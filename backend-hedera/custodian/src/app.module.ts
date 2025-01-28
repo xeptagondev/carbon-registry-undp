@@ -5,8 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import ormConfig from '@app/core/config/orm-config';
 import { CoreModule } from '@app/core';
-import { UserModule } from './user/user.module';
-import { OrganizationModule } from './organization/organization.module';
 import configuration from '@app/core/config/configuration';
 
 @Module({
