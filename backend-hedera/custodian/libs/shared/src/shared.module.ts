@@ -16,23 +16,23 @@ import { UsersModule } from './users/users.module';
 import { UtilModule } from './util/util.module';
 
 @Module({
-  providers: [SharedService],
-  exports: [SharedService],
-  imports: [
-    ActivityModule,
-    ActivityDocModule,
-    AuditModule,
-    DocumentModule,
-    DocumentTypeModule,
-    GuardianRoleModule,
-    OrganizationModule,
-    OrganizationTypeModule,
-    ProjectModule,
-    ProjectDocModule,
-    PolicyBlockModule,
-    RoleModule,
-    UsersModule,
-    UtilModule,
-  ],
+    providers: [SharedService],
+    exports: [SharedService],
+    imports: [
+        ActivityModule,
+        ActivityDocModule,
+        AuditModule,
+        DocumentModule,
+        DocumentTypeModule,
+        GuardianRoleModule,
+        OrganizationModule,
+        OrganizationTypeModule,
+        ProjectModule,
+        ProjectDocModule,
+        PolicyBlockModule,
+        RoleModule,
+        UsersModule,
+        UtilModule,
+    ],
 })
 export class SharedModule {}
