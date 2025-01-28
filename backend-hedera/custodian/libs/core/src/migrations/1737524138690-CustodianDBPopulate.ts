@@ -1,6 +1,6 @@
 /* eslint-disable quotes */
-import { OrganizationTypeEnum } from '@app/common-lib/shared/organization-type/enum/organization-type.enum';
-import { RoleEnum } from '@app/common-lib/shared/role/enum/role.enum';
+import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CustodianDBPopulate1737524138690 implements MigrationInterface {
