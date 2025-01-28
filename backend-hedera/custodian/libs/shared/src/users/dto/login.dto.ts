@@ -1,0 +1,17 @@
+import { IsNotEmpty } from '@nestjs/class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+
+export class LoginDto {
+    @ApiProperty()
+    @IsNotEmpty()
+    @Transform(({ value }) =>
+        typeof value === 'string' ? value.trim().toLowerCase() : value,
+    )
+    @IsNotEmpty()
+    username: string;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    password: string;
+}
