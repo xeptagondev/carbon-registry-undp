@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional } from '@nestjs/class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class FilterBy {

@@ -13,7 +13,7 @@ import {
     IsPositive,
     ValidateIf,
     ValidateNested,
-} from '@nestjs/class-validator';
+} from 'class-validator';
 
 export class QueryDto {
     @ValidateIf((o) => o.page)

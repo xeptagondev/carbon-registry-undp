@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional } from '@nestjs/class-validator';
+import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class HTTPResponseDto {
     @IsNotEmpty()

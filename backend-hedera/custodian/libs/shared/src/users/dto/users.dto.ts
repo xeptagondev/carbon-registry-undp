@@ -1,7 +1,7 @@
 import { SuperDTO } from '@app/core/dto/super.dto';
 import { UsersEntity } from '../entity/users.entity';
 import { Unwrap } from '@app/core/util/unwrappable';
-import { IsEmail, IsNotEmpty } from '@nestjs/class-validator';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { JWTPayload } from './jwt.payload.dto';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
