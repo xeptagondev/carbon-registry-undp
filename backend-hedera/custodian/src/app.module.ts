@@ -7,10 +7,15 @@ import ormConfig from '@app/core/config/orm-config';
 import { CoreModule } from '@app/core';
 import { UserModule } from './user/user.module';
 import { OrganizationModule } from './organization/organization.module';
+import configuration from '@app/core/config/configuration';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+        ConfigModule.forRoot({
+            isGlobal: true,
+            load: [configuration],
+            envFilePath: '.env',
+        }),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
@@ -18,8 +23,6 @@ import { OrganizationModule } from './organization/organization.module';
                 ormConfig(configService),
         }),
         CoreModule,
-        UserModule,
-        OrganizationModule,
     ],
     controllers: [AppController],
     providers: [AppService],

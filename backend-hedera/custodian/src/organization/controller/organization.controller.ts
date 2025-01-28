@@ -1,6 +1,6 @@
 import { Body, Controller, Param, Put } from '@nestjs/common';
-import { UserService } from '../../user/service/user.service';
 import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
+import { UserService } from 'src/user/service/user.service';
 
 @Controller('organization')
 export class OrganizationController {

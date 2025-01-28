@@ -3,10 +3,10 @@ import { OrganizationService } from './service/organization.service';
 import { OrganizationController } from './controller/organization.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
-import { AuditModule } from '@app/shared/audit/audit.module';
+import { UsersModule } from '@app/shared/users/users.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([OrganizationEntity]), AuditModule],
+    imports: [TypeOrmModule.forFeature([OrganizationEntity]), UsersModule],
     providers: [OrganizationService],
     controllers: [OrganizationController],
 })
