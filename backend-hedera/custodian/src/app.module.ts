@@ -7,6 +7,11 @@ import ormConfig from '@app/core/config/orm-config';
 import { CoreModule } from '@app/core';
 import configuration from '@app/core/config/configuration';
 import { AuthGuardModule } from '@app/core/auth-guard/auth-guard.module';
+import { DataSource } from 'typeorm';
+import { SharedModule } from '@app/shared';
+import { OrganizationModule } from './organization/organization.module';
+import { UserModule } from './user/user.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
     imports: [
@@ -22,9 +27,16 @@ import { AuthGuardModule } from '@app/core/auth-guard/auth-guard.module';
                 ormConfig(configService),
         }),
         CoreModule,
+        SharedModule,
+        UserModule,
+        OrganizationModule,
         AuthGuardModule,
     ],
     controllers: [AppController],
     providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+    constructor(private readonly connection: DataSource) {
+        this.connection.runMigrations();
+    }
+}

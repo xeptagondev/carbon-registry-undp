@@ -9,6 +9,7 @@ import { GuardianRoleEntity } from '@app/shared/guardian-role/entity/guardian-ro
 import { RoleEntity } from '@app/shared/role/entity/role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/org
         ]),
         AuditModule,
         UtilModule,
+        JwtModule,
     ],
     controllers: [UserController],
     providers: [UserService],
