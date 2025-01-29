@@ -11,7 +11,7 @@ import { DataSource } from 'typeorm';
 import { SharedModule } from '@app/shared';
 import { OrganizationModule } from './organization/organization.module';
 import { UserModule } from './user/user.module';
-import { JwtModule } from '@nestjs/jwt';
+import { MailModule } from '@app/shared/mail/mail.module';
 
 @Module({
     imports: [
@@ -31,6 +31,7 @@ import { JwtModule } from '@nestjs/jwt';
         UserModule,
         OrganizationModule,
         AuthGuardModule,
+        MailModule,
     ],
     controllers: [AppController],
     providers: [AppService],

@@ -6,6 +6,18 @@ export default () => ({
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
     },
+    mail: {
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT),
+        auth: {
+            user: process.env.EMAIL_ID,
+            pass: process.env.EMAIL_PASS,
+        },
+        defaults: {
+            fromEmail: `"No Reply" <${process.env.EMAIL_ADDRESS}>`,
+        },
+        templateDir: process.env.EMAIL_TEMPLATE_LOCATION,
+    },
     guardian: {
         url: process.env.GUARDIAN_URL || 'http://3.93.78.104:3000',
         login: '/api/v1/accounts/login',
@@ -25,7 +37,6 @@ export default () => ({
         password: '123456',
         did: 'did:hedera:testnet:Hd3Q9whzRsi8YbEuJDVt1pnixzLJ888HhCBoa2Ba8TCi_0.0.5415745',
     },
-
     blocks: {
         create_group_type: 'create_organization',
         create_single_organization: 'single_organizations_creation_form',
