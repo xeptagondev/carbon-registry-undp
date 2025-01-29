@@ -14,6 +14,7 @@ import { PolicyBlockModule } from './policy-block/policy-block.module';
 import { RoleModule } from './role/role.module';
 import { UsersModule } from './users/users.module';
 import { UtilModule } from './util/util.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
     providers: [SharedService],
@@ -33,6 +34,7 @@ import { UtilModule } from './util/util.module';
         RoleModule,
         UsersModule,
         UtilModule,
+        MailModule,
     ],
 })
 export class SharedModule {}
