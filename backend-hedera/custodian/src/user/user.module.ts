@@ -10,6 +10,7 @@ import { RoleEntity } from '@app/shared/role/entity/role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
 import { JwtModule } from '@nestjs/jwt';
+import { TransactionModule } from '@app/shared/transaction/transaction.module';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { JwtModule } from '@nestjs/jwt';
             OrganizationTypeEntity,
         ]),
         AuditModule,
+        TransactionModule,
         UtilModule,
         JwtModule,
     ],

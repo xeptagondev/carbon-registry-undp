@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
@@ -24,6 +24,7 @@ import { RoleEnum } from '@app/shared/role/enum/role.enum';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
+    private readonly logger = new Logger(UserService.name);
     constructor(
         protected readonly auditService: AuditService,
         protected readonly utilService: UtilService,
@@ -211,6 +212,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
     async register(userDto: UsersDTO) {
         try {
+            this.logger.log(
+                `Request received to register user with email ${userDto.email}`,
+            );
             await this.setTagToIdMap();
             // 1: Login SRU and Gov. Root
             const sruLoginResponse = await this.login({
@@ -219,15 +223,19 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             });
 
             // 2: Register the new user as a 'USER' in guardian backend
-            const registerResponse = await axios.post(
-                `${this.configService.get('guardian.url')}${this.configService.get('guardian.register')}`,
-                {
-                    username: userDto.email,
-                    password: userDto.password, // This needs to be a password with SALT from API side
-                    password_confirmation: userDto.password,
-                    role: 'USER',
-                },
-            );
+            try {
+                const registerResponse = await axios.post(
+                    `${this.configService.get('guardian.url')}${this.configService.get('guardian.register')}`,
+                    {
+                        username: userDto.email,
+                        password: userDto.password, // This needs to be a password with SALT from API side
+                        password_confirmation: userDto.password,
+                        role: 'USER',
+                    },
+                );
+            } catch (e) {
+                throw e;
+            }
 
             const userEntity: UsersEntity = {
                 email: userDto.email,
