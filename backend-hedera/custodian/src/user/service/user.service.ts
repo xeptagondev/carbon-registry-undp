@@ -1,9 +1,8 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
-import { v4 as uuidv4 } from 'uuid';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
@@ -21,11 +20,17 @@ import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
 import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
+import { TransactionService } from '@app/shared/transaction/service/transaction.service';
+import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
+import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
+import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
     private readonly logger = new Logger(UserService.name);
     constructor(
+        protected readonly guardianService: GuardianService,
+        protected readonly transactionService: TransactionService,
         protected readonly auditService: AuditService,
         protected readonly utilService: UtilService,
         protected readonly configService: ConfigService,
@@ -89,6 +94,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
     async login(loginDto: LoginDto) {
         try {
+            this.logger.log(
+                `Request received to login user with username ${loginDto.username}`,
+            );
             const response = await axios.post(
                 `${this.configService.get('guardian.url')}${this.configService.get(
                     'guardian.login',
@@ -144,62 +152,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return new Promise<void>((resolve) => setTimeout(resolve, ms));
     }
 
-    generateMessageId(): string {
-        const seconds = Math.floor(Date.now() / 1000);
-        const nanoseconds = process.hrtime()[1];
-        return `${seconds}.${nanoseconds}`;
-    }
-
-    generateMessageHash(data: any): string {
-        const jsonString = JSON.stringify(data);
-        return crypto.createHash('sha256').update(jsonString).digest('hex');
-    }
-
-    generateUUID24(): string {
-        return uuidv4().replace(/-/g, '').substring(0, 24);
-    }
-
-    async createPayload(response: any, role: string) {
-        return JSON.stringify({
-            document: {
-                createDate: new Date().toISOString(),
-                updateDate: new Date().toISOString(),
-                owner: response.owner,
-                hash: response.hash,
-                document: response.document,
-                documentFileId: await this.generateUUID24(),
-                documentFields: [
-                    'id',
-                    'credentialSubject.id',
-                    'credentialSubject.0.id',
-                    'credentialSubject.0.name',
-                    'credentialSubject.0.type',
-                ],
-                hederaStatus: 'ISSUE',
-                signature: 0,
-                type: this.configService.get(`metadata.approve.type.${role}`),
-                policyId: response.policyId,
-                tag: this.configService.get(`metadata.approve.tag.${role}`),
-                option: {
-                    status: 'pending',
-                },
-                schema: response.schema,
-                messageId: this.generateMessageId(),
-                topicId: this.configService.get('policy.topicId'),
-                relationships: response.relationships,
-                accounts: response.accounts,
-                group: response.group,
-                messageHash: this.generateMessageHash(response.document),
-                _id: await this.generateUUID24(),
-                __sourceTag__: this.configService.get(
-                    `metadata.approve.sourceTag.${role}`,
-                ),
-                id: await this.generateUUID24(),
-            },
-            tag: 'Button_0',
-        });
-    }
-
     private async setTagToIdMap() {
         this.tagToIdMap = {};
         const policyBlocks = await this.utilService.getBlocksByPolicy(
@@ -224,15 +176,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             // 2: Register the new user as a 'USER' in guardian backend
             try {
-                const registerResponse = await axios.post(
-                    `${this.configService.get('guardian.url')}${this.configService.get('guardian.register')}`,
-                    {
-                        username: userDto.email,
-                        password: userDto.password, // This needs to be a password with SALT from API side
-                        password_confirmation: userDto.password,
-                        role: 'USER',
-                    },
+                await this.guardianService.registerUser(
+                    userDto.email,
+                    userDto.password,
                 );
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.USER_REGISTER,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
             } catch (e) {
                 throw e;
             }
@@ -255,46 +208,39 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             });
             await this.delay(5000);
             // 4. Update the user profile with the parent (SRU)
-            const updateResponse = await axios.put(
-                `${this.configService.get('guardian.url')}${this.configService.get('guardian.profileUpdate')}/${userDto.email}`,
-                {
-                    parent: this.configService.get('sru.did'),
-                    hederaAccountId: userDto.hederaAccount,
-                    hederaAccountKey: userDto.hederaKey,
-                    useFireblocksSigning: false,
-                    fireblocksConfig: {
-                        fireBlocksVaultId: '',
-                        fireBlocksAssetId: '',
-                        fireBlocksApiKey: '',
-                        fireBlocksPrivateiKey: '',
-                    },
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(
-                            userLoginResponse.refreshToken,
-                        )}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
+            try {
+                await this.guardianService.updateUserProfile(
+                    userDto.email,
+                    userLoginResponse.refreshToken,
+                    this.configService.get('sru.did'),
+                    userDto.hederaAccount,
+                    userDto.hederaKey,
+                );
+            } catch (e) {
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.ASSIGN_REGISTRY,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            }
 
             await this.delay(10000);
 
             // 5. Assign the policy for the user
-            const policyAssignResponse = await axios.post(
-                `${this.configService.get('guardian.url')}${this.configService.get('guardian.policyAsign1')}/${userDto.email}${this.configService.get('guardian.policyAsign2')}`,
-                {
-                    policyIds: [this.configService.get('policy.id')],
-                    assign: true,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(sruLoginResponse.refreshToken)}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
+            try {
+                await this.guardianService.assignPolicyToUser(
+                    userDto.email,
+                    sruLoginResponse.refreshToken,
+                );
+            } catch (e) {
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.ASSIGN_POLICY,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            }
 
             if (userDto.company) {
                 // 6. Register new organization
@@ -328,70 +274,88 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 org?.organizationType?.id,
                 userDto.role,
             );
-
-            const inviteResponse = await axios.post(
-                `${this.configService.get('guardian.url')}/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.getBlock(this.configService.get(`blocks.invite.${org.organizationType.name}`))}`,
-                {
-                    action: 'invite',
-                    group: org.group,
-                    role: guardianRole.name,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(this.getRefreshToken(userDto?.request?.email))}`,
-                        'Content-Type': 'application/json',
+            let inviteResponse = { invitation: '' };
+            try {
+                inviteResponse = await this.guardianService.createInvitation(
+                    this.getRefreshToken(userDto?.request?.email),
+                    this.getBlock(
+                        this.configService.get(`blocks.user_create_invite`),
+                    ),
+                    {
+                        action: 'invite',
+                        group: org.group,
+                        role: guardianRole.name,
                     },
-                },
-            );
+                );
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.CREATE_INVITATION,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                throw e;
+            }
 
             // 2. Submit the generated invitation for user creation
-            const createGroupTypeResponse = await axios.post(
-                `${this.configService.get('guardian.url')}/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.getBlock(this.configService.get('blocks.group.group'))}`,
-                {
-                    invitation: inviteResponse.data.invitation,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(userLoginResponse.refreshToken)}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
+
+            try {
+                const createGroupTypeResponse =
+                    await this.guardianService.createGroupType(
+                        userLoginResponse.refreshToken,
+                        this.getBlock(
+                            this.configService.get('blocks.create_group_type'),
+                        ),
+                        {
+                            invitation: inviteResponse.invitation,
+                        },
+                    );
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.CREATE_GROUP_TYPE,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                throw e;
+            }
 
             // 3. Create the user with the role
-
-            const createGroupResponse = await axios.post(
-                `${this.configService.get('guardian.url')}/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.getBlock(this.configService.get(`blocks.registration.${guardianRole.name}`))}`,
-                {
-                    document: {
-                        name: userDto.name,
-                        role: this.capitalizeFirst(userDto.role),
-                        organization: {
-                            name: org.name,
-                            role: this.capitalizeFirst(
-                                org.organizationType.name,
-                            ),
-                        },
-                    },
-                    ref: null,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(userLoginResponse.refreshToken)}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
+            let createUserResponse = { group: '' };
+            try {
+                createUserResponse = await this.guardianService.createUser(
+                    userLoginResponse.refreshToken,
+                    this.getBlock(this.configService.get(`blocks.create_user`)),
+                    userDto.name,
+                    org.name,
+                    this.capitalizeFirst(
+                        this.capitalizeFirst(org.organizationType.name),
+                    ),
+                    this.capitalizeFirst(userDto.role),
+                );
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.CREATE_USER_BLOCK,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                throw e;
+            }
 
             await this.updateUser(userDto, org, guardianRole);
 
-            return createGroupResponse.data;
+            return createUserResponse;
         } catch (e) {
             throw e;
         }
     }
 
-    async approve(id: number, organizationApproveDto: OrganisationApproveDto) {
+    async approve(
+        email: string,
+        id: number,
+        organizationApproveDto: OrganisationApproveDto,
+    ) {
         try {
             await this.setTagToIdMap();
             const orgEntity: OrganizationEntity =
@@ -403,25 +367,32 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         organizationType: true,
                     },
                 });
-            console.log(organizationApproveDto);
-            console.log(orgEntity);
-            const groupApproveResponse = await axios.post(
-                `${this.configService.get('guardian.url')}/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.getBlock(this.configService.get(`blocks.approve.${orgEntity.organizationType.name}`))}`,
-                orgEntity.payload,
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(organizationApproveDto.refreshToken)}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
+            let approveResponse = {};
+            try {
+                approveResponse = await this.guardianService.approve(
+                    organizationApproveDto.refreshToken,
+                    this.getBlock(
+                        this.configService.get(`blocks.appove_organization`),
+                    ),
+                    orgEntity.payload,
+                );
+                await this.transactionService.save({
+                    user: email,
+                    stage: TransactionStage.APPROVE_ORGANIZATION,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                throw e;
+            }
+
             await this.organizationRepository.update(
                 {
                     id: orgEntity.id,
                 },
                 { state: OrganizationStateEnum.ACTIVE },
             );
-            return groupApproveResponse.data;
+            return approveResponse;
         } catch (e) {
             throw e;
         }
@@ -437,37 +408,51 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     private async registerGroup(userDto: UsersDTO, userLoginResponse) {
         try {
             // 1. Create a new group type in guardian
-            const createGroupTypeResponse = await axios.post(
-                `${this.configService.get('guardian.url')}/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.getBlock(this.configService.get('blocks.group.group'))}`,
-                {
-                    group: this.capitalizeFirst(userDto.company.companyRole),
-                    label: userDto.company.name,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(userLoginResponse.refreshToken)}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
-
+            try {
+                const createGroupTypeResponse =
+                    await this.guardianService.createGroupType(
+                        userLoginResponse.refreshToken,
+                        this.getBlock(
+                            this.configService.get('blocks.create_group_type'),
+                        ),
+                        {
+                            group: this.capitalizeFirst(
+                                userDto.company.companyRole,
+                            ),
+                            label: userDto.company.name,
+                        },
+                    );
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.CREATE_GROUP_TYPE,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                throw e;
+            }
             await this.delay(5000);
-            const createOrganizationResponse = await axios.post(
-                `${this.configService.get('guardian.url')}/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.getBlock(this.configService.get(`blocks.group.${userDto.company.companyRole}`))}`,
-                {
-                    document: {
-                        name: userDto.company.name,
-                        role: this.capitalizeFirst(userDto.company.companyRole),
-                    },
-                    ref: null,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(userLoginResponse.refreshToken)}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
+            try {
+                const createOrganizationResponse =
+                    await this.guardianService.createOrganization(
+                        userLoginResponse.refreshToken,
+                        this.getBlock(
+                            this.configService.get(
+                                `blocks.create_multiple_organization`,
+                            ),
+                        ),
+                        userDto.company.name,
+                        this.capitalizeFirst(userDto.company.companyRole),
+                    );
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.CREATE_ORGANIZATION_BLOCK,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                throw e;
+            }
 
             // I. Save organization in DB
             // i. Get orgType
@@ -488,32 +473,28 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             // 2. Create a group (organization) => Create the organization of org type
 
             await this.delay(10000);
-            const createGroupResponse = await axios.post(
-                `${this.configService.get('guardian.url')}/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.getBlock(this.configService.get(`blocks.user.${userDto.company.companyRole}`))}`,
-                {
-                    document: {
-                        name: userDto.name,
-                        organization: {
-                            name: userDto.company.name,
-                            role: this.capitalizeFirst(
-                                userDto.company.companyRole,
-                            ),
-                        },
-                        role: this.capitalizeFirst(userDto.role),
-                    },
-                    ref: null,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(userLoginResponse.refreshToken)}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
-
+            let createUserResponse = { group: '' };
+            try {
+                createUserResponse = await this.guardianService.createUser(
+                    userLoginResponse.refreshToken,
+                    this.getBlock(this.configService.get(`create_user`)),
+                    userDto.name,
+                    userDto.company.name,
+                    this.capitalizeFirst(userDto.company.companyRole),
+                    this.capitalizeFirst(userDto.role),
+                );
+                await this.transactionService.save({
+                    user: userDto?.request?.email,
+                    stage: TransactionStage.CREATE_USER_BLOCK,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                throw e;
+            }
             // // 3. Create the required payload for group (organization) save
-            const payload = await this.createPayload(
-                createGroupResponse.data,
+            const payload = await this.guardianService.createPayload(
+                createUserResponse,
                 this.capitalizeFirst(userDto.company.companyRole),
             );
 
@@ -522,10 +503,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 {
                     id: orgEntity.id,
                 },
-                { payload: payload, group: createGroupResponse?.data?.group },
+                { payload: payload, group: createUserResponse?.group },
             );
             if (userDto?.request?.userRole === RoleEnum.Root) {
-                await this.approve(orgEntity.id, {
+                await this.approve(userDto?.request?.email, orgEntity.id, {
                     refreshToken: this.getRefreshToken(userDto?.request?.email),
                     remarks: '',
                 });
@@ -537,7 +518,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             await this.updateUser(userDto, orgEntity, guardianRole);
 
-            return createGroupResponse.data;
+            return createUserResponse;
         } catch (e) {
             throw e;
         }

@@ -12,122 +12,107 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
 
         // Add organization types
         await queryRunner.query(
-            `INSERT INTO organization_type_entity (name) \
-            VALUES ('${OrganizationTypeEnum.GOVERNMENT}'), ('${OrganizationTypeEnum.MINISTRY}'), ('${OrganizationTypeEnum.PROGRAMME_DEVELOPER}'), ('${OrganizationTypeEnum.CERTIFIER}');`,
+            `INSERT INTO organization_type_entity (name,multiple) \
+            VALUES ('${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}',false), ('${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}',false), ('${OrganizationTypeEnum.PROJECT_PARTICIPANT}',true);`,
         );
 
         // Add main gov organization
-        await queryRunner.query(
-            `INSERT INTO organization_entity (name, organization_type_id) \
-            VALUES ('Test Government',(SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.GOVERNMENT}'));`,
-        );
+        // await queryRunner.query(
+        //     `INSERT INTO organization_entity (name, organization_type_id) \
+        //     VALUES ('Test Government',(SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.GOVERNMENT}'));`,
+        // );
 
         // Add guardian roles
         await queryRunner.query(
             `INSERT INTO guardian_role_entity (name, role_id, organization_type_id) \
             VALUES \
             ( \
-                'GOVERNMENT_ROOT', \
+                'DNA_ROOT', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Root}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.GOVERNMENT}') \
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}') \
             ), \
             ( \
-                'GOVERNMENT_ADMIN', \
+                'DNA_ADMIN', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Admin}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.GOVERNMENT}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}')\
             ), \
             ( \
-                'GOVERNMENT_MANAGER', \
+                'DNA_MANAGER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Manager}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.GOVERNMENT}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}')\
             ), \
             ( \
-                'GOVERNMENT_VIEWER', \
+                'DNA_VIEWER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.ViewOnly}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.GOVERNMENT}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}')\
             ), \
             ( \
-                'MINISTRY_ADMIN', \
+                'DOE_ADMIN', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Admin}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.MINISTRY}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}')\
             ), \
             ( \
-                'MINISTRY_MANAGER', \
+                'DOE_MANAGER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Manager}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.MINISTRY}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}')\
             ), \
             ( \
-                'MINISTRY_VIEWER', \
+                'DOE_VIEWER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.ViewOnly}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.MINISTRY}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}')\
             ), \
             ( \
-                'DEVELOPER_ADMIN', \
+                'PP_ADMIN', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Admin}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROGRAMME_DEVELOPER}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_PARTICIPANT}')\
             ), \
             ( \
-                'DEVELOPER_MANAGER', \
+                'PP_MANAGER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Manager}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROGRAMME_DEVELOPER}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_PARTICIPANT}')\
             ), \
             ( \
-                'DEVELOPER_VIEWER', \
+                'PP_VIEWER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.ViewOnly}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROGRAMME_DEVELOPER}')\
-            ), \
-            ( \
-                'CERTIFIER_ADMIN', \
-                (SELECT id FROM role_entity WHERE name='${RoleEnum.Admin}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.CERTIFIER}')\
-            ), \
-            ( \
-                'CERTIFIER_MANAGER', \
-                (SELECT id FROM role_entity WHERE name='${RoleEnum.Manager}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.CERTIFIER}')\
-            ), \
-            ( \
-                'CERTIFIER_VIEWER', \
-                (SELECT id FROM role_entity WHERE name='${RoleEnum.ViewOnly}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.CERTIFIER}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_PARTICIPANT}')\
             );`,
         );
 
         // Add gov root user
-        await queryRunner.query(
-            "INSERT INTO users_entity ( \
-                email, \
-                name, \
-                password, \
-                phone_number, \
-                organization_id, \
-                guardian_role_id\
-            ) \
-            VALUES ( \
-                'root@testgov.com', \
-                'Test Gov Root', \
-                '123456', \
-                '0112456789', \
-                (SELECT id FROM organization_entity WHERE name='Test Government'), \
-                (SELECT id FROM guardian_role_entity WHERE name='GOVERNMENT_ROOT') \
-            );",
-        );
+        // await queryRunner.query(
+        //     "INSERT INTO users_entity ( \
+        //         email, \
+        //         name, \
+        //         password, \
+        //         phone_number, \
+        //         organization_id, \
+        //         guardian_role_id\
+        //     ) \
+        //     VALUES ( \
+        //         'root@testgov.com', \
+        //         'Test Gov Root', \
+        //         '123456', \
+        //         '0112456789', \
+        //         (SELECT id FROM organization_entity WHERE name='Test Government'), \
+        //         (SELECT id FROM guardian_role_entity WHERE name='GOVERNMENT_ROOT') \
+        //     );",
+        // );
 
         //will be removed later
-        await queryRunner.query(`
-            UPDATE guardian_role_entity
-            SET name = LOWER(name);
-          `);
+        // await queryRunner.query(`
+        //     UPDATE guardian_role_entity
+        //     SET name = LOWER(name);
+        //   `);
 
-        //will be removed later
-        await queryRunner.query(`
-            UPDATE users_entity
-            SET guardian_role_id = (SELECT id FROM guardian_role_entity WHERE name='government_root')
-          `);
+        // //will be removed later
+        // await queryRunner.query(`
+        //     UPDATE users_entity
+        //     SET guardian_role_id = (SELECT id FROM guardian_role_entity WHERE name='government_root')
+        //   `);
 
-        await queryRunner.query(
-            `update organization_entity set state='1' where id=1;`,
-        );
+        // await queryRunner.query(
+        //     `update organization_entity set state='1' where id=1;`,
+        // );
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {}

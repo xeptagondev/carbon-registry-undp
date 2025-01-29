@@ -1,8 +1,9 @@
-import { TransportType } from '@nestjs-modules/mailer/dist/interfaces/mailer-options.interface';
+import { TransactionStage } from '../enum/transaction.stage.enum';
+import { TransactionType } from '../enum/transaction.type.enum';
 
 export class TransactionDto {
     user: string;
-    stage: string;
-    type: TransportType;
+    stage: TransactionStage;
+    type: TransactionType;
     createdTime: number;
 }

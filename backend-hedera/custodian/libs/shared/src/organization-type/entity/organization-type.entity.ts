@@ -10,6 +10,9 @@ export class OrganizationTypeEntity {
     @Column({ unique: true })
     name: string;
 
+    @Column({ default: true })
+    multiple: boolean;
+
     @OneToMany(
         () => OrganizationEntity,
         (organizationEntity) => organizationEntity.organizationType,
