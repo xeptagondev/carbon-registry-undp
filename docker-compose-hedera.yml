@@ -1,0 +1,56 @@
+version: "3.3"
+
+volumes:
+  data:
+    driver: local
+
+services:
+  hedera_db:
+    container_name: hedera_db
+    image: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: hedera_db
+      POSTGRES_PASSWORD: "123"
+      POSTGRES_USER: root
+    volumes:
+      - ./backend-hedera/custodian/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - data:/data/postgres
+
+  custodian:
+    build:
+      context: .
+      dockerfile: ./backend-hedera/custodian/Dockerfile
+    command: ["yarn", "start:prod"]
+    ports:
+      - "3002:3002"
+    depends_on:
+      - hedera_db
+    environment:
+      CUSTODIAN_PORT: 3002
+      GUARDIAN_URL: "http://3.93.78.104:3000"
+      DB_HOST: hedera_db
+      DB_PORT: 5432
+      DB_USERNAME: root
+      DB_PASSWORD: "123"
+      DB_NAME: hedera_db
+
+  web:
+    build:
+      context: .
+      dockerfile: ./web/Dockerfile
+      args:
+        PORT: 3030
+        REACT_APP_BACKEND: http://localhost:3001
+        REACT_APP_COUNTRY_NAME: "CountryX"
+        REACT_APP_GOVERNMENT_MINISTRY: "Ministry Of Environment"
+        REACT_APP_COUNTRY_FLAG_URL: "https://carbon-common-dev.s3.amazonaws.com/flag.png"
+        REACT_APP_COUNTRY_CODE: "NG"
+        REACT_APP_MAP_TYPE: "None"
+        REACT_APP_MAPBOXGL_ACCESS_TOKEN: ""
+    ports:
+      - "3030:3030"
+    depends_on:
+      - hedera_db
