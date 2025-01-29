@@ -14,7 +14,7 @@ export default () => ({
             pass: process.env.EMAIL_PASS,
         },
         defaults: {
-            fromEmail: `"No Reply" <${process.env.EMAIL_ADDRESS}>`,
+            fromEmail: `"No Reply" <${process.env.EMAIL_SEND_ADDRESS}>`,
         },
         templateDir: process.env.EMAIL_TEMPLATE_LOCATION,
     },
