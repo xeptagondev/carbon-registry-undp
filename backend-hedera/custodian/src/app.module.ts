@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import ormConfig from '@app/core/config/orm-config';
 import { CoreModule } from '@app/core';
 import configuration from '@app/core/config/configuration';
+import { AuthGuardModule } from '@app/core/auth-guard/auth-guard.module';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import configuration from '@app/core/config/configuration';
                 ormConfig(configService),
         }),
         CoreModule,
+        AuthGuardModule,
     ],
     controllers: [AppController],
     providers: [AppService],
