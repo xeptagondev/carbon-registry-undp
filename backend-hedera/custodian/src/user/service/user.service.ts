@@ -73,6 +73,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return true;
     }
 
+    
+
     private async getGuardianRole(orgTypeId: number, userRole: string) {
         const orgType: OrganizationTypeEntity =
             await this.organizationTypeRepository.findOneBy({
@@ -187,6 +189,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -279,7 +282,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 inviteResponse = await this.guardianService.createInvitation(
                     this.getRefreshToken(userDto?.request?.email),
                     this.getBlock(
-                        this.configService.get(`blocks.user_create_invite`),
+                        this.configService.get('blocks.user_create_invite'),
                     ),
                     {
                         action: 'invite',
@@ -294,6 +297,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -317,6 +321,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -325,7 +330,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             try {
                 createUserResponse = await this.guardianService.createUser(
                     userLoginResponse.refreshToken,
-                    this.getBlock(this.configService.get(`blocks.create_user`)),
+                    this.getBlock(this.configService.get('blocks.create_user')),
                     userDto.name,
                     org.name,
                     this.capitalizeFirst(
@@ -340,6 +345,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -347,6 +353,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             return createUserResponse;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -372,7 +379,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 approveResponse = await this.guardianService.approve(
                     organizationApproveDto.refreshToken,
                     this.getBlock(
-                        this.configService.get(`blocks.appove_organization`),
+                        this.configService.get('blocks.appove_organization'),
                     ),
                     orgEntity.payload,
                 );
@@ -383,6 +390,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -394,6 +402,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             return approveResponse;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -429,6 +438,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
             await this.delay(5000);
@@ -438,7 +448,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         userLoginResponse.refreshToken,
                         this.getBlock(
                             this.configService.get(
-                                `blocks.create_multiple_organization`,
+                                'blocks.create_multiple_organization',
                             ),
                         ),
                         userDto.company.name,
@@ -451,6 +461,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -477,7 +488,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             try {
                 createUserResponse = await this.guardianService.createUser(
                     userLoginResponse.refreshToken,
-                    this.getBlock(this.configService.get(`create_user`)),
+                    this.getBlock(this.configService.get('create_user')),
                     userDto.name,
                     userDto.company.name,
                     this.capitalizeFirst(userDto.company.companyRole),
@@ -490,6 +501,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
             // // 3. Create the required payload for group (organization) save
@@ -520,6 +532,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             return createUserResponse;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
