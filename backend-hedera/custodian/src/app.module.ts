@@ -43,7 +43,6 @@ export class AppModule {
         private readonly userService: UserService,
     ) {
         this.connection.runMigrations();
-        this.userService.fetchPolicyBlocks();
-        this.userService.createInitialOrganizations();
+        this.userService.init();
     }
 }

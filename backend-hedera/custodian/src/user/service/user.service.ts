@@ -55,15 +55,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     private tagToIdMap: Record<string, string> = {};
-    // private refreshTokens: Record<string, string> = {};
 
-    // setRefreshToken(username: string, refreshToken: string) {
-    //     this.refreshTokens[username] = refreshToken;
-    // }
-
-    // getRefreshToken(username: string) {
-    //     return this.refreshTokens[username];
-    // }
     async updateUser(
         userDTO: UsersDTO,
         orgEntity: OrganizationEntity,
@@ -167,7 +159,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
-                console.log(e);
                 throw e;
             }
 
@@ -293,7 +284,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 inviteResponse = await this.guardianService.createInvitation(
                     refreshToken,
                     this.getBlock(
-                        this.configService.get('blocks.user_create_invite'),
+                        this.configService.get('blocks.userCreateInvite'),
                     ),
                     {
                         action: 'invite',
@@ -308,7 +299,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
-                console.log(e);
                 throw e;
             }
 
@@ -319,7 +309,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     await this.guardianService.createGroupType(
                         userLoginResponse.refreshToken,
                         this.getBlock(
-                            this.configService.get('blocks.create_group_type'),
+                            this.configService.get('blocks.createGroupType'),
                         ),
                         {
                             invitation: inviteResponse.invitation,
@@ -332,7 +322,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
-                console.log(e);
                 throw e;
             }
 
@@ -341,13 +330,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             try {
                 createUserResponse = await this.guardianService.createUser(
                     userLoginResponse.refreshToken,
-                    this.getBlock(this.configService.get('blocks.create_user')),
-                    userDto.name,
-                    org.name,
-                    this.capitalizeFirst(
-                        this.capitalizeFirst(org.organizationType.name),
-                    ),
-                    this.capitalizeFirst(userDto.role),
+                    this.getBlock(this.configService.get('blocks.createUser')),
+                    {
+                        document: {
+                            name: userDto.name,
+                            organization: {
+                                name: org.name,
+                                role: org.organizationType.name,
+                            },
+                            role: userDto.role,
+                        },
+                        ref: null,
+                    },
                 );
                 await this.transactionService.save({
                     user: userDto?.request?.email,
@@ -356,7 +350,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
-                console.log(e);
                 throw e;
             }
 
@@ -364,7 +357,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             return createUserResponse;
         } catch (e) {
-            console.log(e);
             throw e;
         }
     }
@@ -390,7 +382,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 approveResponse = await this.guardianService.approve(
                     organizationApproveDto.refreshToken,
                     this.getBlock(
-                        this.configService.get('blocks.appove_organization'),
+                        this.configService.get('blocks.appoveOrganization'),
                     ),
                     orgEntity.payload,
                 );
@@ -401,7 +393,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
-                console.log(e);
                 throw e;
             }
 
@@ -413,16 +404,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             return approveResponse;
         } catch (e) {
-            console.log(e);
             throw e;
         }
-    }
-
-    capitalizeFirst(input: string): string {
-        if (!input) {
-            return input;
-        }
-        return input.charAt(0).toUpperCase() + input.slice(1).toLowerCase();
     }
 
     private async registerGroup(userDto: UsersDTO, userLoginResponse) {
@@ -433,12 +416,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     await this.guardianService.createGroupType(
                         userLoginResponse.refreshToken,
                         this.getBlock(
-                            this.configService.get('blocks.create_group_type'),
+                            this.configService.get('blocks.createGroupType'),
                         ),
                         {
-                            group: this.capitalizeFirst(
-                                userDto.company.companyRole,
-                            ),
+                            group: userDto.company.companyRole,
                             label: userDto.company.name,
                         },
                     );
@@ -449,26 +430,32 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
-                console.log(e);
                 throw e;
             }
             await this.delay(5000);
+            const orgType = await this.organizationTypeRepository.findOne({
+                where: {
+                    name: userDto?.company?.companyRole,
+                },
+            });
+            let createOrganizationResponse = { group: '' };
             try {
-                const orgType = await this.organizationTypeRepository.findOne({
-                    where: {
-                        name: userDto?.company?.companyRole,
-                    },
-                });
                 const blockName = orgType.multiple
-                    ? 'blocks.create_multiple_organization'
-                    : 'blocks.create_single_organization';
-                const createOrganizationResponse =
+                    ? `blocks.createMultipleOrganization`
+                    : `blocks.createSingleOrganization`;
+                createOrganizationResponse =
                     await this.guardianService.createOrganization(
                         userLoginResponse.refreshToken,
                         this.getBlock(this.configService.get(blockName)),
-                        userDto.company.name,
-                        this.capitalizeFirst(userDto.company.companyRole),
+                        {
+                            document: {
+                                name: userDto.company.name,
+                                role: userDto.company.companyRole,
+                            },
+                            ref: null,
+                        },
                     );
+
                 await this.transactionService.save({
                     user: userDto?.request?.email,
                     stage: TransactionStage.CREATE_ORGANIZATION_BLOCK,
@@ -476,15 +463,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
-                console.log(e);
                 throw e;
             }
 
             // I. Save organization in DB
             // i. Get orgType
-            const orgType = await this.organizationTypeRepository.findOneBy({
-                name: userDto.company.companyRole,
-            });
 
             // ii. Create organization
             let orgEntity: OrganizationEntity = {
@@ -499,16 +482,26 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             // 2. Create a group (organization) => Create the organization of org type
 
             await this.delay(10000);
-            let createUserResponse = { group: '' };
+
             try {
-                createUserResponse = await this.guardianService.createUser(
-                    userLoginResponse.refreshToken,
-                    this.getBlock(this.configService.get('create_user')),
-                    userDto.name,
-                    userDto.company.name,
-                    this.capitalizeFirst(userDto.company.companyRole),
-                    this.capitalizeFirst(userDto.role),
-                );
+                const createUserResponse =
+                    await this.guardianService.createUser(
+                        userLoginResponse.refreshToken,
+                        this.getBlock(
+                            this.configService.get('blocks.createUser'),
+                        ),
+                        {
+                            document: {
+                                name: userDto.name,
+                                organization: {
+                                    name: userDto.company.name,
+                                    role: userDto.company.companyRole,
+                                },
+                                role: userDto.role,
+                            },
+                            ref: null,
+                        },
+                    );
                 await this.transactionService.save({
                     user: userDto?.request?.email,
                     stage: TransactionStage.CREATE_USER_BLOCK,
@@ -516,13 +509,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
-                console.log(e);
                 throw e;
             }
             // // 3. Create the required payload for group (organization) save
             const payload = await this.guardianService.createPayload(
-                createUserResponse,
-                this.capitalizeFirst(userDto.company.companyRole),
+                createOrganizationResponse,
+                userDto.company.companyRole,
             );
 
             // // 4. Send request for approval
@@ -530,7 +522,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 {
                     id: orgEntity.id,
                 },
-                { payload: payload, group: createUserResponse?.group },
+                { payload: payload, group: createOrganizationResponse?.group },
             );
             if (userDto?.request?.userRole === RoleEnum.Root) {
                 const refreshToken = await this.guardianService.getRefreshToken(
@@ -548,10 +540,19 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             await this.updateUser(userDto, orgEntity, guardianRole);
 
-            return createUserResponse;
+            return createOrganizationResponse;
         } catch (e) {
             console.log(e);
             throw e;
+        }
+    }
+
+    async init() {
+        if (this.configService.get('system.initPolicy')) {
+            await this.fetchPolicyBlocks();
+        }
+        if (this.configService.get('system.initOrgs')) {
+            await this.createInitialOrganizations();
         }
     }
 
@@ -572,14 +573,25 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     const orgDto = new OrganisationDto();
                     orgDto.companyRole =
                         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY;
-                    orgDto.name = 'Designated National Authority';
+                    orgDto.name = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgName`,
+                    );
                     const user = new UsersDTO();
-                    user.email = 'u1004@gmail.com';
-                    user.name = 'u1004';
-                    user.hederaAccount = '0.0.5444754';
-                    user.hederaKey =
-                        '302e020100300506032b657004220420fac61c3cfa772cdf1cf0c71760eabfa53f14952b40b545a2b0e8886644747741';
-                    user.password = '123';
+                    user.email = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
+                    );
+                    user.name = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.name`,
+                    );
+                    user.hederaAccount = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaAccount`,
+                    );
+                    user.hederaKey = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaKey`,
+                    );
+                    user.password = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.password`,
+                    );
                     user.role = RoleEnum.Root;
                     user.company = orgDto;
 
@@ -600,18 +612,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         await this.saveTagIdMap();
     }
 
-    private async loadPolicyJson(): Promise<any> {
+    private async loadPolicyJson() {
         try {
-            if (
-                !this.guardianService.getRefreshToken(
-                    this.configService.get('sru.username'),
-                )
-            ) {
-                const sruLoginResponse = await this.guardianService.login({
-                    username: this.configService.get('sru.username'),
-                    password: this.configService.get('sru.password'),
-                });
-            }
+            const sruLoginResponse = await this.guardianService.login({
+                username: this.configService.get('sru.username'),
+                password: this.configService.get('sru.password'),
+            });
+
             const refreshToken = await this.guardianService.getRefreshToken(
                 this.configService.get('sru.username'),
             );
@@ -628,7 +635,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             return response.data;
         } catch (e) {
-            console.log(e);
             throw new Error('Failed to fetch the policy');
         }
     }
