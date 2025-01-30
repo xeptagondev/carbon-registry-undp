@@ -9,14 +9,14 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { instanceToPlain } from 'class-transformer';
 import { Repository } from 'typeorm';
-import { UserService } from './user.service';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
+import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly configService: ConfigService,
-        private readonly userService: UserService,
+        private readonly guardianService: GuardianService,
         private readonly jwtService: JwtService,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
@@ -134,7 +134,7 @@ export class AuthService {
         }
         let custodianResponse: any;
         try {
-            custodianResponse = await this.userService.login(loginDto);
+            custodianResponse = await this.guardianService.login(loginDto);
         } catch (e) {
             throw new HttpException(
                 'Email or Password is Incorrect',

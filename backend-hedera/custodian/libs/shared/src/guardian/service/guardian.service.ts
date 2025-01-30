@@ -1,27 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
+import { LoginDto } from '@app/shared/users/dto/login.dto';
+import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
+import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
+import { AuditService } from '@app/shared/audit/service/audit.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class GuardianService {
-    constructor(private readonly configService: ConfigService) {}
+    constructor(
+        private readonly configService: ConfigService,
+        private readonly auditService: AuditService,
+        @InjectRepository(UsersEntity)
+        protected readonly usersRepository: Repository<UsersEntity>,
+    ) {}
 
+    async getRefreshToken(username: string) {
+        const user: UsersEntity = await this.usersRepository.findOne({
+            where: { email: username },
+        });
+        return user?.refreshToken;
+    }
     private buildGuardianUrl(pathKey: string): string {
         return `${this.configService.get('guardian.url')}${this.configService.get(`guardian.${pathKey}`)}`;
     }
 
     private async getAccessToken(refreshToken: string): Promise<string> {
-        const accessTokenResponse = await axios.post(
-            `${this.configService.get('guardian.url')}${this.configService.get(
+        try {
+            const url = `${this.configService.get('guardian.url')}${this.configService.get(
                 'guardian.accessToken',
-            )}`,
-            {
+            )}`;
+            console.log(url);
+            console.log(refreshToken);
+            const accessTokenResponse = await axios.post(url, {
                 refreshToken: refreshToken,
-            },
-        );
-        return accessTokenResponse.data.accessToken;
+            });
+            console.log(accessTokenResponse);
+            return accessTokenResponse?.data?.accessToken;
+        } catch (e) {
+            throw e;
+        }
     }
 
     public async registerUser(email: string, password: string): Promise<any> {
@@ -84,7 +107,11 @@ export class GuardianService {
             const url = `${this.buildGuardianUrl('policyAsign1')}/${email}${this.configService.get(
                 'guardian.policyAsign2',
             )}`;
+
+            console.log(url);
+            console.log(this.configService.get('policy.id'));
             const token = await this.getAccessToken(refreshToken);
+            console.log(token);
             const response = await axios.post(
                 url,
                 {
@@ -98,6 +125,7 @@ export class GuardianService {
                     },
                 },
             );
+            console.log(response.data);
             return response.data;
         } catch (e) {
             throw e;
@@ -245,6 +273,49 @@ export class GuardianService {
             return response.data;
         } catch (error) {
             throw error;
+        }
+    }
+    public async login(loginDto: LoginDto): Promise<any> {
+        try {
+            const response = await axios.post(
+                `${this.configService.get('guardian.url')}${this.configService.get(
+                    'guardian.login',
+                )}`,
+                loginDto,
+            );
+
+            if (response?.status === 200) {
+                const message: string = `User: ${loginDto.username} has logged into the system.`;
+                const auditLog: AuditDTO = {
+                    logLevel: LogLevel.INFO,
+                    data: { message: message },
+                    createdTime: Date.now(),
+                };
+                try {
+                    await this.auditService.save(auditLog);
+                    await await this.usersRepository.update(
+                        {
+                            email: loginDto.username,
+                        },
+                        { refreshToken: response?.data?.refreshToken },
+                    );
+
+                    return response.data;
+                } catch (error) {
+                    console.error(`Failed to add log: "${message}"`, error);
+                }
+            } else {
+                throw new HttpException(
+                    'Guardian User Login Failed',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+            return response.data;
+        } catch (error) {
+            throw new HttpException(
+                'Guardian User Login Failed',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
     }
 

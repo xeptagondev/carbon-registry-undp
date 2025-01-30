@@ -1,22 +1,18 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { LoginDto } from '@app/shared/users/dto/login.dto';
+import { In, Repository } from 'typeorm';
 import { SuperService } from '@app/core/service/super.service';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
 import { AuditService } from '@app/shared/audit/service/audit.service';
-import { UtilService } from '@app/shared/util/service/util.service';
 import { GuardianRoleEntity } from '@app/shared/guardian-role/entity/guardian-role.entity';
 import { RoleEntity } from '@app/shared/role/entity/role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
-import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
-import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
 import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
@@ -24,6 +20,9 @@ import { TransactionService } from '@app/shared/transaction/service/transaction.
 import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
 import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
+import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -32,10 +31,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         protected readonly guardianService: GuardianService,
         protected readonly transactionService: TransactionService,
         protected readonly auditService: AuditService,
-        protected readonly utilService: UtilService,
         protected readonly configService: ConfigService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
+        @InjectRepository(PolicyBlocksEntity)
+        protected readonly policyBlocksRepository: Repository<PolicyBlocksEntity>,
         @InjectRepository(GuardianRoleEntity)
         private readonly guardianRoleRepository: Repository<GuardianRoleEntity>,
         @InjectRepository(RoleEntity)
@@ -49,15 +49,15 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     private tagToIdMap: Record<string, string> = {};
-    private refreshTokens: Record<string, string> = {};
+    // private refreshTokens: Record<string, string> = {};
 
-    setRefreshToken(username: string, refreshToken: string) {
-        this.refreshTokens[username] = refreshToken;
-    }
+    // setRefreshToken(username: string, refreshToken: string) {
+    //     this.refreshTokens[username] = refreshToken;
+    // }
 
-    getRefreshToken(username: string) {
-        return this.refreshTokens[username];
-    }
+    // getRefreshToken(username: string) {
+    //     return this.refreshTokens[username];
+    // }
     async updateUser(
         userDTO: UsersDTO,
         orgEntity: OrganizationEntity,
@@ -94,50 +94,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return guardRole;
     }
 
-    async login(loginDto: LoginDto) {
-        try {
-            this.logger.log(
-                `Request received to login user with username ${loginDto.username}`,
-            );
-            const response = await axios.post(
-                `${this.configService.get('guardian.url')}${this.configService.get(
-                    'guardian.login',
-                )}`,
-                loginDto,
-            );
-
-            if (response?.status === 200) {
-                const message: string = `User: ${loginDto.username} has logged into the system.`;
-                const auditLog: AuditDTO = {
-                    logLevel: LogLevel.INFO,
-                    data: { message: message },
-                    createdTime: Date.now(),
-                };
-                try {
-                    await this.auditService.save(auditLog);
-
-                    this.setRefreshToken(
-                        loginDto.username,
-                        response?.data?.refreshToken,
-                    );
-                    return response.data;
-                } catch (error) {
-                    console.error(`Failed to add log: "${message}"`, error);
-                }
-            } else {
-                throw new HttpException(
-                    'Guardian User Login Failed',
-                    HttpStatus.UNAUTHORIZED,
-                );
-            }
-        } catch (error) {
-            throw new HttpException(
-                'Guardian User Login Failed',
-                HttpStatus.UNAUTHORIZED,
-            );
-        }
-    }
-
     async accessToken(refreshToken: string) {
         const accessTokenResponse = await axios.post(
             `${this.configService.get('guardian.url')}${this.configService.get(
@@ -156,7 +112,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
     private async setTagToIdMap() {
         this.tagToIdMap = {};
-        const policyBlocks = await this.utilService.getBlocksByPolicy(
+        const policyBlocks = await this.getBlocksByPolicy(
             this.configService.get('policy.id'),
         );
         policyBlocks.forEach((block) => {
@@ -171,10 +127,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             await this.setTagToIdMap();
             // 1: Login SRU and Gov. Root
-            const sruLoginResponse = await this.login({
-                username: this.configService.get('sru.username'),
-                password: this.configService.get('sru.password'),
-            });
+            if (
+                !this.guardianService.getRefreshToken(
+                    this.configService.get('sru.username'),
+                )
+            ) {
+                const sruLoginResponse = await this.guardianService.login({
+                    username: this.configService.get('sru.username'),
+                    password: this.configService.get('sru.password'),
+                });
+            }
 
             // 2: Register the new user as a 'USER' in guardian backend
             try {
@@ -205,7 +167,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.usersRepository.save(userEntity);
 
             // 3. User login to the guardian backend
-            const userLoginResponse = await this.login({
+            const userLoginResponse = await this.guardianService.login({
                 username: userDto.email,
                 password: userDto.password,
             });
@@ -219,32 +181,37 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.hederaAccount,
                     userDto.hederaKey,
                 );
-            } catch (e) {
                 await this.transactionService.save({
                     user: userDto?.request?.email,
                     stage: TransactionStage.ASSIGN_REGISTRY,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
                 });
+            } catch (e) {
+                throw e;
             }
 
-            await this.delay(10000);
+            await this.delay(15000);
 
             // 5. Assign the policy for the user
             try {
+                const refreshToken = await this.guardianService.getRefreshToken(
+                    this.configService.get('sru.username'),
+                );
                 await this.guardianService.assignPolicyToUser(
                     userDto.email,
-                    sruLoginResponse.refreshToken,
+                    refreshToken,
                 );
-            } catch (e) {
                 await this.transactionService.save({
                     user: userDto?.request?.email,
                     stage: TransactionStage.ASSIGN_POLICY,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
                 });
+            } catch (e) {
+                throw e;
             }
-
+            console.log('$$$$$$$$$$$$$$$$$');
             if (userDto.company) {
                 // 6. Register new organization
                 return await this.registerGroup(userDto, userLoginResponse);
@@ -279,8 +246,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             let inviteResponse = { invitation: '' };
             try {
+                const refreshToken = await this.guardianService.getRefreshToken(
+                    userDto?.request?.email,
+                );
                 inviteResponse = await this.guardianService.createInvitation(
-                    this.getRefreshToken(userDto?.request?.email),
+                    refreshToken,
                     this.getBlock(
                         this.configService.get('blocks.user_create_invite'),
                     ),
@@ -443,14 +413,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
             await this.delay(5000);
             try {
+                const orgType = await this.organizationTypeRepository.findOne({
+                    where: {
+                        name: userDto?.company?.companyRole,
+                    },
+                });
+                const blockName = orgType.multiple
+                    ? `blocks.create_multiple_organization`
+                    : `blocks.create_single_organization`;
                 const createOrganizationResponse =
                     await this.guardianService.createOrganization(
                         userLoginResponse.refreshToken,
-                        this.getBlock(
-                            this.configService.get(
-                                'blocks.create_multiple_organization',
-                            ),
-                        ),
+                        this.getBlock(this.configService.get(blockName)),
                         userDto.company.name,
                         this.capitalizeFirst(userDto.company.companyRole),
                     );
@@ -518,8 +492,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 { payload: payload, group: createUserResponse?.group },
             );
             if (userDto?.request?.userRole === RoleEnum.Root) {
+                const refreshToken = await this.guardianService.getRefreshToken(
+                    userDto?.request?.email,
+                );
                 await this.approve(userDto?.request?.email, orgEntity.id, {
-                    refreshToken: this.getRefreshToken(userDto?.request?.email),
+                    refreshToken: refreshToken,
                     remarks: '',
                 });
             }
@@ -532,8 +509,169 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             return createUserResponse;
         } catch (e) {
-            console.log(e);
             throw e;
+        }
+    }
+
+    async createInitialOrganizations() {
+        try {
+            const singleOrgTypes: OrganizationTypeEntity[] =
+                await this.organizationTypeRepository.find({
+                    where: { multiple: false },
+                });
+            for (const orgType of singleOrgTypes) {
+                const org: OrganizationEntity =
+                    await this.organizationRepository.findOne({
+                        where: {
+                            organizationType: orgType,
+                        },
+                    });
+                if (!org) {
+                    const orgDto = new OrganisationDto();
+                    orgDto.companyRole =
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY;
+                    orgDto.name = 'Designated National Authority';
+                    const user = new UsersDTO();
+                    user.email = 'u1003@gmail.com';
+                    user.name = 'u1003';
+                    user.hederaAccount = '0.0.5444670';
+                    user.hederaKey =
+                        '302e020100300506032b6570042204200711dd74b3b3a57ecded2871197e75d2b68bb0d64f97eca8dafc1eb13486d60d';
+                    user.password = '123';
+                    user.role = RoleEnum.Root;
+                    user.company = orgDto;
+
+                    await this.register(user);
+                }
+            }
+        } catch (e) {
+            this.logger.error(
+                'Error occurred while creating inital organizations',
+            );
+            throw e;
+        }
+    }
+
+    async fetchPolicyBlocks() {
+        const policy = await this.loadPolicyJson();
+        this.tagToIdMap = this.mapTagsToIds(policy);
+        await this.saveTagIdMap();
+    }
+
+    private async loadPolicyJson(): Promise<any> {
+        try {
+            if (
+                !this.guardianService.getRefreshToken(
+                    this.configService.get('sru.username'),
+                )
+            ) {
+                const sruLoginResponse = await this.guardianService.login({
+                    username: this.configService.get('sru.username'),
+                    password: this.configService.get('sru.password'),
+                });
+            }
+            const refreshToken = await this.guardianService.getRefreshToken(
+                this.configService.get('sru.username'),
+            );
+            const response = await axios.get(
+                `${this.configService.get('guardian.url')}${this.configService.get(
+                    'guardian.policies',
+                )}${this.configService.get('policy.id')}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${await this.accessToken(refreshToken)}`,
+                        'Content-Type': 'application/json',
+                    },
+                },
+            );
+            return response.data;
+        } catch (e) {
+            console.log(e);
+            throw new Error('Failed to fetch the policy');
+        }
+    }
+    mapTagsToIds(policy) {
+        const result = {};
+        function traverse(block) {
+            if (block.tag && block.id) {
+                result[block.tag] = block.id;
+            }
+
+            if (Array.isArray(block.children)) {
+                for (const child of block.children) {
+                    traverse(child);
+                }
+            }
+        }
+
+        if (policy && policy.config) {
+            traverse(policy.config);
+        }
+
+        return result;
+    }
+
+    async saveTagIdMap() {
+        if (!this.tagToIdMap || Object.keys(this.tagToIdMap).length === 0) {
+            return;
+        }
+        try {
+            const tagIdMap = this.tagToIdMap;
+
+            const policyBlocks = Object.entries(tagIdMap).map(
+                ([blockName, blockId]) => ({
+                    blockName,
+                    blockId,
+                    policyId: this.configService.get<string>('policy.id'),
+                }),
+            );
+
+            const existingBlocks = await this.policyBlocksRepository.find({
+                where: { blockId: In(Object.values(tagIdMap)) },
+            });
+
+            const existingBlockIds = existingBlocks.map(
+                (block) => block.blockId,
+            );
+
+            const newPolicyBlocks = policyBlocks.filter(
+                (block) => !existingBlockIds.includes(block.blockId),
+            );
+
+            if (newPolicyBlocks.length === 0) {
+                return;
+            }
+
+            await this.policyBlocksRepository.save(newPolicyBlocks);
+        } catch (error) {
+            throw new Error('Failed to save tagIdMap to PolicyBlocksEntity');
+        }
+    }
+
+    public async getBlocksByPolicy(
+        policyId: string,
+    ): Promise<PolicyBlocksEntity[]> {
+        try {
+            const blocks = await this.policyBlocksRepository.find({
+                where: { policyId: policyId },
+            });
+            return blocks;
+        } catch (error) {
+            throw new Error('Failed to execute getBlocksByPolicy');
+        }
+    }
+
+    public async getBlocksByBlockName(
+        blockName: string,
+        policyId: string,
+    ): Promise<PolicyBlocksEntity[]> {
+        try {
+            const blocks = await this.policyBlocksRepository.find({
+                where: { policyId: policyId, blockName: blockName },
+            });
+            return blocks;
+        } catch (error) {
+            throw new Error('Failed to execute getBlocksByBlockName');
         }
     }
 }
