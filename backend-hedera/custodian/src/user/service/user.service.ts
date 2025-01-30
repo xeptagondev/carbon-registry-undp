@@ -299,6 +299,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -322,6 +323,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -350,6 +352,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -357,6 +360,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             return createUserResponse;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -393,6 +397,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -404,6 +409,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             return approveResponse;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -430,6 +436,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
             await this.delay(5000);
@@ -463,6 +470,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -509,6 +517,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
             // // 3. Create the required payload for group (organization) save
