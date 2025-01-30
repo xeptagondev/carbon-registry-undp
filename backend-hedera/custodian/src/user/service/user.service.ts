@@ -73,8 +73,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return true;
     }
 
-    
-
     private async getGuardianRole(orgTypeId: number, userRole: string) {
         const orgType: OrganizationTypeEntity =
             await this.organizationTypeRepository.findOneBy({
@@ -188,6 +186,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -209,6 +208,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
             console.log('$$$$$$$$$$$$$$$$$');
@@ -419,8 +419,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     },
                 });
                 const blockName = orgType.multiple
-                    ? `blocks.create_multiple_organization`
-                    : `blocks.create_single_organization`;
+                    ? 'blocks.create_multiple_organization'
+                    : 'blocks.create_single_organization';
                 const createOrganizationResponse =
                     await this.guardianService.createOrganization(
                         userLoginResponse.refreshToken,
@@ -509,6 +509,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             return createUserResponse;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
