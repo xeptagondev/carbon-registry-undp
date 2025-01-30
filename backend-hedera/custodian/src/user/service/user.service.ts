@@ -23,6 +23,7 @@ import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
 import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
+import { generatePassword, hashPassword } from '@app/shared/util/util';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -118,7 +119,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
     }
 
-    async register(userDto: UsersDTO) {
+    async register(userDto: UsersDTO, defaultPass: string = '') {
         try {
             this.logger.log(
                 `Request received to register user with email ${userDto.email}`,
@@ -136,11 +137,23 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 });
             }
 
+            // 1.1 Generate random password for user
+            const passwordLen = 8;
+            let userPass: string;
+            if (defaultPass === '') {
+                userPass = generatePassword(passwordLen);
+            } else {
+                userPass = defaultPass;
+            }
+            const serverSalt = this.configService.get('security.salt');
+            const guardianPass = userPass + serverSalt;
+            const hashedPass = hashPassword(userPass);
+
             // 2: Register the new user as a 'USER' in guardian backend
             try {
                 await this.guardianService.registerUser(
                     userDto.email,
-                    userDto.password,
+                    guardianPass,
                 );
                 await this.transactionService.save({
                     user: userDto?.request?.email,
@@ -156,7 +169,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             const userEntity: UsersEntity = {
                 email: userDto.email,
                 name: userDto.name,
-                password: userDto.password,
+                password: hashedPass,
                 phoneNumber: userDto.phoneNumber,
             };
 
@@ -167,7 +180,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             // 3. User login to the guardian backend
             const userLoginResponse = await this.guardianService.login({
                 username: userDto.email,
-                password: userDto.password,
+                password: guardianPass,
             });
             await this.delay(5000);
             // 4. Update the user profile with the parent (SRU)
@@ -228,6 +241,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     private getBlock(blokName: string) {
         return this.tagToIdMap[blokName];
     }
+
     private async inviteNewUser(userDto: UsersDTO, userLoginResponse) {
         try {
             // 1. Generate an invite for the given role
@@ -542,7 +556,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     user.role = RoleEnum.Root;
                     user.company = orgDto;
 
-                    await this.register(user);
+                    await this.register(user, user.password);
                 }
             }
         } catch (e) {

@@ -58,4 +58,7 @@ export default () => ({
             },
         },
     },
+    security: {
+        salt: process.env.PASSWORD_SALT,
+    },
 });
