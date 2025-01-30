@@ -15,6 +15,7 @@ import { mailerConfig } from '@app/core/config/mailer-config';
         }),
         AuditModule,
     ],
+    exports: [MailService],
     providers: [MailService],
 })
 export class MailModule {}
