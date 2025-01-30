@@ -11,6 +11,7 @@ import { instanceToPlain } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+import { verifyPassword } from '@app/shared/util/util';
 
 @Injectable()
 export class AuthService {
@@ -126,7 +127,10 @@ export class AuthService {
                 },
             },
         });
-        if (!user || !loginDto.password) {
+
+        const isCorrectPass = verifyPassword(loginDto.password, user.password);
+
+        if (!user || !isCorrectPass) {
             throw new HttpException(
                 'Email or Password is Incorrect',
                 HttpStatus.UNAUTHORIZED,
@@ -134,8 +138,12 @@ export class AuthService {
         }
         let custodianResponse: any;
         try {
+            // add SALT to password for login
+            loginDto.password =
+                loginDto.password + this.configService.get('security.salt');
             custodianResponse = await this.guardianService.login(loginDto);
         } catch (e) {
+            console.log(e);
             throw new HttpException(
                 'Email or Password is Incorrect',
                 HttpStatus.UNAUTHORIZED,

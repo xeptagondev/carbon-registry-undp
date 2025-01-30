@@ -40,6 +40,7 @@ export class GuardianService {
             });
             return accessTokenResponse?.data?.accessToken;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -57,6 +58,7 @@ export class GuardianService {
             });
             return response.data;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -94,6 +96,7 @@ export class GuardianService {
             );
             return response.data;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -125,6 +128,7 @@ export class GuardianService {
             );
             return response.data;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -148,6 +152,7 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
+            console.log(error);
             throw error;
         }
     }
@@ -171,6 +176,7 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
+            console.log(error);
             throw error;
         }
     }
@@ -194,7 +200,8 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
-            // throw error;
+            console.log(error);
+            throw error;
         }
     }
 
@@ -218,6 +225,7 @@ export class GuardianService {
 
             return response.data;
         } catch (error) {
+            console.log(error);
             throw error;
         }
     }
@@ -241,6 +249,7 @@ export class GuardianService {
 
             return response.data;
         } catch (error) {
+            console.log(error);
             throw error;
         }
     }
@@ -281,6 +290,7 @@ export class GuardianService {
             }
             return response.data;
         } catch (error) {
+            console.log(error);
             throw new HttpException(
                 'Guardian User Login Failed',
                 HttpStatus.UNAUTHORIZED,

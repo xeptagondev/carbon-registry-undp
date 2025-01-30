@@ -1,3 +1,3 @@
 export enum MailTemplateEnum {
-    PASSWORD_CREATE = '',
+    PASSWORD_CREATE = './userRegister',
 }

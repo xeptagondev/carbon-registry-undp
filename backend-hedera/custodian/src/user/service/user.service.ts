@@ -23,6 +23,11 @@ import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
 import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
+import { generatePassword, hashPassword } from '@app/shared/util/util';
+import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
+import { USER_REGISTER_HEADER } from '@app/shared/mail/constant/mail-header.constant';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+import { MailService } from '@app/shared/mail/service/mail.service';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -32,6 +37,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         protected readonly transactionService: TransactionService,
         protected readonly auditService: AuditService,
         protected readonly configService: ConfigService,
+        private readonly mailService: MailService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(PolicyBlocksEntity)
@@ -110,24 +116,41 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
     }
 
-    async register(userDto: UsersDTO) {
+    async register(userDto: UsersDTO, defaultPass: string = '') {
         try {
             this.logger.log(
                 `Request received to register user with email ${userDto.email}`,
             );
             await this.setTagToIdMap();
             // 1: Login SRU and Gov. Root
+            if (
+                !this.guardianService.getRefreshToken(
+                    this.configService.get('sru.username'),
+                )
+            ) {
+                const sruLoginResponse = await this.guardianService.login({
+                    username: this.configService.get('sru.username'),
+                    password: this.configService.get('sru.password'),
+                });
+            }
 
-            const sruLoginResponse = await this.guardianService.login({
-                username: this.configService.get('sru.username'),
-                password: this.configService.get('sru.password'),
-            });
+            // 1.1 Generate random password for user
+            const passwordLen = 8;
+            let userPass: string;
+            if (defaultPass === '') {
+                userPass = generatePassword(passwordLen);
+            } else {
+                userPass = defaultPass;
+            }
+            const serverSalt = this.configService.get('security.salt');
+            const guardianPass = userPass + serverSalt;
+            const hashedPass = hashPassword(userPass);
 
             // 2: Register the new user as a 'USER' in guardian backend
             try {
                 await this.guardianService.registerUser(
                     userDto.email,
-                    userDto.password,
+                    guardianPass,
                 );
                 await this.transactionService.save({
                     user: userDto?.request?.email,
@@ -142,7 +165,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             const userEntity: UsersEntity = {
                 email: userDto.email,
                 name: userDto.name,
-                password: userDto.password,
+                password: hashedPass,
                 phoneNumber: userDto.phoneNumber,
             };
 
@@ -153,7 +176,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             // 3. User login to the guardian backend
             const userLoginResponse = await this.guardianService.login({
                 username: userDto.email,
-                password: userDto.password,
+                password: guardianPass,
             });
             await this.delay(5000);
             // 4. Update the user profile with the parent (SRU)
@@ -172,6 +195,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -193,15 +217,39 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
+            console.log('$$$$$$$$$$$$$$$$$');
+            let res;
             if (userDto.company) {
                 // 6. Register new organization
-                return await this.registerGroup(userDto, userLoginResponse);
+                res = await this.registerGroup(userDto, userLoginResponse);
             } else {
                 // 6. Accept an invitation (generate an invitation and create the user)
-                return await this.inviteNewUser(userDto, userLoginResponse);
+                res = await this.inviteNewUser(userDto, userLoginResponse);
             }
+
+            // 7. Send password creation email to user
+            const countryName = this.configService.get('country');
+            const mailDTO: MailTemplateDTO = {
+                subject: USER_REGISTER_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+                template: MailTemplateEnum.PASSWORD_CREATE,
+                to: userDto.email,
+                context: {
+                    name: userDto.name,
+                    countryName: countryName,
+                    home: this.configService.get('url'),
+                    email: userDto.email,
+                    tempPassword: userPass,
+                },
+            };
+            await this.mailService.sendMail(mailDTO);
+
+            return res;
         } catch (error) {
             console.error('Error occurred:', error);
             throw error;
@@ -211,6 +259,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     private getBlock(blokName: string) {
         return this.tagToIdMap[blokName];
     }
+
     private async inviteNewUser(userDto: UsersDTO, userLoginResponse) {
         try {
             // 1. Generate an invite for the given role
@@ -493,6 +542,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             return createOrganizationResponse;
         } catch (e) {
+            console.log(e);
             throw e;
         }
     }
@@ -545,7 +595,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     user.role = RoleEnum.Root;
                     user.company = orgDto;
 
-                    await this.register(user);
+                    await this.register(user, user.password);
                 }
             }
         } catch (e) {

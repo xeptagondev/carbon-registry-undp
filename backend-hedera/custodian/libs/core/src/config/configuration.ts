@@ -1,4 +1,6 @@
 export default () => ({
+    country: process.env.COUNTRY,
+    url: process.env.URL,
     database: {
         host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT, 10) || 5432,
@@ -72,5 +74,8 @@ export default () => ({
                 '302e020100300506032b6570042204202d7b51cd9236e92bf589d44700c81103a72d88e1503a5183b443ab8153cff883',
             password: '123',
         },
+    },
+    security: {
+        salt: process.env.PASSWORD_SALT,
     },
 });
