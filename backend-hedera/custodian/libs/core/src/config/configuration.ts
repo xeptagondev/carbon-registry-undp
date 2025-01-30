@@ -38,12 +38,12 @@ export default () => ({
         did: 'did:hedera:testnet:Hd3Q9whzRsi8YbEuJDVt1pnixzLJ888HhCBoa2Ba8TCi_0.0.5433423',
     },
     blocks: {
-        create_group_type: 'create_organization',
-        create_single_organization: 'single_organizations_creation_form',
-        create_multiple_organization: 'multiple_organizations_form',
-        create_user: 'user_create_form',
-        user_create_invite: 'user_create_invite',
-        appove_organization: 'multiple_organizations_approve_reject_buttons',
+        createGroupType: 'create_orgnization',
+        createSingleOrganization: 'single_organizations_creation_form',
+        createMultipleOrganization: 'multiple_organizations_form',
+        createUser: 'user_create_form',
+        userCreateInvite: 'user_create_invite',
+        appoveOrganization: 'multiple_organizations_approve_reject_buttons',
     },
     metadata: {
         approve: {
@@ -56,6 +56,21 @@ export default () => ({
             sourceTag: {
                 Developer: 'pending_developer_orgs',
             },
+        },
+    },
+    system: {
+        initPolicy: false,
+        initOrgs: false,
+    },
+    organizations: {
+        DNA: {
+            orgName: 'DNA Organization',
+            email: 'dnaorg1@testgov.com',
+            name: 'dnaorg1',
+            hederaAccount: '0.0.5445196',
+            hederaKey:
+                '302e020100300506032b6570042204202d7b51cd9236e92bf589d44700c81103a72d88e1503a5183b443ab8153cff883',
+            password: '123',
         },
     },
 });

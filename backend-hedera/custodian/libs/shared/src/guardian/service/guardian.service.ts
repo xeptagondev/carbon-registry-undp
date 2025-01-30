@@ -27,7 +27,7 @@ export class GuardianService {
         return user?.refreshToken;
     }
     private buildGuardianUrl(pathKey: string): string {
-        return `${this.configService.get('guardian.url')}${this.configService.get(`guardian.${pathKey}`)}`;
+        return `${this.configService.get('guardian.url')}${pathKey}`;
     }
 
     private async getAccessToken(refreshToken: string): Promise<string> {
@@ -35,12 +35,9 @@ export class GuardianService {
             const url = `${this.configService.get('guardian.url')}${this.configService.get(
                 'guardian.accessToken',
             )}`;
-            console.log(url);
-            console.log(refreshToken);
             const accessTokenResponse = await axios.post(url, {
                 refreshToken: refreshToken,
             });
-            console.log(accessTokenResponse);
             return accessTokenResponse?.data?.accessToken;
         } catch (e) {
             throw e;
@@ -49,7 +46,9 @@ export class GuardianService {
 
     public async registerUser(email: string, password: string): Promise<any> {
         try {
-            const url = this.buildGuardianUrl('register');
+            const url = this.buildGuardianUrl(
+                this.configService.get('guardian.register'),
+            );
             const response = await axios.post(url, {
                 username: email,
                 password,
@@ -70,7 +69,7 @@ export class GuardianService {
         hederaKey: string,
     ): Promise<any> {
         try {
-            const url = `${this.buildGuardianUrl('profileUpdate')}/${email}`;
+            const url = `${this.buildGuardianUrl(this.configService.get('guardian.profileUpdate'))}/${email}`;
             const token = await this.getAccessToken(refreshToken);
             const response = await axios.put(
                 url,
@@ -104,14 +103,13 @@ export class GuardianService {
         refreshToken: string,
     ): Promise<any> {
         try {
-            const url = `${this.buildGuardianUrl('policyAsign1')}/${email}${this.configService.get(
-                'guardian.policyAsign2',
-            )}`;
+            const url = this.buildGuardianUrl(
+                `${this.configService.get('guardian.policyAsign1')}/${email}${this.configService.get(
+                    'guardian.policyAsign2',
+                )}`,
+            );
 
-            console.log(url);
-            console.log(this.configService.get('policy.id'));
             const token = await this.getAccessToken(refreshToken);
-            console.log(token);
             const response = await axios.post(
                 url,
                 {
@@ -125,7 +123,6 @@ export class GuardianService {
                     },
                 },
             );
-            console.log(response.data);
             return response.data;
         } catch (e) {
             throw e;
@@ -158,8 +155,7 @@ export class GuardianService {
     public async createOrganization(
         refreshToken: string,
         blockId: string,
-        organizationName: string,
-        organizationRole: string,
+        payload: any,
     ): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
@@ -167,22 +163,12 @@ export class GuardianService {
             );
             const token = await this.getAccessToken(refreshToken);
 
-            const response = await axios.post(
-                url,
-                {
-                    document: {
-                        name: organizationName,
-                        role: organizationRole,
-                    },
-                    ref: null,
+            const response = await axios.post(url, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
+            });
             return response.data;
         } catch (error) {
             throw error;
@@ -192,10 +178,7 @@ export class GuardianService {
     public async createUser(
         refreshToken: string,
         blockId: string,
-        username: string,
-        organizationName: string,
-        organizationRole: string,
-        userRole: string,
+        payload: any,
     ): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
@@ -203,29 +186,15 @@ export class GuardianService {
             );
             const token = await this.getAccessToken(refreshToken);
 
-            const response = await axios.post(
-                url,
-                {
-                    document: {
-                        name: username,
-                        organization: {
-                            name: organizationName,
-                            role: organizationRole,
-                        },
-                        role: userRole,
-                    },
-                    ref: null,
+            const response = await axios.post(url, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
+            });
             return response.data;
         } catch (error) {
-            throw error;
+            // throw error;
         }
     }
 
@@ -293,7 +262,7 @@ export class GuardianService {
                 };
                 try {
                     await this.auditService.save(auditLog);
-                    await await this.usersRepository.update(
+                    await this.usersRepository.update(
                         {
                             email: loginDto.username,
                         },

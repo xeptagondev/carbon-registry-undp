@@ -13,7 +13,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
         // Add organization types
         await queryRunner.query(
             `INSERT INTO organization_type_entity (name,multiple) \
-            VALUES ('${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}',false), ('${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}',false), ('${OrganizationTypeEnum.PROJECT_PARTICIPANT}',true);`,
+            VALUES ('${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}',false), ('${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}',true), ('${OrganizationTypeEnum.PROJECT_PARTICIPANT}',true);`,
         );
 
         // Add main gov organization
@@ -79,24 +79,24 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
         );
 
         // Add gov root user
-        // await queryRunner.query(
-        //     "INSERT INTO users_entity ( \
-        //         email, \
-        //         name, \
-        //         password, \
-        //         phone_number, \
-        //         organization_id, \
-        //         guardian_role_id\
-        //     ) \
-        //     VALUES ( \
-        //         'root@testgov.com', \
-        //         'Test Gov Root', \
-        //         '123456', \
-        //         '0112456789', \
-        //         (SELECT id FROM organization_entity WHERE name='Test Government'), \
-        //         (SELECT id FROM guardian_role_entity WHERE name='GOVERNMENT_ROOT') \
-        //     );",
-        // );
+        await queryRunner.query(
+            "INSERT INTO users_entity ( \
+                email, \
+                name, \
+                password, \
+                phone_number, \
+                organization_id, \
+                guardian_role_id \
+            ) \
+            VALUES ( \
+                'amilareg', \
+                'Registry user', \
+                '123456', \
+                '0112456789', \
+                NULL, \
+                NULL \
+            );",
+        );
 
         //will be removed later
         // await queryRunner.query(`
