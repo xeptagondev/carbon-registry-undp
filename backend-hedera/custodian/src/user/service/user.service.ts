@@ -533,11 +533,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY;
                     orgDto.name = 'Designated National Authority';
                     const user = new UsersDTO();
-                    user.email = 'u1003@gmail.com';
-                    user.name = 'u1003';
-                    user.hederaAccount = '0.0.5444670';
+                    user.email = 'u1004@gmail.com';
+                    user.name = 'u1004';
+                    user.hederaAccount = '0.0.5444754';
                     user.hederaKey =
-                        '302e020100300506032b6570042204200711dd74b3b3a57ecded2871197e75d2b68bb0d64f97eca8dafc1eb13486d60d';
+                        '302e020100300506032b657004220420fac61c3cfa772cdf1cf0c71760eabfa53f14952b40b545a2b0e8886644747741';
                     user.password = '123';
                     user.role = RoleEnum.Root;
                     user.company = orgDto;
