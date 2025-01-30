@@ -12,6 +12,7 @@ import { SharedModule } from '@app/shared';
 import { OrganizationModule } from './organization/organization.module';
 import { UserModule } from './user/user.module';
 import { MailModule } from '@app/shared/mail/mail.module';
+import { UserService } from './user/service/user.service';
 
 @Module({
     imports: [
@@ -28,16 +29,21 @@ import { MailModule } from '@app/shared/mail/mail.module';
         }),
         CoreModule,
         SharedModule,
-        UserModule,
         OrganizationModule,
         AuthGuardModule,
         MailModule,
+        UserModule,
     ],
     controllers: [AppController],
     providers: [AppService],
 })
 export class AppModule {
-    constructor(private readonly connection: DataSource) {
+    constructor(
+        private readonly connection: DataSource,
+        private readonly userService: UserService,
+    ) {
         this.connection.runMigrations();
+        this.userService.fetchPolicyBlocks();
+        this.userService.createInitialOrganizations();
     }
 }

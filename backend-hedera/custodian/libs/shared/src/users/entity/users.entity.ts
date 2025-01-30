@@ -25,6 +25,9 @@ export class UsersEntity {
     @Column({ name: 'phone_number', nullable: true })
     phoneNumber?: string;
 
+    @Column({ nullable: true })
+    refreshToken?: string;
+
     @ManyToOne(
         () => OrganizationEntity,
         (organizationEntity) => organizationEntity.users,

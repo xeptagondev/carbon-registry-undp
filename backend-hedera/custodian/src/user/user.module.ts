@@ -13,6 +13,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TransactionModule } from '@app/shared/transaction/transaction.module';
 import { GuardianModule } from '@app/shared/guardian/guardian.module';
 import { AuthService } from './service/auth.service';
+import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { AuthService } from './service/auth.service';
             RoleEntity,
             OrganizationEntity,
             OrganizationTypeEntity,
+            PolicyBlocksEntity,
         ]),
         AuditModule,
         GuardianModule,
@@ -31,5 +33,6 @@ import { AuthService } from './service/auth.service';
     ],
     controllers: [UserController],
     providers: [UserService, AuthService],
+    exports: [UserService],
 })
 export class UserModule {}

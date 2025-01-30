@@ -9,8 +9,6 @@ import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
 
 export class UsersDTO extends SuperDTO<UsersEntity> {
-    id: number;
-
     @Unwrap()
     @IsEmail()
     @IsNotEmpty()
@@ -18,21 +16,16 @@ export class UsersDTO extends SuperDTO<UsersEntity> {
         typeof value === 'string' ? value.trim().toLowerCase() : value,
     )
     email: string;
-
     @Unwrap()
     name: string;
     @Unwrap()
     phoneNumber?: string;
-    group: string;
-    refreshToken: string;
     @Unwrap()
     hederaAccount: string;
     hederaKey: string;
     password: string;
-    companyRole: OrganizationTypeEnum;
     role: RoleEnum;
-    @Unwrap({ name: 'organization' })
+    // @Unwrap({ name: 'organization' })
     company: OrganisationDto;
-
-    request: JWTPayload;
+    request?: JWTPayload;
 }

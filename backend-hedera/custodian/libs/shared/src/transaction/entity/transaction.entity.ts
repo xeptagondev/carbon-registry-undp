@@ -10,7 +10,7 @@ export class TransactionEntity {
     type: TransactionType;
     @Column({ type: 'enum', enum: TransactionStage })
     stage: TransactionStage;
-    @Column()
+    @Column({ nullable: true })
     user: string;
     @Column({ type: 'bigint', nullable: false })
     createdTime: number;

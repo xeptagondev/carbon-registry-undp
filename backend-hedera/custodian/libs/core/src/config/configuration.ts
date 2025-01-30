@@ -29,13 +29,13 @@ export default () => ({
         policies: '/api/v1/policies/',
     },
     policy: {
-        id: '6790a931671ff72cb9b56754',
-        topicId: '0.0.5415758',
+        id: '679a183d71e846be0ff69a93',
+        topicId: '0.0.5441710',
     },
     sru: {
         username: 'amilareg',
         password: '123456',
-        did: 'did:hedera:testnet:Hd3Q9whzRsi8YbEuJDVt1pnixzLJ888HhCBoa2Ba8TCi_0.0.5415745',
+        did: 'did:hedera:testnet:Hd3Q9whzRsi8YbEuJDVt1pnixzLJ888HhCBoa2Ba8TCi_0.0.5433423',
     },
     blocks: {
         create_group_type: 'create_organization',
