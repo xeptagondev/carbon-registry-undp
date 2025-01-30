@@ -1,4 +1,6 @@
 export default () => ({
+    country: process.env.COUNTRY,
+    url: process.env.URL,
     database: {
         host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT, 10) || 5432,

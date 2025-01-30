@@ -24,6 +24,10 @@ import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organiz
 import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
 import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
 import { generatePassword, hashPassword } from '@app/shared/util/util';
+import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
+import { USER_REGISTER_HEADER } from '@app/shared/mail/constant/mail-header.constant';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+import { MailService } from '@app/shared/mail/service/mail.service';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -33,6 +37,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         protected readonly transactionService: TransactionService,
         protected readonly auditService: AuditService,
         protected readonly configService: ConfigService,
+        private readonly mailService: MailService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(PolicyBlocksEntity)
@@ -225,13 +230,35 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 throw e;
             }
             console.log('$$$$$$$$$$$$$$$$$');
+            let res;
             if (userDto.company) {
                 // 6. Register new organization
-                return await this.registerGroup(userDto, userLoginResponse);
+                res = await this.registerGroup(userDto, userLoginResponse);
             } else {
                 // 6. Accept an invitation (generate an invitation and create the user)
-                return await this.inviteNewUser(userDto, userLoginResponse);
+                res = await this.inviteNewUser(userDto, userLoginResponse);
             }
+
+            // 7. Send password creation email to user
+            const countryName = this.configService.get('country');
+            const mailDTO: MailTemplateDTO = {
+                subject: USER_REGISTER_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+                template: MailTemplateEnum.PASSWORD_CREATE,
+                to: userDto.email,
+                context: {
+                    name: userDto.name,
+                    countryName: countryName,
+                    home: this.configService.get('url'),
+                    email: userDto.email,
+                    tempPassword: userPass,
+                },
+            };
+            await this.mailService.sendMail(mailDTO);
+
+            return res;
         } catch (error) {
             console.error('Error occurred:', error);
             throw error;
