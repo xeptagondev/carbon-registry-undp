@@ -159,6 +159,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     createdTime: Date.now(),
                 });
             } catch (e) {
+                console.log(e);
                 throw e;
             }
 
@@ -448,8 +449,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             let createOrganizationResponse = { group: '' };
             try {
                 const blockName = orgType.multiple
-                    ? `blocks.createMultipleOrganization`
-                    : `blocks.createSingleOrganization`;
+                    ? 'blocks.createMultipleOrganization'
+                    : 'blocks.createSingleOrganization';
                 createOrganizationResponse =
                     await this.guardianService.createOrganization(
                         userLoginResponse.refreshToken,
