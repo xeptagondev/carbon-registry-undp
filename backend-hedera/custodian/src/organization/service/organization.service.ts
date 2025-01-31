@@ -28,6 +28,22 @@ export class OrganizationService extends SuperService<
         super(organizationRepository);
     }
 
+    async getOrganizationProfile(
+        organizationId: number,
+        requestUser: JWTPayload,
+    ): Promise<OrganizationEntity> {
+        this.helperService.validateRequestUser(requestUser);
+        const companies = await this.organizationRepository.findOne({
+            where: {
+                id: organizationId,
+            },
+            relations: {
+                organizationType: true,
+            },
+        });
+        return companies;
+    }
+
     mapNewQueryToOldQuery(organization: OrganizationEntity) {
         return {
             companyId: organization.id,

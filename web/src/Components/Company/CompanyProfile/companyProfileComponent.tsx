@@ -60,7 +60,7 @@ export const CompanyProfileComponent = (props: any) => {
   const getCompanyDetails = async (companyId: string) => {
     try {
       setIsLoading(true);
-      const response = await get(`national/organisation/profile?id=${companyId}`);
+      const response = await get(`organisation/profile?id=${companyId}`);
       if (response.data) {
         setCompanyDetails(response.data);
         setIsLoading(false);
@@ -71,7 +71,7 @@ export const CompanyProfileComponent = (props: any) => {
   const getUserDetails = async (companyId: string) => {
     setIsLoading(true);
     try {
-      const response: any = await post('national/user/query', {
+      const response: any = await post('user/query', {
         page: 1,
         size: 10,
         filterAnd: [
@@ -115,12 +115,9 @@ export const CompanyProfileComponent = (props: any) => {
   const onDeauthoriseOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(
-        `national/organisation/suspend?id=${companyDetails.companyId}`,
-        {
-          remarks: remarks,
-        }
-      );
+      const response: any = await put(`organisation/suspend?id=${companyDetails.companyId}`, {
+        remarks: remarks,
+      });
       setOpenDeauthorisationModal(false);
       message.open({
         type: 'success',
@@ -139,12 +136,9 @@ export const CompanyProfileComponent = (props: any) => {
   const onReactivateOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(
-        `national/organisation/activate?id=${companyDetails.companyId}`,
-        {
-          remarks: remarks,
-        }
-      );
+      const response: any = await put(`organisation/activate?id=${companyDetails.companyId}`, {
+        remarks: remarks,
+      });
       setOpenReactivateModal(false);
       message.open({
         type: 'success',
@@ -163,12 +157,9 @@ export const CompanyProfileComponent = (props: any) => {
   const onApproveOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(
-        `national/organisation/approve?id=${companyDetails.companyId}`,
-        {
-          remarks: remarks,
-        }
-      );
+      const response: any = await put(`organisation/approve?id=${companyDetails.companyId}`, {
+        remarks: remarks,
+      });
       setOpenApproveModal(false);
       message.open({
         type: 'success',
@@ -192,12 +183,9 @@ export const CompanyProfileComponent = (props: any) => {
   const onRejectOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(
-        `national/organisation/reject?id=${companyDetails.companyId}`,
-        {
-          remarks: remarks,
-        }
-      );
+      const response: any = await put(`organisation/reject?id=${companyDetails.companyId}`, {
+        remarks: remarks,
+      });
       setOpenRejectModal(false);
       message.open({
         type: 'success',
@@ -287,7 +275,7 @@ export const CompanyProfileComponent = (props: any) => {
   const getCarbonNeutralCertificates = async (companyId: number) => {
     // setLoading(true);
     try {
-      const response: any = await post('national/programmeSl/getCarbonNeutralCertificates', {
+      const response: any = await post('programmeSl/getCarbonNeutralCertificates', {
         companyId: companyId,
       });
       if (response.status === 200 || response.status === 201) {
@@ -361,7 +349,7 @@ export const CompanyProfileComponent = (props: any) => {
   ) => {
     setIsLoading(true);
     try {
-      await post('national/programmeSl/issueCarbonNeutralCertificate', {
+      await post('programmeSl/issueCarbonNeutralCertificate', {
         documentId: docId,
         scope: level,
         assessmentPeriodStart: startDate,

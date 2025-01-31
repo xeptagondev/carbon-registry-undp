@@ -1,4 +1,11 @@
-import { Controller, Post, Body, Request, UseGuards } from '@nestjs/common';
+import {
+    Controller,
+    Post,
+    Body,
+    Request,
+    UseGuards,
+    Get,
+} from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
@@ -12,6 +19,12 @@ export class UserController {
     @Post('add')
     async add(@Body() userDto: UsersDTO, @Request() req): Promise<any> {
         return this.userService.register(userDto, '', req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Get('profile')
+    async getUserProfile(@Request() req): Promise<any> {
+        return this.userService.getUserProfile(req.user);
     }
 
     @UseGuards(AuthGuardService)

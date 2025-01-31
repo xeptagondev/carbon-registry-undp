@@ -881,4 +881,25 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             total ? total : undefined,
         );
     }
+
+    public async getUserProfile(requestUser: JWTPayload) {
+        this.helperService.validateRequestUser(requestUser);
+        const userProfile = await this.usersRepository.findOne({
+            where: {
+                id: requestUser.userId,
+            },
+            relations: {
+                organization: {
+                    organizationType: true,
+                },
+                guardianRole: {
+                    role: true,
+                },
+            },
+        });
+        return {
+            user: userProfile,
+            Organisation: userProfile?.organization,
+        };
+    }
 }

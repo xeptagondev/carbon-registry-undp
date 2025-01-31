@@ -27,7 +27,7 @@ export const UserProfileComponent = (props: any) => {
   const getUserProfileDetails = async () => {
     try {
       setIsLoading(true);
-      const response = await get('national/User/profile');
+      const response = await get('user/profile');
       if (response.data) {
         setOrganisationDetails(response.data.Organisation);
         setUserDetails(response.data.user);

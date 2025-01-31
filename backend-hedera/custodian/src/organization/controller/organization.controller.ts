@@ -1,4 +1,12 @@
-import { Controller, Post, UseGuards, Request, Body } from '@nestjs/common';
+import {
+    Controller,
+    Post,
+    UseGuards,
+    Request,
+    Body,
+    Get,
+    Query,
+} from '@nestjs/common';
 import { OrganizationService } from '../service/organization.service';
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
@@ -16,6 +24,18 @@ export class OrganizationController {
     // ): Promise<any> {
     //     return this.userService.approve(id, organizationApproveDto);
     // }
+
+    @UseGuards(AuthGuardService)
+    @Get('profile')
+    async getOrganizationProfile(
+        @Query('id') organizationId: number,
+        @Request() req,
+    ) {
+        return await this.organizationService.getOrganizationProfile(
+            organizationId,
+            req.user,
+        );
+    }
 
     @UseGuards(AuthGuardService)
     @Post('query')
