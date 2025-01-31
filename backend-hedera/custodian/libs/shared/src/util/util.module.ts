@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { HelperService } from './service/helper.service';
 
-@Module({})
+@Module({
+    providers: [HelperService],
+    exports: [HelperService],
+})
 export class UtilModule {}
