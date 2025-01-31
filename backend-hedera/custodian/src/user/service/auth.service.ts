@@ -153,7 +153,7 @@ export class AuthService {
             );
         }
 
-        if (guardianResponse && guardianResponse.status == HttpStatus.CREATED) {
+        if (guardianResponse) {
             const organization = await this.organizationsRepository.findOne({
                 where: { id: user.organization.id },
                 relations: {
@@ -178,6 +178,7 @@ export class AuthService {
                 organizationRole: organization.organizationType.name,
             };
 
+            console.log(refreshPayload);
             const refreshToken = this.jwtService.sign(refreshPayload, {
                 secret: this.configService.get<string>(
                     'apiJwt.refreshTokenSecret',
@@ -186,7 +187,7 @@ export class AuthService {
                     'apiJwt.refreshTokenExpireTimeout',
                 ),
             });
-
+            console.log(refreshToken);
             response.statusCode = HttpStatus.OK;
             response.data = {
                 // eslint-disable-next-line camelcase
