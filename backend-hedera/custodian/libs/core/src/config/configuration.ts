@@ -31,13 +31,13 @@ export default () => ({
         policies: '/api/v1/policies/',
     },
     policy: {
-        id: '679c503271e846be0ff6a69c',
-        topicId: '0.0.5449556',
+        id: process.env.POLICY_ID,
+        topicId: process.env.POLICY_TOPIC_ID,
     },
     sru: {
-        username: 'amilareg',
-        password: '123456',
-        did: 'did:hedera:testnet:Hd3Q9whzRsi8YbEuJDVt1pnixzLJ888HhCBoa2Ba8TCi_0.0.5433423',
+        username: process.env.STANDARD_REGISTRY_USERNAME,
+        password: process.env.STANDARD_REGISTRY_PASSWORD,
+        did: process.env.STANDARD_REGISTRY_DID,
     },
     blocks: {
         createGroupType: 'create_organizations',
@@ -61,18 +61,17 @@ export default () => ({
         },
     },
     system: {
-        initPolicy: false,
-        initOrgs: true,
+        initPolicy: process.env.INIT_POLICY_ENABLE || false,
+        initOrgs: process.env.INIT_ORGS_ENABLE || true,
     },
     organizations: {
         DNA: {
-            orgName: 'DNA Organization 7',
-            email: 'amilad+7@xeptagon.com',
-            name: 'amilad+7',
-            hederaAccount: '0.0.5449580',
-            hederaKey:
-                '302e020100300506032b657004220420f37dbbd108360224180420a749644a31b7a14d56ced633f0eb5397fbb7ede54c',
-            password: '123',
+            orgName: process.env.DNA_ORGANIZATION_NAME,
+            email: process.env.DNA_ROOT_EMAIL,
+            name: process.env.DNA_ROOT_NAME,
+            hederaAccount: process.env.DNA_ROOT_HEDERA_ACCOUNT_ID,
+            hederaKey: process.env.DNA_ROOT_HEDERA_ACCOUNT_KEY,
+            password: process.env.DNA_ROOT_PASSWORD,
         },
     },
     security: {
