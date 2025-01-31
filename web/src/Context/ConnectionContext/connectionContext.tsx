@@ -175,7 +175,7 @@ export const ConnectionContextProvider: FC<ConnectionContextProviderProps> = (
   }, []);
 
   const refreshAccessToken = async () => {
-    const response = await post('national/auth/login/refresh', {
+    const response = await post('auth/login/refresh', {
       refreshToken,
     });
     return response;
