@@ -27,5 +27,4 @@ export class UsersDTO extends SuperDTO<UsersEntity> {
     role: RoleEnum;
     // @Unwrap({ name: 'organization' })
     company: OrganisationDto;
-    request?: JWTPayload;
 }

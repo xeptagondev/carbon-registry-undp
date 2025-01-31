@@ -159,7 +159,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     guardianPass,
                 );
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.USER_REGISTER,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -196,7 +196,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.hederaKey,
                 );
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.ASSIGN_REGISTRY,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -218,7 +218,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     refreshToken,
                 );
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.ASSIGN_POLICY,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -237,7 +237,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 );
             } else {
                 // 6. Accept an invitation (generate an invitation and create the user)
-                res = await this.inviteNewUser(userDto, userLoginResponse);
+                res = await this.inviteNewUser(
+                    userDto,
+                    userLoginResponse,
+                    reqUser,
+                );
             }
 
             // 7. Send password creation email to user
@@ -257,7 +261,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     tempPassword: userPass,
                 },
             };
-            console.log(userPass);
+
             await this.mailService.sendMail(mailDTO);
 
             return res;
@@ -271,13 +275,17 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return this.tagToIdMap[blokName];
     }
 
-    private async inviteNewUser(userDto: UsersDTO, userLoginResponse) {
+    private async inviteNewUser(
+        userDto: UsersDTO,
+        userLoginResponse,
+        reqUser: JWTPayload,
+    ) {
         try {
             // 1. Generate an invite for the given role
             const org: OrganizationEntity =
                 await this.organizationRepository.findOne({
                     where: {
-                        id: userDto.request.organizationId,
+                        id: reqUser?.organizationId,
                     },
                     relations: {
                         organizationType: true,
@@ -290,7 +298,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             let inviteResponse = { invitation: '' };
             try {
                 const refreshToken = await this.guardianService.getRefreshToken(
-                    userDto?.request?.email,
+                    reqUser?.email,
                 );
                 inviteResponse = await this.guardianService.createInvitation(
                     refreshToken,
@@ -304,7 +312,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     },
                 );
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.CREATE_INVITATION,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -328,7 +336,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         },
                     );
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.CREATE_GROUP_TYPE,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -357,7 +365,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     },
                 );
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.CREATE_USER_BLOCK,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -448,7 +456,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         },
                     );
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.CREATE_GROUP_TYPE,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -482,7 +490,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     );
 
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.CREATE_ORGANIZATION_BLOCK,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -525,7 +533,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         },
                     );
                 await this.transactionService.save({
-                    user: userDto?.request?.email,
+                    user: reqUser?.email,
                     stage: TransactionStage.CREATE_USER_BLOCK,
                     type: TransactionType.USER_REGISTER,
                     createdTime: Date.now(),
@@ -549,9 +557,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             if (reqUser?.userRole === RoleEnum.Root) {
                 const refreshToken = await this.guardianService.getRefreshToken(
-                    userDto?.request?.email,
+                    reqUser?.email,
                 );
-                await this.approve(userDto?.request?.email, orgEntity.id, {
+                await this.approve(reqUser?.email, orgEntity.id, {
                     refreshToken: refreshToken,
                     remarks: '',
                 });
