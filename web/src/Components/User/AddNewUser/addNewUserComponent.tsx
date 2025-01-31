@@ -51,7 +51,7 @@ export const AddNewUserComponent = (props: any) => {
   const getCountryList = async () => {
     setIsCountryListLoading(true);
     try {
-      const response = await get('national/organisation/countries');
+      const response = await get('organisation/countries');
       if (response.data) {
         const alpha2Names = response.data.map((item: any) => {
           return item.alpha2;
@@ -79,7 +79,7 @@ export const AddNewUserComponent = (props: any) => {
       } else {
         values.phoneNo = undefined;
       }
-      const response = await post('national/user/add', values);
+      const response = await post('user/add', values);
       if (response.status === 200 || response.status === 201) {
         message.open({
           type: 'success',
@@ -120,7 +120,7 @@ export const AddNewUserComponent = (props: any) => {
       if (ability.can(Action.Update, plainToClass(User, state?.record), 'email'))
         values.email = formOneValues?.email;
 
-      const response = await put('national/user/update', values);
+      const response = await put('user/update', values);
       if (response.status === 200 || response.status === 201) {
         message.open({
           type: 'success',
@@ -176,7 +176,7 @@ export const AddNewUserComponent = (props: any) => {
     try {
       setIsLoading(true);
       const userId = userInfoState?.id;
-      await del(`national/user/delete?userId=${userId}`);
+      await del(`user/delete?userId=${userId}`);
       setOpenDeleteConfirmationModal(false);
       message.open({
         type: 'success',
@@ -197,7 +197,7 @@ export const AddNewUserComponent = (props: any) => {
   const onPasswordChangeCompleted = async (props: any) => {
     setIsLoading(true);
     try {
-      const response = await put('national/user/resetPassword', {
+      const response = await put('user/resetPassword', {
         newPassword: props.newPassword,
         oldPassword: props.oldPassword,
       });

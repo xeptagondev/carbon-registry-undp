@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
@@ -28,7 +29,11 @@ import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import { USER_REGISTER_HEADER } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { MailService } from '@app/shared/mail/service/mail.service';
+import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
+import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
+import { FilterEntry } from '@app/shared/util/dto/filter.entry';
+import { HelperService } from '@app/shared/util/service/helper.service';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -39,6 +44,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         protected readonly auditService: AuditService,
         protected readonly configService: ConfigService,
         private readonly mailService: MailService,
+        private readonly helperService: HelperService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(PolicyBlocksEntity)
@@ -747,5 +753,124 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         } catch (error) {
             throw new Error('Failed to execute getBlocksByBlockName');
         }
+    }
+
+    mapNewQueryToOldQuery(newUser: UsersEntity) {
+        return {
+            id: newUser.id,
+            email: newUser.email,
+            role: newUser.guardianRole?.role?.name ?? null,
+            name: newUser.name,
+            country: null,
+            phoneNo: newUser.phoneNumber,
+            companyId: newUser.organization?.id,
+            companyRole: newUser.guardianRole?.name ?? null,
+            createdTime: null,
+            isPending: false,
+            company: {
+                companyId: newUser.organization?.id,
+                name: newUser.organization?.name,
+                taxId: null,
+                paymentId: null,
+                email: null,
+                phoneNo: newUser.phoneNumber ?? null,
+                website: null,
+                address: null,
+                country: null,
+                logo: null,
+                companyRole:
+                    newUser.organization?.organizationType?.name ?? null,
+                state: newUser.organization?.state ?? null,
+                creditBalance: null,
+                secondaryAccountBalance: null,
+                programmeCount: null,
+                lastUpdateVersion: null,
+                creditTxTime: null,
+                remarks: null,
+                createdTime: null,
+                geographicalLocationCordintes: null,
+                regions: null,
+                nameOfMinister: null,
+                sectoralScope: null,
+                omgePercentage: null,
+                nationalSopValue: null,
+                ministry: null,
+                govDep: null,
+            },
+        };
+    }
+
+    public async query(
+        query: QueryDto,
+        requestUser: JWTPayload,
+    ): Promise<DataListResponseDto> {
+        this.helperService.validateRequestUser(requestUser);
+        if (
+            !(
+                requestUser.organizationRole ==
+                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+            )
+        ) {
+            if (query.filterAnd) {
+                query.filterAnd.push({
+                    key: 'organization"."id',
+                    operation: '=',
+                    value: requestUser.organizationId,
+                });
+            } else {
+                const filterAnd: FilterEntry[] = [];
+                filterAnd.push({
+                    key: 'organization"."id',
+                    operation: '=',
+                    value: requestUser.organizationId,
+                });
+                query.filterAnd = filterAnd;
+            }
+        }
+
+        //Formatting Query
+        const newToOldFieldMap: Record<string, string> = {
+            id: 'user"."id',
+            name: 'user"."name',
+            email: 'user"."email',
+        };
+        query = this.helperService.mapNewWhereClausetoOldWhereClause(
+            query,
+            newToOldFieldMap,
+        );
+
+        const [entities, total] = await this.usersRepository
+            .createQueryBuilder('user')
+            .leftJoin('user.organization', 'organization')
+            .leftJoin('user.guardianRole', 'guardianRole')
+            .leftJoin('organization.organizationType', 'organizationType')
+            .leftJoin('guardianRole.role', 'role')
+            .addSelect([
+                'organization',
+                'guardianRole',
+                'role',
+                'organizationType',
+            ])
+            .where(this.helperService.generateWhereSQL(query))
+            .orderBy(
+                query?.sort?.key && `"${query?.sort?.key}"`,
+                query?.sort?.order,
+                query?.sort?.nullFirst !== undefined
+                    ? query?.sort?.nullFirst === true
+                        ? 'NULLS FIRST'
+                        : 'NULLS LAST'
+                    : undefined,
+            )
+            .offset(query.size * query.page - query.size)
+            .limit(query.size)
+            .getManyAndCount();
+
+        const oldFormatData = entities.map((user) =>
+            this.mapNewQueryToOldQuery(user),
+        );
+        return new DataListResponseDto(
+            entities ? oldFormatData : undefined,
+            total ? total : undefined,
+        );
     }
 }

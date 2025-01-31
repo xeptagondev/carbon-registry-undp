@@ -1,8 +1,12 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body } from '@nestjs/common';
+import { OrganizationService } from '../service/organization.service';
+import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
+import { QueryDto } from '@app/shared/util/dto/query.dto';
+import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 
-@Controller('organization')
+@Controller('organisation')
 export class OrganizationController {
-    // constructor(private readonly userService: UserService) {}
+    constructor(private readonly organizationService: OrganizationService) {}
 
     // @UseGuards(AuthGuardService)
     // @Put('approve/:id')
@@ -12,4 +16,13 @@ export class OrganizationController {
     // ): Promise<any> {
     //     return this.userService.approve(id, organizationApproveDto);
     // }
+
+    @UseGuards(AuthGuardService)
+    @Post('query')
+    async query(
+        @Body() queryDto: QueryDto,
+        @Request() req,
+    ): Promise<DataListResponseDto> {
+        return this.organizationService.query(queryDto, req.user);
+    }
 }

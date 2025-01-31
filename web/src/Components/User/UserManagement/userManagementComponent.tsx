@@ -150,7 +150,7 @@ export const UserManagementComponent = (props: any) => {
   const deleteUser = async (record: UserTableDataType) => {
     setLoading(true);
     try {
-      const response = await del(`national/user/delete?userId=${record?.id}`);
+      const response = await del(`user/delete?userId=${record?.id}`);
       if (response.status === 200) {
         message.open({
           type: 'success',
@@ -466,7 +466,7 @@ export const UserManagementComponent = (props: any) => {
   const getAllUser = async () => {
     setLoading(true);
     try {
-      const response: any = await post('national/user/query', getAllUserParams());
+      const response: any = await post('user/query', getAllUserParams());
       if (response && response.data) {
         const availableUsers = response.data.filter(
           (user: any) => user.companyRole !== CompanyRole.API
@@ -495,7 +495,7 @@ export const UserManagementComponent = (props: any) => {
   const downloadUserData = async () => {
     setLoading(true);
     try {
-      const response: any = await post('national/user/download', {
+      const response: any = await post('user/download', {
         filterAnd: dataQuery.filterAnd,
         filterOr: dataQuery.filterOr?.length > 0 ? dataQuery.filterOr : undefined,
         sort: dataQuery.sort,

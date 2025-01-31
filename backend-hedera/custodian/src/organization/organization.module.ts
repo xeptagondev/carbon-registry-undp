@@ -6,6 +6,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { UsersModule } from '@app/shared/users/users.module';
 import { AuditModule } from '@app/shared/audit/audit.module';
 import { JwtModule } from '@nestjs/jwt';
+import { UtilModule } from '@app/shared/util/util.module';
 
 @Module({
     imports: [
@@ -13,6 +14,7 @@ import { JwtModule } from '@nestjs/jwt';
         UsersModule,
         AuditModule,
         JwtModule,
+        UtilModule,
     ],
     providers: [OrganizationService],
     controllers: [OrganizationController],
