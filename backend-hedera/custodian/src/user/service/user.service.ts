@@ -548,10 +548,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     async init() {
-        if (this.configService.get('system.initPolicy')) {
+        if (this.configService.get('system.initPolicy') === 'true') {
             await this.fetchPolicyBlocks();
         }
-        if (this.configService.get('system.initOrgs')) {
+        if (this.configService.get('system.initOrgs') === 'true') {
             await this.createInitialOrganizations();
         }
     }
@@ -595,7 +595,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     user.role = RoleEnum.Root;
                     user.company = orgDto;
 
-                    await this.register(user, user.password);
+                    const groupResponse = await this.register(
+                        user,
+                        user.password,
+                    );
+                    await this.organizationRepository.update(
+                        {
+                            group: groupResponse?.group,
+                        },
+                        { state: OrganizationStateEnum.ACTIVE },
+                    );
                 }
             }
         } catch (e) {

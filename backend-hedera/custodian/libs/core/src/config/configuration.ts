@@ -70,7 +70,7 @@ export default () => ({
     },
     system: {
         initPolicy: process.env.INIT_POLICY_ENABLE || false,
-        initOrgs: process.env.INIT_ORGS_ENABLE || true,
+        initOrgs: process.env.INIT_ORGS_ENABLE || false,
     },
     organizations: {
         DNA: {
