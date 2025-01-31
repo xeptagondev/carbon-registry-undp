@@ -43,7 +43,7 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
     setErrorMsg(undefined);
     try {
       const email = values.email.trim();
-      const response = await post('national/auth/login', {
+      const response = await post('user/login', {
         username: email.trim(),
         password: values.password.trim(),
       });
@@ -72,7 +72,9 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
         removeToken();
         setIsTokenExpired(false);
         return IsAuthenticated(response.data.access_token)
-          ? navigate(redirectLocation ? redirectLocation : '/dashboard', { replace: true })
+          ? navigate(redirectLocation ? redirectLocation : '/userManagement/viewAll', {
+              replace: true,
+            })
           : navigate('/login');
       }
     } catch (error: any) {
