@@ -8,6 +8,14 @@ export default () => ({
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
     },
+    apiJwt: {
+        secret: process.env.API_JWT_SECRET || 'api_jwt_secret',
+        expireTimeout: process.env.API_JWT_EXPIRE || '7200s',
+        refreshTokenSecret:
+            process.env.API_REFRESH_TOKEN_SECRET || 'api_refresh_token_secret',
+        refreshTokenExpireTimeout:
+            process.env.API_REFRESH_TOKEN_EXPIRE || '7200s',
+    },
     mail: {
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT),
