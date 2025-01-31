@@ -82,7 +82,7 @@ export class AuthService {
         }
 
         let userId: number;
-        let companyId: number;
+        let organizationId: number;
 
         try {
             const decoded = this.jwtService.verify(refreshToken, {
@@ -91,7 +91,8 @@ export class AuthService {
                 ),
             });
             userId = decoded.userId;
-            companyId = decoded.companyId;
+            organizationId = decoded.organizationId;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
             throw new HttpException(
                 'Refresh Token Verification Failed',
@@ -102,9 +103,11 @@ export class AuthService {
         try {
             const generatedAccessToken = await this.generateAccessToken(
                 userId,
-                companyId,
+                organizationId,
             );
+            // eslint-disable-next-line camelcase
             return { access_token: generatedAccessToken };
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
             throw new HttpException(
                 'Refresh Token Generation Failed',
@@ -136,24 +139,21 @@ export class AuthService {
                 HttpStatus.UNAUTHORIZED,
             );
         }
-        let custodianResponse: any;
+        let guardianResponse: any;
         try {
             // add SALT to password for login
             loginDto.password =
                 loginDto.password + this.configService.get('security.salt');
-            custodianResponse = await this.guardianService.login(loginDto);
-        } catch (e) {
-            console.log(e);
+            guardianResponse = await this.guardianService.login(loginDto);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_) {
             throw new HttpException(
                 'Email or Password is Incorrect',
                 HttpStatus.UNAUTHORIZED,
             );
         }
 
-        if (
-            custodianResponse &&
-            custodianResponse.status == HttpStatus.CREATED
-        ) {
+        if (guardianResponse && guardianResponse.status == HttpStatus.CREATED) {
             const organization = await this.organizationsRepository.findOne({
                 where: { id: user.organization.id },
                 relations: {
@@ -173,9 +173,9 @@ export class AuthService {
             // Refresh Token Generation
             const refreshPayload = {
                 userId: user.id,
-                companyId: organization.id,
+                organizationId: organization.id,
                 role: user.guardianRole.role.name,
-                companyRole: organization.organizationType.name,
+                organizationRole: organization.organizationType.name,
             };
 
             const refreshToken = this.jwtService.sign(refreshPayload, {
@@ -189,10 +189,12 @@ export class AuthService {
 
             response.statusCode = HttpStatus.OK;
             response.data = {
+                // eslint-disable-next-line camelcase
                 access_token: await this.generateAccessToken(
                     user.id,
                     organization.id,
                 ),
+                // eslint-disable-next-line camelcase
                 refresh_token: refreshToken,
                 role: user.guardianRole?.role?.name,
                 id: user.id,
@@ -201,6 +203,7 @@ export class AuthService {
                 companyRole: organization.organizationType.name,
                 companyName: organization.name,
                 companyLogo:
+                    // eslint-disable-next-line max-len
                     'https://carbon-common-uni.s3.amazonaws.com/profile_images%2F228_1736221366674.png', // Will be removed after database changes
                 companyState: parseInt(organization.state),
             };
