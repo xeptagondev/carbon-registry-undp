@@ -31,8 +31,8 @@ export default () => ({
         policies: '/api/v1/policies/',
     },
     policy: {
-        id: '679a183d71e846be0ff69a93',
-        topicId: '0.0.5441710',
+        id: '679c503271e846be0ff6a69c',
+        topicId: '0.0.5449556',
     },
     sru: {
         username: 'amilareg',
@@ -40,10 +40,10 @@ export default () => ({
         did: 'did:hedera:testnet:Hd3Q9whzRsi8YbEuJDVt1pnixzLJ888HhCBoa2Ba8TCi_0.0.5433423',
     },
     blocks: {
-        createGroupType: 'create_orgnization',
+        createGroupType: 'create_organizations',
         createSingleOrganization: 'single_organizations_creation_form',
-        createMultipleOrganization: 'multiple_organizations_form',
-        createUser: 'user_create_form',
+        createMultipleOrganization: 'multiple_organizations_creation_form',
+        createUser: 'user_creation_form',
         userCreateInvite: 'user_create_invite',
         appoveOrganization: 'multiple_organizations_approve_reject_buttons',
     },
@@ -62,16 +62,16 @@ export default () => ({
     },
     system: {
         initPolicy: false,
-        initOrgs: false,
+        initOrgs: true,
     },
     organizations: {
         DNA: {
-            orgName: 'DNA Organization',
-            email: 'dnaorg1@testgov.com',
-            name: 'dnaorg1',
-            hederaAccount: '0.0.5445196',
+            orgName: 'DNA Organization 7',
+            email: 'amilad+7@xeptagon.com',
+            name: 'amilad+7',
+            hederaAccount: '0.0.5449580',
             hederaKey:
-                '302e020100300506032b6570042204202d7b51cd9236e92bf589d44700c81103a72d88e1503a5183b443ab8153cff883',
+                '302e020100300506032b657004220420f37dbbd108360224180420a749644a31b7a14d56ced633f0eb5397fbb7ede54c',
             password: '123',
         },
     },

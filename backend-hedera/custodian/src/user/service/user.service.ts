@@ -123,16 +123,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             await this.setTagToIdMap();
             // 1: Login SRU and Gov. Root
-            if (
-                !this.guardianService.getRefreshToken(
-                    this.configService.get('sru.username'),
-                )
-            ) {
-                const sruLoginResponse = await this.guardianService.login({
-                    username: this.configService.get('sru.username'),
-                    password: this.configService.get('sru.password'),
-                });
-            }
+
+            const sruLoginResponse = await this.guardianService.login({
+                username: this.configService.get('sru.username'),
+                password: this.configService.get('sru.password'),
+            });
 
             // 1.1 Generate random password for user
             const passwordLen = 8;
@@ -221,7 +216,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 console.log(e);
                 throw e;
             }
-            console.log('$$$$$$$$$$$$$$$$$');
             let res;
             if (userDto.company) {
                 // 6. Register new organization
@@ -502,10 +496,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         {
                             document: {
                                 name: userDto.name,
-                                organization: {
-                                    name: userDto.company.name,
-                                    role: userDto.company.companyRole,
-                                },
                                 role: userDto.role,
                             },
                             ref: null,
