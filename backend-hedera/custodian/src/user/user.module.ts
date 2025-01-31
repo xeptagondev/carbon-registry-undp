@@ -15,6 +15,7 @@ import { GuardianModule } from '@app/shared/guardian/guardian.module';
 import { AuthService } from './service/auth.service';
 import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
 import { MailModule } from '@app/shared/mail/mail.module';
+import { AuthController } from './controller/auth.controller';
 
 @Module({
     imports: [
@@ -33,7 +34,7 @@ import { MailModule } from '@app/shared/mail/mail.module';
         JwtModule,
         MailModule,
     ],
-    controllers: [UserController],
+    controllers: [UserController, AuthController],
     providers: [UserService, AuthService],
     exports: [UserService],
 })
