@@ -28,6 +28,7 @@ import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import { USER_REGISTER_HEADER } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { MailService } from '@app/shared/mail/service/mail.service';
+import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -116,7 +117,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
     }
 
-    async register(userDto: UsersDTO, defaultPass: string = '') {
+    async register(
+        userDto: UsersDTO,
+        defaultPass: string = '',
+        reqUser?: JWTPayload,
+    ) {
         try {
             this.logger.log(
                 `Request received to register user with email ${userDto.email}`,
@@ -219,7 +224,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             let res;
             if (userDto.company) {
                 // 6. Register new organization
-                res = await this.registerGroup(userDto, userLoginResponse);
+                res = await this.registerGroup(
+                    userDto,
+                    userLoginResponse,
+                    reqUser,
+                );
             } else {
                 // 6. Accept an invitation (generate an invitation and create the user)
                 res = await this.inviteNewUser(userDto, userLoginResponse);
@@ -242,6 +251,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     tempPassword: userPass,
                 },
             };
+            console.log(userPass);
             await this.mailService.sendMail(mailDTO);
 
             return res;
@@ -366,6 +376,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         organizationApproveDto: OrganisationApproveDto,
     ) {
         try {
+            this.logger.log(
+                `Request received to approve organization ${organizationApproveDto}`,
+            );
             await this.setTagToIdMap();
             const orgEntity: OrganizationEntity =
                 await this.organizationRepository.findOne({
@@ -409,7 +422,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    private async registerGroup(userDto: UsersDTO, userLoginResponse) {
+    private async registerGroup(
+        userDto: UsersDTO,
+        userLoginResponse,
+        reqUser: JWTPayload,
+    ) {
         try {
             // 1. Create a new group type in guardian
             try {
@@ -524,7 +541,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 },
                 { payload: payload, group: createOrganizationResponse?.group },
             );
-            if (userDto?.request?.userRole === RoleEnum.Root) {
+            if (reqUser?.userRole === RoleEnum.Root) {
                 const refreshToken = await this.guardianService.getRefreshToken(
                     userDto?.request?.email,
                 );

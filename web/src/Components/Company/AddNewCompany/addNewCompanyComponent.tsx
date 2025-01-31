@@ -488,11 +488,11 @@ export const AddNewCompanyComponent = (props: any) => {
       const logoBase64 = await getBase64(requestData?.company?.logo[0]?.originFileObj as RcFile);
       const logoUrls = logoBase64.split(',');
       requestData.company.logo = logoUrls[1];
-      if (companyRole === CompanyRole.MINISTRY) {
+      if (companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         requestData.company.name = 'Ministry of ' + requestData.company.ministry;
       }
       if (isGuest) {
-        const response = await post('national/user/register', requestData);
+        const response = await post('user/register', requestData);
         if (response.status === 200 || response.status === 201) {
           message.open({
             type: 'success',
@@ -504,7 +504,7 @@ export const AddNewCompanyComponent = (props: any) => {
           setLoading(false);
         }
       } else {
-        const response = await post('national/user/add', requestData);
+        const response = await post('user/add', requestData);
         if (response.status === 200 || response.status === 201) {
           if (isUpdate) {
             setUserInfo({
@@ -570,18 +570,12 @@ export const AddNewCompanyComponent = (props: any) => {
         };
       }
 
-      if (
-        state?.record?.companyRole !== CompanyRole.GOVERNMENT &&
-        state?.record?.companyRole !== CompanyRole.MINISTRY
-      ) {
+      if (state?.record?.companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         values.taxId = formOneValues.taxId;
         values.paymentId = formOneValues.paymentId;
       }
 
-      if (
-        state?.record?.companyRole === CompanyRole.MINISTRY ||
-        state?.record?.companyRole === CompanyRole.GOVERNMENT
-      ) {
+      if (state?.record?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         if (formOneValues.govDep in GovDepartment) {
           const key = formOneValues.govDep as keyof typeof GovDepartment;
           values.govDep = GovDepartment[key];
@@ -590,15 +584,15 @@ export const AddNewCompanyComponent = (props: any) => {
         }
         values.ministry = formOneValues.ministry;
       }
-      if (state?.record?.companyRole === CompanyRole.MINISTRY) {
+      if (state?.record?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         values.sectoralScope = formOneValues.sectoralScope;
         values.nameOfMinister = formOneValues.nameOfMinister;
         values.name = 'Ministry of ' + formOneValues.ministry;
       }
-      if (state?.record?.companyRole === CompanyRole.GOVERNMENT) {
+      if (state?.record?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         values.omgePercentage = Math.round(Number(formOneValues.omgePercentage));
       }
-      if (state?.record?.companyRole === CompanyRole.GOVERNMENT) {
+      if (state?.record?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         values.nationalSopValue = Math.floor(Number(formOneValues.nationalSopValue));
       }
 
@@ -652,16 +646,12 @@ export const AddNewCompanyComponent = (props: any) => {
 
   const CompanyDetailsForm = () => {
     const companyRoleClassName =
-      companyRole === CompanyRole.CERTIFIER
+      companyRole === CompanyRole.DESIGNATED_OPERATIONAL_ENTITY
         ? 'certifier'
-        : companyRole === CompanyRole.PROGRAMME_DEVELOPER
+        : companyRole === CompanyRole.PROJECT_PARTICIPANT
         ? 'dev'
-        : companyRole === CompanyRole.MINISTRY
+        : companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
         ? 'minister'
-        : companyRole === CompanyRole.CLIMATE_FUND
-        ? 'climate-fund'
-        : companyRole === CompanyRole.EXECUTIVE_COMMITTEE
-        ? 'executive-committee'
         : 'gov';
     return (
       <div className="company-details-form-container">
@@ -677,7 +667,7 @@ export const AddNewCompanyComponent = (props: any) => {
             <Row className="row" gutter={[16, 16]}>
               <Col xl={12} md={24}>
                 <div className="details-part-one">
-                  {companyRole !== CompanyRole.MINISTRY && (
+                  {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <Form.Item
                       label={t('addCompany:name')}
                       name="name"
@@ -704,8 +694,10 @@ export const AddNewCompanyComponent = (props: any) => {
                       <Input size="large" />
                     </Form.Item>
                   )}
-                  {companyRole !== CompanyRole.MINISTRY
-                    ? (!isUpdate || (isUpdate && companyRole !== CompanyRole.GOVERNMENT)) && (
+                  {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
+                    ? (!isUpdate ||
+                        (isUpdate &&
+                          companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY)) && (
                         <Form.Item
                           label={t('addCompany:taxId')}
                           initialValue={state?.record?.taxId}
@@ -733,8 +725,10 @@ export const AddNewCompanyComponent = (props: any) => {
                         </Form.Item>
                       )
                     : null}
-                  {companyRole !== CompanyRole.MINISTRY
-                    ? (!isUpdate || (isUpdate && companyRole !== CompanyRole.GOVERNMENT)) && (
+                  {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
+                    ? (!isUpdate ||
+                        (isUpdate &&
+                          companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY)) && (
                         <Form.Item
                           label={t('addCompany:paymentId')}
                           initialValue={state?.record?.paymentId}
@@ -764,7 +758,7 @@ export const AddNewCompanyComponent = (props: any) => {
                         </Form.Item>
                       )
                     : null}
-                  {companyRole !== CompanyRole.GOVERNMENT && (
+                  {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <Form.Item
                       label={t('addCompany:email')}
                       name="email"
@@ -799,8 +793,8 @@ export const AddNewCompanyComponent = (props: any) => {
                       <Input size="large" />
                     </Form.Item>
                   )}
-                  {(companyRole === CompanyRole.MINISTRY ||
-                    companyRole === CompanyRole.GOVERNMENT) && (
+                  {(companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
+                    companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) && (
                     <div className="space-container" style={{ width: '100%' }}>
                       <Form.Item
                         label={t('addCompany:Ministry')}
@@ -813,7 +807,7 @@ export const AddNewCompanyComponent = (props: any) => {
                           },
                         ]}
                       >
-                        {companyRole !== CompanyRole.GOVERNMENT &&
+                        {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
                         ministryDropdown &&
                         ministryDropdown.length > 0 ? (
                           <Select size="large" onChange={onChangeMinistry}>
@@ -825,7 +819,7 @@ export const AddNewCompanyComponent = (props: any) => {
                           <Select size="large" disabled={true}></Select>
                         )}
                       </Form.Item>
-                      {companyRole === CompanyRole.GOVERNMENT && (
+                      {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                         <Form.Item
                           label={t('addCompany:email')}
                           name="email"
@@ -860,7 +854,7 @@ export const AddNewCompanyComponent = (props: any) => {
                           <Input size="large" />
                         </Form.Item>
                       )}
-                      {companyRole === CompanyRole.MINISTRY && (
+                      {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                         <Form.Item
                           label={t('addCompany:ministerName')}
                           name="nameOfMinister"
@@ -916,7 +910,7 @@ export const AddNewCompanyComponent = (props: any) => {
                   >
                     <Input addonBefore="https://" size="large" />
                   </Form.Item>
-                  {companyRole === CompanyRole.MINISTRY && (
+                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <Form.Item
                       name="address"
                       label={t('addCompany:addresss')}
@@ -993,7 +987,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       </Button>
                     </Upload>
                   </Form.Item>
-                  {companyRole === CompanyRole.GOVERNMENT && (
+                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <div className="space-container" style={{ width: '100%' }}>
                       <Space
                         wrap={true}
@@ -1066,16 +1060,10 @@ export const AddNewCompanyComponent = (props: any) => {
                       {isUpdate ? (
                         <div className={`${companyRoleClassName}-radio-container`}>
                           <Radio.Button className={companyRoleClassName} value={companyRole}>
-                            {companyRole === CompanyRole.CERTIFIER ? (
+                            {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ? (
                               <SafetyOutlined className="role-icons" />
-                            ) : companyRole === CompanyRole.PROGRAMME_DEVELOPER ? (
+                            ) : companyRole === CompanyRole.PROJECT_PARTICIPANT ? (
                               <ExperimentOutlined className="role-icons" />
-                            ) : companyRole === CompanyRole.MINISTRY ? (
-                              <AuditOutlined className="role-icons" />
-                            ) : companyRole === CompanyRole.CLIMATE_FUND ? (
-                              <CopyrightOutlined className="role-icons" />
-                            ) : companyRole === CompanyRole.EXECUTIVE_COMMITTEE ? (
-                              <TeamOutlined className="role-icons" />
                             ) : (
                               <BankOutlined className="role-icons" />
                             )}
@@ -1084,11 +1072,13 @@ export const AddNewCompanyComponent = (props: any) => {
                         </div>
                       ) : (
                         <>
-                          {userInfoState?.companyRole !== CompanyRole.CLIMATE_FUND && (
+                          {userInfoState?.companyRole !==
+                            CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                             <div
                               className="certifier-radio-container"
                               style={
-                                userInfoState?.companyRole === CompanyRole.MINISTRY
+                                userInfoState?.companyRole ===
+                                CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
                                   ? {
                                       width: '45%',
                                     }
@@ -1096,9 +1086,9 @@ export const AddNewCompanyComponent = (props: any) => {
                               }
                             >
                               <Tooltip placement="top" title={t('addCompany:viewerToolTip')}>
-                                <Radio.Button className="certifier" value="Certifier">
+                                <Radio.Button className="certifier" value="DOE">
                                   <SafetyOutlined className="role-icons" />
-                                  {t('addCompany:Certifier')}
+                                  {t('addCompany:doe')}
                                 </Radio.Button>
                               </Tooltip>
                             </div>
@@ -1106,7 +1096,8 @@ export const AddNewCompanyComponent = (props: any) => {
                           <div
                             className="dev-radio-container"
                             style={
-                              userInfoState?.companyRole === CompanyRole.MINISTRY
+                              userInfoState?.companyRole ===
+                              CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
                                 ? {
                                     width: '45%',
                                     marginLeft: isGuest ? '30px' : 0,
@@ -1118,14 +1109,37 @@ export const AddNewCompanyComponent = (props: any) => {
                               placement="top"
                               title={t('addCompany:programmeDeveleperToolTip')}
                             >
-                              <Radio.Button className="dev" value="ProgrammeDeveloper">
+                              <Radio.Button className="dev" value="DOE">
+                                <ExperimentOutlined className="role-icons" />
+                                {t('addCompany:doe')}
+                              </Radio.Button>
+                            </Tooltip>
+                          </div>
+                          <div
+                            className="dev-radio-container"
+                            style={
+                              userInfoState?.companyRole ===
+                              CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
+                                ? {
+                                    width: '45%',
+                                    marginLeft: isGuest ? '30px' : 0,
+                                  }
+                                : { marginLeft: isGuest ? '30px' : 0 }
+                            }
+                          >
+                            <Tooltip
+                              placement="top"
+                              title={t('addCompany:programmeDeveleperToolTip')}
+                            >
+                              <Radio.Button className="dev" value="PP">
                                 <ExperimentOutlined className="role-icons" />
                                 {t('addCompany:ProgrammeDeveloper')}
                               </Radio.Button>
                             </Tooltip>
                           </div>
-                          {userInfoState?.companyRole !== CompanyRole.MINISTRY &&
-                            userInfoState?.companyRole !== CompanyRole.CLIMATE_FUND &&
+
+                          {/* {userInfoState?.companyRole !==
+                            CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
                             !isGuest && (
                               <div className="minister-radio-container">
                                 {ministryDropdown.length > 0 ? (
@@ -1144,13 +1158,13 @@ export const AddNewCompanyComponent = (props: any) => {
                                   </Tooltip>
                                 )}
                               </div>
-                            )}
+                            )} */}
                         </>
                       )}
                     </Radio.Group>
                   </Form.Item>
-                  {(companyRole === CompanyRole.MINISTRY ||
-                    companyRole === CompanyRole.GOVERNMENT) && (
+
+                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <Form.Item
                       label={t('addCompany:govdep')}
                       name="govDep"
@@ -1182,7 +1196,7 @@ export const AddNewCompanyComponent = (props: any) => {
                         },
                       ]}
                     >
-                      {companyRole !== CompanyRole.GOVERNMENT &&
+                      {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
                       selectedGovDepatments &&
                       selectedGovDepatments.length > 0 ? (
                         <Select size="large">
@@ -1203,7 +1217,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       )}
                     </Form.Item>
                   )}
-                  {companyRole === CompanyRole.MINISTRY && (
+                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <Form.Item
                       label={t('addCompany:sectoralScope')}
                       name="sectoralScope"
@@ -1329,7 +1343,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       initialValue={state?.record?.provinces ?? []}
                       rules={[
                         {
-                          required: true,
+                          required: false,
                           message: `${t('addCompany:province')} ${t('isRequired')}`,
                         },
                       ]}
@@ -1348,7 +1362,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       </Select>
                     </Form.Item>
                   )}
-                  {companyRole !== CompanyRole.MINISTRY && (
+                  {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <Form.Item
                       name="address"
                       label={t('addCompany:addresss')}
@@ -1372,52 +1386,53 @@ export const AddNewCompanyComponent = (props: any) => {
                       <Input.TextArea rows={3} maxLength={100} />
                     </Form.Item>
                   )}
-                  {companyRole === CompanyRole.GOVERNMENT && systemType !== CarbonSystemType.MRV && (
-                    <div className="space-container" style={{ width: '100%' }}>
-                      <Space
-                        wrap={true}
-                        style={{
-                          display: 'flex',
-                          marginBottom: 8,
-                        }}
-                        align="center"
-                        size={'large'}
-                      >
-                        <Form.Item
-                          style={{ width: '100%' }}
-                          name="omgePercentage"
-                          label={t('addCompany:omgePercentage')}
-                          initialValue={state?.record?.omgePercentage}
-                          rules={[
-                            { required: true, message: '' },
-                            {
-                              validator: async (rule, value) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(
-                                    `${t('addCompany:omgePercentage')}  ${t('isRequired')}`
-                                  );
-                                }
-                              },
-                            },
-                          ]}
+                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+                    systemType !== CarbonSystemType.MRV && (
+                      <div className="space-container" style={{ width: '100%' }}>
+                        <Space
+                          wrap={true}
+                          style={{
+                            display: 'flex',
+                            marginBottom: 8,
+                          }}
+                          align="center"
+                          size={'large'}
                         >
-                          <InputNumber
+                          <Form.Item
                             style={{ width: '100%' }}
-                            size="large"
-                            min={0}
-                            max={99}
-                            formatter={(value) => `${value ? Math.round(value) : ''}%`}
-                            parser={(value: any) => value.replace('%', '')}
-                          />
-                        </Form.Item>
-                      </Space>
-                    </div>
-                  )}
+                            name="omgePercentage"
+                            label={t('addCompany:omgePercentage')}
+                            initialValue={state?.record?.omgePercentage}
+                            rules={[
+                              { required: true, message: '' },
+                              {
+                                validator: async (rule, value) => {
+                                  if (
+                                    String(value).trim() === '' ||
+                                    String(value).trim() === undefined ||
+                                    value === null ||
+                                    value === undefined
+                                  ) {
+                                    throw new Error(
+                                      `${t('addCompany:omgePercentage')}  ${t('isRequired')}`
+                                    );
+                                  }
+                                },
+                              },
+                            ]}
+                          >
+                            <InputNumber
+                              style={{ width: '100%' }}
+                              size="large"
+                              min={0}
+                              max={99}
+                              formatter={(value) => `${value ? Math.round(value) : ''}%`}
+                              parser={(value: any) => value.replace('%', '')}
+                            />
+                          </Form.Item>
+                        </Space>
+                      </div>
+                    )}
                 </div>
               </Col>
             </Row>
@@ -1456,6 +1471,64 @@ export const AddNewCompanyComponent = (props: any) => {
           form={formTwo}
           onFinish={onFinishStepTwo}
         >
+          <Row className="row" gutter={[16, 16]}>
+            <Col xl={12} md={24}>
+              <div className="details-part-one">
+                <Form.Item
+                  label={t('addCompany:hederaAccount')}
+                  name="hederaAccount"
+                  rules={[
+                    {
+                      required: true,
+                      message: '',
+                    },
+                    {
+                      validator: async (rule, value) => {
+                        if (
+                          String(value).trim() === '' ||
+                          String(value).trim() === undefined ||
+                          value === null ||
+                          value === undefined
+                        ) {
+                          throw new Error(`${t('addCompany:hederaAccount')} ${t('isRequired')}`);
+                        }
+                      },
+                    },
+                  ]}
+                >
+                  <Input size="large" />
+                </Form.Item>
+              </div>
+            </Col>
+            <Col xl={12} md={24}>
+              <div className="details-part-two">
+                <Form.Item
+                  label={t('addCompany:hederaKey')}
+                  name="hederaKey"
+                  rules={[
+                    {
+                      required: true,
+                      message: '',
+                    },
+                    {
+                      validator: async (rule, value) => {
+                        if (
+                          String(value).trim() === '' ||
+                          String(value).trim() === undefined ||
+                          value === null ||
+                          value === undefined
+                        ) {
+                          throw new Error(`${t('addCompany:hederaKey')} ${t('isRequired')}`);
+                        }
+                      },
+                    },
+                  ]}
+                >
+                  <Input size="large" />
+                </Form.Item>
+              </div>
+            </Col>
+          </Row>
           <Row className="row" gutter={[16, 16]}>
             <Col xl={12} md={24}>
               <div className="details-part-one">

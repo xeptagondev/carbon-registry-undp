@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
@@ -9,7 +9,7 @@ export class UserController {
 
     @UseGuards(AuthGuardService)
     @Post('add')
-    async add(@Body() userDto: UsersDTO): Promise<any> {
-        return this.userService.register(userDto);
+    async add(@Body() userDto: UsersDTO, @Request() req): Promise<any> {
+        return this.userService.register(userDto, '', req.user);
     }
 }
