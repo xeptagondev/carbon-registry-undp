@@ -17,6 +17,7 @@ import { UtilModule } from './util/util.module';
 import { MailModule } from './mail/mail.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { GuardianModule } from './guardian/guardian.module';
+import { TokenModule } from './token/token.module';
 
 @Module({
     providers: [SharedService],
@@ -39,6 +40,7 @@ import { GuardianModule } from './guardian/guardian.module';
         MailModule,
         TransactionModule,
         GuardianModule,
+        TokenModule,
     ],
 })
 export class SharedModule {}
