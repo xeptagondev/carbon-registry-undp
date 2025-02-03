@@ -8,6 +8,7 @@ import { Transform } from 'class-transformer';
 export class OrganisationDto extends SuperDTO<OrganizationEntity> {
     id?: number;
     @Unwrap()
+    @IsNotEmpty()
     name: string;
     companyRole: OrganizationTypeEnum;
     taxId?: string;
@@ -16,7 +17,7 @@ export class OrganisationDto extends SuperDTO<OrganizationEntity> {
     phoneNo: string;
     @Unwrap()
     @IsNotEmpty()
-    paymentId?: string;
+    paymentId: string;
     faxNo?: string;
     @Unwrap()
     @IsEmail()

@@ -74,12 +74,17 @@ export default () => ({
     },
     organizations: {
         DNA: {
-            orgName: process.env.DNA_ORGANIZATION_NAME,
             email: process.env.DNA_ROOT_EMAIL,
             name: process.env.DNA_ROOT_NAME,
+            phoneNo: process.env.DNA_ROOT_PHONE_NO,
             hederaAccount: process.env.DNA_ROOT_HEDERA_ACCOUNT_ID,
             hederaKey: process.env.DNA_ROOT_HEDERA_ACCOUNT_KEY,
             password: process.env.DNA_ROOT_PASSWORD,
+            orgName: process.env.DNA_ORGANIZATION_NAME,
+            orgEmail: process.env.DNA_ROOT_ORGANIZATION_EMAIL,
+            orgPaymentId: process.env.DNA_ROOT_ORGANIZATION_PAYMENT_ID,
+            orgPhoneNo: process.env.DNA_ROOT_ORGANIZATION_PHONE_NO,
+            orgAddress: process.env.DNA_ROOT_ORGANIZATION_ADDRESS,
         },
     },
     security: {

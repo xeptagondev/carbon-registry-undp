@@ -535,6 +535,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     orgDto.name = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgName`,
                     );
+                    orgDto.email = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgEmail`,
+                    );
+                    orgDto.paymentId = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgPaymentId`,
+                    );
+                    orgDto.phoneNo = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgPhoneNo`,
+                    );
+                    orgDto.address = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgAddress`,
+                    );
                     const user = new UsersDTO();
                     user.email = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
@@ -550,6 +562,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     );
                     user.password = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.password`,
+                    );
+                    user.phoneNo = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.phoneNo`,
                     );
                     user.role = RoleEnum.Root;
                     user.company = orgDto;
