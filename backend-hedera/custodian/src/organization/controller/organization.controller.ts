@@ -6,6 +6,8 @@ import {
     Body,
     Put,
     Param,
+    Query,
+    Get,
 } from '@nestjs/common';
 import { OrganizationService } from '../service/organization.service';
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
@@ -31,6 +33,17 @@ export class OrganizationController {
         );
     }
 
+    @UseGuards(AuthGuardService)
+    @Get('profile')
+    async getOrganizationProfile(
+        @Query('id') organizationId: number,
+        @Request() req,
+    ) {
+        return await this.organizationService.getOrganizationProfile(
+            organizationId,
+            req.user,
+        );
+    }
     @UseGuards(AuthGuardService)
     @Post('query')
     async query(
