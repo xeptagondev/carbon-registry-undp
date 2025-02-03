@@ -65,7 +65,9 @@ export class OrganizationService extends SuperService<
             phoneNo: null,
             website: null,
             address: null,
-            logo: 'https://carbon-common-uni.s3.amazonaws.com/profile_images%2F229_1736489123985.png',
+            logo: organization.logo
+                ? organization.logo
+                : 'https://carbon-common-uni.s3.amazonaws.com/profile_images%2F229_1736489123985.png',
             country: null,
             companyRole: organization.organizationType.name,
             state: organization.state,

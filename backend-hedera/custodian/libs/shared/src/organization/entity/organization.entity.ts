@@ -65,4 +65,6 @@ export class OrganizationEntity {
     website?: string;
     @Column()
     address: string;
+    @Column({ nullable: true })
+    logo?: string;
 }

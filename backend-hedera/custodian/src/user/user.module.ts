@@ -17,6 +17,7 @@ import { MailModule } from '@app/shared/mail/mail.module';
 import { AuthController } from './controller/auth.controller';
 import { OrganizationModule } from 'src/organization/organization.module';
 import { TokenModule } from '@app/shared/token/token.module';
+import { FileHandlerModule } from '@app/shared/file-handler/file-handler.module';
 
 @Module({
     imports: [
@@ -35,6 +36,7 @@ import { TokenModule } from '@app/shared/token/token.module';
         MailModule,
         OrganizationModule,
         TokenModule,
+        FileHandlerModule,
     ],
     controllers: [UserController, AuthController],
     providers: [UserService, AuthService],

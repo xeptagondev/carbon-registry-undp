@@ -31,6 +31,10 @@ export class HelperService {
         return query;
     }
 
+    public isBase64(text: string): boolean {
+        return Buffer.from(text, 'base64').toString('base64') === text;
+    }
+
     public validateRequestUser(requestUser: JWTPayload) {
         if (!requestUser) {
             throw new HttpException(

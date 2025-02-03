@@ -1,6 +1,7 @@
 export default () => ({
     country: process.env.COUNTRY,
     url: process.env.URL,
+    backendHost: process.env.BACKEND_HOST || 'http://localhost:3000',
     database: {
         host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT, 10) || 5432,

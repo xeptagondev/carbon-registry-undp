@@ -16,6 +16,7 @@ services:
       POSTGRES_PASSWORD: "123"
       POSTGRES_USER: root
     volumes:
+      - filestore:./backend-hedera/custodian/public
       - ./backend-hedera/custodian/init.sql:/docker-entrypoint-initdb.d/init.sql
       - data:/data/postgres
 

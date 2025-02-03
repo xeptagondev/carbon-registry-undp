@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
@@ -8,7 +8,6 @@ import { In, Repository } from 'typeorm';
 import { SuperService } from '@app/core/service/super.service';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
-import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianRoleEntity } from '@app/shared/guardian-role/entity/guardian-role.entity';
 import { RoleEntity } from '@app/shared/role/entity/role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
@@ -21,7 +20,6 @@ import { TransactionType } from '@app/shared/transaction/enum/transaction.type.e
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
-import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
 import { generatePassword, hashPassword } from '@app/shared/util/util';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import { USER_REGISTER_HEADER } from '@app/shared/mail/constant/mail-header.constant';
@@ -34,21 +32,22 @@ import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
 import { OrganizationService } from 'src/organization/service/organization.service';
+import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
     private readonly logger = new Logger(UserService.name);
     constructor(
-        protected readonly guardianService: GuardianService,
-        protected readonly transactionService: TransactionService,
-        protected readonly auditService: AuditService,
-        protected readonly configService: ConfigService,
-        protected readonly utilService: UtilService,
+        private readonly guardianService: GuardianService,
+        private readonly transactionService: TransactionService,
+        private readonly configService: ConfigService,
+        private readonly utilService: UtilService,
         private readonly mailService: MailService,
+        private readonly fileHandler: FileHandlerInterface,
         private readonly helperService: HelperService,
         private readonly orgaisationService: OrganizationService,
         @InjectRepository(UsersEntity)
-        protected readonly usersRepository: Repository<UsersEntity>,
+        private readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(GuardianRoleEntity)
         private readonly guardianRoleRepository: Repository<GuardianRoleEntity>,
         @InjectRepository(RoleEntity)
@@ -445,6 +444,30 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             await this.delay(10000);
 
+            if (
+                userDto?.company?.logo &&
+                this.helperService.isBase64(userDto?.company?.logo)
+            ) {
+                const response: any = await this.fileHandler.uploadFile(
+                    `profile_images/${orgEntity.id}_${new Date().getTime()}.png`,
+                    userDto?.company?.logo,
+                );
+                if (response) {
+                    userDto.company.logo = response;
+                    // if (
+                    //     process.env.ASYNC_OPERATIONS_TYPE ===
+                    //     AsyncOperationType.Queue
+                    // ) {
+                    //     createdUserDto.company.logo = response;
+                    // }
+                } else {
+                    throw new HttpException(
+                        'Error while uploading company logo',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                }
+            }
+
             try {
                 const createUserResponse =
                     await this.guardianService.createUser(
@@ -481,7 +504,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 {
                     id: orgEntity.id,
                 },
-                { payload: payload, group: createOrganizationResponse?.group },
+                {
+                    payload: payload,
+                    group: createOrganizationResponse?.group,
+                    logo: userDto?.company?.logo,
+                },
             );
             if (reqUser?.userRole === RoleEnum.Root) {
                 await this.orgaisationService.approve(
