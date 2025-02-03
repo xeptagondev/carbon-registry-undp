@@ -26,6 +26,19 @@ export class GuardianService {
         });
         return user?.refreshToken;
     }
+
+    async accessToken(refreshToken: string) {
+        const accessTokenResponse = await axios.post(
+            `${this.configService.get('guardian.url')}${this.configService.get(
+                'guardian.accessToken',
+            )}`,
+            {
+                refreshToken: refreshToken,
+            },
+        );
+        return accessTokenResponse.data.accessToken;
+    }
+
     private buildGuardianUrl(pathKey: string): string {
         return `${this.configService.get('guardian.url')}${pathKey}`;
     }

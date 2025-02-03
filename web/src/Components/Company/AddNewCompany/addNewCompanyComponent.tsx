@@ -1072,49 +1072,25 @@ export const AddNewCompanyComponent = (props: any) => {
                         </div>
                       ) : (
                         <>
-                          {userInfoState?.companyRole !==
-                            CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
-                            <div
-                              className="certifier-radio-container"
-                              style={
-                                userInfoState?.companyRole ===
-                                CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
-                                  ? {
-                                      width: '45%',
-                                    }
-                                  : {}
-                              }
-                            >
-                              <Tooltip placement="top" title={t('addCompany:viewerToolTip')}>
-                                <Radio.Button className="certifier" value="DOE">
-                                  <SafetyOutlined className="role-icons" />
-                                  {t('addCompany:doe')}
-                                </Radio.Button>
-                              </Tooltip>
-                            </div>
-                          )}
                           <div
-                            className="dev-radio-container"
+                            className="certifier-radio-container"
                             style={
                               userInfoState?.companyRole ===
                               CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
                                 ? {
                                     width: '45%',
-                                    marginLeft: isGuest ? '30px' : 0,
                                   }
-                                : { marginLeft: isGuest ? '30px' : 0 }
+                                : {}
                             }
                           >
-                            <Tooltip
-                              placement="top"
-                              title={t('addCompany:programmeDeveleperToolTip')}
-                            >
-                              <Radio.Button className="dev" value="DOE">
-                                <ExperimentOutlined className="role-icons" />
+                            <Tooltip placement="top" title={t('addCompany:viewerToolTip')}>
+                              <Radio.Button className="certifier" value="DOE">
+                                <SafetyOutlined className="role-icons" />
                                 {t('addCompany:doe')}
                               </Radio.Button>
                             </Tooltip>
                           </div>
+
                           <div
                             className="dev-radio-container"
                             style={

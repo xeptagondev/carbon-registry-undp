@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, Logger } from '@nestjs/common';
-import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
@@ -14,7 +13,6 @@ import { GuardianRoleEntity } from '@app/shared/guardian-role/entity/guardian-ro
 import { RoleEntity } from '@app/shared/role/entity/role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
-import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { TransactionService } from '@app/shared/transaction/service/transaction.service';
@@ -34,6 +32,8 @@ import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { HelperService } from '@app/shared/util/service/helper.service';
+import { UtilService } from '@app/shared/util/service/util.service';
+import { OrganizationService } from 'src/organization/service/organization.service';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -43,12 +43,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         protected readonly transactionService: TransactionService,
         protected readonly auditService: AuditService,
         protected readonly configService: ConfigService,
+        protected readonly utilService: UtilService,
         private readonly mailService: MailService,
         private readonly helperService: HelperService,
+        private readonly orgaisationService: OrganizationService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
-        @InjectRepository(PolicyBlocksEntity)
-        protected readonly policyBlocksRepository: Repository<PolicyBlocksEntity>,
         @InjectRepository(GuardianRoleEntity)
         private readonly guardianRoleRepository: Repository<GuardianRoleEntity>,
         @InjectRepository(RoleEntity)
@@ -60,8 +60,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     ) {
         super(usersRepository);
     }
-
-    private tagToIdMap: Record<string, string> = {};
 
     async updateUser(
         userDTO: UsersDTO,
@@ -97,30 +95,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return guardRole;
     }
 
-    async accessToken(refreshToken: string) {
-        const accessTokenResponse = await axios.post(
-            `${this.configService.get('guardian.url')}${this.configService.get(
-                'guardian.accessToken',
-            )}`,
-            {
-                refreshToken: refreshToken,
-            },
-        );
-        return accessTokenResponse.data.accessToken;
-    }
-
     async delay(ms: number) {
         return new Promise<void>((resolve) => setTimeout(resolve, ms));
-    }
-
-    private async setTagToIdMap() {
-        this.tagToIdMap = {};
-        const policyBlocks = await this.getBlocksByPolicy(
-            this.configService.get('policy.id'),
-        );
-        policyBlocks.forEach((block) => {
-            this.tagToIdMap[block.blockName] = block.blockId;
-        });
     }
 
     async register(
@@ -132,7 +108,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             this.logger.log(
                 `Request received to register user with email ${userDto.email}`,
             );
-            await this.setTagToIdMap();
+            await this.utilService.setTagToIdMap();
             // 1: Login SRU and Gov. Root
 
             const sruLoginResponse = await this.guardianService.login({
@@ -271,10 +247,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    private getBlock(blokName: string) {
-        return this.tagToIdMap[blokName];
-    }
-
     private async inviteNewUser(
         userDto: UsersDTO,
         userLoginResponse,
@@ -302,7 +274,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 );
                 inviteResponse = await this.guardianService.createInvitation(
                     refreshToken,
-                    this.getBlock(
+                    this.utilService.getBlock(
                         this.configService.get('blocks.userCreateInvite'),
                     ),
                     {
@@ -328,7 +300,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const createGroupTypeResponse =
                     await this.guardianService.createGroupType(
                         userLoginResponse.refreshToken,
-                        this.getBlock(
+                        this.utilService.getBlock(
                             this.configService.get('blocks.createGroupType'),
                         ),
                         {
@@ -351,14 +323,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             try {
                 createUserResponse = await this.guardianService.createUser(
                     userLoginResponse.refreshToken,
-                    this.getBlock(this.configService.get('blocks.createUser')),
+                    this.utilService.getBlock(
+                        this.configService.get('blocks.createUser'),
+                    ),
                     {
                         document: {
                             name: userDto.name,
-                            organization: {
-                                name: org.name,
-                                role: org.organizationType.name,
-                            },
                             role: userDto.role,
                         },
                         ref: null,
@@ -384,58 +354,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async approve(
-        email: string,
-        id: number,
-        organizationApproveDto: OrganisationApproveDto,
-    ) {
-        try {
-            this.logger.log(
-                `Request received to approve organization ${organizationApproveDto}`,
-            );
-            await this.setTagToIdMap();
-            const orgEntity: OrganizationEntity =
-                await this.organizationRepository.findOne({
-                    where: {
-                        id: id,
-                    },
-                    relations: {
-                        organizationType: true,
-                    },
-                });
-            let approveResponse = {};
-            try {
-                approveResponse = await this.guardianService.approve(
-                    organizationApproveDto.refreshToken,
-                    this.getBlock(
-                        this.configService.get('blocks.appoveOrganization'),
-                    ),
-                    orgEntity.payload,
-                );
-                await this.transactionService.save({
-                    user: email,
-                    stage: TransactionStage.APPROVE_ORGANIZATION,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
-
-            await this.organizationRepository.update(
-                {
-                    id: orgEntity.id,
-                },
-                { state: OrganizationStateEnum.ACTIVE },
-            );
-            return approveResponse;
-        } catch (e) {
-            console.log(e);
-            throw e;
-        }
-    }
-
     private async registerGroup(
         userDto: UsersDTO,
         userLoginResponse,
@@ -447,7 +365,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const createGroupTypeResponse =
                     await this.guardianService.createGroupType(
                         userLoginResponse.refreshToken,
-                        this.getBlock(
+                        this.utilService.getBlock(
                             this.configService.get('blocks.createGroupType'),
                         ),
                         {
@@ -479,7 +397,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 createOrganizationResponse =
                     await this.guardianService.createOrganization(
                         userLoginResponse.refreshToken,
-                        this.getBlock(this.configService.get(blockName)),
+                        this.utilService.getBlock(
+                            this.configService.get(blockName),
+                        ),
                         {
                             document: {
                                 name: userDto.company.name,
@@ -521,7 +441,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const createUserResponse =
                     await this.guardianService.createUser(
                         userLoginResponse.refreshToken,
-                        this.getBlock(
+                        this.utilService.getBlock(
                             this.configService.get('blocks.createUser'),
                         ),
                         {
@@ -556,13 +476,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 { payload: payload, group: createOrganizationResponse?.group },
             );
             if (reqUser?.userRole === RoleEnum.Root) {
-                const refreshToken = await this.guardianService.getRefreshToken(
+                await this.orgaisationService.approve(
                     reqUser?.email,
+                    orgEntity.id,
+                    {
+                        remarks: '',
+                    },
                 );
-                await this.approve(reqUser?.email, orgEntity.id, {
-                    refreshToken: refreshToken,
-                    remarks: '',
-                });
             }
 
             const guardianRole = await this.getGuardianRole(
@@ -580,7 +500,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
     async init() {
         if (this.configService.get('system.initPolicy') === 'true') {
-            await this.fetchPolicyBlocks();
+            await this.utilService.fetchPolicyBlocks();
         }
         if (this.configService.get('system.initOrgs') === 'true') {
             await this.createInitialOrganizations();
@@ -643,123 +563,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 'Error occurred while creating inital organizations',
             );
             throw e;
-        }
-    }
-
-    async fetchPolicyBlocks() {
-        const policy = await this.loadPolicyJson();
-        this.tagToIdMap = this.mapTagsToIds(policy);
-        await this.saveTagIdMap();
-    }
-
-    private async loadPolicyJson() {
-        try {
-            const sruLoginResponse = await this.guardianService.login({
-                username: this.configService.get('sru.username'),
-                password: this.configService.get('sru.password'),
-            });
-
-            const refreshToken = await this.guardianService.getRefreshToken(
-                this.configService.get('sru.username'),
-            );
-            const response = await axios.get(
-                `${this.configService.get('guardian.url')}${this.configService.get(
-                    'guardian.policies',
-                )}${this.configService.get('policy.id')}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${await this.accessToken(refreshToken)}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
-            );
-            return response.data;
-        } catch (e) {
-            throw new Error('Failed to fetch the policy');
-        }
-    }
-    mapTagsToIds(policy) {
-        const result = {};
-        function traverse(block) {
-            if (block.tag && block.id) {
-                result[block.tag] = block.id;
-            }
-
-            if (Array.isArray(block.children)) {
-                for (const child of block.children) {
-                    traverse(child);
-                }
-            }
-        }
-
-        if (policy && policy.config) {
-            traverse(policy.config);
-        }
-
-        return result;
-    }
-
-    async saveTagIdMap() {
-        if (!this.tagToIdMap || Object.keys(this.tagToIdMap).length === 0) {
-            return;
-        }
-        try {
-            const tagIdMap = this.tagToIdMap;
-
-            const policyBlocks = Object.entries(tagIdMap).map(
-                ([blockName, blockId]) => ({
-                    blockName,
-                    blockId,
-                    policyId: this.configService.get<string>('policy.id'),
-                }),
-            );
-
-            const existingBlocks = await this.policyBlocksRepository.find({
-                where: { blockId: In(Object.values(tagIdMap)) },
-            });
-
-            const existingBlockIds = existingBlocks.map(
-                (block) => block.blockId,
-            );
-
-            const newPolicyBlocks = policyBlocks.filter(
-                (block) => !existingBlockIds.includes(block.blockId),
-            );
-
-            if (newPolicyBlocks.length === 0) {
-                return;
-            }
-
-            await this.policyBlocksRepository.save(newPolicyBlocks);
-        } catch (error) {
-            throw new Error('Failed to save tagIdMap to PolicyBlocksEntity');
-        }
-    }
-
-    public async getBlocksByPolicy(
-        policyId: string,
-    ): Promise<PolicyBlocksEntity[]> {
-        try {
-            const blocks = await this.policyBlocksRepository.find({
-                where: { policyId: policyId },
-            });
-            return blocks;
-        } catch (error) {
-            throw new Error('Failed to execute getBlocksByPolicy');
-        }
-    }
-
-    public async getBlocksByBlockName(
-        blockName: string,
-        policyId: string,
-    ): Promise<PolicyBlocksEntity[]> {
-        try {
-            const blocks = await this.policyBlocksRepository.find({
-                where: { policyId: policyId, blockName: blockName },
-            });
-            return blocks;
-        } catch (error) {
-            throw new Error('Failed to execute getBlocksByBlockName');
         }
     }
 
