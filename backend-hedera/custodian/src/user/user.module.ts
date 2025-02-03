@@ -13,9 +13,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { TransactionModule } from '@app/shared/transaction/transaction.module';
 import { GuardianModule } from '@app/shared/guardian/guardian.module';
 import { AuthService } from './service/auth.service';
-import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
 import { MailModule } from '@app/shared/mail/mail.module';
 import { AuthController } from './controller/auth.controller';
+import { OrganizationModule } from 'src/organization/organization.module';
 
 @Module({
     imports: [
@@ -25,7 +25,6 @@ import { AuthController } from './controller/auth.controller';
             RoleEntity,
             OrganizationEntity,
             OrganizationTypeEntity,
-            PolicyBlocksEntity,
         ]),
         AuditModule,
         GuardianModule,
@@ -33,6 +32,7 @@ import { AuthController } from './controller/auth.controller';
         UtilModule,
         JwtModule,
         MailModule,
+        OrganizationModule,
     ],
     controllers: [UserController, AuthController],
     providers: [UserService, AuthService],

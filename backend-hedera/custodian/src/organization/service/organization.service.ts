@@ -1,16 +1,23 @@
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 import { SuperService } from '@app/core/service/super.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
+import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
 import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
+import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
+import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
+import { TransactionService } from '@app/shared/transaction/service/transaction.service';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
-import { Injectable } from '@nestjs/common';
+import { UtilService } from '@app/shared/util/service/util.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -19,11 +26,15 @@ export class OrganizationService extends SuperService<
     OrganizationEntity,
     OrganisationDto
 > {
+    private readonly logger = new Logger(OrganizationService.name);
     constructor(
-        protected readonly auditService: AuditService,
-        protected readonly helperService: HelperService,
+        private readonly utilService: UtilService,
+        private readonly helperService: HelperService,
+        private readonly guardianService: GuardianService,
+        private readonly transactionService: TransactionService,
+        private readonly configService: ConfigService,
         @InjectRepository(OrganizationEntity)
-        protected readonly organizationRepository: Repository<OrganizationEntity>,
+        private readonly organizationRepository: Repository<OrganizationEntity>,
     ) {
         super(organizationRepository);
     }
@@ -154,5 +165,59 @@ export class OrganizationService extends SuperService<
             entities ? oldFormatData : undefined,
             total ? total : undefined,
         );
+    }
+
+    async approve(
+        email: string,
+        id: number,
+        organizationApproveDto: OrganisationApproveDto,
+    ) {
+        try {
+            this.logger.log(
+                `Request received to approve organization ${organizationApproveDto}`,
+            );
+            await this.utilService.setTagToIdMap();
+            const refreshToken =
+                await this.guardianService.getRefreshToken(email);
+            const orgEntity: OrganizationEntity =
+                await this.organizationRepository.findOne({
+                    where: {
+                        id: id,
+                    },
+                    relations: {
+                        organizationType: true,
+                    },
+                });
+            let approveResponse = {};
+            try {
+                approveResponse = await this.guardianService.approve(
+                    refreshToken,
+                    this.utilService.getBlock(
+                        this.configService.get('blocks.appoveOrganization'),
+                    ),
+                    orgEntity.payload,
+                );
+                await this.transactionService.save({
+                    user: email,
+                    stage: TransactionStage.APPROVE_ORGANIZATION,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                console.log(e);
+                throw e;
+            }
+
+            await this.organizationRepository.update(
+                {
+                    id: orgEntity.id,
+                },
+                { state: OrganizationStateEnum.ACTIVE },
+            );
+            return approveResponse;
+        } catch (e) {
+            console.log(e);
+            throw e;
+        }
     }
 }

@@ -7,6 +7,8 @@ import { UsersModule } from '@app/shared/users/users.module';
 import { AuditModule } from '@app/shared/audit/audit.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UtilModule } from '@app/shared/util/util.module';
+import { GuardianModule } from '@app/shared/guardian/guardian.module';
+import { TransactionModule } from '@app/shared/transaction/transaction.module';
 
 @Module({
     imports: [
@@ -15,8 +17,11 @@ import { UtilModule } from '@app/shared/util/util.module';
         AuditModule,
         JwtModule,
         UtilModule,
+        GuardianModule,
+        TransactionModule,
     ],
     providers: [OrganizationService],
+    exports: [OrganizationService],
     controllers: [OrganizationController],
 })
 export class OrganizationModule {}
