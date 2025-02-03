@@ -48,4 +48,21 @@ export class OrganizationEntity {
         default: OrganizationStateEnum.PENDING,
     })
     state?: OrganizationStateEnum;
+
+    @Column({ unique: true })
+    email: string;
+    @Column({ nullable: true })
+    taxId?: string;
+    @Column()
+    phoneNumber: string;
+    @Column({ nullable: true })
+    paymentId?: string;
+    @Column({ nullable: true })
+    faxNumber?: string;
+    @Column({ nullable: true })
+    province?: string;
+    @Column({ nullable: true })
+    website?: string;
+    @Column()
+    address: string;
 }

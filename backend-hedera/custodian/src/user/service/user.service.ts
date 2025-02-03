@@ -149,7 +149,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 email: userDto.email,
                 name: userDto.name,
                 password: hashedPass,
-                phoneNumber: userDto.phoneNumber,
+                phoneNumber: userDto.phoneNo,
             };
 
             // i. Save user in db without organization and role
@@ -428,6 +428,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 name: userDto.company.name,
                 organizationType: orgType,
                 state: OrganizationStateEnum.PENDING,
+                email: userDto?.company?.email,
+                taxId: userDto?.company?.taxId,
+                phoneNumber: userDto?.company?.phoneNo,
+                paymentId: userDto?.company?.paymentId,
+                faxNumber: userDto?.company?.faxNo,
+                province: userDto?.company?.provinces,
+                website: userDto?.company?.website,
+                address: userDto?.company?.address,
             };
 
             // iii. Save organization
