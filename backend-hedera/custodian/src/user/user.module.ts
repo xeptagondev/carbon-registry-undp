@@ -16,6 +16,7 @@ import { AuthService } from './service/auth.service';
 import { MailModule } from '@app/shared/mail/mail.module';
 import { AuthController } from './controller/auth.controller';
 import { OrganizationModule } from 'src/organization/organization.module';
+import { TokenModule } from '@app/shared/token/token.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { OrganizationModule } from 'src/organization/organization.module';
         JwtModule,
         MailModule,
         OrganizationModule,
+        TokenModule,
     ],
     controllers: [UserController, AuthController],
     providers: [UserService, AuthService],
