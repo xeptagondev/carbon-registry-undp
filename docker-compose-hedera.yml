@@ -36,6 +36,7 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: "123"
       DB_NAME: hedera_db
+    volumes: -./backend-hedera/custodian/.env:/.env
 
   web:
     build:
