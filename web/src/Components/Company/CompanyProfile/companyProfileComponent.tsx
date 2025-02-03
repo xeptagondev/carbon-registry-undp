@@ -22,8 +22,6 @@ import {
   CarbonNeutralConfirmationModelSl,
   CarbonNeutralConfirmationPopupInfo,
 } from '../../Models/carbonNeutralConfirmationModelSl';
-import { SlcfFormActionModel } from '../../Models/SlcfFormActionModel';
-import { PopupInfo } from '../../../Definitions/Definitions/ndcDetails.definitions';
 import moment from 'moment';
 import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
@@ -167,8 +165,8 @@ export const CompanyProfileComponent = (props: any) => {
         duration: 3,
         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
       });
-      getCompanyDetails(companyDetails.companyId);
-      getUserDetails(companyDetails.companyId);
+      getCompanyDetails(companyDetails.id);
+      getUserDetails(companyDetails.id);
     } catch (exception: any) {
       setErrorMsg(exception.message);
     } finally {
@@ -183,7 +181,7 @@ export const CompanyProfileComponent = (props: any) => {
   const onRejectOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(`organisation/reject?id=${companyDetails.companyId}`, {
+      const response: any = await put(`organisation/reject?id=${companyDetails.id}`, {
         remarks: remarks,
       });
       setOpenRejectModal(false);
@@ -193,7 +191,7 @@ export const CompanyProfileComponent = (props: any) => {
         duration: 3,
         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
       });
-      getCompanyDetails(companyDetails.companyId);
+      getCompanyDetails(companyDetails.id);
     } catch (exception: any) {
       setErrorMsg(exception.message);
     } finally {

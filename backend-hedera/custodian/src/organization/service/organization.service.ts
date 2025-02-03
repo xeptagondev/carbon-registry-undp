@@ -220,4 +220,62 @@ export class OrganizationService extends SuperService<
             throw e;
         }
     }
+
+    async reject(
+        email: string,
+        id: number,
+        organizationApproveDto: OrganisationApproveDto,
+    ) {
+        try {
+            this.logger.log(
+                `Request received to reject organization ${organizationApproveDto}`,
+            );
+            await this.utilService.setTagToIdMap();
+            const refreshToken =
+                await this.guardianService.getRefreshToken(email);
+            const orgEntity: OrganizationEntity =
+                await this.organizationRepository.findOne({
+                    where: {
+                        id: id,
+                    },
+                    relations: {
+                        organizationType: true,
+                    },
+                });
+            let approveResponse = {};
+            try {
+                orgEntity.payload = orgEntity.payload.replace(
+                    'Button_0',
+                    'Button_1',
+                );
+                approveResponse = await this.guardianService.approve(
+                    refreshToken,
+                    this.utilService.getBlock(
+                        this.configService.get('blocks.appoveOrganization'),
+                    ),
+                    orgEntity.payload,
+                );
+                await this.transactionService.save({
+                    user: email,
+                    stage: TransactionStage.REJECT_ORGANIZATION,
+                    type: TransactionType.USER_REGISTER,
+                    createdTime: Date.now(),
+                });
+            } catch (e) {
+                console.log(e);
+                throw e;
+            }
+
+            await this.organizationRepository.update(
+                {
+                    id: orgEntity.id,
+                },
+                { state: OrganizationStateEnum.REJECTED },
+            );
+            return approveResponse;
+        } catch (e) {
+            console.log(e);
+            throw e;
+        }
+    }
 }

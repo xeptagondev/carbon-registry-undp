@@ -34,6 +34,20 @@ export class OrganizationController {
     }
 
     @UseGuards(AuthGuardService)
+    @Put('reject')
+    async reject(
+        @Query('id') id: number,
+        @Body() organizationApproveDto: OrganisationApproveDto,
+        @Request() req,
+    ): Promise<any> {
+        return this.organizationService.reject(
+            req?.user?.email,
+            id,
+            organizationApproveDto,
+        );
+    }
+
+    @UseGuards(AuthGuardService)
     @Get('profile')
     async getOrganizationProfile(
         @Query('id') organizationId: number,
