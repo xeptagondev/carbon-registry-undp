@@ -20,9 +20,9 @@ export class OrganizationController {
     constructor(private readonly organizationService: OrganizationService) {}
 
     @UseGuards(AuthGuardService)
-    @Put('approve/:id')
+    @Put('approve')
     async approve(
-        @Param('id') id: number,
+        @Query('id') id: number,
         @Body() organizationApproveDto: OrganisationApproveDto,
         @Request() req,
     ): Promise<any> {

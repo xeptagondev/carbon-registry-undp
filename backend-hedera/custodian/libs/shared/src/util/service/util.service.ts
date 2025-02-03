@@ -17,7 +17,7 @@ export class UtilService {
     private tagToIdMap: Record<string, string> = {};
 
     getBlock(blokName: string) {
-        return this.tagToIdMap.tagToIdMap[blokName];
+        return this.tagToIdMap[blokName];
     }
 
     public async getBlocksByPolicy(

@@ -157,7 +157,7 @@ export const CompanyProfileComponent = (props: any) => {
   const onApproveOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(`organisation/approve?id=${companyDetails.companyId}`, {
+      const response: any = await put(`organisation/approve?id=${companyDetails.id}`, {
         remarks: remarks,
       });
       setOpenApproveModal(false);
