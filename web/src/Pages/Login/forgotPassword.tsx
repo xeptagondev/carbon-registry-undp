@@ -20,7 +20,7 @@ const ForgotPassword = () => {
     setLoading(true);
     try {
       const email = values.email.trim();
-      const response = await post('national/auth/forgotPassword', {
+      const response = await post('auth/forgotPassword', {
         email: email.trim(),
       });
 

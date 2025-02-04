@@ -6,8 +6,8 @@ export class HTTPResponseDto {
     statusCode: number;
 
     @IsOptional()
-    message: string;
+    message?: string;
 
     @IsOptional()
-    data: any;
+    data?: any;
 }

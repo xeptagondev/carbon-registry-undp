@@ -10,6 +10,7 @@ import { AuditService } from '@app/shared/audit/service/audit.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Repository } from 'typeorm';
+import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
 
 @Injectable()
 export class GuardianService {
@@ -307,6 +308,31 @@ export class GuardianService {
             throw new HttpException(
                 'Guardian User Login Failed',
                 HttpStatus.UNAUTHORIZED,
+            );
+        }
+    }
+
+    async passwordChange(guardianPwChangeDto: GuardianPwChangeDto) {
+        const logInDetails = await this.login({
+            username: guardianPwChangeDto.username,
+            password: guardianPwChangeDto.oldPassword,
+        });
+
+        const url = `${this.buildGuardianUrl(this.configService.get('guardian.changePassword'))}`;
+        const token = await this.getAccessToken(logInDetails?.refreshToken);
+        const response = await axios.post(url, guardianPwChangeDto, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response && response.status == HttpStatus.OK) {
+            return response;
+        } else {
+            throw new HttpException(
+                'Password Changed Failed',
+                HttpStatus.BAD_REQUEST,
             );
         }
     }

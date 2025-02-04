@@ -85,3 +85,20 @@ export function verifyPassword(
 
     return hash === originalHash;
 }
+
+export function formatRemainingTime(ms: number): string {
+    // Input should be in milisecond
+    const seconds = Math.ceil(ms / 1000);
+
+    if (seconds < 60) {
+        return `${seconds} second${seconds === 1 ? '' : 's'}`;
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) {
+        return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    return `${hours} hour${hours === 1 ? '' : 's'}`;
+}

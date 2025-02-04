@@ -20,9 +20,16 @@ import { TransactionType } from '@app/shared/transaction/enum/transaction.type.e
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
-import { generatePassword, hashPassword } from '@app/shared/util/util';
+import {
+    generatePassword,
+    hashPassword,
+    verifyPassword,
+} from '@app/shared/util/util';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
-import { USER_REGISTER_HEADER } from '@app/shared/mail/constant/mail-header.constant';
+import {
+    RESET_PASSWORD_HEADER,
+    USER_REGISTER_HEADER,
+} from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
@@ -33,6 +40,8 @@ import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
 import { OrganizationService } from 'src/organization/service/organization.service';
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
+import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
+import { HTTPResponseDto } from '@app/shared/util/dto/http.response.dto';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -123,15 +132,15 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             } else {
                 userPass = defaultPass;
             }
-            const serverSalt = this.configService.get('security.salt');
-            const guardianPass = userPass + serverSalt;
+            // const serverSalt = this.configService.get('security.salt');
+            // const guardianPass = userPass + serverSalt;
             const hashedPass = hashPassword(userPass);
 
             // 2: Register the new user as a 'USER' in guardian backend
             try {
                 await this.guardianService.registerUser(
                     userDto.email,
-                    guardianPass,
+                    hashedPass,
                 );
                 await this.transactionService.save({
                     user: reqUser?.email,
@@ -158,7 +167,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             // 3. User login to the guardian backend
             const userLoginResponse = await this.guardianService.login({
                 username: userDto.email,
-                password: guardianPass,
+                password: hashedPass,
             });
             await this.delay(5000);
             // 4. Update the user profile with the parent (SRU)
@@ -754,5 +763,86 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             user: userProfile,
             Organisation: userProfile?.organization,
         };
+    }
+
+    async resetPassword(
+        passwordUpdateDto: PasswordUpdateDto,
+        requestUser: JWTPayload,
+    ) {
+        this.helperService.validateRequestUser(requestUser);
+
+        const userDetails = await this.usersRepository.findOneBy({
+            email: requestUser.email,
+        });
+        const isOldPwdVerified = verifyPassword(
+            passwordUpdateDto.oldPassword,
+            userDetails.password,
+        );
+
+        if (!userDetails || !isOldPwdVerified) {
+            throw new HttpException(
+                'Entered old password is incorrect',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+
+        const hashedPass = hashPassword(passwordUpdateDto.newPassword);
+        // const serverSalt = this.configService.get('security.salt');
+        const guardianResponse = await this.guardianService.passwordChange({
+            newPassword: hashedPass,
+            oldPassword: userDetails.password,
+            username: userDetails.email,
+        });
+
+        if (guardianResponse) {
+            await this.transactionService.save({
+                user: userDetails?.email,
+                stage: TransactionStage.CHANGE_PASSOWRD,
+                type: TransactionType.CHANGE_PASSOWRD,
+                createdTime: Date.now(),
+            });
+            const result = await this.usersRepository
+                .update(
+                    {
+                        id: userDetails.id,
+                        email: userDetails.email,
+                    },
+                    {
+                        password: hashedPass,
+                    },
+                )
+                .catch((err: any) => {
+                    return err;
+                });
+
+            if (result.affected > 0) {
+                const countryName = this.configService.get('country');
+                const mailDTO: MailTemplateDTO = {
+                    subject: RESET_PASSWORD_HEADER.replace(
+                        '{{countryName}}',
+                        countryName,
+                    ),
+                    template: MailTemplateEnum.RESET_PASSWORD,
+                    to: userDetails.email,
+                    context: {
+                        name: userDetails.name,
+                        countryName: countryName,
+                    },
+                };
+                await this.mailService.sendMail(mailDTO);
+
+                const response: HTTPResponseDto = {
+                    statusCode: HttpStatus.OK,
+                    message: 'The password has been reset successfully',
+                };
+
+                return response;
+            } else {
+                throw new HttpException(
+                    'Password update failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+        }
     }
 }

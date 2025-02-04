@@ -35,6 +35,7 @@ export default () => ({
         register: '/api/v1/accounts/register',
         accessToken: '/api/v1/accounts/access-token',
         profileUpdate: '/api/v1/profiles/push',
+        changePassword: '/api/v1/accounts/change-password',
         policyAsign1: '/api/v1/permissions/users',
         policyAsign2: '/policies/assign',
         policies: '/api/v1/policies/',
@@ -90,5 +91,11 @@ export default () => ({
     },
     security: {
         salt: process.env.PASSWORD_SALT,
+    },
+    token: {
+        forgotPwdExpireTimeOut:
+            Number(process.env.FORGOT_PWD_TOKEN_EXPIRE) || 3600, // In Seconds
+        length: process.env.TOKEN_LENGTH || 8,
+        verificationSecret: process.env.TOKEN_VERIFICATION_SECRET,
     },
 });

@@ -5,11 +5,13 @@ import {
     Request,
     UseGuards,
     Get,
+    Put,
 } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
+import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 
 @Controller('user')
 export class UserController {
@@ -36,5 +38,11 @@ export class UserController {
     @Post('query')
     async query(@Body() queryDto: QueryDto, @Request() req): Promise<any> {
         return this.userService.query(queryDto, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Put('resetPassword')
+    resetPassword(@Body() passwordUpdate: PasswordUpdateDto, @Request() req) {
+        return this.userService.resetPassword(passwordUpdate, req.user);
     }
 }

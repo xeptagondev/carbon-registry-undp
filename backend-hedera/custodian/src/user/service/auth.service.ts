@@ -11,7 +11,26 @@ import { instanceToPlain } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { verifyPassword } from '@app/shared/util/util';
+import {
+    formatRemainingTime,
+    hashPassword,
+    verifyPassword,
+} from '@app/shared/util/util';
+import { TokenService } from '@app/shared/token/service/token.service';
+import {
+    FORGOT_PASSWORD_HEADER,
+    RESET_PASSWORD_HEADER,
+} from '@app/shared/mail/constant/mail-header.constant';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+import { MailService } from '@app/shared/mail/service/mail.service';
+import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
+import { GenerateTokenDto } from '@app/shared/token/dto/generate-token.dto';
+import { PasswordResetDto } from '@app/shared/users/dto/password-reset.dto';
+import { ValidateTokenDto } from '@app/shared/token/dto/validate-token.dto';
+import { TransactionService } from '@app/shared/transaction/service/transaction.service';
+import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
+import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
+import { RequestTokenDto } from '@app/shared/token/dto/request-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +38,9 @@ export class AuthService {
         private readonly configService: ConfigService,
         private readonly guardianService: GuardianService,
         private readonly jwtService: JwtService,
+        private readonly tokenService: TokenService,
+        private readonly mailService: MailService,
+        private readonly transactionService: TransactionService,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(OrganizationEntity)
@@ -131,9 +153,16 @@ export class AuthService {
             },
         });
 
+        if (!user) {
+            throw new HttpException(
+                'Email or Password is Incorrect',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+
         const isCorrectPass = verifyPassword(loginDto.password, user.password);
 
-        if (!user || !isCorrectPass) {
+        if (!isCorrectPass) {
             throw new HttpException(
                 'Email or Password is Incorrect',
                 HttpStatus.UNAUTHORIZED,
@@ -142,8 +171,7 @@ export class AuthService {
         let guardianResponse: any;
         try {
             // add SALT to password for login
-            loginDto.password =
-                loginDto.password + this.configService.get('security.salt');
+            loginDto.password = user?.password;
             guardianResponse = await this.guardianService.login(loginDto);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
@@ -178,7 +206,6 @@ export class AuthService {
                 organizationRole: organization.organizationType.name,
             };
 
-            console.log(refreshPayload);
             const refreshToken = this.jwtService.sign(refreshPayload, {
                 secret: this.configService.get<string>(
                     'apiJwt.refreshTokenSecret',
@@ -187,7 +214,6 @@ export class AuthService {
                     'apiJwt.refreshTokenExpireTimeout',
                 ),
             });
-            console.log(refreshToken);
             response.statusCode = HttpStatus.OK;
             response.data = {
                 // eslint-disable-next-line camelcase
@@ -203,9 +229,7 @@ export class AuthService {
                 companyId: organization.id,
                 companyRole: organization.organizationType.name,
                 companyName: organization.name,
-                companyLogo:
-                    // eslint-disable-next-line max-len
-                    'https://carbon-common-uni.s3.amazonaws.com/profile_images%2F228_1736221366674.png', // Will be removed after database changes
+                companyLogo: organization?.logo,
                 companyState: parseInt(organization.state),
             };
             return response;
@@ -214,6 +238,145 @@ export class AuthService {
                 'Email or Password is Incorrect',
                 HttpStatus.UNAUTHORIZED,
             );
+        }
+    }
+
+    async forgotPassword(requestTokenDto: RequestTokenDto) {
+        const userDetails = await this.usersRepository.findOne({
+            where: {
+                email: requestTokenDto.email,
+            },
+            relations: {
+                organization: true,
+            },
+        });
+        if (
+            userDetails &&
+            userDetails?.organization?.state == OrganizationStateEnum.ACTIVE
+        ) {
+            const createTime = Date.now();
+            const tokenValidTime =
+                Number(
+                    this.configService.get<string>(
+                        'token.forgotPwdExpireTimeOut',
+                    ),
+                ) * 1000;
+            const expireTime = createTime + tokenValidTime;
+
+            const generateNewToken = new GenerateTokenDto();
+            generateNewToken.email = requestTokenDto.email;
+            generateNewToken.createTime = createTime;
+            generateNewToken.expireTime = expireTime;
+
+            const token =
+                await this.tokenService.generateNewToken(generateNewToken);
+
+            const countryName = this.configService.get('country');
+            const mailDTO: MailTemplateDTO = {
+                subject: FORGOT_PASSWORD_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+                template: MailTemplateEnum.FORGOT_PASSOWRD,
+                to: requestTokenDto.email,
+                context: {
+                    name: userDetails.name,
+                    countryName: countryName,
+                    remainingTime: formatRemainingTime(tokenValidTime),
+                    pwdResetlink: `${this.configService.get('url')}/resetPassword/${token}`,
+                },
+            };
+            await this.mailService.sendMail(mailDTO);
+
+            const response: HTTPResponseDto = {
+                statusCode: HttpStatus.OK,
+                message: 'User found, An email was sent',
+            };
+
+            return response;
+        } else {
+            throw new HttpException(
+                'No visible user found',
+                HttpStatus.NOT_FOUND,
+            );
+        }
+    }
+
+    async resetPassword(
+        validateTokenDto: ValidateTokenDto,
+        passwordResetDto: PasswordResetDto,
+    ) {
+        const tokenDetails =
+            await this.tokenService.validateToken(validateTokenDto);
+        if (tokenDetails) {
+            const userDetails = await this.usersRepository.findOneBy({
+                email: tokenDetails.email,
+            });
+
+            if (!userDetails) {
+                throw new HttpException(
+                    'No visible user found',
+                    HttpStatus.NOT_FOUND,
+                );
+            }
+            const hashedPass = hashPassword(passwordResetDto.newPassword);
+            // const serverSalt = this.configService.get('security.salt');
+            const guardianResponse = await this.guardianService.passwordChange({
+                newPassword: hashedPass,
+                oldPassword: userDetails.password,
+                username: userDetails.email,
+            });
+
+            if (guardianResponse) {
+                await this.transactionService.save({
+                    user: userDetails?.email,
+                    stage: TransactionStage.CHANGE_PASSOWRD,
+                    type: TransactionType.CHANGE_PASSOWRD,
+                    createdTime: Date.now(),
+                });
+                const result = await this.usersRepository
+                    .update(
+                        {
+                            id: userDetails.id,
+                            email: userDetails.email,
+                        },
+                        {
+                            password: hashedPass,
+                        },
+                    )
+                    .catch((err: any) => {
+                        return err;
+                    });
+
+                if (result.affected > 0) {
+                    const countryName = this.configService.get('country');
+                    const mailDTO: MailTemplateDTO = {
+                        subject: RESET_PASSWORD_HEADER.replace(
+                            '{{countryName}}',
+                            countryName,
+                        ),
+                        template: MailTemplateEnum.RESET_PASSWORD,
+                        to: userDetails.email,
+                        context: {
+                            name: userDetails.name,
+                            countryName: countryName,
+                        },
+                    };
+                    await this.mailService.sendMail(mailDTO);
+
+                    const response: HTTPResponseDto = {
+                        statusCode: HttpStatus.OK,
+                        message: 'The password has been reset successfully',
+                    };
+
+                    return response;
+                } else {
+                    throw new HttpException(
+                        'Password update failed. Please try again',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                }
+            }
         }
     }
 }

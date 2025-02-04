@@ -1,12 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty } from 'class-validator';
-import { TokenEntity } from '../../entity/token.entity/token.entity';
-import { Unwrap } from '@app/core/util/unwrappable';
-import { SuperDTO } from '@app/core/dto/super.dto';
 
-export class RequestTokenDto extends SuperDTO<TokenEntity> {
-    @Unwrap()
+export class RequestTokenDto {
     @IsEmail()
     @IsNotEmpty()
     @ApiProperty()

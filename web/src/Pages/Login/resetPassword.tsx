@@ -25,7 +25,7 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
   const onSubmit = async (values: any) => {
     try {
       setLoading(true);
-      const response: any = await put(`national/auth/resetPassword?requestId=${requestid}`, {
+      const response: any = await put(`auth/resetPassword?requestId=${requestid}`, {
         newPassword: values.password,
       });
       if (response.status === 200 || response.status === 201) {
