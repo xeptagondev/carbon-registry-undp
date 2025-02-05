@@ -48,28 +48,28 @@ export const AddNewUserComponent = (props: any) => {
   const [countries, setCountries] = useState<[]>([]);
   const [isCountryListLoading, setIsCountryListLoading] = useState(false);
 
-  const getCountryList = async () => {
-    setIsCountryListLoading(true);
-    try {
-      const response = await get('organisation/countries');
-      if (response.data) {
-        const alpha2Names = response.data.map((item: any) => {
-          return item.alpha2;
-        });
-        setCountries(alpha2Names);
-      }
-    } catch (error: any) {
-      console.log('Error in getCountryList', error);
-      message.open({
-        type: 'error',
-        content: `${error.message}`,
-        duration: 3,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
-    } finally {
-      setIsCountryListLoading(false);
-    }
-  };
+  // const getCountryList = async () => {
+  //   setIsCountryListLoading(true);
+  //   try {
+  //     const response = await get('organisation/countries');
+  //     if (response.data) {
+  //       const alpha2Names = response.data.map((item: any) => {
+  //         return item.alpha2;
+  //       });
+  //       setCountries(alpha2Names);
+  //     }
+  //   } catch (error: any) {
+  //     console.log('Error in getCountryList', error);
+  //     message.open({
+  //       type: 'error',
+  //       content: `${error.message}`,
+  //       duration: 3,
+  //       style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //     });
+  //   } finally {
+  //     setIsCountryListLoading(false);
+  //   }
+  // };
 
   const onAddUser = async (values: any) => {
     setLoading(true);
@@ -281,6 +281,7 @@ export const AddNewUserComponent = (props: any) => {
                 <Form.Item
                   label={t('addUser:hederaAccount')}
                   name="hederaAccount"
+                  initialValue={state?.record?.hederaAccount}
                   rules={[
                     {
                       required: true,
@@ -300,7 +301,7 @@ export const AddNewUserComponent = (props: any) => {
                     },
                   ]}
                 >
-                  <Input size="large" />
+                  <Input disabled={isUpdate} size="large" />
                 </Form.Item>
               </div>
             </Col>
@@ -309,6 +310,11 @@ export const AddNewUserComponent = (props: any) => {
                 <Form.Item
                   label={t('addUser:hederaKey')}
                   name="hederaKey"
+                  initialValue={
+                    state?.record?.hederaAccount
+                      ? '##################################################'
+                      : null
+                  }
                   rules={[
                     {
                       required: true,
@@ -328,7 +334,7 @@ export const AddNewUserComponent = (props: any) => {
                     },
                   ]}
                 >
-                  <Input size="large" />
+                  <Input disabled={isUpdate} size="large" />
                 </Form.Item>
               </div>
             </Col>
@@ -392,13 +398,7 @@ export const AddNewUserComponent = (props: any) => {
                     },
                   ]}
                 >
-                  <Input
-                    disabled={
-                      isUpdate &&
-                      !ability.can(Action.Update, plainToClass(User, state?.record), 'email')
-                    }
-                    size="large"
-                  />
+                  <Input disabled={isUpdate} size="large" />
                 </Form.Item>
               </div>
             </Col>
@@ -416,14 +416,7 @@ export const AddNewUserComponent = (props: any) => {
                     },
                   ]}
                 >
-                  <Radio.Group
-                    value={state?.record?.role}
-                    size="large"
-                    disabled={
-                      isUpdate &&
-                      !ability.can(Action.Update, plainToClass(User, state?.record), 'role')
-                    }
-                  >
+                  <Radio.Group value={state?.record?.role} size="large" disabled={isUpdate}>
                     <div className="admin-radio-container">
                       <Tooltip placement="top" title={t('addUser:adminToolTip')}>
                         <Radio.Button className="admin" value="Admin">

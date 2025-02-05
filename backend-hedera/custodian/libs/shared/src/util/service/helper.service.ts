@@ -38,13 +38,13 @@ export class HelperService {
     public validateRequestUser(requestUser: JWTPayload) {
         if (!requestUser) {
             throw new HttpException(
-                'Not Authorized User',
+                'This action is unauthorised',
                 HttpStatus.UNAUTHORIZED,
             );
         }
         if (requestUser.organizationState != OrganizationStateEnum.ACTIVE) {
             throw new HttpException(
-                'Organization Not Authorized',
+                'No active company found',
                 HttpStatus.UNAUTHORIZED,
             );
         }

@@ -18,11 +18,13 @@ import { TransactionService } from '@app/shared/transaction/service/transaction.
 import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
 import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import {
+    OrganizationTypeEnum,
+    OrganizationTypeFormatEnum,
+} from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import {
     generatePassword,
-    getEnumKeyByValue,
     hashPassword,
     verifyPassword,
 } from '@app/shared/util/util';
@@ -44,6 +46,7 @@ import { OrganizationService } from 'src/organization/service/organization.servi
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 import { HTTPResponseDto } from '@app/shared/util/dto/http.response.dto';
+import { UserUpdateDto } from '@app/shared/users/dto/user-update.dto';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -161,6 +164,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 name: userDto.name,
                 password: hashedPass,
                 phoneNumber: userDto.phoneNo,
+                hederaAccount: userDto.hederaAccount,
             };
 
             // i. Save user in db without organization and role
@@ -234,10 +238,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     context: {
                         organizationName: userDto.company.name,
                         countryName: countryName,
-                        organizationRole: getEnumKeyByValue(
-                            OrganizationTypeEnum,
-                            userDto.company.companyRole,
-                        ),
+                        organizationRole:
+                            OrganizationTypeFormatEnum[
+                                userDto.company.companyRole
+                            ],
                         home: this.configService.get('url'),
                     },
                 };
@@ -606,6 +610,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     orgDto.address = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgAddress`,
                     );
+                    orgDto.logo = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgLogo`,
+                    );
                     const user = new UsersDTO();
                     user.email = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
@@ -660,15 +667,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             companyRole: newUser.guardianRole?.name ?? null,
             createdTime: null,
             isPending: false,
+            hederaAccount: newUser?.hederaAccount,
             company: {
                 companyId: newUser.organization?.id,
                 name: newUser.organization?.name,
-                taxId: null,
-                paymentId: null,
-                email: null,
+                taxId: newUser.organization?.taxId,
+                paymentId: newUser.organization?.paymentId,
+                email: newUser.organization?.email,
                 phoneNo: newUser.phoneNumber ?? null,
-                website: null,
-                address: null,
+                website: newUser.organization?.website,
+                address: newUser.organization?.address,
                 country: null,
                 logo: newUser?.organization?.logo,
                 companyRole:
@@ -846,8 +854,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         password: hashedPass,
                     },
                 )
-                .catch((err: any) => {
-                    return err;
+                .catch((_: any) => {
+                    throw new HttpException(
+                        'Password update failed. Please try again',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
                 });
 
             if (result.affected > 0) {
@@ -878,6 +889,57 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
             }
+        }
+    }
+
+    async updateUserDetails(
+        userUpdateDto: UserUpdateDto,
+        requestUser: JWTPayload,
+    ): Promise<HTTPResponseDto> {
+        this.helperService.validateRequestUser(requestUser);
+
+        const userDetails = await this.usersRepository.findOneBy({
+            id: userUpdateDto.id,
+        });
+
+        if (!userDetails) {
+            throw new HttpException(
+                'No visible user found',
+                HttpStatus.NOT_FOUND,
+            );
+        }
+        // Guardian Implmentation Not Yet Completed
+        const result = await this.usersRepository
+            .update(
+                {
+                    id: userUpdateDto.id,
+                },
+                {
+                    name: userUpdateDto.name,
+                    phoneNumber: userUpdateDto.phoneNo
+                        ? userUpdateDto.phoneNo
+                        : userDetails.phoneNumber,
+                },
+            )
+            .catch((err: any) => {
+                throw new HttpException(
+                    'User update failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            });
+
+        if (result.affected > 0) {
+            const response: HTTPResponseDto = {
+                statusCode: HttpStatus.OK,
+                message: 'The user account has been updated successfully',
+            };
+
+            return response;
+        } else {
+            throw new HttpException(
+                'User update failed. Please try again',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 }

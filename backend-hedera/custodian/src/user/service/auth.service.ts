@@ -344,8 +344,12 @@ export class AuthService {
                             password: hashedPass,
                         },
                     )
-                    .catch((err: any) => {
-                        return err;
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    .catch((_: any) => {
+                        throw new HttpException(
+                            'Password update failed. Please try again',
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
                     });
 
                 if (result.affected > 0) {

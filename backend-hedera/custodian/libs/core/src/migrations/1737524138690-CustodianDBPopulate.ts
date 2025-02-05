@@ -85,6 +85,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 name, \
                 password, \
                 phone_number, \
+                hedera_account_id, \
                 organization_id, \
                 guardian_role_id \
             ) \
@@ -92,6 +93,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 'amilareg', \
                 'Registry user', \
                 '123456', \
+                '0.0.5449556', \
                 '0112456789', \
                 NULL, \
                 NULL \
