@@ -23,6 +23,7 @@
   "sectoralScope": "Sectoral Scope",
   "viewer": "Viewer",
   "viewerToolTip": "Permitted to certify and revoke certifications of projects",
+  "doeToolTip": "Permitted to verify, certify and upload reports",
   "programmeDeveleperToolTip": "Permitted to own projects and transfer carbon credits",
   "ministryToolTip": "Permitted to perform all project-related actions within the Ministry",
   "phoneNo": "Phone Number",

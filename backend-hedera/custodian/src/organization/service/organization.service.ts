@@ -63,7 +63,7 @@ export class OrganizationService extends SuperService<
             remarks: null,
             createdTime: null,
             geographicalLocationCordintes: null,
-            provinces: organization?.province,
+            provinces: organization?.provinces,
             regions: null,
             nameOfMinister: null,
             sectoralScope: null,

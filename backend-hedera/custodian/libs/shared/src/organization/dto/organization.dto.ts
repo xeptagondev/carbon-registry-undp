@@ -40,7 +40,7 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
     )
     email: string;
 
-    provinces?: string;
+    provinces?: string[];
 
     website?: string;
 

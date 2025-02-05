@@ -60,6 +60,19 @@ const ministries: any = [
   'Other',
 ];
 
+const provinces: any = [
+  'Harare',
+  'Bulawayo',
+  'Manicaland',
+  'Mashonaland Central',
+  'Mashonaland East',
+  'Mashonaland West',
+  'Masvingo',
+  'Matabeleland North',
+  'Matabeleland South',
+  'Midlands',
+];
+
 const ministryOrgs: any = {
   Agriculture: [
     'Cocoa Research Institute',
@@ -346,29 +359,31 @@ export const AddNewCompanyComponent = (props: any) => {
   };
 
   const getRegionList = async () => {
-    setLoadingList(true);
-    try {
-      const response = await post('national/location/province', {
-        page: 1,
-        size: 100,
-        filterAnd: [
-          {
-            key: 'lang',
-            operation: '=',
-            value: 'en',
-          },
-        ],
-      });
-      if (response.data) {
-        const regionNames = response.data.map((item: any) => item.provinceName);
-        const uniqueRegionNames: any = Array.from(new Set(regionNames));
-        setRegionsList([t('national'), ...uniqueRegionNames]);
-      }
-    } catch (error: any) {
-      console.log('Error in getting regions list', error);
-    } finally {
-      setLoadingList(false);
-    }
+    // setLoadingList(true);
+    // try {
+    //   const response = await post('national/location/province', {
+    //     page: 1,
+    //     size: 100,
+    //     filterAnd: [
+    //       {
+    //         key: 'lang',
+    //         operation: '=',
+    //         value: 'en',
+    //       },
+    //     ],
+    //   });
+    //   if (response.data) {
+    //     const regionNames = response.data.map((item: any) => item.provinceName);
+    //     const uniqueRegionNames: any = Array.from(new Set(regionNames));
+    //     setRegionsList([t('national'), ...uniqueRegionNames]);
+    //   }
+    // } catch (error: any) {
+    //   console.log('Error in getting regions list', error);
+    // } finally {
+    //   setLoadingList(false);
+    // }
+
+    setRegionsList(provinces);
   };
 
   const getGovDep = async (val: any) => {
@@ -1083,7 +1098,7 @@ export const AddNewCompanyComponent = (props: any) => {
                                 : {}
                             }
                           >
-                            <Tooltip placement="top" title={t('addCompany:viewerToolTip')}>
+                            <Tooltip placement="top" title={t('addCompany:doeToolTip')}>
                               <Radio.Button className="certifier" value="DOE">
                                 <SafetyOutlined className="role-icons" />
                                 {t('addCompany:doe')}
@@ -1438,200 +1453,214 @@ export const AddNewCompanyComponent = (props: any) => {
 
   const CompanyAdminDetailsForm = () => {
     return (
-      <div className="company-details-form-container">
-        <Form
-          name="company-admin-details"
-          className="company-details-form"
-          layout="vertical"
-          requiredMark={true}
-          form={formTwo}
-          onFinish={onFinishStepTwo}
+      <>
+        <label
+          style={{
+            display: 'inline-block',
+            color: 'rgba(58, 53, 65, 0.5)',
+            borderRadius: '4px',
+            fontSize: '14px',
+            fontWeight: 500,
+            marginBottom: '10px',
+          }}
         >
-          <Row className="row" gutter={[16, 16]}>
-            <Col xl={12} md={24}>
-              <div className="details-part-one">
-                <Form.Item
-                  label={t('addCompany:hederaAccount')}
-                  name="hederaAccount"
-                  rules={[
-                    {
-                      required: true,
-                      message: '',
-                    },
-                    {
-                      validator: async (rule, value) => {
-                        if (
-                          String(value).trim() === '' ||
-                          String(value).trim() === undefined ||
-                          value === null ||
-                          value === undefined
-                        ) {
-                          throw new Error(`${t('addCompany:hederaAccount')} ${t('isRequired')}`);
-                        }
+          {t('addUser:hederaAccountRequired')}
+        </label>
+        <div className="company-details-form-container">
+          <Form
+            name="company-admin-details"
+            className="company-details-form"
+            layout="vertical"
+            requiredMark={true}
+            form={formTwo}
+            onFinish={onFinishStepTwo}
+          >
+            <Row className="row" gutter={[16, 16]}>
+              <Col xl={12} md={24}>
+                <div className="details-part-one">
+                  <Form.Item
+                    label={t('addCompany:hederaAccount')}
+                    name="hederaAccount"
+                    rules={[
+                      {
+                        required: true,
+                        message: '',
                       },
-                    },
-                  ]}
-                >
-                  <Input size="large" />
-                </Form.Item>
-              </div>
-            </Col>
-            <Col xl={12} md={24}>
-              <div className="details-part-two">
-                <Form.Item
-                  label={t('addCompany:hederaKey')}
-                  name="hederaKey"
-                  rules={[
-                    {
-                      required: true,
-                      message: '',
-                    },
-                    {
-                      validator: async (rule, value) => {
-                        if (
-                          String(value).trim() === '' ||
-                          String(value).trim() === undefined ||
-                          value === null ||
-                          value === undefined
-                        ) {
-                          throw new Error(`${t('addCompany:hederaKey')} ${t('isRequired')}`);
-                        }
-                      },
-                    },
-                  ]}
-                >
-                  <Input size="large" />
-                </Form.Item>
-              </div>
-            </Col>
-          </Row>
-          <Row className="row" gutter={[16, 16]}>
-            <Col xl={12} md={24}>
-              <div className="details-part-one">
-                <Form.Item
-                  label={t('addCompany:name')}
-                  name="name"
-                  rules={[
-                    {
-                      required: true,
-                      message: '',
-                    },
-                    {
-                      validator: async (rule, value) => {
-                        if (
-                          String(value).trim() === '' ||
-                          String(value).trim() === undefined ||
-                          value === null ||
-                          value === undefined
-                        ) {
-                          throw new Error(`${t('addCompany:name')} ${t('isRequired')}`);
-                        }
-                      },
-                    },
-                  ]}
-                >
-                  <Input size="large" />
-                </Form.Item>
-                <Form.Item
-                  name="phoneNo"
-                  label={t('addCompany:phoneNo')}
-                  rules={[
-                    {
-                      required: false,
-                    },
-                    {
-                      validator: async (rule: any, value: any) => {
-                        const phoneNo = formatPhoneNumber(String(value));
-                        if (String(value).trim() !== '') {
+                      {
+                        validator: async (rule, value) => {
                           if (
-                            (String(value).trim() !== '' &&
-                              String(value).trim() !== undefined &&
-                              value !== null &&
-                              value !== undefined &&
-                              phoneNo !== null &&
-                              phoneNo !== '' &&
-                              phoneNo !== undefined &&
-                              !isPossiblePhoneNumber(String(value))) ||
-                            value?.length > 17
+                            String(value).trim() === '' ||
+                            String(value).trim() === undefined ||
+                            value === null ||
+                            value === undefined
                           ) {
-                            throw new Error(`${t('addCompany:phoneNo')} ${t('isInvalid')}`);
+                            throw new Error(`${t('addCompany:hederaAccount')} ${t('isRequired')}`);
                           }
-                        }
+                        },
                       },
-                    },
-                  ]}
-                >
-                  <PhoneInput
-                    placeholder={t('addCompany:phoneNo')}
-                    international
-                    value={formatPhoneNumberIntl(contactNoInput)}
-                    defaultCountry="LK"
-                    countryCallingCodeEditable={false}
-                    onChange={(v) => {}}
-                  />
-                </Form.Item>
-              </div>
-            </Col>
-            <Col xl={12} md={24}>
-              <div className="details-part-two">
-                <Form.Item
-                  label={t('addCompany:email')}
-                  name="email"
-                  rules={[
-                    {
-                      required: true,
-                      message: '',
-                    },
-                    {
-                      validator: async (rule, value) => {
-                        if (
-                          String(value).trim() === '' ||
-                          String(value).trim() === undefined ||
-                          value === null ||
-                          value === undefined
-                        ) {
-                          throw new Error(`${t('addCompany:email')} ${t('isRequired')}`);
-                        } else {
-                          const val = value.trim();
-                          const reg =
-                            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                          const matches = val.match(reg) ? val.match(reg) : [];
-                          if (matches.length === 0) {
-                            throw new Error(`${t('addCompany:email')} ${t('isInvalid')}`);
+                    ]}
+                  >
+                    <Input size="large" />
+                  </Form.Item>
+                </div>
+              </Col>
+              <Col xl={12} md={24}>
+                <div className="details-part-two">
+                  <Form.Item
+                    label={t('addCompany:hederaKey')}
+                    name="hederaKey"
+                    rules={[
+                      {
+                        required: true,
+                        message: '',
+                      },
+                      {
+                        validator: async (rule, value) => {
+                          if (
+                            String(value).trim() === '' ||
+                            String(value).trim() === undefined ||
+                            value === null ||
+                            value === undefined
+                          ) {
+                            throw new Error(`${t('addCompany:hederaKey')} ${t('isRequired')}`);
                           }
-                        }
+                        },
                       },
-                    },
-                  ]}
+                    ]}
+                  >
+                    <Input size="large" />
+                  </Form.Item>
+                </div>
+              </Col>
+            </Row>
+            <Row className="row" gutter={[16, 16]}>
+              <Col xl={12} md={24}>
+                <div className="details-part-one">
+                  <Form.Item
+                    label={t('addCompany:name')}
+                    name="name"
+                    rules={[
+                      {
+                        required: true,
+                        message: '',
+                      },
+                      {
+                        validator: async (rule, value) => {
+                          if (
+                            String(value).trim() === '' ||
+                            String(value).trim() === undefined ||
+                            value === null ||
+                            value === undefined
+                          ) {
+                            throw new Error(`${t('addCompany:name')} ${t('isRequired')}`);
+                          }
+                        },
+                      },
+                    ]}
+                  >
+                    <Input size="large" />
+                  </Form.Item>
+                  <Form.Item
+                    name="phoneNo"
+                    label={t('addCompany:phoneNo')}
+                    rules={[
+                      {
+                        required: false,
+                      },
+                      {
+                        validator: async (rule: any, value: any) => {
+                          const phoneNo = formatPhoneNumber(String(value));
+                          if (String(value).trim() !== '') {
+                            if (
+                              (String(value).trim() !== '' &&
+                                String(value).trim() !== undefined &&
+                                value !== null &&
+                                value !== undefined &&
+                                phoneNo !== null &&
+                                phoneNo !== '' &&
+                                phoneNo !== undefined &&
+                                !isPossiblePhoneNumber(String(value))) ||
+                              value?.length > 17
+                            ) {
+                              throw new Error(`${t('addCompany:phoneNo')} ${t('isInvalid')}`);
+                            }
+                          }
+                        },
+                      },
+                    ]}
+                  >
+                    <PhoneInput
+                      placeholder={t('addCompany:phoneNo')}
+                      international
+                      value={formatPhoneNumberIntl(contactNoInput)}
+                      defaultCountry="LK"
+                      countryCallingCodeEditable={false}
+                      onChange={(v) => {}}
+                    />
+                  </Form.Item>
+                </div>
+              </Col>
+              <Col xl={12} md={24}>
+                <div className="details-part-two">
+                  <Form.Item
+                    label={t('addCompany:email')}
+                    name="email"
+                    rules={[
+                      {
+                        required: true,
+                        message: '',
+                      },
+                      {
+                        validator: async (rule, value) => {
+                          if (
+                            String(value).trim() === '' ||
+                            String(value).trim() === undefined ||
+                            value === null ||
+                            value === undefined
+                          ) {
+                            throw new Error(`${t('addCompany:email')} ${t('isRequired')}`);
+                          } else {
+                            const val = value.trim();
+                            const reg =
+                              /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                            const matches = val.match(reg) ? val.match(reg) : [];
+                            if (matches.length === 0) {
+                              throw new Error(`${t('addCompany:email')} ${t('isInvalid')}`);
+                            }
+                          }
+                        },
+                      },
+                    ]}
+                  >
+                    <Input size="large" />
+                  </Form.Item>
+                </div>
+              </Col>
+            </Row>
+            <div className="steps-actions">
+              {current === 1 && state?.record ? (
+                <Button
+                  className="mg-left-1"
+                  type="primary"
+                  onClick={onUpdateCompany}
+                  loading={loading}
                 >
-                  <Input size="large" />
-                </Form.Item>
-              </div>
-            </Col>
-          </Row>
-          <div className="steps-actions">
-            {current === 1 && state?.record ? (
-              <Button
-                className="mg-left-1"
-                type="primary"
-                onClick={onUpdateCompany}
-                loading={loading}
-              >
-                UPDATE
-              </Button>
-            ) : (
-              <Button className="mg-left-1" type="primary" htmlType="submit" loading={loading}>
-                {t('addCompany:submit')}
-              </Button>
-            )}
-            {current === 1 && (
-              <Button onClick={() => prevOne()} loading={loading}>
-                {t('addCompany:back')}
-              </Button>
-            )}
-          </div>
-        </Form>
-      </div>
+                  UPDATE
+                </Button>
+              ) : (
+                <Button className="mg-left-1" type="primary" htmlType="submit" loading={loading}>
+                  {t('addCompany:submit')}
+                </Button>
+              )}
+              {current === 1 && (
+                <Button onClick={() => prevOne()} loading={loading}>
+                  {t('addCompany:back')}
+                </Button>
+              )}
+            </div>
+          </Form>
+        </div>
+      </>
     );
   };
 

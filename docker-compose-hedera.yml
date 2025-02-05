@@ -27,7 +27,7 @@ services:
       dockerfile: ./backend-hedera/custodian/Dockerfile
     command: ["yarn", "start:prod"]
     ports:
-      - "3001:3000"
+      - "3000:3000"
     depends_on:
       - hedera_db
     environment:

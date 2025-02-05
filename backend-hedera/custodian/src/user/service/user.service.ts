@@ -468,7 +468,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 phoneNumber: userDto?.company?.phoneNo,
                 paymentId: userDto?.company?.paymentId,
                 faxNumber: userDto?.company?.faxNo,
-                province: userDto?.company?.provinces,
+                provinces: userDto?.company?.provinces,
                 website: userDto?.company?.website,
                 address: userDto?.company?.address,
             };
