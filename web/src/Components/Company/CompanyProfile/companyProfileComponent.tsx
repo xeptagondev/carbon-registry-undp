@@ -106,7 +106,7 @@ export const CompanyProfileComponent = (props: any) => {
       if (state.record?.state == '2' || state.record?.state == '3') {
         getUserDetails(state.record.companyId);
       }
-      getCarbonNeutralCertificates(state.record.companyId);
+      // getCarbonNeutralCertificates(state.record.companyId);
     }
   }, []);
 
@@ -270,28 +270,28 @@ export const CompanyProfileComponent = (props: any) => {
     setCNCModelInfo(info);
   };
 
-  const getCarbonNeutralCertificates = async (companyId: number) => {
-    // setLoading(true);
-    try {
-      const response: any = await post('programmeSl/getCarbonNeutralCertificates', {
-        companyId: companyId,
-      });
-      if (response.status === 200 || response.status === 201) {
-        console.log(response);
-        setCarbonNeutralCertificateData(response?.data);
-      }
-    } catch (err: any) {
-      console.log('Error in getting carbon neutral certificate data - ', err);
-      message.open({
-        type: 'error',
-        content: err.message,
-        duration: 4,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
-    } finally {
-      // setLoading(false);
-    }
-  };
+  // const getCarbonNeutralCertificates = async (companyId: number) => {
+  //   // setLoading(true);
+  //   try {
+  //     const response: any = await post('programmeSl/getCarbonNeutralCertificates', {
+  //       companyId: companyId,
+  //     });
+  //     if (response.status === 200 || response.status === 201) {
+  //       console.log(response);
+  //       setCarbonNeutralCertificateData(response?.data);
+  //     }
+  //   } catch (err: any) {
+  //     console.log('Error in getting carbon neutral certificate data - ', err);
+  //     message.open({
+  //       type: 'error',
+  //       content: err.message,
+  //       duration: 4,
+  //       style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //     });
+  //   } finally {
+  //     // setLoading(false);
+  //   }
+  // };
 
   function formatCreatedTime(createdTime: string): string {
     return moment(parseInt(createdTime, 10)).format('DD MMMM YYYY [@] HH:mm');
@@ -365,7 +365,7 @@ export const CompanyProfileComponent = (props: any) => {
         duration: 3,
         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
       });
-      getCarbonNeutralCertificates(companyDetails.companyId);
+      // getCarbonNeutralCertificates(companyDetails.companyId);
     } catch (error: any) {
       console.log('Error in issuing  request', error);
       message.open({

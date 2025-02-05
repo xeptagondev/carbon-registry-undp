@@ -87,6 +87,7 @@ export default () => ({
             orgPaymentId: process.env.DNA_ROOT_ORGANIZATION_PAYMENT_ID,
             orgPhoneNo: process.env.DNA_ROOT_ORGANIZATION_PHONE_NO,
             orgAddress: process.env.DNA_ROOT_ORGANIZATION_ADDRESS,
+            orgLogo: process.env.DNA_ROOT_ORGANIZATION_LOGO,
         },
     },
     security: {

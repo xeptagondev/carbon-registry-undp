@@ -12,6 +12,7 @@ import { UsersDTO } from '@app/shared/users/dto/users.dto';
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
+import { UserUpdateDto } from '@app/shared/users/dto/user-update.dto';
 
 @Controller('user')
 export class UserController {
@@ -38,6 +39,12 @@ export class UserController {
     @Post('query')
     async query(@Body() queryDto: QueryDto, @Request() req): Promise<any> {
         return this.userService.query(queryDto, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Put('update')
+    updateUser(@Body() userUpdate: UserUpdateDto, @Request() req) {
+        return this.userService.updateUserDetails(userUpdate, req.user);
     }
 
     @UseGuards(AuthGuardService)
