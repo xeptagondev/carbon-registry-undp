@@ -22,6 +22,7 @@ import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organiz
 import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import {
     generatePassword,
+    getEnumKeyByValue,
     hashPassword,
     verifyPassword,
 } from '@app/shared/util/util';
@@ -233,7 +234,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     context: {
                         organizationName: userDto.company.name,
                         countryName: countryName,
-                        organizationRole: userDto.company.companyRole,
+                        organizationRole: getEnumKeyByValue(
+                            OrganizationTypeEnum,
+                            userDto.company.companyRole,
+                        ),
                         home: this.configService.get('url'),
                     },
                 };

@@ -102,3 +102,12 @@ export function formatRemainingTime(ms: number): string {
     const hours = Math.floor(minutes / 60);
     return `${hours} hour${hours === 1 ? '' : 's'}`;
 }
+
+export function getEnumKeyByValue<T>(
+    enumObj: T,
+    value: T[keyof T],
+): keyof T | undefined {
+    return Object.keys(enumObj).find(
+        (key) => enumObj[key as keyof T] === value,
+    ) as keyof T | undefined;
+}
