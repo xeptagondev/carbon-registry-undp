@@ -232,7 +232,7 @@ export const AddNewUserComponent = (props: any) => {
   };
 
   useEffect(() => {
-    getCountryList();
+    // getCountryList();
     setIsUpdate(state?.record ? true : false);
   }, []);
 
@@ -241,6 +241,17 @@ export const AddNewUserComponent = (props: any) => {
       <div className="title-container">
         <div className="titles">
           <div className="main">{isUpdate ? t('addUser:editUser') : t('addUser:addNewUser')}</div>
+          <label
+            style={{
+              display: 'inline-block',
+              color: 'rgba(58, 53, 65, 0.5)',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: 500,
+            }}
+          >
+            {t('addUser:hederaAccountRequired')}
+          </label>
         </div>
         {isUpdate && !ability.can(Action.Update, plainToClass(User, state?.record), 'email') && (
           <div className="actions">
@@ -439,50 +450,47 @@ export const AddNewUserComponent = (props: any) => {
                     </div>
                   </Radio.Group>
                 </Form.Item>
-                <Skeleton loading={isCountryListLoading} active>
-                  {countries.length > 0 && (
-                    <Form.Item
-                      name="phoneNo"
-                      label={t('addUser:phoneNo')}
-                      initialValue={state?.record?.phoneNo}
-                      rules={[
-                        {
-                          required: false,
-                        },
-                        {
-                          validator: async (rule: any, value: any) => {
-                            const phoneNo = formatPhoneNumber(String(value));
-                            if (String(value).trim() !== '') {
-                              if (
-                                (String(value).trim() !== '' &&
-                                  String(value).trim() !== undefined &&
-                                  value !== null &&
-                                  value !== undefined &&
-                                  phoneNo !== null &&
-                                  phoneNo !== '' &&
-                                  phoneNo !== undefined &&
-                                  !isPossiblePhoneNumber(String(value))) ||
-                                value?.length > 17
-                              ) {
-                                throw new Error(`${t('addUser:phoneNo')} ${t('isInvalid')}`);
-                              }
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <PhoneInput
-                        placeholder={t('addUser:phoneNo')}
-                        international
-                        // value={contactNoInput}
-                        defaultCountry="LK"
-                        countryCallingCodeEditable={false}
-                        onChange={(v) => {}}
-                        countries={countries}
-                      />
-                    </Form.Item>
-                  )}
-                </Skeleton>
+
+                <Form.Item
+                  name="phoneNo"
+                  label={t('addUser:phoneNo')}
+                  initialValue={state?.record?.phoneNo}
+                  rules={[
+                    {
+                      required: false,
+                    },
+                    {
+                      validator: async (rule: any, value: any) => {
+                        const phoneNo = formatPhoneNumber(String(value));
+                        if (String(value).trim() !== '') {
+                          if (
+                            (String(value).trim() !== '' &&
+                              String(value).trim() !== undefined &&
+                              value !== null &&
+                              value !== undefined &&
+                              phoneNo !== null &&
+                              phoneNo !== '' &&
+                              phoneNo !== undefined &&
+                              !isPossiblePhoneNumber(String(value))) ||
+                            value?.length > 17
+                          ) {
+                            throw new Error(`${t('addUser:phoneNo')} ${t('isInvalid')}`);
+                          }
+                        }
+                      },
+                    },
+                  ]}
+                >
+                  <PhoneInput
+                    placeholder={t('addUser:phoneNo')}
+                    international
+                    // value={contactNoInput}
+                    defaultCountry="LK"
+                    countryCallingCodeEditable={false}
+                    onChange={(v) => {}}
+                    countries={countries}
+                  />
+                </Form.Item>
               </div>
             </Col>
           </Row>

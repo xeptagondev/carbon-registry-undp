@@ -59,8 +59,8 @@ export class OrganizationEntity {
     paymentId?: string;
     @Column({ nullable: true })
     faxNumber?: string;
-    @Column({ nullable: true })
-    province?: string;
+    @Column('varchar', { array: true, nullable: true })
+    provinces: string[];
     @Column({ nullable: true })
     website?: string;
     @Column()
