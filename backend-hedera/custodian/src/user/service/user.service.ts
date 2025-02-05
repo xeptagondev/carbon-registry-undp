@@ -779,8 +779,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             },
         });
         return {
-            user: userProfile,
-            Organisation: userProfile?.organization,
+            user: this.mapNewQueryToOldQuery(userProfile),
+            Organisation: this.orgaisationService.mapNewQueryToOldQuery(
+                userProfile?.organization,
+            ),
         };
     }
 

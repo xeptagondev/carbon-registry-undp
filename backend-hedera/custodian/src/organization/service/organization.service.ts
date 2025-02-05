@@ -39,46 +39,31 @@ export class OrganizationService extends SuperService<
         super(organizationRepository);
     }
 
-    async getOrganizationProfile(
-        organizationId: number,
-        requestUser: JWTPayload,
-    ): Promise<OrganizationEntity> {
-        this.helperService.validateRequestUser(requestUser);
-        const companies = await this.organizationRepository.findOne({
-            where: {
-                id: organizationId,
-            },
-            relations: {
-                organizationType: true,
-            },
-        });
-        return companies;
-    }
-
     mapNewQueryToOldQuery(organization: OrganizationEntity) {
         return {
-            companyId: organization.id,
-            taxId: null,
-            paymentId: null,
-            name: organization.name,
-            email: null,
-            phoneNo: null,
-            website: null,
-            address: null,
-            logo: organization.logo
-                ? organization.logo
-                : 'https://carbon-common-uni.s3.amazonaws.com/profile_images%2F229_1736489123985.png',
+            companyId: organization?.id,
+            taxId: organization?.taxId,
+            paymentId: organization?.paymentId,
+            name: organization?.name,
+            email: organization?.email,
+            phoneNo: organization?.phoneNumber,
+            faxNo: organization?.faxNumber,
+            website: organization?.website,
+            address: organization?.address,
+            logo: organization?.logo,
             country: null,
-            companyRole: organization.organizationType.name,
-            state: organization.state,
+            companyRole: organization?.organizationType.name,
+            state: organization?.state,
             creditBalance: null,
             secondaryAccountBalance: null,
+            slcfAccountBalance: null,
             programmeCount: null,
             lastUpdateVersion: null,
             creditTxTime: null,
             remarks: null,
             createdTime: null,
             geographicalLocationCordintes: null,
+            provinces: organization?.province,
             regions: null,
             nameOfMinister: null,
             sectoralScope: null,
@@ -87,6 +72,22 @@ export class OrganizationService extends SuperService<
             ministry: null,
             govDep: null,
         };
+    }
+
+    async getOrganizationProfile(
+        organizationId: number,
+        requestUser: JWTPayload,
+    ): Promise<Partial<OrganizationEntity>> {
+        this.helperService.validateRequestUser(requestUser);
+        const organizationDetails = await this.organizationRepository.findOne({
+            where: {
+                id: organizationId,
+            },
+            relations: {
+                organizationType: true,
+            },
+        });
+        return this.mapNewQueryToOldQuery(organizationDetails);
     }
 
     async query(

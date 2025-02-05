@@ -3,6 +3,8 @@ version: "3.3"
 volumes:
   data:
     driver: local
+  filestore:
+    driver: local
 
 services:
   hedera_db:
@@ -25,7 +27,7 @@ services:
       dockerfile: ./backend-hedera/custodian/Dockerfile
     command: ["yarn", "start:prod"]
     ports:
-      - "3002:3002"
+      - "3001:3000"
     depends_on:
       - hedera_db
     environment:
@@ -37,7 +39,7 @@ services:
       DB_PASSWORD: "123"
       DB_NAME: hedera_db
     volumes:
-      - filestore:./backend-hedera/custodian/public
+      - filestore:/usr/src/app/public
       - ./backend-hedera/custodian/.env:/.env
 
   web:
