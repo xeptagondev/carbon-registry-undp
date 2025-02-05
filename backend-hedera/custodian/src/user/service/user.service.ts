@@ -704,21 +704,31 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
             )
         ) {
-            if (query.filterAnd) {
-                query.filterAnd.push({
-                    key: 'organization"."id',
-                    operation: '=',
-                    value: requestUser.organizationId,
-                });
-            } else {
+            if (!query.filterAnd) {
                 const filterAnd: FilterEntry[] = [];
-                filterAnd.push({
-                    key: 'organization"."id',
-                    operation: '=',
-                    value: requestUser.organizationId,
-                });
                 query.filterAnd = filterAnd;
             }
+
+            query.filterAnd.push({
+                key: 'organization"."id',
+                operation: '=',
+                value: requestUser.organizationId,
+            });
+        } else {
+            if (!query.filterOr) {
+                const filterOr: FilterEntry[] = [];
+                query.filterOr = filterOr;
+            }
+            query.filterOr.push({
+                key: 'organization"."id',
+                operation: '=',
+                value: requestUser.organizationId,
+            });
+            query.filterOr.push({
+                key: 'organization"."id',
+                operation: '!=',
+                value: requestUser.organizationId,
+            });
         }
 
         //Formatting Query

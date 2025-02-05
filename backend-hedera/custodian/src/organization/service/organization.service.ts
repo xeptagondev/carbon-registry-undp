@@ -116,21 +116,16 @@ export class OrganizationService extends SuperService<
             ];
         }
 
-        if (query.filterAnd) {
-            query.filterAnd.push({
-                key: 'organization"."state',
-                operation: 'in',
-                value: filterWithCompanyStatesIn,
-            });
-        } else {
+        if (!query.filterAnd) {
             const filterAnd: FilterEntry[] = [];
-            filterAnd.push({
-                key: 'organization"."state',
-                operation: 'in',
-                value: filterWithCompanyStatesIn,
-            });
             query.filterAnd = filterAnd;
         }
+
+        query.filterAnd.push({
+            key: 'organization"."state',
+            operation: 'in',
+            value: filterWithCompanyStatesIn,
+        });
 
         //Formatting Query
         const newToOldFieldMap: Record<string, string> = {
