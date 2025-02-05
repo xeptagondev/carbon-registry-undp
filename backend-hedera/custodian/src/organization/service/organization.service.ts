@@ -4,7 +4,7 @@ import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
-import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
+import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
@@ -24,7 +24,7 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class OrganizationService extends SuperService<
     OrganizationEntity,
-    OrganisationDto
+    OrganizationDto
 > {
     private readonly logger = new Logger(OrganizationService.name);
     constructor(
@@ -279,5 +279,13 @@ export class OrganizationService extends SuperService<
             console.log(e);
             throw e;
         }
+    }
+
+    async update(dto: Partial<OrganizationDto>): Promise<any> {
+        return {};
+    }
+
+    async updateStatus(dto: Partial<OrganizationDto>): Promise<any> {
+        return {};
     }
 }

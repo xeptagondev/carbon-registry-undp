@@ -19,7 +19,7 @@ import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage
 import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
-import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
+import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import {
     generatePassword,
     hashPassword,
@@ -27,6 +27,7 @@ import {
 } from '@app/shared/util/util';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import {
+    ORG_CREATE_HEADER,
     RESET_PASSWORD_HEADER,
     USER_REGISTER_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
@@ -113,6 +114,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         reqUser?: JWTPayload,
     ) {
         try {
+            const countryName = this.configService.get('country');
             this.logger.log(
                 `Request received to register user with email ${userDto.email}`,
             );
@@ -219,6 +221,24 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userLoginResponse,
                     reqUser,
                 );
+
+                // 6.1 Send organization email
+                const mailDTO: MailTemplateDTO = {
+                    subject: ORG_CREATE_HEADER.replace(
+                        '{{countryName}}',
+                        countryName,
+                    ),
+                    template: MailTemplateEnum.ORG_CREATE,
+                    to: userDto.company.email,
+                    context: {
+                        organizationName: userDto.company.name,
+                        countryName: countryName,
+                        organizationRole: userDto.company.companyRole,
+                        home: this.configService.get('url'),
+                    },
+                };
+
+                await this.mailService.sendMail(mailDTO);
             } else {
                 // 6. Accept an invitation (generate an invitation and create the user)
                 res = await this.inviteNewUser(
@@ -229,7 +249,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
 
             // 7. Send password creation email to user
-            const countryName = this.configService.get('country');
             const mailDTO: MailTemplateDTO = {
                 subject: USER_REGISTER_HEADER.replace(
                     '{{countryName}}',
@@ -565,7 +584,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         },
                     });
                 if (!org) {
-                    const orgDto = new OrganisationDto();
+                    const orgDto = new OrganizationDto();
                     orgDto.companyRole =
                         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY;
                     orgDto.name = this.configService.get(

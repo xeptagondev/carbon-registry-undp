@@ -4,22 +4,34 @@ import { Unwrap } from '@app/core/util/unwrappable';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OrganizationStateEnum } from '../enum/organization.state.enum';
 
-export class OrganisationDto extends SuperDTO<OrganizationEntity> {
+export class OrganizationDto extends SuperDTO<OrganizationEntity> {
     id?: number;
+
     @Unwrap()
     @IsNotEmpty()
     name: string;
+
     companyRole: OrganizationTypeEnum;
+
     taxId?: string;
+
+    @Unwrap()
+    @ApiProperty({ enum: OrganizationStateEnum })
+    state?: OrganizationStateEnum;
+
     @Unwrap()
     @IsNotEmpty()
     phoneNo: string;
+
     @Unwrap()
     @IsNotEmpty()
     paymentId: string;
+
     faxNo?: string;
+
     @Unwrap()
     @IsEmail()
     @IsNotEmpty()
@@ -27,8 +39,11 @@ export class OrganisationDto extends SuperDTO<OrganizationEntity> {
         typeof value === 'string' ? value.trim().toLowerCase() : value,
     )
     email: string;
+
     provinces?: string;
+
     website?: string;
+
     @Unwrap()
     @IsNotEmpty()
     address: string;

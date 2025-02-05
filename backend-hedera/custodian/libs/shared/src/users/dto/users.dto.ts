@@ -6,7 +6,7 @@ import { Transform } from 'class-transformer';
 import { JWTPayload } from './jwt.payload.dto';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
-import { OrganisationDto } from '@app/shared/organization/dto/organisation.dto';
+import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 
 export class UsersDTO extends SuperDTO<UsersEntity> {
     @Unwrap()
@@ -26,5 +26,5 @@ export class UsersDTO extends SuperDTO<UsersEntity> {
     password: string;
     role: RoleEnum;
     // @Unwrap({ name: 'organization' })
-    company: OrganisationDto;
+    company: OrganizationDto;
 }

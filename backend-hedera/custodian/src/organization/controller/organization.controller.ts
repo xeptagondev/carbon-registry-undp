@@ -5,7 +5,6 @@ import {
     Request,
     Body,
     Put,
-    Param,
     Query,
     Get,
 } from '@nestjs/common';
@@ -14,6 +13,7 @@ import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.servic
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
+import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 
 @Controller('organisation')
 export class OrganizationController {
@@ -58,12 +58,25 @@ export class OrganizationController {
             req.user,
         );
     }
+
     @UseGuards(AuthGuardService)
     @Post('query')
     async query(
         @Body() queryDto: QueryDto,
         @Request() req,
     ): Promise<DataListResponseDto> {
-        return this.organizationService.query(queryDto, req.user);
+        return await this.organizationService.query(queryDto, req.user);
     }
+
+    // @UseGuards(AuthGuardService)
+    // @Post('update')
+    // async update(@Body() dto: OrganizationDto, @Request() req) {
+    //     return await this.organizationService.update(dto);
+    // }
+
+    // @UseGuards(AuthGuardService)
+    // @Post('changeStatus')
+    // async updateStatus(@Body() dto: Partial<OrganizationDto>, @Request() req) {
+    //     return await this.organizationService.updateStatus(dto);
+    // }
 }
