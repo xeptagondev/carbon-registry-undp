@@ -72,21 +72,29 @@ export class GuardianService {
             });
             return response.data;
         } catch (e) {
-            console.log(e);
-            throw e;
+            throw new HttpException(
+                'Error occurred while registering user in guardian',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
     public async updateUserProfile(
         email: string,
-        refreshToken: string,
+        hashedPass: string,
         parentDid: string,
         hederaAccount: string,
         hederaKey: string,
     ): Promise<any> {
         try {
+            const userLoginResponse = await this.login({
+                username: email,
+                password: hashedPass,
+            });
             const url = `${this.buildGuardianUrl(this.configService.get('guardian.profileUpdate'))}/${email}`;
-            const token = await this.getAccessToken(refreshToken);
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
             const response = await axios.put(
                 url,
                 {
@@ -110,14 +118,15 @@ export class GuardianService {
             );
             return response.data;
         } catch (e) {
-            console.log(e);
-            throw e;
+            throw new HttpException(
+                'Error occurred while updating user profile with guardian registry',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
     public async assignPolicyToUser(
         email: string,
-        refreshToken: string,
         assign: boolean = true,
     ): Promise<any> {
         try {
@@ -127,7 +136,14 @@ export class GuardianService {
                 )}`,
             );
 
-            const token = await this.getAccessToken(refreshToken);
+            const userLoginResponse = await this.login({
+                username: this.configService.get('sru.username'),
+                password: this.configService.get('sru.password'),
+            });
+
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
             const response = await axios.post(
                 url,
                 {
@@ -143,14 +159,16 @@ export class GuardianService {
             );
             return response.data;
         } catch (e) {
-            console.log(e);
-            throw e;
+            throw new HttpException(
+                'Error occurred while assigning policy to user',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
     public async createGroupType(
-        refreshToken: string,
-
+        email: string,
+        hashedPass: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -158,7 +176,13 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
-            const token = await this.getAccessToken(refreshToken);
+            const userLoginResponse = await this.login({
+                username: email,
+                password: hashedPass,
+            });
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
             const response = await axios.post(url, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -173,7 +197,8 @@ export class GuardianService {
     }
 
     public async createOrganization(
-        refreshToken: string,
+        email: string,
+        hashedPass: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -181,7 +206,13 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
-            const token = await this.getAccessToken(refreshToken);
+            const userLoginResponse = await this.login({
+                username: email,
+                password: hashedPass,
+            });
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
 
             const response = await axios.post(url, payload, {
                 headers: {
@@ -197,7 +228,8 @@ export class GuardianService {
     }
 
     public async createUser(
-        refreshToken: string,
+        email: string,
+        hashedPass: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -205,7 +237,13 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
-            const token = await this.getAccessToken(refreshToken);
+            const userLoginResponse = await this.login({
+                username: email,
+                password: hashedPass,
+            });
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
 
             const response = await axios.post(url, payload, {
                 headers: {
@@ -221,7 +259,7 @@ export class GuardianService {
     }
 
     public async createInvitation(
-        refreshToken: string,
+        email: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -229,6 +267,7 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
+            const refreshToken = await this.getRefreshToken(email);
             const token = await this.getAccessToken(refreshToken);
 
             const response = await axios.post(url, payload, {
@@ -240,8 +279,10 @@ export class GuardianService {
 
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            throw new HttpException(
+                'Error occurred while generating user invitation',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
     public async approve(
