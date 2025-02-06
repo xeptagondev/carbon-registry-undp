@@ -6,6 +6,8 @@ import {
     UseGuards,
     Get,
     Put,
+    Delete,
+    Query,
 } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
@@ -51,5 +53,11 @@ export class UserController {
     @Put('resetPassword')
     resetPassword(@Body() passwordUpdate: PasswordUpdateDto, @Request() req) {
         return this.userService.resetPassword(passwordUpdate, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Delete('delete')
+    deleteUser(@Query('userId') userId: number, @Request() req) {
+        return this.userService.deleteUser(userId, req.user);
     }
 }

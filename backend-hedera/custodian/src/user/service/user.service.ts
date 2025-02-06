@@ -79,7 +79,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             {
                 email: userDTO.email,
             },
-            { organization: orgEntity, guardianRole: guardRole },
+            {
+                ...userDTO,
+                organization: orgEntity,
+                guardianRole: guardRole,
+            },
         );
 
         return true;
@@ -112,8 +116,21 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         userDto: UsersDTO,
         defaultPass: string = '',
         reqUser?: JWTPayload,
+        isUserActive: boolean = false,
     ) {
         try {
+            const userDetails = await this.usersRepository.findOne({
+                where: {
+                    email: userDto.email,
+                },
+            });
+            if (userDetails) {
+                throw new HttpException(
+                    'User already exists in the Carbon Registry System with the given email',
+                    HttpStatus.FORBIDDEN,
+                );
+            }
+
             const countryName = this.configService.get('country');
             this.logger.log(
                 `Request received to register user with email ${userDto.email}`,
@@ -155,6 +172,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 password: hashedPass,
                 phoneNumber: userDto.phoneNo,
                 hederaAccount: userDto.hederaAccount,
+                isActive: isUserActive,
             };
 
             // i. Save user in db without organization and role
@@ -191,6 +209,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.guardianService.assignPolicyToUser(
                     userDto.email,
                     refreshToken,
+                    true,
                 );
             } catch (e) {
                 console.log(e);
@@ -340,6 +359,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 throw e;
             }
 
+            userDto.isActive = true;
             await this.updateUser(userDto, org, guardianRole);
 
             return createUserResponse;
@@ -501,6 +521,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 orgType?.id,
                 userDto.role,
             );
+            userDto.isActive = true;
             await this.updateUser(userDto, orgEntity, guardianRole);
 
             return createOrganizationResponse;
@@ -579,6 +600,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     const groupResponse = await this.register(
                         user,
                         user.password,
+                        undefined,
+                        true,
                     );
                     await this.organizationRepository.update(
                         {
@@ -607,7 +630,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             companyId: newUser.organization?.id,
             companyRole: newUser.guardianRole?.name ?? null,
             createdTime: null,
-            isPending: false,
+            isPending: newUser?.isActive,
             hederaAccount: newUser?.hederaAccount,
             company: {
                 companyId: newUser.organization?.id,
@@ -865,6 +888,150 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         } else {
             throw new HttpException(
                 'User update failed. Please try again',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async deleteUser(
+        userId: number,
+        requestUser: JWTPayload,
+    ): Promise<HTTPResponseDto> {
+        const actionUserDetails = await this.usersRepository.findOne({
+            where: { id: requestUser.userId },
+            relations: {
+                guardianRole: {
+                    role: true,
+                },
+                organization: true,
+            },
+        });
+        const userDetails = await this.usersRepository.findOne({
+            where: { id: userId },
+            relations: {
+                guardianRole: {
+                    role: true,
+                },
+                organization: {
+                    organizationType: true,
+                },
+            },
+        });
+
+        if (!userDetails) {
+            throw new HttpException(
+                'No visible user found',
+                HttpStatus.FORBIDDEN,
+            );
+        }
+
+        if (userDetails?.guardianRole?.role?.name == RoleEnum.Root) {
+            throw new HttpException(
+                'Root user cannot be deleted',
+                HttpStatus.FORBIDDEN,
+            );
+        } else if (userDetails?.guardianRole?.role?.name == RoleEnum.Admin) {
+            const orgAdminCount = await this.usersRepository.countBy({
+                organization: { id: userDetails?.organization?.id },
+                guardianRole: {
+                    role: {
+                        name: RoleEnum.Admin,
+                    },
+                },
+            });
+            if (
+                userDetails?.organization?.organizationType?.name !==
+                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                orgAdminCount <= 1
+            ) {
+                throw new HttpException(
+                    'The user cannot be deleted as the user is the only admin',
+                    HttpStatus.FORBIDDEN,
+                );
+            }
+        }
+
+        if (actionUserDetails.organization.id == userDetails.organization.id) {
+            if (
+                !(
+                    actionUserDetails.guardianRole.role.name ==
+                        RoleEnum.Admin ||
+                    actionUserDetails.guardianRole.role.name == RoleEnum.Root
+                )
+            ) {
+                throw new HttpException(
+                    'This action is unauthorised',
+                    HttpStatus.FORBIDDEN,
+                );
+            }
+        } else {
+            if (
+                actionUserDetails.organization.organizationType.name !==
+                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+            ) {
+                throw new HttpException(
+                    'This action is unauthorised',
+                    HttpStatus.FORBIDDEN,
+                );
+            } else {
+                if (
+                    actionUserDetails.guardianRole.role.name !== RoleEnum.Root
+                ) {
+                    throw new HttpException(
+                        'This action is unauthorised',
+                        HttpStatus.FORBIDDEN,
+                    );
+                }
+            }
+        }
+
+        try {
+            await this.guardianService.login({
+                username: this.configService.get('sru.username'),
+                password: this.configService.get('sru.password'),
+            });
+
+            const refreshToken = await this.guardianService.getRefreshToken(
+                this.configService.get('sru.username'),
+            );
+            await this.guardianService.assignPolicyToUser(
+                userDetails?.email,
+                refreshToken,
+                false,
+            );
+        } catch (e) {
+            throw new HttpException(
+                'Delete failed. Please try again',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+
+        const result = await this.usersRepository
+            .update(
+                {
+                    id: userDetails.id,
+                },
+                {
+                    isActive: false,
+                },
+            )
+            .catch((_: any) => {
+                throw new HttpException(
+                    'Delete failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            });
+
+        if (result.affected > 0) {
+            const response: HTTPResponseDto = {
+                statusCode: HttpStatus.OK,
+                message: 'The user has been deleted successfully',
+            };
+
+            return response;
+        } else {
+            throw new HttpException(
+                'Delete failed. Please try again',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }

@@ -118,6 +118,7 @@ export class GuardianService {
     public async assignPolicyToUser(
         email: string,
         refreshToken: string,
+        assign: boolean = true,
     ): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
@@ -131,7 +132,7 @@ export class GuardianService {
                 url,
                 {
                     policyIds: [this.configService.get('policy.id')],
-                    assign: true,
+                    assign: assign,
                 },
                 {
                     headers: {

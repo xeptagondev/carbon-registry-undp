@@ -25,6 +25,7 @@ export class UsersDTO extends SuperDTO<UsersEntity> {
     hederaKey: string;
     password: string;
     role: RoleEnum;
+    isActive?: boolean;
     // @Unwrap({ name: 'organization' })
     company: OrganizationDto;
 }
