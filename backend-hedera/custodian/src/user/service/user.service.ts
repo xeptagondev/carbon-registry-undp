@@ -678,7 +678,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 website: newUser.organization?.website,
                 address: newUser.organization?.address,
                 country: null,
-                logo: newUser.organization?.logo,
+                logo: newUser?.organization?.logo,
                 companyRole:
                     newUser.organization?.organizationType?.name ?? null,
                 state: newUser.organization?.state ?? null,
