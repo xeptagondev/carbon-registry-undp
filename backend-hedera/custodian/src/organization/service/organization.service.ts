@@ -132,6 +132,9 @@ export class OrganizationService extends SuperService<
             id: 'organization"."id',
             name: 'organization"."name',
             companyId: 'organization"."id',
+            companyRole: 'organizationType"."name',
+            taxId: 'organization"."taxId',
+            programmeCount: 'organization"."name', // Not Added the column Yet
         };
         query = this.helperService.mapNewWhereClausetoOldWhereClause(
             query,
