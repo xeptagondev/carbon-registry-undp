@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { SuperService } from '@app/core/service/super.service';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
@@ -625,7 +625,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 state: newUser.organization?.state ?? null,
                 creditBalance: null,
                 secondaryAccountBalance: null,
-                programmeCount: null,
+                programmeCount: newUser?.organization?.numberOfProjects,
                 lastUpdateVersion: null,
                 creditTxTime: null,
                 remarks: null,
@@ -647,27 +647,27 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
         this.helperService.validateRequestUser(requestUser);
+        if (!query.filterAnd) {
+            const filterAnd: FilterEntry[] = [];
+            query.filterAnd = filterAnd;
+        }
+        if (!query.filterOr) {
+            const filterOr: FilterEntry[] = [];
+            query.filterOr = filterOr;
+        }
+
         if (
             !(
                 requestUser.organizationRole ==
                 OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
             )
         ) {
-            if (!query.filterAnd) {
-                const filterAnd: FilterEntry[] = [];
-                query.filterAnd = filterAnd;
-            }
-
             query.filterAnd.push({
                 key: 'organization"."id',
                 operation: '=',
                 value: requestUser.organizationId,
             });
         } else {
-            if (!query.filterOr) {
-                const filterOr: FilterEntry[] = [];
-                query.filterOr = filterOr;
-            }
             query.filterOr.push({
                 key: 'organization"."id',
                 operation: '=',
@@ -679,12 +679,19 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 value: requestUser.organizationId,
             });
         }
+        query.filterAnd.push({
+            key: 'companyRole',
+            operation: 'IS NOT',
+            value: null,
+        });
 
         //Formatting Query
         const newToOldFieldMap: Record<string, string> = {
             id: 'user"."id',
             name: 'user"."name',
             email: 'user"."email',
+            companyRole: 'organizationType"."name',
+            role: 'role"."name',
         };
         query = this.helperService.mapNewWhereClausetoOldWhereClause(
             query,

@@ -415,12 +415,9 @@ export const CompanyManagementComponent = (props: any) => {
           <Radio.Group onChange={onFilterOrganisationType} value={filterByOrganisationType}>
             <Space direction="vertical">
               <Radio value="All">{t('company:all')}</Radio>
-              <Radio value="Government">{t('company:gov')}</Radio>
-              <Radio value="Ministry">{t('company:min')}</Radio>
-              <Radio value="ProgrammeDeveloper">{t('company:developer')}</Radio>
-              <Radio value="ClimateFund">{t('company:ClimateFund')}</Radio>
-              <Radio value="ExecutiveCommittee">{t('company:ExecutiveCommittee')}</Radio>
-              <Radio value="Certifier">{t('company:certifier')}</Radio>
+              <Radio value="DNA">{t('company:dna')}</Radio>
+              <Radio value="PP">{t('company:pp')}</Radio>
+              <Radio value="DOE">{t('company:doe')}</Radio>
             </Space>
           </Radio.Group>
         </div>

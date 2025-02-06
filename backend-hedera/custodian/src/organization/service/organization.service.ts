@@ -53,7 +53,7 @@ export class OrganizationService extends SuperService<
             creditBalance: null,
             secondaryAccountBalance: null,
             slcfAccountBalance: null,
-            programmeCount: null,
+            programmeCount: organization?.numberOfProjects,
             lastUpdateVersion: null,
             creditTxTime: null,
             remarks: null,
@@ -130,7 +130,7 @@ export class OrganizationService extends SuperService<
             companyId: 'organization"."id',
             companyRole: 'organizationType"."name',
             taxId: 'organization"."taxId',
-            programmeCount: 'organization"."name', // Not Added the column Yet
+            programmeCount: 'organization"."number_of_projects', // Not Added the column Yet
         };
         query = this.helperService.mapNewWhereClausetoOldWhereClause(
             query,

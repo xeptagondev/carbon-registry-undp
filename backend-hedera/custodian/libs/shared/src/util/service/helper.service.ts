@@ -82,17 +82,20 @@ export class HelperService {
     private isLower(key: string) {
         if (
             [
-                'email',
-                'name',
-                'companyName',
-                'taxId',
-                'country',
-                'title',
-                'externalId',
-                'serialNo',
-                'programmeTitle',
-                'programmeName',
-                'id',
+                // 'email',
+                // 'name',
+                // 'companyName',
+                // 'taxId',
+                // 'country',
+                // 'title',
+                // 'externalId',
+                // 'serialNo',
+                // 'programmeTitle',
+                // 'programmeName',
+                // 'id',
+                'organization"."name',
+                'user"."name',
+                'user"."email',
             ].includes(key)
         )
             return true;
