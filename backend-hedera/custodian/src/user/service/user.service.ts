@@ -385,7 +385,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             if (user && user.stage === UserStageEnum.CREATE_GROUP_TYPE) {
                 await this.guardianService.createUser(
                     userDto.email,
-                    userDto.password,
+                    user.password,
                     this.utilService.getBlock(
                         this.configService.get('blocks.createUser'),
                     ),
