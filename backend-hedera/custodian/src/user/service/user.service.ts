@@ -169,17 +169,21 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive: boolean = false,
     ) {
         try {
-            // const userDetails = await this.usersRepository.findOne({
-            //     where: {
-            //         email: userDto.email,
-            //     },
-            // });
-            // if (userDetails) {
-            //     throw new HttpException(
-            //         'User already exists in the Carbon Registry System with the given email',
-            //         HttpStatus.FORBIDDEN,
-            //     );
-            // }
+            const userDetails = await this.usersRepository.findOne({
+                where: {
+                    email: userDto.email,
+                },
+            });
+            if (
+                userDetails &&
+                userDetails.stage === UserStageEnum.APPROVE_USER
+            ) {
+                throw new HttpException(
+                    'User already exists in the Carbon Registry System with the given email',
+                    HttpStatus.FORBIDDEN,
+                );
+                return;
+            }
 
             const countryName = this.configService.get('country');
             this.logger.log(
@@ -294,6 +298,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
 
             // 7. Send password creation email to user
+
             const mailDTO: MailTemplateDTO = {
                 subject: USER_REGISTER_HEADER.replace(
                     '{{countryName}}',
@@ -314,11 +319,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             const response: HTTPResponseDto = {
                 statusCode: HttpStatus.OK,
-                message: 'Successfully created organization with admin user',
+                message: userDto.company
+                    ? `Successfully created organization with admin user`
+                    : `Successfully created the user`,
             };
             return response;
         } catch (error) {
-            console.log(error);
             throw new HttpException(
                 'Error occurred while registering the user',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -330,7 +336,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         try {
             // 1. Generate an invite for the given role
             const groupTypeUser = await this.findUser(userDto.email);
-            console.log(groupTypeUser);
             if (
                 groupTypeUser &&
                 groupTypeUser.stage === UserStageEnum.ASIGN_POLICY
@@ -410,8 +415,15 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     org?.organizationType?.id,
                     userDto.role,
                 );
+
                 await this.approveUser(userDto.email);
                 await this.updateUser(userDto, org, guardianRole);
+                await this.usersRepository.update(
+                    {
+                        email: userDto.email,
+                    },
+                    { stage: UserStageEnum.APPROVE_USER },
+                );
             }
 
             return true;
@@ -563,7 +575,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const orgEntity = await this.organizationRepository.findOne({
                     where: { email: userDto?.company?.email },
                 });
-                console.log(createOrganizationResponse);
                 await this.organizationRepository.update(
                     {
                         id: orgEntity.id,
@@ -574,10 +585,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         logo: userDto?.company?.logo,
                     },
                 );
-                console.log('$$$$$$$$$$$$$$$$$');
             }
             const approveUser = await this.findUser(userDto.email);
-            console.log(approveUser);
             if (
                 approveUser &&
                 approveUser.stage === UserStageEnum.CREATE_USER
@@ -586,7 +595,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     where: { email: userDto?.company?.email },
                 });
                 if (reqUser?.userRole === RoleEnum.Root) {
-                    console.log('################');
                     await this.orgaisationService.approve(
                         reqUser?.email,
                         orgEntity.id,

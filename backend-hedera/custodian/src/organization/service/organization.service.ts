@@ -9,6 +9,7 @@ import { OrganizationStateEnum } from '@app/shared/organization/enum/organizatio
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
@@ -215,6 +216,7 @@ export class OrganizationService extends SuperService<
                             },
                             {
                                 isActive: true,
+                                stage: UserStageEnum.APPROVE_USER,
                             },
                         )
                         // eslint-disable-next-line @typescript-eslint/no-unused-vars
