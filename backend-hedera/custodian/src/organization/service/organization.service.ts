@@ -1,12 +1,12 @@
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 import { SuperService } from '@app/core/service/super.service';
-import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
 import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
+import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
 import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
 import { TransactionService } from '@app/shared/transaction/service/transaction.service';
@@ -16,7 +16,7 @@ import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -281,11 +281,69 @@ export class OrganizationService extends SuperService<
         }
     }
 
-    async update(dto: Partial<OrganizationDto>): Promise<any> {
+    async update(
+        dto: Partial<OrganizationDto>,
+        user: JWTPayload,
+    ): Promise<any> {
+        const orgId = dto.id;
+        const orgEnt = await this.organizationRepository.findOne({
+            where: { id: orgId },
+            relations: {
+                organizationType: true,
+            },
+        });
+
+        if (!orgEnt) {
+            throw new HttpException(
+                'Organisation not found',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        // Check if the user is of the same organization (orgType + orgName)
+        // id is not checked since it is a passed value from user request
+        if (
+            orgEnt.organizationType.name != user.organizationRole &&
+            orgEnt.name != user.organizationName
+        ) {
+            throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
+        }
+
+        //TODO: edit the org and save
+
         return {};
     }
 
-    async updateStatus(dto: Partial<OrganizationDto>): Promise<any> {
-        return {};
+    async updateStatus(
+        dto: Partial<OrganizationDto>,
+        requestData: JWTPayload,
+    ): Promise<any> {
+        if (
+            !this.validateAccess(
+                [
+                    {
+                        role: RoleEnum.Root,
+                        orgType:
+                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                    },
+                    {
+                        role: RoleEnum.Admin,
+                        orgType:
+                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                    },
+                ],
+                {
+                    role: requestData.userRole,
+                    orgType: requestData.organizationRole,
+                },
+            )
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
+
+        return await this.organizationRepository.update(
+            { id: dto.id },
+            { state: dto.state },
+        );
     }
 }
