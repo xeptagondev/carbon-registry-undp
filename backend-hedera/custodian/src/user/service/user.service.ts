@@ -81,13 +81,52 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 email: userDTO.email,
             },
             {
-                ...userDTO,
                 organization: orgEntity,
                 guardianRole: guardRole,
             },
         );
 
         return true;
+    }
+
+    async approveUser(userEmail: string) {
+        const userDetails = await this.usersRepository.findOneBy({
+            email: userEmail,
+        });
+        if (!userDetails) {
+            throw new HttpException(
+                'No visible user found',
+                HttpStatus.FORBIDDEN,
+            );
+        }
+        if (userDetails.isActive == true) {
+            throw new HttpException(
+                'User Already Activated',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+        const result = await this.usersRepository
+            .update(
+                {
+                    id: userDetails.id,
+                },
+                {
+                    isActive: true,
+                },
+            )
+            .catch((_: any) => {
+                throw new HttpException(
+                    'Update failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            });
+
+        if (result.affected < 0) {
+            throw new HttpException(
+                'Update failed. Please try again',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
     }
 
     private async getGuardianRole(orgTypeId: number, userRole: string) {
@@ -370,7 +409,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     org?.organizationType?.id,
                     userDto.role,
                 );
-                userDto.isActive = true;
+                await this.approveUser(userDto.email);
                 await this.updateUser(userDto, org, guardianRole);
             }
 
@@ -550,7 +589,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             remarks: '',
                         },
                     );
-                    userDto.isActive = true;
                 }
 
                 const guardianRole = await this.getGuardianRole(
@@ -1028,14 +1066,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
 
         try {
-            await this.guardianService.login({
-                username: this.configService.get('sru.username'),
-                password: this.configService.get('sru.password'),
-            });
-
-            const refreshToken = await this.guardianService.getRefreshToken(
-                this.configService.get('sru.username'),
-            );
             await this.guardianService.assignPolicyToUser(
                 userDetails?.email,
                 false,

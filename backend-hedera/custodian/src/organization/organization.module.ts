@@ -8,10 +8,11 @@ import { AuditModule } from '@app/shared/audit/audit.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UtilModule } from '@app/shared/util/util.module';
 import { GuardianModule } from '@app/shared/guardian/guardian.module';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([OrganizationEntity]),
+        TypeOrmModule.forFeature([OrganizationEntity, UsersEntity]),
         UsersModule,
         AuditModule,
         JwtModule,
