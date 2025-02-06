@@ -210,7 +210,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const userEntity: UsersEntity = {
                     email: userDto.email,
                     name: userDto.name,
-                    password: regUser.password,
+                    password: hashedPass,
                     phoneNumber: userDto.phoneNo,
                     hederaAccount: userDto.hederaAccount,
                     stage: UserStageEnum.REGISTER,
@@ -318,6 +318,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             };
             return response;
         } catch (error) {
+            console.log(error);
             throw new HttpException(
                 'Error occurred while registering the user',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -562,6 +563,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const orgEntity = await this.organizationRepository.findOne({
                     where: { email: userDto?.company?.email },
                 });
+                console.log(createOrganizationResponse);
                 await this.organizationRepository.update(
                     {
                         id: orgEntity.id,
@@ -572,8 +574,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         logo: userDto?.company?.logo,
                     },
                 );
+                console.log('$$$$$$$$$$$$$$$$$');
             }
             const approveUser = await this.findUser(userDto.email);
+            console.log(approveUser);
             if (
                 approveUser &&
                 approveUser.stage === UserStageEnum.CREATE_USER
@@ -582,6 +586,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     where: { email: userDto?.company?.email },
                 });
                 if (reqUser?.userRole === RoleEnum.Root) {
+                    console.log('################');
                     await this.orgaisationService.approve(
                         reqUser?.email,
                         orgEntity.id,

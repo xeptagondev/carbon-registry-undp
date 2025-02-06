@@ -72,6 +72,7 @@ export class GuardianService {
             });
             return response.data;
         } catch (e) {
+            console.log(e);
             throw new HttpException(
                 'Error occurred while registering user in guardian',
                 HttpStatus.INTERNAL_SERVER_ERROR,
