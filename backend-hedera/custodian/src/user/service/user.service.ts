@@ -651,10 +651,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             const filterAnd: FilterEntry[] = [];
             query.filterAnd = filterAnd;
         }
-        if (!query.filterOr) {
-            const filterOr: FilterEntry[] = [];
-            query.filterOr = filterOr;
-        }
+        query.filterAnd.push({
+            key: 'organizationType"."name',
+            operation: 'IS NOT',
+            value: null,
+        });
 
         if (
             !(
@@ -667,23 +668,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 operation: '=',
                 value: requestUser.organizationId,
             });
-        } else {
-            query.filterOr.push({
-                key: 'organization"."id',
-                operation: '=',
-                value: requestUser.organizationId,
-            });
-            query.filterOr.push({
-                key: 'organization"."id',
-                operation: '!=',
-                value: requestUser.organizationId,
-            });
         }
-        query.filterAnd.push({
-            key: 'companyRole',
-            operation: 'IS NOT',
-            value: null,
-        });
 
         //Formatting Query
         const newToOldFieldMap: Record<string, string> = {
