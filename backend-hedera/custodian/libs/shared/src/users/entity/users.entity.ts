@@ -28,6 +28,9 @@ export class UsersEntity {
     @Column({ nullable: true })
     refreshToken?: string;
 
+    @Column({ name: 'hedera_account_id', nullable: false, unique: true })
+    hederaAccount?: string;
+
     @ManyToOne(
         () => OrganizationEntity,
         (organizationEntity) => organizationEntity.users,

@@ -7,9 +7,6 @@ import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
-import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
-import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
-import { TransactionService } from '@app/shared/transaction/service/transaction.service';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
@@ -31,7 +28,6 @@ export class OrganizationService extends SuperService<
         private readonly utilService: UtilService,
         private readonly helperService: HelperService,
         private readonly guardianService: GuardianService,
-        private readonly transactionService: TransactionService,
         private readonly configService: ConfigService,
         @InjectRepository(OrganizationEntity)
         private readonly organizationRepository: Repository<OrganizationEntity>,
@@ -39,46 +35,31 @@ export class OrganizationService extends SuperService<
         super(organizationRepository);
     }
 
-    async getOrganizationProfile(
-        organizationId: number,
-        requestUser: JWTPayload,
-    ): Promise<OrganizationEntity> {
-        this.helperService.validateRequestUser(requestUser);
-        const companies = await this.organizationRepository.findOne({
-            where: {
-                id: organizationId,
-            },
-            relations: {
-                organizationType: true,
-            },
-        });
-        return companies;
-    }
-
     mapNewQueryToOldQuery(organization: OrganizationEntity) {
         return {
-            companyId: organization.id,
-            taxId: null,
-            paymentId: null,
-            name: organization.name,
-            email: null,
-            phoneNo: null,
-            website: null,
-            address: null,
-            logo: organization.logo
-                ? organization.logo
-                : 'https://carbon-common-uni.s3.amazonaws.com/profile_images%2F229_1736489123985.png',
+            companyId: organization?.id,
+            taxId: organization?.taxId,
+            paymentId: organization?.paymentId,
+            name: organization?.name,
+            email: organization?.email,
+            phoneNo: organization?.phoneNumber,
+            faxNo: organization?.faxNumber,
+            website: organization?.website,
+            address: organization?.address,
+            logo: organization?.logo,
             country: null,
-            companyRole: organization.organizationType.name,
-            state: organization.state,
+            companyRole: organization?.organizationType.name,
+            state: organization?.state,
             creditBalance: null,
             secondaryAccountBalance: null,
-            programmeCount: null,
+            slcfAccountBalance: null,
+            programmeCount: organization?.numberOfProjects,
             lastUpdateVersion: null,
             creditTxTime: null,
             remarks: null,
             createdTime: null,
             geographicalLocationCordintes: null,
+            provinces: organization?.provinces,
             regions: null,
             nameOfMinister: null,
             sectoralScope: null,
@@ -87,6 +68,22 @@ export class OrganizationService extends SuperService<
             ministry: null,
             govDep: null,
         };
+    }
+
+    async getOrganizationProfile(
+        organizationId: number,
+        requestUser: JWTPayload,
+    ): Promise<Partial<OrganizationEntity>> {
+        this.helperService.validateRequestUser(requestUser);
+        const organizationDetails = await this.organizationRepository.findOne({
+            where: {
+                id: organizationId,
+            },
+            relations: {
+                organizationType: true,
+            },
+        });
+        return this.mapNewQueryToOldQuery(organizationDetails);
     }
 
     async query(
@@ -115,27 +112,25 @@ export class OrganizationService extends SuperService<
             ];
         }
 
-        if (query.filterAnd) {
-            query.filterAnd.push({
-                key: 'organization"."state',
-                operation: 'in',
-                value: filterWithCompanyStatesIn,
-            });
-        } else {
+        if (!query.filterAnd) {
             const filterAnd: FilterEntry[] = [];
-            filterAnd.push({
-                key: 'organization"."state',
-                operation: 'in',
-                value: filterWithCompanyStatesIn,
-            });
             query.filterAnd = filterAnd;
         }
+
+        query.filterAnd.push({
+            key: 'organization"."state',
+            operation: 'in',
+            value: filterWithCompanyStatesIn,
+        });
 
         //Formatting Query
         const newToOldFieldMap: Record<string, string> = {
             id: 'organization"."id',
             name: 'organization"."name',
             companyId: 'organization"."id',
+            companyRole: 'organizationType"."name',
+            taxId: 'organization"."taxId',
+            programmeCount: 'organization"."number_of_projects', // Not Added the column Yet
         };
         query = this.helperService.mapNewWhereClausetoOldWhereClause(
             query,
@@ -199,12 +194,6 @@ export class OrganizationService extends SuperService<
                     ),
                     orgEntity.payload,
                 );
-                await this.transactionService.save({
-                    user: email,
-                    stage: TransactionStage.APPROVE_ORGANIZATION,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -257,12 +246,6 @@ export class OrganizationService extends SuperService<
                     ),
                     orgEntity.payload,
                 );
-                await this.transactionService.save({
-                    user: email,
-                    stage: TransactionStage.REJECT_ORGANIZATION,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;

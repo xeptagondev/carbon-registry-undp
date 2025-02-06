@@ -51,20 +51,31 @@ export class OrganizationEntity {
 
     @Column({ unique: true })
     email: string;
+
     @Column({ nullable: true })
     taxId?: string;
+
     @Column()
     phoneNumber: string;
+
     @Column({ nullable: true })
     paymentId?: string;
+
     @Column({ nullable: true })
     faxNumber?: string;
-    @Column({ nullable: true })
-    province?: string;
+
+    @Column('varchar', { array: true, nullable: true })
+    provinces: string[];
+
     @Column({ nullable: true })
     website?: string;
+
     @Column()
     address: string;
+
+    @Column({ name: 'number_of_projects', nullable: true })
+    numberOfProjects?: number;
+
     @Column({ nullable: true })
     logo?: string;
 }

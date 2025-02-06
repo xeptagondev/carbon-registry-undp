@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { SuperService } from '@app/core/service/super.service';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
@@ -14,11 +14,11 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
-import { TransactionService } from '@app/shared/transaction/service/transaction.service';
-import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
-import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import {
+    OrganizationTypeEnum,
+    OrganizationTypeFormatEnum,
+} from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import {
     generatePassword,
@@ -43,13 +43,13 @@ import { OrganizationService } from 'src/organization/service/organization.servi
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 import { HTTPResponseDto } from '@app/shared/util/dto/http.response.dto';
+import { UserUpdateDto } from '@app/shared/users/dto/user-update.dto';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
     private readonly logger = new Logger(UserService.name);
     constructor(
         private readonly guardianService: GuardianService,
-        private readonly transactionService: TransactionService,
         private readonly configService: ConfigService,
         private readonly utilService: UtilService,
         private readonly mailService: MailService,
@@ -144,12 +144,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.email,
                     hashedPass,
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.USER_REGISTER,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -160,6 +154,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 name: userDto.name,
                 password: hashedPass,
                 phoneNumber: userDto.phoneNo,
+                hederaAccount: userDto.hederaAccount,
             };
 
             // i. Save user in db without organization and role
@@ -181,12 +176,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.hederaAccount,
                     userDto.hederaKey,
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.ASSIGN_REGISTRY,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -203,12 +192,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.email,
                     refreshToken,
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.ASSIGN_POLICY,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -233,7 +216,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     context: {
                         organizationName: userDto.company.name,
                         countryName: countryName,
-                        organizationRole: userDto.company.companyRole,
+                        organizationRole:
+                            OrganizationTypeFormatEnum[
+                                userDto.company.companyRole
+                            ],
                         home: this.configService.get('url'),
                     },
                 };
@@ -310,12 +296,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         role: guardianRole.name,
                     },
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_INVITATION,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -334,12 +314,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             invitation: inviteResponse.invitation,
                         },
                     );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_GROUP_TYPE,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -361,12 +335,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         ref: null,
                     },
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_USER_BLOCK,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -400,12 +368,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             label: userDto.company.name,
                         },
                     );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_GROUP_TYPE,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -435,13 +397,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             ref: null,
                         },
                     );
-
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_ORGANIZATION_BLOCK,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -460,7 +415,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 phoneNumber: userDto?.company?.phoneNo,
                 paymentId: userDto?.company?.paymentId,
                 faxNumber: userDto?.company?.faxNo,
-                province: userDto?.company?.provinces,
+                provinces: userDto?.company?.provinces,
                 website: userDto?.company?.website,
                 address: userDto?.company?.address,
             };
@@ -511,12 +466,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             ref: null,
                         },
                     );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_USER_BLOCK,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -602,6 +551,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     orgDto.address = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgAddress`,
                     );
+                    orgDto.logo = this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgLogo`,
+                    );
                     const user = new UsersDTO();
                     user.email = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
@@ -656,23 +608,24 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             companyRole: newUser.guardianRole?.name ?? null,
             createdTime: null,
             isPending: false,
+            hederaAccount: newUser?.hederaAccount,
             company: {
                 companyId: newUser.organization?.id,
                 name: newUser.organization?.name,
-                taxId: null,
-                paymentId: null,
-                email: null,
+                taxId: newUser.organization?.taxId,
+                paymentId: newUser.organization?.paymentId,
+                email: newUser.organization?.email,
                 phoneNo: newUser.phoneNumber ?? null,
-                website: null,
-                address: null,
+                website: newUser.organization?.website,
+                address: newUser.organization?.address,
                 country: null,
-                logo: null,
+                logo: newUser?.organization?.logo,
                 companyRole:
                     newUser.organization?.organizationType?.name ?? null,
                 state: newUser.organization?.state ?? null,
                 creditBalance: null,
                 secondaryAccountBalance: null,
-                programmeCount: null,
+                programmeCount: newUser?.organization?.numberOfProjects,
                 lastUpdateVersion: null,
                 creditTxTime: null,
                 remarks: null,
@@ -694,27 +647,27 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
         this.helperService.validateRequestUser(requestUser);
+        if (!query.filterAnd) {
+            const filterAnd: FilterEntry[] = [];
+            query.filterAnd = filterAnd;
+        }
+        query.filterAnd.push({
+            key: 'organizationType"."name',
+            operation: 'IS NOT',
+            value: null,
+        });
+
         if (
             !(
                 requestUser.organizationRole ==
                 OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
             )
         ) {
-            if (query.filterAnd) {
-                query.filterAnd.push({
-                    key: 'organization"."id',
-                    operation: '=',
-                    value: requestUser.organizationId,
-                });
-            } else {
-                const filterAnd: FilterEntry[] = [];
-                filterAnd.push({
-                    key: 'organization"."id',
-                    operation: '=',
-                    value: requestUser.organizationId,
-                });
-                query.filterAnd = filterAnd;
-            }
+            query.filterAnd.push({
+                key: 'organization"."id',
+                operation: '=',
+                value: requestUser.organizationId,
+            });
         }
 
         //Formatting Query
@@ -722,6 +675,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             id: 'user"."id',
             name: 'user"."name',
             email: 'user"."email',
+            companyRole: 'organizationType"."name',
+            role: 'role"."name',
         };
         query = this.helperService.mapNewWhereClausetoOldWhereClause(
             query,
@@ -779,8 +734,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             },
         });
         return {
-            user: userProfile,
-            Organisation: userProfile?.organization,
+            user: this.mapNewQueryToOldQuery(userProfile),
+            Organisation: this.orgaisationService.mapNewQueryToOldQuery(
+                userProfile?.organization,
+            ),
         };
     }
 
@@ -814,12 +771,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
 
         if (guardianResponse) {
-            await this.transactionService.save({
-                user: userDetails?.email,
-                stage: TransactionStage.CHANGE_PASSOWRD,
-                type: TransactionType.CHANGE_PASSOWRD,
-                createdTime: Date.now(),
-            });
             const result = await this.usersRepository
                 .update(
                     {
@@ -830,8 +781,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         password: hashedPass,
                     },
                 )
-                .catch((err: any) => {
-                    return err;
+                .catch((_: any) => {
+                    throw new HttpException(
+                        'Password update failed. Please try again',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
                 });
 
             if (result.affected > 0) {
@@ -862,6 +816,57 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
             }
+        }
+    }
+
+    async updateUserDetails(
+        userUpdateDto: UserUpdateDto,
+        requestUser: JWTPayload,
+    ): Promise<HTTPResponseDto> {
+        this.helperService.validateRequestUser(requestUser);
+
+        const userDetails = await this.usersRepository.findOneBy({
+            id: userUpdateDto.id,
+        });
+
+        if (!userDetails) {
+            throw new HttpException(
+                'No visible user found',
+                HttpStatus.NOT_FOUND,
+            );
+        }
+        // Guardian Implmentation Not Yet Completed
+        const result = await this.usersRepository
+            .update(
+                {
+                    id: userUpdateDto.id,
+                },
+                {
+                    name: userUpdateDto.name,
+                    phoneNumber: userUpdateDto.phoneNo
+                        ? userUpdateDto.phoneNo
+                        : userDetails.phoneNumber,
+                },
+            )
+            .catch((err: any) => {
+                throw new HttpException(
+                    'User update failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            });
+
+        if (result.affected > 0) {
+            const response: HTTPResponseDto = {
+                statusCode: HttpStatus.OK,
+                message: 'The user account has been updated successfully',
+            };
+
+            return response;
+        } else {
+            throw new HttpException(
+                'User update failed. Please try again',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 }

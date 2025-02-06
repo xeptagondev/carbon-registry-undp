@@ -602,12 +602,9 @@ export const UserManagementComponent = (props: any) => {
           <Radio.Group onChange={onFilterOrganisationType} value={filterByOrganisationType}>
             <Space direction="vertical">
               <Radio value="All">{t('user:all')}</Radio>
-              <Radio value="Government">{t('user:gov')}</Radio>
-              <Radio value="Ministry">{t('user:min')}</Radio>
-              <Radio value="ProgrammeDeveloper">{t('user:developer')}</Radio>
-              <Radio value="ClimateFund">{t('user:ClimateFund')}</Radio>
-              <Radio value="ExecutiveCommittee">{t('user:ExecutiveCommittee')}</Radio>
-              <Radio value="Certifier">{t('user:certifier')}</Radio>
+              <Radio value="DNA">{t('user:dna')}</Radio>
+              <Radio value="PP">{t('user:pp')}</Radio>
+              <Radio value="DOE">{t('user:doe')}</Radio>
             </Space>
           </Radio.Group>
         </div>
