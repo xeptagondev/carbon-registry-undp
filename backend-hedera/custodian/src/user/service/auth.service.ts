@@ -27,9 +27,6 @@ import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import { GenerateTokenDto } from '@app/shared/token/dto/generate-token.dto';
 import { PasswordResetDto } from '@app/shared/users/dto/password-reset.dto';
 import { ValidateTokenDto } from '@app/shared/token/dto/validate-token.dto';
-import { TransactionService } from '@app/shared/transaction/service/transaction.service';
-import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
-import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
 import { RequestTokenDto } from '@app/shared/token/dto/request-token.dto';
 
 @Injectable()
@@ -40,7 +37,6 @@ export class AuthService {
         private readonly jwtService: JwtService,
         private readonly tokenService: TokenService,
         private readonly mailService: MailService,
-        private readonly transactionService: TransactionService,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(OrganizationEntity)
@@ -328,12 +324,6 @@ export class AuthService {
             });
 
             if (guardianResponse) {
-                await this.transactionService.save({
-                    user: userDetails?.email,
-                    stage: TransactionStage.CHANGE_PASSOWRD,
-                    type: TransactionType.CHANGE_PASSOWRD,
-                    createdTime: Date.now(),
-                });
                 const result = await this.usersRepository
                     .update(
                         {

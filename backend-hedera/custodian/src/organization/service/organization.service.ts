@@ -7,9 +7,6 @@ import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto
 import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
-import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
-import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
-import { TransactionService } from '@app/shared/transaction/service/transaction.service';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
@@ -31,7 +28,6 @@ export class OrganizationService extends SuperService<
         private readonly utilService: UtilService,
         private readonly helperService: HelperService,
         private readonly guardianService: GuardianService,
-        private readonly transactionService: TransactionService,
         private readonly configService: ConfigService,
         @InjectRepository(OrganizationEntity)
         private readonly organizationRepository: Repository<OrganizationEntity>,
@@ -198,12 +194,6 @@ export class OrganizationService extends SuperService<
                     ),
                     orgEntity.payload,
                 );
-                await this.transactionService.save({
-                    user: email,
-                    stage: TransactionStage.APPROVE_ORGANIZATION,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -256,12 +246,6 @@ export class OrganizationService extends SuperService<
                     ),
                     orgEntity.payload,
                 );
-                await this.transactionService.save({
-                    user: email,
-                    stage: TransactionStage.REJECT_ORGANIZATION,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;

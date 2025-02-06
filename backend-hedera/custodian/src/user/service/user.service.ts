@@ -14,9 +14,6 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
-import { TransactionService } from '@app/shared/transaction/service/transaction.service';
-import { TransactionStage } from '@app/shared/transaction/enum/transaction.stage.enum';
-import { TransactionType } from '@app/shared/transaction/enum/transaction.type.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     OrganizationTypeEnum,
@@ -53,7 +50,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     private readonly logger = new Logger(UserService.name);
     constructor(
         private readonly guardianService: GuardianService,
-        private readonly transactionService: TransactionService,
         private readonly configService: ConfigService,
         private readonly utilService: UtilService,
         private readonly mailService: MailService,
@@ -148,12 +144,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.email,
                     hashedPass,
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.USER_REGISTER,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -186,12 +176,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.hederaAccount,
                     userDto.hederaKey,
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.ASSIGN_REGISTRY,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -208,12 +192,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.email,
                     refreshToken,
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.ASSIGN_POLICY,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -318,12 +296,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         role: guardianRole.name,
                     },
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_INVITATION,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -342,12 +314,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             invitation: inviteResponse.invitation,
                         },
                     );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_GROUP_TYPE,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -369,12 +335,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         ref: null,
                     },
                 );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_USER_BLOCK,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -408,12 +368,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             label: userDto.company.name,
                         },
                     );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_GROUP_TYPE,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -443,13 +397,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             ref: null,
                         },
                     );
-
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_ORGANIZATION_BLOCK,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -519,12 +466,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             ref: null,
                         },
                     );
-                await this.transactionService.save({
-                    user: reqUser?.email,
-                    stage: TransactionStage.CREATE_USER_BLOCK,
-                    type: TransactionType.USER_REGISTER,
-                    createdTime: Date.now(),
-                });
             } catch (e) {
                 console.log(e);
                 throw e;
@@ -838,12 +779,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
 
         if (guardianResponse) {
-            await this.transactionService.save({
-                user: userDetails?.email,
-                stage: TransactionStage.CHANGE_PASSOWRD,
-                type: TransactionType.CHANGE_PASSOWRD,
-                createdTime: Date.now(),
-            });
             const result = await this.usersRepository
                 .update(
                     {
