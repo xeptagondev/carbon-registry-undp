@@ -679,6 +679,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             operation: 'IS NOT',
             value: null,
         });
+        query.filterAnd.push({
+            key: 'user"."isActive',
+            operation: '=',
+            value: true,
+        });
 
         if (
             !(
