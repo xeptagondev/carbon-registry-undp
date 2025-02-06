@@ -292,9 +292,25 @@ export class OrganizationService extends SuperService<
             throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
         }
 
-        //TODO: edit the org and save
+        const editData: Partial<OrganizationEntity> = {
+            name: dto.name,
+            email: dto.email,
+            phoneNumber: dto.phoneNo,
+            website: dto.website,
+            faxNumber: dto.faxNo,
+            logo: dto.logo,
+            provinces: dto.provinces,
+            address: dto.address,
+        };
 
-        return {};
+        if (user.organizationRole == OrganizationTypeEnum.PROJECT_PARTICIPANT) {
+            editData.paymentId = dto.paymentId;
+        }
+
+        return await this.organizationRepository.update(
+            { id: orgEnt.id },
+            editData,
+        );
     }
 
     async updateStatus(
