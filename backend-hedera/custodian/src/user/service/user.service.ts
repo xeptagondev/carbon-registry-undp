@@ -113,16 +113,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return new Promise<void>((resolve) => setTimeout(resolve, ms));
     }
 
-    private async findUser(email: string, password: string) {
+    private async findUser(email: string) {
         const user: UsersEntity = await this.usersRepository.findOne({
             where: {
                 email: email,
             },
         });
 
-        return user && user.password && user.password === hashPassword(password)
-            ? user
-            : null;
+        return user;
     }
 
     async register(
@@ -132,17 +130,17 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive: boolean = false,
     ) {
         try {
-            const userDetails = await this.usersRepository.findOne({
-                where: {
-                    email: userDto.email,
-                },
-            });
-            if (userDetails) {
-                throw new HttpException(
-                    'User already exists in the Carbon Registry System with the given email',
-                    HttpStatus.FORBIDDEN,
-                );
-            }
+            // const userDetails = await this.usersRepository.findOne({
+            //     where: {
+            //         email: userDto.email,
+            //     },
+            // });
+            // if (userDetails) {
+            //     throw new HttpException(
+            //         'User already exists in the Carbon Registry System with the given email',
+            //         HttpStatus.FORBIDDEN,
+            //     );
+            // }
 
             const countryName = this.configService.get('country');
             this.logger.log(
@@ -163,8 +161,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             const hashedPass = hashPassword(userPass);
 
             // 2: Register the new user as a 'USER' in guardian backend
-            const regUser = await this.findUser(userDto.email, hashedPass);
-            console.log(regUser);
+            const regUser = await this.findUser(userDto.email);
             if (!regUser) {
                 await this.guardianService.registerUser(
                     userDto.email,
@@ -174,7 +171,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const userEntity: UsersEntity = {
                     email: userDto.email,
                     name: userDto.name,
-                    password: hashedPass,
+                    password: regUser.password,
                     phoneNumber: userDto.phoneNo,
                     hederaAccount: userDto.hederaAccount,
                     stage: UserStageEnum.REGISTER,
@@ -190,11 +187,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.delay(5000);
             }
             // 4. Update the user profile with the parent (SRU)
-            const updateUser = await this.findUser(userDto.email, hashedPass);
+            const updateUser = await this.findUser(userDto.email);
             if (updateUser && updateUser.stage === UserStageEnum.REGISTER) {
                 await this.guardianService.updateUserProfile(
                     userDto.email,
-                    hashedPass,
+                    updateUser.password,
                     this.configService.get('sru.did'),
                     userDto.hederaAccount,
                     userDto.hederaKey,
@@ -209,7 +206,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
             // 5. Assign the policy for the user
 
-            const assignUser = await this.findUser(userDto.email, hashedPass);
+            const assignUser = await this.findUser(userDto.email);
+
             if (
                 assignUser &&
                 assignUser.stage === UserStageEnum.ASIGN_REGISTRY
@@ -229,7 +227,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             let res;
             if (userDto.company) {
                 // 6. Register new organization
-                res = await this.registerGroup(userDto, hashedPass, reqUser);
+                res = await this.registerGroup(userDto, reqUser);
 
                 // 6.1 Send organization email
                 const mailDTO: MailTemplateDTO = {
@@ -253,7 +251,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.mailService.sendMail(mailDTO);
             } else {
                 // 6. Accept an invitation (generate an invitation and create the user)
-                res = await this.inviteNewUser(userDto, hashedPass, reqUser);
+                res = await this.inviteNewUser(userDto, reqUser);
             }
 
             // 7. Send password creation email to user
@@ -288,17 +286,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    private async inviteNewUser(
-        userDto: UsersDTO,
-        hashedPass: string,
-        reqUser: JWTPayload,
-    ) {
+    private async inviteNewUser(userDto: UsersDTO, reqUser: JWTPayload) {
         try {
             // 1. Generate an invite for the given role
-            const groupTypeUser = await this.findUser(
-                userDto.email,
-                hashedPass,
-            );
+            const groupTypeUser = await this.findUser(userDto.email);
             console.log(groupTypeUser);
             if (
                 groupTypeUser &&
@@ -334,7 +325,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
                 await this.guardianService.createGroupType(
                     userDto.email,
-                    hashedPass,
+                    groupTypeUser.password,
                     this.utilService.getBlock(
                         this.configService.get('blocks.createGroupType'),
                     ),
@@ -350,11 +341,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 );
             }
             // 3. Create the user with the role
-            const user = await this.findUser(userDto.email, hashedPass);
+            const user = await this.findUser(userDto.email);
             if (user && user.stage === UserStageEnum.CREATE_GROUP_TYPE) {
                 await this.guardianService.createUser(
                     userDto.email,
-                    hashedPass,
+                    userDto.password,
                     this.utilService.getBlock(
                         this.configService.get('blocks.createUser'),
                     ),
@@ -390,24 +381,17 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    private async registerGroup(
-        userDto: UsersDTO,
-        hashedPass: string,
-        reqUser: JWTPayload,
-    ) {
+    private async registerGroup(userDto: UsersDTO, reqUser: JWTPayload) {
         try {
             // 1. Create a new group type in guardian
-            const groupTypeUser = await this.findUser(
-                userDto.email,
-                hashedPass,
-            );
+            const groupTypeUser = await this.findUser(userDto.email);
             if (
                 groupTypeUser &&
                 groupTypeUser.stage === UserStageEnum.ASIGN_POLICY
             ) {
                 await this.guardianService.createGroupType(
                     userDto.email,
-                    hashedPass,
+                    groupTypeUser.password,
                     this.utilService.getBlock(
                         this.configService.get('blocks.createGroupType'),
                     ),
@@ -433,7 +417,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             });
 
             let createOrganizationResponse = { group: '' };
-            const groupUser = await this.findUser(userDto.email, hashedPass);
+            const groupUser = await this.findUser(userDto.email);
             if (
                 groupUser &&
                 groupUser.stage === UserStageEnum.CREATE_GROUP_TYPE
@@ -444,7 +428,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 createOrganizationResponse =
                     await this.guardianService.createOrganization(
                         userDto.email,
-                        hashedPass,
+                        groupUser.password,
                         this.utilService.getBlock(
                             this.configService.get(blockName),
                         ),
@@ -506,11 +490,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     { stage: UserStageEnum.CREATE_GROUP },
                 );
             }
-            const user = await this.findUser(userDto.email, hashedPass);
+            const user = await this.findUser(userDto.email);
             if (user && user.stage === UserStageEnum.CREATE_GROUP) {
                 await this.guardianService.createUser(
                     userDto.email,
-                    hashedPass,
+                    user.password,
                     this.utilService.getBlock(
                         this.configService.get('blocks.createUser'),
                     ),
@@ -549,6 +533,15 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         logo: userDto?.company?.logo,
                     },
                 );
+            }
+            const approveUser = await this.findUser(userDto.email);
+            if (
+                approveUser &&
+                approveUser.stage === UserStageEnum.CREATE_USER
+            ) {
+                const orgEntity = await this.organizationRepository.findOne({
+                    where: { email: userDto?.company?.email },
+                });
                 if (reqUser?.userRole === RoleEnum.Root) {
                     await this.orgaisationService.approve(
                         reqUser?.email,
@@ -557,15 +550,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             remarks: '',
                         },
                     );
+                    userDto.isActive = true;
                 }
 
                 const guardianRole = await this.getGuardianRole(
                     orgType?.id,
                     userDto.role,
                 );
-                userDto.isActive = true;
                 await this.updateUser(userDto, orgEntity, guardianRole);
             }
+
             return true;
         } catch (e) {
             throw new HttpException(
@@ -640,7 +634,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     );
                     user.role = RoleEnum.Root;
                     user.company = orgDto;
-
                     const groupResponse = await this.register(
                         user,
                         user.password,

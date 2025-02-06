@@ -186,18 +186,14 @@ export class OrganizationService extends SuperService<
                     },
                 });
             let approveResponse = {};
-            try {
-                approveResponse = await this.guardianService.approve(
-                    refreshToken,
-                    this.utilService.getBlock(
-                        this.configService.get('blocks.appoveOrganization'),
-                    ),
-                    orgEntity.payload,
-                );
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
+
+            approveResponse = await this.guardianService.approve(
+                refreshToken,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.appoveOrganization'),
+                ),
+                orgEntity.payload,
+            );
 
             await this.organizationRepository.update(
                 {
@@ -207,8 +203,10 @@ export class OrganizationService extends SuperService<
             );
             return approveResponse;
         } catch (e) {
-            console.log(e);
-            throw e;
+            throw new HttpException(
+                'Error occurred while approving the organization',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
