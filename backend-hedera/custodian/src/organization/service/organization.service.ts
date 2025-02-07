@@ -200,16 +200,29 @@ export class OrganizationService extends SuperService<
                 orgEntity.payload,
             );
 
-            await this.organizationRepository.update(
-                {
-                    id: orgEntity.id,
-                },
-                { state: OrganizationStateEnum.ACTIVE },
-            );
+            const resultOrg = await this.organizationRepository
+                .update(
+                    {
+                        id: orgEntity.id,
+                    },
+                    { state: OrganizationStateEnum.ACTIVE },
+                )
+                .catch((_: any) => {
+                    throw new HttpException(
+                        'Update failed. Please try again',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                });
+            if (resultOrg.affected < 0) {
+                throw new HttpException(
+                    'Update failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
 
             for (const user of orgEntity.users) {
                 if (user.isActive == false) {
-                    const result = await this.usersRepository
+                    const resultUser = await this.usersRepository
                         .update(
                             {
                                 id: user.id,
@@ -227,7 +240,7 @@ export class OrganizationService extends SuperService<
                             );
                         });
 
-                    if (result.affected < 0) {
+                    if (resultUser.affected < 0) {
                         throw new HttpException(
                             'Update failed. Please try again',
                             HttpStatus.INTERNAL_SERVER_ERROR,
