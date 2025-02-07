@@ -29,12 +29,8 @@ export class UserController {
 
     @UseGuards(AuthGuardService)
     @Post('download')
-    async download(@Body() query: DataExportQueryDto, @Request() req) {
-        try {
-            return this.userService.download(query);
-        } catch (err) {
-            return { error: 'Error generating the CSV file.' };
-        }
+    async download(@Body() query: DataExportQueryDto) {
+        return this.userService.download(query);
     }
 
     @Post('register')

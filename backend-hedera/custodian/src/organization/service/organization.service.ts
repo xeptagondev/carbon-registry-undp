@@ -251,7 +251,7 @@ export class OrganizationService extends SuperService<
 
         if (oldFormatData.length > 0) {
             const prepData = this.prepareCompanyDataForExport(oldFormatData);
-            let headers: string[] = [];
+            const headers: string[] = [];
             const titleKeys = Object.keys(prepData[0]);
             for (const key of titleKeys) {
                 headers.push(this.orgExportMap[key]);
@@ -387,6 +387,7 @@ export class OrganizationService extends SuperService<
                     },
                     { state: OrganizationStateEnum.ACTIVE },
                 )
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 .catch((_: any) => {
                     throw new HttpException(
                         'Update failed. Please try again',

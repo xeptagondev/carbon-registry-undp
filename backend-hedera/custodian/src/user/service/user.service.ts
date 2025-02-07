@@ -379,7 +379,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     org?.organizationType?.id,
                     userDto.role,
                 );
-                let inviteResponse =
+                const inviteResponse =
                     await this.guardianService.createInvitation(
                         reqUser?.email,
                         this.utilService.getBlock(
@@ -858,7 +858,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         if (oldFormatData.length > 0) {
             const prepData = this.prepareUserDataForExport(oldFormatData);
 
-            let headers: string[] = [];
+            const headers: string[] = [];
             const titleKeys = Object.keys(prepData[0]);
             for (const key of titleKeys) {
                 headers.push(this.userExportMap[key]);
