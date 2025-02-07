@@ -76,14 +76,10 @@ export class OrganizationController {
     @UseGuards(AuthGuardService)
     @Post('download')
     async download(@Body() query: DataExportQueryDto, @Request() req) {
-        try {
-            return this.organizationService.download(
-                query,
-                req?.user?.organizationRole,
-            );
-        } catch (err) {
-            return { error: 'Error generating the CSV file.' };
-        }
+        return this.organizationService.download(
+            query,
+            req?.user?.organizationRole,
+        );
     }
 
     @UseGuards(AuthGuardService)
