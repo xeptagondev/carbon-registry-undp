@@ -344,6 +344,14 @@ export const UserManagementComponent = (props: any) => {
     } else return undefined;
   };
 
+  const fixFilterAnd = [
+    {
+      key: 'user"."isActive',
+      operation: '=',
+      value: true,
+    },
+  ];
+
   const filterAnd = () => {
     if (
       searchByTermUser !== null &&
@@ -354,6 +362,7 @@ export const UserManagementComponent = (props: any) => {
       filterByOrganisationType !== 'All'
     ) {
       return [
+        ...fixFilterAnd,
         {
           key: searchByTermUser,
           operation: 'like',
@@ -378,6 +387,7 @@ export const UserManagementComponent = (props: any) => {
       filterByRole !== 'All'
     ) {
       return [
+        ...fixFilterAnd,
         {
           key: searchByTermUser,
           operation: 'like',
@@ -397,6 +407,7 @@ export const UserManagementComponent = (props: any) => {
       filterByOrganisationType !== 'All'
     ) {
       return [
+        ...fixFilterAnd,
         {
           key: searchByTermUser,
           operation: 'like',
@@ -410,6 +421,7 @@ export const UserManagementComponent = (props: any) => {
       ];
     } else if (filterByOrganisationType !== 'All' && filterByRole !== 'All') {
       return [
+        ...fixFilterAnd,
         {
           key: 'companyRole',
           operation: '=',
@@ -423,6 +435,7 @@ export const UserManagementComponent = (props: any) => {
       ];
     } else if (filterByOrganisationType !== 'All') {
       return [
+        ...fixFilterAnd,
         {
           key: 'companyRole',
           operation: '=',
@@ -431,13 +444,14 @@ export const UserManagementComponent = (props: any) => {
       ];
     } else if (filterByRole !== 'All') {
       return [
+        ...fixFilterAnd,
         {
           key: 'role',
           operation: '=',
           value: filterByRole,
         },
       ];
-    } else return undefined;
+    } else return [...fixFilterAnd];
   };
 
   const sort = () => {

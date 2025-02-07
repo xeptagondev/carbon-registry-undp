@@ -169,6 +169,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive: boolean = false,
     ) {
         try {
+            this.helperService.validateRequestUser(reqUser);
             const userDetails = await this.usersRepository.findOne({
                 where: {
                     email: userDto.email,
@@ -320,8 +321,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             const response: HTTPResponseDto = {
                 statusCode: HttpStatus.OK,
                 message: userDto.company
-                    ? `Successfully created organization with admin user`
-                    : `Successfully created the user`,
+                    ? 'Successfully created organization with admin user'
+                    : 'Successfully created the user',
             };
             return response;
         } catch (error) {
@@ -594,6 +595,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const orgEntity = await this.organizationRepository.findOne({
                     where: { email: userDto?.company?.email },
                 });
+                const guardianRole = await this.getGuardianRole(
+                    orgType?.id,
+                    userDto.role,
+                );
+                await this.updateUser(userDto, orgEntity, guardianRole);
                 if (
                     reqUser?.organizationRole ==
                         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
@@ -608,12 +614,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         },
                     );
                 }
-
-                const guardianRole = await this.getGuardianRole(
-                    orgType?.id,
-                    userDto.role,
-                );
-                await this.updateUser(userDto, orgEntity, guardianRole);
             }
 
             return true;
@@ -723,7 +723,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             companyId: newUser.organization?.id,
             companyRole: newUser.guardianRole?.name ?? null,
             createdTime: null,
-            isPending: newUser?.isActive,
+            isPending: !newUser?.isActive,
             hederaAccount: newUser?.hederaAccount,
             company: {
                 companyId: newUser.organization?.id,
@@ -772,11 +772,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             operation: 'IS NOT',
             value: null,
         });
-        query.filterAnd.push({
-            key: 'user"."isActive',
-            operation: '=',
-            value: true,
-        });
 
         if (
             !(
@@ -798,6 +793,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             email: 'user"."email',
             companyRole: 'organizationType"."name',
             role: 'role"."name',
+            companyId: 'organization"."id',
         };
         query = this.helperService.mapNewWhereClausetoOldWhereClause(
             query,
@@ -995,6 +991,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         userId: number,
         requestUser: JWTPayload,
     ): Promise<HTTPResponseDto> {
+        this.helperService.validateRequestUser(requestUser);
         const actionUserDetails = await this.usersRepository.findOne({
             where: { id: requestUser.userId },
             relations: {
