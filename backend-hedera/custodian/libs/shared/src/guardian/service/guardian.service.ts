@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Repository } from 'typeorm';
 import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
+import { GUARDIAN_ERROR } from '../constant/guardian-error.constant';
 
 @Injectable()
 export class GuardianService {
@@ -20,6 +21,24 @@ export class GuardianService {
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
     ) {}
+
+    async getGuardianError(error: unknown, calledMainFunction: string) {
+        console.log(
+            `Error Occurred in Guardian Service ${calledMainFunction}`,
+            error,
+        );
+        if (axios.isAxiosError(error)) {
+            throw new HttpException(
+                GUARDIAN_ERROR[error.response.status],
+                error.response.status,
+            );
+        } else {
+            throw new HttpException(
+                GUARDIAN_ERROR[HttpStatus.INTERNAL_SERVER_ERROR],
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
 
     async getRefreshToken(username: string) {
         const user: UsersEntity = await this.usersRepository.findOne({
@@ -54,8 +73,7 @@ export class GuardianService {
             });
             return accessTokenResponse?.data?.accessToken;
         } catch (e) {
-            console.log(e);
-            throw e;
+            await this.getGuardianError(e, 'getAccessToken');
         }
     }
 
@@ -70,13 +88,8 @@ export class GuardianService {
                 password_confirmation: password,
                 role: 'USER',
             });
-            return response.data;
         } catch (e) {
-            console.log(e);
-            throw new HttpException(
-                'Error occurred while registering user in guardian',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
+            await this.getGuardianError(e, 'registerUser');
         }
     }
 
@@ -119,10 +132,7 @@ export class GuardianService {
             );
             return response.data;
         } catch (e) {
-            throw new HttpException(
-                'Error occurred while updating user profile with guardian registry',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
+            await this.getGuardianError(e, 'updateUserProfile');
         }
     }
 
@@ -160,10 +170,7 @@ export class GuardianService {
             );
             return response.data;
         } catch (e) {
-            throw new HttpException(
-                'Error occurred while assigning policy to user',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
+            await this.getGuardianError(e, 'assignPolicyToUser');
         }
     }
 
@@ -192,8 +199,7 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'createGroupType');
         }
     }
 
@@ -223,8 +229,7 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'createOrganization');
         }
     }
 
@@ -254,8 +259,7 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'createUser');
         }
     }
 
@@ -280,10 +284,7 @@ export class GuardianService {
 
             return response.data;
         } catch (error) {
-            throw new HttpException(
-                'Error occurred while generating user invitation',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
+            await this.getGuardianError(error, 'createInvitation');
         }
     }
     public async approve(
@@ -306,8 +307,7 @@ export class GuardianService {
 
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'approve');
         }
     }
     public async login(loginDto: LoginDto): Promise<any> {
@@ -347,11 +347,7 @@ export class GuardianService {
             }
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw new HttpException(
-                'Guardian User Login Failed',
-                HttpStatus.UNAUTHORIZED,
-            );
+            await this.getGuardianError(error, 'login');
         }
     }
 
