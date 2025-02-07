@@ -15,6 +15,7 @@ import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.servic
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 import { UserUpdateDto } from '@app/shared/users/dto/user-update.dto';
+import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 
 @Controller('user')
 export class UserController {
@@ -24,6 +25,12 @@ export class UserController {
     @Post('add')
     async add(@Body() userDto: UsersDTO, @Request() req): Promise<any> {
         return this.userService.register(userDto, '', req?.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Post('download')
+    async download(@Body() query: DataExportQueryDto) {
+        return this.userService.download(query);
     }
 
     @Post('register')
