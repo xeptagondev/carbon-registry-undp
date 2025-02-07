@@ -241,7 +241,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         reqUser?: JWTPayload,
         isUserActive: boolean = false,
     ) {
-        this.helperService.validateRequestUser(reqUser);
+        // this.helperService.validateRequestUser(reqUser);
         const userDetails = await this.usersRepository.findOne({
             where: {
                 email: userDto.email,
