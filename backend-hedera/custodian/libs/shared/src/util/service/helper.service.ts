@@ -44,7 +44,7 @@ export class HelperService {
         }
         if (requestUser.organizationState != OrganizationStateEnum.ACTIVE) {
             throw new HttpException(
-                'No active company found',
+                'No active organisation found',
                 HttpStatus.UNAUTHORIZED,
             );
         }
