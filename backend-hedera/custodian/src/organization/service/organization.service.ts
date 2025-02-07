@@ -222,7 +222,7 @@ export class OrganizationService extends SuperService<
             companyId: 'organization"."id',
             companyRole: 'organizationType"."name',
             taxId: 'organization"."taxId',
-            programmeCount: 'organization"."number_of_projects', // Not Added the column Yet
+            programmeCount: 'organization"."number_of_projects',
         };
         query = this.helperService.mapNewWhereClausetoOldWhereClause(
             query,
@@ -248,25 +248,6 @@ export class OrganizationService extends SuperService<
         const oldFormatData = resp.map((organisation) =>
             this.mapNewQueryToOldQuery(organisation),
         );
-
-        // const resp = await this.organizationRepository
-        //   .createQueryBuilder()
-        //   .where(
-        //     this.helperService.generateWhereSQL(
-        //       queryDto,
-        //       this.helperService.parseMongoQueryToSQL(abilityCondition)
-        //     )
-        //   )
-        //   .orderBy(
-        //     queryDto?.sort?.key && `"${queryDto?.sort?.key}"`,
-        //     queryDto?.sort?.order,
-        //     queryDto?.sort?.nullFirst !== undefined
-        //       ? queryDto?.sort?.nullFirst === true
-        //         ? "NULLS FIRST"
-        //         : "NULLS LAST"
-        //       : undefined
-        //   )
-        //   .getMany();
 
         if (oldFormatData.length > 0) {
             const prepData = this.prepareCompanyDataForExport(oldFormatData);

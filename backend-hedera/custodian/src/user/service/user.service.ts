@@ -45,6 +45,9 @@ import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 import { HTTPResponseDto } from '@app/shared/util/dto/http.response.dto';
 import { UserUpdateDto } from '@app/shared/users/dto/user-update.dto';
 import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
+import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
+import { DataExportUserDto } from '@app/shared/util/dto/data.export.user.dto';
+import { DataExportService } from '@app/shared/util/service/data-export.service';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -56,6 +59,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         private readonly mailService: MailService,
         private readonly fileHandler: FileHandlerInterface,
         private readonly helperService: HelperService,
+        private readonly dataExportService: DataExportService,
         private readonly orgaisationService: OrganizationService,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
@@ -70,6 +74,27 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     ) {
         super(usersRepository);
     }
+    private userExportMap = {
+        id: 'User Id',
+        email: 'Email',
+        role: 'Role',
+        name: 'Name',
+        country: 'Country',
+        phoneNo: 'Phone Number',
+        companyId: 'Organization Id',
+        companyName: 'Organization Name',
+        companyRole: 'Organization Type',
+        createdTime: 'Created At',
+        isPending: 'Pending Approval',
+        nothingToExport: 'Data not found for export',
+        users: 'Users',
+        ProgrammeDeveloper: 'Project Participant',
+        Government: 'Government',
+        Certifier: 'Certifier (VVB)',
+        ClimateFund: 'Zimbabwe Climate Fund',
+        ExecutiveCommittee: 'Executive Committee',
+        Ministry: 'Ministry',
+    };
 
     async updateUser(
         userDTO: UsersDTO,
@@ -756,6 +781,124 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 govDep: null,
             },
         };
+    }
+
+    async download(queryData: DataExportQueryDto) {
+        let query = new QueryDto();
+        query.filterAnd = queryData.filterAnd;
+        query.filterOr = queryData.filterOr;
+        query.sort = queryData.sort;
+
+        // if (query.filterAnd) {
+        //     query.filterAnd.push({
+        //     key: "companyRole",
+        //     operation: "!=",
+        //     value: "API",
+        //   });
+        // } else {
+        //   const filterAnd: FilterEntry[] = [];
+        //   filterAnd.push({
+        //     key: "companyRole",
+        //     operation: "!=",
+        //     value: "API",
+        //   });
+        //   query.filterAnd = filterAnd;
+        // }
+
+        if (!query.filterAnd) {
+            const filterAnd: FilterEntry[] = [];
+            query.filterAnd = filterAnd;
+        }
+        query.filterAnd.push({
+            key: 'organizationType"."name',
+            operation: 'IS NOT',
+            value: null,
+        });
+        const newToOldFieldMap: Record<string, string> = {
+            id: 'user"."id',
+            name: 'user"."name',
+            email: 'user"."email',
+            companyRole: 'organizationType"."name',
+            role: 'role"."name',
+            companyId: 'organization"."id',
+        };
+        query = this.helperService.mapNewWhereClausetoOldWhereClause(
+            query,
+            newToOldFieldMap,
+        );
+
+        const resp = await this.usersRepository
+            .createQueryBuilder('user')
+            .leftJoin('user.organization', 'organization')
+            .leftJoin('user.guardianRole', 'guardianRole')
+            .leftJoin('organization.organizationType', 'organizationType')
+            .leftJoin('guardianRole.role', 'role')
+            .addSelect([
+                'organization',
+                'guardianRole',
+                'role',
+                'organizationType',
+            ])
+            .where(this.helperService.generateWhereSQL(query))
+            .orderBy(
+                query?.sort?.key && `"${query?.sort?.key}"`,
+                query?.sort?.order,
+                query?.sort?.nullFirst !== undefined
+                    ? query?.sort?.nullFirst === true
+                        ? 'NULLS FIRST'
+                        : 'NULLS LAST'
+                    : undefined,
+            )
+            .getMany();
+
+        const oldFormatData = resp.map((user) =>
+            this.mapNewQueryToOldQuery(user),
+        );
+
+        if (oldFormatData.length > 0) {
+            const prepData = this.prepareUserDataForExport(oldFormatData);
+
+            let headers: string[] = [];
+            const titleKeys = Object.keys(prepData[0]);
+            for (const key of titleKeys) {
+                headers.push(this.userExportMap[key]);
+            }
+
+            const path = await this.dataExportService.generateCsv(
+                prepData,
+                headers,
+                this.userExportMap['users'],
+            );
+            return path;
+        }
+        throw new HttpException(
+            this.userExportMap['nothingToExport'],
+            HttpStatus.BAD_REQUEST,
+        );
+    }
+
+    private prepareUserDataForExport(users: any) {
+        const exportData: DataExportUserDto[] = [];
+
+        for (const user of users) {
+            const dto = new DataExportUserDto();
+            dto.id = user.id;
+            dto.email = user.email;
+            dto.role = user.role;
+            dto.name = user.name;
+            dto.country = user.country;
+            dto.phoneNo = user.phoneNo;
+            dto.companyId = user.companyId;
+            dto.companyName = user.company?.name;
+            dto.companyRole = this.userExportMap[user.companyRole];
+            dto.createdTime = this.helperService.formatTimestamp(
+                user.createdTime,
+            );
+            dto.isPending = user.isPending;
+            exportData.push(dto);
+        }
+
+        return exportData;
     }
 
     public async query(
