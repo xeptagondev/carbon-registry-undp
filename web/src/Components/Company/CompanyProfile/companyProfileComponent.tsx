@@ -155,7 +155,7 @@ export const CompanyProfileComponent = (props: any) => {
   const onApproveOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(`organisation/approve?id=${companyDetails.id}`, {
+      const response: any = await put(`organisation/approve?id=${companyDetails.companyId}`, {
         remarks: remarks,
       });
       setOpenApproveModal(false);
@@ -165,8 +165,8 @@ export const CompanyProfileComponent = (props: any) => {
         duration: 3,
         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
       });
-      getCompanyDetails(companyDetails.id);
-      getUserDetails(companyDetails.id);
+      getCompanyDetails(companyDetails.companyId);
+      getUserDetails(companyDetails.companyId);
     } catch (exception: any) {
       setErrorMsg(exception.message);
     } finally {
@@ -181,7 +181,7 @@ export const CompanyProfileComponent = (props: any) => {
   const onRejectOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(`organisation/reject?id=${companyDetails.id}`, {
+      const response: any = await put(`organisation/reject?id=${companyDetails.companyId}`, {
         remarks: remarks,
       });
       setOpenRejectModal(false);
@@ -191,7 +191,7 @@ export const CompanyProfileComponent = (props: any) => {
         duration: 3,
         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
       });
-      getCompanyDetails(companyDetails.id);
+      getCompanyDetails(companyDetails.companyId);
     } catch (exception: any) {
       setErrorMsg(exception.message);
     } finally {
