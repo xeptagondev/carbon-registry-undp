@@ -50,14 +50,14 @@ const LayoutSider = (props: LayoutSiderProps) => {
   const { i18n, t } = useTranslation(['nav']);
 
   const items: MenuItem[] = [
-    getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
-    getItem(
-      t('nav:slcfprogrammes'),
-      'programmeManagementSLCF/viewAllProjects',
-      <AppstoreOutlined />
-    ),
-    getItem(t('nav:projectList'), 'programmeManagementSLCF/viewAll', <UnorderedListOutlined />),
-    getItem(t('nav:retirements'), 'retirementManagement/viewAll', <SplitCellsOutlined />),
+    // getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
+    // getItem(
+    //   t('nav:slcfprogrammes'),
+    //   'programmeManagementSLCF/viewAllProjects',
+    //   <AppstoreOutlined />
+    // ),
+    // getItem(t('nav:projectList'), 'programmeManagementSLCF/viewAll', <UnorderedListOutlined />),
+    // getItem(t('nav:retirements'), 'retirementManagement/viewAll', <SplitCellsOutlined />),
     // getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
     // getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
     // getItem(t('nav:verra'), 'verraManagement/viewAll', <AppstoreOutlined />),
@@ -81,20 +81,20 @@ const LayoutSider = (props: LayoutSiderProps) => {
   //   );
   // }
 
-  if (userInfoState?.companyRole !== CompanyRole.PROGRAMME_DEVELOPER) {
-    items.splice(
-      4,
-      0,
-      getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
-      getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
-      getItem(t('nav:verra'), 'verraManagement/viewAll', <AppstoreOutlined />),
-      getItem(t('nav:goldStandards'), 'goldStandardManagement/viewAll', <AppstoreOutlined />)
-    );
-  }
+  // if (userInfoState?.companyRole !== CompanyRole.PROGRAMME_DEVELOPER) {
+  //   items.splice(
+  //     4,
+  //     0,
+  //     getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
+  //     getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
+  //     getItem(t('nav:verra'), 'verraManagement/viewAll', <AppstoreOutlined />),
+  //     getItem(t('nav:goldStandards'), 'goldStandardManagement/viewAll', <AppstoreOutlined />)
+  //   );
+  // }
 
-  if (userInfoState?.userRole === Role.Root) {
-    items.push(getItem(t('nav:settings'), 'settings', <SettingOutlined />));
-  }
+  // if (userInfoState?.userRole === Role.Root) {
+  //   items.push(getItem(t('nav:settings'), 'settings', <SettingOutlined />));
+  // }
 
   const onClick: MenuProps['onClick'] = (e) => {
     navigate('/' + e.key);

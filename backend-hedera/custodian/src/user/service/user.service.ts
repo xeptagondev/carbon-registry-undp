@@ -162,175 +162,211 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return user;
     }
 
+    async checkForOrganizationDuplicates(
+        email: string,
+        taxId: string,
+        paymentId: string,
+    ) {
+        const existingOrganization = await this.organizationRepository.findOne({
+            where: [
+                { email: email },
+                { taxId: taxId },
+                { paymentId: paymentId },
+            ],
+        });
+
+        if (existingOrganization) {
+            let errorMessage = 'This organisation already exists';
+
+            if (taxId === existingOrganization.taxId) {
+                errorMessage =
+                    'Organisation already exists in the Carbon Registry System with the given Tax ID';
+            } else if (paymentId === existingOrganization.paymentId) {
+                errorMessage =
+                    'Organisation already exists in the Carbon Registry System with the given Registration Payment ID';
+            } else if (email === existingOrganization.email) {
+                errorMessage =
+                    'Organisation already exists in the Carbon Registry System with the given email';
+            }
+
+            throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async checkForUserDuplicates(email: string, hederaAccount: string) {
+        const existingUser = await this.usersRepository.findOne({
+            where: [{ email: email }, { hederaAccount: hederaAccount }],
+        });
+
+        if (existingUser) {
+            let errorMessage = 'This user already exists';
+
+            if (email === existingUser.email) {
+                errorMessage =
+                    'User already exists in the Carbon Registry System with the given email';
+            }
+
+            throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     async register(
         userDto: UsersDTO,
         defaultPass: string = '',
         reqUser?: JWTPayload,
         isUserActive: boolean = false,
     ) {
-        try {
-            this.helperService.validateRequestUser(reqUser);
-            const userDetails = await this.usersRepository.findOne({
-                where: {
+        this.helperService.validateRequestUser(reqUser);
+        const userDetails = await this.usersRepository.findOne({
+            where: {
+                email: userDto.email,
+            },
+        });
+        if (userDetails && userDetails.stage === UserStageEnum.APPROVE_USER) {
+            throw new HttpException(
+                'User already exists in the Carbon Registry System with the given email',
+                HttpStatus.FORBIDDEN,
+            );
+        }
+
+        const countryName = this.configService.get('country');
+        this.logger.log(
+            `Request received to register user with email ${userDto.email}`,
+        );
+        await this.utilService.setTagToIdMap();
+        // 1: Login SRU and Gov. Root
+
+        // 1.1 Generate random password for user
+        const passwordLen = 8;
+        let userPass: string;
+        if (defaultPass === '') {
+            userPass = generatePassword(passwordLen);
+        } else {
+            userPass = defaultPass;
+        }
+
+        const hashedPass = hashPassword(userPass);
+
+        // 2: Register the new user as a 'USER' in guardian backend
+        const regUser = await this.findUser(userDto.email);
+        if (!regUser) {
+            await this.checkForUserDuplicates(
+                userDto.email,
+                userDto.hederaAccount,
+            );
+
+            await this.guardianService.registerUser(userDto.email, hashedPass);
+
+            const userEntity: UsersEntity = {
+                email: userDto.email,
+                name: userDto.name,
+                password: hashedPass,
+                phoneNumber: userDto.phoneNo,
+                hederaAccount: userDto.hederaAccount,
+                stage: UserStageEnum.REGISTER,
+                isActive: isUserActive,
+            };
+
+            // i. Save user in db without organization and role
+            const user: UsersEntity =
+                await this.usersRepository.save(userEntity);
+
+            // 3. User login to the guardian backend
+
+            await this.delay(5000);
+        }
+        // 4. Update the user profile with the parent (SRU)
+        const updateUser = await this.findUser(userDto.email);
+        if (updateUser && updateUser.stage === UserStageEnum.REGISTER) {
+            await this.guardianService.updateUserProfile(
+                userDto.email,
+                updateUser.password,
+                this.configService.get('sru.did'),
+                userDto.hederaAccount,
+                userDto.hederaKey,
+            );
+            await this.usersRepository.update(
+                {
                     email: userDto.email,
                 },
-            });
-            if (
-                userDetails &&
-                userDetails.stage === UserStageEnum.APPROVE_USER
-            ) {
-                throw new HttpException(
-                    'User already exists in the Carbon Registry System with the given email',
-                    HttpStatus.FORBIDDEN,
-                );
-                return;
-            }
-
-            const countryName = this.configService.get('country');
-            this.logger.log(
-                `Request received to register user with email ${userDto.email}`,
+                { stage: UserStageEnum.ASIGN_REGISTRY },
             );
-            await this.utilService.setTagToIdMap();
-            // 1: Login SRU and Gov. Root
+            await this.delay(15000);
+        }
+        // 5. Assign the policy for the user
 
-            // 1.1 Generate random password for user
-            const passwordLen = 8;
-            let userPass: string;
-            if (defaultPass === '') {
-                userPass = generatePassword(passwordLen);
-            } else {
-                userPass = defaultPass;
-            }
+        const assignUser = await this.findUser(userDto.email);
 
-            const hashedPass = hashPassword(userPass);
-
-            // 2: Register the new user as a 'USER' in guardian backend
-            const regUser = await this.findUser(userDto.email);
-            if (!regUser) {
-                await this.guardianService.registerUser(
-                    userDto.email,
-                    hashedPass,
-                );
-
-                const userEntity: UsersEntity = {
+        if (assignUser && assignUser.stage === UserStageEnum.ASIGN_REGISTRY) {
+            await this.guardianService.assignPolicyToUser(userDto.email, true);
+            await this.usersRepository.update(
+                {
                     email: userDto.email,
-                    name: userDto.name,
-                    password: hashedPass,
-                    phoneNumber: userDto.phoneNo,
-                    hederaAccount: userDto.hederaAccount,
-                    stage: UserStageEnum.REGISTER,
-                    isActive: isUserActive,
-                };
+                },
+                { stage: UserStageEnum.ASIGN_POLICY },
+            );
+        }
 
-                // i. Save user in db without organization and role
-                const user: UsersEntity =
-                    await this.usersRepository.save(userEntity);
+        let res;
+        if (userDto.company) {
+            await this.checkForOrganizationDuplicates(
+                userDto.company.email,
+                userDto.company.taxId,
+                userDto.company.paymentId,
+            );
+            // 6. Register new organization
+            res = await this.registerGroup(userDto, reqUser);
 
-                // 3. User login to the guardian backend
-
-                await this.delay(5000);
-            }
-            // 4. Update the user profile with the parent (SRU)
-            const updateUser = await this.findUser(userDto.email);
-            if (updateUser && updateUser.stage === UserStageEnum.REGISTER) {
-                await this.guardianService.updateUserProfile(
-                    userDto.email,
-                    updateUser.password,
-                    this.configService.get('sru.did'),
-                    userDto.hederaAccount,
-                    userDto.hederaKey,
-                );
-                await this.usersRepository.update(
-                    {
-                        email: userDto.email,
-                    },
-                    { stage: UserStageEnum.ASIGN_REGISTRY },
-                );
-                await this.delay(15000);
-            }
-            // 5. Assign the policy for the user
-
-            const assignUser = await this.findUser(userDto.email);
-
-            if (
-                assignUser &&
-                assignUser.stage === UserStageEnum.ASIGN_REGISTRY
-            ) {
-                await this.guardianService.assignPolicyToUser(
-                    userDto.email,
-                    true,
-                );
-                await this.usersRepository.update(
-                    {
-                        email: userDto.email,
-                    },
-                    { stage: UserStageEnum.ASIGN_POLICY },
-                );
-            }
-
-            let res;
-            if (userDto.company) {
-                // 6. Register new organization
-                res = await this.registerGroup(userDto, reqUser);
-
-                // 6.1 Send organization email
-                const mailDTO: MailTemplateDTO = {
-                    subject: ORG_CREATE_HEADER.replace(
-                        '{{countryName}}',
-                        countryName,
-                    ),
-                    template: MailTemplateEnum.ORG_CREATE,
-                    to: userDto.company.email,
-                    context: {
-                        organizationName: userDto.company.name,
-                        countryName: countryName,
-                        organizationRole:
-                            OrganizationTypeFormatEnum[
-                                userDto.company.companyRole
-                            ],
-                        home: this.configService.get('url'),
-                    },
-                };
-
-                await this.mailService.sendMail(mailDTO);
-            } else {
-                // 6. Accept an invitation (generate an invitation and create the user)
-                res = await this.inviteNewUser(userDto, reqUser);
-            }
-
-            // 7. Send password creation email to user
-
+            // 6.1 Send organization email
             const mailDTO: MailTemplateDTO = {
-                subject: USER_REGISTER_HEADER.replace(
+                subject: ORG_CREATE_HEADER.replace(
                     '{{countryName}}',
                     countryName,
                 ),
-                template: MailTemplateEnum.PASSWORD_CREATE,
-                to: userDto.email,
+                template: MailTemplateEnum.ORG_CREATE,
+                to: userDto.company.email,
                 context: {
-                    name: userDto.name,
+                    organizationName: userDto.company.name,
                     countryName: countryName,
+                    organizationRole:
+                        OrganizationTypeFormatEnum[userDto.company.companyRole],
                     home: this.configService.get('url'),
-                    email: userDto.email,
-                    tempPassword: userPass,
                 },
             };
 
             await this.mailService.sendMail(mailDTO);
-
-            const response: HTTPResponseDto = {
-                statusCode: HttpStatus.OK,
-                message: userDto.company
-                    ? 'Successfully created organization with admin user'
-                    : 'Successfully created the user',
-            };
-            return response;
-        } catch (error) {
-            throw new HttpException(
-                'Error occurred while registering the user',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
+        } else {
+            // 6. Accept an invitation (generate an invitation and create the user)
+            res = await this.inviteNewUser(userDto, reqUser);
         }
+
+        // 7. Send password creation email to user
+
+        const mailDTO: MailTemplateDTO = {
+            subject: USER_REGISTER_HEADER.replace(
+                '{{countryName}}',
+                countryName,
+            ),
+            template: MailTemplateEnum.PASSWORD_CREATE,
+            to: userDto.email,
+            context: {
+                name: userDto.name,
+                countryName: countryName,
+                home: this.configService.get('url'),
+                email: userDto.email,
+                tempPassword: userPass,
+            },
+        };
+
+        await this.mailService.sendMail(mailDTO);
+
+        const response: HTTPResponseDto = {
+            statusCode: HttpStatus.OK,
+            message: userDto.company
+                ? 'Successfully created organization with admin user'
+                : 'Successfully created the user',
+        };
+        return response;
     }
 
     private async inviteNewUser(userDto: UsersDTO, reqUser: JWTPayload) {
@@ -354,7 +390,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     org?.organizationType?.id,
                     userDto.role,
                 );
-                let inviteResponse =
+                const inviteResponse =
                     await this.guardianService.createInvitation(
                         reqUser?.email,
                         this.utilService.getBlock(
@@ -423,14 +459,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     {
                         email: userDto.email,
                     },
-                    { stage: UserStageEnum.APPROVE_USER },
+                    {
+                        stage: UserStageEnum.APPROVE_USER,
+                    },
                 );
             }
 
             return true;
         } catch (e) {
-            console.log(e);
-            throw e;
+            throw new HttpException(
+                'Error occurred while adding the user',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 

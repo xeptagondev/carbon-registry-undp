@@ -16,6 +16,8 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
 
     companyRole: OrganizationTypeEnum;
 
+    @Unwrap()
+    @IsNotEmpty()
     taxId?: string;
 
     @Unwrap()
