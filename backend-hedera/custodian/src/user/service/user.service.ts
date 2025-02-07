@@ -594,7 +594,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 const orgEntity = await this.organizationRepository.findOne({
                     where: { email: userDto?.company?.email },
                 });
-                if (reqUser?.userRole === RoleEnum.Root) {
+                if (
+                    reqUser?.organizationRole ==
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                    (reqUser?.userRole === RoleEnum.Admin ||
+                        reqUser?.userRole === RoleEnum.Root)
+                ) {
                     await this.orgaisationService.approve(
                         reqUser?.email,
                         orgEntity.id,
