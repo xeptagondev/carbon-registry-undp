@@ -48,6 +48,13 @@ export class HelperService {
                 HttpStatus.UNAUTHORIZED,
             );
         }
+
+        if (!requestUser.userState) {
+            throw new HttpException(
+                'This action is unauthorised',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
     }
 
     private prepareValue(value: any, table?: string, toLower?: boolean) {

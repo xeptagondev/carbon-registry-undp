@@ -169,6 +169,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive: boolean = false,
     ) {
         try {
+            this.helperService.validateRequestUser(reqUser);
             const userDetails = await this.usersRepository.findOne({
                 where: {
                     email: userDto.email,
@@ -320,8 +321,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             const response: HTTPResponseDto = {
                 statusCode: HttpStatus.OK,
                 message: userDto.company
-                    ? `Successfully created organization with admin user`
-                    : `Successfully created the user`,
+                    ? 'Successfully created organization with admin user'
+                    : 'Successfully created the user',
             };
             return response;
         } catch (error) {
@@ -990,6 +991,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         userId: number,
         requestUser: JWTPayload,
     ): Promise<HTTPResponseDto> {
+        this.helperService.validateRequestUser(requestUser);
         const actionUserDetails = await this.usersRepository.findOne({
             where: { id: requestUser.userId },
             relations: {

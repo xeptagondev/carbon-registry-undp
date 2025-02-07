@@ -83,6 +83,7 @@ export class AuthService {
             user.email,
             user.id,
             user.guardianRole.role.name,
+            user.isActive,
             user.organization.id,
             organisationDetails.organizationType.name,
             organisationDetails.state,
@@ -152,6 +153,13 @@ export class AuthService {
         if (!user) {
             throw new HttpException(
                 'Email or Password is Incorrect',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+
+        if (!user.isActive) {
+            throw new HttpException(
+                'This action is unauthorised',
                 HttpStatus.UNAUTHORIZED,
             );
         }
@@ -248,7 +256,8 @@ export class AuthService {
         });
         if (
             userDetails &&
-            userDetails?.organization?.state == OrganizationStateEnum.ACTIVE
+            userDetails?.organization?.state == OrganizationStateEnum.ACTIVE &&
+            userDetails.isActive
         ) {
             const createTime = Date.now();
             const tokenValidTime =
