@@ -18,6 +18,7 @@ import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto
 import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
+import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 
 @Controller('organisation')
 export class OrganizationController {
@@ -70,6 +71,19 @@ export class OrganizationController {
         @Request() req,
     ): Promise<DataListResponseDto> {
         return await this.organizationService.query(queryDto, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Post('download')
+    async download(@Body() query: DataExportQueryDto, @Request() req) {
+        try {
+            return this.organizationService.download(
+                query,
+                req?.user?.organizationRole,
+            );
+        } catch (err) {
+            return { error: 'Error generating the CSV file.' };
+        }
     }
 
     @UseGuards(AuthGuardService)
