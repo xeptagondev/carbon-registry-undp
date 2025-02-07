@@ -197,7 +197,7 @@ export class AuthService {
                 organization.state == OrganizationStateEnum.PENDING
             ) {
                 throw new HttpException(
-                    'Organization not found or Activate',
+                    'Organisation not found or not activated.',
                     HttpStatus.UNAUTHORIZED,
                 );
             }
