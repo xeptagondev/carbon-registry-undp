@@ -625,7 +625,7 @@ export const AddNewCompanyComponent = (props: any) => {
         }
       }
 
-      const response = await put('national/organisation/update', values);
+      const response = await put('organisation/update', values);
       if (response.status === 200 || response.status === 201) {
         setUserInfo({
           companyLogo: response.data.logo,
