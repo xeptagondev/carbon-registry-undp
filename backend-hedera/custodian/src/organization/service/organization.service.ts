@@ -8,9 +8,14 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
+import { DataExportCompanyDto } from '@app/shared/util/dto/data.export.company.dto';
+import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
+import { DataExportService } from '@app/shared/util/service/data-export.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
@@ -31,10 +36,48 @@ export class OrganizationService extends SuperService<
         private readonly configService: ConfigService,
         @InjectRepository(OrganizationEntity)
         private readonly organizationRepository: Repository<OrganizationEntity>,
+        @InjectRepository(UsersEntity)
+        private readonly usersRepository: Repository<UsersEntity>,
+        private dataExportService: DataExportService,
     ) {
         super(organizationRepository);
     }
 
+    private orgExportMap = {
+        companyId: 'Company Id',
+        taxId: 'Tax Id',
+        paymentId: 'Registration Payment Id',
+        name: 'Organization Name',
+        email: 'Email',
+        phoneNo: 'Phone Number',
+        website: 'Website',
+        address: 'Address',
+        country: 'Country',
+        companyRole: 'Role',
+        state: 'Status',
+        creditBalance: 'Credit Balance',
+        secondaryAccountBalanceLocal: 'Secondary Account Balance - Local',
+        secondaryAccountBalanceInternational:
+            'Secondary Account Balance - International',
+        secondaryAccountBalanceOmge: 'Secondary Account Balance - OMGE',
+        programmeCount: 'Number of Projects',
+        lastUpdateVersion: 'Last Update Version',
+        creditTxTime: 'Credit Tx Time',
+        remarks: 'Remarks',
+        createdTime: 'Created Time',
+        geographicalLocationCordintes: 'Geographical Location Coordinates',
+        regions: 'Regions',
+        nameOfMinister: 'Name Of Minister',
+        sectoralScope: 'Sectoral Scope',
+        nothingToExport: 'Data not found for export',
+        organisations: 'Organisations',
+        ProgrammeDeveloper: 'Project Participant',
+        Government: 'Government',
+        Certifier: 'Certifier (VVB)',
+        ClimateFund: 'Zimbabwe Climate Fund',
+        ExecutiveCommittee: 'Executive Committee',
+        Ministry: 'Ministry',
+    };
     mapNewQueryToOldQuery(organization: OrganizationEntity) {
         return {
             companyId: organization?.id,
@@ -84,6 +127,147 @@ export class OrganizationService extends SuperService<
             },
         });
         return this.mapNewQueryToOldQuery(organizationDetails);
+    }
+
+    private prepareCompanyDataForExport(companies: any) {
+        const exportData: DataExportCompanyDto[] = [];
+
+        for (const company of companies) {
+            const dto = new DataExportCompanyDto();
+
+            const orgStateKey = Object.keys(OrganizationStateEnum).find(
+                (key) => OrganizationStateEnum[key] === company.state,
+            );
+
+            const secondaryAccountBalanceLocal =
+                (company.secondaryAccountBalance?.local?.total ?? 0) +
+                (company.secondaryAccountBalance?.account?.total ?? 0);
+
+            dto.companyId = company.companyId;
+            dto.taxId = company.taxId;
+            dto.paymentId = company.paymentId;
+            dto.name = company.name;
+            dto.email = company.email;
+            dto.phoneNo = company.phoneNo;
+            dto.website = company.website;
+            dto.address = company.address;
+            dto.country = company.country;
+            dto.companyRole = this.orgExportMap[company.companyRole];
+            dto.state = orgStateKey;
+            dto.creditBalance = company.creditBalance;
+            dto.secondaryAccountBalanceLocal = secondaryAccountBalanceLocal
+                ? secondaryAccountBalanceLocal
+                : '';
+            dto.secondaryAccountBalanceInternational =
+                company.secondaryAccountBalance?.international?.total;
+            dto.secondaryAccountBalanceOmge =
+                company.secondaryAccountBalance?.omge?.total;
+            dto.programmeCount = company.programmeCount;
+            dto.lastUpdateVersion = company.lastUpdateVersion;
+            dto.creditTxTime = this.helperService.formatTimestamp(
+                company.creditTxTime,
+            );
+            dto.remarks = company.remarks;
+            dto.createdTime = this.helperService.formatTimestamp(
+                company.createdTime,
+            );
+
+            exportData.push(dto);
+        }
+
+        return exportData;
+    }
+
+    async download(queryData: DataExportQueryDto, companyRole: string) {
+        let query = new QueryDto();
+        query.filterAnd = queryData.filterAnd;
+        query.filterOr = queryData.filterOr;
+        query.sort = queryData.sort;
+
+        let filterWithCompanyStatesIn: number[];
+
+        if (
+            companyRole === OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+        ) {
+            filterWithCompanyStatesIn = [0, 1, 2, 3];
+        } else {
+            filterWithCompanyStatesIn = [0, 1];
+        }
+
+        if (query.filterAnd) {
+            query.filterAnd.push({
+                key: 'organization"."state',
+                operation: 'in',
+                value: filterWithCompanyStatesIn,
+            });
+        } else {
+            const filterAnd: FilterEntry[] = [];
+            filterAnd.push({
+                key: 'organization"."state',
+                operation: 'in',
+                value: filterWithCompanyStatesIn,
+            });
+            query.filterAnd = filterAnd;
+        }
+
+        query.filterAnd.push({
+            key: 'companyRole',
+            operation: '!=',
+            value: 'API',
+        });
+
+        const newToOldFieldMap: Record<string, string> = {
+            id: 'organization"."id',
+            name: 'organization"."name',
+            companyId: 'organization"."id',
+            companyRole: 'organizationType"."name',
+            taxId: 'organization"."taxId',
+            programmeCount: 'organization"."number_of_projects',
+        };
+        query = this.helperService.mapNewWhereClausetoOldWhereClause(
+            query,
+            newToOldFieldMap,
+        );
+
+        const resp = await this.organizationRepository
+            .createQueryBuilder('organization')
+            .leftJoin('organization.organizationType', 'organizationType')
+            .addSelect(['organizationType'])
+            .where(this.helperService.generateWhereSQL(query))
+            .orderBy(
+                query?.sort?.key && `"${query?.sort?.key}"`,
+                query?.sort?.order,
+                query?.sort?.nullFirst !== undefined
+                    ? query?.sort?.nullFirst === true
+                        ? 'NULLS FIRST'
+                        : 'NULLS LAST'
+                    : undefined,
+            )
+            .getMany();
+
+        const oldFormatData = resp.map((organisation) =>
+            this.mapNewQueryToOldQuery(organisation),
+        );
+
+        if (oldFormatData.length > 0) {
+            const prepData = this.prepareCompanyDataForExport(oldFormatData);
+            const headers: string[] = [];
+            const titleKeys = Object.keys(prepData[0]);
+            for (const key of titleKeys) {
+                headers.push(this.orgExportMap[key]);
+            }
+            const path = await this.dataExportService.generateCsv(
+                prepData,
+                headers,
+                this.orgExportMap['organisations'],
+            );
+            return path;
+        }
+
+        throw new HttpException(
+            this.orgExportMap['nothingToExport'],
+            HttpStatus.BAD_REQUEST,
+        );
     }
 
     async query(
@@ -183,32 +367,76 @@ export class OrganizationService extends SuperService<
                     },
                     relations: {
                         organizationType: true,
+                        users: true,
                     },
                 });
             let approveResponse = {};
-            try {
-                approveResponse = await this.guardianService.approve(
-                    refreshToken,
-                    this.utilService.getBlock(
-                        this.configService.get('blocks.appoveOrganization'),
-                    ),
-                    orgEntity.payload,
+
+            approveResponse = await this.guardianService.approve(
+                refreshToken,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.appoveOrganization'),
+                ),
+                orgEntity.payload,
+            );
+
+            const resultOrg = await this.organizationRepository
+                .update(
+                    {
+                        id: orgEntity.id,
+                    },
+                    { state: OrganizationStateEnum.ACTIVE },
+                )
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                .catch((_: any) => {
+                    throw new HttpException(
+                        'Update failed. Please try again',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                });
+            if (resultOrg.affected < 0) {
+                throw new HttpException(
+                    'Update failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
                 );
-            } catch (e) {
-                console.log(e);
-                throw e;
             }
 
-            await this.organizationRepository.update(
-                {
-                    id: orgEntity.id,
-                },
-                { state: OrganizationStateEnum.ACTIVE },
-            );
+            for (const user of orgEntity.users) {
+                if (user.isActive == false) {
+                    const resultUser = await this.usersRepository
+                        .update(
+                            {
+                                id: user.id,
+                            },
+                            {
+                                isActive: true,
+                                stage: UserStageEnum.APPROVE_USER,
+                            },
+                        )
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        .catch((_: any) => {
+                            throw new HttpException(
+                                'Update failed. Please try again',
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                            );
+                        });
+
+                    if (resultUser.affected < 0) {
+                        throw new HttpException(
+                            'Update failed. Please try again',
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
+                    }
+                }
+            }
+
             return approveResponse;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
-            console.log(e);
-            throw e;
+            throw new HttpException(
+                'Error occurred while approving the organization',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 

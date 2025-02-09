@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Repository } from 'typeorm';
 import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
+import { GUARDIAN_ERROR } from '../constant/guardian-error.constant';
 
 @Injectable()
 export class GuardianService {
@@ -20,6 +21,24 @@ export class GuardianService {
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
     ) {}
+
+    async getGuardianError(error: unknown, calledMainFunction: string) {
+        console.log(
+            `Error Occurred in Guardian Service ${calledMainFunction}`,
+            error,
+        );
+        if (axios.isAxiosError(error)) {
+            throw new HttpException(
+                GUARDIAN_ERROR[error.response.status],
+                error.response.status,
+            );
+        } else {
+            throw new HttpException(
+                GUARDIAN_ERROR[HttpStatus.INTERNAL_SERVER_ERROR],
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
 
     async getRefreshToken(username: string) {
         const user: UsersEntity = await this.usersRepository.findOne({
@@ -54,8 +73,7 @@ export class GuardianService {
             });
             return accessTokenResponse?.data?.accessToken;
         } catch (e) {
-            console.log(e);
-            throw e;
+            await this.getGuardianError(e, 'getAccessToken');
         }
     }
 
@@ -70,23 +88,27 @@ export class GuardianService {
                 password_confirmation: password,
                 role: 'USER',
             });
-            return response.data;
         } catch (e) {
-            console.log(e);
-            throw e;
+            await this.getGuardianError(e, 'registerUser');
         }
     }
 
     public async updateUserProfile(
         email: string,
-        refreshToken: string,
+        hashedPass: string,
         parentDid: string,
         hederaAccount: string,
         hederaKey: string,
     ): Promise<any> {
         try {
+            const userLoginResponse = await this.login({
+                username: email,
+                password: hashedPass,
+            });
             const url = `${this.buildGuardianUrl(this.configService.get('guardian.profileUpdate'))}/${email}`;
-            const token = await this.getAccessToken(refreshToken);
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
             const response = await axios.put(
                 url,
                 {
@@ -110,14 +132,13 @@ export class GuardianService {
             );
             return response.data;
         } catch (e) {
-            console.log(e);
-            throw e;
+            await this.getGuardianError(e, 'updateUserProfile');
         }
     }
 
     public async assignPolicyToUser(
         email: string,
-        refreshToken: string,
+        assign: boolean = true,
     ): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
@@ -126,12 +147,19 @@ export class GuardianService {
                 )}`,
             );
 
-            const token = await this.getAccessToken(refreshToken);
+            const userLoginResponse = await this.login({
+                username: this.configService.get('sru.username'),
+                password: this.configService.get('sru.password'),
+            });
+
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
             const response = await axios.post(
                 url,
                 {
                     policyIds: [this.configService.get('policy.id')],
-                    assign: true,
+                    assign: assign,
                 },
                 {
                     headers: {
@@ -142,14 +170,13 @@ export class GuardianService {
             );
             return response.data;
         } catch (e) {
-            console.log(e);
-            throw e;
+            await this.getGuardianError(e, 'assignPolicyToUser');
         }
     }
 
     public async createGroupType(
-        refreshToken: string,
-
+        email: string,
+        hashedPass: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -157,7 +184,13 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
-            const token = await this.getAccessToken(refreshToken);
+            const userLoginResponse = await this.login({
+                username: email,
+                password: hashedPass,
+            });
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
             const response = await axios.post(url, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -166,13 +199,13 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'createGroupType');
         }
     }
 
     public async createOrganization(
-        refreshToken: string,
+        email: string,
+        hashedPass: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -180,7 +213,13 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
-            const token = await this.getAccessToken(refreshToken);
+            const userLoginResponse = await this.login({
+                username: email,
+                password: hashedPass,
+            });
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
 
             const response = await axios.post(url, payload, {
                 headers: {
@@ -190,13 +229,13 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'createOrganization');
         }
     }
 
     public async createUser(
-        refreshToken: string,
+        email: string,
+        hashedPass: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -204,7 +243,13 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
-            const token = await this.getAccessToken(refreshToken);
+            const userLoginResponse = await this.login({
+                username: email,
+                password: hashedPass,
+            });
+            const token = await this.getAccessToken(
+                userLoginResponse.refreshToken,
+            );
 
             const response = await axios.post(url, payload, {
                 headers: {
@@ -214,13 +259,12 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'createUser');
         }
     }
 
     public async createInvitation(
-        refreshToken: string,
+        email: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -228,6 +272,7 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
+            const refreshToken = await this.getRefreshToken(email);
             const token = await this.getAccessToken(refreshToken);
 
             const response = await axios.post(url, payload, {
@@ -239,8 +284,7 @@ export class GuardianService {
 
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'createInvitation');
         }
     }
     public async approve(
@@ -263,8 +307,7 @@ export class GuardianService {
 
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw error;
+            await this.getGuardianError(error, 'approve');
         }
     }
     public async login(loginDto: LoginDto): Promise<any> {
@@ -304,11 +347,7 @@ export class GuardianService {
             }
             return response.data;
         } catch (error) {
-            console.log(error);
-            throw new HttpException(
-                'Guardian User Login Failed',
-                HttpStatus.UNAUTHORIZED,
-            );
+            await this.getGuardianError(error, 'login');
         }
     }
 

@@ -3,8 +3,6 @@ import { UsersEntity } from '../entity/users.entity';
 import { Unwrap } from '@app/core/util/unwrappable';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { JWTPayload } from './jwt.payload.dto';
-import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 
@@ -21,10 +19,12 @@ export class UsersDTO extends SuperDTO<UsersEntity> {
     @Unwrap()
     phoneNo?: string;
     @Unwrap()
+    @IsNotEmpty()
     hederaAccount: string;
     hederaKey: string;
     password: string;
     role: RoleEnum;
+    isActive?: boolean;
     // @Unwrap({ name: 'organization' })
     company: OrganizationDto;
 }

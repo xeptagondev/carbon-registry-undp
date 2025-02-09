@@ -46,4 +46,10 @@ export class UsersEntity {
     )
     @JoinColumn([{ name: 'guardian_role_id', referencedColumnName: 'id' }])
     guardianRole?: GuardianRoleEntity;
+
+    @Column({ nullable: true })
+    stage?: string;
+
+    @Column({ type: 'boolean', default: true })
+    isActive: boolean;
 }

@@ -44,6 +44,10 @@ import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.inter
 import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 import { HTTPResponseDto } from '@app/shared/util/dto/http.response.dto';
 import { UserUpdateDto } from '@app/shared/users/dto/user-update.dto';
+import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
+import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
+import { DataExportUserDto } from '@app/shared/util/dto/data.export.user.dto';
+import { DataExportService } from '@app/shared/util/service/data-export.service';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -55,6 +59,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         private readonly mailService: MailService,
         private readonly fileHandler: FileHandlerInterface,
         private readonly helperService: HelperService,
+        private readonly dataExportService: DataExportService,
         private readonly orgaisationService: OrganizationService,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
@@ -69,6 +74,27 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     ) {
         super(usersRepository);
     }
+    private userExportMap = {
+        id: 'User Id',
+        email: 'Email',
+        role: 'Role',
+        name: 'Name',
+        country: 'Country',
+        phoneNo: 'Phone Number',
+        companyId: 'Organization Id',
+        companyName: 'Organization Name',
+        companyRole: 'Organization Type',
+        createdTime: 'Created At',
+        isPending: 'Pending Approval',
+        nothingToExport: 'Data not found for export',
+        users: 'Users',
+        ProgrammeDeveloper: 'Project Participant',
+        Government: 'Government',
+        Certifier: 'Certifier (VVB)',
+        ClimateFund: 'Zimbabwe Climate Fund',
+        ExecutiveCommittee: 'Executive Committee',
+        Ministry: 'Ministry',
+    };
 
     async updateUser(
         userDTO: UsersDTO,
@@ -79,10 +105,53 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             {
                 email: userDTO.email,
             },
-            { organization: orgEntity, guardianRole: guardRole },
+            {
+                organization: orgEntity,
+                guardianRole: guardRole,
+            },
         );
 
         return true;
+    }
+
+    async approveUser(userEmail: string) {
+        const userDetails = await this.usersRepository.findOneBy({
+            email: userEmail,
+        });
+        if (!userDetails) {
+            throw new HttpException(
+                'No visible user found',
+                HttpStatus.FORBIDDEN,
+            );
+        }
+        if (userDetails.isActive == true) {
+            throw new HttpException(
+                'User Already Activated',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+        const result = await this.usersRepository
+            .update(
+                {
+                    id: userDetails.id,
+                },
+                {
+                    isActive: true,
+                },
+            )
+            .catch((_: any) => {
+                throw new HttpException(
+                    'Update failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            });
+
+        if (result.affected < 0) {
+            throw new HttpException(
+                'Update failed. Please try again',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
     }
 
     private async getGuardianRole(orgTypeId: number, userRole: string) {
@@ -108,46 +177,110 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return new Promise<void>((resolve) => setTimeout(resolve, ms));
     }
 
+    private async findUser(email: string) {
+        const user: UsersEntity = await this.usersRepository.findOne({
+            where: {
+                email: email,
+            },
+        });
+
+        return user;
+    }
+
+    async checkForOrganizationDuplicates(
+        email: string,
+        taxId: string,
+        paymentId: string,
+    ) {
+        const existingOrganization = await this.organizationRepository.findOne({
+            where: [
+                { email: email },
+                { taxId: taxId },
+                { paymentId: paymentId },
+            ],
+        });
+
+        if (existingOrganization) {
+            let errorMessage = 'This organisation already exists';
+
+            if (taxId === existingOrganization.taxId) {
+                errorMessage =
+                    'Organisation already exists in the Carbon Registry System with the given Tax ID';
+            } else if (paymentId === existingOrganization.paymentId) {
+                errorMessage =
+                    'Organisation already exists in the Carbon Registry System with the given Registration Payment ID';
+            } else if (email === existingOrganization.email) {
+                errorMessage =
+                    'Organisation already exists in the Carbon Registry System with the given email';
+            }
+
+            throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async checkForUserDuplicates(email: string, hederaAccount: string) {
+        const existingUser = await this.usersRepository.findOne({
+            where: [{ email: email }, { hederaAccount: hederaAccount }],
+        });
+
+        if (existingUser) {
+            let errorMessage = 'This user already exists';
+
+            if (email === existingUser.email) {
+                errorMessage =
+                    'User already exists in the Carbon Registry System with the given email';
+            }
+
+            throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     async register(
         userDto: UsersDTO,
         defaultPass: string = '',
         reqUser?: JWTPayload,
+        isUserActive: boolean = false,
     ) {
-        try {
-            const countryName = this.configService.get('country');
-            this.logger.log(
-                `Request received to register user with email ${userDto.email}`,
+        // this.helperService.validateRequestUser(reqUser);
+        const userDetails = await this.usersRepository.findOne({
+            where: {
+                email: userDto.email,
+            },
+        });
+        if (userDetails && userDetails.stage === UserStageEnum.APPROVE_USER) {
+            throw new HttpException(
+                'User already exists in the Carbon Registry System with the given email',
+                HttpStatus.FORBIDDEN,
             );
-            await this.utilService.setTagToIdMap();
-            // 1: Login SRU and Gov. Root
+        }
 
-            const sruLoginResponse = await this.guardianService.login({
-                username: this.configService.get('sru.username'),
-                password: this.configService.get('sru.password'),
-            });
+        const countryName = this.configService.get('country');
+        this.logger.log(
+            `Request received to register user with email ${userDto.email}`,
+        );
+        await this.utilService.setTagToIdMap();
+        // 1: Login SRU and Gov. Root
 
-            // 1.1 Generate random password for user
-            const passwordLen = 8;
-            let userPass: string;
-            if (defaultPass === '') {
-                userPass = generatePassword(passwordLen);
-            } else {
-                userPass = defaultPass;
-            }
-            // const serverSalt = this.configService.get('security.salt');
-            // const guardianPass = userPass + serverSalt;
-            const hashedPass = hashPassword(userPass);
+        // 1.1 Generate random password for user
+        const passwordLen = 8;
+        let userPass: string;
+        if (defaultPass === '') {
+            userPass = generatePassword(passwordLen);
+        } else {
+            userPass = defaultPass;
+        }
 
-            // 2: Register the new user as a 'USER' in guardian backend
-            try {
-                await this.guardianService.registerUser(
-                    userDto.email,
-                    hashedPass,
-                );
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
+        const hashedPass = hashPassword(userPass);
+
+        // 2: Register the new user as a 'USER' in guardian backend
+        const regUser = await this.findUser(userDto.email);
+        if (!regUser) {
+            await this.checkForUserDuplicates(
+                userDto.email,
+                userDto.hederaAccount,
+            );
+
+            await this.guardianService.registerUser(userDto.email, hashedPass);
 
             const userEntity: UsersEntity = {
                 email: userDto.email,
@@ -155,6 +288,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 password: hashedPass,
                 phoneNumber: userDto.phoneNo,
                 hederaAccount: userDto.hederaAccount,
+                stage: UserStageEnum.REGISTER,
+                isActive: isUserActive,
             };
 
             // i. Save user in db without organization and role
@@ -162,168 +297,162 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.usersRepository.save(userEntity);
 
             // 3. User login to the guardian backend
-            const userLoginResponse = await this.guardianService.login({
-                username: userDto.email,
-                password: hashedPass,
-            });
+
             await this.delay(5000);
-            // 4. Update the user profile with the parent (SRU)
-            try {
-                await this.guardianService.updateUserProfile(
-                    userDto.email,
-                    userLoginResponse.refreshToken,
-                    this.configService.get('sru.did'),
-                    userDto.hederaAccount,
-                    userDto.hederaKey,
-                );
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
-
+        }
+        // 4. Update the user profile with the parent (SRU)
+        const updateUser = await this.findUser(userDto.email);
+        if (updateUser && updateUser.stage === UserStageEnum.REGISTER) {
+            await this.guardianService.updateUserProfile(
+                userDto.email,
+                updateUser.password,
+                this.configService.get('sru.did'),
+                userDto.hederaAccount,
+                userDto.hederaKey,
+            );
+            await this.usersRepository.update(
+                {
+                    email: userDto.email,
+                },
+                { stage: UserStageEnum.ASIGN_REGISTRY },
+            );
             await this.delay(15000);
+        }
+        // 5. Assign the policy for the user
 
-            // 5. Assign the policy for the user
-            try {
-                const refreshToken = await this.guardianService.getRefreshToken(
-                    this.configService.get('sru.username'),
-                );
-                await this.guardianService.assignPolicyToUser(
-                    userDto.email,
-                    refreshToken,
-                );
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
-            let res;
-            if (userDto.company) {
-                // 6. Register new organization
-                res = await this.registerGroup(
-                    userDto,
-                    userLoginResponse,
-                    reqUser,
-                );
+        const assignUser = await this.findUser(userDto.email);
 
-                // 6.1 Send organization email
-                const mailDTO: MailTemplateDTO = {
-                    subject: ORG_CREATE_HEADER.replace(
-                        '{{countryName}}',
-                        countryName,
-                    ),
-                    template: MailTemplateEnum.ORG_CREATE,
-                    to: userDto.company.email,
-                    context: {
-                        organizationName: userDto.company.name,
-                        countryName: countryName,
-                        organizationRole:
-                            OrganizationTypeFormatEnum[
-                                userDto.company.companyRole
-                            ],
-                        home: this.configService.get('url'),
-                    },
-                };
+        if (assignUser && assignUser.stage === UserStageEnum.ASIGN_REGISTRY) {
+            await this.guardianService.assignPolicyToUser(userDto.email, true);
+            await this.usersRepository.update(
+                {
+                    email: userDto.email,
+                },
+                { stage: UserStageEnum.ASIGN_POLICY },
+            );
+        }
 
-                await this.mailService.sendMail(mailDTO);
-            } else {
-                // 6. Accept an invitation (generate an invitation and create the user)
-                res = await this.inviteNewUser(
-                    userDto,
-                    userLoginResponse,
-                    reqUser,
-                );
-            }
+        let res;
+        if (userDto.company) {
+            await this.checkForOrganizationDuplicates(
+                userDto.company.email,
+                userDto.company.taxId,
+                userDto.company.paymentId,
+            );
+            // 6. Register new organization
+            res = await this.registerGroup(userDto, reqUser);
 
-            // 7. Send password creation email to user
+            // 6.1 Send organization email
             const mailDTO: MailTemplateDTO = {
-                subject: USER_REGISTER_HEADER.replace(
+                subject: ORG_CREATE_HEADER.replace(
                     '{{countryName}}',
                     countryName,
                 ),
-                template: MailTemplateEnum.PASSWORD_CREATE,
-                to: userDto.email,
+                template: MailTemplateEnum.ORG_CREATE,
+                to: userDto.company.email,
                 context: {
-                    name: userDto.name,
+                    organizationName: userDto.company.name,
                     countryName: countryName,
+                    organizationRole:
+                        OrganizationTypeFormatEnum[userDto.company.companyRole],
                     home: this.configService.get('url'),
-                    email: userDto.email,
-                    tempPassword: userPass,
                 },
             };
 
             await this.mailService.sendMail(mailDTO);
-
-            return res;
-        } catch (error) {
-            console.error('Error occurred:', error);
-            throw error;
+        } else {
+            // 6. Accept an invitation (generate an invitation and create the user)
+            res = await this.inviteNewUser(userDto, reqUser);
         }
+
+        // 7. Send password creation email to user
+
+        const mailDTO: MailTemplateDTO = {
+            subject: USER_REGISTER_HEADER.replace(
+                '{{countryName}}',
+                countryName,
+            ),
+            template: MailTemplateEnum.PASSWORD_CREATE,
+            to: userDto.email,
+            context: {
+                name: userDto.name,
+                countryName: countryName,
+                home: this.configService.get('url'),
+                email: userDto.email,
+                tempPassword: userPass,
+            },
+        };
+
+        await this.mailService.sendMail(mailDTO);
+
+        const response: HTTPResponseDto = {
+            statusCode: HttpStatus.OK,
+            message: userDto.company
+                ? 'Successfully created organization with admin user'
+                : 'Successfully created the user',
+        };
+        return response;
     }
 
-    private async inviteNewUser(
-        userDto: UsersDTO,
-        userLoginResponse,
-        reqUser: JWTPayload,
-    ) {
+    private async inviteNewUser(userDto: UsersDTO, reqUser: JWTPayload) {
         try {
             // 1. Generate an invite for the given role
-            const org: OrganizationEntity =
-                await this.organizationRepository.findOne({
-                    where: {
-                        id: reqUser?.organizationId,
-                    },
-                    relations: {
-                        organizationType: true,
-                    },
-                });
-            const guardianRole = await this.getGuardianRole(
-                org?.organizationType?.id,
-                userDto.role,
-            );
-            let inviteResponse = { invitation: '' };
-            try {
-                const refreshToken = await this.guardianService.getRefreshToken(
-                    reqUser?.email,
+            const groupTypeUser = await this.findUser(userDto.email);
+            if (
+                groupTypeUser &&
+                groupTypeUser.stage === UserStageEnum.ASIGN_POLICY
+            ) {
+                const org: OrganizationEntity =
+                    await this.organizationRepository.findOne({
+                        where: {
+                            id: reqUser?.organizationId,
+                        },
+                        relations: {
+                            organizationType: true,
+                        },
+                    });
+                const guardianRole = await this.getGuardianRole(
+                    org?.organizationType?.id,
+                    userDto.role,
                 );
-                inviteResponse = await this.guardianService.createInvitation(
-                    refreshToken,
-                    this.utilService.getBlock(
-                        this.configService.get('blocks.userCreateInvite'),
-                    ),
-                    {
-                        action: 'invite',
-                        group: org.group,
-                        role: guardianRole.name,
-                    },
-                );
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
-
-            // 2. Submit the generated invitation for user creation
-
-            try {
-                const createGroupTypeResponse =
-                    await this.guardianService.createGroupType(
-                        userLoginResponse.refreshToken,
+                const inviteResponse =
+                    await this.guardianService.createInvitation(
+                        reqUser?.email,
                         this.utilService.getBlock(
-                            this.configService.get('blocks.createGroupType'),
+                            this.configService.get('blocks.userCreateInvite'),
                         ),
                         {
-                            invitation: inviteResponse.invitation,
+                            action: 'invite',
+                            group: org.group,
+                            role: guardianRole.name,
                         },
                     );
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
 
+                // 2. Submit the generated invitation for user creation
+
+                await this.guardianService.createGroupType(
+                    userDto.email,
+                    groupTypeUser.password,
+                    this.utilService.getBlock(
+                        this.configService.get('blocks.createGroupType'),
+                    ),
+                    {
+                        invitation: inviteResponse.invitation,
+                    },
+                );
+                await this.usersRepository.update(
+                    {
+                        email: userDto.email,
+                    },
+                    { stage: UserStageEnum.CREATE_GROUP_TYPE },
+                );
+            }
             // 3. Create the user with the role
-            let createUserResponse = { group: '' };
-            try {
-                createUserResponse = await this.guardianService.createUser(
-                    userLoginResponse.refreshToken,
+            const user = await this.findUser(userDto.email);
+            if (user && user.stage === UserStageEnum.CREATE_GROUP_TYPE) {
+                await this.guardianService.createUser(
+                    userDto.email,
+                    user.password,
                     this.utilService.getBlock(
                         this.configService.get('blocks.createUser'),
                     ),
@@ -335,57 +464,89 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         ref: null,
                     },
                 );
-            } catch (e) {
-                console.log(e);
-                throw e;
+                const org: OrganizationEntity =
+                    await this.organizationRepository.findOne({
+                        where: {
+                            id: reqUser?.organizationId,
+                        },
+                        relations: {
+                            organizationType: true,
+                        },
+                    });
+                const guardianRole = await this.getGuardianRole(
+                    org?.organizationType?.id,
+                    userDto.role,
+                );
+
+                await this.approveUser(userDto.email);
+                await this.updateUser(userDto, org, guardianRole);
+                await this.usersRepository.update(
+                    {
+                        email: userDto.email,
+                    },
+                    {
+                        stage: UserStageEnum.APPROVE_USER,
+                    },
+                );
             }
 
-            await this.updateUser(userDto, org, guardianRole);
-
-            return createUserResponse;
+            return true;
         } catch (e) {
-            console.log(e);
-            throw e;
+            throw new HttpException(
+                'Error occurred while adding the user',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
-    private async registerGroup(
-        userDto: UsersDTO,
-        userLoginResponse,
-        reqUser: JWTPayload,
-    ) {
+    private async registerGroup(userDto: UsersDTO, reqUser: JWTPayload) {
         try {
             // 1. Create a new group type in guardian
-            try {
-                const createGroupTypeResponse =
-                    await this.guardianService.createGroupType(
-                        userLoginResponse.refreshToken,
-                        this.utilService.getBlock(
-                            this.configService.get('blocks.createGroupType'),
-                        ),
-                        {
-                            group: userDto.company.companyRole,
-                            label: userDto.company.name,
-                        },
-                    );
-            } catch (e) {
-                console.log(e);
-                throw e;
+            const groupTypeUser = await this.findUser(userDto.email);
+            if (
+                groupTypeUser &&
+                groupTypeUser.stage === UserStageEnum.ASIGN_POLICY
+            ) {
+                await this.guardianService.createGroupType(
+                    userDto.email,
+                    groupTypeUser.password,
+                    this.utilService.getBlock(
+                        this.configService.get('blocks.createGroupType'),
+                    ),
+                    {
+                        group: userDto.company.companyRole,
+                        label: userDto.company.name,
+                    },
+                );
+
+                await this.usersRepository.update(
+                    {
+                        email: userDto.email,
+                    },
+                    { stage: UserStageEnum.CREATE_GROUP_TYPE },
+                );
+                await this.delay(5000);
             }
-            await this.delay(5000);
+
             const orgType = await this.organizationTypeRepository.findOne({
                 where: {
                     name: userDto?.company?.companyRole,
                 },
             });
+
             let createOrganizationResponse = { group: '' };
-            try {
+            const groupUser = await this.findUser(userDto.email);
+            if (
+                groupUser &&
+                groupUser.stage === UserStageEnum.CREATE_GROUP_TYPE
+            ) {
                 const blockName = orgType.multiple
                     ? 'blocks.createMultipleOrganization'
                     : 'blocks.createSingleOrganization';
                 createOrganizationResponse =
                     await this.guardianService.createOrganization(
-                        userLoginResponse.refreshToken,
+                        userDto.email,
+                        groupUser.password,
                         this.utilService.getBlock(
                             this.configService.get(blockName),
                         ),
@@ -397,116 +558,135 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             ref: null,
                         },
                     );
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
 
-            // I. Save organization in DB
-            // i. Get orgType
+                // I. Save organization in DB
+                // i. Get orgType
 
-            // ii. Create organization
-            let orgEntity: OrganizationEntity = {
-                name: userDto.company.name,
-                organizationType: orgType,
-                state: OrganizationStateEnum.PENDING,
-                email: userDto?.company?.email,
-                taxId: userDto?.company?.taxId,
-                phoneNumber: userDto?.company?.phoneNo,
-                paymentId: userDto?.company?.paymentId,
-                faxNumber: userDto?.company?.faxNo,
-                provinces: userDto?.company?.provinces,
-                website: userDto?.company?.website,
-                address: userDto?.company?.address,
-            };
+                // ii. Create organization
+                let orgEntity: OrganizationEntity = {
+                    name: userDto.company.name,
+                    organizationType: orgType,
+                    state: OrganizationStateEnum.PENDING,
+                    email: userDto?.company?.email,
+                    taxId: userDto?.company?.taxId,
+                    phoneNumber: userDto?.company?.phoneNo,
+                    paymentId: userDto?.company?.paymentId,
+                    faxNumber: userDto?.company?.faxNo,
+                    provinces: userDto?.company?.provinces,
+                    website: userDto?.company?.website,
+                    address: userDto?.company?.address,
+                };
 
-            // iii. Save organization
-            orgEntity = await this.organizationRepository.save(orgEntity);
+                // iii. Save organization
+                orgEntity = await this.organizationRepository.save(orgEntity);
 
-            // 2. Create a group (organization) => Create the organization of org type
+                // 2. Create a group (organization) => Create the organization of org type
 
-            await this.delay(10000);
+                await this.delay(10000);
 
-            if (
-                userDto?.company?.logo &&
-                this.helperService.isBase64(userDto?.company?.logo)
-            ) {
-                const response: any = await this.fileHandler.uploadFile(
-                    `profile_images/${orgEntity.id}_${new Date().getTime()}.png`,
-                    userDto?.company?.logo,
+                if (
+                    userDto?.company?.logo &&
+                    this.helperService.isBase64(userDto?.company?.logo)
+                ) {
+                    const response: any = await this.fileHandler.uploadFile(
+                        `profile_images/${orgEntity.id}_${new Date().getTime()}.png`,
+                        userDto?.company?.logo,
+                    );
+                    if (response) {
+                        userDto.company.logo = response;
+                    } else {
+                        throw new HttpException(
+                            'Error while uploading company logo',
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
+                    }
+                }
+                await this.usersRepository.update(
+                    {
+                        email: userDto.email,
+                    },
+                    { stage: UserStageEnum.CREATE_GROUP },
                 );
-                if (response) {
-                    userDto.company.logo = response;
-                    // if (
-                    //     process.env.ASYNC_OPERATIONS_TYPE ===
-                    //     AsyncOperationType.Queue
-                    // ) {
-                    //     createdUserDto.company.logo = response;
-                    // }
-                } else {
-                    throw new HttpException(
-                        'Error while uploading company logo',
-                        HttpStatus.INTERNAL_SERVER_ERROR,
+            }
+            const user = await this.findUser(userDto.email);
+            if (user && user.stage === UserStageEnum.CREATE_GROUP) {
+                await this.guardianService.createUser(
+                    userDto.email,
+                    user.password,
+                    this.utilService.getBlock(
+                        this.configService.get('blocks.createUser'),
+                    ),
+                    {
+                        document: {
+                            name: userDto.name,
+                            role: userDto.role,
+                        },
+                        ref: null,
+                    },
+                );
+
+                // // 3. Create the required payload for group (organization) save
+                const payload = await this.guardianService.createPayload(
+                    createOrganizationResponse,
+                    userDto.company.companyRole,
+                );
+                await this.usersRepository.update(
+                    {
+                        email: userDto.email,
+                    },
+                    { stage: UserStageEnum.CREATE_USER },
+                );
+
+                // // 4. Send request for approval
+                const orgEntity = await this.organizationRepository.findOne({
+                    where: { email: userDto?.company?.email },
+                });
+                await this.organizationRepository.update(
+                    {
+                        id: orgEntity.id,
+                    },
+                    {
+                        payload: payload,
+                        group: createOrganizationResponse?.group,
+                        logo: userDto?.company?.logo,
+                    },
+                );
+            }
+            const approveUser = await this.findUser(userDto.email);
+            if (
+                approveUser &&
+                approveUser.stage === UserStageEnum.CREATE_USER
+            ) {
+                const orgEntity = await this.organizationRepository.findOne({
+                    where: { email: userDto?.company?.email },
+                });
+                const guardianRole = await this.getGuardianRole(
+                    orgType?.id,
+                    userDto.role,
+                );
+                await this.updateUser(userDto, orgEntity, guardianRole);
+                if (
+                    reqUser?.organizationRole ==
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                    (reqUser?.userRole === RoleEnum.Admin ||
+                        reqUser?.userRole === RoleEnum.Root)
+                ) {
+                    await this.orgaisationService.approve(
+                        reqUser?.email,
+                        orgEntity.id,
+                        {
+                            remarks: '',
+                        },
                     );
                 }
             }
 
-            try {
-                const createUserResponse =
-                    await this.guardianService.createUser(
-                        userLoginResponse.refreshToken,
-                        this.utilService.getBlock(
-                            this.configService.get('blocks.createUser'),
-                        ),
-                        {
-                            document: {
-                                name: userDto.name,
-                                role: userDto.role,
-                            },
-                            ref: null,
-                        },
-                    );
-            } catch (e) {
-                console.log(e);
-                throw e;
-            }
-            // // 3. Create the required payload for group (organization) save
-            const payload = await this.guardianService.createPayload(
-                createOrganizationResponse,
-                userDto.company.companyRole,
-            );
-
-            // // 4. Send request for approval
-            await this.organizationRepository.update(
-                {
-                    id: orgEntity.id,
-                },
-                {
-                    payload: payload,
-                    group: createOrganizationResponse?.group,
-                    logo: userDto?.company?.logo,
-                },
-            );
-            if (reqUser?.userRole === RoleEnum.Root) {
-                await this.orgaisationService.approve(
-                    reqUser?.email,
-                    orgEntity.id,
-                    {
-                        remarks: '',
-                    },
-                );
-            }
-
-            const guardianRole = await this.getGuardianRole(
-                orgType?.id,
-                userDto.role,
-            );
-            await this.updateUser(userDto, orgEntity, guardianRole);
-
-            return createOrganizationResponse;
+            return true;
         } catch (e) {
-            console.log(e);
-            throw e;
+            throw new HttpException(
+                'Error occurred while creating group type, group and user',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
@@ -575,14 +755,15 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     );
                     user.role = RoleEnum.Root;
                     user.company = orgDto;
-
                     const groupResponse = await this.register(
                         user,
                         user.password,
+                        undefined,
+                        true,
                     );
                     await this.organizationRepository.update(
                         {
-                            group: groupResponse?.group,
+                            email: orgDto.email,
                         },
                         { state: OrganizationStateEnum.ACTIVE },
                     );
@@ -607,7 +788,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             companyId: newUser.organization?.id,
             companyRole: newUser.guardianRole?.name ?? null,
             createdTime: null,
-            isPending: false,
+            isPending: !newUser?.isActive,
             hederaAccount: newUser?.hederaAccount,
             company: {
                 companyId: newUser.organization?.id,
@@ -640,6 +821,124 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 govDep: null,
             },
         };
+    }
+
+    async download(queryData: DataExportQueryDto) {
+        let query = new QueryDto();
+        query.filterAnd = queryData.filterAnd;
+        query.filterOr = queryData.filterOr;
+        query.sort = queryData.sort;
+
+        // if (query.filterAnd) {
+        //     query.filterAnd.push({
+        //     key: "companyRole",
+        //     operation: "!=",
+        //     value: "API",
+        //   });
+        // } else {
+        //   const filterAnd: FilterEntry[] = [];
+        //   filterAnd.push({
+        //     key: "companyRole",
+        //     operation: "!=",
+        //     value: "API",
+        //   });
+        //   query.filterAnd = filterAnd;
+        // }
+
+        if (!query.filterAnd) {
+            const filterAnd: FilterEntry[] = [];
+            query.filterAnd = filterAnd;
+        }
+        query.filterAnd.push({
+            key: 'organizationType"."name',
+            operation: 'IS NOT',
+            value: null,
+        });
+        const newToOldFieldMap: Record<string, string> = {
+            id: 'user"."id',
+            name: 'user"."name',
+            email: 'user"."email',
+            companyRole: 'organizationType"."name',
+            role: 'role"."name',
+            companyId: 'organization"."id',
+        };
+        query = this.helperService.mapNewWhereClausetoOldWhereClause(
+            query,
+            newToOldFieldMap,
+        );
+
+        const resp = await this.usersRepository
+            .createQueryBuilder('user')
+            .leftJoin('user.organization', 'organization')
+            .leftJoin('user.guardianRole', 'guardianRole')
+            .leftJoin('organization.organizationType', 'organizationType')
+            .leftJoin('guardianRole.role', 'role')
+            .addSelect([
+                'organization',
+                'guardianRole',
+                'role',
+                'organizationType',
+            ])
+            .where(this.helperService.generateWhereSQL(query))
+            .orderBy(
+                query?.sort?.key && `"${query?.sort?.key}"`,
+                query?.sort?.order,
+                query?.sort?.nullFirst !== undefined
+                    ? query?.sort?.nullFirst === true
+                        ? 'NULLS FIRST'
+                        : 'NULLS LAST'
+                    : undefined,
+            )
+            .getMany();
+
+        const oldFormatData = resp.map((user) =>
+            this.mapNewQueryToOldQuery(user),
+        );
+
+        if (oldFormatData.length > 0) {
+            const prepData = this.prepareUserDataForExport(oldFormatData);
+
+            const headers: string[] = [];
+            const titleKeys = Object.keys(prepData[0]);
+            for (const key of titleKeys) {
+                headers.push(this.userExportMap[key]);
+            }
+
+            const path = await this.dataExportService.generateCsv(
+                prepData,
+                headers,
+                this.userExportMap['users'],
+            );
+            return path;
+        }
+        throw new HttpException(
+            this.userExportMap['nothingToExport'],
+            HttpStatus.BAD_REQUEST,
+        );
+    }
+
+    private prepareUserDataForExport(users: any) {
+        const exportData: DataExportUserDto[] = [];
+
+        for (const user of users) {
+            const dto = new DataExportUserDto();
+            dto.id = user.id;
+            dto.email = user.email;
+            dto.role = user.role;
+            dto.name = user.name;
+            dto.country = user.country;
+            dto.phoneNo = user.phoneNo;
+            dto.companyId = user.companyId;
+            dto.companyName = user.company?.name;
+            dto.companyRole = this.userExportMap[user.companyRole];
+            dto.createdTime = this.helperService.formatTimestamp(
+                user.createdTime,
+            );
+            dto.isPending = user.isPending;
+            exportData.push(dto);
+        }
+
+        return exportData;
     }
 
     public async query(
@@ -677,6 +976,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             email: 'user"."email',
             companyRole: 'organizationType"."name',
             role: 'role"."name',
+            companyId: 'organization"."id',
         };
         query = this.helperService.mapNewWhereClausetoOldWhereClause(
             query,
@@ -865,6 +1165,142 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         } else {
             throw new HttpException(
                 'User update failed. Please try again',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async deleteUser(
+        userId: number,
+        requestUser: JWTPayload,
+    ): Promise<HTTPResponseDto> {
+        this.helperService.validateRequestUser(requestUser);
+        const actionUserDetails = await this.usersRepository.findOne({
+            where: { id: requestUser.userId },
+            relations: {
+                guardianRole: {
+                    role: true,
+                },
+                organization: true,
+            },
+        });
+        const userDetails = await this.usersRepository.findOne({
+            where: { id: userId },
+            relations: {
+                guardianRole: {
+                    role: true,
+                },
+                organization: {
+                    organizationType: true,
+                },
+            },
+        });
+
+        if (!userDetails) {
+            throw new HttpException(
+                'No visible user found',
+                HttpStatus.FORBIDDEN,
+            );
+        }
+
+        if (userDetails?.guardianRole?.role?.name == RoleEnum.Root) {
+            throw new HttpException(
+                'Root user cannot be deleted',
+                HttpStatus.FORBIDDEN,
+            );
+        } else if (userDetails?.guardianRole?.role?.name == RoleEnum.Admin) {
+            const orgAdminCount = await this.usersRepository.countBy({
+                organization: { id: userDetails?.organization?.id },
+                guardianRole: {
+                    role: {
+                        name: RoleEnum.Admin,
+                    },
+                },
+            });
+            if (
+                userDetails?.organization?.organizationType?.name !==
+                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                orgAdminCount <= 1
+            ) {
+                throw new HttpException(
+                    'The user cannot be deleted as the user is the only admin',
+                    HttpStatus.FORBIDDEN,
+                );
+            }
+        }
+
+        if (actionUserDetails.organization.id == userDetails.organization.id) {
+            if (
+                !(
+                    actionUserDetails.guardianRole.role.name ==
+                        RoleEnum.Admin ||
+                    actionUserDetails.guardianRole.role.name == RoleEnum.Root
+                )
+            ) {
+                throw new HttpException(
+                    'This action is unauthorised',
+                    HttpStatus.FORBIDDEN,
+                );
+            }
+        } else {
+            if (
+                actionUserDetails.organization.organizationType.name !==
+                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+            ) {
+                throw new HttpException(
+                    'This action is unauthorised',
+                    HttpStatus.FORBIDDEN,
+                );
+            } else {
+                if (
+                    actionUserDetails.guardianRole.role.name !== RoleEnum.Root
+                ) {
+                    throw new HttpException(
+                        'This action is unauthorised',
+                        HttpStatus.FORBIDDEN,
+                    );
+                }
+            }
+        }
+
+        try {
+            await this.guardianService.assignPolicyToUser(
+                userDetails?.email,
+                false,
+            );
+        } catch (e) {
+            throw new HttpException(
+                'Delete failed. Please try again',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+
+        const result = await this.usersRepository
+            .update(
+                {
+                    id: userDetails.id,
+                },
+                {
+                    isActive: false,
+                },
+            )
+            .catch((_: any) => {
+                throw new HttpException(
+                    'Delete failed. Please try again',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            });
+
+        if (result.affected > 0) {
+            const response: HTTPResponseDto = {
+                statusCode: HttpStatus.OK,
+                message: 'The user has been deleted successfully',
+            };
+
+            return response;
+        } else {
+            throw new HttpException(
+                'Delete failed. Please try again',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }

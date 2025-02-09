@@ -3,4 +3,6 @@ export enum MailTemplateEnum {
     FORGOT_PASSOWRD = './forgotPassword',
     RESET_PASSWORD = './resetPassword',
     ORG_CREATE = './organizationCreate',
+    PENDING_USER_CREATE = './pendingUserRegister',
+    USER_ACTIVATION = './userActivation',
 }
