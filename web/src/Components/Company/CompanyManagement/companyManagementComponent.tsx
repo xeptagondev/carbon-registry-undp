@@ -240,7 +240,7 @@ export const CompanyManagementComponent = (props: any) => {
             <Popover placement="bottomRight" content={menu} trigger="click">
               <EllipsisOutlined
                 rotate={90}
-                style={{ fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
+                style={{ fontWeight: 600, marginTop: '15px', fontSize: '1rem', cursor: 'pointer' }}
               />
             </Popover>
           )

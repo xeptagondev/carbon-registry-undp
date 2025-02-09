@@ -5,7 +5,7 @@
   "paymentId": "Registration Payment ID",
   "companyRole": "Role",
   "email": "Email",
-  "phoneNo": "Phone",
+  "phoneNo": "Phone Number",
   "website": "Website",
   "address": "Address",
   "creditBalance": "Credit Balance",

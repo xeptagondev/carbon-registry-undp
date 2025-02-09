@@ -30,13 +30,14 @@ export interface CompanyRoleIconProps {
 
 const CompanyRoleIcon: FC<CompanyRoleIconProps> = (props: CompanyRoleIconProps) => {
   const { role, t } = props;
+  console.log(role);
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      {role === 'Government' ? (
+      {role === 'DNA' ? (
         <RoleIcon icon={<BankOutlined />} bg={GovBGColor} color={GovColor} />
-      ) : role === 'Certifier' ? (
+      ) : role === 'DOE' ? (
         <RoleIcon icon={<SafetyOutlined />} bg={CertBGColor} color={CertColor} />
-      ) : role === 'ProgrammeDeveloper' ? (
+      ) : role === 'PP' ? (
         <RoleIcon icon={<ExperimentOutlined />} bg={DevBGColor} color={DevColor} />
       ) : role === 'ClimateFund' ? (
         <RoleIcon icon={<CopyrightOutlined />} bg={CFBGColor} color={CFColor} />

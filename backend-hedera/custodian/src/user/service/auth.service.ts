@@ -83,6 +83,7 @@ export class AuthService {
             user.email,
             user.id,
             user.guardianRole.role.name,
+            user.isActive,
             user.organization.id,
             organisationDetails.organizationType.name,
             organisationDetails.state,
@@ -156,6 +157,13 @@ export class AuthService {
             );
         }
 
+        if (!user.isActive) {
+            throw new HttpException(
+                'This action is unauthorised',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+
         const isCorrectPass = verifyPassword(loginDto.password, user.password);
 
         if (!isCorrectPass) {
@@ -189,7 +197,7 @@ export class AuthService {
                 organization.state == OrganizationStateEnum.PENDING
             ) {
                 throw new HttpException(
-                    'Organization not found or Activate',
+                    'Organisation not found or not activated.',
                     HttpStatus.UNAUTHORIZED,
                 );
             }
@@ -248,7 +256,8 @@ export class AuthService {
         });
         if (
             userDetails &&
-            userDetails?.organization?.state == OrganizationStateEnum.ACTIVE
+            userDetails?.organization?.state == OrganizationStateEnum.ACTIVE &&
+            userDetails.isActive
         ) {
             const createTime = Date.now();
             const tokenValidTime =
