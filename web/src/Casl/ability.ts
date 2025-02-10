@@ -122,7 +122,8 @@ export const updateUserAbility = (ability: AppAbility, user: User) => {
 
     if (
       (user.role === Role.Admin && user.companyRole === CompanyRole.GOVERNMENT) ||
-      user.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY // Added for Zimbabwe Registry Permission
+      ((user.role === Role.Admin || user.role === Role.Root) &&
+        user.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) // Added for Zimbabwe Registry Permission
     ) {
       can(Action.Approve, Company);
       can(Action.Reject, Company);
