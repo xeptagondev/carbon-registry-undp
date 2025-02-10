@@ -89,15 +89,7 @@ export class GuardianService {
                 role: 'USER',
             });
         } catch (e) {
-            if (e?.response?.status === 404) {
-                throw new HttpException(
-                    `Account creation failed: The provided Hedera account ID
-                     or key is invalid. Please verify and try again.`,
-                    404,
-                );
-            } else {
-                await this.getGuardianError(e, 'registerUser');
-            }
+            await this.getGuardianError(e, 'registerUser');
         }
     }
 
