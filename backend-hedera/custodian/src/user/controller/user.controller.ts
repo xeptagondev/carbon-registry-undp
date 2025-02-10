@@ -16,6 +16,7 @@ import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 import { UserUpdateDto } from '@app/shared/users/dto/user-update.dto';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
+import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
 
 @Controller('user')
 export class UserController {
@@ -24,7 +25,12 @@ export class UserController {
     @UseGuards(AuthGuardService)
     @Post('add')
     async add(@Body() userDto: UsersDTO, @Request() req): Promise<any> {
-        return this.userService.register(userDto, '', req?.user);
+        return this.userService.register(
+            userDto,
+            '',
+            req?.user,
+            UserStateConstant.ACTIVE,
+        );
     }
 
     @UseGuards(AuthGuardService)
@@ -35,7 +41,12 @@ export class UserController {
 
     @Post('register')
     async register(@Body() userDto: UsersDTO, @Request() req): Promise<any> {
-        return this.userService.register(userDto, '', req?.user);
+        return this.userService.register(
+            userDto,
+            '',
+            req?.user,
+            UserStateConstant.DEACTIVE,
+        );
     }
 
     @UseGuards(AuthGuardService)
