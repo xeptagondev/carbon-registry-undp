@@ -106,7 +106,7 @@ export class OrganizationService extends SuperService<
             lastUpdateVersion: null,
             creditTxTime: null,
             remarks: null,
-            createdTime: null,
+            createdTime: organization?.createdTime,
             geographicalLocationCordintes: null,
             provinces: organization?.provinces,
             regions: null,
