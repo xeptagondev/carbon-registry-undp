@@ -1,5 +1,5 @@
 export type UserProps = {
-  id: string;
+  id: number;
   userRole: string;
   companyId: number;
   companyRole: string;
