@@ -307,7 +307,7 @@ export const SLCFProgrammeManagementComponent = (props: any) => {
     }
 
     try {
-      const response: any = await post('national/programmeSl/query', {
+      const response: any = await post('project/query', {
         page: currentPage,
         size: pageSize,
         filterAnd: filter,
@@ -338,7 +338,7 @@ export const SLCFProgrammeManagementComponent = (props: any) => {
     setLoading(true);
     try {
       const userId = userInfoState?.id;
-      const response: any = await post('national/user/query', {
+      const response: any = await post('user/query', {
         page: 1,
         size: 10,
         filterAnd: [
@@ -439,7 +439,7 @@ export const SLCFProgrammeManagementComponent = (props: any) => {
           <div className="body-title">{t('projectList:slcfViewProgrammes')}</div>
         </div>
         <div className="actions">
-          {userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
+          {userInfoState?.companyRole === CompanyRole.PROJECT_PARTICIPANT &&
             userInfoState.userRole !== Role.ViewOnly &&
             enableAddProgramme && (
               <div className="action-bar">

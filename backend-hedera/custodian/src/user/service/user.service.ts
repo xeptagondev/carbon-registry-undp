@@ -185,11 +185,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
 
         if (existingUser) {
-            let errorMessage = 'This user already exists';
+            let errorMessage =
+                'Account creation failed: The provided Hedera account ID already exists.';
 
             if (email === existingUser.email) {
                 errorMessage =
-                    'User already exists in the Carbon Registry System with the given email';
+                    'Account creation failed: The provided email address is already registered in the system.';
             }
 
             throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
@@ -210,7 +211,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
         if (userDetails && userDetails.stage === UserStageEnum.APPROVE_USER) {
             throw new HttpException(
-                'User already exists in the Carbon Registry System with the given email',
+                'Account creation failed: The provided email address is already registered in the system.',
                 HttpStatus.FORBIDDEN,
             );
         }
