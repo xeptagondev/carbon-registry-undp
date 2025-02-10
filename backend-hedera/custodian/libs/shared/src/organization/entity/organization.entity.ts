@@ -9,6 +9,7 @@ import {
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { OrganizationStateEnum } from '../enum/organization.state.enum';
+import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 
 @Entity()
 export class OrganizationEntity {
@@ -81,4 +82,7 @@ export class OrganizationEntity {
 
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
+
+    @OneToMany(() => ProjectEntity, (project) => project.organization)
+    projects: ProjectEntity[];
 }

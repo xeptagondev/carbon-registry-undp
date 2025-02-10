@@ -157,7 +157,6 @@ export class OrganizationService extends SuperService<
             dto.phoneNo = company.phoneNo;
             dto.website = company.website;
             dto.address = company.address;
-            dto.country = company.country;
             dto.companyRole = this.orgExportMap[company.companyRole];
             dto.state = orgStateKey;
             dto.creditBalance = company.creditBalance;
