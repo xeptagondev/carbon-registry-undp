@@ -751,7 +751,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             phoneNo: newUser.phoneNumber,
             companyId: newUser.organization?.id,
             companyRole: newUser.guardianRole?.name ?? null,
-            createdTime: null,
+            createdTime: newUser.createdTime,
             isPending: !newUser?.isActive,
             hederaAccount: newUser?.hederaAccount,
             company: {
@@ -774,7 +774,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 lastUpdateVersion: null,
                 creditTxTime: null,
                 remarks: null,
-                createdTime: null,
+                createdTime: newUser?.organization?.createdTime,
                 geographicalLocationCordintes: null,
                 regions: null,
                 nameOfMinister: null,
