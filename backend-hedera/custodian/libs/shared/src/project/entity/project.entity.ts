@@ -1,9 +1,16 @@
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 import { ProjectCategoryEnum } from '../enum/project.category.enum';
 import { ProjectGeography } from '../enum/project.geography.enum';
 import { ProjectStatus } from '../enum/project.status.enum';
 import { CreditType } from '../enum/credit.type.enum';
+import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 
 @Entity()
 export class ProjectEntity {
@@ -121,4 +128,10 @@ export class ProjectEntity {
         { nullable: true },
     )
     activities?: ActivityEntity[];
+
+    @ManyToOne(
+        () => OrganizationEntity,
+        (organization) => organization.projects,
+    )
+    organization: OrganizationEntity;
 }
