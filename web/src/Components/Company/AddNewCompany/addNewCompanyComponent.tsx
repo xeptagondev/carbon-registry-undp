@@ -572,6 +572,7 @@ export const AddNewCompanyComponent = (props: any) => {
           provinces: formOneValues.provinces,
           // regions: formOneValues.regions,
           companyRole: state?.record?.companyRole,
+          logo: state?.record?.logo,
         };
       } else {
         values = {
@@ -582,6 +583,7 @@ export const AddNewCompanyComponent = (props: any) => {
           faxNo: formOneValues.faxNo,
           address: formOneValues.address,
           companyRole: state?.record?.companyRole,
+          logo: state?.record?.logo,
         };
       }
 
@@ -602,7 +604,7 @@ export const AddNewCompanyComponent = (props: any) => {
       if (state?.record?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         values.sectoralScope = formOneValues.sectoralScope;
         values.nameOfMinister = formOneValues.nameOfMinister;
-        values.name = 'Ministry of ' + formOneValues.ministry;
+        // values.name = formOneValues.ministry;
       }
       if (state?.record?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         values.omgePercentage = Math.round(Number(formOneValues.omgePercentage));
@@ -625,7 +627,7 @@ export const AddNewCompanyComponent = (props: any) => {
         }
       }
 
-      const response = await put('organisation/update', values);
+      const response = await post('organisation/update', values);
       if (response.status === 200 || response.status === 201) {
         setUserInfo({
           companyLogo: response.data.logo,
@@ -682,33 +684,32 @@ export const AddNewCompanyComponent = (props: any) => {
             <Row className="row" gutter={[16, 16]}>
               <Col xl={12} md={24}>
                 <div className="details-part-one">
-                  {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
-                    <Form.Item
-                      label={t('addCompany:name')}
-                      name="name"
-                      initialValue={state?.record?.name}
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
+                  <Form.Item
+                    label={t('addCompany:name')}
+                    name="name"
+                    initialValue={state?.record?.name}
+                    rules={[
+                      {
+                        required: true,
+                        message: '',
+                      },
+                      {
+                        validator: async (rule, value) => {
+                          if (
+                            String(value).trim() === '' ||
+                            String(value).trim() === undefined ||
+                            value === null ||
+                            value === undefined
+                          ) {
+                            throw new Error(`${t('addCompany:name')} ${t('isRequired')}`);
+                          }
                         },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(`${t('addCompany:name')} ${t('isRequired')}`);
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  )}
+                      },
+                    ]}
+                  >
+                    <Input size="large" />
+                  </Form.Item>
+
                   {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
                     ? (!isUpdate ||
                         (isUpdate &&
@@ -811,7 +812,7 @@ export const AddNewCompanyComponent = (props: any) => {
                   {(companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
                     companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) && (
                     <div className="space-container" style={{ width: '100%' }}>
-                      <Form.Item
+                      {/* <Form.Item
                         label={t('addCompany:Ministry')}
                         name="ministry"
                         initialValue={state?.record?.ministry}
@@ -833,7 +834,7 @@ export const AddNewCompanyComponent = (props: any) => {
                         ) : (
                           <Select size="large" disabled={true}></Select>
                         )}
-                      </Form.Item>
+                      </Form.Item> */}
                       {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                         <Form.Item
                           label={t('addCompany:email')}
@@ -869,7 +870,7 @@ export const AddNewCompanyComponent = (props: any) => {
                           <Input size="large" />
                         </Form.Item>
                       )}
-                      {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
+                      {/* {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                         <Form.Item
                           label={t('addCompany:ministerName')}
                           name="nameOfMinister"
@@ -897,7 +898,7 @@ export const AddNewCompanyComponent = (props: any) => {
                         >
                           <Input size="large" />
                         </Form.Item>
-                      )}
+                      )} */}
                     </div>
                   )}
                   <Form.Item
@@ -1155,7 +1156,7 @@ export const AddNewCompanyComponent = (props: any) => {
                     </Radio.Group>
                   </Form.Item>
 
-                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
+                  {/* {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <Form.Item
                       label={t('addCompany:govdep')}
                       name="govDep"
@@ -1207,8 +1208,8 @@ export const AddNewCompanyComponent = (props: any) => {
                         <Select size="large" disabled={true}></Select>
                       )}
                     </Form.Item>
-                  )}
-                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
+                  )} */}
+                  {/* {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <Form.Item
                       label={t('addCompany:sectoralScope')}
                       name="sectoralScope"
@@ -1228,7 +1229,7 @@ export const AddNewCompanyComponent = (props: any) => {
                         ))}
                       </Select>
                     </Form.Item>
-                  )}
+                  )} */}
                   <Form.Item
                     name="phoneNo"
                     label={t('addCompany:phoneNo')}
