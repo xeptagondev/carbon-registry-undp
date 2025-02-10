@@ -348,15 +348,15 @@ export const AddNewCompanyComponent = (props: any) => {
     }
   };
 
-  const getCountryList = async () => {
-    const response = await get('national/organisation/countries');
-    if (response.data) {
-      const alpha2Names = response.data.map((item: any) => {
-        return item.alpha2;
-      });
-      setCountries(alpha2Names);
-    }
-  };
+  // const getCountryList = async () => {
+  //   const response = await get('national/organisation/countries');
+  //   if (response.data) {
+  //     const alpha2Names = response.data.map((item: any) => {
+  //       return item.alpha2;
+  //     });
+  //     setCountries(alpha2Names);
+  //   }
+  // };
 
   const getRegionList = async () => {
     // setLoadingList(true);
@@ -426,7 +426,7 @@ export const AddNewCompanyComponent = (props: any) => {
 
   useEffect(() => {
     setIsUpdate(state?.record ? true : false);
-    getCountryList();
+    // getCountryList();
     getRegionList();
     getMinistryList();
     if (state?.record?.logo) {
