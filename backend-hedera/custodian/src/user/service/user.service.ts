@@ -48,6 +48,7 @@ import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataExportUserDto } from '@app/shared/util/dto/data.export.user.dto';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
+import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -112,46 +113,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         );
 
         return true;
-    }
-
-    async approveUser(userEmail: string) {
-        const userDetails = await this.usersRepository.findOneBy({
-            email: userEmail,
-        });
-        if (!userDetails) {
-            throw new HttpException(
-                'No visible user found',
-                HttpStatus.FORBIDDEN,
-            );
-        }
-        if (userDetails.isActive == true) {
-            throw new HttpException(
-                'User Already Activated',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-        const result = await this.usersRepository
-            .update(
-                {
-                    id: userDetails.id,
-                },
-                {
-                    isActive: true,
-                },
-            )
-            .catch((_: any) => {
-                throw new HttpException(
-                    'Update failed. Please try again',
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                );
-            });
-
-        if (result.affected < 0) {
-            throw new HttpException(
-                'Update failed. Please try again',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
     }
 
     private async getGuardianRole(orgTypeId: number, userRole: string) {
@@ -239,7 +200,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         userDto: UsersDTO,
         defaultPass: string = '',
         reqUser?: JWTPayload,
-        isUserActive: boolean = false,
+        isUserActive: boolean = UserStateConstant.DEACTIVE,
     ) {
         // this.helperService.validateRequestUser(reqUser);
         const userDetails = await this.usersRepository.findOne({
@@ -373,7 +334,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 '{{countryName}}',
                 countryName,
             ),
-            template: MailTemplateEnum.PASSWORD_CREATE,
+            template: isUserActive
+                ? MailTemplateEnum.PASSWORD_CREATE
+                : MailTemplateEnum.PENDING_USER_CREATE,
             to: userDto.email,
             context: {
                 name: userDto.name,
@@ -479,7 +442,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.role,
                 );
 
-                await this.approveUser(userDto.email);
                 await this.updateUser(userDto, org, guardianRole);
                 await this.usersRepository.update(
                     {
@@ -761,7 +723,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         user,
                         user.password,
                         undefined,
-                        true,
+                        UserStateConstant.ACTIVE,
                     );
                     await this.organizationRepository.update(
                         {
@@ -1181,7 +1143,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 guardianRole: {
                     role: true,
                 },
-                organization: true,
+                organization: {
+                    organizationType: true,
+                },
             },
         });
         const userDetails = await this.usersRepository.findOne({

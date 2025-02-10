@@ -1,12 +1,17 @@
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 import { SuperService } from '@app/core/service/super.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+import { USER_ACTIVATION_HEADER } from '@app/shared/mail/constant/mail-header.constant';
+import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+import { MailService } from '@app/shared/mail/service/mail.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganisationApproveDto } from '@app/shared/organization/dto/approve.dto';
 import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
+import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
@@ -34,6 +39,7 @@ export class OrganizationService extends SuperService<
         private readonly helperService: HelperService,
         private readonly guardianService: GuardianService,
         private readonly configService: ConfigService,
+        private readonly mailService: MailService,
         @InjectRepository(OrganizationEntity)
         private readonly organizationRepository: Repository<OrganizationEntity>,
         @InjectRepository(UsersEntity)
@@ -409,7 +415,7 @@ export class OrganizationService extends SuperService<
                                 id: user.id,
                             },
                             {
-                                isActive: true,
+                                isActive: UserStateConstant.ACTIVE,
                                 stage: UserStageEnum.APPROVE_USER,
                             },
                         )
@@ -427,6 +433,23 @@ export class OrganizationService extends SuperService<
                             HttpStatus.INTERNAL_SERVER_ERROR,
                         );
                     }
+                    const countryName = this.configService.get('country');
+
+                    const mailDTO: MailTemplateDTO = {
+                        subject: USER_ACTIVATION_HEADER.replace(
+                            '{{countryName}}',
+                            countryName,
+                        ),
+                        template: MailTemplateEnum.USER_ACTIVATION,
+                        to: user.email,
+                        context: {
+                            name: user.name,
+                            countryName: countryName,
+                            home: this.configService.get('url'),
+                        },
+                    };
+
+                    await this.mailService.sendMail(mailDTO);
                 }
             }
 

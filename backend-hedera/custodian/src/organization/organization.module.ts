@@ -9,6 +9,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { UtilModule } from '@app/shared/util/util.module';
 import { GuardianModule } from '@app/shared/guardian/guardian.module';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { MailModule } from '@app/shared/mail/mail.module';
 
 @Module({
     imports: [
@@ -16,6 +17,7 @@ import { UsersEntity } from '@app/shared/users/entity/users.entity';
         UsersModule,
         AuditModule,
         JwtModule,
+        MailModule,
         UtilModule,
         GuardianModule,
     ],
