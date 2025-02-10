@@ -9,7 +9,6 @@ export class DataExportCompanyDto extends DataExportDto {
     phoneNo;
     website;
     address;
-    country;
     companyRole;
     state;
     creditBalance;

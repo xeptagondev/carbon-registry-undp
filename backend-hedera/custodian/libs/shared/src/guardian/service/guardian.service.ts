@@ -82,7 +82,7 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 this.configService.get('guardian.register'),
             );
-            const response = await axios.post(url, {
+            await axios.post(url, {
                 username: email,
                 password,
                 password_confirmation: password,

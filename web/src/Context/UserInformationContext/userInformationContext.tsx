@@ -20,10 +20,10 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
   const [isTokenExpired, setIsTokenExpired] = useState<boolean>(false);
   const initialUserProps: UserProps = {
     id: localStorage.getItem('userId')
-      ? (localStorage.getItem('userId') as string)
+      ? parseInt(localStorage.getItem('userId') as string)
       : process.env.STORYBOOK_USER_ID
-      ? process.env.STORYBOOK_USER_ID
-      : '',
+      ? parseInt(process.env.STORYBOOK_USER_ID)
+      : -1,
     userRole: localStorage.getItem('userRole')
       ? (localStorage.getItem('userRole') as string)
       : process.env.STORYBOOK_USER_ROLE
@@ -70,7 +70,7 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
     } = value;
     if (id) {
       setUserInfoState((prev) => ({ ...prev, id }));
-      localStorage.setItem('userId', id);
+      localStorage.setItem('userId', id + '');
     }
 
     if (userRole) {

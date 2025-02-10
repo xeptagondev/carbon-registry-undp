@@ -48,6 +48,7 @@ import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataExportUserDto } from '@app/shared/util/dto/data.export.user.dto';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
+import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -88,9 +89,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isPending: 'Pending Approval',
         nothingToExport: 'Data not found for export',
         users: 'Users',
-        ProgrammeDeveloper: 'Project Participant',
-        Government: 'Government',
-        Certifier: 'Certifier (VVB)',
+        PP: 'Project Participant',
+        DNA: 'Designated National Authority',
+        DOE: 'Indinependant Certifier',
         ClimateFund: 'Zimbabwe Climate Fund',
         ExecutiveCommittee: 'Executive Committee',
         Ministry: 'Ministry',
@@ -112,46 +113,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         );
 
         return true;
-    }
-
-    async approveUser(userEmail: string) {
-        const userDetails = await this.usersRepository.findOneBy({
-            email: userEmail,
-        });
-        if (!userDetails) {
-            throw new HttpException(
-                'No visible user found',
-                HttpStatus.FORBIDDEN,
-            );
-        }
-        if (userDetails.isActive == true) {
-            throw new HttpException(
-                'User Already Activated',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-        const result = await this.usersRepository
-            .update(
-                {
-                    id: userDetails.id,
-                },
-                {
-                    isActive: true,
-                },
-            )
-            .catch((_: any) => {
-                throw new HttpException(
-                    'Update failed. Please try again',
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                );
-            });
-
-        if (result.affected < 0) {
-            throw new HttpException(
-                'Update failed. Please try again',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
     }
 
     private async getGuardianRole(orgTypeId: number, userRole: string) {
@@ -224,11 +185,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
 
         if (existingUser) {
-            let errorMessage = 'This user already exists';
+            let errorMessage =
+                'Account creation failed: The provided Hedera account ID already exists.';
 
             if (email === existingUser.email) {
                 errorMessage =
-                    'User already exists in the Carbon Registry System with the given email';
+                    'Account creation failed: The provided email address is already registered in the system.';
             }
 
             throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
@@ -239,7 +201,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         userDto: UsersDTO,
         defaultPass: string = '',
         reqUser?: JWTPayload,
-        isUserActive: boolean = false,
+        isUserActive: boolean = UserStateConstant.DEACTIVE,
     ) {
         // this.helperService.validateRequestUser(reqUser);
         const userDetails = await this.usersRepository.findOne({
@@ -249,7 +211,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         });
         if (userDetails && userDetails.stage === UserStageEnum.APPROVE_USER) {
             throw new HttpException(
-                'User already exists in the Carbon Registry System with the given email',
+                'Account creation failed: The provided email address is already registered in the system.',
                 HttpStatus.FORBIDDEN,
             );
         }
@@ -290,6 +252,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 hederaAccount: userDto.hederaAccount,
                 stage: UserStageEnum.REGISTER,
                 isActive: isUserActive,
+                createdTime: new Date().getTime(),
             };
 
             // i. Save user in db without organization and role
@@ -372,7 +335,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 '{{countryName}}',
                 countryName,
             ),
-            template: MailTemplateEnum.PASSWORD_CREATE,
+            template: isUserActive
+                ? MailTemplateEnum.PASSWORD_CREATE
+                : MailTemplateEnum.PENDING_USER_CREATE,
             to: userDto.email,
             context: {
                 name: userDto.name,
@@ -478,7 +443,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.role,
                 );
 
-                await this.approveUser(userDto.email);
                 await this.updateUser(userDto, org, guardianRole);
                 await this.usersRepository.update(
                     {
@@ -575,6 +539,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     provinces: userDto?.company?.provinces,
                     website: userDto?.company?.website,
                     address: userDto?.company?.address,
+                    createdTime: new Date().getTime(),
                 };
 
                 // iii. Save organization
@@ -759,7 +724,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         user,
                         user.password,
                         undefined,
-                        true,
+                        UserStateConstant.ACTIVE,
                     );
                     await this.organizationRepository.update(
                         {
@@ -787,7 +752,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             phoneNo: newUser.phoneNumber,
             companyId: newUser.organization?.id,
             companyRole: newUser.guardianRole?.name ?? null,
-            createdTime: null,
+            createdTime: newUser.createdTime,
             isPending: !newUser?.isActive,
             hederaAccount: newUser?.hederaAccount,
             company: {
@@ -810,7 +775,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 lastUpdateVersion: null,
                 creditTxTime: null,
                 remarks: null,
-                createdTime: null,
+                createdTime: newUser?.organization?.createdTime,
                 geographicalLocationCordintes: null,
                 regions: null,
                 nameOfMinister: null,
@@ -926,15 +891,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             dto.email = user.email;
             dto.role = user.role;
             dto.name = user.name;
-            dto.country = user.country;
             dto.phoneNo = user.phoneNo;
             dto.companyId = user.companyId;
             dto.companyName = user.company?.name;
-            dto.companyRole = this.userExportMap[user.companyRole];
+            dto.companyRole = this.userExportMap[user?.company?.companyRole];
             dto.createdTime = this.helperService.formatTimestamp(
                 user.createdTime,
             );
-            dto.isPending = user.isPending;
             exportData.push(dto);
         }
 
@@ -1181,7 +1144,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 guardianRole: {
                     role: true,
                 },
-                organization: true,
+                organization: {
+                    organizationType: true,
+                },
             },
         });
         const userDetails = await this.usersRepository.findOne({
