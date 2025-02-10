@@ -30,7 +30,6 @@ export interface CompanyRoleIconProps {
 
 const CompanyRoleIcon: FC<CompanyRoleIconProps> = (props: CompanyRoleIconProps) => {
   const { role, t } = props;
-  console.log(role);
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       {role === 'DNA' ? (

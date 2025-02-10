@@ -1709,7 +1709,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   const getUserDetails = async () => {
     setLoadingAll(true);
     try {
-      const userId = userInfoState?.id ? parseInt(userInfoState.id) : userInfoState?.id;
+      const userId = userInfoState?.id;
       const response: any = await post('national/user/query', {
         page: 1,
         size: 10,
