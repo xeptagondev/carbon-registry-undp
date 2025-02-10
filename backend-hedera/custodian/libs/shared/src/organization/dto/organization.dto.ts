@@ -2,7 +2,13 @@ import { SuperDTO } from '@app/core/dto/super.dto';
 import { OrganizationEntity } from '../entity/organization.entity';
 import { Unwrap } from '@app/core/util/unwrappable';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
-import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import {
+    IsEmail,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    MaxLength,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrganizationStateEnum } from '../enum/organization.state.enum';
@@ -17,7 +23,7 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
     companyRole: OrganizationTypeEnum;
 
     @Unwrap()
-    @IsNotEmpty()
+    @IsOptional()
     taxId?: string;
 
     @Unwrap()
@@ -29,7 +35,7 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
     phoneNo: string;
 
     @Unwrap()
-    @IsNotEmpty()
+    @IsOptional()
     paymentId: string;
 
     faxNo?: string;
@@ -53,6 +59,6 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
     @IsString()
     @IsNotEmpty()
     @ApiPropertyOptional()
-    @MaxLength(1048576, { message: 'Logo cannot exceed 1MB' })
+    // @MaxLength(2048576, { message: 'Logo cannot exceed 2MB' })
     logo: string;
 }

@@ -85,7 +85,13 @@ export class OrganizationController {
     @UseGuards(AuthGuardService)
     @Post('update')
     async update(@Body() dto: OrganizationDto, @Request() req) {
-        if (req.user.role != RoleEnum.Admin) {
+        console.log(req);
+        if (
+            !(
+                req.user.userRole == RoleEnum.Admin ||
+                req.user.userRole == RoleEnum.Root
+            )
+        ) {
             throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
         }
         return await this.organizationService.update(dto, req.user);
