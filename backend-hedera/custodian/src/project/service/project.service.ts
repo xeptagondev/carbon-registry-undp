@@ -26,11 +26,6 @@ export class ProjectService {
             const filterAnd: FilterEntry[] = [];
             query.filterAnd = filterAnd;
         }
-        query.filterAnd.push({
-            key: 'organizationType"."name',
-            operation: 'IS NOT',
-            value: null,
-        });
 
         if (
             !(
@@ -39,7 +34,7 @@ export class ProjectService {
             )
         ) {
             query.filterAnd.push({
-                key: 'project"."organizationId',
+                key: 'organization"."organizationId',
                 operation: '=',
                 value: requestUser.organizationId,
             });
@@ -61,7 +56,7 @@ export class ProjectService {
 
         const [entities, total] = await this.projectRepository
             .createQueryBuilder('project')
-            // .leftJoin('user.organization', 'organization')
+            .leftJoin('project.organization', 'organization')
             // .leftJoin('user.guardianRole', 'guardianRole')
             // .leftJoin('organization.organizationType', 'organizationType')
             // .leftJoin('guardianRole.role', 'role')

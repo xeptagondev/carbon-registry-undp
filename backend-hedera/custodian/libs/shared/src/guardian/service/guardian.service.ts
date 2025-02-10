@@ -82,14 +82,22 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 this.configService.get('guardian.register'),
             );
-            const response = await axios.post(url, {
+            await axios.post(url, {
                 username: email,
                 password,
                 password_confirmation: password,
                 role: 'USER',
             });
         } catch (e) {
-            await this.getGuardianError(e, 'registerUser');
+            if (e?.response?.status === 404) {
+                throw new HttpException(
+                    `Account creation failed: The provided Hedera account ID
+                     or key is invalid. Please verify and try again.`,
+                    404,
+                );
+            } else {
+                await this.getGuardianError(e, 'registerUser');
+            }
         }
     }
 
