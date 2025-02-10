@@ -13,6 +13,7 @@ import { OrganizationModule } from './organization/organization.module';
 import { UserModule } from './user/user.module';
 import { MailModule } from '@app/shared/mail/mail.module';
 import { UserService } from './user/service/user.service';
+import { ProjectModule } from './project/project.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { UserService } from './user/service/user.service';
         AuthGuardModule,
         MailModule,
         UserModule,
+        ProjectModule,
     ],
     controllers: [AppController],
     providers: [AppService],
