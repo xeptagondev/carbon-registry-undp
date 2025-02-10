@@ -86,5 +86,5 @@ export class OrganizationEntity {
     @OneToMany(() => ProjectEntity, (project) => project.organization, {
         nullable: true,
     })
-    projects: ProjectEntity[];
+    projects?: ProjectEntity[];
 }
