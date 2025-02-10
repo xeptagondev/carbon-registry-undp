@@ -88,9 +88,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isPending: 'Pending Approval',
         nothingToExport: 'Data not found for export',
         users: 'Users',
-        ProgrammeDeveloper: 'Project Participant',
-        Government: 'Government',
-        Certifier: 'Certifier (VVB)',
+        PP: 'Project Participant',
+        DNA: 'Designated National Authority',
+        DOE: 'Indinependant Certifier',
         ClimateFund: 'Zimbabwe Climate Fund',
         ExecutiveCommittee: 'Executive Committee',
         Ministry: 'Ministry',
@@ -290,6 +290,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 hederaAccount: userDto.hederaAccount,
                 stage: UserStageEnum.REGISTER,
                 isActive: isUserActive,
+                createdTime: new Date().getTime(),
             };
 
             // i. Save user in db without organization and role
@@ -575,6 +576,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     provinces: userDto?.company?.provinces,
                     website: userDto?.company?.website,
                     address: userDto?.company?.address,
+                    createdTime: new Date().getTime(),
                 };
 
                 // iii. Save organization
@@ -930,7 +932,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             dto.phoneNo = user.phoneNo;
             dto.companyId = user.companyId;
             dto.companyName = user.company?.name;
-            dto.companyRole = this.userExportMap[user.companyRole];
+            dto.companyRole = this.userExportMap[user?.company?.companyRole];
             dto.createdTime = this.helperService.formatTimestamp(
                 user.createdTime,
             );

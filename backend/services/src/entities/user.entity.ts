@@ -2,7 +2,6 @@ import { Role } from '../casl/role.enum';
 import { Entity, Column, PrimaryGeneratedColumn, JoinColumn, OneToOne, OneToMany, ManyToOne } from 'typeorm';
 import { EntitySubject } from './entity.subject';
 import { CompanyRole } from '../enum/company.role.enum';
-import { Company } from './company.entity';
 
 @Entity()
 export class User  implements EntitySubject{

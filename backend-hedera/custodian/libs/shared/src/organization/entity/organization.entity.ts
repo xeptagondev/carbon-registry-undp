@@ -78,4 +78,7 @@ export class OrganizationEntity {
 
     @Column({ nullable: true })
     logo?: string;
+
+    @Column({ type: 'bigint', nullable: true })
+    createdTime: number;
 }
