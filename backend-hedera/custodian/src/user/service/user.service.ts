@@ -1143,7 +1143,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 guardianRole: {
                     role: true,
                 },
-                organization: true,
+                organization: {
+                    organizationType: true,
+                },
             },
         });
         const userDetails = await this.usersRepository.findOne({
