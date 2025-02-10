@@ -50,14 +50,14 @@ const LayoutSider = (props: LayoutSiderProps) => {
   const { i18n, t } = useTranslation(['nav']);
 
   const items: MenuItem[] = [
-    // getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
-    // getItem(
-    //   t('nav:slcfprogrammes'),
-    //   'programmeManagementSLCF/viewAllProjects',
-    //   <AppstoreOutlined />
-    // ),
-    // getItem(t('nav:projectList'), 'programmeManagementSLCF/viewAll', <UnorderedListOutlined />),
-    // getItem(t('nav:retirements'), 'retirementManagement/viewAll', <SplitCellsOutlined />),
+    getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
+    getItem(
+      t('nav:slcfprogrammes'),
+      'programmeManagementSLCF/viewAllProjects',
+      <AppstoreOutlined />
+    ),
+    getItem(t('nav:projectList'), 'programmeManagementSLCF/viewAll', <UnorderedListOutlined />),
+    getItem(t('nav:retirements'), 'retirementManagement/viewAll', <SplitCellsOutlined />),
     // getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
     // getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
     // getItem(t('nav:verra'), 'verraManagement/viewAll', <AppstoreOutlined />),
