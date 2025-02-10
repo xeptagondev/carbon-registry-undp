@@ -890,7 +890,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             dto.email = user.email;
             dto.role = user.role;
             dto.name = user.name;
-            dto.country = user.country;
             dto.phoneNo = user.phoneNo;
             dto.companyId = user.companyId;
             dto.companyName = user.company?.name;
@@ -898,7 +897,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             dto.createdTime = this.helperService.formatTimestamp(
                 user.createdTime,
             );
-            dto.isPending = user.isPending;
             exportData.push(dto);
         }
 
