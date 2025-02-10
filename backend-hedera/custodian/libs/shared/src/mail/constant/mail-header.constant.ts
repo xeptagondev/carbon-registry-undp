@@ -11,4 +11,4 @@ export const FORGOT_PASSWORD_HEADER: string =
     'Password Reset Request for Your {{countryName}} Carbon Registry Account';
 
 export const RESET_PASSWORD_HEADER: string =
-    'Reset Your {{countryName}} Carbon Registry Password';
+    'Your {{countryName}} Carbon Registry Account Password is Changed';
