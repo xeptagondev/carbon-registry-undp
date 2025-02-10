@@ -83,6 +83,8 @@ export class OrganizationEntity {
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
 
-    @OneToMany(() => ProjectEntity, (project) => project.organization)
+    @OneToMany(() => ProjectEntity, (project) => project.organization, {
+        nullable: true,
+    })
     projects: ProjectEntity[];
 }
