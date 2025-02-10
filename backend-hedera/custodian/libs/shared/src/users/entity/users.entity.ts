@@ -52,4 +52,7 @@ export class UsersEntity {
 
     @Column({ type: 'boolean', default: true })
     isActive: boolean;
+
+    @Column({ type: 'bigint', nullable: true })
+    createdTime: number;
 }
