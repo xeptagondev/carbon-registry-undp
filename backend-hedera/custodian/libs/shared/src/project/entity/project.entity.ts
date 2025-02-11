@@ -3,6 +3,8 @@ import {
     Column,
     Entity,
     JoinColumn,
+    JoinTable,
+    ManyToMany,
     ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
@@ -149,4 +151,21 @@ export class ProjectEntity {
 
     // @ManyToOne(() => UsersEntity, (user) => user.createdProjects)
     // createdUser: UsersEntity;
+
+    @ManyToMany(
+        () => OrganizationEntity,
+        (orgEntity) => orgEntity.assignedProjects,
+    )
+    @JoinTable({
+        name: 'project_assignees',
+        joinColumn: {
+            name: 'project_id',
+            referencedColumnName: 'id',
+        },
+        inverseJoinColumn: {
+            name: 'organization_id',
+            referencedColumnName: 'id',
+        },
+    })
+    assignees?: OrganizationEntity[];
 }
