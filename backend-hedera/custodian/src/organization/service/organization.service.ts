@@ -26,7 +26,7 @@ import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class OrganizationService extends SuperService<
@@ -45,6 +45,7 @@ export class OrganizationService extends SuperService<
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
         private dataExportService: DataExportService,
+        private readonly dataSource: DataSource,
     ) {
         super(organizationRepository);
     }
@@ -590,9 +591,50 @@ export class OrganizationService extends SuperService<
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
 
-        return await this.organizationRepository.update(
-            { id: dto.id },
-            { state: dto.state },
-        );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            // Get organization entity
+            const orgEnt = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: dto.id },
+                    relations: { users: true },
+                },
+            );
+
+            // change the active state of the users
+            for (let i = 0; i < orgEnt?.users?.length; i++) {
+                const user = orgEnt.users[i];
+                let isActive = false;
+                if (dto.state === OrganizationStateEnum.ACTIVE) {
+                    isActive = true;
+                } else if (dto.state !== OrganizationStateEnum.SUSPENDED) {
+                    break;
+                }
+
+                await queryRunner.manager.update(
+                    UsersEntity,
+                    { id: user.id },
+                    { isActive: isActive },
+                );
+            }
+
+            await this.organizationRepository.update(
+                { id: dto.id },
+                { state: dto.state },
+            );
+
+            await queryRunner.commitTransaction();
+
+            return true;
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            console.log(err);
+        } finally {
+            await queryRunner.release();
+        }
+        return false;
     }
 }
