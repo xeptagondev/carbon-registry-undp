@@ -258,7 +258,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
 
     setLoading(true);
     try {
-      const res = await post('national/programmeSl/create', body);
+      const res = await post('project/create', body);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
