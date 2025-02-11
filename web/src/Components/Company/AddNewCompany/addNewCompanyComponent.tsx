@@ -925,30 +925,103 @@ export const AddNewCompanyComponent = (props: any) => {
                   >
                     <Input addonBefore="https://" size="large" />
                   </Form.Item>
-                  {
-                    <Form.Item
-                      name="address"
-                      label={t('addCompany:addresss')}
-                      initialValue={state?.record?.address}
-                      rules={[
-                        { required: true, message: '' },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(`${t('addCompany:addresss')} ${t('isRequired')}`);
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input.TextArea rows={3} maxLength={100} />
-                    </Form.Item>
-                  }
+
+                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+                    systemType !== CarbonSystemType.MRV && (
+                      <div className="space-container" style={{ width: '100%' }}>
+                        <Space
+                          wrap={true}
+                          style={{
+                            display: 'flex',
+                            marginBottom: 8,
+                          }}
+                          align="center"
+                          size={'large'}
+                        >
+                          <Form.Item
+                            style={{ width: '100%' }}
+                            name="omgePercentage"
+                            label={t('addCompany:omgePercentage')}
+                            initialValue={state?.record?.omgePercentage}
+                            rules={[
+                              { required: true, message: '' },
+                              {
+                                validator: async (rule, value) => {
+                                  if (
+                                    String(value).trim() === '' ||
+                                    String(value).trim() === undefined ||
+                                    value === null ||
+                                    value === undefined
+                                  ) {
+                                    throw new Error(
+                                      `${t('addCompany:omgePercentage')}  ${t('isRequired')}`
+                                    );
+                                  }
+                                },
+                              },
+                            ]}
+                          >
+                            <InputNumber
+                              style={{ width: '100%' }}
+                              size="large"
+                              min={0}
+                              max={99}
+                              formatter={(value) => `${value ? Math.round(value) : ''}%`}
+                              parser={(value: any) => value.replace('%', '')}
+                            />
+                          </Form.Item>
+                        </Space>
+                      </div>
+                    )}
+                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
+                    <div className="space-container" style={{ width: '100%' }}>
+                      <Space
+                        wrap={true}
+                        style={{
+                          display: 'flex',
+                          marginBottom: 8,
+                        }}
+                        align="center"
+                        size={'large'}
+                      >
+                        <Form.Item
+                          style={{ width: '100%' }}
+                          name="nationalSopValue"
+                          label={t('addCompany:nationalSopValue')}
+                          initialValue={state?.record?.nationalSopValue}
+                          rules={[
+                            { required: true, message: '' },
+                            {
+                              validator: async (rule, value) => {
+                                if (
+                                  String(value).trim() === '' ||
+                                  String(value).trim() === undefined ||
+                                  value === null ||
+                                  value === undefined
+                                ) {
+                                  throw new Error(
+                                    `${t('addCompany:nationalSopValue')} s${t('isRequired')}`
+                                  );
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <InputNumber
+                            style={{ width: '100%' }}
+                            size="large"
+                            min={0}
+                            max={99}
+                            formatter={(value) => `${value}%`}
+                            parser={(value: any) => value.replace('%', '')}
+                            // eslint-disable-next-line eqeqeq
+                            disabled={systemType == CarbonSystemType.REGISTRY}
+                          />
+                        </Form.Item>
+                      </Space>
+                    </div>
+                  )}
+
                   <Form.Item
                     name="logo"
                     label={t('addCompany:companyLogoWithType')}
@@ -1002,54 +1075,6 @@ export const AddNewCompanyComponent = (props: any) => {
                       </Button>
                     </Upload>
                   </Form.Item>
-                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
-                    <div className="space-container" style={{ width: '100%' }}>
-                      <Space
-                        wrap={true}
-                        style={{
-                          display: 'flex',
-                          marginBottom: 8,
-                        }}
-                        align="center"
-                        size={'large'}
-                      >
-                        <Form.Item
-                          style={{ width: '100%' }}
-                          name="nationalSopValue"
-                          label={t('addCompany:nationalSopValue')}
-                          initialValue={state?.record?.nationalSopValue}
-                          rules={[
-                            { required: true, message: '' },
-                            {
-                              validator: async (rule, value) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(
-                                    `${t('addCompany:nationalSopValue')} s${t('isRequired')}`
-                                  );
-                                }
-                              },
-                            },
-                          ]}
-                        >
-                          <InputNumber
-                            style={{ width: '100%' }}
-                            size="large"
-                            min={0}
-                            max={99}
-                            formatter={(value) => `${value}%`}
-                            parser={(value: any) => value.replace('%', '')}
-                            // eslint-disable-next-line eqeqeq
-                            disabled={systemType == CarbonSystemType.REGISTRY}
-                          />
-                        </Form.Item>
-                      </Space>
-                    </div>
-                  )}
                 </div>
               </Col>
               <Col xl={12} md={24}>
@@ -1354,7 +1379,8 @@ export const AddNewCompanyComponent = (props: any) => {
                     </Form.Item>
                   )}
 
-                  {/* <Form.Item
+                  {
+                    <Form.Item
                       name="address"
                       label={t('addCompany:addresss')}
                       initialValue={state?.record?.address}
@@ -1375,55 +1401,8 @@ export const AddNewCompanyComponent = (props: any) => {
                       ]}
                     >
                       <Input.TextArea rows={3} maxLength={100} />
-                    </Form.Item> */}
-
-                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
-                    systemType !== CarbonSystemType.MRV && (
-                      <div className="space-container" style={{ width: '100%' }}>
-                        <Space
-                          wrap={true}
-                          style={{
-                            display: 'flex',
-                            marginBottom: 8,
-                          }}
-                          align="center"
-                          size={'large'}
-                        >
-                          <Form.Item
-                            style={{ width: '100%' }}
-                            name="omgePercentage"
-                            label={t('addCompany:omgePercentage')}
-                            initialValue={state?.record?.omgePercentage}
-                            rules={[
-                              { required: true, message: '' },
-                              {
-                                validator: async (rule, value) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('addCompany:omgePercentage')}  ${t('isRequired')}`
-                                    );
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <InputNumber
-                              style={{ width: '100%' }}
-                              size="large"
-                              min={0}
-                              max={99}
-                              formatter={(value) => `${value ? Math.round(value) : ''}%`}
-                              parser={(value: any) => value.replace('%', '')}
-                            />
-                          </Form.Item>
-                        </Space>
-                      </div>
-                    )}
+                    </Form.Item>
+                  }
                 </div>
               </Col>
             </Row>

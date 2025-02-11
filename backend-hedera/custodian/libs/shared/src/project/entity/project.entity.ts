@@ -149,9 +149,6 @@ export class ProjectEntity {
     @JoinColumn([{ name: 'approved_user_id', referencedColumnName: 'id' }])
     approvedBy?: UsersEntity;
 
-    // @ManyToOne(() => UsersEntity, (user) => user.createdProjects)
-    // createdUser: UsersEntity;
-
     @ManyToMany(
         () => OrganizationEntity,
         (orgEntity) => orgEntity.assignedProjects,
