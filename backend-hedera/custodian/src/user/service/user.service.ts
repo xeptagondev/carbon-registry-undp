@@ -243,6 +243,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             await this.guardianService.registerUser(userDto.email, hashedPass);
+            await this.delay(5000);
 
             const userEntity: UsersEntity = {
                 email: userDto.email,
@@ -260,8 +261,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.usersRepository.save(userEntity);
 
             // 3. User login to the guardian backend
-
-            await this.delay(5000);
         }
         // 4. Update the user profile with the parent (SRU)
         const updateUser = await this.findUser(userDto.email);
@@ -273,13 +272,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 userDto.hederaAccount,
                 userDto.hederaKey,
             );
+            await this.delay(15000);
+
             await this.usersRepository.update(
                 {
                     email: userDto.email,
                 },
                 { stage: UserStageEnum.ASIGN_REGISTRY },
             );
-            await this.delay(15000);
         }
         // 5. Assign the policy for the user
 
