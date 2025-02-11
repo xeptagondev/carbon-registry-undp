@@ -19,7 +19,9 @@ export class ProjectService {
     ) {}
 
     create(projectDto: ProjectDto, user: any): any {
-        throw new Error('Method not implemented.');
+        console.log(
+            `Request received to create project with details ${projectDto} from user ${user}`,
+        );
     }
 
     public async query(

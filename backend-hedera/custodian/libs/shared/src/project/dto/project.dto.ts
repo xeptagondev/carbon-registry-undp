@@ -59,11 +59,6 @@ export class ProjectDto {
     city: string;
 
     @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    street: string;
-
-    @ApiProperty()
     @IsArray()
     geographicalLocationCoordinates: [];
 

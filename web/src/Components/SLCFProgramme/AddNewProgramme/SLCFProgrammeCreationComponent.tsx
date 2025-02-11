@@ -132,7 +132,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       const { data } = await post('location/city', {
         filterAnd: [
           {
-            key: 'divisionName',
+            key: 'districtName',
             operation: '=',
             value: division,
           },
@@ -181,10 +181,6 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
   };
 
   const onDistrictSelect = (value: string) => {
-    getDivisions(value);
-  };
-
-  const onDivisionSelect = (value: string) => {
     getCities(value);
   };
 
@@ -225,9 +221,8 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       projectCategory: values?.projectCategory,
       province: values?.province || 'test',
       district: values?.district || 'test',
-      dsDivision: values?.dsDivision || 'test',
       city: values?.city || 'test',
-      community: values?.community,
+      postalCode: values?.postalCode,
       geographicalLocationCoordinates: values?.projectLocation,
       projectGeography: values?.projectGeography,
       otherProjectCategory: values?.otherCategory,
@@ -252,6 +247,9 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       startDate: moment(values?.startTime).startOf('day').unix(),
       additionalDocuments: base64Docs,
       contactName: values?.contactName,
+      contactFax: formatPhoneNumberIntl(values?.contactFax),
+      contactAddress: values?.contactAddress,
+      contactWebsite: values?.contactWebsite,
       contactEmail: values?.contactEmail,
       contactPhoneNo: formatPhoneNumberIntl(values?.contactPhoneNo),
     };
@@ -399,7 +397,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                   ))}
                                 </Select>
                               </Form.Item>
-                              <Form.Item
+                              {/* <Form.Item
                                 label={t('addProgramme:dsDivision')}
                                 name="dsDivision"
                                 rules={[
@@ -418,7 +416,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                     <Select.Option value={division}>{division}</Select.Option>
                                   ))}
                                 </Select>
-                              </Form.Item>
+                              </Form.Item> */}
                               <Form.Item
                                 label={t('addProgramme:city')}
                                 name="city"
@@ -439,12 +437,12 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                 </Select>
                               </Form.Item>
                               <Form.Item
-                                label={t('addProgramme:community')}
-                                name="community"
+                                label={t('addProgramme:street')}
+                                name="postalCode"
                                 rules={[
                                   {
                                     required: true,
-                                    message: `${t('addProgramme:community')} ${t('isRequired')}`,
+                                    message: `${t('addProgramme:street')} ${t('isRequired')}`,
                                   },
                                 ]}
                               >
@@ -985,6 +983,84 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                 </Form.Item>
                               )}
                             </Skeleton>
+                          </Col>
+                          <Col xl={12} md={24}>
+                            <Skeleton loading={isCountryListLoading} active>
+                              {countries.length > 0 && (
+                                <Form.Item
+                                  name="contactFax"
+                                  label={t('addProgramme:fax')}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: `${t('addProgramme:fax')} ${t('isRequired')}`,
+                                    },
+                                    {
+                                      validator: async (rule: any, value: any) => {
+                                        const phoneNo = formatPhoneNumber(String(value));
+                                        if (String(value).trim() !== '') {
+                                          if (
+                                            (String(value).trim() !== '' &&
+                                              String(value).trim() !== undefined &&
+                                              value !== null &&
+                                              value !== undefined &&
+                                              phoneNo !== null &&
+                                              phoneNo !== '' &&
+                                              phoneNo !== undefined &&
+                                              !isPossiblePhoneNumber(String(value))) ||
+                                            value?.length > 17
+                                          ) {
+                                            throw new Error(
+                                              `${t('addProgramme:fax')} ${t('isInvalid')}`
+                                            );
+                                          }
+                                        }
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <PhoneInput
+                                    placeholder={t('addProgramme:phoneNo')}
+                                    international
+                                    defaultCountry="LK"
+                                    countryCallingCodeEditable={false}
+                                    onChange={(v) => {}}
+                                    countries={countries}
+                                  />
+                                </Form.Item>
+                              )}
+                            </Skeleton>
+                          </Col>
+                        </Row>
+
+                        <Row className="row" gutter={[40, 16]}>
+                          <Col xl={12} md={24}>
+                            <Form.Item
+                              label={t('addProgramme:website')}
+                              name={'contactWebsite'}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: `${t('addProgramme:website')} ${t('isRequired')}`,
+                                },
+                              ]}
+                            >
+                              <Input size="large" />
+                            </Form.Item>
+                          </Col>
+                          <Col xl={12} md={24}>
+                            <Form.Item
+                              label={t('addProgramme:address')}
+                              name={'contactAddress'}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: `${t('addProgramme:address')} ${t('isRequired')}`,
+                                },
+                              ]}
+                            >
+                              <TextArea rows={4} />
+                            </Form.Item>
                           </Col>
                         </Row>
                         <InfDocumentInformation t={t}></InfDocumentInformation>

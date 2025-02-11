@@ -13,7 +13,7 @@
   "mvcUnadjusted": "MVC Unadjusted",
   "governmentDepartment": "Government Department",
   "ownership": "Ownership",
-  "creditReduction":"Estimated Reductions",
+  "creditReduction": "Estimated Reductions",
   "inNDC": "Included in NDC",
   "inNDCToolTip": "Nationally Determined Contributions (NDC)",
   "inNAP": "Included in NAP",
@@ -63,6 +63,7 @@
   "city": "City",
   "cityPlaceholder": "Select Project city",
   "community": "Community",
+  "street": "Street Name and Number",
   "projectGeography": "Geography of the Project",
   "projectGeographyPlaceholder": "Select project activity",
   "landExtent": "Land Extent",
@@ -86,6 +87,9 @@
   "contactPersonName": "Name",
   "email": "Email",
   "phoneNo": "Mobile",
+  "fax": "Fax",
+  "website": "Website",
+  "address": "Address",
   "documentInfoTitle": "Document Information",
   "titleOfDoc": "Title of Document",
   "docNoTitle": "Document No",
@@ -99,5 +103,4 @@
   "projectDetails": "Project Details",
   "upload": "Upload",
   "submit": "Submit"
-
 }
