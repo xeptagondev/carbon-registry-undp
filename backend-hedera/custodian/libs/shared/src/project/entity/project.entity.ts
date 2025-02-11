@@ -2,6 +2,7 @@ import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import {
     Column,
     Entity,
+    JoinColumn,
     ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
@@ -11,6 +12,7 @@ import { ProjectGeography } from '../enum/project.geography.enum';
 import { ProjectStatus } from '../enum/project.status.enum';
 import { CreditType } from '../enum/credit.type.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
 
 @Entity()
 export class ProjectEntity {
@@ -134,4 +136,17 @@ export class ProjectEntity {
         (organization) => organization.projects,
     )
     organization: OrganizationEntity;
+
+    @ManyToOne(() => UsersEntity, (user) => user.createdProjects)
+    @JoinColumn([{ name: 'created_user_id', referencedColumnName: 'id' }])
+    createdBy: UsersEntity;
+
+    @ManyToOne(() => UsersEntity, (user) => user.approvedProjects, {
+        nullable: true,
+    })
+    @JoinColumn([{ name: 'approved_user_id', referencedColumnName: 'id' }])
+    approvedBy?: UsersEntity;
+
+    // @ManyToOne(() => UsersEntity, (user) => user.createdProjects)
+    // createdUser: UsersEntity;
 }

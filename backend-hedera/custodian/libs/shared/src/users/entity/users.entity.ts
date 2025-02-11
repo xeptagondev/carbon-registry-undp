@@ -1,10 +1,12 @@
 import { GuardianRoleEntity } from '@app/shared/guardian-role/entity/guardian-role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import {
     Column,
     Entity,
     JoinColumn,
     ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -55,4 +57,18 @@ export class UsersEntity {
 
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
+
+    @OneToMany(
+        () => ProjectEntity,
+        (projectEntity) => projectEntity.createdBy,
+        { nullable: true },
+    )
+    createdProjects?: ProjectEntity[];
+
+    @OneToMany(
+        () => ProjectEntity,
+        (projectEntity) => projectEntity.approvedBy,
+        { nullable: true },
+    )
+    approvedProjects?: ProjectEntity[];
 }
