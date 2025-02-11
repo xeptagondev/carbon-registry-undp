@@ -18,6 +18,7 @@ import { MailModule } from './mail/mail.module';
 import { GuardianModule } from './guardian/guardian.module';
 import { TokenModule } from './token/token.module';
 import { FileHandlerModule } from './file-handler/file-handler.module';
+import { LocationModule } from './location/location.module';
 
 @Module({
     providers: [SharedService],
@@ -41,6 +42,7 @@ import { FileHandlerModule } from './file-handler/file-handler.module';
         GuardianModule,
         TokenModule,
         FileHandlerModule,
+        LocationModule,
     ],
 })
 export class SharedModule {}

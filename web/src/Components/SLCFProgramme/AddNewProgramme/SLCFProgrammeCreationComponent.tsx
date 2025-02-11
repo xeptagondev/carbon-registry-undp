@@ -82,7 +82,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
 
   const getProvinces = async () => {
     try {
-      const { data } = await post('national/location/province');
+      const { data } = await post('location/province');
       const tempProvinces = data.map((provinceData: any) => provinceData.provinceName);
       setProvinces(tempProvinces);
     } catch (error) {
@@ -92,7 +92,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
 
   const getDistricts = async (provinceName: string) => {
     try {
-      const { data } = await post('national/location/district', {
+      const { data } = await post('location/district', {
         filterAnd: [
           {
             key: 'provinceName',
@@ -129,7 +129,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
 
   const getCities = async (division?: string) => {
     try {
-      const { data } = await post('national/location/city', {
+      const { data } = await post('location/city', {
         filterAnd: [
           {
             key: 'divisionName',
@@ -149,7 +149,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
   const getCountryList = async () => {
     setIsCountryListLoading(true);
     try {
-      const response = await get('national/organisation/countries');
+      const response = await get('location/countries');
       if (response.data) {
         const alpha2Names = response.data.map((item: any) => {
           return item.alpha2;
