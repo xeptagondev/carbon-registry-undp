@@ -809,8 +809,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       <Input size="large" />
                     </Form.Item>
                   )}
-                  {(companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
-                    companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) && (
+                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <div className="space-container" style={{ width: '100%' }}>
                       {/* <Form.Item
                         label={t('addCompany:Ministry')}
@@ -835,7 +834,7 @@ export const AddNewCompanyComponent = (props: any) => {
                           <Select size="large" disabled={true}></Select>
                         )}
                       </Form.Item> */}
-                      {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
+                      {
                         <Form.Item
                           label={t('addCompany:email')}
                           name="email"
@@ -869,7 +868,7 @@ export const AddNewCompanyComponent = (props: any) => {
                         >
                           <Input size="large" />
                         </Form.Item>
-                      )}
+                      }
                       {/* {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                         <Form.Item
                           label={t('addCompany:ministerName')}
@@ -926,7 +925,7 @@ export const AddNewCompanyComponent = (props: any) => {
                   >
                     <Input addonBefore="https://" size="large" />
                   </Form.Item>
-                  {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
+                  {
                     <Form.Item
                       name="address"
                       label={t('addCompany:addresss')}
@@ -949,7 +948,7 @@ export const AddNewCompanyComponent = (props: any) => {
                     >
                       <Input.TextArea rows={3} maxLength={100} />
                     </Form.Item>
-                  )}
+                  }
                   <Form.Item
                     name="logo"
                     label={t('addCompany:companyLogoWithType')}
@@ -1354,7 +1353,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       </Select>
                     </Form.Item>
                   )}
-                  {companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
+                  {
                     <Form.Item
                       name="address"
                       label={t('addCompany:addresss')}
@@ -1377,7 +1376,7 @@ export const AddNewCompanyComponent = (props: any) => {
                     >
                       <Input.TextArea rows={3} maxLength={100} />
                     </Form.Item>
-                  )}
+                  }
                   {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
                     systemType !== CarbonSystemType.MRV && (
                       <div className="space-container" style={{ width: '100%' }}>

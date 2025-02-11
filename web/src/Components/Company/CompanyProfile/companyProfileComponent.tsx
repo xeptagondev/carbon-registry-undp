@@ -113,8 +113,12 @@ export const CompanyProfileComponent = (props: any) => {
   const onDeauthoriseOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(`organisation/suspend?id=${companyDetails.companyId}`, {
-        remarks: remarks,
+      // const response: any = await put(`organisation/suspend?id=${companyDetails.companyId}`, {
+      //   remarks: remarks,
+      // });
+      const response: any = await post('organisation/changeStatus', {
+        id: companyDetails.companyId,
+        state: '0',
       });
       setOpenDeauthorisationModal(false);
       message.open({
@@ -134,8 +138,12 @@ export const CompanyProfileComponent = (props: any) => {
   const onReactivateOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(`organisation/activate?id=${companyDetails.companyId}`, {
-        remarks: remarks,
+      // const response: any = await put(`organisation/activate?id=${companyDetails.companyId}`, {
+      //   remarks: remarks,
+      // });
+      const response: any = await post('organisation/changeStatus', {
+        id: companyDetails.companyId,
+        state: '1',
       });
       setOpenReactivateModal(false);
       message.open({
