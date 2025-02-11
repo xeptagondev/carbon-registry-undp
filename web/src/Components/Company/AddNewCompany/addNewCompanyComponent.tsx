@@ -1353,8 +1353,8 @@ export const AddNewCompanyComponent = (props: any) => {
                       </Select>
                     </Form.Item>
                   )}
-                  {
-                    <Form.Item
+
+                  {/* <Form.Item
                       name="address"
                       label={t('addCompany:addresss')}
                       initialValue={state?.record?.address}
@@ -1375,8 +1375,8 @@ export const AddNewCompanyComponent = (props: any) => {
                       ]}
                     >
                       <Input.TextArea rows={3} maxLength={100} />
-                    </Form.Item>
-                  }
+                    </Form.Item> */}
+
                   {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
                     systemType !== CarbonSystemType.MRV && (
                       <div className="space-container" style={{ width: '100%' }}>
