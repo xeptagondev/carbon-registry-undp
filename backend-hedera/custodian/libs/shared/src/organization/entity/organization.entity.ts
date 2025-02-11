@@ -4,6 +4,7 @@ import {
     Column,
     Entity,
     JoinColumn,
+    ManyToMany,
     ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
@@ -87,4 +88,11 @@ export class OrganizationEntity {
         nullable: true,
     })
     projects?: ProjectEntity[];
+
+    @ManyToMany(
+        () => ProjectEntity,
+        (projectEntity) => projectEntity.assignees,
+        { nullable: true },
+    )
+    assignedProjects?: ProjectEntity[];
 }
