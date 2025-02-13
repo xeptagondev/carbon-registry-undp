@@ -515,11 +515,10 @@ export class OrganizationService extends SuperService<
         }
     }
 
-    async update(
-        dto: Partial<OrganizationDto>,
-        user: JWTPayload,
-    ): Promise<any> {
-        const orgId = dto.id;
+    async update(dto: any, user: JWTPayload): Promise<any> {
+        const orgId = dto.companyId;
+
+        // console.log(dto.companyId, user.organizationId);
 
         // Check if the user is of the same organization
         if (orgId != user.organizationId) {
@@ -565,11 +564,11 @@ export class OrganizationService extends SuperService<
         dto: Partial<OrganizationDto>,
         requestData: JWTPayload,
     ): Promise<any> {
-        console.log(
-            'update status',
-            requestData.userRole,
-            requestData.organizationRole,
-        );
+        // console.log(
+        //     'update status',
+        //     requestData.userRole,
+        //     requestData.organizationRole,
+        // );
         if (
             !this.validateAccess(
                 [
