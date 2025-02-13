@@ -24,7 +24,7 @@ const SLCFProgrammeManagement = () => {
   ];
 
   const onNavigateToProgrammeView = (record: any) => {
-    navigate(`/programmeManagementSLCF/view/${record.programmeId}`, { state: { record } });
+    navigate(`/project/view/${record.id}`, { state: { record } });
   };
 
   const onClickAddProgramme = () => {

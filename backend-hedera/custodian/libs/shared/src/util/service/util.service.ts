@@ -136,12 +136,12 @@ export class UtilService {
     public async getBlocksByBlockName(
         blockName: string,
         policyId: string,
-    ): Promise<PolicyBlocksEntity[]> {
+    ): Promise<PolicyBlocksEntity> {
         try {
-            const blocks = await this.policyBlocksRepository.find({
+            const block = await this.policyBlocksRepository.findOne({
                 where: { policyId: policyId, blockName: blockName },
             });
-            return blocks;
+            return block;
         } catch (error) {
             throw new Error('Failed to execute getBlocksByBlockName');
         }

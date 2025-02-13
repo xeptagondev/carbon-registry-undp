@@ -19,6 +19,7 @@ import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
 import { DataExportCompanyDto } from '@app/shared/util/dto/data.export.company.dto';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
+import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
@@ -570,9 +571,13 @@ export class OrganizationService extends SuperService<
             editData.paymentId = dto.paymentId;
         }
 
-        return await this.organizationRepository.update(
-            { id: orgEnt.id },
-            editData,
+        await this.organizationRepository.update({ id: orgEnt.id }, editData);
+
+        return new DataResponseDto(
+            HttpStatus.OK,
+            await this.organizationRepository.findOne({
+                where: { id: orgEnt.id },
+            }),
         );
     }
 

@@ -1,3 +1,4 @@
+import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectDto } from '@app/shared/project/dto/project.dto';
@@ -9,7 +10,9 @@ import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
+import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -23,6 +26,9 @@ export class ProjectService {
         private readonly userRepository: Repository<UsersEntity>,
         @InjectRepository(OrganizationEntity)
         private readonly organizationRepository: Repository<OrganizationEntity>,
+        private readonly utilService: UtilService,
+        private readonly guardianService: GuardianService,
+        private readonly configService: ConfigService,
     ) {}
 
     async create(projectDto: ProjectDto, requestUser: JWTPayload) {
@@ -88,6 +94,15 @@ export class ProjectService {
             ) {
                 project.speciesPlanted = null;
             }
+            const block = await this.utilService.getBlocksByBlockName(
+                'project_creation_form',
+                this.configService.get('policy.id'),
+            );
+            await this.guardianService.createProject(
+                requestUser.email,
+                block.blockId,
+                { name: 'name', loi: 'loi', pin: 'pin' },
+            );
             return await this.projectRepository.save(project);
         } catch {
             throw new HttpException(
