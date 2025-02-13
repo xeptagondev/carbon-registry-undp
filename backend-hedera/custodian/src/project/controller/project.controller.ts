@@ -20,6 +20,22 @@ export class ProjectController {
     }
 
     @UseGuards(AuthGuardService)
+    @Post('inf/approve')
+    async approveINF(@Body('programmeId') programmeId: number, @Request() req) {
+        return this.projectService.approveINF(programmeId, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Post('inf/reject')
+    async rejectINF(
+        @Body('programmeId') programmeId: number,
+        @Body('remark') remark: string,
+        @Request() req,
+    ) {
+        return this.projectService.rejectINF(programmeId, remark, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
     @Post('getProjectById')
     async getProjectById(@Body('programmeId') programmeId: number) {
         return this.projectService.getProjectById(programmeId);

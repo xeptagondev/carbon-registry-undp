@@ -1,4 +1,9 @@
+import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
+import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
+import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+
+import { MailService } from '@app/shared/mail/service/mail.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectDto } from '@app/shared/project/dto/project.dto';
@@ -8,6 +13,7 @@ import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
+import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
@@ -21,6 +27,7 @@ import { Repository } from 'typeorm';
 export class ProjectService {
     constructor(
         private readonly helperService: HelperService,
+        private readonly auditService: AuditService,
         @InjectRepository(ProjectEntity)
         private readonly projectRepository: Repository<ProjectEntity>,
         @InjectRepository(UsersEntity)
@@ -30,6 +37,7 @@ export class ProjectService {
         private readonly utilService: UtilService,
         private readonly guardianService: GuardianService,
         private readonly configService: ConfigService,
+        private readonly mailService: MailService,
     ) {}
 
     async create(projectDto: ProjectDto, requestUser: JWTPayload) {
@@ -236,5 +244,146 @@ export class ProjectService {
             documents: [],
         };
         return updatedProject;
+    }
+
+    async approveINF(
+        id: number,
+        requestUser: JWTPayload,
+    ): Promise<DataResponseDto> {
+        if (
+            requestUser.organizationRole !=
+            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+        ) {
+            throw new HttpException(
+                'User not authorized',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+
+        const project = await this.projectRepository.findOne({
+            where: { id: id },
+            relations: { organization: true },
+        });
+
+        if (!project.organization) {
+            throw new HttpException(
+                'No associated organization found for company',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        if (
+            project?.projectProposalStage !== ProjectProposalStage.SUBMITTED_INF
+        ) {
+            throw new HttpException(
+                'project not in a suitable stage to proceed',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        const updateResponse = await this.projectRepository.update(
+            {
+                id: id,
+            },
+            { projectProposalStage: ProjectProposalStage.APPROVED_INF },
+        );
+
+        // const mailDTO: MailTemplateDTO = {
+        //     subject: ORG_CREATE_HEADER.replace('{{countryName}}', countryName),
+        //     template: MailTemplateEnum.ORG_CREATE,
+        //     to: userDto.company.email,
+        //     context: {
+        //         organizationName: userDto.company.name,
+        //         countryName: countryName,
+        //         organizationRole:
+        //             OrganizationTypeFormatEnum[userDto.company.companyRole],
+        //         home: this.configService.get('url'),
+        //     },
+        // };
+
+        // await this.mailService.sendMail(mailDTO);
+
+        if (updateResponse) {
+            const message: string = `Project with id : ${id} has approved by ${requestUser.userId}`;
+            const auditLog: AuditDTO = {
+                logLevel: LogLevel.INFO,
+                data: { message: message },
+                createdTime: Date.now(),
+            };
+            await this.auditService.save(auditLog);
+        }
+
+        return new DataResponseDto(HttpStatus.OK, updateResponse);
+    }
+
+    async rejectINF(
+        id: number,
+        remark: string,
+        requestUser: JWTPayload,
+    ): Promise<DataResponseDto> {
+        if (
+            requestUser.organizationRole !=
+            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+        ) {
+            throw new HttpException(
+                'User not authorized',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+
+        const project = await this.projectRepository.findOne({
+            where: { id: id },
+            relations: { organization: true },
+        });
+
+        if (!project.organization) {
+            throw new HttpException(
+                'No associated organization found for company',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        if (
+            project?.projectProposalStage !== ProjectProposalStage.SUBMITTED_INF
+        ) {
+            throw new HttpException(
+                'project not in a suitable stage to proceed',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        const updateResponse = await this.projectRepository.update(
+            {
+                id: id,
+            },
+            { projectProposalStage: ProjectProposalStage.REJECTED_INF },
+        );
+
+        // const mailDTO: MailTemplateDTO = {
+        //     subject: ORG_CREATE_HEADER.replace('{{countryName}}', countryName),
+        //     template: MailTemplateEnum.ORG_CREATE,
+        //     to: userDto.company.email,
+        //     context: {
+        //         organizationName: userDto.company.name,
+        //         countryName: countryName,
+        //         organizationRole:
+        //             OrganizationTypeFormatEnum[userDto.company.companyRole],
+        //         home: this.configService.get('url'),
+        //     },
+        // };
+
+        // await this.mailService.sendMail(mailDTO);
+
+        if (updateResponse) {
+            const message: string = `Project with id : ${id} has rejected by ${requestUser.userId}`;
+            const auditLog: AuditDTO = {
+                logLevel: LogLevel.INFO,
+                data: { message: message },
+                createdTime: Date.now(),
+            };
+            await this.auditService.save(auditLog);
+        }
+
+        return new DataResponseDto(HttpStatus.OK, updateResponse);
     }
 }
