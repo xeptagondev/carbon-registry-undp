@@ -567,7 +567,11 @@ export class OrganizationService extends SuperService<
             address: dto.address,
         };
 
-        if (user.organizationRole == OrganizationTypeEnum.PROJECT_PARTICIPANT) {
+        if (
+            user.organizationRole == OrganizationTypeEnum.PROJECT_PARTICIPANT ||
+            user.organizationRole ==
+                OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY
+        ) {
             editData.paymentId = dto.paymentId;
         }
 
