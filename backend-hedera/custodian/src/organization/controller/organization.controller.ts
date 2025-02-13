@@ -100,6 +100,9 @@ export class OrganizationController {
     @UseGuards(AuthGuardService)
     @Post('changeStatus')
     async updateStatus(@Body() dto: Partial<OrganizationDto>, @Request() req) {
+        if (!(req.user.userRole == RoleEnum.Root)) {
+            throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
+        }
         if (
             !(
                 dto.state === OrganizationStateEnum.ACTIVE ||
