@@ -568,6 +568,11 @@ export class OrganizationService extends SuperService<
         dto: Partial<OrganizationDto>,
         requestData: JWTPayload,
     ): Promise<any> {
+        console.log(
+            'update status',
+            requestData.userRole,
+            requestData.organizationRole,
+        );
         if (
             !this.validateAccess(
                 [
@@ -576,11 +581,11 @@ export class OrganizationService extends SuperService<
                         orgType:
                             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
                     },
-                    {
-                        role: RoleEnum.Admin,
-                        orgType:
-                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
-                    },
+                    // {
+                    //     role: RoleEnum.Admin,
+                    //     orgType:
+                    //         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                    // },
                 ],
                 {
                     role: requestData.userRole,
