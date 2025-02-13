@@ -25,6 +25,7 @@ import {
 import moment from 'moment';
 import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
+import { Role } from '../../../Definitions/Enums/role.enum';
 
 export const CompanyProfileComponent = (props: any) => {
   const {
@@ -396,7 +397,9 @@ export const CompanyProfileComponent = (props: any) => {
           <div className="body-title">{t('companyProfile:title')}</div>
         </div>
         <div className="flex-display">
-          {ability.can(Action.Delete, plainToClass(Company, companyDetails)) &&
+          {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+          userRole === Role.Root &&
+          ability.can(Action.Delete, plainToClass(Company, companyDetails)) &&
           !isLoading &&
           parseInt(companyDetails?.state) === 1 ? (
             <Button danger className="btn-danger" onClick={onDeauthoriseOrganisation}>
@@ -406,7 +409,9 @@ export const CompanyProfileComponent = (props: any) => {
             ''
           )}
 
-          {ability.can(Action.Delete, plainToClass(Company, companyDetails)) &&
+          {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+          userRole === Role.Root &&
+          ability.can(Action.Delete, plainToClass(Company, companyDetails)) &&
           !isLoading &&
           parseInt(companyDetails?.state) === 0 ? (
             <Button className="btn-activate" onClick={onReActivateOrganisation}>
