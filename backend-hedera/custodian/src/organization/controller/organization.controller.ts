@@ -85,7 +85,7 @@ export class OrganizationController {
     @UseGuards(AuthGuardService)
     @Post('update')
     async update(@Body() dto: OrganizationDto, @Request() req) {
-        console.log(req);
+        // console.log('role', req.user.userRole);
         if (
             !(
                 req.user.userRole == RoleEnum.Admin ||
