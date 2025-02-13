@@ -15,6 +15,7 @@ import { ProjectStatus } from '../enum/project.status.enum';
 import { CreditType } from '../enum/credit.type.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { ProjectProposalStage } from '../enum/project.proposal.stage.enum';
 
 @Entity()
 export class ProjectEntity {
@@ -159,4 +160,12 @@ export class ProjectEntity {
         },
     })
     assignees?: OrganizationEntity[];
+
+    @Column({
+        type: 'enum',
+        enum: ProjectProposalStage,
+        array: false,
+        nullable: true,
+    })
+    projectProposalStage: ProjectProposalStage;
 }

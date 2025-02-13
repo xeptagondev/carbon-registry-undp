@@ -454,7 +454,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const getProgrammeById = async () => {
     try {
-      const response: any = await post('national/programmeSl/getProjectById', {
+      const response: any = await post('project/getProjectById', {
         programmeId: id,
       });
 

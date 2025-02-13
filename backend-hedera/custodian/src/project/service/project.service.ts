@@ -4,6 +4,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { ProjectDto } from '@app/shared/project/dto/project.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { ProjectCategoryEnum } from '@app/shared/project/enum/project.category.enum';
+import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
@@ -76,6 +77,7 @@ export class ProjectService {
                 contactPerson: projectDto.contactName,
                 organization: organization,
                 createdBy: user,
+                projectProposalStage: ProjectProposalStage.SUBMITTED_INF,
             };
             if (
                 projectDto.projectCategory ===
@@ -202,5 +204,37 @@ export class ProjectService {
                   }
                 : null,
         };
+    }
+
+    async getProjectById(id: number) {
+        const project = await this.projectRepository.findOne({
+            where: { id: id },
+            relations: { organization: true },
+        });
+
+        // let documents = await this.documentRepo.find({
+        //     select: {
+        //         version: true,
+        //         createdTime: true,
+        //         type: true,
+        //     },
+        //     where: {
+        //         programmeId: programmeId,
+        //     },
+        // });
+
+        // const lastVersions = documents.reduce((acc, doc) => {
+        //     if (!acc[doc.type] || acc[doc.type].version < doc.version) {
+        //         acc[doc.type] = doc;
+        //     }
+        //     return acc;
+        // }, {});
+
+        const updatedProject = {
+            ...project,
+            company: project.organization,
+            documents: [],
+        };
+        return updatedProject;
     }
 }

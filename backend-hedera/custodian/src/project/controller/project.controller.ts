@@ -18,4 +18,10 @@ export class ProjectController {
     async create(@Body() projectDto: ProjectDto, @Request() req): Promise<any> {
         return this.projectService.create(projectDto, req?.user);
     }
+
+    @UseGuards(AuthGuardService)
+    @Post('getProjectById')
+    async getProjectById(@Body('programmeId') programmeId: number) {
+        return this.projectService.getProjectById(programmeId);
+    }
 }
