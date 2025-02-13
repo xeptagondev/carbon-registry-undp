@@ -520,6 +520,12 @@ export class OrganizationService extends SuperService<
         user: JWTPayload,
     ): Promise<any> {
         const orgId = dto.id;
+
+        // Check if the user is of the same organization
+        if (orgId != user.organizationId) {
+            throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
+        }
+
         const orgEnt = await this.organizationRepository.findOne({
             where: { id: orgId },
             relations: {
@@ -532,15 +538,6 @@ export class OrganizationService extends SuperService<
                 'Organisation not found',
                 HttpStatus.BAD_REQUEST,
             );
-        }
-
-        // Check if the user is of the same organization (orgType + orgName)
-        // id is not checked since it is a passed value from user request
-        if (
-            orgEnt.organizationType.name != user.organizationRole &&
-            orgEnt.name != user.organizationName
-        ) {
-            throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
         }
 
         const editData: Partial<OrganizationEntity> = {
