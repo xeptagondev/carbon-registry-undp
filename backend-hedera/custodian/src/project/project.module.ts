@@ -14,6 +14,7 @@ import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { GuardianModule } from '@app/shared/guardian/guardian.module';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
         UtilModule,
         MailModule,
         FileHandlerModule,
+        GuardianModule,
     ],
     controllers: [ProjectController],
     providers: [ProjectService],
