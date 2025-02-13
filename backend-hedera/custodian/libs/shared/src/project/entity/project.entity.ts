@@ -19,13 +19,10 @@ import { UsersEntity } from '@app/shared/users/entity/users.entity';
 @Entity()
 export class ProjectEntity {
     @PrimaryGeneratedColumn()
-    id: number;
+    id?: number;
 
     @Column()
     title: string;
-
-    @Column({ nullable: true })
-    serialNo?: string;
 
     @Column({
         type: 'enum',
@@ -48,9 +45,6 @@ export class ProjectEntity {
 
     @Column()
     city: string;
-
-    @Column()
-    street: string;
 
     @Column({
         type: 'jsonb',
