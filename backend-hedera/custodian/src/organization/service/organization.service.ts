@@ -1,5 +1,6 @@
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 import { SuperService } from '@app/core/service/super.service';
+import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { USER_ACTIVATION_HEADER } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
@@ -46,6 +47,7 @@ export class OrganizationService extends SuperService<
         private readonly usersRepository: Repository<UsersEntity>,
         private dataExportService: DataExportService,
         private readonly dataSource: DataSource,
+        private readonly fileHandler: FileHandlerInterface,
     ) {
         super(organizationRepository);
     }
@@ -539,6 +541,20 @@ export class OrganizationService extends SuperService<
             );
         }
 
+        if (dto.logo && this.helperService.isBase64(dto.logo)) {
+            const response: any = await this.fileHandler.uploadFile(
+                `profile_images/${orgEnt.id}_${new Date().getTime()}.png`,
+                dto.logo,
+            );
+            if (response) {
+                dto.logo = response;
+            } else {
+                throw new HttpException(
+                    'Error while uploading company logo',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+        }
         const editData: Partial<OrganizationEntity> = {
             name: dto.name,
             email: dto.email,
