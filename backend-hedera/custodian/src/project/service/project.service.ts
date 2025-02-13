@@ -1,4 +1,5 @@
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import { ProjectDto } from '@app/shared/project/dto/project.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
@@ -16,6 +17,12 @@ export class ProjectService {
         @InjectRepository(ProjectEntity)
         private readonly projectRepository: Repository<ProjectEntity>,
     ) {}
+
+    create(projectDto: ProjectDto, user: any): any {
+        console.log(
+            `Request received to create project with details ${projectDto} from user ${user}`,
+        );
+    }
 
     public async query(
         query: QueryDto,
