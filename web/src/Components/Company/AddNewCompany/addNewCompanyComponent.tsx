@@ -41,6 +41,7 @@ import { CarbonSystemType } from '../../../Definitions/Enums/carbonSystemType.en
 import { GovDepartment } from '../../../Definitions/Enums/govDep.enum';
 import { Ministry } from '../../../Definitions/Enums/ministry.enum';
 import { SectoralScope } from '../../../Definitions/Enums/sectoralScope.enum';
+import { formatBytes } from '../../../Utils/utilityHelper';
 
 const ministries: any = [
   'Agriculture',
@@ -1050,7 +1051,11 @@ export const AddNewCompanyComponent = (props: any) => {
                                 throw new Error(`${t('unsupportedFormat')}`);
                               } else if (file[0]?.size > maximumImageSize) {
                                 // default size format of files would be in bytes -> 1MB = 1000000bytes
-                                throw new Error(`${t('maxUploadSize')}`);
+                                throw new Error(
+                                  `${t('addCompany:maxUploadSize', {
+                                    maxUploadSize: formatBytes(maximumImageSize),
+                                  })}`
+                                );
                               }
                             }
                           }
