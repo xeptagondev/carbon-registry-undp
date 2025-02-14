@@ -12,7 +12,7 @@ const RegisterNewCompany = () => {
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
-    : 5000000;
+    : 1048576;
 
   const onNavigateToHome = () => {
     navigate('/', { replace: true });

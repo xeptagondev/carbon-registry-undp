@@ -14,7 +14,7 @@
   "companyLogo": "Organisation Logo",
   "companyLogoWithType": "Organisation Logo (File Type : JPEG, PNG)",
   "unsupportedFormat": "Unsupported file format!",
-  "maxUploadSize": "Maximum upload file size is 5MB!",
+  "maxUploadSize": "Maximum upload file size is {{maxUploadSize}}!",
   "role": "Role",
   "Certifier": "Certifier (VVB)",
   "ProgrammeDeveloper": "Project Participant",
