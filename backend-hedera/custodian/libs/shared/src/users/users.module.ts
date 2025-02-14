@@ -14,6 +14,7 @@ import { MailModule } from '../mail/mail.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { TokenModule } from '../token/token.module';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
+import { UserInitializationService } from './service/user.initialization.service';
 
 @Module({
     imports: [
@@ -33,7 +34,7 @@ import { FileHandlerModule } from '../file-handler/file-handler.module';
         TokenModule,
         FileHandlerModule,
     ],
-    exports: [UserService],
-    providers: [UserService],
+    exports: [UserService, UserInitializationService],
+    providers: [UserService, UserInitializationService],
 })
 export class UsersModule {}

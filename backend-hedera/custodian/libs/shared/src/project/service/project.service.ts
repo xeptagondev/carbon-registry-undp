@@ -165,7 +165,7 @@ export class ProjectService {
 
         for (const admin of admins) {
             const mailDTO: MailTemplateDTO = {
-                subject: `Project Notification - ${countryName}`,
+                subject: INF_CREATE_HEADER,
                 template: MailTemplateEnum.INF_CREATE,
                 to: admin.email,
                 context: {
@@ -419,6 +419,7 @@ export class ProjectService {
 
     async rejectINF(
         id: number,
+        remark: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
         this.validateUserAuthorization(requestUser);
