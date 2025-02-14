@@ -2,7 +2,11 @@ import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
 import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { INF_CREATE_HEADER } from '@app/shared/mail/constant/mail-header.constant';
+import {
+    INF_APPROVE_HEADER,
+    INF_CREATE_HEADER,
+    INF_REJECT_HEADER,
+} from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 
@@ -13,7 +17,6 @@ import { ProjectDto } from '@app/shared/project/dto/project.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { ProjectCategoryEnum } from '@app/shared/project/enum/project.category.enum';
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
-import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UserService } from '@app/shared/users/service/user.service';
@@ -44,33 +47,11 @@ export class ProjectService {
         private readonly mailService: MailService,
     ) {}
 
-    async getDNAAdmins() {
-        const dnaAdmins: UsersEntity[] = await this.userRepository.find({
-            where: {
-                guardianRole: {
-                    organizationType: {
-                        name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
-                    },
-                    role: {
-                        name: RoleEnum.Admin,
-                    },
-                },
-            },
-            relations: [
-                'guardianRole',
-                'guardianRole.organizationType',
-                'guardianRole.role',
-            ],
-        });
-        return dnaAdmins;
-    }
-
     async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
         console.log(
             `Request received to create project with details ${projectDto} from user ${requestUser}`,
         );
 
-        // **Authorization Check**
         this.validateProjectParticipant(requestUser);
 
         try {
@@ -88,7 +69,9 @@ export class ProjectService {
 
             const projectEntity = await this.projectRepository.save(project);
             await this.notifyAdmins(projectEntity, requestUser);
-            await this.logAuditEntry(projectEntity, requestUser);
+            await this.logProjectStage(
+                `Project with title: ${project.title} has been created by ${requestUser.userName}`,
+            );
         } catch (error) {
             throw new HttpException(
                 'An error occurred while creating the project',
@@ -194,21 +177,6 @@ export class ProjectService {
 
             await this.mailService.sendMail(mailDTO);
         }
-    }
-
-    private async logAuditEntry(
-        project: ProjectEntity,
-        requestUser: JWTPayload,
-    ) {
-        const message = `Project with title: ${project.title} has been created by ${requestUser.userName}`;
-
-        const auditLog: AuditDTO = {
-            logLevel: LogLevel.INFO,
-            data: { message },
-            createdTime: Date.now(),
-        };
-
-        await this.auditService.save(auditLog);
     }
 
     public async query(
@@ -335,12 +303,9 @@ export class ProjectService {
         return updatedProject;
     }
 
-    async approveINF(
-        id: number,
-        requestUser: JWTPayload,
-    ): Promise<DataResponseDto> {
+    private validateUserAuthorization(requestUser: JWTPayload): void {
         if (
-            requestUser.organizationRole !=
+            requestUser.organizationRole !==
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
         ) {
             throw new HttpException(
@@ -348,12 +313,22 @@ export class ProjectService {
                 HttpStatus.UNAUTHORIZED,
             );
         }
+    }
 
+    private async getProjectWithRelations(id: number): Promise<ProjectEntity> {
         const project = await this.projectRepository.findOne({
-            where: { id: id },
-            relations: { organization: true },
+            where: { id },
+            relations: { organization: true, createdBy: true },
         });
 
+        if (!project) {
+            throw new HttpException('Project not found', HttpStatus.NOT_FOUND);
+        }
+
+        return project;
+    }
+
+    private validateProject(project: ProjectEntity): void {
         if (!project.organization) {
             throw new HttpException(
                 'No associated organization found for company',
@@ -362,118 +337,111 @@ export class ProjectService {
         }
 
         if (
-            project?.projectProposalStage !== ProjectProposalStage.SUBMITTED_INF
+            project.projectProposalStage !== ProjectProposalStage.SUBMITTED_INF
         ) {
             throw new HttpException(
-                'project not in a suitable stage to proceed',
+                'Project not in a suitable stage to proceed',
                 HttpStatus.BAD_REQUEST,
             );
         }
+    }
 
-        const updateResponse = await this.projectRepository.update(
-            {
-                id: id,
+    private async updateProjectStage(
+        id: number,
+        stage: ProjectProposalStage,
+    ): Promise<any> {
+        return this.projectRepository.update(
+            { id },
+            { projectProposalStage: stage },
+        );
+    }
+
+    private async notifyProjectStageChange(
+        project: ProjectEntity,
+        requestUser: JWTPayload,
+        template: MailTemplateEnum,
+        header: string,
+    ): Promise<void> {
+        const countryName = this.configService.get('country');
+        const mailDTO: MailTemplateDTO = {
+            subject: header,
+            template: template,
+            to: project?.createdBy?.email,
+            context: {
+                organizationName: requestUser.organizationName,
+                countryName: countryName,
+                projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
             },
-            { projectProposalStage: ProjectProposalStage.APPROVED_INF },
+        };
+
+        await this.mailService.sendMail(mailDTO);
+    }
+
+    private async logProjectStage(message: string): Promise<void> {
+        const auditLog: AuditDTO = {
+            logLevel: LogLevel.INFO,
+            data: { message },
+            createdTime: Date.now(),
+        };
+
+        await this.auditService.save(auditLog);
+    }
+
+    async approveINF(
+        id: number,
+        requestUser: JWTPayload,
+    ): Promise<DataResponseDto> {
+        this.validateUserAuthorization(requestUser);
+
+        const project = await this.getProjectWithRelations(id);
+
+        this.validateProject(project);
+
+        const updateResponse = await this.updateProjectStage(
+            id,
+            ProjectProposalStage.APPROVED_INF,
         );
 
-        // if (updateResponse) {
-        //     const countryName = this.configService.get('country');
-        //     const mailDTO: MailTemplateDTO = {
-        //         subject: INF_CREATE_HEADER.replace(
-        //             '{{countryName}}',
-        //             countryName,
-        //         ),
-        //         template: MailTemplateEnum.INF_CREATE,
-        //         to: userDto.company.email,
-        //         context: {
-        //             organizationName: userDto.company.name,
-        //             countryName: countryName,
-        //             organizationRole:
-        //                 OrganizationTypeFormatEnum[userDto.company.companyRole],
-        //             home: this.configService.get('url'),
-        //         },
-        //     };
-
-        //     await this.mailService.sendMail(mailDTO);
-        //     const message: string = `Project with id : ${id} has approved by ${requestUser.userId}`;
-        //     const auditLog: AuditDTO = {
-        //         logLevel: LogLevel.INFO,
-        //         data: { message: message },
-        //         createdTime: Date.now(),
-        //     };
-        //     await this.auditService.save(auditLog);
-        // }
+        if (updateResponse) {
+            await this.notifyProjectStageChange(
+                project,
+                requestUser,
+                MailTemplateEnum.INF_APPROVE,
+                INF_APPROVE_HEADER,
+            );
+            await this.logProjectStage(
+                `Project with id: ${id} has been approved by ${requestUser.userId}`,
+            );
+        }
 
         return new DataResponseDto(HttpStatus.OK, updateResponse);
     }
 
     async rejectINF(
         id: number,
-        remark: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
-        if (
-            requestUser.organizationRole !=
-            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
-        ) {
-            throw new HttpException(
-                'User not authorized',
-                HttpStatus.UNAUTHORIZED,
-            );
-        }
+        this.validateUserAuthorization(requestUser);
 
-        const project = await this.projectRepository.findOne({
-            where: { id: id },
-            relations: { organization: true },
-        });
+        const project = await this.getProjectWithRelations(id);
 
-        if (!project.organization) {
-            throw new HttpException(
-                'No associated organization found for company',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
+        this.validateProject(project);
 
-        if (
-            project?.projectProposalStage !== ProjectProposalStage.SUBMITTED_INF
-        ) {
-            throw new HttpException(
-                'project not in a suitable stage to proceed',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-
-        const updateResponse = await this.projectRepository.update(
-            {
-                id: id,
-            },
-            { projectProposalStage: ProjectProposalStage.REJECTED_INF },
+        const updateResponse = await this.updateProjectStage(
+            id,
+            ProjectProposalStage.REJECTED_INF,
         );
 
-        // const mailDTO: MailTemplateDTO = {
-        //     subject: ORG_CREATE_HEADER.replace('{{countryName}}', countryName),
-        //     template: MailTemplateEnum.ORG_CREATE,
-        //     to: userDto.company.email,
-        //     context: {
-        //         organizationName: userDto.company.name,
-        //         countryName: countryName,
-        //         organizationRole:
-        //             OrganizationTypeFormatEnum[userDto.company.companyRole],
-        //         home: this.configService.get('url'),
-        //     },
-        // };
-
-        // await this.mailService.sendMail(mailDTO);
-
         if (updateResponse) {
-            const message: string = `Project with id : ${id} has rejected by ${requestUser.userId}`;
-            const auditLog: AuditDTO = {
-                logLevel: LogLevel.INFO,
-                data: { message: message },
-                createdTime: Date.now(),
-            };
-            await this.auditService.save(auditLog);
+            await this.notifyProjectStageChange(
+                project,
+                requestUser,
+                MailTemplateEnum.INF_REJECT,
+                INF_REJECT_HEADER,
+            );
+            await this.logProjectStage(
+                `Project with id: ${id} has been rejected by ${requestUser.userId}`,
+            );
         }
 
         return new DataResponseDto(HttpStatus.OK, updateResponse);

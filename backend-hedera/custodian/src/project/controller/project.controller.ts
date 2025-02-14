@@ -16,7 +16,7 @@ export class ProjectController {
     @UseGuards(AuthGuardService)
     @Post('create')
     async create(@Body() projectDto: ProjectDto, @Request() req): Promise<any> {
-        return this.projectService.create(projectDto, req?.user);
+        return this.projectService.createProject(projectDto, req?.user);
     }
 
     @UseGuards(AuthGuardService)
