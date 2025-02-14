@@ -39,7 +39,7 @@ import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
-import { OrganizationService } from 'src/organization/service/organization.service';
+import { OrganizationService } from '@app/shared/organization/service/organization.service';
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 import { HTTPResponseDto } from '@app/shared/util/dto/http.response.dto';
@@ -1269,5 +1269,25 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
+    }
+
+    async getDNAAdmins(): Promise<UsersEntity[]> {
+        return this.usersRepository.find({
+            where: {
+                guardianRole: {
+                    organizationType: {
+                        name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                    },
+                    role: {
+                        name: RoleEnum.Admin,
+                    },
+                },
+            },
+            relations: [
+                'guardianRole',
+                'guardianRole.organizationType',
+                'guardianRole.role',
+            ],
+        });
     }
 }

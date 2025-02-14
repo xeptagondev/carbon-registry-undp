@@ -2,6 +2,9 @@ import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
 import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+import { INF_CREATE_HEADER } from '@app/shared/mail/constant/mail-header.constant';
+import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
@@ -10,14 +13,15 @@ import { ProjectDto } from '@app/shared/project/dto/project.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { ProjectCategoryEnum } from '@app/shared/project/enum/project.category.enum';
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
+import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { UserService } from '@app/shared/users/service/user.service';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
-import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -34,92 +38,177 @@ export class ProjectService {
         private readonly userRepository: Repository<UsersEntity>,
         @InjectRepository(OrganizationEntity)
         private readonly organizationRepository: Repository<OrganizationEntity>,
-        private readonly utilService: UtilService,
+        private readonly userService: UserService,
         private readonly guardianService: GuardianService,
         private readonly configService: ConfigService,
         private readonly mailService: MailService,
     ) {}
 
-    async create(projectDto: ProjectDto, requestUser: JWTPayload) {
+    async getDNAAdmins() {
+        const dnaAdmins: UsersEntity[] = await this.userRepository.find({
+            where: {
+                guardianRole: {
+                    organizationType: {
+                        name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                    },
+                    role: {
+                        name: RoleEnum.Admin,
+                    },
+                },
+            },
+            relations: [
+                'guardianRole',
+                'guardianRole.organizationType',
+                'guardianRole.role',
+            ],
+        });
+        return dnaAdmins;
+    }
+
+    async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
         console.log(
             `Request received to create project with details ${projectDto} from user ${requestUser}`,
         );
-        if (
-            requestUser.organizationRole !=
-            OrganizationTypeEnum.PROJECT_PARTICIPANT
-        ) {
-            throw new HttpException(
-                'Unautherized user request',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-        try {
-            const user: UsersEntity = await this.userRepository.findOne({
-                where: { id: requestUser.userId },
-            });
-            const organization: OrganizationEntity =
-                await this.organizationRepository.findOne({
-                    where: { id: requestUser.organizationId },
-                });
-            const project: ProjectEntity = {
-                title: projectDto.title,
-                projectCategory: projectDto.projectCategory,
-                postalCode: projectDto.postalCode,
-                province: projectDto.province,
-                district: projectDto.district,
-                city: projectDto.city,
-                geographicalLocationCoordinates:
-                    projectDto.geographicalLocationCoordinates,
-                projectGeography: projectDto.projectGeography,
-                startDate: projectDto.startDate,
-                projectDescription: projectDto.projectDescription,
-                projectStatus: projectDto.projectStatus,
-                purposeOfCreditDevelopment:
-                    projectDto.purposeOfCreditDevelopment,
-                projectParticipant: requestUser.organizationName,
-                address: projectDto.contactAddress,
-                telephone: projectDto.contactPhoneNo,
-                fax: projectDto.contactFax,
-                email: projectDto.contactEmail,
-                website: projectDto.contactWebsite,
-                contactPerson: projectDto.contactName,
-                organization: organization,
-                createdBy: user,
-                projectProposalStage: ProjectProposalStage.SUBMITTED_INF,
-            };
-            if (
-                projectDto.projectCategory ===
-                    ProjectCategoryEnum.AFFORESTATION ||
-                projectDto.projectCategory ===
-                    ProjectCategoryEnum.REFORESTATION ||
-                projectDto.projectCategory === ProjectCategoryEnum.OTHER
-            ) {
-                project.proposedProjectCapacity = null;
-            }
 
-            if (
-                projectDto.projectCategory ===
-                    ProjectCategoryEnum.RENEWABLE_ENERGY ||
-                projectDto.projectCategory === ProjectCategoryEnum.OTHER
-            ) {
-                project.speciesPlanted = null;
-            }
-            const block = await this.utilService.getBlocksByBlockName(
-                'project_creation_form',
-                this.configService.get('policy.id'),
+        // **Authorization Check**
+        this.validateProjectParticipant(requestUser);
+
+        try {
+            const user = await this.getUserById(requestUser.userId);
+            const organization = await this.getOrganizationById(
+                requestUser.organizationId,
             );
-            await this.guardianService.createProject(
-                requestUser.email,
-                block.blockId,
-                { name: 'name', loi: 'loi', pin: 'pin' },
+
+            const project = this.buildProjectEntity(
+                projectDto,
+                requestUser,
+                user,
+                organization,
             );
-            return await this.projectRepository.save(project);
-        } catch {
+
+            const projectEntity = await this.projectRepository.save(project);
+            await this.notifyAdmins(projectEntity, requestUser);
+            await this.logAuditEntry(projectEntity, requestUser);
+        } catch (error) {
             throw new HttpException(
                 'An error occurred while creating the project',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
+    }
+
+    private validateProjectParticipant(requestUser: JWTPayload) {
+        if (
+            requestUser.organizationRole !==
+            OrganizationTypeEnum.PROJECT_PARTICIPANT
+        ) {
+            throw new HttpException(
+                'Unauthorized user request',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+    }
+
+    private async getUserById(userId: number): Promise<UsersEntity> {
+        return this.userRepository.findOne({ where: { id: userId } });
+    }
+
+    private async getOrganizationById(
+        orgId: number,
+    ): Promise<OrganizationEntity> {
+        return this.organizationRepository.findOne({ where: { id: orgId } });
+    }
+
+    private buildProjectEntity(
+        projectDto: ProjectDto,
+        requestUser: JWTPayload,
+        user: UsersEntity,
+        organization: OrganizationEntity,
+    ): ProjectEntity {
+        const project = new ProjectEntity();
+        project.title = projectDto.title;
+        project.projectCategory = projectDto.projectCategory;
+        project.postalCode = projectDto.postalCode;
+        project.province = projectDto.province;
+        project.district = projectDto.district;
+        project.city = projectDto.city;
+        project.geographicalLocationCoordinates =
+            projectDto.geographicalLocationCoordinates;
+        project.projectGeography = projectDto.projectGeography;
+        project.startDate = projectDto.startDate;
+        project.projectDescription = projectDto.projectDescription;
+        project.projectStatus = projectDto.projectStatus;
+        project.purposeOfCreditDevelopment =
+            projectDto.purposeOfCreditDevelopment;
+        project.projectParticipant = requestUser.organizationName;
+        project.address = projectDto.contactAddress;
+        project.telephone = projectDto.contactPhoneNo;
+        project.fax = projectDto.contactFax;
+        project.email = projectDto.contactEmail;
+        project.website = projectDto.contactWebsite;
+        project.contactPerson = projectDto.contactName;
+        project.organization = organization;
+        project.createdBy = user;
+        project.projectProposalStage = ProjectProposalStage.SUBMITTED_INF;
+
+        if (
+            [
+                ProjectCategoryEnum.AFFORESTATION,
+                ProjectCategoryEnum.REFORESTATION,
+                ProjectCategoryEnum.OTHER,
+            ].includes(projectDto.projectCategory)
+        ) {
+            project.proposedProjectCapacity = null;
+        }
+
+        if (
+            [
+                ProjectCategoryEnum.RENEWABLE_ENERGY,
+                ProjectCategoryEnum.OTHER,
+            ].includes(projectDto.projectCategory)
+        ) {
+            project.speciesPlanted = null;
+        }
+
+        return project;
+    }
+
+    private async notifyAdmins(
+        project: ProjectEntity,
+        requestUser: JWTPayload,
+    ) {
+        const admins = await this.userService.getDNAAdmins();
+        const countryName = this.configService.get('country');
+
+        for (const admin of admins) {
+            const mailDTO: MailTemplateDTO = {
+                subject: `Project Notification - ${countryName}`,
+                template: MailTemplateEnum.INF_CREATE,
+                to: admin.email,
+                context: {
+                    organizationName: requestUser.organizationName,
+                    countryName: countryName,
+                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
+                },
+            };
+
+            await this.mailService.sendMail(mailDTO);
+        }
+    }
+
+    private async logAuditEntry(
+        project: ProjectEntity,
+        requestUser: JWTPayload,
+    ) {
+        const message = `Project with title: ${project.title} has been created by ${requestUser.userName}`;
+
+        const auditLog: AuditDTO = {
+            logLevel: LogLevel.INFO,
+            data: { message },
+            createdTime: Date.now(),
+        };
+
+        await this.auditService.save(auditLog);
     }
 
     public async query(
@@ -288,30 +377,33 @@ export class ProjectService {
             { projectProposalStage: ProjectProposalStage.APPROVED_INF },
         );
 
-        // const mailDTO: MailTemplateDTO = {
-        //     subject: ORG_CREATE_HEADER.replace('{{countryName}}', countryName),
-        //     template: MailTemplateEnum.ORG_CREATE,
-        //     to: userDto.company.email,
-        //     context: {
-        //         organizationName: userDto.company.name,
-        //         countryName: countryName,
-        //         organizationRole:
-        //             OrganizationTypeFormatEnum[userDto.company.companyRole],
-        //         home: this.configService.get('url'),
-        //     },
-        // };
+        // if (updateResponse) {
+        //     const countryName = this.configService.get('country');
+        //     const mailDTO: MailTemplateDTO = {
+        //         subject: INF_CREATE_HEADER.replace(
+        //             '{{countryName}}',
+        //             countryName,
+        //         ),
+        //         template: MailTemplateEnum.INF_CREATE,
+        //         to: userDto.company.email,
+        //         context: {
+        //             organizationName: userDto.company.name,
+        //             countryName: countryName,
+        //             organizationRole:
+        //                 OrganizationTypeFormatEnum[userDto.company.companyRole],
+        //             home: this.configService.get('url'),
+        //         },
+        //     };
 
-        // await this.mailService.sendMail(mailDTO);
-
-        if (updateResponse) {
-            const message: string = `Project with id : ${id} has approved by ${requestUser.userId}`;
-            const auditLog: AuditDTO = {
-                logLevel: LogLevel.INFO,
-                data: { message: message },
-                createdTime: Date.now(),
-            };
-            await this.auditService.save(auditLog);
-        }
+        //     await this.mailService.sendMail(mailDTO);
+        //     const message: string = `Project with id : ${id} has approved by ${requestUser.userId}`;
+        //     const auditLog: AuditDTO = {
+        //         logLevel: LogLevel.INFO,
+        //         data: { message: message },
+        //         createdTime: Date.now(),
+        //     };
+        //     await this.auditService.save(auditLog);
+        // }
 
         return new DataResponseDto(HttpStatus.OK, updateResponse);
     }
