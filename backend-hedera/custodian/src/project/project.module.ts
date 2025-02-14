@@ -12,11 +12,16 @@ import { ActivityDocEntity } from '@app/shared/activity-doc/entity/activity-doc.
 import { DocumentTypeEntity } from '@app/shared/document-type/entity/document-type.entity';
 import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 import { JwtModule } from '@nestjs/jwt';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { GuardianModule } from '@app/shared/guardian/guardian.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             ProjectEntity,
+            UsersEntity,
+            OrganizationEntity,
             ActivityEntity,
             ActivityDocEntity,
             DocumentTypeEntity,
@@ -27,6 +32,7 @@ import { JwtModule } from '@nestjs/jwt';
         UtilModule,
         MailModule,
         FileHandlerModule,
+        GuardianModule,
     ],
     controllers: [ProjectController],
     providers: [ProjectService],

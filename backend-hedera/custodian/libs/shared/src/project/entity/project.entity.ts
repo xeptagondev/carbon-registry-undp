@@ -15,17 +15,15 @@ import { ProjectStatus } from '../enum/project.status.enum';
 import { CreditType } from '../enum/credit.type.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { ProjectProposalStage } from '../enum/project.proposal.stage.enum';
 
 @Entity()
 export class ProjectEntity {
     @PrimaryGeneratedColumn()
-    id: number;
+    id?: number;
 
     @Column()
     title: string;
-
-    @Column({ nullable: true })
-    serialNo?: string;
 
     @Column({
         type: 'enum',
@@ -48,9 +46,6 @@ export class ProjectEntity {
 
     @Column()
     city: string;
-
-    @Column()
-    street: string;
 
     @Column({
         type: 'jsonb',
@@ -165,4 +160,12 @@ export class ProjectEntity {
         },
     })
     assignees?: OrganizationEntity[];
+
+    @Column({
+        type: 'enum',
+        enum: ProjectProposalStage,
+        array: false,
+        nullable: true,
+    })
+    projectProposalStage: ProjectProposalStage;
 }

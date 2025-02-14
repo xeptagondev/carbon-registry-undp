@@ -10,6 +10,7 @@ import { UtilModule } from '@app/shared/util/util.module';
 import { GuardianModule } from '@app/shared/guardian/guardian.module';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { MailModule } from '@app/shared/mail/mail.module';
+import { FileHandlerModule } from '@app/shared/file-handler/file-handler.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { MailModule } from '@app/shared/mail/mail.module';
         MailModule,
         UtilModule,
         GuardianModule,
+        FileHandlerModule,
     ],
     providers: [OrganizationService],
     exports: [OrganizationService],

@@ -29,8 +29,8 @@ export abstract class SuperService<
     ): Promise<boolean> {
         return requiredList.some((required) => {
             return (
-                required.role == requestData.role &&
-                required.orgType == requestData.orgType
+                required.role === requestData.role &&
+                required.orgType === requestData.orgType
             );
         });
     }

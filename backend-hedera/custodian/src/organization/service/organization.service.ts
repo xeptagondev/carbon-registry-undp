@@ -1,5 +1,6 @@
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 import { SuperService } from '@app/core/service/super.service';
+import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { USER_ACTIVATION_HEADER } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
@@ -18,6 +19,7 @@ import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
 import { DataExportCompanyDto } from '@app/shared/util/dto/data.export.company.dto';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
+import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
@@ -46,6 +48,7 @@ export class OrganizationService extends SuperService<
         private readonly usersRepository: Repository<UsersEntity>,
         private dataExportService: DataExportService,
         private readonly dataSource: DataSource,
+        private readonly fileHandler: FileHandlerInterface,
     ) {
         super(organizationRepository);
     }
@@ -515,11 +518,16 @@ export class OrganizationService extends SuperService<
         }
     }
 
-    async update(
-        dto: Partial<OrganizationDto>,
-        user: JWTPayload,
-    ): Promise<any> {
-        const orgId = dto.id;
+    async update(dto: any, user: JWTPayload): Promise<any> {
+        const orgId = dto.companyId;
+
+        // console.log(dto.companyId, user.organizationId);
+
+        // Check if the user is of the same organization
+        if (orgId != user.organizationId) {
+            throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
+        }
+
         const orgEnt = await this.organizationRepository.findOne({
             where: { id: orgId },
             relations: {
@@ -534,15 +542,20 @@ export class OrganizationService extends SuperService<
             );
         }
 
-        // Check if the user is of the same organization (orgType + orgName)
-        // id is not checked since it is a passed value from user request
-        if (
-            orgEnt.organizationType.name != user.organizationRole &&
-            orgEnt.name != user.organizationName
-        ) {
-            throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
+        if (dto.logo && this.helperService.isBase64(dto.logo)) {
+            const response: any = await this.fileHandler.uploadFile(
+                `profile_images/${orgEnt.id}_${new Date().getTime()}.png`,
+                dto.logo,
+            );
+            if (response) {
+                dto.logo = response;
+            } else {
+                throw new HttpException(
+                    'Error while uploading company logo',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
         }
-
         const editData: Partial<OrganizationEntity> = {
             name: dto.name,
             email: dto.email,
@@ -554,13 +567,21 @@ export class OrganizationService extends SuperService<
             address: dto.address,
         };
 
-        if (user.organizationRole == OrganizationTypeEnum.PROJECT_PARTICIPANT) {
+        if (
+            user.organizationRole == OrganizationTypeEnum.PROJECT_PARTICIPANT ||
+            user.organizationRole ==
+                OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY
+        ) {
             editData.paymentId = dto.paymentId;
         }
 
-        return await this.organizationRepository.update(
-            { id: orgEnt.id },
-            editData,
+        await this.organizationRepository.update({ id: orgEnt.id }, editData);
+
+        return new DataResponseDto(
+            HttpStatus.OK,
+            await this.organizationRepository.findOne({
+                where: { id: orgEnt.id },
+            }),
         );
     }
 
@@ -568,6 +589,11 @@ export class OrganizationService extends SuperService<
         dto: Partial<OrganizationDto>,
         requestData: JWTPayload,
     ): Promise<any> {
+        // console.log(
+        //     'update status',
+        //     requestData.userRole,
+        //     requestData.organizationRole,
+        // );
         if (
             !this.validateAccess(
                 [
@@ -576,11 +602,11 @@ export class OrganizationService extends SuperService<
                         orgType:
                             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
                     },
-                    {
-                        role: RoleEnum.Admin,
-                        orgType:
-                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
-                    },
+                    // {
+                    //     role: RoleEnum.Admin,
+                    //     orgType:
+                    //         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                    // },
                 ],
                 {
                     role: requestData.userRole,
