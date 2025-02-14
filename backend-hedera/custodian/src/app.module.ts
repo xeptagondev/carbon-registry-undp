@@ -9,13 +9,14 @@ import configuration from '@app/core/config/configuration';
 import { AuthGuardModule } from '@app/core/auth-guard/auth-guard.module';
 import { DataSource } from 'typeorm';
 import { SharedModule } from '@app/shared';
-import { OrganizationModule } from './organization/organization.module';
-import { UserModule } from './user/user.module';
 import { MailModule } from '@app/shared/mail/mail.module';
-import { UserService } from './user/service/user.service';
-import { ProjectModule } from './project/project.module';
+// import { UserService } from '../libs/shared/src/users/service/user.service';
 import { LocationAppModule } from './location/location.module';
 import { DocumentModule } from './document/document.module';
+import { OrganizationAppModule } from './organization/organization.module';
+import { ProjectAppModule } from './project/project.module';
+import { UserAppModule } from './user/user.module';
+
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -31,11 +32,11 @@ import { DocumentModule } from './document/document.module';
         }),
         CoreModule,
         SharedModule,
-        OrganizationModule,
+        OrganizationAppModule,
         AuthGuardModule,
         MailModule,
-        UserModule,
-        ProjectModule,
+        UserAppModule,
+        ProjectAppModule,
         LocationAppModule,
         DocumentModule,
     ],
@@ -45,10 +46,10 @@ import { DocumentModule } from './document/document.module';
 export class AppModule {
     constructor(
         private readonly connection: DataSource,
-        private readonly userService: UserService,
+        // private readonly userService: UserService,
     ) {
         this.connection.runMigrations();
 
-        this.userService.init();
+        // this.userService.init();
     }
 }

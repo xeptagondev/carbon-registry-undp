@@ -12,3 +12,9 @@ export const FORGOT_PASSWORD_HEADER: string =
 
 export const RESET_PASSWORD_HEADER: string =
     'Your {{countryName}} Carbon Registry Account Password is Changed';
+export const INF_CREATE_HEADER: string =
+    '{{countryName}} Carbon Registry: Initial Notification has been Submitted!';
+export const INF_APPROVE_HEADER: string =
+    'Initial Notification has been Approved';
+export const INF_REJECT_HEADER: string =
+    'Initial Notification has been Rejected';

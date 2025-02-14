@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './controller/user.controller';
-import { UserService } from './service/user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { AuditModule } from '@app/shared/audit/audit.module';
@@ -14,9 +13,10 @@ import { GuardianModule } from '@app/shared/guardian/guardian.module';
 import { AuthService } from './service/auth.service';
 import { MailModule } from '@app/shared/mail/mail.module';
 import { AuthController } from './controller/auth.controller';
-import { OrganizationModule } from 'src/organization/organization.module';
 import { TokenModule } from '@app/shared/token/token.module';
 import { FileHandlerModule } from '@app/shared/file-handler/file-handler.module';
+import { UsersModule } from '@app/shared/users/users.module';
+import { OrganizationModule } from '@app/shared/organization/organization.module';
 
 @Module({
     imports: [
@@ -35,9 +35,9 @@ import { FileHandlerModule } from '@app/shared/file-handler/file-handler.module'
         OrganizationModule,
         TokenModule,
         FileHandlerModule,
+        UsersModule,
     ],
     controllers: [UserController, AuthController],
-    providers: [UserService, AuthService],
-    exports: [UserService],
+    providers: [AuthService],
 })
-export class UserModule {}
+export class UserAppModule {}
