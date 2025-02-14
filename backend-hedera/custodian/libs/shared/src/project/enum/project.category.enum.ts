@@ -1,6 +1,6 @@
 export enum ProjectCategoryEnum {
-    RENEWABLE_ENERGY = 'Renewable Energy',
-    AFFORESTATION = 'Afforestation',
-    REFORESTATION = 'Reforestation',
-    OTHER = 'Other',
+    RENEWABLE_ENERGY = 'RENEWABLE_ENERGY',
+    AFFORESTATION = 'AFFORESTATION',
+    REFORESTATION = 'REFORESTATION',
+    OTHER = 'OTHER',
 }

@@ -14,7 +14,8 @@ import { UserModule } from './user/user.module';
 import { MailModule } from '@app/shared/mail/mail.module';
 import { UserService } from './user/service/user.service';
 import { ProjectModule } from './project/project.module';
-
+import { LocationAppModule } from './location/location.module';
+import { DocumentModule } from './document/document.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -35,6 +36,8 @@ import { ProjectModule } from './project/project.module';
         MailModule,
         UserModule,
         ProjectModule,
+        LocationAppModule,
+        DocumentModule,
     ],
     controllers: [AppController],
     providers: [AppService],
@@ -45,6 +48,7 @@ export class AppModule {
         private readonly userService: UserService,
     ) {
         this.connection.runMigrations();
+
         this.userService.init();
     }
 }
