@@ -1,8 +1,8 @@
 export const USER_REGISTER_HEADER: string =
-    '{{countryName}} Carbon Registry : Welcome!';
+    '{{countryName}} Carbon Registry: Welcome!';
 
 export const ORG_CREATE_HEADER: string =
-    '{{countryName}} Carbon Registry : Welcome!';
+    '{{countryName}} Carbon Registry: Welcome!';
 
 export const USER_ACTIVATION_HEADER: string =
     '{{countryName}} Carbon Registry: Account Activated.';
