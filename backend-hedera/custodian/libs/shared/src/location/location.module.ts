@@ -14,11 +14,18 @@ import { UtilModule } from '../util/util.module';
 import { LocationInitializerService } from './service/location.initialization.service';
 import { CountryService } from './service/country.service';
 import { Country } from './entity/country.entity';
+import { PostalCode } from './entity/postal.code.entity';
 
 @Module({
     imports: [
         UtilModule,
-        TypeOrmModule.forFeature([Province, District, City, Country]),
+        TypeOrmModule.forFeature([
+            Province,
+            District,
+            City,
+            Country,
+            PostalCode,
+        ]),
         ConfigModule.forRoot({
             isGlobal: true,
             load: [configuration],

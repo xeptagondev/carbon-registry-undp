@@ -4,4 +4,5 @@ export enum LocationDataType {
     DISTRICT = 'district',
     DIVISION = 'division',
     CITY = 'city',
+    POSTAL_CODE = 'postalCode',
 }
