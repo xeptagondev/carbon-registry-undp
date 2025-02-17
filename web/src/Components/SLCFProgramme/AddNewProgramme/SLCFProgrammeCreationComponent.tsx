@@ -30,6 +30,7 @@ import PhoneInput, {
   isPossiblePhoneNumber,
 } from 'react-phone-number-input';
 import InfDocumentInformation from './infDocumentInfo';
+import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -75,10 +76,11 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
 
   const [provinces, setProvinces] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
-  const [dsDivisions, setDsDivisions] = useState<string[]>([]);
+  const [independentCertifiers, setIndependentCertifiers] = useState<any[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [countries, setCountries] = useState<[]>([]);
   const [isCountryListLoading, setIsCountryListLoading] = useState(false);
+  const [organizationsLoading, setOrganizationsLoading] = useState(false);
 
   const getProvinces = async () => {
     try {
@@ -103,25 +105,6 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       });
       const tempDistricts = data.map((districtData: any) => districtData.districtName);
       setDistricts(tempDistricts);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getDivisions = async (districtName: string) => {
-    try {
-      const { data } = await post('national/location/division', {
-        filterAnd: [
-          {
-            key: 'districtName',
-            operation: '=',
-            value: districtName,
-          },
-        ],
-      });
-
-      const tempDivisions = data.map((divisionData: any) => divisionData.divisionName);
-      setDsDivisions(tempDivisions);
     } catch (error) {
       console.log(error);
     }
@@ -169,9 +152,35 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
     }
   };
 
+  const getIndependentCertifiers = async () => {
+    setOrganizationsLoading(true);
+    try {
+      const response = await post('organisation/byType', {
+        companyRole: CompanyRole.DESIGNATED_OPERATIONAL_ENTITY,
+      });
+      if (response.data) {
+        const alpha2Names = response.data.map((item: any) => {
+          return item.alpha2;
+        });
+        setIndependentCertifiers(alpha2Names);
+      }
+    } catch (error: any) {
+      console.log('Error in getCountryList', error);
+      message.open({
+        type: 'error',
+        content: `${error.message}`,
+        duration: 3,
+        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+      });
+    } finally {
+      setOrganizationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     getProvinces();
     getCountryList();
+    getIndependentCertifiers();
   }, []);
 
   const onProvinceSelect = async (value: any) => {
@@ -252,6 +261,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       contactWebsite: values?.contactWebsite,
       contactEmail: values?.contactEmail,
       contactPhoneNo: formatPhoneNumberIntl(values?.contactPhoneNo),
+      independentCertifiers: values?.independentCertifiers,
     };
 
     setLoading(true);
@@ -873,6 +883,31 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                     {t('addProgramme:upload')}
                                   </Button>
                                 </Upload>
+                              </Form.Item>
+
+                              <Form.Item
+                                label={t('addProgramme:independentCertifiers')}
+                                name="independentCertifiers"
+                                rules={[
+                                  {
+                                    required: false,
+                                    message: `${t('addProgramme:independentCertifiers')} ${t(
+                                      'isRequired'
+                                    )}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  mode="multiple"
+                                  size="large"
+                                  maxTagCount={2}
+                                  loading={organizationsLoading}
+                                  allowClear
+                                >
+                                  {independentCertifiers.map((region: any) => (
+                                    <Select.Option value={region}>{region}</Select.Option>
+                                  ))}
+                                </Select>
                               </Form.Item>
                             </div>
                           </Col>
