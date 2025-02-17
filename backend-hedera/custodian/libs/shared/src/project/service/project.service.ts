@@ -259,6 +259,7 @@ export class ProjectService {
             contactPhoneNo: project.telephone,
             contactWebsite: project.website,
             contactAddress: project.address,
+            projectProposalStage: project.projectProposalStage,
             company: project.organization
                 ? {
                       companyId: project.organization.id,

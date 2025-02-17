@@ -65,6 +65,18 @@ export class OrganizationController {
     }
 
     @UseGuards(AuthGuardService)
+    @Post('byType')
+    async getOrganizationsByType(
+        @Body() dto: Partial<OrganizationDto>,
+        @Request() req,
+    ): Promise<DataListResponseDto> {
+        return await this.organizationService.getOrganizationsByType(
+            dto,
+            req.user,
+        );
+    }
+
+    @UseGuards(AuthGuardService)
     @Post('query')
     async query(
         @Body() queryDto: QueryDto,
