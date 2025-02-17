@@ -4,7 +4,6 @@ import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     INF_APPROVE_HEADER,
-    INF_CREATE_HEADER,
     INF_REJECT_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
