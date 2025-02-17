@@ -649,11 +649,11 @@ export class OrganizationService extends SuperService<
                         orgType:
                             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
                     },
-                    // {
-                    //     role: RoleEnum.Admin,
-                    //     orgType:
-                    //         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
-                    // },
+                    {
+                        role: RoleEnum.Admin,
+                        orgType:
+                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                    },
                 ],
                 {
                     role: requestData.userRole,
