@@ -46,6 +46,11 @@ export class ProjectDto {
     @ApiProperty()
     @IsNotEmpty()
     @IsString()
+    street: string;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
     province: string;
 
     @ApiProperty()

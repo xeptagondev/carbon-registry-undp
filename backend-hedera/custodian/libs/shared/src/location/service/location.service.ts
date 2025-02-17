@@ -9,6 +9,7 @@ import { HelperService } from '@app/shared/util/service/helper.service';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { Country } from '../entity/country.entity';
+import { PostalCode } from '../entity/postal.code.entity';
 
 @Injectable()
 export class LocationService {
@@ -17,6 +18,7 @@ export class LocationService {
         @InjectRepository(District) private districtRepo: Repository<District>,
         @InjectRepository(City) private cityRepo: Repository<City>,
         @InjectRepository(Country) private countryRepo: Repository<Country>,
+        @InjectRepository(Country) private postalRepo: Repository<PostalCode>,
         private helperService: HelperService,
     ) {}
 
@@ -75,6 +77,9 @@ export class LocationService {
 
             case LocationDataType.CITY:
                 return this.cityRepo;
+                break;
+            case LocationDataType.POSTAL_CODE:
+                return this.postalRepo;
                 break;
 
             default:

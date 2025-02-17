@@ -38,6 +38,9 @@ export class ProjectEntity {
     @Column()
     postalCode: string;
 
+    @Column({ nullable: true })
+    street: string;
+
     @Column()
     province: string;
 
