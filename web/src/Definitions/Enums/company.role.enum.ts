@@ -20,6 +20,6 @@ export enum CompanyRole {
   EXECUTIVE_COMMITTEE = 'ExecutiveCommittee',
   //only following three are used in zimbabwe flow. above will be deleted
   DESIGNATED_NATIONAL_AUTHORITY = 'DNA',
-  DESIGNATED_OPERATIONAL_ENTITY = 'DOE',
-  PROJECT_PARTICIPANT = 'PP',
+  INDEPENDENT_CERTIFIER = 'IC',
+  PROJECT_DEVELOPER = 'PD',
 }

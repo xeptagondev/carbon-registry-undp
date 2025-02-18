@@ -416,8 +416,8 @@ export const CompanyManagementComponent = (props: any) => {
             <Space direction="vertical">
               <Radio value="All">{t('company:all')}</Radio>
               <Radio value="DNA">{t('company:dna')}</Radio>
-              <Radio value="PP">{t('company:pp')}</Radio>
-              <Radio value="DOE">{t('company:doe')}</Radio>
+              <Radio value="PD">{t('company:pd')}</Radio>
+              <Radio value="IC">{t('company:ic')}</Radio>
             </Space>
           </Radio.Group>
         </div>
