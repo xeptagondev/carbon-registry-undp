@@ -1,11 +1,11 @@
 export enum OrganizationTypeEnum {
     DESIGNATED_NATIONAL_AUTHORITY = 'DNA',
-    DESIGNATED_OPERATIONAL_ENTITY = 'DOE',
-    PROJECT_PARTICIPANT = 'PP',
+    INDEPENDENT_CERTIFIER = 'IC',
+    PROJECT_DEVELOPER = 'PD',
 }
 
 export enum OrganizationTypeFormatEnum {
     DNA = 'Designated National Authority',
-    DOE = 'Designated Operational Entity',
-    PP = 'Project Participant',
+    IC = 'Independent Certifier',
+    PD = 'Project Developer',
 }

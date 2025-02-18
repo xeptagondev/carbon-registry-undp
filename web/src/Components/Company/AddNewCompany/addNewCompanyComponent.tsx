@@ -664,9 +664,9 @@ export const AddNewCompanyComponent = (props: any) => {
 
   const CompanyDetailsForm = () => {
     const companyRoleClassName =
-      companyRole === CompanyRole.DESIGNATED_OPERATIONAL_ENTITY
+      companyRole === CompanyRole.INDEPENDENT_CERTIFIER
         ? 'certifier'
-        : companyRole === CompanyRole.PROJECT_PARTICIPANT
+        : companyRole === CompanyRole.PROJECT_DEVELOPER
         ? 'dev'
         : companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
         ? 'minister'
@@ -1107,7 +1107,7 @@ export const AddNewCompanyComponent = (props: any) => {
                           <Radio.Button className={companyRoleClassName} value={companyRole}>
                             {companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ? (
                               <SafetyOutlined className="role-icons" />
-                            ) : companyRole === CompanyRole.PROJECT_PARTICIPANT ? (
+                            ) : companyRole === CompanyRole.PROJECT_DEVELOPER ? (
                               <ExperimentOutlined className="role-icons" />
                             ) : (
                               <BankOutlined className="role-icons" />
@@ -1129,9 +1129,9 @@ export const AddNewCompanyComponent = (props: any) => {
                             }
                           >
                             <Tooltip placement="top" title={t('addCompany:doeToolTip')}>
-                              <Radio.Button className="certifier" value="DOE">
+                              <Radio.Button className="certifier" value="IC">
                                 <SafetyOutlined className="role-icons" />
-                                {t('addCompany:doe')}
+                                {t('addCompany:ic')}
                               </Radio.Button>
                             </Tooltip>
                           </div>
@@ -1152,7 +1152,7 @@ export const AddNewCompanyComponent = (props: any) => {
                               placement="top"
                               title={t('addCompany:programmeDeveleperToolTip')}
                             >
-                              <Radio.Button className="dev" value="PP">
+                              <Radio.Button className="dev" value="PD">
                                 <ExperimentOutlined className="role-icons" />
                                 {t('addCompany:ProgrammeDeveloper')}
                               </Radio.Button>

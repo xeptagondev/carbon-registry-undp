@@ -439,7 +439,7 @@ export const SLCFProgrammeManagementComponent = (props: any) => {
           <div className="body-title">{t('projectList:slcfViewProgrammes')}</div>
         </div>
         <div className="actions">
-          {userInfoState?.companyRole === CompanyRole.PROJECT_PARTICIPANT &&
+          {userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
             userInfoState.userRole !== Role.ViewOnly &&
             enableAddProgramme && (
               <div className="action-bar">
