@@ -617,8 +617,8 @@ export const UserManagementComponent = (props: any) => {
             <Space direction="vertical">
               <Radio value="All">{t('user:all')}</Radio>
               <Radio value="DNA">{t('user:dna')}</Radio>
-              <Radio value="PP">{t('user:pp')}</Radio>
-              <Radio value="DOE">{t('user:doe')}</Radio>
+              <Radio value="PD">{t('user:pd')}</Radio>
+              <Radio value="IC">{t('user:ic')}</Radio>
             </Space>
           </Radio.Group>
         </div>

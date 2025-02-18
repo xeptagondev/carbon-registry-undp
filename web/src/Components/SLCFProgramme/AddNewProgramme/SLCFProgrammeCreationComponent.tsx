@@ -176,7 +176,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
     setOrganizationsLoading(true);
     try {
       const response = await post('organisation/byType', {
-        companyRole: CompanyRole.DESIGNATED_OPERATIONAL_ENTITY,
+        companyRole: CompanyRole.INDEPENDENT_CERTIFIER,
       });
       if (response.data) {
         const alpha2Names = response.data.map((item: any) => {

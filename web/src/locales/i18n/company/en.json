@@ -1,5 +1,5 @@
 {
-  "developer": "Project Participant",
+  "developer": "Project Developer",
   "name": "ORGANISATION NAME",
   "taxId": "TAX ID",
   "filterByOrgType": "Filter by Organisation Type",
@@ -24,7 +24,7 @@
   "view": "View",
   "ClimateFund": "Zimbabwe Climate Fund",
   "ExecutiveCommittee": "Executive Committee",
-  "doe": "Designated Operational Entity",
+  "ic": "Independent Certifier",
   "dna": "Designated National Authority",
-  "pp": "Project Participant"
+  "pd": "Project Developer"
 }
