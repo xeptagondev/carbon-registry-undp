@@ -34,9 +34,9 @@ const CompanyRoleIcon: FC<CompanyRoleIconProps> = (props: CompanyRoleIconProps) 
     <div style={{ display: 'flex', alignItems: 'center' }}>
       {role === 'DNA' ? (
         <RoleIcon icon={<BankOutlined />} bg={GovBGColor} color={GovColor} />
-      ) : role === 'DOE' ? (
+      ) : role === 'IC' ? (
         <RoleIcon icon={<SafetyOutlined />} bg={CertBGColor} color={CertColor} />
-      ) : role === 'PP' ? (
+      ) : role === 'PD' ? (
         <RoleIcon icon={<ExperimentOutlined />} bg={DevBGColor} color={DevColor} />
       ) : role === 'ClimateFund' ? (
         <RoleIcon icon={<CopyrightOutlined />} bg={CFBGColor} color={CFColor} />

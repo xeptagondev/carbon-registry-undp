@@ -147,7 +147,7 @@ export const updateUserAbility = (ability: AppAbility, user: User) => {
 
     if (
       (user.role !== Role.ViewOnly && user.companyRole === CompanyRole.PROGRAMME_DEVELOPER) ||
-      user.companyRole === CompanyRole.PROJECT_PARTICIPANT // Added for Zimbabwe Registry Permission
+      user.companyRole === CompanyRole.PROJECT_DEVELOPER // Added for Zimbabwe Registry Permission
     ) {
       can(Action.Manage, ProgrammeTransfer);
       can(Action.Manage, ProgrammeEntity);
@@ -164,7 +164,7 @@ export const updateUserAbility = (ability: AppAbility, user: User) => {
 
     if (
       (user.role !== Role.ViewOnly && user.companyRole === CompanyRole.CERTIFIER) ||
-      user.companyRole === CompanyRole.DESIGNATED_OPERATIONAL_ENTITY // Added for Zimbabwe Registry Permission
+      user.companyRole === CompanyRole.INDEPENDENT_CERTIFIER // Added for Zimbabwe Registry Permission
     ) {
       can(Action.Manage, ProgrammeCertify);
     }
@@ -173,7 +173,7 @@ export const updateUserAbility = (ability: AppAbility, user: User) => {
       can([Action.Create, Action.Read], ProgrammeEntity);
     } else if (
       user.companyRole === CompanyRole.CERTIFIER ||
-      user.companyRole === CompanyRole.DESIGNATED_OPERATIONAL_ENTITY // Added for Zimbabwe Registry Permission
+      user.companyRole === CompanyRole.INDEPENDENT_CERTIFIER // Added for Zimbabwe Registry Permission
     ) {
       can(Action.Read, ProgrammeEntity, {
         currentStage: { $in: [ProgrammeStageUnified.Authorised] },
@@ -181,7 +181,7 @@ export const updateUserAbility = (ability: AppAbility, user: User) => {
       can(Action.Read, ProgrammeEntity, { certifierId: { $elemMatch: { $eq: user.companyId } } });
     } else if (
       user.companyRole === CompanyRole.PROGRAMME_DEVELOPER ||
-      user.companyRole === CompanyRole.PROJECT_PARTICIPANT // Added for Zimbabwe Registry Permission
+      user.companyRole === CompanyRole.PROJECT_DEVELOPER // Added for Zimbabwe Registry Permission
     ) {
       can(Action.Read, ProgrammeEntity, {
         currentStage: { $eq: ProgrammeStageUnified.Authorised },
