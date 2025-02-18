@@ -176,7 +176,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
     setOrganizationsLoading(true);
     try {
       const response = await post('organisation/byType', {
-        companyRole: CompanyRole.PROJECT_PARTICIPANT,
+        companyRole: CompanyRole.INDEPENDENT_CERTIFIER,
       });
       if (response.data) {
         setIndependentCertifiers(response.data);
