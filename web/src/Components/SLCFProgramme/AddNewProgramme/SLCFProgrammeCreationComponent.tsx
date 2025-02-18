@@ -176,13 +176,10 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
     setOrganizationsLoading(true);
     try {
       const response = await post('organisation/byType', {
-        companyRole: CompanyRole.DESIGNATED_OPERATIONAL_ENTITY,
+        companyRole: CompanyRole.PROJECT_PARTICIPANT,
       });
       if (response.data) {
-        const alpha2Names = response.data.map((item: any) => {
-          return item.alpha2;
-        });
-        setIndependentCertifiers(alpha2Names);
+        setIndependentCertifiers(response.data);
       }
     } catch (error: any) {
       console.log('Error in getCountryList', error);
@@ -276,7 +273,6 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       speciesPlanted: values?.speciesPlanted,
       projectDescription: values?.briefProjectDescription,
       projectStatus: values?.projectStatus,
-      purposeOfCreditDevelopment: values?.creditDevelopmentPurpose,
       startDate: moment(values?.startTime).startOf('day').unix(),
       additionalDocuments: base64Docs,
       contactName: values?.contactName,
@@ -392,7 +388,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                               </Form.Item>
 
                               <Row justify="space-between">
-                                <Col span={9}>
+                                <Col span={24}>
                                   <Form.Item
                                     label={t('addProgramme:projectCategory')}
                                     name="projectCategory"
@@ -751,35 +747,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                 label={t('addProgramme:projectStatusDescription')}
                                 name={'projectStatusDescription'}
                               >
-                                <Input />
-                              </Form.Item>
-
-                              <Form.Item
-                                label={t('addProgramme:creditDevelopmentPurpose')}
-                                name="creditDevelopmentPurpose"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: `${t('addProgramme:creditDevelopmentPurpose')} ${t(
-                                      'isRequired'
-                                    )}`,
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  size="large"
-                                  placeholder={t(
-                                    'addProgramme:creditDevelopmentPurposePlaceholder'
-                                  )}
-                                >
-                                  {Object.keys(PURPOSE_CREDIT_DEVELOPMENT).map(
-                                    (purpose: string) => (
-                                      <Select.Option value={purpose}>
-                                        {PURPOSE_CREDIT_DEVELOPMENT[purpose]}
-                                      </Select.Option>
-                                    )
-                                  )}
-                                </Select>
+                                <TextArea rows={4} />
                               </Form.Item>
                             </div>
                           </Col>
@@ -837,6 +805,30 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                 />
                               </Form.Item>
 
+                              <Form.Item
+                                label={t('addProgramme:independentCertifiers')}
+                                name="independentCertifiers"
+                                rules={[
+                                  {
+                                    required: false,
+                                    message: `${t('addProgramme:independentCertifiers')} ${t(
+                                      'isRequired'
+                                    )}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  mode="multiple"
+                                  size="large"
+                                  maxTagCount={2}
+                                  loading={organizationsLoading}
+                                  allowClear
+                                >
+                                  {independentCertifiers.map((ic: any) => (
+                                    <Select.Option value={ic.id}>{ic.name}</Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
                               {projectCategory === 'RENEWABLE_ENERGY' && (
                                 <Form.Item
                                   label={t('addProgramme:projectCapacity')}
@@ -928,31 +920,6 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                     {t('addProgramme:upload')}
                                   </Button>
                                 </Upload>
-                              </Form.Item>
-
-                              <Form.Item
-                                label={t('addProgramme:independentCertifiers')}
-                                name="independentCertifiers"
-                                rules={[
-                                  {
-                                    required: false,
-                                    message: `${t('addProgramme:independentCertifiers')} ${t(
-                                      'isRequired'
-                                    )}`,
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  mode="multiple"
-                                  size="large"
-                                  maxTagCount={2}
-                                  loading={organizationsLoading}
-                                  allowClear
-                                >
-                                  {independentCertifiers.map((region: any) => (
-                                    <Select.Option value={region}>{region}</Select.Option>
-                                  ))}
-                                </Select>
                               </Form.Item>
                             </div>
                           </Col>
