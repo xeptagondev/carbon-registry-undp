@@ -13,7 +13,6 @@ import {
 import { ProjectCategoryEnum } from '../enum/project.category.enum';
 import { ProjectGeography } from '../enum/project.geography.enum';
 import { ProjectStatus } from '../enum/project.status.enum';
-import { CreditType } from '../enum/credit.type.enum';
 import { IsNotPastDate } from '@app/shared/util/decorators/isNotPastDate.decorator';
 import { IsTwoDecimalPoints } from '@app/shared/util/decorators/twoDecimalPointNumber.decorator';
 
@@ -46,6 +45,11 @@ export class ProjectDto {
     @ApiProperty()
     @IsNotEmpty()
     @IsString()
+    street: string;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
     province: string;
 
     @ApiProperty()
@@ -61,6 +65,10 @@ export class ProjectDto {
     @ApiProperty()
     @IsArray()
     geographicalLocationCoordinates: [];
+
+    @ApiProperty()
+    @IsArray()
+    independentCertifiers: number[];
 
     @ApiProperty({ enum: ProjectGeography })
     @IsNotEmpty()
@@ -121,15 +129,6 @@ export class ProjectDto {
     @IsOptional()
     @IsString()
     projectStatusDescription?: string;
-
-    @ApiProperty({ enum: CreditType })
-    @IsNotEmpty()
-    @IsEnum(CreditType, {
-        message:
-            'Invalid purpose of credit development. Supported following purpose of credit development:' +
-            Object.values(CreditType),
-    })
-    purposeOfCreditDevelopment: CreditType;
 
     @ApiProperty()
     @IsNotEmpty()

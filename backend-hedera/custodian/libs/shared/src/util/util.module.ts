@@ -6,6 +6,7 @@ import { PolicyBlocksEntity } from '../policy-block/entity/policy-blocks.entity'
 import { GuardianModule } from '../guardian/guardian.module';
 import { DataExportService } from './service/data-export.service';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
+import { ObjectionLetterGenerateService } from './service/objection.letter.gen';
 
 @Module({
     imports: [
@@ -13,7 +14,17 @@ import { FileHandlerModule } from '../file-handler/file-handler.module';
         GuardianModule,
         FileHandlerModule,
     ],
-    providers: [HelperService, UtilService, DataExportService],
-    exports: [HelperService, UtilService, DataExportService],
+    providers: [
+        HelperService,
+        UtilService,
+        DataExportService,
+        ObjectionLetterGenerateService,
+    ],
+    exports: [
+        HelperService,
+        UtilService,
+        DataExportService,
+        ObjectionLetterGenerateService,
+    ],
 })
 export class UtilModule {}

@@ -56,6 +56,8 @@ export default () => ({
         createUser: 'user_creation_form',
         userCreateInvite: 'user_create_invite',
         appoveOrganization: 'multiple_organizations_approve_reject_buttons',
+        createProject: 'project_creation_form',
+        projectQuery: 'project_approve_grid',
     },
     metadata: {
         approve: {

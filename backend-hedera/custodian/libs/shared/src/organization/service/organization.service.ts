@@ -24,8 +24,10 @@ import { DataExportCompanyDto } from '@app/shared/util/dto/data.export.company.d
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { FilterBy } from '@app/shared/util/dto/filter.by';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
+import { SortEntry } from '@app/shared/util/dto/sort.entry';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
@@ -85,9 +87,9 @@ export class OrganizationService extends SuperService<
         sectoralScope: 'Sectoral Scope',
         nothingToExport: 'Data not found for export',
         organisations: 'Organisations',
-        PP: 'Project Participant',
+        PD: 'Project Developer',
         DNA: 'Designated National Authority',
-        DOE: 'Indinependant Certifier',
+        IC: 'Independent Certifier',
         ClimateFund: 'Zimbabwe Climate Fund',
         ExecutiveCommittee: 'Executive Committee',
         Ministry: 'Ministry',
@@ -280,6 +282,51 @@ export class OrganizationService extends SuperService<
         throw new HttpException(
             this.orgExportMap['nothingToExport'],
             HttpStatus.BAD_REQUEST,
+        );
+    }
+
+    async getOrganizationsByType(
+        dto: Partial<OrganizationDto>,
+        requestUser: JWTPayload,
+    ): Promise<DataListResponseDto> {
+        let filterWithCompanyStatesIn: OrganizationStateEnum[];
+
+        if (
+            !(
+                requestUser.organizationRole ===
+                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+            )
+        ) {
+            filterWithCompanyStatesIn = [
+                OrganizationStateEnum.SUSPENDED,
+                OrganizationStateEnum.ACTIVE,
+            ];
+        } else {
+            filterWithCompanyStatesIn = [
+                OrganizationStateEnum.SUSPENDED,
+                OrganizationStateEnum.ACTIVE,
+                OrganizationStateEnum.REJECTED,
+                OrganizationStateEnum.PENDING,
+            ];
+        }
+
+        const [entities, total] = await this.organizationRepository
+            .createQueryBuilder('organization')
+            .leftJoinAndSelect(
+                'organization.organizationType',
+                'organizationType',
+            )
+            .where('organization.state IN (:...states)', {
+                states: filterWithCompanyStatesIn,
+            })
+            .andWhere('organizationType.name = :companyRole', {
+                companyRole: dto.companyRole,
+            })
+            .getManyAndCount();
+
+        return new DataListResponseDto(
+            entities ? entities : undefined,
+            total ? total : undefined,
         );
     }
 
@@ -572,9 +619,9 @@ export class OrganizationService extends SuperService<
         };
 
         if (
-            user.organizationRole == OrganizationTypeEnum.PROJECT_PARTICIPANT ||
+            user.organizationRole == OrganizationTypeEnum.PROJECT_DEVELOPER ||
             user.organizationRole ==
-                OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
             editData.paymentId = dto.paymentId;
         }

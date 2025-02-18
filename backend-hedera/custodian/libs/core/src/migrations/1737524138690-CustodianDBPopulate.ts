@@ -13,7 +13,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
         // Add organization types
         await queryRunner.query(
             `INSERT INTO organization_type_entity (name,multiple) \
-            VALUES ('${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}',false), ('${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}',true), ('${OrganizationTypeEnum.PROJECT_PARTICIPANT}',true);`,
+            VALUES ('${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}',false), ('${OrganizationTypeEnum.INDEPENDENT_CERTIFIER}',true), ('${OrganizationTypeEnum.PROJECT_DEVELOPER}',true);`,
         );
 
         // Add main gov organization
@@ -49,32 +49,32 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
             ( \
                 'DOE_ADMIN', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Admin}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.INDEPENDENT_CERTIFIER}')\
             ), \
             ( \
                 'DOE_MANAGER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Manager}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.INDEPENDENT_CERTIFIER}')\
             ), \
             ( \
                 'DOE_VIEWER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.ViewOnly}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_OPERATIONAL_ENTITY}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.INDEPENDENT_CERTIFIER}')\
             ), \
             ( \
                 'PP_ADMIN', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Admin}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_PARTICIPANT}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_DEVELOPER}')\
             ), \
             ( \
                 'PP_MANAGER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Manager}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_PARTICIPANT}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_DEVELOPER}')\
             ), \
             ( \
                 'PP_VIEWER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.ViewOnly}'), \
-                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_PARTICIPANT}')\
+                (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_DEVELOPER}')\
             );`,
         );
 

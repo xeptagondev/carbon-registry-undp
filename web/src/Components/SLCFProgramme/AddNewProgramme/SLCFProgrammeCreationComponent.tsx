@@ -30,6 +30,7 @@ import PhoneInput, {
   isPossiblePhoneNumber,
 } from 'react-phone-number-input';
 import InfDocumentInformation from './infDocumentInfo';
+import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -75,10 +76,12 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
 
   const [provinces, setProvinces] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
-  const [dsDivisions, setDsDivisions] = useState<string[]>([]);
+  const [independentCertifiers, setIndependentCertifiers] = useState<any[]>([]);
   const [cities, setCities] = useState<string[]>([]);
+  const [postalCodes, setPostalCodes] = useState<string[]>([]);
   const [countries, setCountries] = useState<[]>([]);
   const [isCountryListLoading, setIsCountryListLoading] = useState(false);
+  const [organizationsLoading, setOrganizationsLoading] = useState(false);
 
   const getProvinces = async () => {
     try {
@@ -108,25 +111,6 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
     }
   };
 
-  const getDivisions = async (districtName: string) => {
-    try {
-      const { data } = await post('national/location/division', {
-        filterAnd: [
-          {
-            key: 'districtName',
-            operation: '=',
-            value: districtName,
-          },
-        ],
-      });
-
-      const tempDivisions = data.map((divisionData: any) => divisionData.divisionName);
-      setDsDivisions(tempDivisions);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const getCities = async (division?: string) => {
     try {
       const { data } = await post('location/city', {
@@ -141,6 +125,25 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
 
       const tempCities = data.map((cityData: any) => cityData.cityName);
       setCities(tempCities);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getPostalCodes = async (city?: string) => {
+    try {
+      const { data } = await post('location/postalCode', {
+        filterAnd: [
+          {
+            key: 'cityName',
+            operation: '=',
+            value: city,
+          },
+        ],
+      });
+
+      const tempPcs = data.map((pcData: any) => pcData.postalCode);
+      setPostalCodes(tempPcs);
     } catch (error) {
       console.log(error);
     }
@@ -169,9 +172,32 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
     }
   };
 
+  const getIndependentCertifiers = async () => {
+    setOrganizationsLoading(true);
+    try {
+      const response = await post('organisation/byType', {
+        companyRole: CompanyRole.INDEPENDENT_CERTIFIER,
+      });
+      if (response.data) {
+        setIndependentCertifiers(response.data);
+      }
+    } catch (error: any) {
+      console.log('Error in getCountryList', error);
+      message.open({
+        type: 'error',
+        content: `${error.message}`,
+        duration: 3,
+        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+      });
+    } finally {
+      setOrganizationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     getProvinces();
     getCountryList();
+    getIndependentCertifiers();
   }, []);
 
   const onProvinceSelect = async (value: any) => {
@@ -182,6 +208,9 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
 
   const onDistrictSelect = (value: string) => {
     getCities(value);
+  };
+  const onCitySelect = (value: string) => {
+    getPostalCodes(value);
   };
 
   const onGeographyOfProjectSelect = (value: string) => {
@@ -223,6 +252,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       district: values?.district || 'test',
       city: values?.city || 'test',
       postalCode: values?.postalCode,
+      street: values?.street,
       geographicalLocationCoordinates: values?.projectLocation,
       projectGeography: values?.projectGeography,
       otherProjectCategory: values?.otherCategory,
@@ -243,7 +273,6 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       speciesPlanted: values?.speciesPlanted,
       projectDescription: values?.briefProjectDescription,
       projectStatus: values?.projectStatus,
-      purposeOfCreditDevelopment: values?.creditDevelopmentPurpose,
       startDate: moment(values?.startTime).startOf('day').unix(),
       additionalDocuments: base64Docs,
       contactName: values?.contactName,
@@ -252,6 +281,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       contactWebsite: values?.contactWebsite,
       contactEmail: values?.contactEmail,
       contactPhoneNo: formatPhoneNumberIntl(values?.contactPhoneNo),
+      independentCertifiers: values?.independentCertifiers,
     };
 
     setLoading(true);
@@ -356,125 +386,9 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                               >
                                 <Input size="large" />
                               </Form.Item>
-                              <Form.Item
-                                label={t('addProgramme:province')}
-                                name="province"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: `${t('addProgramme:province')} ${t('isRequired')}`,
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  size="large"
-                                  onChange={onProvinceSelect}
-                                  placeholder={t('addProgramme:provincePlaceholder')}
-                                >
-                                  {provinces.map((province: string, index: number) => (
-                                    <Select.Option value={province}>{province}</Select.Option>
-                                  ))}
-                                </Select>
-                              </Form.Item>
-
-                              <Form.Item
-                                label={t('addProgramme:district')}
-                                name="district"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: `${t('addProgramme:district')} ${t('isRequired')}`,
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  size="large"
-                                  placeholder={t('addProgramme:districtPlaceholder')}
-                                  onSelect={onDistrictSelect}
-                                >
-                                  {districts?.map((district: string, index: number) => (
-                                    <Select.Option key={district}>{district}</Select.Option>
-                                  ))}
-                                </Select>
-                              </Form.Item>
-                              {/* <Form.Item
-                                label={t('addProgramme:dsDivision')}
-                                name="dsDivision"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: `${t('addProgramme:dsDivision')} ${t('isRequired')}`,
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  size="large"
-                                  placeholder={t('addProgramme:dsDivisionPlaceholder')}
-                                  onSelect={onDivisionSelect}
-                                >
-                                  {dsDivisions.map((division: string) => (
-                                    <Select.Option value={division}>{division}</Select.Option>
-                                  ))}
-                                </Select>
-                              </Form.Item> */}
-                              <Form.Item
-                                label={t('addProgramme:city')}
-                                name="city"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: `${t('addProgramme:city')} ${t('isRequired')}`,
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  size="large"
-                                  placeholder={t('addProgramme:cityPlaceholder')}
-                                >
-                                  {cities.map((city: string) => (
-                                    <Select.Option value={city}>{city}</Select.Option>
-                                  ))}
-                                </Select>
-                              </Form.Item>
-                              <Form.Item
-                                label={t('addProgramme:street')}
-                                name="postalCode"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: `${t('addProgramme:street')} ${t('isRequired')}`,
-                                  },
-                                ]}
-                              >
-                                <Input size="large" />
-                              </Form.Item>
-                              <Form.Item
-                                label={t('addProgramme:projectGeography')}
-                                name="projectGeography"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: `${t('addProgramme:projectGeography')} ${t(
-                                      'isRequired'
-                                    )}`,
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  size="large"
-                                  placeholder={t('addProgramme:projectGeographyPlaceholder')}
-                                  onChange={onGeographyOfProjectSelect}
-                                >
-                                  {Object.keys(PROJECT_GEOGRAPHY).map((geography: string) => (
-                                    <Select.Option value={geography}>
-                                      {PROJECT_GEOGRAPHY[geography]}
-                                    </Select.Option>
-                                  ))}
-                                </Select>
-                              </Form.Item>
 
                               <Row justify="space-between">
-                                <Col span={9}>
+                                <Col span={24}>
                                   <Form.Item
                                     label={t('addProgramme:projectCategory')}
                                     name="projectCategory"
@@ -669,6 +583,143 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                               )}
 
                               <Form.Item
+                                label={t('addProgramme:province')}
+                                name="province"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `${t('addProgramme:province')} ${t('isRequired')}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  onChange={onProvinceSelect}
+                                  placeholder={t('addProgramme:provincePlaceholder')}
+                                >
+                                  {provinces.map((province: string, index: number) => (
+                                    <Select.Option value={province}>{province}</Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+
+                              <Form.Item
+                                label={t('addProgramme:district')}
+                                name="district"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `${t('addProgramme:district')} ${t('isRequired')}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  placeholder={t('addProgramme:districtPlaceholder')}
+                                  onSelect={onDistrictSelect}
+                                >
+                                  {districts?.map((district: string, index: number) => (
+                                    <Select.Option key={district}>{district}</Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+                              {/* <Form.Item
+                                label={t('addProgramme:dsDivision')}
+                                name="dsDivision"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `${t('addProgramme:dsDivision')} ${t('isRequired')}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  placeholder={t('addProgramme:dsDivisionPlaceholder')}
+                                  onSelect={onDivisionSelect}
+                                >
+                                  {dsDivisions.map((division: string) => (
+                                    <Select.Option value={division}>{division}</Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item> */}
+                              <Form.Item
+                                label={t('addProgramme:city')}
+                                name="city"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `${t('addProgramme:city')} ${t('isRequired')}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  placeholder={t('addProgramme:cityPlaceholder')}
+                                  onSelect={onCitySelect}
+                                >
+                                  {cities.map((city: string) => (
+                                    <Select.Option value={city}>{city}</Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+                              <Form.Item
+                                label={t('addProgramme:postalCode')}
+                                name="postalCode"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `${t('addProgramme:postalCode')} ${t('isRequired')}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  placeholder={t('addProgramme:postalCodePlaceholder')}
+                                >
+                                  {postalCodes.map((postalCode: string) => (
+                                    <Select.Option value={postalCode}>{postalCode}</Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+                              <Form.Item
+                                label={t('addProgramme:street')}
+                                name="street"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `${t('addProgramme:street')} ${t('isRequired')}`,
+                                  },
+                                ]}
+                              >
+                                <Input size="large" />
+                              </Form.Item>
+                              <Form.Item
+                                label={t('addProgramme:projectGeography')}
+                                name="projectGeography"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `${t('addProgramme:projectGeography')} ${t(
+                                      'isRequired'
+                                    )}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  placeholder={t('addProgramme:projectGeographyPlaceholder')}
+                                  onChange={onGeographyOfProjectSelect}
+                                >
+                                  {Object.keys(PROJECT_GEOGRAPHY).map((geography: string) => (
+                                    <Select.Option value={geography}>
+                                      {PROJECT_GEOGRAPHY[geography]}
+                                    </Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+
+                              <Form.Item
                                 label={t('addProgramme:projectStatus')}
                                 name="projectStatus"
                                 rules={[
@@ -696,35 +747,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                 label={t('addProgramme:projectStatusDescription')}
                                 name={'projectStatusDescription'}
                               >
-                                <Input />
-                              </Form.Item>
-
-                              <Form.Item
-                                label={t('addProgramme:creditDevelopmentPurpose')}
-                                name="creditDevelopmentPurpose"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: `${t('addProgramme:creditDevelopmentPurpose')} ${t(
-                                      'isRequired'
-                                    )}`,
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  size="large"
-                                  placeholder={t(
-                                    'addProgramme:creditDevelopmentPurposePlaceholder'
-                                  )}
-                                >
-                                  {Object.keys(PURPOSE_CREDIT_DEVELOPMENT).map(
-                                    (purpose: string) => (
-                                      <Select.Option value={purpose}>
-                                        {PURPOSE_CREDIT_DEVELOPMENT[purpose]}
-                                      </Select.Option>
-                                    )
-                                  )}
-                                </Select>
+                                <TextArea rows={4} />
                               </Form.Item>
                             </div>
                           </Col>
@@ -782,6 +805,30 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                 />
                               </Form.Item>
 
+                              <Form.Item
+                                label={t('addProgramme:independentCertifiers')}
+                                name="independentCertifiers"
+                                rules={[
+                                  {
+                                    required: false,
+                                    message: `${t('addProgramme:independentCertifiers')} ${t(
+                                      'isRequired'
+                                    )}`,
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  mode="multiple"
+                                  size="large"
+                                  maxTagCount={2}
+                                  loading={organizationsLoading}
+                                  allowClear
+                                >
+                                  {independentCertifiers.map((ic: any) => (
+                                    <Select.Option value={ic.id}>{ic.name}</Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
                               {projectCategory === 'RENEWABLE_ENERGY' && (
                                 <Form.Item
                                   label={t('addProgramme:projectCapacity')}

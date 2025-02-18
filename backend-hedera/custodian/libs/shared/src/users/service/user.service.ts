@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { SuperService } from '@app/core/service/super.service';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
@@ -89,9 +89,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isPending: 'Pending Approval',
         nothingToExport: 'Data not found for export',
         users: 'Users',
-        PP: 'Project Participant',
+        PD: 'Project Developer',
         DNA: 'Designated National Authority',
-        DOE: 'Indinependant Certifier',
+        IC: 'Independent Certifier',
         ClimateFund: 'Zimbabwe Climate Fund',
         ExecutiveCommittee: 'Executive Committee',
         Ministry: 'Ministry',
@@ -1271,12 +1271,22 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async getDNAAdmins(): Promise<UsersEntity[]> {
+    async getAdminsByIds(ids: number[]): Promise<UsersEntity[]> {
+        return this.usersRepository.find({
+            where: {
+                organization: { id: In(ids) },
+            },
+            relations: ['organization'],
+        });
+    }
+    async getAdminsByType(
+        organizationType: OrganizationTypeEnum,
+    ): Promise<UsersEntity[]> {
         return this.usersRepository.find({
             where: {
                 guardianRole: {
                     organizationType: {
-                        name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                        name: organizationType,
                     },
                     role: {
                         name: RoleEnum.Admin,
