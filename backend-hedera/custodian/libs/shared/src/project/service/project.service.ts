@@ -83,7 +83,7 @@ export class ProjectService {
     private validateProjectParticipant(requestUser: JWTPayload) {
         if (
             requestUser.organizationRole !==
-            OrganizationTypeEnum.PROJECT_PARTICIPANT
+            OrganizationTypeEnum.PROJECT_DEVELOPER
         ) {
             throw new HttpException(
                 'Unauthorized user request',
