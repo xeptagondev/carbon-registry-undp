@@ -377,7 +377,7 @@ export const getGeneralFields = (
     title: programme.title,
     serialNo: programme.serialNo,
     currentStatus: programme.currentStage,
-    applicationType: 'Project Participant',
+    applicationType: 'Project Developer',
     sector: programme.sector,
     sectoralScope:
       Object.keys(SectoralScope)[

@@ -24,3 +24,5 @@ export const ORG_DEACTIVATE_HEADER: string =
 
 export const ORG_REACTIVATE_HEADER: string =
     'Your {{countryName}} Carbon Registry Organisation is Reactivated';
+export const INF_ASSIGN_HEADER: string =
+    'Assigned to Review Project Authorization';

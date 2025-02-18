@@ -12,7 +12,6 @@ import {
 import { ProjectCategoryEnum } from '../enum/project.category.enum';
 import { ProjectGeography } from '../enum/project.geography.enum';
 import { ProjectStatus } from '../enum/project.status.enum';
-import { CreditType } from '../enum/credit.type.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { ProjectProposalStage } from '../enum/project.proposal.stage.enum';
@@ -37,6 +36,9 @@ export class ProjectEntity {
 
     @Column()
     postalCode: string;
+
+    @Column({ nullable: true })
+    street: string;
 
     @Column()
     province: string;
@@ -89,13 +91,6 @@ export class ProjectEntity {
         array: false,
     })
     projectStatus: ProjectStatus;
-
-    @Column({
-        type: 'enum',
-        enum: CreditType,
-        array: false,
-    })
-    purposeOfCreditDevelopment: CreditType;
 
     @Column({ nullable: true })
     projectStatusDescription?: string;

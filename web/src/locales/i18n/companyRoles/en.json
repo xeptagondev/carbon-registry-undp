@@ -1,11 +1,11 @@
 {
-    "ProgrammeDeveloper": "Project Participant",
+    "ProgrammeDeveloper": "Project Developer",
     "Government": "Designated National Authority",
-    "Certifier": "Designated Operational Entity",
+    "Certifier": "Independent Certifier",
     "ClimateFund": "Zimbabwe Climate Fund",
     "ExecutiveCommittee": "Executive Committee",
     "Ministry": "Ministry",
     "DNA": "DNA",
-    "DOE": "DOE",
-    "PP": "Project Participant"
+    "IC": "Independent Certifier",
+    "PD": "Project Developer"
 }

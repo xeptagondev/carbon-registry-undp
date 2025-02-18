@@ -34,6 +34,15 @@ export class LocationInitializerService implements OnModuleInit {
                 LocationDataType.CITY,
             );
 
+            const postalCodesRawData = fs.readFileSync(
+                'postalCodes.csv',
+                'utf8',
+            );
+            await this.locationInterface.init(
+                postalCodesRawData,
+                LocationDataType.POSTAL_CODE,
+            );
+
             const countryData = fs.readFileSync('countries.json', 'utf8');
             const jsonCountryData = JSON.parse(countryData);
 
