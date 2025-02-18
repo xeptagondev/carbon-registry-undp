@@ -2,7 +2,11 @@
 import { SuperService } from '@app/core/service/super.service';
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { USER_ACTIVATION_HEADER } from '@app/shared/mail/constant/mail-header.constant';
+import {
+    ORG_DEACTIVATE_HEADER,
+    ORG_REACTIVATE_HEADER,
+    USER_ACTIVATION_HEADER,
+} from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { MailService } from '@app/shared/mail/service/mail.service';
@@ -653,6 +657,41 @@ export class OrganizationService extends SuperService<
             );
 
             await queryRunner.commitTransaction();
+
+            try {
+                let header = '';
+                let template;
+
+                const admins = await this.usersRepository.findBy({
+                    organization: { id: dto.id },
+                    guardianRole: { role: { name: RoleEnum.Admin } },
+                });
+
+                const adminEmails = admins.map((user) => user.email);
+
+                if (dto.state === OrganizationStateEnum.ACTIVE) {
+                    header = ORG_REACTIVATE_HEADER;
+                    template = MailTemplateEnum.ORG_REACTIVATE;
+                } else if (dto.state !== OrganizationStateEnum.SUSPENDED) {
+                    header = ORG_DEACTIVATE_HEADER;
+                    template = MailTemplateEnum.ORG_DEACTIVATE;
+                }
+
+                const countryName: string = this.configService.get('country');
+
+                const mailDTO: MailTemplateDTO = {
+                    subject: header.replace('{{countryName}}', countryName),
+                    template: template,
+                    to: adminEmails,
+                    context: {
+                        countryName: countryName,
+                    },
+                };
+
+                await this.mailService.sendMail(mailDTO);
+            } catch (err) {
+                console.log('Email send failed for org status update', err);
+            }
 
             return true;
         } catch (err) {
