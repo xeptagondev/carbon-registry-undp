@@ -1,5 +1,6 @@
 {
   "addProgramme": "Add New Project",
+  "postalCode": "Postal/ZIP Code",
   "addProgrammeSub": "",
   "addProgramme1": "Project Details",
   "addProgramme2": "Project Financing Sought",
@@ -74,6 +75,7 @@
   "creditDevelopmentPurpose": "Purpose of Credit Development",
   "creditDevelopmentPurposePlaceholder": "Select project purpose",
   "projectCategory": "Project Category",
+  "independentCertifiers": "Select the independent certifiers",
   "otherCategory": "Other Category",
   "setLocation": "Set Location",
   "latitude": "Latitude",

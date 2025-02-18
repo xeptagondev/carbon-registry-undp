@@ -6,6 +6,7 @@ export enum MailTemplateEnum {
     PENDING_USER_CREATE = './pendingUserRegister',
     USER_ACTIVATION = './userActivation',
     INF_CREATE = './infCreate',
+    INF_ASSIGN = './infAssign',
     INF_APPROVE = './infApprove',
     INF_REJECT = './infReject',
 }

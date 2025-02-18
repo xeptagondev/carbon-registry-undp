@@ -259,6 +259,28 @@ export class GuardianService {
         }
     }
 
+    public async getProjects(email: string, blockId: string): Promise<any> {
+        try {
+            const url = this.buildGuardianUrl(
+                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
+            );
+            const user = await this.usersRepository.findOne({
+                where: { email: email },
+            });
+            const token = await this.getAccessToken(user.refreshToken);
+
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            return response.data;
+        } catch (error) {
+            await this.getGuardianError(error, 'getProjects');
+        }
+    }
+
     public async createUser(
         email: string,
         hashedPass: string,

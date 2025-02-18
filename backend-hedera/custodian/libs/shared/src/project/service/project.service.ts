@@ -4,6 +4,7 @@ import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     INF_APPROVE_HEADER,
+    INF_ASSIGN_HEADER,
     INF_CREATE_HEADER,
     INF_REJECT_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
@@ -25,10 +26,12 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
+import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
+import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class ProjectService {
@@ -44,7 +47,9 @@ export class ProjectService {
         private readonly userService: UserService,
         private readonly guardianService: GuardianService,
         private readonly configService: ConfigService,
+        private readonly utilService: UtilService,
         private readonly mailService: MailService,
+        private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
     ) {}
 
     async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
@@ -60,7 +65,7 @@ export class ProjectService {
                 requestUser.organizationId,
             );
 
-            const project = this.buildProjectEntity(
+            const project = await this.buildProjectEntity(
                 projectDto,
                 requestUser,
                 user,
@@ -68,7 +73,26 @@ export class ProjectService {
             );
 
             const projectEntity = await this.projectRepository.save(project);
+            await this.guardianService.createProject(
+                requestUser.email,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.createProject'),
+                ),
+                {
+                    document: {
+                        name: project.title,
+                        loi: 'https://example.com',
+                        pin: 'https://example.com',
+                    },
+                    ref: null,
+                },
+            );
             await this.notifyAdmins(projectEntity, requestUser);
+            await this.notifyCertifiers(
+                projectEntity,
+                projectDto.independentCertifiers,
+                requestUser,
+            );
             await this.logProjectStage(
                 `Project with title: ${project.title} has been created by ${requestUser.userName}`,
             );
@@ -102,12 +126,12 @@ export class ProjectService {
         return this.organizationRepository.findOne({ where: { id: orgId } });
     }
 
-    private buildProjectEntity(
+    private async buildProjectEntity(
         projectDto: ProjectDto,
         requestUser: JWTPayload,
         user: UsersEntity,
         organization: OrganizationEntity,
-    ): ProjectEntity {
+    ): Promise<ProjectEntity> {
         const project = new ProjectEntity();
         project.title = projectDto.title;
         project.projectCategory = projectDto.projectCategory;
@@ -121,8 +145,7 @@ export class ProjectService {
         project.startDate = projectDto.startDate;
         project.projectDescription = projectDto.projectDescription;
         project.projectStatus = projectDto.projectStatus;
-        project.purposeOfCreditDevelopment =
-            projectDto.purposeOfCreditDevelopment;
+
         project.projectParticipant = requestUser.organizationName;
         project.address = projectDto.contactAddress;
         project.telephone = projectDto.contactPhoneNo;
@@ -133,8 +156,10 @@ export class ProjectService {
         project.organization = organization;
         project.createdBy = user;
         project.street = projectDto.street;
+        project.assignees = await this.organizationRepository.find({
+            where: { id: In(projectDto.independentCertifiers) },
+        });
         project.projectProposalStage = ProjectProposalStage.SUBMITTED_INF;
-
         if (
             [
                 ProjectCategoryEnum.AFFORESTATION,
@@ -161,15 +186,45 @@ export class ProjectService {
         project: ProjectEntity,
         requestUser: JWTPayload,
     ) {
-        const admins = await this.userService.getDNAAdmins();
+        const admins = await this.userService.getAdminsByType(
+            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+        );
         const countryName = this.configService.get('country');
 
         for (const admin of admins) {
             const mailDTO: MailTemplateDTO = {
-                subject: INF_CREATE_HEADER,
+                subject: INF_CREATE_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
                 template: MailTemplateEnum.INF_CREATE,
                 to: admin.email,
                 context: {
+                    userName: admin?.name,
+                    organizationName: requestUser.organizationName,
+                    countryName: countryName,
+                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
+                },
+            };
+
+            await this.mailService.sendMail(mailDTO);
+        }
+    }
+    private async notifyCertifiers(
+        project: ProjectEntity,
+        ids: number[],
+        requestUser: JWTPayload,
+    ) {
+        const admins = await this.userService.getAdminsByIds(ids);
+        const countryName = this.configService.get('country');
+
+        for (const admin of admins) {
+            const mailDTO: MailTemplateDTO = {
+                subject: INF_ASSIGN_HEADER,
+                template: MailTemplateEnum.INF_ASSIGN,
+                to: admin.email,
+                context: {
+                    userName: admin?.name,
                     organizationName: requestUser.organizationName,
                     countryName: countryName,
                     projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
@@ -185,50 +240,65 @@ export class ProjectService {
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
         this.helperService.validateRequestUser(requestUser);
-        if (!query.filterAnd) {
-            const filterAnd: FilterEntry[] = [];
-            query.filterAnd = filterAnd;
-        }
+        // if (!query.filterAnd) {
+        //     const filterAnd: FilterEntry[] = [];
+        //     query.filterAnd = filterAnd;
+        // }
 
-        if (
-            !(
-                requestUser.organizationRole ==
-                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
-            )
-        ) {
-            query.filterAnd.push({
-                key: 'organization"."id',
-                operation: '=',
-                value: requestUser.organizationId,
-            });
-        }
+        // if (
+        //     !(
+        //         requestUser.organizationRole ==
+        //         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+        //     )
+        // ) {
+        //     query.filterAnd.push({
+        //         key: 'organization"."id',
+        //         operation: '=',
+        //         value: requestUser.organizationId,
+        //     });
+        // }
 
-        const [entities, total] = await this.projectRepository
-            .createQueryBuilder('project')
-            .leftJoinAndSelect('project.organization', 'organization')
-            .leftJoinAndSelect(
-                'organization.organizationType',
-                'organizationType',
-            )
-            .where(this.helperService.generateWhereSQL(query))
-            .orderBy(
-                query?.sort?.key && `"${query?.sort?.key}"`,
-                query?.sort?.order,
-                query?.sort?.nullFirst !== undefined
-                    ? query?.sort?.nullFirst === true
-                        ? 'NULLS FIRST'
-                        : 'NULLS LAST'
-                    : undefined,
-            )
-            .offset(query.size * query.page - query.size)
-            .limit(query.size)
-            .getManyAndCount();
-        const oldFormatData = entities.map((project) =>
-            this.mapNewQueryToOldQuery(project),
+        // const [entities, total] = await this.projectRepository
+        //     .createQueryBuilder('project')
+        //     .leftJoinAndSelect('project.organization', 'organization')
+        //     .leftJoinAndSelect(
+        //         'organization.organizationType',
+        //         'organizationType',
+        //     )
+        //     .where(this.helperService.generateWhereSQL(query))
+        //     .orderBy(
+        //         query?.sort?.key && `"${query?.sort?.key}"`,
+        //         query?.sort?.order,
+        //         query?.sort?.nullFirst !== undefined
+        //             ? query?.sort?.nullFirst === true
+        //                 ? 'NULLS FIRST'
+        //                 : 'NULLS LAST'
+        //             : undefined,
+        //     )
+        //     .offset(query.size * query.page - query.size)
+        //     .limit(query.size)
+        //     .getManyAndCount();
+        // const oldFormatData = entities.map((project) =>
+        //     this.mapNewQueryToOldQuery(project),
+        // );
+        // return new DataListResponseDto(
+        //     oldFormatData ? oldFormatData : undefined,
+        //     total ? total : undefined,
+        // );
+
+        const data = await this.guardianService.getProjects(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
         );
+        const oldFormatData = data?.data.map((project) => {
+            console.log(project?.document?.credentialSubject[0]);
+            this.mapNewQueryToOldQuery(project?.document?.credentialSubject[0]);
+        });
         return new DataListResponseDto(
             oldFormatData ? oldFormatData : undefined,
-            total ? total : undefined,
+            oldFormatData.length,
         );
     }
 
@@ -251,7 +321,6 @@ export class ProjectService {
             additionalDocuments: project.additionalDocuments,
             projectStatus: project.projectStatus,
             projectStatusDescription: project.projectStatusDescription,
-            purposeOfCreditDevelopment: project.purposeOfCreditDevelopment,
             startDate: project.startDate,
             companyId: project?.organization?.id,
             postalCode: project.postalCode,
@@ -298,8 +367,7 @@ export class ProjectService {
         // }, {});
 
         const updatedProject = {
-            ...project,
-            company: project.organization,
+            ...this.mapNewQueryToOldQuery(project),
             documents: [],
         };
         return updatedProject;
@@ -405,6 +473,11 @@ export class ProjectService {
         );
 
         if (updateResponse) {
+            await this.objectionLetterGenerateService.generateReport(
+                project?.organization?.name,
+                project.title,
+                project.id,
+            );
             await this.notifyProjectStageChange(
                 project,
                 requestUser,

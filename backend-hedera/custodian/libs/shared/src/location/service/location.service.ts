@@ -18,7 +18,8 @@ export class LocationService {
         @InjectRepository(District) private districtRepo: Repository<District>,
         @InjectRepository(City) private cityRepo: Repository<City>,
         @InjectRepository(Country) private countryRepo: Repository<Country>,
-        @InjectRepository(Country) private postalRepo: Repository<PostalCode>,
+        @InjectRepository(PostalCode)
+        private postalRepo: Repository<PostalCode>,
         private helperService: HelperService,
     ) {}
 

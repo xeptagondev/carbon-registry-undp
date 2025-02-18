@@ -18,3 +18,5 @@ export const INF_APPROVE_HEADER: string =
     'Initial Notification has been Approved';
 export const INF_REJECT_HEADER: string =
     'Initial Notification has been Rejected';
+export const INF_ASSIGN_HEADER: string =
+    'Assigned to Review Project Authorization';
