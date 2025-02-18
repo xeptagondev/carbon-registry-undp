@@ -18,3 +18,9 @@ export const INF_APPROVE_HEADER: string =
     'Initial Notification has been Approved';
 export const INF_REJECT_HEADER: string =
     'Initial Notification has been Rejected';
+
+export const ORG_DEACTIVATE_HEADER: string =
+    'Your {{countryName}} Carbon Registry Organisation is Deactivated';
+
+export const ORG_REACTIVATE_HEADER: string =
+    'Your {{countryName}} Carbon Registry Organisation is Reactivated';

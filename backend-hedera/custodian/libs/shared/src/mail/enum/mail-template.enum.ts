@@ -8,4 +8,6 @@ export enum MailTemplateEnum {
     INF_CREATE = './infCreate',
     INF_APPROVE = './infApprove',
     INF_REJECT = './infReject',
+    ORG_DEACTIVATE = './deactivateOrg',
+    ORG_REACTIVATE = './reactivateOrg',
 }
