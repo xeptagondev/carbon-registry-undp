@@ -16,7 +16,10 @@ import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organiz
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectDto } from '@app/shared/project/dto/project.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
-import { ProjectCategoryEnum } from '@app/shared/project/enum/project.category.enum';
+import {
+    ProjectCategoryEnum,
+    SlProjectCategoryMap,
+} from '@app/shared/project/enum/project.category.enum';
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -56,7 +59,7 @@ export class ProjectService {
 
     async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
         console.log(
-            `Request received to create project with details ${projectDto} from user ${requestUser}`,
+            `Request received to create project with details ${projectDto} from user ${requestUser.userName}`,
         );
 
         this.validateProjectParticipant(requestUser);
@@ -80,12 +83,9 @@ export class ProjectService {
             );
             project.projectId = refId;
             const projectEntity = await this.projectRepository.save(project);
-            delete project.postalCode;
-            delete project.projectParticipant;
             delete project.address;
             delete project.telephone;
             delete project.fax;
-            delete project.email;
             delete project.website;
             delete project.contactPerson;
             delete project.organization;
@@ -99,6 +99,38 @@ export class ProjectService {
                     delete project[key];
                 }
             }
+            const users = await this.guardianService.query(
+                requestUser.email,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.userQuery'),
+                ),
+            );
+
+            const organizations = await this.guardianService.query(
+                requestUser.email,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.organizationQuery'),
+                ),
+            );
+
+            const createdBy = users?.data.find((user) => {
+                if (
+                    user?.document?.credentialSubject[0]?.name ===
+                    requestUser.userName
+                ) {
+                    return user?.document?.credentialSubject[0];
+                }
+            });
+
+            const createdOrg = organizations?.data.find((organization) => {
+                if (
+                    organization?.document?.credentialSubject[0]?.name ===
+                    requestUser.organizationName
+                ) {
+                    return organization?.document?.credentialSubject[0];
+                }
+            });
+
             await this.guardianService.createProject(
                 requestUser.email,
                 this.utilService.getBlock(
@@ -106,9 +138,47 @@ export class ProjectService {
                 ),
                 {
                     document: {
-                        ...project,
-                        geographicalLocationCoordinates: ['we'],
-                        additionalDocuments: 'docs',
+                        title: projectDto.title,
+                        projectCategory:
+                            SlProjectCategoryMap[projectDto.projectCategory],
+                        otherProjectCategory: projectDto.otherProjectCategory,
+                        landExtentReforestation: projectDto.landExtent,
+                        speciesPlantedReforestation: projectDto.speciesPlanted,
+                        landExtentAfforestation: projectDto.landExtent,
+                        speciesPlantedAfforestation: projectDto.speciesPlanted,
+                        projectCapacity: projectDto.proposedProjectCapacity,
+                        province: projectDto.province,
+                        district: projectDto.district,
+                        city: projectDto.city,
+                        geographicalLocationCoordinates: {
+                            type: 'MultiPoint',
+                            coordinates: [[1, 2]],
+                        },
+                        projectGeography: projectDto.projectGeography,
+                        proposedProjectCapacity:
+                            projectDto.proposedProjectCapacity,
+                        projectDescription: projectDto.projectDescription,
+                        additionalDocuments: 'doc',
+                        projectStatus: projectDto.projectStatus,
+                        projectStatusDescription:
+                            projectDto.projectStatusDescription,
+                        startDate: '2025-02-19',
+                        postalZipCode: projectDto.postalCode,
+                        StreetNameAndNumber: projectDto.street,
+                        postalCode: projectDto.postalCode,
+                        projectParticipant: projectDto.projectParticipant,
+                        contactName: projectDto.contactName,
+                        contactEmail: projectDto.contactEmail,
+                        contactPhoneNo: projectDto.contactPhoneNo,
+                        contactWebsite: projectDto.contactWebsite,
+                        contactAddress: projectDto.contactAddress,
+                        createdBy: createdBy
+                            ? createdBy?.document?.credentialSubject[0]
+                            : undefined,
+                        organization: createdOrg
+                            ? createdOrg?.document?.credentialSubject[0]
+                            : undefined,
+                        refId: refId,
                     },
                     ref: null,
                 },
@@ -323,15 +393,17 @@ export class ProjectService {
             ),
         );
         const oldFormatData = data?.data.map((project) => {
-            console.log(project?.document?.credentialSubject[0]);
-            this.mapNewQueryToOldQuery(project?.document?.credentialSubject[0]);
+            return this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            );
         });
-        return new DataListResponseDto(undefined, oldFormatData.length);
+        return new DataListResponseDto(oldFormatData, oldFormatData.length);
     }
 
-    mapNewQueryToOldQuery(project: ProjectEntity) {
+    mapNewQueryToOldQuery(id: any, project: any) {
         return {
-            id: project.id,
+            id: id,
             title: project.title,
             projectCategory: project.projectCategory,
             otherProjectCategory: project.otherProjectCategory,
@@ -394,7 +466,7 @@ export class ProjectService {
         // }, {});
 
         const updatedProject = {
-            ...this.mapNewQueryToOldQuery(project),
+            ...this.mapNewQueryToOldQuery(1, project),
             documents: [],
         };
         return updatedProject;
