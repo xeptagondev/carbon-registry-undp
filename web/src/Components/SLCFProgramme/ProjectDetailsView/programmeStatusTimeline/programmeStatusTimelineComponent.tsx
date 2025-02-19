@@ -284,6 +284,7 @@ const ProgrammeStatusTimelineComponent: React.FC<ProgrammeStatusTimelineComponen
   programmeDetails,
   translator,
 }) => {
+  console.log('---------programmeStatus-----------', programmeDetails);
   const t = translator;
   const currentStep = getCurrentStep(programmeDetails.projectProposalStage);
   const infContent = getINFContent(programmeDetails.projectProposalStage, t);
@@ -294,6 +295,7 @@ const ProgrammeStatusTimelineComponent: React.FC<ProgrammeStatusTimelineComponen
   return (
     <Steps
       current={currentStep}
+      direction="vertical"
       items={[
         {
           title: t('slcfRoadmapTimeline:infTitle'),
