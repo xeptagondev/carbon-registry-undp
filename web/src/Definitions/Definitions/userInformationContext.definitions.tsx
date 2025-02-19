@@ -6,6 +6,7 @@ export type UserProps = {
   companyLogo: string;
   companyName: string;
   companyState: number;
+  name: string;
 };
 
 export interface UserContextProps {

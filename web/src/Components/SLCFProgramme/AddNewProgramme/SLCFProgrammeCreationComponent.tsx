@@ -198,6 +198,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
     getProvinces();
     getCountryList();
     getIndependentCertifiers();
+    form.setFieldValue('projectParticipant', localStorage.getItem('name') || '');
   }, []);
 
   const onProvinceSelect = async (value: any) => {
@@ -276,6 +277,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
       startDate: moment(values?.startTime).startOf('day').unix(),
       additionalDocuments: base64Docs,
       contactName: values?.contactName,
+      projectParticipant: values?.projectParticipant,
       contactFax: formatPhoneNumberIntl(values?.contactFax),
       contactAddress: values?.contactAddress,
       contactWebsite: values?.contactWebsite,
@@ -810,7 +812,7 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                                 name="independentCertifiers"
                                 rules={[
                                   {
-                                    required: false,
+                                    required: true,
                                     message: `${t('addProgramme:independentCertifiers')} ${t(
                                       'isRequired'
                                     )}`,
@@ -930,21 +932,19 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                         <Row className="row" gutter={[40, 16]}>
                           <Col xl={12} md={24}>
                             <Form.Item
-                              label={t('addProgramme:contactPersonName')}
-                              name={'contactName'}
+                              label={t('addProgramme:projectParticipant')}
+                              name={'projectParticipant'}
                               rules={[
                                 {
                                   required: true,
-                                  message: `${t('addProgramme:contactPersonName')} ${t(
+                                  message: `${t('addProgramme:projectParticipant')} ${t(
                                     'isRequired'
                                   )}`,
                                 },
                               ]}
                             >
-                              <Input size="large" />
+                              <Input disabled size="large" />
                             </Form.Item>
-                          </Col>
-                          <Col xl={12} md={24}>
                             <Form.Item
                               label={t('addProgramme:email')}
                               name="contactEmail"
@@ -980,6 +980,20 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                               ]}
                             >
                               <Input size="large" />
+                            </Form.Item>
+                          </Col>
+                          <Col xl={12} md={24}>
+                            <Form.Item
+                              label={t('addProgramme:address')}
+                              name={'contactAddress'}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: `${t('addProgramme:address')} ${t('isRequired')}`,
+                                },
+                              ]}
+                            >
+                              <TextArea rows={6} />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1097,16 +1111,18 @@ export const SLCFProgrammeCreationComponent = (props: any) => {
                           </Col>
                           <Col xl={12} md={24}>
                             <Form.Item
-                              label={t('addProgramme:address')}
-                              name={'contactAddress'}
+                              label={t('addProgramme:contactPersonName')}
+                              name={'contactName'}
                               rules={[
                                 {
                                   required: true,
-                                  message: `${t('addProgramme:address')} ${t('isRequired')}`,
+                                  message: `${t('addProgramme:contactPersonName')} ${t(
+                                    'isRequired'
+                                  )}`,
                                 },
                               ]}
                             >
-                              <TextArea rows={4} />
+                              <Input size="large" />
                             </Form.Item>
                           </Col>
                         </Row>
