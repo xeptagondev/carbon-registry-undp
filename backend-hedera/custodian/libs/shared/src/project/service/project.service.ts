@@ -23,8 +23,9 @@ import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UserService } from '@app/shared/users/service/user.service';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
-import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
+import { CounterType } from '@app/shared/util/enum/counter.type.enum';
+import { CounterService } from '@app/shared/util/service/counter.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
 import { UtilService } from '@app/shared/util/service/util.service';
@@ -49,6 +50,7 @@ export class ProjectService {
         private readonly configService: ConfigService,
         private readonly utilService: UtilService,
         private readonly mailService: MailService,
+        private readonly counterService: CounterService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
     ) {}
 
@@ -72,6 +74,11 @@ export class ProjectService {
                 organization,
             );
 
+            const refId = await this.counterService.incrementCount(
+                CounterType.PROJECT,
+                4,
+            );
+            project.projectId = refId;
             const projectEntity = await this.projectRepository.save(project);
             delete project.postalCode;
             delete project.projectParticipant;
