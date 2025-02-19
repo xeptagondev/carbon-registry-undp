@@ -103,7 +103,7 @@ export class ProjectService {
                         geographicalLocationCoordinates: ['we'],
                         additionalDocuments: 'docs',
                     },
-                    ref: { test: 'test' },
+                    ref: null,
                 },
             );
             // await this.notifyAdmins(projectEntity, requestUser);
@@ -309,7 +309,7 @@ export class ProjectService {
         //     total ? total : undefined,
         // );
 
-        const data = await this.guardianService.getProjects(
+        const data = await this.guardianService.query(
             requestUser.email,
             this.utilService.getBlock(
                 this.configService.get('blocks.projectQuery'),
@@ -319,7 +319,7 @@ export class ProjectService {
             console.log(project?.document?.credentialSubject[0]);
             this.mapNewQueryToOldQuery(project?.document?.credentialSubject[0]);
         });
-        return new DataListResponseDto(oldFormatData, oldFormatData.length);
+        return new DataListResponseDto(undefined, oldFormatData.length);
     }
 
     mapNewQueryToOldQuery(project: ProjectEntity) {
