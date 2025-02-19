@@ -13,24 +13,24 @@ import {
   message,
 } from 'antd';
 import { InfoCircleOutlined, MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
-import './SLCFProgrammeCreationComponent.scss';
+import './ProgrammeCreationComponent.scss';
 import moment from 'moment';
 import TextArea from 'antd/lib/input/TextArea';
-import { isValidateFileType } from '../../../Utils/DocumentValidator';
-import { DocType } from '../../../Definitions/Enums/document.type';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
-import { getBase64 } from '../../../Definitions/Definitions/programme.definitions';
+import { isValidateFileType } from '../../Utils/DocumentValidator';
+import { DocType } from '../../Definitions/Enums/document.type';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
 import { useNavigate } from 'react-router-dom';
-import GetMultipleLocationsMapComponent from '../../Maps/GetMultipleLocationsMapComponent';
-import { Loading } from '../../Loading/loading';
+import GetMultipleLocationsMapComponent from '../Maps/GetMultipleLocationsMapComponent';
+import { Loading } from '../Loading/loading';
 import PhoneInput, {
   formatPhoneNumber,
   formatPhoneNumberIntl,
   isPossiblePhoneNumber,
 } from 'react-phone-number-input';
 import InfDocumentInformation from './infDocumentInfo';
-import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
+import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -62,7 +62,7 @@ export const PURPOSE_CREDIT_DEVELOPMENT: { [key: string]: string } = {
   TRACK_2: 'Track 2',
 };
 
-export const SLCFProgrammeCreationComponent = (props: any) => {
+export const ProgrammeCreationComponent = (props: any) => {
   const { translator } = props;
   const [current, setCurrent] = useState<number>(0);
   const navigate = useNavigate();

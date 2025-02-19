@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AddCostQuotationForm } from '../../Components/SLCFProgramme/AddCostQuotation/AddCostQuotationForm';
+import { AddCostQuotationForm } from '../../Components/AddCostQuotation/AddCostQuotationForm';
 
 const SLCFCostQuotationForm = () => {
   const navigate = useNavigate();

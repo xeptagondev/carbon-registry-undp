@@ -9,17 +9,14 @@ import { DataAndParametersStep } from './DataAndParametersStep';
 import { QualificationStep } from './QuantificationStep';
 import { AnnexureStep } from './AnnexureStep';
 import { useForm } from 'antd/lib/form/Form';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import moment from 'moment';
-import { DocumentTypeEnum } from '../../../Definitions/Enums/document.type.enum';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
-import {
-  extractFilePropertiesFromLink,
-  fileUploadValueExtract,
-} from '../../../Utils/utilityHelper';
-import { SlcfFormActionModel } from '../../Models/SlcfFormActionModel';
-import { PopupInfo } from '../../../Definitions/Definitions/ndcDetails.definitions';
+import { DocumentTypeEnum } from '../../Definitions/Enums/document.type.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { extractFilePropertiesFromLink, fileUploadValueExtract } from '../../Utils/utilityHelper';
+import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
+import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 const StepperComponent = (props: any) => {
   const navigate = useNavigate();

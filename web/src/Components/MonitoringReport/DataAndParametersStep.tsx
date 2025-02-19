@@ -1,7 +1,7 @@
 import { Button, Col, Form, Input, Row } from 'antd';
 
 import TextArea from 'antd/lib/input/TextArea';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
 
 export const DataAndParametersStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, countries, prev, onValueChange } =

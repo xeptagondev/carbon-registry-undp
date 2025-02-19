@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { SLCFProgrammeCreationComponent } from '../../Components/SLCFProgramme/AddNewProgramme/SLCFProgrammeCreationComponent';
+import { SLCFProgrammeCreationComponent } from '../../Components/AddNewProgramme/ProgrammeCreationComponent';
 
 const SLCFAddProgramme = () => {
   const navigate = useNavigate();
