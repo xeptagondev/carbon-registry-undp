@@ -73,6 +73,25 @@ export class ProjectService {
             );
 
             const projectEntity = await this.projectRepository.save(project);
+            delete project.postalCode;
+            delete project.projectParticipant;
+            delete project.address;
+            delete project.telephone;
+            delete project.fax;
+            delete project.email;
+            delete project.website;
+            delete project.contactPerson;
+            delete project.organization;
+            delete project.createdBy;
+            delete project.street;
+            delete project.assignees;
+            delete project.projectProposalStage;
+            delete project.id;
+            for (const key in project) {
+                if (project[key] === null || project[key] === undefined) {
+                    delete project[key];
+                }
+            }
             await this.guardianService.createProject(
                 requestUser.email,
                 this.utilService.getBlock(
@@ -80,22 +99,22 @@ export class ProjectService {
                 ),
                 {
                     document: {
-                        name: project.title,
-                        loi: 'https://example.com',
-                        pin: 'https://example.com',
+                        ...project,
+                        geographicalLocationCoordinates: ['we'],
+                        additionalDocuments: 'docs',
                     },
-                    ref: null,
+                    ref: { test: 'test' },
                 },
             );
-            await this.notifyAdmins(projectEntity, requestUser);
-            await this.notifyCertifiers(
-                projectEntity,
-                projectDto.independentCertifiers,
-                requestUser,
-            );
-            await this.logProjectStage(
-                `Project with title: ${project.title} has been created by ${requestUser.userName}`,
-            );
+            // await this.notifyAdmins(projectEntity, requestUser);
+            // await this.notifyCertifiers(
+            //     projectEntity,
+            //     projectDto.independentCertifiers,
+            //     requestUser,
+            // );
+            // await this.logProjectStage(
+            //     `Project with title: ${project.title} has been created by ${requestUser.userName}`,
+            // );
         } catch (error) {
             throw new HttpException(
                 'An error occurred while creating the project',
@@ -156,6 +175,7 @@ export class ProjectService {
         project.organization = organization;
         project.createdBy = user;
         project.street = projectDto.street;
+
         project.assignees = await this.organizationRepository.find({
             where: { id: In(projectDto.independentCertifiers) },
         });
@@ -177,6 +197,9 @@ export class ProjectService {
             ].includes(projectDto.projectCategory)
         ) {
             project.speciesPlanted = null;
+        }
+        if (ProjectCategoryEnum.OTHER === projectDto.projectCategory) {
+            project.otherProjectCategory = projectDto.otherProjectCategory;
         }
 
         return project;
@@ -296,10 +319,7 @@ export class ProjectService {
             console.log(project?.document?.credentialSubject[0]);
             this.mapNewQueryToOldQuery(project?.document?.credentialSubject[0]);
         });
-        return new DataListResponseDto(
-            oldFormatData ? oldFormatData : undefined,
-            oldFormatData.length,
-        );
+        return new DataListResponseDto(oldFormatData, oldFormatData.length);
     }
 
     mapNewQueryToOldQuery(project: ProjectEntity) {
