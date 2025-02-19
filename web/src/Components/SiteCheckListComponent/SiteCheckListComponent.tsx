@@ -32,7 +32,7 @@ import { DocType } from '../../Definitions/Enums/document.type';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
-import { PURPOSE_CREDIT_DEVELOPMENT } from '../SLCFProgramme/AddNewProgramme/SLCFProgrammeCreationComponent';
+import { PURPOSE_CREDIT_DEVELOPMENT } from '../AddNewProgramme/ProgrammeCreationComponent';
 import GetMultipleLocationsMapComponent from '../Maps/GetMultipleLocationsMapComponent';
 import { Loading } from '../Loading/loading';
 

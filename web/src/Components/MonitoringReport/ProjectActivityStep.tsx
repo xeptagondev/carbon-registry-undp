@@ -8,12 +8,12 @@ import PhoneInput, {
 } from 'react-phone-number-input';
 
 import moment from 'moment';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import TextArea from 'antd/lib/input/TextArea';
 import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
-import GetLocationMapComponent from '../../Maps/GetLocationMapComponent';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
-import LabelWithTooltip, { TooltipPostion } from '../../LabelWithTooltip/LabelWithTooltip';
+import GetLocationMapComponent from '../Maps/GetLocationMapComponent';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
 export const ProjectActivityStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, countries, prev, onValueChange } =
     props;

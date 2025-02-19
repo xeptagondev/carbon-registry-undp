@@ -7,7 +7,7 @@ import PhoneInput, {
 } from 'react-phone-number-input';
 
 import moment from 'moment';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
 
 export const ProjectDetailsStep = (props: any) => {
   const {

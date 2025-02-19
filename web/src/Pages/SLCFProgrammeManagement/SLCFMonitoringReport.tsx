@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { SLCFMonitoringReportComponent } from '../../Components/SLCFProgramme/MonitoringReport/SLCFMonitoringReportComponent';
+import { SLCFMonitoringReportComponent } from '../../Components/MonitoringReport/SLCFMonitoringReportComponent';
 
 const SLCFMonitoringReport = () => {
   const navigate = useNavigate();

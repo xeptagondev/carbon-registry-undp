@@ -3,13 +3,13 @@ import { Button, Col, Form, Input, Row, message, Typography, DatePicker, Upload 
 import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import './AddCostQuotationForm.scss';
 import moment from 'moment';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
-import { getBase64 } from '../../../Definitions/Definitions/programme.definitions';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import TextArea from 'antd/lib/input/TextArea';
-import { isValidateFileType } from '../../../Utils/DocumentValidator';
-import { DocType } from '../../../Definitions/Enums/document.type';
+import { isValidateFileType } from '../../Utils/DocumentValidator';
+import { DocType } from '../../Definitions/Enums/document.type';
 const { Text } = Typography;
 
 export const AddCostQuotationForm = (props: any) => {

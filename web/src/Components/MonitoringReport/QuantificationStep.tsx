@@ -2,8 +2,8 @@ import { UploadOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, Row, Upload } from 'antd';
 
 import TextArea from 'antd/lib/input/TextArea';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
-import NetEmissionReduction from '../../Common/NetEmissonReduction';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import NetEmissionReduction from '../Common/NetEmissonReduction';
 export const QualificationStep = (props: any) => {
   const {
     useLocation,
