@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useAbilityContext } from '../../Casl/Can';
 import { ProgrammeManagementColumns } from '../../Definitions/Enums/programme.management.columns.enum';
 import { ProgrammeManagementSlColumns } from '../../Definitions/Enums/programme.management.sl.columns.enum';
-import { SLCFProgrammeManagementComponent } from '../../Components/SLCFProgrammeManagement/SLCFProgrammeManagementComponent';
+import { SLCFProgrammeManagementComponent } from '../../Components/SLCFProgramme/SLCFProgrammeManagement/SLCFProgrammeManagementComponent';
 
-const ProgrammeManagement = () => {
+const SLCFProgrammeManagement = () => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'projectList']);
 
@@ -24,15 +24,15 @@ const ProgrammeManagement = () => {
   ];
 
   const onNavigateToProgrammeView = (record: any) => {
-      navigate(`/programmeManagement/view/${record.refId}`, { state: { record } });
+    navigate(`/programmeManagementSLCF/view/${record.refId}`, { state: { record } });
   };
 
   const onClickAddProgramme = () => {
-    navigate('/programmeManagement/addProgramme');
+    navigate('/programmeManagementSLCF/addProgramme');
   };
 
   const onClickAddInvestment = () => {
-    navigate('/programmeManagement/addInvestment');
+    navigate('/programmeManagementSLCF/addInvestment');
   };
 
   return (
@@ -47,4 +47,4 @@ const ProgrammeManagement = () => {
   );
 };
 
-export default ProgrammeManagement;
+export default SLCFProgrammeManagement;
