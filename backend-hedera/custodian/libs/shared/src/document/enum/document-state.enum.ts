@@ -3,5 +3,5 @@ export enum DocumentStateEnum {
     IC_APPROVED = 'IC_APPROVED',
     IC_REJECTED = 'IC_REJECTED',
     DNA_APPROVED = 'DNA_APPROVED',
-    DNA_REJECTED = 'DNAC_REJECTED',
+    DNA_REJECTED = 'DNA_REJECTED',
 }

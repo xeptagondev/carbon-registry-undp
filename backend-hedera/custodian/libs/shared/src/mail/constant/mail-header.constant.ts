@@ -26,3 +26,9 @@ export const ORG_REACTIVATE_HEADER: string =
     'Your {{countryName}} Carbon Registry Organisation is Reactivated';
 export const INF_ASSIGN_HEADER: string =
     'Assigned to Review Project Authorization';
+
+export const PDD_IC_REJECT_HEADER: string =
+    '{{countryName}} Carbon Registry: Project Design Document Certification Denied';
+
+export const PDD_CREATE_HEADER: string =
+    '{{countryName}} Carbon Registry: Project Design Document Submitted!';

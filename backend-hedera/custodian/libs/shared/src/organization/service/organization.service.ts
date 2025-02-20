@@ -617,9 +617,8 @@ export class OrganizationService extends SuperService<
         };
 
         if (
-            user.organizationRole == OrganizationTypeEnum.PROJECT_DEVELOPER ||
-            user.organizationRole ==
-                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER ||
+            user.organizationRole === OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
             editData.paymentId = dto.paymentId;
         }

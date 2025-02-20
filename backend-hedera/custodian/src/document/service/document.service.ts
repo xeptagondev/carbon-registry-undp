@@ -7,8 +7,19 @@ import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { DocumentActionDTO } from '../dto/document-action-request.dto';
+import { ConfigService } from '@nestjs/config';
+import { MailService } from '@app/shared/mail/service/mail.service';
+import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
+import {
+    PDD_CREATE_HEADER,
+    PDD_IC_REJECT_HEADER,
+} from '@app/shared/mail/constant/mail-header.constant';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
+import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 
 @Injectable()
 export class DocumentService {
@@ -17,6 +28,9 @@ export class DocumentService {
         private readonly documentRepository: Repository<DocumentEntity>,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
+        private readonly configService: ConfigService,
+        private readonly mailService: MailService,
+        private readonly dataSource: DataSource,
     ) {}
 
     async getDocumentWithProjectAssignees(id: number) {
@@ -28,6 +42,7 @@ export class DocumentService {
                 project: {
                     assignees: true,
                 },
+                submittedUser: true,
             },
         });
     }
@@ -110,6 +125,32 @@ export class DocumentService {
 
         // save document
         await this.documentRepository.save(document);
+
+        // TODO: send emails and other actions
+        if (requestData.action === DocumentStateEnum.IC_REJECTED) {
+            // send IC rejection email(s) and perform other actions
+            const countryName = this.configService.get('country');
+
+            const mailDTO: MailTemplateDTO = {
+                subject: PDD_IC_REJECT_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+                template: MailTemplateEnum.PDD_IC_REJECT,
+                to: document.submittedUser.email,
+                context: {
+                    username: document.submittedUser.name,
+                    organizationName: jwtData.organizationName,
+                    countryName: countryName,
+                    // TODO: fix the link
+                    programmePageLink: this.configService.get('url') + '/',
+                },
+            };
+
+            await this.mailService.sendMail(mailDTO);
+        } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
+            // send IC rejection email(s) and perform other actions
+        }
     }
 
     async approve(
@@ -159,6 +200,159 @@ export class DocumentService {
                     jwtData,
                 );
             }
+        }
+    }
+
+    async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
+        // get the last document of the project of the same type
+        let lastDoc: DocumentEntity = null;
+        if (dto.activityId) {
+            lastDoc = await this.documentRepository.findOne({
+                where: {
+                    documentType: dto.documentType,
+                    project: {
+                        id: dto.projectId,
+                    },
+                    activity: {
+                        id: dto.activityId,
+                    },
+                },
+                order: {
+                    version: 'DESC',
+                },
+            });
+        } else {
+            lastDoc = await this.documentRepository.findOne({
+                where: {
+                    documentType: dto.documentType,
+                    project: {
+                        id: dto.projectId,
+                    },
+                },
+                order: {
+                    version: 'DESC',
+                },
+            });
+        }
+
+        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+        if (
+            lastDoc &&
+            !(
+                lastDoc.state === DocumentStateEnum.IC_REJECTED ||
+                lastDoc.state === DocumentStateEnum.DNA_REJECTED
+            )
+        ) {
+            throw new HttpException(
+                'Action not allowed. Conflicting documents',
+                HttpStatus.CONFLICT,
+            );
+        }
+
+        // TODO: depending on the document type, do a verification on 'data' field separately
+
+        // start transaction and save document
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            await queryRunner.startTransaction();
+            const project: ProjectEntity = await queryRunner.manager.findOne(
+                ProjectEntity,
+                {
+                    where: { id: dto.projectId },
+                    relations: { organization: true, assignees: true },
+                },
+            );
+
+            if (!project) {
+                throw new HttpException(
+                    'Project not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const submittedUser: UsersEntity =
+                await queryRunner.manager.findOne(UsersEntity, {
+                    where: { id: jwtData.userId },
+                    relations: { organization: true },
+                });
+
+            // PD has to be an Admin of the same organization of the project the document is being submitted to
+            if (
+                jwtData.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                jwtData.userRole === RoleEnum.Admin &&
+                submittedUser.organization.id !== project.organization.id
+            ) {
+                throw new HttpException(
+                    'Unauthorized',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
+            let activity: ActivityEntity = null;
+            if (dto.activityId) {
+                activity = await queryRunner.manager.findOne(ActivityEntity, {
+                    where: { id: dto.activityId },
+                });
+            }
+
+            // create document in 'PENDING' state
+            const document: DocumentEntity = {
+                name: dto.name,
+                project: project,
+                documentType: dto.documentType,
+                state: DocumentStateEnum.PENDING,
+                activity: activity,
+                data: dto.data,
+                submittedUser: submittedUser,
+            };
+
+            // save document
+            await queryRunner.manager.save(DocumentEntity, document);
+
+            // send email
+            if (dto.documentType === DocumentEnum.PDD) {
+                // get assigned ICs
+                const assigneeEmails: string[] = project.assignees.map(
+                    (user) => user.email,
+                );
+
+                // send PDD create email to assignees
+                const countryName = this.configService.get('country');
+
+                const mailDTO: MailTemplateDTO = {
+                    subject: PDD_CREATE_HEADER.replace(
+                        '{{countryName}}',
+                        countryName,
+                    ),
+                    template: MailTemplateEnum.PDD_CREATE,
+                    to: assigneeEmails,
+                    context: {
+                        // username: document.submittedUser.name,
+                        organizationName: jwtData.organizationName,
+                        countryName: countryName,
+                        // TODO: fix the link
+                        programmePageLink: this.configService.get('url') + '/',
+                    },
+                };
+
+                // TODO: Change project state?
+
+                await this.mailService.sendMail(mailDTO);
+            }
+
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            console.log(err);
+            await queryRunner.rollbackTransaction();
+            throw new HttpException(
+                'Failed to submit document',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        } finally {
+            await queryRunner.release();
         }
     }
 }

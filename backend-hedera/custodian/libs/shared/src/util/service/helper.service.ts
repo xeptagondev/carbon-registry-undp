@@ -2,6 +2,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { QueryDto } from '../dto/query.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 
 @Injectable()
 export class HelperService {
@@ -29,6 +31,24 @@ export class HelperService {
             }
         }
         return query;
+    }
+
+    /**
+     * Validates an object against the validation rules defined in the class.
+     *
+     * @param cls The class to validate against.
+     * @param obj The plain object to validate.
+     * @returns true if the object is valid, false otherwise.
+     */
+    public isValidInstance<T extends object>(
+        cls: { new (...args: any[]): T },
+        obj: any,
+    ): obj is T {
+        // Transform the plain object to an instance of the class.
+        const instance = plainToInstance(cls, obj);
+        // Synchronously validate the instance.
+        const errors = validateSync(instance);
+        return errors.length === 0;
     }
 
     public isBase64(text: string): boolean {
