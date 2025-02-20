@@ -1,8 +1,9 @@
+// not used currently
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ProgrammeCreationComponent } from '../../Components/AddNewProgramme/ProgrammeCreationComponent';
+import { ProgrammeCreationComponent } from '../../Components/Programme/AddNewProgramme/programmeCreationComponent';
 
-const SLCFAddProgramme = () => {
+const AddProgramme = () => {
   const navigate = useNavigate();
   const { i18n } = useTranslation(['common', 'addProgramme']);
 
@@ -19,4 +20,4 @@ const SLCFAddProgramme = () => {
   );
 };
 
-export default SLCFAddProgramme;
+export default AddProgramme;

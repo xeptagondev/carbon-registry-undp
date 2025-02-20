@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SLCFMonitoringReportComponent } from '../../Components/MonitoringReport/SLCFMonitoringReportComponent';
 
-const SLCFMonitoringReport = () => {
+const MonitoringReport = () => {
   const navigate = useNavigate();
   const { i18n } = useTranslation(['common', 'monitoringReport']);
 
@@ -19,4 +19,4 @@ const SLCFMonitoringReport = () => {
   );
 };
 
-export default SLCFMonitoringReport;
+export default MonitoringReport;
