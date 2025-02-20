@@ -7,7 +7,7 @@ const SLCFRetirement = () => {
   const { i18n } = useTranslation(['common', 'creditTransfer', 'programme', 'view']);
 
   const onNavigateToProgrammeView = (programmeId: any) => {
-    navigate('/programmeManagementSLCF/view/' + programmeId);
+    navigate('/programmeManagement/view/' + programmeId);
   };
 
   return (

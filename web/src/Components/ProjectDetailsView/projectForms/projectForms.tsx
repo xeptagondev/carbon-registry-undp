@@ -63,26 +63,26 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   const navigate = useNavigate();
 
   const navigateToCostQuotationView = () => {
-    navigate(`/programmeManagementSLCF/addCostQuotation/${programmeId}`, {
+    navigate(`/programmeManagement/addCostQuotation/${programmeId}`, {
       state: { isView: true },
     });
   };
 
   const navigateToCostQuotationCreate = () => {
-    navigate(`/programmeManagementSLCF/addCostQuotation/${programmeId}`);
+    navigate(`/programmeManagement/addCostQuotation/${programmeId}`);
   };
 
   const navigateToProposalView = () => {
-    navigate(`/programmeManagementSLCF/projectProposal/${programmeId}`, {
+    navigate(`/programmeManagement/projectProposal/${programmeId}`, {
       state: { isView: true },
     });
   };
   const navigateToProposalCreate = () => {
-    navigate(`/programmeManagementSLCF/projectProposal/${programmeId}`);
+    navigate(`/programmeManagement/projectProposal/${programmeId}`);
   };
 
   const navigateToSiteVisitCheckListView = () => {
-    navigate(`/programmeManagementSLCF/siteVisitCheckList/${programmeId}`, {
+    navigate(`/programmeManagement/siteVisitCheckList/${programmeId}`, {
       state: { isView: true },
     });
   };
@@ -135,32 +135,32 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   };
 
   const navigateToCMACreate = () => {
-    navigate(`/programmeManagementSLCF/cmaForm/${programmeId}`);
+    navigate(`/programmeManagement/cmaForm/${programmeId}`);
   };
 
   const navigateToCMAView = () => {
-    navigate(`/programmeManagementSLCF/cmaForm/${programmeId}`, {
+    navigate(`/programmeManagement/cmaForm/${programmeId}`, {
       state: { isView: true },
     });
   };
   const navigateToCMAEdit = () => {
-    navigate(`/programmeManagementSLCF/cmaForm/${programmeId}`, {
+    navigate(`/programmeManagement/cmaForm/${programmeId}`, {
       state: { isEdit: true },
     });
   };
 
   function navigateToValidationAgreementCreate(): void {
-    navigate(`/programmeManagementSLCF/validationAgreement/${programmeId}`);
+    navigate(`/programmeManagement/validationAgreement/${programmeId}`);
   }
 
   function navigateToValidationAgreementView(): void {
-    navigate(`/programmeManagementSLCF/validationAgreement/${programmeId}`, {
+    navigate(`/programmeManagement/validationAgreement/${programmeId}`, {
       state: { isView: true },
     });
   }
 
   function navigateToValidationReportCreate(): void {
-    navigate(`/programmeManagementSLCF/validationReport/${programmeId}`, {
+    navigate(`/programmeManagement/validationReport/${programmeId}`, {
       state: {
         mode: FormMode.CREATE,
       },
@@ -168,7 +168,7 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   }
 
   function navigateToValidationReportEdit(): void {
-    navigate(`/programmeManagementSLCF/validationReport/${programmeId}`, {
+    navigate(`/programmeManagement/validationReport/${programmeId}`, {
       state: {
         mode: FormMode.EDIT,
       },
@@ -176,7 +176,7 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   }
 
   function navigateToValidationReportView(): void {
-    navigate(`/programmeManagementSLCF/validationReport/${programmeId}`, {
+    navigate(`/programmeManagement/validationReport/${programmeId}`, {
       state: { mode: FormMode.VIEW },
     });
   }

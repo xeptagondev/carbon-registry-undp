@@ -669,7 +669,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const approveCMA = () => {
-    navigate(`/programmeManagementSLCF/siteVisitCheckList/${id}`);
+    navigate(`/programmeManagement/siteVisitCheckList/${id}`);
   };
   const rejectValidation = async (remark: string) => {
     try {
@@ -700,7 +700,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const navigateToMonitoringReportCreate = () => {
-    navigate(`/programmeManagementSLCF/monitoringReport/${id}`, {
+    navigate(`/programmeManagement/monitoringReport/${id}`, {
       state: {
         mode: FormMode.CREATE,
         docId: null,

@@ -430,7 +430,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "PROJECT_PROPOSAL_ACCEPTED":
@@ -438,7 +438,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "PROJECT_PROPOSAL_REJECTED":
@@ -447,7 +447,7 @@ export class EmailHelperService {
           countryName: systemCountryName,
           programmeName: programme.title,
           remark,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "CMA_CREATE":
@@ -455,7 +455,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "VALIDATION_APPROVED":
@@ -463,7 +463,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "VALIDATION_REJECTED":
@@ -472,7 +472,7 @@ export class EmailHelperService {
           countryName: systemCountryName,
           programmeName: programme.title,
           remark,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "MONITORING_CREATE":
@@ -480,7 +480,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "VERIFICATION_APPROVED":
@@ -488,7 +488,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "VERIFICATION_REJECTED":
@@ -497,7 +497,7 @@ export class EmailHelperService {
           countryName: systemCountryName,
           programmeName: programme.title,
           remark,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "CREDIT_TRANSFER_SL_REQUEST":
@@ -520,7 +520,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          // pageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          // pageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
 
@@ -581,7 +581,7 @@ export class EmailHelperService {
         templateData = {
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "PROGRAMME_SL_REJECTED":
@@ -590,7 +590,7 @@ export class EmailHelperService {
           countryName: systemCountryName,
           programmeName: programme.title,
           remark,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
 
@@ -598,7 +598,7 @@ export class EmailHelperService {
         templateData = {
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "CMA_APPROVED":
@@ -606,7 +606,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "CMA_REJECTED":
@@ -615,7 +615,7 @@ export class EmailHelperService {
           countryName: systemCountryName,
           programmeName: programme.title,
           remark,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "VALIDATION_APPROVED":
@@ -623,7 +623,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "MONITORING_APPROVED":
@@ -631,7 +631,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "MONITORING_REJECTED":
@@ -640,7 +640,7 @@ export class EmailHelperService {
           countryName: systemCountryName,
           programmeName: programme.title,
           remark,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "VERIFICATION_APPROVED":
@@ -648,7 +648,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       case "VERIFICATION_REJECTED":
@@ -657,7 +657,7 @@ export class EmailHelperService {
           countryName: systemCountryName,
           programmeName: programme.title,
           remark,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
       default:
@@ -716,7 +716,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
 
@@ -725,7 +725,7 @@ export class EmailHelperService {
           organisationName: companyDetails.name,
           countryName: systemCountryName,
           programmeName: programme.title,
-          programmePageLink: hostAddress + `/programmeManagementSLCF/view/${programmeId}`,
+          programmePageLink: hostAddress + `/programmeManagement/view/${programmeId}`,
         };
         break;
 
