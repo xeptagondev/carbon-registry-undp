@@ -603,7 +603,7 @@ export class VerificationService {
           programmeName: updatedProgramme.title,
           credits: verificationRequest.creditAmount,
           serialNumber: updatedProgramme.serialNo,
-          pageLink: hostAddress + `/programmeManagementSLCF/view/${updatedProgramme.programmeId}`,
+          pageLink: hostAddress + `/programmeManagement/view/${updatedProgramme.programmeId}`,
         }
       );
 

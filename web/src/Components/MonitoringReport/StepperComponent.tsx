@@ -44,7 +44,7 @@ const StepperComponent = (props: any) => {
   const scrollSection = useRef({} as any);
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${id}`);
+    navigate(`/programmeManagement/view/${id}`);
   };
 
   const showModalOnAction = (info: PopupInfo) => {
@@ -70,7 +70,7 @@ const StepperComponent = (props: any) => {
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
-        navigate(`/programmeManagementSLCF/view/${id}`);
+        navigate(`/programmeManagement/view/${id}`);
       }
     } catch (error: any) {
       if (error && error.errors && error.errors.length > 0) {

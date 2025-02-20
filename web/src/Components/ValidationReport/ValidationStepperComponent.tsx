@@ -58,7 +58,7 @@ const StepperComponent = (props: any) => {
   });
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${programId}`);
+    navigate(`/programmeManagement/view/${programId}`);
   };
 
   const scrollToDiv = () => {

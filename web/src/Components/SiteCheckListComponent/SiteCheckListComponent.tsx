@@ -54,7 +54,7 @@ const SiteCheckListComponent = (props: { translator: i18n }) => {
   const { get, post } = useConnection();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${id}`);
+    navigate(`/programmeManagement/view/${id}`);
   };
 
   const getDataToPopulate = async (programmeId: any) => {

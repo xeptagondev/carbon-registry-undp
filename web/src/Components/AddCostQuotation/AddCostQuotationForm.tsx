@@ -27,7 +27,7 @@ export const AddCostQuotationForm = (props: any) => {
   const [form] = Form.useForm();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${id}`);
+    navigate(`/programmeManagement/view/${id}`);
   };
 
   const t = translator.t;

@@ -64,7 +64,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   const navigateToMonitoringReportCreate = (docId: any) => {
-    navigate(`/programmeManagementSLCF/monitoringReport/${programmeId}`, {
+    navigate(`/programmeManagement/monitoringReport/${programmeId}`, {
       state: {
         mode: FormMode.CREATE,
         docId: docId,
@@ -73,7 +73,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   const navigateToMonitoringReportEdit = (docId: any, verificationRequestId: any) => {
-    navigate(`/programmeManagementSLCF/monitoringReport/${programmeId}/${verificationRequestId}`, {
+    navigate(`/programmeManagement/monitoringReport/${programmeId}/${verificationRequestId}`, {
       state: {
         mode: FormMode.EDIT,
         docId: docId,
@@ -82,7 +82,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   const navigateToMonitoringReportView = (verificationRequestId: any) => {
-    navigate(`/programmeManagementSLCF/monitoringReport/${programmeId}/${verificationRequestId}`, {
+    navigate(`/programmeManagement/monitoringReport/${programmeId}/${verificationRequestId}`, {
       state: {
         mode: FormMode.VIEW,
       },
@@ -128,7 +128,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   function navigateToVerificationReportCreate(docId: any): void {
-    navigate(`/programmeManagementSLCF/verificationReport/${programmeId}`, {
+    navigate(`/programmeManagement/verificationReport/${programmeId}`, {
       state: {
         mode: FormMode.CREATE,
         docId: docId,
@@ -138,7 +138,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
 
   const navigateToVerificationReportEdit = (docId: any, verificationRequestId: any) => {
     navigate(
-      `/programmeManagementSLCF/verificationReport/${programmeId}/${verificationRequestId}`,
+      `/programmeManagement/verificationReport/${programmeId}/${verificationRequestId}`,
       {
         state: {
           mode: FormMode.EDIT,
@@ -150,7 +150,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
 
   function navigateToVerificationReportView(verificationRequestId: any): void {
     navigate(
-      `/programmeManagementSLCF/verificationReport/${programmeId}/${verificationRequestId}`,
+      `/programmeManagement/verificationReport/${programmeId}/${verificationRequestId}`,
       {
         state: {
           mode: FormMode.VIEW,

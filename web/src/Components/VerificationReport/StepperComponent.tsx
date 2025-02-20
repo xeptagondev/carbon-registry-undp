@@ -50,7 +50,7 @@ const StepperComponent = (props: any) => {
   };
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${id}`);
+    navigate(`/programmeManagement/view/${id}`);
   };
 
   const approveOrReject = async (verify: boolean, remark?: string) => {
@@ -71,7 +71,7 @@ const StepperComponent = (props: any) => {
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
-        navigate(`/programmeManagementSLCF/view/${id}`);
+        navigate(`/programmeManagement/view/${id}`);
       }
     } catch (error: any) {
       if (error && error.errors && error.errors.length > 0) {
@@ -181,7 +181,7 @@ const StepperComponent = (props: any) => {
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
-          navigate(`/programmeManagementSLCF/view/${id}`);
+          navigate(`/programmeManagement/view/${id}`);
         }
       } catch (error: any) {
         if (error && error.errors && error.errors.length > 0) {
