@@ -65,40 +65,40 @@ export class ProjectService {
         this.validateProjectParticipant(requestUser);
 
         try {
-            const user = await this.getUserById(requestUser.userId);
-            const organization = await this.getOrganizationById(
-                requestUser.organizationId,
-            );
+            // const user = await this.getUserById(requestUser.userId);
+            // const organization = await this.getOrganizationById(
+            //     requestUser.organizationId,
+            // );
 
-            const project = await this.buildProjectEntity(
-                projectDto,
-                requestUser,
-                user,
-                organization,
-            );
+            // const project = await this.buildProjectEntity(
+            //     projectDto,
+            //     requestUser,
+            //     user,
+            //     organization,
+            // );
 
             const refId = await this.counterService.incrementCount(
                 CounterType.PROJECT,
                 4,
             );
-            project.projectId = refId;
-            const projectEntity = await this.projectRepository.save(project);
-            delete project.address;
-            delete project.telephone;
-            delete project.fax;
-            delete project.website;
-            delete project.contactPerson;
-            delete project.organization;
-            delete project.createdBy;
-            delete project.street;
-            delete project.assignees;
-            delete project.projectProposalStage;
-            delete project.id;
-            for (const key in project) {
-                if (project[key] === null || project[key] === undefined) {
-                    delete project[key];
-                }
-            }
+            // project.projectId = refId;
+            // const projectEntity = await this.projectRepository.save(project);
+            // delete project.address;
+            // delete project.telephone;
+            // delete project.fax;
+            // delete project.website;
+            // delete project.contactPerson;
+            // delete project.organization;
+            // delete project.createdBy;
+            // delete project.street;
+            // delete project.assignees;
+            // delete project.projectProposalStage;
+            // delete project.id;
+            // for (const key in project) {
+            //     if (project[key] === null || project[key] === undefined) {
+            //         delete project[key];
+            //     }
+            // }
             const users = await this.guardianService.query(
                 requestUser.email,
                 this.utilService.getBlock(
@@ -179,15 +179,15 @@ export class ProjectService {
                     ref: null,
                 },
             );
-            // await this.notifyAdmins(projectEntity, requestUser);
-            // await this.notifyCertifiers(
-            //     projectEntity,
-            //     projectDto.independentCertifiers,
-            //     requestUser,
-            // );
-            // await this.logProjectStage(
-            //     `Project with title: ${project.title} has been created by ${requestUser.userName}`,
-            // );
+            await this.notifyAdmins(refId, requestUser);
+            await this.notifyCertifiers(
+                refId,
+                projectDto.independentCertifiers,
+                requestUser,
+            );
+            await this.logProjectStage(
+                `Project with title: ${projectDto.title} has been created by ${requestUser.userName}`,
+            );
         } catch (error) {
             throw new HttpException(
                 'An error occurred while creating the project',
@@ -278,10 +278,8 @@ export class ProjectService {
         return project;
     }
 
-    private async notifyAdmins(
-        project: ProjectEntity,
-        requestUser: JWTPayload,
-    ) {
+    private async notifyAdmins(refId: string, requestUser: JWTPayload) {
+        console.log(`Request received to notify admins for project ${refId}`);
         const admins = await this.userService.getAdminsByType(
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
         );
@@ -299,7 +297,7 @@ export class ProjectService {
                     userName: admin?.name,
                     organizationName: requestUser.organizationName,
                     countryName: countryName,
-                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
+                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${refId}`,
                 },
             };
 
@@ -307,10 +305,13 @@ export class ProjectService {
         }
     }
     private async notifyCertifiers(
-        project: ProjectEntity,
+        refId: string,
         ids: number[],
         requestUser: JWTPayload,
     ) {
+        console.log(
+            `Request received to notify certifiers for project ${refId}`,
+        );
         const admins = await this.userService.getAdminsByIds(ids);
         const countryName = this.configService.get('country');
 
@@ -323,7 +324,7 @@ export class ProjectService {
                     userName: admin?.name,
                     organizationName: requestUser.organizationName,
                     countryName: countryName,
-                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
+                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${refId}`,
                 },
             };
 
@@ -406,6 +407,7 @@ export class ProjectService {
             province: project.province,
             district: project.district,
             city: project.city,
+            refId: project.refId,
             geographicalLocationCoordinates:
                 project.geographicalLocationCoordinates,
             projectGeography: project.projectGeography,
@@ -413,7 +415,7 @@ export class ProjectService {
             proposedProjectCapacity: project.proposedProjectCapacity,
             speciesPlanted: project.speciesPlanted,
             projectDescription: project.projectDescription,
-            additionalDocuments: project.additionalDocuments,
+            additionalDocuments: [], //need to update
             projectStatus: project.projectStatus,
             projectStatusDescription: project.projectStatusDescription,
             startDate: project.startDate,
@@ -424,7 +426,9 @@ export class ProjectService {
             contactPhoneNo: project.telephone,
             contactWebsite: project.website,
             contactAddress: project.address,
-            projectProposalStage: project.projectProposalStage,
+            projectProposalStage:
+                project.projectProposalStage ||
+                ProjectProposalStage.SUBMITTED_INF,
             company: project.organization
                 ? {
                       companyId: project.organization.id,
@@ -468,7 +472,7 @@ export class ProjectService {
             ),
         );
         const project = projects?.data.find((project) => {
-            return project?.id === id;
+            return project?.document?.credentialSubject[0]?.refId === id;
         });
 
         const updatedProject = {
