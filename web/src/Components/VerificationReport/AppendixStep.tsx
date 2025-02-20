@@ -2,10 +2,10 @@ import { Button, Col, Form, Row, Upload } from 'antd';
 
 import TextArea from 'antd/lib/input/TextArea';
 import { UploadOutlined } from '@ant-design/icons';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
-import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
-import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
-import { DocumentStatus } from '../../../Definitions/Enums/document.status';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
+import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
+import { DocumentStatus } from '../../Definitions/Enums/document.status';
 export const AppendixStep = (props: any) => {
   const {
     useLocation,

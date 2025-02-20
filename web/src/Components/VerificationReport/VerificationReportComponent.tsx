@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import './VerificationReport.scss';
 import StepperComponent from './StepperComponent';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { useParams } from 'react-router-dom';
-import { DocumentTypeEnum } from '../../../Definitions/Enums/document.type';
+import { DocumentTypeEnum } from '../../Definitions/Enums/document.type';
 import { Col, Row, Select, Tag } from 'antd';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
-import { getDocumentStatusColor } from '../../../Definitions/Definitions/programme.definitions';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { getDocumentStatusColor } from '../../Definitions/Definitions/programme.definitions';
 
 export const VerificationReportComponent = (props: any) => {
   const [countries, setCountries] = useState<[]>([]);

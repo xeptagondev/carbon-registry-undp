@@ -21,12 +21,12 @@ import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import './programmeTransferManagement.scss';
 import './creditRetirementSl.scss';
-import '../../../Styles/common.table.scss';
+import '../../Styles/common.table.scss';
 import * as Icon from 'react-bootstrap-icons';
-import { TooltipColor } from '../../../Styles/role.color.constants';
+import { TooltipColor } from '../../Styles/role.color.constants';
 import { CircleFlag } from 'react-circle-flags';
-import { creditUnit } from '../../../Definitions/Definitions/common.definitions';
-import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
+import { creditUnit } from '../../Definitions/Definitions/common.definitions';
+import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import {
   addCommSepRound,
   addSpaces,
@@ -35,17 +35,17 @@ import {
   getCreditTypeTagType,
   getStageTransferEnumVal,
   getTransferStageTagType,
-} from '../../../Definitions/Definitions/programme.definitions';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
-import { ProgrammeTransfer } from '../../../Definitions/Entities/programmeTransfer';
-import { useSettingsContext } from '../../../Context/SettingsContext/settingsContext';
-import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
-import { Role } from '../../../Definitions/Enums/role.enum';
-import { ProfileIcon } from '../../../Components/IconComponents/ProfileIcon/profile.icon';
-import { ConfigurationSettingsType } from '../../../Definitions/Definitions/settings.definitions';
-import { CreditRetirementSlActionModel } from '../../Models/creditRetirementSlActionModel';
-import { CreditRetirementSl } from '../../../Definitions/Entities/creditRetirementSl';
-import { CreditTransferSlStage, CreditTypeSl } from '../../../Definitions/Enums/creditTypeSl.enum';
+} from '../../Definitions/Definitions/programme.definitions';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { ProgrammeTransfer } from '../../Definitions/Entities/programmeTransfer';
+import { useSettingsContext } from '../../Context/SettingsContext/settingsContext';
+import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
+import { Role } from '../../Definitions/Enums/role.enum';
+import { ProfileIcon } from '../../Components/IconComponents/ProfileIcon/profile.icon';
+import { ConfigurationSettingsType } from '../../Definitions/Definitions/settings.definitions';
+import { CreditRetirementSlActionModel } from '../Models/creditRetirementSlActionModel';
+import { CreditRetirementSl } from '../../Definitions/Entities/creditRetirementSl';
+import { CreditTransferSlStage, CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
 
 type PopupInfo = {
   title: string;

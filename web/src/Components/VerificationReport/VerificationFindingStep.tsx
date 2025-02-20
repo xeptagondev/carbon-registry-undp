@@ -3,7 +3,7 @@ import { Button, Checkbox, Col, DatePicker, Form, Input, Row, Select, Upload } f
 
 import TextArea from 'antd/lib/input/TextArea';
 import moment from 'moment';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
 
 export const VerificationFindingStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, prev, onValueChange } = props;

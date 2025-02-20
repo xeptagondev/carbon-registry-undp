@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { MapSourceData } from '../../../Definitions/Definitions/mapComponent.definitions';
-import { MapComponent } from '../../Maps/mapComponent';
+import { MapSourceData } from '../../Definitions/Definitions/mapComponent.definitions';
+import { MapComponent } from '../Maps/mapComponent';
 import { FormInstance } from 'antd';
 
 interface MapComponentProps {

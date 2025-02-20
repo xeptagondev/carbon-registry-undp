@@ -14,8 +14,8 @@ import {
 } from '@ant-design/icons';
 import './programmeStatusTimelineComponent.scss';
 import * as Icon from 'react-bootstrap-icons';
-import { getProjectProposalStageEnumVal } from '../../../../Definitions/Definitions/programme.definitions';
-import { ProjectProposalStage } from '../../../../Definitions/Enums/programmeStage.enum';
+import { getProjectProposalStageEnumVal } from '../../../Definitions/Definitions/programme.definitions';
+import { ProjectProposalStage } from '../../../Definitions/Enums/programmeStage.enum';
 
 interface ProgrammeStatusTimelineComponentProps {
   programmeDetails: any;
