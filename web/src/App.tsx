@@ -54,8 +54,8 @@ import VerificationReport from './Pages/ProgrammeManagement/VerificationReport';
 import SiteVisitCheckListPage from './Pages/SiteVisitCheckListPage/SiteVisitCheckListPage';
 import Settings from './Pages/Settings/settings';
 import SLCFDashboard from './Pages/Dashboard/slcf/slcfdashboard';
-import AddProgramme from './Pages/ProgrammeManagement/AddProgramme';
-import ProgrammeManagement from './Pages/ProgrammeManagement/ProgrammeManagement';
+import AddProgramme from './Pages/ProgrammeManagement/addProgramme';
+import ProgrammeManagement from './Pages/ProgrammeManagement/programmeManagement';
 
 const App = () => {
   const ability = defineAbility();
