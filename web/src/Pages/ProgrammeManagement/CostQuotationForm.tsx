@@ -2,7 +2,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AddCostQuotationForm } from '../../Components/AddCostQuotation/AddCostQuotationForm';
 
-const SLCFCostQuotationForm = () => {
+const CostQuotationForm = () => {
   const navigate = useNavigate();
   const { i18n } = useTranslation(['common', 'costQuotation']);
   const { id } = useParams();
@@ -21,4 +21,4 @@ const SLCFCostQuotationForm = () => {
   );
 };
 
-export default SLCFCostQuotationForm;
+export default CostQuotationForm;
