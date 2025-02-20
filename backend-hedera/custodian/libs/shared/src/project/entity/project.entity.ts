@@ -15,6 +15,7 @@ import { ProjectStatus } from '../enum/project.status.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { ProjectProposalStage } from '../enum/project.proposal.stage.enum';
+import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 
 @Entity()
 export class ProjectEntity {
@@ -127,11 +128,11 @@ export class ProjectEntity {
         () => OrganizationEntity,
         (organization) => organization.projects,
     )
-    organization: OrganizationEntity;
+    organization?: OrganizationEntity;
 
     @ManyToOne(() => UsersEntity, (user) => user.createdProjects)
     @JoinColumn([{ name: 'created_user_id', referencedColumnName: 'id' }])
-    createdBy: UsersEntity;
+    createdBy?: UsersEntity;
 
     @ManyToOne(() => UsersEntity, (user) => user.approvedProjects, {
         nullable: true,
@@ -163,4 +164,11 @@ export class ProjectEntity {
         nullable: true,
     })
     projectProposalStage: ProjectProposalStage;
+
+    @OneToMany(
+        () => DocumentEntity,
+        (documentEntity) => documentEntity.project,
+        { nullable: true },
+    )
+    documents?: DocumentEntity[];
 }
