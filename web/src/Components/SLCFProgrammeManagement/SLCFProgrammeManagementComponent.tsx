@@ -16,9 +16,9 @@ import {
 } from 'antd';
 import { useEffect, useState } from 'react';
 import './SLCFProgrammeManagementComponent.scss';
-import '../../../Styles/common.table.scss';
-import { UserTableDataType } from '../../../Definitions/Definitions/userManagement.definitions';
-import { TooltipColor } from '../../../Styles/role.color.constants';
+import '../../Styles/common.table.scss';
+import { UserTableDataType } from '../../Definitions/Definitions/userManagement.definitions';
+import { TooltipColor } from '../../Styles/role.color.constants';
 import { CheckboxValueType } from 'antd/lib/checkbox/Group';
 import {
   addSpaces,
@@ -27,22 +27,22 @@ import {
   getCreditTypeTagType,
   getProjectProposalStage,
   getProjectProposalStageEnumVal,
-} from '../../../Definitions/Definitions/programme.definitions';
+} from '../../Definitions/Definitions/programme.definitions';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import { ProgrammeManagementSlColumns } from '../../../Definitions/Enums/programme.management.sl.columns.enum';
+import { ProgrammeManagementSlColumns } from '../../Definitions/Enums/programme.management.sl.columns.enum';
 import { PlusOutlined, EllipsisOutlined } from '@ant-design/icons';
-import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
+import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import * as Icon from 'react-bootstrap-icons';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
-import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import {
   getProjectCategory,
   ProgrammeStatus,
   ProjectProposalStage,
-} from '../../../Definitions/Enums/programmeStage.enum';
-import { ProfileIcon } from '../../IconComponents/ProfileIcon/profile.icon';
-import { CreditTypeSl } from '../../../Definitions/Enums/creditTypeSl.enum';
-import { Role } from '../../../Definitions/Enums/role.enum';
+} from '../../Definitions/Enums/programmeStage.enum';
+import { ProfileIcon } from '../IconComponents/ProfileIcon/profile.icon';
+import { CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
+import { Role } from '../../Definitions/Enums/role.enum';
 
 const { Search } = Input;
 

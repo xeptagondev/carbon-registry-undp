@@ -51,8 +51,8 @@ import { DateTime } from 'luxon';
 import Geocoding from '@mapbox/mapbox-sdk/services/geocoding';
 import TextArea from 'antd/lib/input/TextArea';
 import { ShieldCheck } from 'react-bootstrap-icons';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
-import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import {
   addCommSep,
   addCommSepRound,
@@ -74,62 +74,62 @@ import {
   ProgrammeU,
   sumArray,
   UnitField,
-} from '../../../Definitions/Definitions/programme.definitions';
+} from '../../Definitions/Definitions/programme.definitions';
 import {
   MapSourceData,
   MapTypes,
   MarkerData,
-} from '../../../Definitions/Definitions/mapComponent.definitions';
-import { useSettingsContext } from '../../../Context/SettingsContext/settingsContext';
-import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
-import { Role } from '../../../Definitions/Enums/role.enum';
-import { InvestmentBody } from '../../Investment/investmentBody';
-import { isBase64 } from '../../IconComponents/ProfileIcon/profile.icon';
-import { ProgrammeTransfer } from '../../../Definitions/Entities/programmeTransfer';
+} from '../../Definitions/Definitions/mapComponent.definitions';
+import { useSettingsContext } from '../../Context/SettingsContext/settingsContext';
+import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
+import { Role } from '../../Definitions/Enums/role.enum';
+import { InvestmentBody } from '../Investment/investmentBody';
+import { isBase64 } from '../IconComponents/ProfileIcon/profile.icon';
+import { ProgrammeTransfer } from '../../Definitions/Entities/programmeTransfer';
 import {
   creditUnit,
   dateFormat,
   dateTimeFormat,
-} from '../../../Definitions/Definitions/common.definitions';
-import { addNdcDesc, TimelineBody } from '../../TimelineBody/timelineBody';
-import { RetireType } from '../../../Definitions/Enums/retireType.enum';
-import { CreditTransferStage } from '../../../Definitions/Enums/creditTransferStage.enum';
+} from '../../Definitions/Definitions/common.definitions';
+import { addNdcDesc, TimelineBody } from '../TimelineBody/timelineBody';
+import { RetireType } from '../../Definitions/Enums/retireType.enum';
+import { CreditTransferStage } from '../../Definitions/Enums/creditTransferStage.enum';
 import {
   CreditType,
   ProgrammeStageUnified,
   ProgrammeStatus,
   ProjectProposalStage,
-} from '../../../Definitions/Enums/programmeStage.enum';
-import { TxType } from '../../../Definitions/Enums/TxType.enum';
-import { DocType } from '../../../Definitions/Enums/document.type';
-import { DocumentStatus } from '../../../Definitions/Enums/document.status';
-import { CompanyState } from '../../../Definitions/Enums/company.state.enum';
-import { NdcActionBody } from '../../NdcActions/NdcActionBody/ndcActionBody';
-import { Loading } from '../../Loading/loading';
-import { OrganisationStatus } from '../../OrganisationStatus/organisationStatus';
-import { DevBGColor, DevColor, TooltipColor } from '../../../Styles/role.color.constants';
-import { getValidNdcActions, ProgrammeIssueForm } from '../../Models/programmeIssueForm';
-import { ProgrammeRevokeForm } from '../../Models/programmeRevokeForm';
-import { CarbonSystemType } from '../../../Definitions/Enums/carbonSystemType.enum';
-import { RoleIcon } from '../../IconComponents/RoleIcon/role.icon';
-import { ProgrammeRetireForm } from '../../Models/programmeRetireForm';
-import { ProgrammeTransferForm } from '../../Models/programmeTransferForm';
-import { InfoView } from '../../InfoView/info.view';
-import { ProgrammeDocuments } from '../../ProgrammeDocuments/programmeDocuments';
-import { MapComponent } from '../../Maps/mapComponent';
-import { ProjectForms } from '../projectForms/projectForms';
-import { VerificationForms } from '../projectForms/verificationForms';
-import { CreditRetirementSlRequestForm } from '../../Models/creditRetirementSlRequestForm';
+} from '../../Definitions/Enums/programmeStage.enum';
+import { TxType } from '../../Definitions/Enums/TxType.enum';
+import { DocType } from '../../Definitions/Enums/document.type';
+import { DocumentStatus } from '../../Definitions/Enums/document.status';
+import { CompanyState } from '../../Definitions/Enums/company.state.enum';
+import { NdcActionBody } from '../NdcActions/NdcActionBody/ndcActionBody';
+import { Loading } from '../Loading/loading';
+import { OrganisationStatus } from '../OrganisationStatus/organisationStatus';
+import { DevBGColor, DevColor, TooltipColor } from '../../Styles/role.color.constants';
+import { getValidNdcActions, ProgrammeIssueForm } from '../Models/programmeIssueForm';
+import { ProgrammeRevokeForm } from '../Models/programmeRevokeForm';
+import { CarbonSystemType } from '../../Definitions/Enums/carbonSystemType.enum';
+import { RoleIcon } from '../IconComponents/RoleIcon/role.icon';
+import { ProgrammeRetireForm } from '../Models/programmeRetireForm';
+import { ProgrammeTransferForm } from '../Models/programmeTransferForm';
+import { InfoView } from '../InfoView/info.view';
+import { ProgrammeDocuments } from '../ProgrammeDocuments/programmeDocuments';
+import { MapComponent } from '../Maps/mapComponent';
+import { ProjectForms } from './projectForms/projectForms';
+import { VerificationForms } from './projectForms/verificationForms';
+import { CreditRetirementSlRequestForm } from '../Models/creditRetirementSlRequestForm';
 import { HttpStatusCode } from 'axios';
-import { CreditTypeSl } from '../../../Definitions/Enums/creditTypeSl.enum';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
-import { VerificationRequestStatusEnum } from '../../../Definitions/Enums/verification.request.status.enum';
-import LabelWithTooltip from '../../LabelWithTooltip/LabelWithTooltip';
+import { CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { VerificationRequestStatusEnum } from '../../Definitions/Enums/verification.request.status.enum';
+import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 import ProgrammeHistoryStepsComponent from './programmeHistory/programmeHistoryStepComponent';
 import ProgrammeStatusTimelineComponent from './programmeStatusTimeline/programmeStatusTimelineComponent';
-import { OrganisationSlStatus } from '../../OrganisationSlStatus/organisationSlStatus';
-import { SlcfFormActionModel } from '../../Models/SlcfFormActionModel';
-import { PopupInfo } from '../../../Definitions/Definitions/ndcDetails.definitions';
+import { OrganisationSlStatus } from '../OrganisationSlStatus/organisationSlStatus';
+import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
+import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;

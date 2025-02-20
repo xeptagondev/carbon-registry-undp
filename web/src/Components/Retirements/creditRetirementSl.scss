@@ -1,4 +1,4 @@
-@import '../../../Styles/variables.scss';
+@import '../../Styles/variables.scss';
 
 .credit-transfer-management {
   .ant-checkbox-checked {
@@ -9,7 +9,7 @@
 
     .ant-checkbox-input[value='Cancelled'] + .ant-checkbox-inner {
       background-color: rgba(#3a3541, 0.4);
-      border: none;
+      border: none; 
     }
 
     .ant-checkbox-input[value='Accepted'] + .ant-checkbox-inner {

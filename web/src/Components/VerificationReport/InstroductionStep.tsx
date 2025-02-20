@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Button, Col, DatePicker, Form, Input, Row, Select, Upload } from 'antd';
 import moment from 'moment';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import TextArea from 'antd/lib/input/TextArea';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
 export const IntroductionStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, countries, prev, onValueChange } =
     props;

@@ -6,7 +6,7 @@ import * as Icon from 'react-bootstrap-icons';
 
 import './programmeHistoryStepComponent.scss';
 import { DateTime } from 'luxon';
-import { dateTimeFormat } from '../../../../Definitions/Definitions/common.definitions';
+import { dateTimeFormat } from '../../../Definitions/Definitions/common.definitions';
 
 interface ProgrammeLog {
   id: number;

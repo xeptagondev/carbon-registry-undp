@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { VerificationReportComponent } from '../../Components/SLCFProgramme/VerificationReport/VerificationReportComponent';
+import { VerificationReportComponent } from '../../Components/VerificationReport/VerificationReportComponent';
 
 const VerificationReport = () => {
   const navigate = useNavigate();

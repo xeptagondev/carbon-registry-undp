@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { SLCFProgrammeCreationComponent } from '../../Components/AddNewProgramme/ProgrammeCreationComponent';
+import { ProgrammeCreationComponent } from '../../Components/AddNewProgramme/ProgrammeCreationComponent';
 
 const SLCFAddProgramme = () => {
   const navigate = useNavigate();
@@ -11,11 +11,11 @@ const SLCFAddProgramme = () => {
   };
 
   return (
-    <SLCFProgrammeCreationComponent
+    <ProgrammeCreationComponent
       translator={i18n}
       useLocation={useLocation}
       onNavigateToProgrammeView={onNavigateToProgrammeManagementView}
-    ></SLCFProgrammeCreationComponent>
+    ></ProgrammeCreationComponent>
   );
 };
 

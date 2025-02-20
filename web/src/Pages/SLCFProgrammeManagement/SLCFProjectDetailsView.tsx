@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import SLCFProjectDetailsViewComponent from '../../Components/SLCFProgramme/ProjectDetailsView/SLCFProjectDetailsViewComponent';
+import SLCFProjectDetailsViewComponent from '../../Components/ProjectDetailsView/SLCFProjectDetailsViewComponent';
 
 const SLCFProjectDetailsView = () => {
   const navigate = useNavigate();

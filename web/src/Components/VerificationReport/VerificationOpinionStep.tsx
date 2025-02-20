@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Button, Col, DatePicker, Form, Input, Row, Upload } from 'antd';
 
 import moment from 'moment';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import TextArea from 'antd/lib/input/TextArea';
 import { UploadOutlined } from '@ant-design/icons';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
 
 export const VerificationOpinionStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, countries, prev, onValueChange } =

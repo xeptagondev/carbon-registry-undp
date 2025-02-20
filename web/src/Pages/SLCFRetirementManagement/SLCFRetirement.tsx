@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CreditRetirementSlComponent } from '../../Components/SLCFProgramme/Retirements/creditRetirementManagementSlComponent';
+import { CreditRetirementSlComponent } from '../../Components/Retirements/creditRetirementManagementSlComponent';
 
 const SLCFRetirement = () => {
   const navigate = useNavigate();

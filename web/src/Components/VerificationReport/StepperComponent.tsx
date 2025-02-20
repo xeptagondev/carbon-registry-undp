@@ -9,17 +9,14 @@ import { VerificationOpinionStep } from './VerificationOpinionStep';
 import { ReferenceStep } from './ReferenceStep';
 import { AppendixStep } from './AppendixStep';
 import { useForm } from 'antd/lib/form/Form';
-import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import moment from 'moment';
-import { DocumentTypeEnum } from '../../../Definitions/Enums/document.type.enum';
-import { FormMode } from '../../../Definitions/Enums/formMode.enum';
-import {
-  extractFilePropertiesFromLink,
-  fileUploadValueExtract,
-} from '../../../Utils/utilityHelper';
-import { PopupInfo } from '../../../Definitions/Definitions/ndcDetails.definitions';
-import { SlcfFormActionModel } from '../../Models/SlcfFormActionModel';
+import { DocumentTypeEnum } from '../../Definitions/Enums/document.type.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { extractFilePropertiesFromLink, fileUploadValueExtract } from '../../Utils/utilityHelper';
+import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
+import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 const StepperComponent = (props: any) => {
   const { useLocation, translator, countries, selectedVersion, handleDocumentStatus } = props;
