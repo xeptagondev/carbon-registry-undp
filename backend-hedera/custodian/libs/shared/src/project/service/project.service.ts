@@ -114,21 +114,17 @@ export class ProjectService {
             );
 
             const createdBy = users?.data.find((user) => {
-                if (
+                return (
                     user?.document?.credentialSubject[0]?.name ===
                     requestUser.userName
-                ) {
-                    return user?.document?.credentialSubject[0];
-                }
+                );
             });
 
             const createdOrg = organizations?.data.find((organization) => {
-                if (
+                return (
                     organization?.document?.credentialSubject[0]?.name ===
                     requestUser.organizationName
-                ) {
-                    return organization?.document?.credentialSubject[0];
-                }
+                );
             });
 
             await this.guardianService.createProject(
@@ -441,11 +437,11 @@ export class ProjectService {
         };
     }
 
-    async getProjectById(id: number) {
-        const project = await this.projectRepository.findOne({
-            where: { id: id },
-            relations: { organization: true },
-        });
+    async getProjectById(id: number, requestUser: JWTPayload) {
+        // const project = await this.projectRepository.findOne({
+        //     where: { id: id },
+        //     relations: { organization: true },
+        // });
 
         // let documents = await this.documentRepo.find({
         //     select: {
@@ -465,8 +461,21 @@ export class ProjectService {
         //     return acc;
         // }, {});
 
+        const projects = await this.guardianService.query(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.find((project) => {
+            return project?.id === id;
+        });
+
         const updatedProject = {
-            ...this.mapNewQueryToOldQuery(1, project),
+            ...this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            ),
             documents: [],
         };
         return updatedProject;
