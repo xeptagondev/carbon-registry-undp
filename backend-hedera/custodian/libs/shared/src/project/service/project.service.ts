@@ -16,15 +16,19 @@ import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organiz
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectDto } from '@app/shared/project/dto/project.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
-import { ProjectCategoryEnum } from '@app/shared/project/enum/project.category.enum';
+import {
+    ProjectCategoryEnum,
+    SlProjectCategoryMap,
+} from '@app/shared/project/enum/project.category.enum';
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UserService } from '@app/shared/users/service/user.service';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
-import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
+import { CounterType } from '@app/shared/util/enum/counter.type.enum';
+import { CounterService } from '@app/shared/util/service/counter.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
 import { UtilService } from '@app/shared/util/service/util.service';
@@ -49,12 +53,13 @@ export class ProjectService {
         private readonly configService: ConfigService,
         private readonly utilService: UtilService,
         private readonly mailService: MailService,
+        private readonly counterService: CounterService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
     ) {}
 
     async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
         console.log(
-            `Request received to create project with details ${projectDto} from user ${requestUser}`,
+            `Request received to create project with details ${projectDto} from user ${requestUser.userName}`,
         );
 
         this.validateProjectParticipant(requestUser);
@@ -72,13 +77,15 @@ export class ProjectService {
                 organization,
             );
 
+            const refId = await this.counterService.incrementCount(
+                CounterType.PROJECT,
+                4,
+            );
+            project.projectId = refId;
             const projectEntity = await this.projectRepository.save(project);
-            delete project.postalCode;
-            delete project.projectParticipant;
             delete project.address;
             delete project.telephone;
             delete project.fax;
-            delete project.email;
             delete project.website;
             delete project.contactPerson;
             delete project.organization;
@@ -92,6 +99,34 @@ export class ProjectService {
                     delete project[key];
                 }
             }
+            const users = await this.guardianService.query(
+                requestUser.email,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.userQuery'),
+                ),
+            );
+
+            const organizations = await this.guardianService.query(
+                requestUser.email,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.organizationQuery'),
+                ),
+            );
+
+            const createdBy = users?.data.find((user) => {
+                return (
+                    user?.document?.credentialSubject[0]?.name ===
+                    requestUser.userName
+                );
+            });
+
+            const createdOrg = organizations?.data.find((organization) => {
+                return (
+                    organization?.document?.credentialSubject[0]?.name ===
+                    requestUser.organizationName
+                );
+            });
+
             await this.guardianService.createProject(
                 requestUser.email,
                 this.utilService.getBlock(
@@ -99,11 +134,49 @@ export class ProjectService {
                 ),
                 {
                     document: {
-                        ...project,
-                        geographicalLocationCoordinates: ['we'],
-                        additionalDocuments: 'docs',
+                        title: projectDto.title,
+                        projectCategory:
+                            SlProjectCategoryMap[projectDto.projectCategory],
+                        otherProjectCategory: projectDto.otherProjectCategory,
+                        landExtentReforestation: projectDto.landExtent,
+                        speciesPlantedReforestation: projectDto.speciesPlanted,
+                        landExtentAfforestation: projectDto.landExtent,
+                        speciesPlantedAfforestation: projectDto.speciesPlanted,
+                        projectCapacity: projectDto.proposedProjectCapacity,
+                        province: projectDto.province,
+                        district: projectDto.district,
+                        city: projectDto.city,
+                        geographicalLocationCoordinates: {
+                            type: 'MultiPoint',
+                            coordinates: [[1, 2]],
+                        },
+                        projectGeography: projectDto.projectGeography,
+                        proposedProjectCapacity:
+                            projectDto.proposedProjectCapacity,
+                        projectDescription: projectDto.projectDescription,
+                        additionalDocuments: 'doc',
+                        projectStatus: projectDto.projectStatus,
+                        projectStatusDescription:
+                            projectDto.projectStatusDescription,
+                        startDate: '2025-02-19',
+                        postalZipCode: projectDto.postalCode,
+                        StreetNameAndNumber: projectDto.street,
+                        postalCode: projectDto.postalCode,
+                        projectParticipant: projectDto.projectParticipant,
+                        contactName: projectDto.contactName,
+                        contactEmail: projectDto.contactEmail,
+                        contactPhoneNo: projectDto.contactPhoneNo,
+                        contactWebsite: projectDto.contactWebsite,
+                        contactAddress: projectDto.contactAddress,
+                        createdBy: createdBy
+                            ? createdBy?.document?.credentialSubject[0]
+                            : undefined,
+                        organization: createdOrg
+                            ? createdOrg?.document?.credentialSubject[0]
+                            : undefined,
+                        refId: refId,
                     },
-                    ref: { test: 'test' },
+                    ref: null,
                 },
             );
             // await this.notifyAdmins(projectEntity, requestUser);
@@ -309,22 +382,24 @@ export class ProjectService {
         //     total ? total : undefined,
         // );
 
-        const data = await this.guardianService.getProjects(
+        const data = await this.guardianService.query(
             requestUser.email,
             this.utilService.getBlock(
                 this.configService.get('blocks.projectQuery'),
             ),
         );
         const oldFormatData = data?.data.map((project) => {
-            console.log(project?.document?.credentialSubject[0]);
-            this.mapNewQueryToOldQuery(project?.document?.credentialSubject[0]);
+            return this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            );
         });
         return new DataListResponseDto(oldFormatData, oldFormatData.length);
     }
 
-    mapNewQueryToOldQuery(project: ProjectEntity) {
+    mapNewQueryToOldQuery(id: any, project: any) {
         return {
-            id: project.id,
+            id: id,
             title: project.title,
             projectCategory: project.projectCategory,
             otherProjectCategory: project.otherProjectCategory,
@@ -362,11 +437,11 @@ export class ProjectService {
         };
     }
 
-    async getProjectById(id: number) {
-        const project = await this.projectRepository.findOne({
-            where: { id: id },
-            relations: { organization: true },
-        });
+    async getProjectById(id: number, requestUser: JWTPayload) {
+        // const project = await this.projectRepository.findOne({
+        //     where: { id: id },
+        //     relations: { organization: true },
+        // });
 
         // let documents = await this.documentRepo.find({
         //     select: {
@@ -386,8 +461,21 @@ export class ProjectService {
         //     return acc;
         // }, {});
 
+        const projects = await this.guardianService.query(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.find((project) => {
+            return project?.id === id;
+        });
+
         const updatedProject = {
-            ...this.mapNewQueryToOldQuery(project),
+            ...this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            ),
             documents: [],
         };
         return updatedProject;

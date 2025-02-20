@@ -51,13 +51,13 @@ export class OrganizationEntity {
     })
     state?: OrganizationStateEnum;
 
-    @Column({ unique: true })
+    @Column({ unique: true, nullable: true })
     email: string;
 
     @Column({ nullable: true })
     taxId?: string;
 
-    @Column()
+    @Column({ nullable: true })
     phoneNumber: string;
 
     @Column({ nullable: true })
@@ -72,7 +72,7 @@ export class OrganizationEntity {
     @Column({ nullable: true })
     website?: string;
 
-    @Column()
+    @Column({ nullable: true })
     address: string;
 
     @Column({ name: 'number_of_projects', nullable: true })

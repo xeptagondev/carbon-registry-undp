@@ -21,6 +21,9 @@ export class ProjectEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
+    @Column({ unique: true })
+    projectId: string;
+
     @Column()
     title: string;
 

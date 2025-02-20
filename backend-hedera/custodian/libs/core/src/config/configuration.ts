@@ -58,6 +58,8 @@ export default () => ({
         appoveOrganization: 'multiple_organizations_approve_reject_buttons',
         createProject: 'project_creation_form',
         projectQuery: 'project_approve_grid',
+        userQuery: 'user_grid',
+        organizationQuery: 'multiple_organizations_approve_grid',
     },
     metadata: {
         approve: {
