@@ -1,23 +1,59 @@
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
-import { Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    Unique,
+} from 'typeorm';
+import { DocumentEnum } from '../enum/document.enum';
+import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { DocumentStateEnum } from '../enum/document-state.enum';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
 
 @Entity()
+@Unique(['version', 'documentType', 'project', 'activity'])
 export class DocumentEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @Column({ type: 'string' })
+    name: string;
+
+    @Column({ type: Number })
+    version: number;
+
+    @Column({ type: 'enum', enum: DocumentEnum, nullable: false })
+    documentType: DocumentEnum;
+
+    @Column({ type: 'enum', enum: DocumentStateEnum, nullable: false })
+    state: DocumentStateEnum;
+
+    @Column({ type: 'string', nullable: true, default: '' })
+    remarks?: string;
+
+    @ManyToOne(() => UsersEntity, (userEntity) => userEntity.submittedDocuments)
+    @JoinColumn([{ name: 'submitted_user_id', referencedColumnName: 'id' }])
+    submittedUser?: UsersEntity;
+
+    @ManyToOne(
+        () => UsersEntity,
+        (userEntity) => userEntity.approvedDocuments,
+        { nullable: true },
+    )
+    @JoinColumn([{ name: 'approved_user_id', referencedColumnName: 'id' }])
+    approvedUser?: UsersEntity;
+
     @ManyToOne(
         () => ActivityEntity,
         (activityEntity) => activityEntity.documents,
+        { nullable: true },
     )
-    activity: ActivityEntity;
+    @JoinColumn([{ name: 'activity_id', referencedColumnName: 'id' }])
+    activity?: ActivityEntity;
 
-    // @ManyToOne(() => UsersEntity, (userEntity) => userEntity.submittedDocuments)
-    // submittedUser: UsersEntity;
-
-    // @ManyToOne(() => UsersEntity, (userEntity) => userEntity.approvedDocuments)
-    // approvedUser: UsersEntity;
-
-    // @ManyToOne(() => ProjectEntity, (projectEntity) => projectEntity.documents)
-    // project?: ProjectEntity;
+    @ManyToOne(() => ProjectEntity, (projectEntity) => projectEntity.documents)
+    @JoinColumn([{ name: 'project_id', referencedColumnName: 'id' }])
+    project?: ProjectEntity;
 }

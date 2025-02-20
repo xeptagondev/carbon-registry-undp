@@ -24,10 +24,8 @@ import { DataExportCompanyDto } from '@app/shared/util/dto/data.export.company.d
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
-import { FilterBy } from '@app/shared/util/dto/filter.by';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
-import { SortEntry } from '@app/shared/util/dto/sort.entry';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
