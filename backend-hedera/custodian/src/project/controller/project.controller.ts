@@ -37,7 +37,10 @@ export class ProjectController {
 
     @UseGuards(AuthGuardService)
     @Post('getProjectById')
-    async getProjectById(@Body('programmeId') programmeId: number) {
-        return this.projectService.getProjectById(programmeId);
+    async getProjectById(
+        @Body('programmeId') programmeId: number,
+        @Request() req,
+    ) {
+        return this.projectService.getProjectById(programmeId, req.user);
     }
 }

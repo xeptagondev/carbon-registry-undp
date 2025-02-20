@@ -259,7 +259,7 @@ export class GuardianService {
         }
     }
 
-    public async getProjects(email: string, blockId: string): Promise<any> {
+    public async query(email: string, blockId: string): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
