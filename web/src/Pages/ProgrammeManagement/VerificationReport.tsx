@@ -7,7 +7,7 @@ const VerificationReport = () => {
   const { i18n } = useTranslation(['common', 'verificationReport']);
 
   const onNavigateToProgrammeManagementView = () => {
-    navigate('/programmeManagementSLCF/viewAll');
+    navigate('/programmeManagement/viewAll');
   };
 
   return (

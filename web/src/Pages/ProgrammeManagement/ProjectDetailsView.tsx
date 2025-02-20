@@ -7,7 +7,7 @@ const ProjectDetailsView = () => {
   const { i18n } = useTranslation(['common', 'projectDetailsView']);
 
   const onNavigateToProgrammeManagementView = () => {
-    navigate('/programmeManagementSLCF/viewAll');
+    navigate('/programmeManagement/viewAll');
   };
 
   return (

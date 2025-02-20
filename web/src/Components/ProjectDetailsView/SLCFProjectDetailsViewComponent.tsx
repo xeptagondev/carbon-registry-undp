@@ -1747,7 +1747,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     if (id) {
       getProgrammeById();
     } else {
-      navigate('/programmeManagementSLCF/viewAll', { replace: true });
+      navigate('/programmeManagement/viewAll', { replace: true });
     }
     // }
 

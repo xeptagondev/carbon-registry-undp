@@ -296,7 +296,7 @@ export const ProgrammeCreationComponent = (props: any) => {
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
-        navigate('/programmeManagementSLCF/viewAll');
+        navigate('/programmeManagement/viewAll');
       }
     } catch (error: any) {
       if (error && error.errors && error.errors.length > 0) {
