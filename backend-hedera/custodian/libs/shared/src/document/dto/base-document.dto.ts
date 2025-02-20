@@ -4,14 +4,13 @@ import { DocumentEnum } from '../enum/document.enum';
 
 export class BaseDocumentDTO {
     @ApiProperty({ type: Number })
+    @IsOptional()
+    @IsNumber()
+    id?: number;
+
+    @ApiProperty({ type: Number })
     @IsNumber()
     projectId: number;
-
-    @ApiProperty({
-        type: 'string',
-    })
-    @IsNotEmpty()
-    data: string;
 
     @ApiProperty({
         type: 'string',
@@ -30,4 +29,17 @@ export class BaseDocumentDTO {
         enum: DocumentEnum,
     })
     documentType: DocumentEnum;
+
+    @ApiProperty({
+        type: Number,
+    })
+    @IsOptional()
+    @IsNumber()
+    activityId?: number;
+
+    @ApiProperty({
+        type: Object,
+    })
+    @IsOptional()
+    data: any;
 }

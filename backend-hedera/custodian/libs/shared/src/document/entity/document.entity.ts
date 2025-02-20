@@ -16,13 +16,16 @@ import { UsersEntity } from '@app/shared/users/entity/users.entity';
 @Unique(['version', 'documentType', 'project', 'activity'])
 export class DocumentEntity {
     @PrimaryGeneratedColumn()
-    id: number;
+    id?: number;
 
     @Column({ type: 'string' })
     name: string;
 
-    @Column({ type: Number })
-    version: number;
+    @Column({ type: Number, generated: 'increment' })
+    version?: number;
+
+    @Column({ type: 'jsonb' })
+    data: any;
 
     @Column({ type: 'enum', enum: DocumentEnum, nullable: false })
     documentType: DocumentEnum;
