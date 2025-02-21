@@ -416,7 +416,7 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     projectStatus: programme.projectStatus,
     projectCategory: getProjectCategory[programme.projectCategory],
     startDate: DateTime.fromSeconds(Number(programme.startDate)),
-    purposeOfCreditDevelopment: programme.purposeOfCreditDevelopment,
+    // purposeOfCreditDevelopment: programme.purposeOfCreditDevelopment,
     creditReceived:
       safeNumber(programme.creditBalance) +
       safeNumber(programme.creditFrozen) +
