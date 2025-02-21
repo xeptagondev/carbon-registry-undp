@@ -510,8 +510,8 @@ export class ProjectService {
         return project;
     }
 
-    private validateProject(project: ProjectEntity): void {
-        if (!project.organization) {
+    private validateProject(project: any): void {
+        if (!project.company) {
             throw new HttpException(
                 'No associated organization found for company',
                 HttpStatus.BAD_REQUEST,
@@ -550,6 +550,7 @@ export class ProjectService {
             template: template,
             to: project?.createdBy?.email,
             context: {
+                userName: requestUser.userName,
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
                 projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
@@ -570,68 +571,112 @@ export class ProjectService {
     }
 
     async approveINF(
-        id: number,
+        id: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
         this.validateUserAuthorization(requestUser);
 
-        const project = await this.getProjectWithRelations(id);
+        const projects = await this.guardianService.query(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.find((project) => {
+            return project?.document?.credentialSubject[0]?.refId === id;
+        });
 
-        this.validateProject(project);
+        const updatedProject = {
+            ...this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            ),
+            documents: [],
+        };
 
-        const updateResponse = await this.updateProjectStage(
-            id,
-            ProjectProposalStage.APPROVED_INF,
+        this.validateProject(updatedProject);
+
+        // const updateResponse = await this.updateProjectStage(
+        //     id,
+        //     ProjectProposalStage.APPROVED_INF,
+        // );
+
+        const approveResponse = await this.guardianService.approve(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.approveProject'),
+            ),
+            { document: { ...project }, tag: 'Button_0' },
         );
 
-        if (updateResponse) {
-            await this.objectionLetterGenerateService.generateReport(
-                project?.organization?.name,
-                project.title,
-                project.id,
-            );
-            await this.notifyProjectStageChange(
-                project,
-                requestUser,
-                MailTemplateEnum.INF_APPROVE,
-                INF_APPROVE_HEADER,
-            );
-            await this.logProjectStage(
-                `Project with id: ${id} has been approved by ${requestUser.userId}`,
-            );
-        }
+        await this.objectionLetterGenerateService.generateReport(
+            project?.organization?.name,
+            project.title,
+            id,
+        );
+        // await this.notifyProjectStageChange(
+        //     project,
+        //     requestUser,
+        //     MailTemplateEnum.INF_APPROVE,
+        //     INF_APPROVE_HEADER,
+        // );
+        await this.logProjectStage(
+            `Project with id: ${id} has been approved by ${requestUser.userId}`,
+        );
 
-        return new DataResponseDto(HttpStatus.OK, updateResponse);
+        return new DataResponseDto(HttpStatus.OK, approveResponse);
     }
 
     async rejectINF(
-        id: number,
+        id: string,
         remark: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
         this.validateUserAuthorization(requestUser);
 
-        const project = await this.getProjectWithRelations(id);
+        const projects = await this.guardianService.query(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.find((project) => {
+            return project?.document?.credentialSubject[0]?.refId === id;
+        });
 
-        this.validateProject(project);
+        const updatedProject = {
+            ...this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            ),
+            documents: [],
+        };
 
-        const updateResponse = await this.updateProjectStage(
-            id,
-            ProjectProposalStage.REJECTED_INF,
+        this.validateProject(updatedProject);
+
+        // const updateResponse = await this.updateProjectStage(
+        //     id,
+        //     ProjectProposalStage.APPROVED_INF,
+        // );
+
+        const rejectResponse = await this.guardianService.approve(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.rejectProject'),
+            ),
+            { document: { ...project }, tag: 'Button_1' },
         );
 
-        if (updateResponse) {
-            await this.notifyProjectStageChange(
-                project,
-                requestUser,
-                MailTemplateEnum.INF_REJECT,
-                INF_REJECT_HEADER,
-            );
-            await this.logProjectStage(
-                `Project with id: ${id} has been rejected by ${requestUser.userId}`,
-            );
-        }
+        await this.notifyProjectStageChange(
+            project,
+            requestUser,
+            MailTemplateEnum.INF_REJECT,
+            INF_REJECT_HEADER,
+        );
+        await this.logProjectStage(
+            `Project with id: ${id} has been rejected by ${requestUser.userId}`,
+        );
 
-        return new DataResponseDto(HttpStatus.OK, updateResponse);
+        return new DataResponseDto(HttpStatus.OK, rejectResponse);
     }
 }

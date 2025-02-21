@@ -21,14 +21,14 @@ export class ProjectController {
 
     @UseGuards(AuthGuardService)
     @Post('inf/approve')
-    async approveINF(@Body('programmeId') programmeId: number, @Request() req) {
+    async approveINF(@Body('programmeId') programmeId: string, @Request() req) {
         return this.projectService.approveINF(programmeId, req.user);
     }
 
     @UseGuards(AuthGuardService)
     @Post('inf/reject')
     async rejectINF(
-        @Body('programmeId') programmeId: number,
+        @Body('programmeId') programmeId: string,
         @Body('remark') remark: string,
         @Request() req,
     ) {
