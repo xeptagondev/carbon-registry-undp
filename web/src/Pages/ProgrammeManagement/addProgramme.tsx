@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ProgrammeCreationComponent } from '../../Components/Programme/AddNewProgramme/programmeCreationComponent';
+import { ProgrammeCreationComponent } from '../../Components/AddNewProgramme/ProgrammeCreationComponent';
 
 const AddProgramme = () => {
   const navigate = useNavigate();
