@@ -418,8 +418,7 @@ export class OrganizationService extends SuperService<
                 `Request received to approve organization ${organizationApproveDto}`,
             );
             await this.utilService.setTagToIdMap();
-            const refreshToken =
-                await this.guardianService.getRefreshToken(email);
+
             const orgEntity: OrganizationEntity =
                 await this.organizationRepository.findOne({
                     where: {
@@ -433,7 +432,7 @@ export class OrganizationService extends SuperService<
             let approveResponse = {};
 
             approveResponse = await this.guardianService.approve(
-                refreshToken,
+                email,
                 this.utilService.getBlock(
                     this.configService.get('blocks.appoveOrganization'),
                 ),
@@ -620,8 +619,7 @@ export class OrganizationService extends SuperService<
 
         if (
             user.organizationRole == OrganizationTypeEnum.PROJECT_DEVELOPER ||
-            user.organizationRole ==
-                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            user.organizationRole == OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
             editData.paymentId = dto.paymentId;
         }
