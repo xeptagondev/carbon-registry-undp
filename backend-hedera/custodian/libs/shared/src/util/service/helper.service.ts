@@ -4,9 +4,11 @@ import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class HelperService {
+    constructor(private i18n: I18nService) {}
     public mapNewWhereClausetoOldWhereClause(
         query: QueryDto,
         newToOldFieldMap: Record<string, string>,
@@ -49,6 +51,17 @@ export class HelperService {
         // Synchronously validate the instance.
         const errors = validateSync(instance);
         return errors.length === 0;
+    }
+
+    public formatReqMessagesString(langTag: string, vargs: any[]) {
+        const str: any = this.i18n.t(langTag);
+        const parts: any = str.split('{}');
+        let insertAt = 1;
+        for (const arg of vargs) {
+            parts.splice(insertAt, 0, arg);
+            insertAt += 2;
+        }
+        return parts.join('');
     }
 
     public isBase64(text: string): boolean {

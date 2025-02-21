@@ -2,6 +2,16 @@ export default () => ({
     country: process.env.COUNTRY,
     url: process.env.URL,
     backendHost: process.env.BACKEND_HOST || 'http://localhost:3000',
+    docGenerate: {
+        ministerName: process.env.MINISTER_NAME || 'Minister X',
+        ministerNameAndDesignation:
+            process.env.MINISTER_NAME_AND_DESIGNATION ||
+            '\nHonorable Minister X\nMinister\nMinistry of Environment, Forestry & Tourism',
+        ministryName: 'Ministry of Environment, Forestry & Tourism',
+        countryCapital: process.env.COUNTRY_CAPITAL || 'Capital X',
+        contactEmailForQuestions:
+            process.env.CONTACT_EMAIL || 'contactus@email.com',
+    },
     database: {
         host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT, 10) || 5432,
@@ -58,6 +68,9 @@ export default () => ({
         appoveOrganization: 'multiple_organizations_approve_reject_buttons',
         createProject: 'project_creation_form',
         projectQuery: 'project_approve_grid',
+        userQuery: 'user_grid',
+        organizationQuery: 'multiple_organizations_approve_grid',
+        approveProject: 'project_approve_reject_buttons',
     },
     metadata: {
         approve: {

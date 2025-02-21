@@ -1929,7 +1929,7 @@ export class ProgrammeSlService {
       {
         programmeName: programme.title,
         remark: cNCertificateIssueDto.orgBoundary,
-        pageLink: hostAddress + `/programmeManagementSLCF/view/${programme.programmeId}`,
+        pageLink: hostAddress + `/programmeManagement/view/${programme.programmeId}`,
       }
     );
 
