@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CreditRetirementSlComponent } from '../../Components/SLCFProgramme/Retirements/creditRetirementManagementSlComponent';
+import { CreditRetirementSlComponent } from '../../Components/Retirements/creditRetirementManagementSlComponent';
 
 const SLCFRetirement = () => {
   const navigate = useNavigate();
   const { i18n } = useTranslation(['common', 'creditTransfer', 'programme', 'view']);
 
   const onNavigateToProgrammeView = (programmeId: any) => {
-    navigate('/programmeManagementSLCF/view/' + programmeId);
+    navigate('/programmeManagement/view/' + programmeId);
   };
 
   return (

@@ -5,6 +5,7 @@
   "accepted": "Accepted",
   "rejected": "Rejected",
   "completed": "Completed",
+  "generated": "Generated",
   "infTitle" : "Initial Notification",
   "submissionByPP": "Submission by Project Developer",
   "approveBySLCF": "Approval by SLCF",
@@ -16,7 +17,7 @@
   "validationTitle": "Validation Report",
   "submissionBySLCF": "Submission by SLCF",
   "approveByExCom": "Approval by Executive Committee",
-  "authorisedTitle": "Project Authorisation"
-  
-
+  "authorisedTitle": "Project Authorisation",
+  "noObjection": "No Objection Letter",
+  "noObjectionDescription": "Generated once INF is Approved"
 }

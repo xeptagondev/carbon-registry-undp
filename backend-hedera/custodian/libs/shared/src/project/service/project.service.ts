@@ -297,7 +297,7 @@ export class ProjectService {
                     userName: admin?.name,
                     organizationName: requestUser.organizationName,
                     countryName: countryName,
-                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${refId}`,
+                    projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
                 },
             };
 
@@ -324,7 +324,7 @@ export class ProjectService {
                     userName: admin?.name,
                     organizationName: requestUser.organizationName,
                     countryName: countryName,
-                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${refId}`,
+                    projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
                 },
             };
 
@@ -553,7 +553,7 @@ export class ProjectService {
                 userName: requestUser.userName,
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
+                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${project.id}`,
             },
         };
 
