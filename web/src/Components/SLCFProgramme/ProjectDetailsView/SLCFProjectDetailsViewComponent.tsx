@@ -560,7 +560,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const approveNotificationForm = async () => {
     try {
-      const response: any = await post('national/programmeSl/inf/approve', {
+      const response: any = await post('project/inf/approve', {
         programmeId: id,
       });
 
@@ -587,7 +587,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const rejectProposal = async (remark: string) => {
     try {
-      const response: any = await post('national/programmeSl/proposal/reject', {
+      const response: any = await post('project/proposal/reject', {
         programmeId: id,
         remark,
       });
@@ -1912,7 +1912,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   // MARK: Action Buttons
   if (userInfoState?.userRole !== 'ViewOnly') {
     if (userInfoState && data.projectProposalStage === ProjectProposalStage.SUBMITTED_INF) {
-      if (userInfoState?.companyRole === CompanyRole.CLIMATE_FUND) {
+      if (userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         actionBtns.push(
           <Button
             danger
