@@ -50,6 +50,8 @@
       color: rgba(0, 0, 0, 0.45);
     }
 
+    
+
     .timeline-description-item-complete {
       color: #5dc380;
       font-weight: 600;
@@ -80,6 +82,14 @@
         fill: 'none';
       }
   }
+
+    .timeline-description {
+      padding-left: 0 !important;
+      list-style: none;
+      margin-left: -14px;
+      display: flex;
+      list-style: circle;
+    }
 
     .timeline-description-approved-true,
     .timeline-description-rejected-true {

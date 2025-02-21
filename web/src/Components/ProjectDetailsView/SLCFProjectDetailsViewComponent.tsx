@@ -1818,7 +1818,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   const getProgrammeHistory = async (programmeId: string) => {
     setLoadingHistory(true);
     try {
-      const response: any = await get(`national/logs?programmeId=${programmeId}`);
+      const response: any = await get(`national/logs?programmeId=${id}`);
       if (response && response.data) {
         setProgrammeHistoryLogData(response.data);
         setProgrammeHistoryLogDataLoaded(true);
@@ -2256,7 +2256,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         </div>
       </div>
       <div className="content-body">
-        {/* <Row className="programme-status-timeline">
+        <Row className="programme-status-timeline">
           <Card className="card-container">
             <div className="info-view">
               <ProgrammeStatusTimelineComponent
@@ -2265,7 +2265,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
               ></ProgrammeStatusTimelineComponent>
             </div>
           </Card>
-        </Row> */}
+        </Row>
         <Row gutter={16}>
           <Col md={24} lg={10}>
             {data.projectProposalStage === ProjectProposalStage.AUTHORISED && (
@@ -2536,7 +2536,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                 />
               </div>
             </Card>
-            {data.contactPerson && (
+            {data.contactName && (
               <Card className="card-container">
                 <div>
                   <InfoView
@@ -2623,15 +2623,6 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                 </div>
               </Card>
             )}
-
-            <Card className="card-container">
-              <div className="info-view">
-                <ProgrammeStatusTimelineComponent
-                  programmeDetails={data}
-                  translator={t}
-                ></ProgrammeStatusTimelineComponent>
-              </div>
-            </Card>
           </Col>
         </Row>
       </div>
