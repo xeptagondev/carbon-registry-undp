@@ -7,7 +7,7 @@ import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { DocumentActionDTO } from '../dto/document-action-request.dto';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
@@ -20,6 +20,7 @@ import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
+import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 
 @Injectable()
 export class DocumentService {
@@ -203,6 +204,93 @@ export class DocumentService {
         }
     }
 
+    async authorizeAndSendEmail(
+        docType: DocumentEnum,
+        jwtData: JWTPayload,
+        submittedUser: UsersEntity,
+        project: ProjectEntity,
+        queryRunner: QueryRunner,
+    ) {
+        let heading: string;
+        let template: MailTemplateEnum;
+        let sendTo: string | string[];
+        let context: any;
+        if (docType === DocumentEnum.PDD) {
+            // PDD has to be an Admin of the same organization of the project the document is being submitted to
+            if (
+                jwtData.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                jwtData.userRole === RoleEnum.Admin &&
+                submittedUser.organization.id !== project.organization.id
+            ) {
+                throw new HttpException(
+                    'Unauthorized',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
+            // get assigned ICs
+            const orgEmails: string[] = project.assignees.map(
+                (org) => org.email,
+            );
+
+            // get assignee org admins
+            const orgsWithAdmins = await queryRunner.manager
+                .getRepository(OrganizationEntity)
+                .createQueryBuilder('organization')
+                .innerJoinAndSelect('organization.users', 'user')
+                .innerJoinAndSelect('user.guardianRole', 'guardianRole')
+                .innerJoinAndSelect('guardianRole.role', 'role')
+                .where('organization.email IN (:...orgEmails)', { orgEmails })
+                .andWhere('role.name = :roleName', { roleName: RoleEnum.Admin })
+                .getMany();
+
+            const assigneeEmails: string[] = [];
+
+            for (let i = 0; i < orgsWithAdmins.length; i++) {
+                const org = orgsWithAdmins[i];
+                const admins = org.users;
+                for (let j = 0; j < admins.length; j++) {
+                    assigneeEmails.push(admins[j].email);
+                }
+            }
+
+            // send PDD create email to assignees
+            const countryName = this.configService.get('country');
+
+            heading = PDD_CREATE_HEADER.replace('{{countryName}}', countryName);
+            template = MailTemplateEnum.PDD_CREATE;
+            sendTo = assigneeEmails;
+            context = {
+                organizationName: jwtData.organizationName,
+                countryName: countryName,
+                // TODO: fix the link
+                programmePageLink: this.configService.get('url') + '/',
+            };
+        } else {
+            throw new HttpException(
+                `${docType} document submission not implemented`,
+                HttpStatus.NOT_IMPLEMENTED,
+            );
+        }
+
+        // send email
+        const mailDTO: MailTemplateDTO = {
+            subject: heading,
+            template: template,
+            to: sendTo,
+            context: context,
+        };
+
+        await this.mailService.sendMail(mailDTO);
+    }
+
+    async verifyDocData(docType: DocumentEnum, data: any) {
+        if (docType === DocumentEnum.PDD) {
+            // verify from PDD DTO
+        }
+    }
+
     async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
         // get the last document of the project of the same type
         let lastDoc: DocumentEntity = null;
@@ -278,19 +366,6 @@ export class DocumentService {
                     relations: { organization: true },
                 });
 
-            // PD has to be an Admin of the same organization of the project the document is being submitted to
-            if (
-                jwtData.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
-                jwtData.userRole === RoleEnum.Admin &&
-                submittedUser.organization.id !== project.organization.id
-            ) {
-                throw new HttpException(
-                    'Unauthorized',
-                    HttpStatus.UNAUTHORIZED,
-                );
-            }
-
             let activity: ActivityEntity = null;
             if (dto.activityId) {
                 activity = await queryRunner.manager.findOne(ActivityEntity, {
@@ -312,36 +387,14 @@ export class DocumentService {
             // save document
             await queryRunner.manager.save(DocumentEntity, document);
 
-            // send email
-            if (dto.documentType === DocumentEnum.PDD) {
-                // get assigned ICs
-                const assigneeEmails: string[] = project.assignees.map(
-                    (user) => user.email,
-                );
-
-                // send PDD create email to assignees
-                const countryName = this.configService.get('country');
-
-                const mailDTO: MailTemplateDTO = {
-                    subject: PDD_CREATE_HEADER.replace(
-                        '{{countryName}}',
-                        countryName,
-                    ),
-                    template: MailTemplateEnum.PDD_CREATE,
-                    to: assigneeEmails,
-                    context: {
-                        // username: document.submittedUser.name,
-                        organizationName: jwtData.organizationName,
-                        countryName: countryName,
-                        // TODO: fix the link
-                        programmePageLink: this.configService.get('url') + '/',
-                    },
-                };
-
-                // TODO: Change project state?
-
-                await this.mailService.sendMail(mailDTO);
-            }
+            // authorize permission and send email
+            await this.authorizeAndSendEmail(
+                dto.documentType,
+                jwtData,
+                submittedUser,
+                project,
+                queryRunner,
+            );
 
             await queryRunner.commitTransaction();
         } catch (err) {
