@@ -12,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_PASSWORD: "<ANY PASSOWORD>"
+      POSTGRES_PASSWORD: root
       POSTGRES_USER: root
       PSQL_USERNAME: root
       # POSTGRES_HOST_AUTH_METHOD: trust
@@ -31,11 +31,11 @@ services:
     environment:
       DB_HOST: db
       DB_USER: root
-      DB_PASSWORD: "<ANY PASSOWORD>"
+      DB_PASSWORD: root
       RUN_MODULE: national-api
-      rootEmail: <ROOT EMAIL>
-      cfAdminEmail: <CLIMATE FUND ADMIN EMAIL>
-      exComAdminEmail: <EXCECUTIVE COMMITTEE ADMIN EMAIL>
+      rootEmail: ravinduf@xeptagon.com
+      cfAdminEmail: ravinduf+cf@xeptagon.com
+      exComAdminEmail: ravinduf+ex@xepagon.com
       Ministery: ""
       Department: ""
       systemCountryCode: "ZW"

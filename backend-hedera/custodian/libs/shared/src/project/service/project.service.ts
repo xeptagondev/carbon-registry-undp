@@ -16,15 +16,19 @@ import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organiz
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectDto } from '@app/shared/project/dto/project.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
-import { ProjectCategoryEnum } from '@app/shared/project/enum/project.category.enum';
+import {
+    ProjectCategoryEnum,
+    SlProjectCategoryMap,
+} from '@app/shared/project/enum/project.category.enum';
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UserService } from '@app/shared/users/service/user.service';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
-import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
+import { CounterType } from '@app/shared/util/enum/counter.type.enum';
+import { CounterService } from '@app/shared/util/service/counter.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
 import { UtilService } from '@app/shared/util/service/util.service';
@@ -49,30 +53,80 @@ export class ProjectService {
         private readonly configService: ConfigService,
         private readonly utilService: UtilService,
         private readonly mailService: MailService,
+        private readonly counterService: CounterService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
     ) {}
 
     async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
         console.log(
-            `Request received to create project with details ${projectDto} from user ${requestUser}`,
+            `Request received to create project with details ${projectDto} from user ${requestUser.userName}`,
         );
 
         this.validateProjectParticipant(requestUser);
 
         try {
-            const user = await this.getUserById(requestUser.userId);
-            const organization = await this.getOrganizationById(
-                requestUser.organizationId,
+            // const user = await this.getUserById(requestUser.userId);
+            // const organization = await this.getOrganizationById(
+            //     requestUser.organizationId,
+            // );
+
+            // const project = await this.buildProjectEntity(
+            //     projectDto,
+            //     requestUser,
+            //     user,
+            //     organization,
+            // );
+
+            const refId = await this.counterService.incrementCount(
+                CounterType.PROJECT,
+                4,
+            );
+            // project.projectId = refId;
+            // const projectEntity = await this.projectRepository.save(project);
+            // delete project.address;
+            // delete project.telephone;
+            // delete project.fax;
+            // delete project.website;
+            // delete project.contactPerson;
+            // delete project.organization;
+            // delete project.createdBy;
+            // delete project.street;
+            // delete project.assignees;
+            // delete project.projectProposalStage;
+            // delete project.id;
+            // for (const key in project) {
+            //     if (project[key] === null || project[key] === undefined) {
+            //         delete project[key];
+            //     }
+            // }
+            const users = await this.guardianService.query(
+                requestUser.email,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.userQuery'),
+                ),
             );
 
-            const project = await this.buildProjectEntity(
-                projectDto,
-                requestUser,
-                user,
-                organization,
+            const organizations = await this.guardianService.query(
+                requestUser.email,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.organizationQuery'),
+                ),
             );
 
-            const projectEntity = await this.projectRepository.save(project);
+            const createdBy = users?.data.find((user) => {
+                return (
+                    user?.document?.credentialSubject[0]?.name ===
+                    requestUser.userName
+                );
+            });
+
+            const createdOrg = organizations?.data.find((organization) => {
+                return (
+                    organization?.document?.credentialSubject[0]?.name ===
+                    requestUser.organizationName
+                );
+            });
+
             await this.guardianService.createProject(
                 requestUser.email,
                 this.utilService.getBlock(
@@ -80,21 +134,59 @@ export class ProjectService {
                 ),
                 {
                     document: {
-                        name: project.title,
-                        loi: 'https://example.com',
-                        pin: 'https://example.com',
+                        title: projectDto.title,
+                        projectCategory:
+                            SlProjectCategoryMap[projectDto.projectCategory],
+                        otherProjectCategory: projectDto.otherProjectCategory,
+                        landExtentReforestation: projectDto.landExtent,
+                        speciesPlantedReforestation: projectDto.speciesPlanted,
+                        landExtentAfforestation: projectDto.landExtent,
+                        speciesPlantedAfforestation: projectDto.speciesPlanted,
+                        projectCapacity: projectDto.proposedProjectCapacity,
+                        province: projectDto.province,
+                        district: projectDto.district,
+                        city: projectDto.city,
+                        geographicalLocationCoordinates: {
+                            type: 'MultiPoint',
+                            coordinates: [[1, 2]],
+                        },
+                        projectGeography: projectDto.projectGeography,
+                        proposedProjectCapacity:
+                            projectDto.proposedProjectCapacity,
+                        projectDescription: projectDto.projectDescription,
+                        additionalDocuments: 'doc',
+                        projectStatus: projectDto.projectStatus,
+                        projectStatusDescription:
+                            projectDto.projectStatusDescription,
+                        startDate: '2025-02-19',
+                        postalZipCode: projectDto.postalCode,
+                        StreetNameAndNumber: projectDto.street,
+                        postalCode: projectDto.postalCode,
+                        projectParticipant: projectDto.projectParticipant,
+                        contactName: projectDto.contactName,
+                        contactEmail: projectDto.contactEmail,
+                        contactPhoneNo: projectDto.contactPhoneNo,
+                        contactWebsite: projectDto.contactWebsite,
+                        contactAddress: projectDto.contactAddress,
+                        createdBy: createdBy
+                            ? createdBy?.document?.credentialSubject[0]
+                            : undefined,
+                        organization: createdOrg
+                            ? createdOrg?.document?.credentialSubject[0]
+                            : undefined,
+                        refId: refId,
                     },
                     ref: null,
                 },
             );
-            await this.notifyAdmins(projectEntity, requestUser);
+            await this.notifyAdmins(refId, requestUser);
             await this.notifyCertifiers(
-                projectEntity,
+                refId,
                 projectDto.independentCertifiers,
                 requestUser,
             );
             await this.logProjectStage(
-                `Project with title: ${project.title} has been created by ${requestUser.userName}`,
+                `Project with title: ${projectDto.title} has been created by ${requestUser.userName}`,
             );
         } catch (error) {
             throw new HttpException(
@@ -156,6 +248,7 @@ export class ProjectService {
         project.organization = organization;
         project.createdBy = user;
         project.street = projectDto.street;
+
         project.assignees = await this.organizationRepository.find({
             where: { id: In(projectDto.independentCertifiers) },
         });
@@ -178,14 +271,15 @@ export class ProjectService {
         ) {
             project.speciesPlanted = null;
         }
+        if (ProjectCategoryEnum.OTHER === projectDto.projectCategory) {
+            project.otherProjectCategory = projectDto.otherProjectCategory;
+        }
 
         return project;
     }
 
-    private async notifyAdmins(
-        project: ProjectEntity,
-        requestUser: JWTPayload,
-    ) {
+    private async notifyAdmins(refId: string, requestUser: JWTPayload) {
+        console.log(`Request received to notify admins for project ${refId}`);
         const admins = await this.userService.getAdminsByType(
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
         );
@@ -203,7 +297,7 @@ export class ProjectService {
                     userName: admin?.name,
                     organizationName: requestUser.organizationName,
                     countryName: countryName,
-                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
+                    projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
                 },
             };
 
@@ -211,10 +305,13 @@ export class ProjectService {
         }
     }
     private async notifyCertifiers(
-        project: ProjectEntity,
+        refId: string,
         ids: number[],
         requestUser: JWTPayload,
     ) {
+        console.log(
+            `Request received to notify certifiers for project ${refId}`,
+        );
         const admins = await this.userService.getAdminsByIds(ids);
         const countryName = this.configService.get('country');
 
@@ -227,7 +324,7 @@ export class ProjectService {
                     userName: admin?.name,
                     organizationName: requestUser.organizationName,
                     countryName: countryName,
-                    projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
+                    projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
                 },
             };
 
@@ -286,31 +383,31 @@ export class ProjectService {
         //     total ? total : undefined,
         // );
 
-        const data = await this.guardianService.getProjects(
+        const data = await this.guardianService.query(
             requestUser.email,
             this.utilService.getBlock(
                 this.configService.get('blocks.projectQuery'),
             ),
         );
         const oldFormatData = data?.data.map((project) => {
-            console.log(project?.document?.credentialSubject[0]);
-            this.mapNewQueryToOldQuery(project?.document?.credentialSubject[0]);
+            return this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            );
         });
-        return new DataListResponseDto(
-            oldFormatData ? oldFormatData : undefined,
-            oldFormatData.length,
-        );
+        return new DataListResponseDto(oldFormatData, oldFormatData.length);
     }
 
-    mapNewQueryToOldQuery(project: ProjectEntity) {
+    mapNewQueryToOldQuery(id: any, project: any) {
         return {
-            id: project.id,
+            id: id,
             title: project.title,
             projectCategory: project.projectCategory,
             otherProjectCategory: project.otherProjectCategory,
             province: project.province,
             district: project.district,
             city: project.city,
+            refId: project.refId,
             geographicalLocationCoordinates:
                 project.geographicalLocationCoordinates,
             projectGeography: project.projectGeography,
@@ -318,7 +415,7 @@ export class ProjectService {
             proposedProjectCapacity: project.proposedProjectCapacity,
             speciesPlanted: project.speciesPlanted,
             projectDescription: project.projectDescription,
-            additionalDocuments: project.additionalDocuments,
+            additionalDocuments: [], //need to update
             projectStatus: project.projectStatus,
             projectStatusDescription: project.projectStatusDescription,
             startDate: project.startDate,
@@ -329,7 +426,9 @@ export class ProjectService {
             contactPhoneNo: project.telephone,
             contactWebsite: project.website,
             contactAddress: project.address,
-            projectProposalStage: project.projectProposalStage,
+            projectProposalStage:
+                project.projectProposalStage ||
+                ProjectProposalStage.SUBMITTED_INF,
             company: project.organization
                 ? {
                       companyId: project.organization.id,
@@ -342,11 +441,11 @@ export class ProjectService {
         };
     }
 
-    async getProjectById(id: number) {
-        const project = await this.projectRepository.findOne({
-            where: { id: id },
-            relations: { organization: true },
-        });
+    async getProjectById(id: number, requestUser: JWTPayload) {
+        // const project = await this.projectRepository.findOne({
+        //     where: { id: id },
+        //     relations: { organization: true },
+        // });
 
         // let documents = await this.documentRepo.find({
         //     select: {
@@ -366,8 +465,21 @@ export class ProjectService {
         //     return acc;
         // }, {});
 
+        const projects = await this.guardianService.query(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.find((project) => {
+            return project?.document?.credentialSubject[0]?.refId === id;
+        });
+
         const updatedProject = {
-            ...this.mapNewQueryToOldQuery(project),
+            ...this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            ),
             documents: [],
         };
         return updatedProject;
@@ -398,8 +510,8 @@ export class ProjectService {
         return project;
     }
 
-    private validateProject(project: ProjectEntity): void {
-        if (!project.organization) {
+    private validateProject(project: any): void {
+        if (!project.company) {
             throw new HttpException(
                 'No associated organization found for company',
                 HttpStatus.BAD_REQUEST,
@@ -438,9 +550,10 @@ export class ProjectService {
             template: template,
             to: project?.createdBy?.email,
             context: {
+                userName: requestUser.userName,
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagementSLCF/view/${project.id}`,
+                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${project.id}`,
             },
         };
 
@@ -458,68 +571,112 @@ export class ProjectService {
     }
 
     async approveINF(
-        id: number,
+        id: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
         this.validateUserAuthorization(requestUser);
 
-        const project = await this.getProjectWithRelations(id);
+        const projects = await this.guardianService.query(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.find((project) => {
+            return project?.document?.credentialSubject[0]?.refId === id;
+        });
 
-        this.validateProject(project);
+        const updatedProject = {
+            ...this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            ),
+            documents: [],
+        };
 
-        const updateResponse = await this.updateProjectStage(
-            id,
-            ProjectProposalStage.APPROVED_INF,
+        this.validateProject(updatedProject);
+
+        // const updateResponse = await this.updateProjectStage(
+        //     id,
+        //     ProjectProposalStage.APPROVED_INF,
+        // );
+
+        const approveResponse = await this.guardianService.approve(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.approveProject'),
+            ),
+            { document: { ...project }, tag: 'Button_0' },
         );
 
-        if (updateResponse) {
-            await this.objectionLetterGenerateService.generateReport(
-                project?.organization?.name,
-                project.title,
-                project.id,
-            );
-            await this.notifyProjectStageChange(
-                project,
-                requestUser,
-                MailTemplateEnum.INF_APPROVE,
-                INF_APPROVE_HEADER,
-            );
-            await this.logProjectStage(
-                `Project with id: ${id} has been approved by ${requestUser.userId}`,
-            );
-        }
+        await this.objectionLetterGenerateService.generateReport(
+            project?.organization?.name,
+            project.title,
+            id,
+        );
+        // await this.notifyProjectStageChange(
+        //     project,
+        //     requestUser,
+        //     MailTemplateEnum.INF_APPROVE,
+        //     INF_APPROVE_HEADER,
+        // );
+        await this.logProjectStage(
+            `Project with id: ${id} has been approved by ${requestUser.userId}`,
+        );
 
-        return new DataResponseDto(HttpStatus.OK, updateResponse);
+        return new DataResponseDto(HttpStatus.OK, approveResponse);
     }
 
     async rejectINF(
-        id: number,
+        id: string,
         remark: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
         this.validateUserAuthorization(requestUser);
 
-        const project = await this.getProjectWithRelations(id);
+        const projects = await this.guardianService.query(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.find((project) => {
+            return project?.document?.credentialSubject[0]?.refId === id;
+        });
 
-        this.validateProject(project);
+        const updatedProject = {
+            ...this.mapNewQueryToOldQuery(
+                project.id,
+                project?.document?.credentialSubject[0],
+            ),
+            documents: [],
+        };
 
-        const updateResponse = await this.updateProjectStage(
-            id,
-            ProjectProposalStage.REJECTED_INF,
+        this.validateProject(updatedProject);
+
+        // const updateResponse = await this.updateProjectStage(
+        //     id,
+        //     ProjectProposalStage.APPROVED_INF,
+        // );
+
+        const rejectResponse = await this.guardianService.approve(
+            requestUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.rejectProject'),
+            ),
+            { document: { ...project }, tag: 'Button_1' },
         );
 
-        if (updateResponse) {
-            await this.notifyProjectStageChange(
-                project,
-                requestUser,
-                MailTemplateEnum.INF_REJECT,
-                INF_REJECT_HEADER,
-            );
-            await this.logProjectStage(
-                `Project with id: ${id} has been rejected by ${requestUser.userId}`,
-            );
-        }
+        await this.notifyProjectStageChange(
+            project,
+            requestUser,
+            MailTemplateEnum.INF_REJECT,
+            INF_REJECT_HEADER,
+        );
+        await this.logProjectStage(
+            `Project with id: ${id} has been rejected by ${requestUser.userId}`,
+        );
 
-        return new DataResponseDto(HttpStatus.OK, updateResponse);
+        return new DataResponseDto(HttpStatus.OK, rejectResponse);
     }
 }

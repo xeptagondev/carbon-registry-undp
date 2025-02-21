@@ -259,7 +259,7 @@ export class GuardianService {
         }
     }
 
-    public async getProjects(email: string, blockId: string): Promise<any> {
+    public async query(email: string, blockId: string): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
@@ -336,7 +336,7 @@ export class GuardianService {
         }
     }
     public async approve(
-        refreshToken: string,
+        email: string,
         blockId: string,
         payload: any,
     ): Promise<any> {
@@ -344,6 +344,7 @@ export class GuardianService {
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
+            const refreshToken = await this.getRefreshToken(email);
             const token = await this.getAccessToken(refreshToken);
 
             const response = await axios.post(url, payload, {

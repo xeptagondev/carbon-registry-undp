@@ -4,3 +4,10 @@ export enum ProjectCategoryEnum {
     REFORESTATION = 'REFORESTATION',
     OTHER = 'OTHER',
 }
+
+export enum SlProjectCategoryMap {
+    RENEWABLE_ENERGY = 'Renewable Energy',
+    AFFORESTATION = 'Afforestation',
+    REFORESTATION = 'Reforestation',
+    OTHER = 'Other',
+}

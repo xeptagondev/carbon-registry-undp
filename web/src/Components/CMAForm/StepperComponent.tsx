@@ -57,7 +57,7 @@ const StepperComponent = (props: any) => {
   const [disableFields, setDisableFields] = useState<boolean>(false);
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${id}`);
+    navigate(`/programmeManagement/view/${id}`);
   };
 
   const [values, setValues] = useState({

@@ -31,7 +31,7 @@ export class UsersEntity {
     @Column({ nullable: true })
     refreshToken?: string;
 
-    @Column({ name: 'hedera_account_id', nullable: false, unique: true })
+    @Column({ name: 'hedera_account_id', nullable: true, unique: true })
     hederaAccount?: string;
 
     @ManyToOne(
