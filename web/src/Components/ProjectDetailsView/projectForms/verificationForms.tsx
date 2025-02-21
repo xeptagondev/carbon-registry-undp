@@ -137,26 +137,20 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   }
 
   const navigateToVerificationReportEdit = (docId: any, verificationRequestId: any) => {
-    navigate(
-      `/programmeManagement/verificationReport/${programmeId}/${verificationRequestId}`,
-      {
-        state: {
-          mode: FormMode.EDIT,
-          docId: docId,
-        },
-      }
-    );
+    navigate(`/programmeManagement/verificationReport/${programmeId}/${verificationRequestId}`, {
+      state: {
+        mode: FormMode.EDIT,
+        docId: docId,
+      },
+    });
   };
 
   function navigateToVerificationReportView(verificationRequestId: any): void {
-    navigate(
-      `/programmeManagement/verificationReport/${programmeId}/${verificationRequestId}`,
-      {
-        state: {
-          mode: FormMode.VIEW,
-        },
-      }
-    );
+    navigate(`/programmeManagement/verificationReport/${programmeId}/${verificationRequestId}`, {
+      state: {
+        mode: FormMode.VIEW,
+      },
+    });
   }
 
   const getLatestReport = (reports: any[], docType: DocumentTypeEnum): any => {

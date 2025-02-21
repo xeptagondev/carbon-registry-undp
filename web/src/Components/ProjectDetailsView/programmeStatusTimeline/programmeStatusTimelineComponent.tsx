@@ -89,6 +89,35 @@ const getINFContent = (stage: ProjectProposalStage, t: any) => {
       };
   }
 };
+// future
+// const getNoObjectionLetterContent = (stage: ProjectProposalStage, t: any) => {
+//   switch (getProjectProposalStageEnumVal(stage)) {
+//     // case ProjectProposalStage.NO_OBJECTION_LETTER_PENDING:
+//     //   return {
+//     //     subTitle: t('slcfRoadmapTimeline:pending'),
+//     //     statusKey: 'pending',
+//     //     icon: <ReadOutlined />,
+//     //     className: 'no-objection-letter-pending',
+//     //     subTasks: [t('slcfRoadmapTimeline:noObjectionPending')],
+//     //   };
+//     case ProjectProposalStage.NO_OBJECTION_LETTER_GENERATED:
+//       return {
+//         subTitle: t('slcfRoadmapTimeline:generated'),
+//         statusKey: 'generated',
+//         className: 'no-objection-letter-generated',
+//         icon: <ReadOutlined />,
+//         subTasks: [t('slcfRoadmapTimeline:noObjectionPending')],
+//       };
+//     default:
+//       return {
+//         subTitle: t('slcfRoadmapTimeline:pending'),
+//         statusKey: 'pending',
+//         icon: <ReadOutlined />,
+//         className: 'no-objection-letter-pending',
+//         subTasks: [t('slcfRoadmapTimeline:noObjectionPending')],
+//       };
+//   }
+// };
 
 const getProposalContent = (stage: ProjectProposalStage, t: any) => {
   switch (getProjectProposalStageEnumVal(stage)) {
@@ -288,14 +317,18 @@ const ProgrammeStatusTimelineComponent: React.FC<ProgrammeStatusTimelineComponen
   const t = translator;
   const currentStep = getCurrentStep(programmeDetails.projectProposalStage);
   const infContent = getINFContent(programmeDetails.projectProposalStage, t);
-  const proposalContent = getProposalContent(programmeDetails.projectProposalStage, t);
-  const cmaContent = getCMAContent(programmeDetails.projectProposalStage, t);
-  const validationContent = getValidationContent(programmeDetails.projectProposalStage, t);
+  const proposalContent = getProposalContent(programmeDetails.projectProposalStage, t); // need to update
+  const cmaContent = getCMAContent(programmeDetails.projectProposalStage, t); // need to update
+  const validationContent = getValidationContent(programmeDetails.projectProposalStage, t); // need to update
+
+  // const noObjectionLetterContent = getNoObjectionLetterContent(
+  //   programmeDetails.projectProposalStage,
+  //   t
+  // );
 
   return (
     <Steps
       current={currentStep}
-      direction="vertical"
       items={[
         {
           title: t('slcfRoadmapTimeline:infTitle'),
