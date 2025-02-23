@@ -215,63 +215,76 @@ export class DocumentService {
         let template: MailTemplateEnum;
         let sendTo: string | string[];
         let context: any;
-        if (docType === DocumentEnum.PDD) {
-            // PDD has to be an Admin of the same organization of the project the document is being submitted to
-            if (
-                jwtData.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
-                jwtData.userRole === RoleEnum.Admin &&
-                submittedUser.organization.id !== project.organization.id
-            ) {
+        switch (docType) {
+            case DocumentEnum.PDD:
+                {
+                    // PDD has to be an Admin of the same organization of the project the document is being submitted to
+                    if (
+                        jwtData.organizationRole ===
+                            OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                        jwtData.userRole === RoleEnum.Admin &&
+                        submittedUser.organization.id !==
+                            project.organization.id
+                    ) {
+                        throw new HttpException(
+                            'Unauthorized',
+                            HttpStatus.UNAUTHORIZED,
+                        );
+                    }
+
+                    // get assigned ICs
+                    const orgEmails: string[] = project.assignees.map(
+                        (org) => org.email,
+                    );
+
+                    // get assignee org admins
+                    const orgsWithAdmins = await queryRunner.manager
+                        .getRepository(OrganizationEntity)
+                        .createQueryBuilder('organization')
+                        .innerJoinAndSelect('organization.users', 'user')
+                        .innerJoinAndSelect('user.guardianRole', 'guardianRole')
+                        .innerJoinAndSelect('guardianRole.role', 'role')
+                        .where('organization.email IN (:...orgEmails)', {
+                            orgEmails,
+                        })
+                        .andWhere('role.name = :roleName', {
+                            roleName: RoleEnum.Admin,
+                        })
+                        .getMany();
+
+                    const assigneeEmails: string[] = [];
+
+                    for (let i = 0; i < orgsWithAdmins.length; i++) {
+                        const org = orgsWithAdmins[i];
+                        const admins = org.users;
+                        for (let j = 0; j < admins.length; j++) {
+                            assigneeEmails.push(admins[j].email);
+                        }
+                    }
+
+                    // send PDD create email to assignees
+                    const countryName = this.configService.get('country');
+
+                    heading = PDD_CREATE_HEADER.replace(
+                        '{{countryName}}',
+                        countryName,
+                    );
+                    template = MailTemplateEnum.PDD_CREATE;
+                    sendTo = assigneeEmails;
+                    context = {
+                        organizationName: jwtData.organizationName,
+                        countryName: countryName,
+                        // TODO: fix the link
+                        programmePageLink: this.configService.get('url') + '/',
+                    };
+                }
+                break;
+            default: {
                 throw new HttpException(
-                    'Unauthorized',
-                    HttpStatus.UNAUTHORIZED,
+                    `${docType} document submission not implemented`,
+                    HttpStatus.NOT_IMPLEMENTED,
                 );
             }
-
-            // get assigned ICs
-            const orgEmails: string[] = project.assignees.map(
-                (org) => org.email,
-            );
-
-            // get assignee org admins
-            const orgsWithAdmins = await queryRunner.manager
-                .getRepository(OrganizationEntity)
-                .createQueryBuilder('organization')
-                .innerJoinAndSelect('organization.users', 'user')
-                .innerJoinAndSelect('user.guardianRole', 'guardianRole')
-                .innerJoinAndSelect('guardianRole.role', 'role')
-                .where('organization.email IN (:...orgEmails)', { orgEmails })
-                .andWhere('role.name = :roleName', { roleName: RoleEnum.Admin })
-                .getMany();
-
-            const assigneeEmails: string[] = [];
-
-            for (let i = 0; i < orgsWithAdmins.length; i++) {
-                const org = orgsWithAdmins[i];
-                const admins = org.users;
-                for (let j = 0; j < admins.length; j++) {
-                    assigneeEmails.push(admins[j].email);
-                }
-            }
-
-            // send PDD create email to assignees
-            const countryName = this.configService.get('country');
-
-            heading = PDD_CREATE_HEADER.replace('{{countryName}}', countryName);
-            template = MailTemplateEnum.PDD_CREATE;
-            sendTo = assigneeEmails;
-            context = {
-                organizationName: jwtData.organizationName,
-                countryName: countryName,
-                // TODO: fix the link
-                programmePageLink: this.configService.get('url') + '/',
-            };
-        } else {
-            throw new HttpException(
-                `${docType} document submission not implemented`,
-                HttpStatus.NOT_IMPLEMENTED,
-            );
         }
 
         // send email
