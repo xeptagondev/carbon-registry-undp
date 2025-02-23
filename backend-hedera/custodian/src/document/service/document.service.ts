@@ -15,6 +15,7 @@ import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import {
     PDD_CREATE_HEADER,
     PDD_IC_REJECT_HEADER,
+    VR_CREATE_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
@@ -279,6 +280,84 @@ export class DocumentService {
                     };
                 }
                 break;
+            case DocumentEnum.VALIDATION_REPORT:
+                {
+                    // PDD has to be submitted and in approved state before VR submission
+                    const lastPdd = await this.documentRepository.findOne({
+                        where: {
+                            documentType: DocumentEnum.PDD,
+                            project: {
+                                id: project.id,
+                            },
+                        },
+                        order: {
+                            version: 'DESC',
+                        },
+                    });
+
+                    if (
+                        !lastPdd ||
+                        lastPdd.state !== DocumentStateEnum.DNA_APPROVED
+                    ) {
+                        throw new HttpException(
+                            'PDD needs to be approved',
+                            HttpStatus.BAD_REQUEST,
+                        );
+                    }
+
+                    // VR can be submitted by IC Admin of an assigned org
+                    // get assignee org ids
+                    const assigneeOrgIds = project.assignees.map(
+                        (org) => org.id,
+                    );
+
+                    if (
+                        jwtData.organizationRole ===
+                            OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+                        jwtData.userRole === RoleEnum.Admin &&
+                        jwtData.organizationId in assigneeOrgIds
+                    ) {
+                        // send emails to PD admins (project organization admins)
+                        const orgAdminUsers = await queryRunner.manager
+                            .getRepository(UsersEntity)
+                            .createQueryBuilder('user')
+                            .innerJoinAndSelect(
+                                'user.organization',
+                                'organization',
+                            )
+                            .innerJoinAndSelect(
+                                'user.guardianRole',
+                                'guardianRole',
+                            )
+                            .innerJoinAndSelect('guardianRole.role', 'role')
+                            .where('organization.id = :id', {
+                                id: jwtData.organizationId,
+                            })
+                            .andWhere('role.name = :roleName', {
+                                roleName: RoleEnum.Admin,
+                            })
+                            .getMany();
+
+                        sendTo = orgAdminUsers.map((user) => user.email);
+
+                        heading = VR_CREATE_HEADER;
+                        template = MailTemplateEnum.VR_CREATE;
+                        context = {
+                            organizationName: jwtData.organizationName,
+                            programmeName: project.title,
+                            countryName: this.configService.get('country'),
+                            // TODO: fix the link
+                            programmePageLink:
+                                this.configService.get('url') + '/',
+                        };
+                    } else {
+                        throw new HttpException(
+                            'Unauthorized',
+                            HttpStatus.UNAUTHORIZED,
+                        );
+                    }
+                }
+                break;
             default: {
                 throw new HttpException(
                     `${docType} document submission not implemented`,
@@ -413,6 +492,9 @@ export class DocumentService {
         } catch (err) {
             console.log(err);
             await queryRunner.rollbackTransaction();
+            if (err instanceof HttpException) {
+                throw err;
+            }
             throw new HttpException(
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,

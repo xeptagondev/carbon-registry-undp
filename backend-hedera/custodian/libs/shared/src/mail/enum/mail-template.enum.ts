@@ -13,4 +13,5 @@ export enum MailTemplateEnum {
     ORG_REACTIVATE = './reactivateOrg',
     PDD_IC_REJECT = './pddRejectIC',
     PDD_CREATE = './pddCreate',
+    VR_CREATE = './vrCreate',
 }
