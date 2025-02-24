@@ -43,3 +43,7 @@ export const PDD_DNA_APPROVE_HEADER: string =
     '{{countryName}} Carbon Registry: Project Design Document Approved by DNA!';
 
 export const VR_CREATE_HEADER: string = 'New Validation Report Submitted!';
+
+export const VR_APPROVE_HEADER: string = 'Validation Report Accepted!';
+
+export const VR_REJECT_HEADER: string = 'Validation Report Rejected!';
