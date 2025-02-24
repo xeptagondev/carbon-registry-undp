@@ -32,3 +32,12 @@ export const PDD_IC_REJECT_HEADER: string =
 
 export const PDD_CREATE_HEADER: string =
     '{{countryName}} Carbon Registry: Project Design Document Submitted!';
+
+export const MONITORING_CREATE_HEADER: string =
+    '{{countryName}} Carbon Registry: Monitoring Report Submitted!';
+
+export const MONITORING_APPROVE_HEADER: string =
+    '{{countryName}} Carbon Registry:  Monitoring Report Certified';
+
+export const MONITORING_REJECT_HEADER: string =
+    '{{countryName}} Carbon Registry:  Monitoring Report Certified';

@@ -1,3 +1,7 @@
 export enum DocumentEnum {
+    INF = 'INF',
     PDD = 'PDD',
+    VALIDATION = 'VALIDATION',
+    MONITORING = 'MONITORING',
+    VERIFICATION = 'VERIFICATION',
 }

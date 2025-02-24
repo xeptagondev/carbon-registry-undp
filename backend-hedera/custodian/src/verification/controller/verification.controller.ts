@@ -31,17 +31,17 @@ export class VerificationController {
         );
     }
 
-    // @UseGuards(AuthGuardService)
-    // @Post('verifyMonitoringReport')
-    // verifyMonitoringReport(
-    //     @Body() verifyReportDto: VerifyReportDto,
-    //     @Request() req,
-    // ) {
-    //     return this.verificationService.verifyMonitoringReport(
-    //         verifyReportDto,
-    //         req.user,
-    //     );
-    // }
+    @UseGuards(AuthGuardService)
+    @Post('verifyMonitoringReport')
+    verifyMonitoringReport(
+        @Body() verifyReportDto: VerifyReportDto,
+        @Request() req,
+    ) {
+        return this.verificationService.verifyMonitoringReport(
+            verifyReportDto,
+            req.user,
+        );
+    }
 
     // @UseGuards(AuthGuardService)
     // @Post('createVerificationReport')
