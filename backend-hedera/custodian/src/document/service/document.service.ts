@@ -14,6 +14,7 @@ import { MailService } from '@app/shared/mail/service/mail.service';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import {
     PDD_CREATE_HEADER,
+    PDD_DNA_APPROVE_HEADER,
     PDD_DNA_REJECT_HEADER,
     PDD_IC_APPROVE_HEADER,
     PDD_IC_REJECT_HEADER,
@@ -256,7 +257,7 @@ export class DocumentService {
 
             const toICCtx = {
                 pdOrganizationName: document.project.organization.name,
-                icOrganizationName: jwtData.organizationName,
+                icOrganizationName: prevApproveUser.organization.name,
                 countryName: countryName,
             };
 
@@ -281,13 +282,50 @@ export class DocumentService {
             };
 
             await this.sendEmail(
-                dnaAdminEmails,
+                projectAdminEmails,
                 subject,
                 MailTemplateEnum.PDD_DNA_REJECT_TO_PD,
                 toPDCtx,
             );
         } else if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
-            
+            // send email to assigned IC admins
+            const assignedICAdmins = await this.getOrgAdminEmails(
+                assigneeOrgEmails,
+                queryRunner,
+            );
+
+            const toICCtx = {
+                pdOrganizationName: document.project.organization.name,
+                icOrganizationName: prevApproveUser.organization.name,
+                // TODO: fix the link
+                programmePageLink: this.configService.get('url') + '/',
+                countryName: countryName,
+            };
+
+            const subject = PDD_DNA_APPROVE_HEADER.replace(
+                '{{countryName}}',
+                countryName,
+            );
+
+            await this.sendEmail(
+                assignedICAdmins,
+                subject,
+                MailTemplateEnum.PDD_APPROVAL_DNA_TO_IC,
+                toICCtx,
+            );
+
+            // send email to PD
+            const toPDCtx = {
+                pdOrganizationName: document.project.organization.name,
+                countryName: countryName,
+            };
+
+            await this.sendEmail(
+                projectAdminEmails,
+                subject,
+                MailTemplateEnum.PDD_APPROVAL_DNA_TO_PD,
+                toPDCtx,
+            );
         }
     }
 
@@ -322,7 +360,9 @@ export class DocumentService {
 
             queryRunner.commitTransaction();
         } catch (err) {
+            console.log(err);
             queryRunner.rollbackTransaction();
+            throw err;
         } finally {
             queryRunner.release();
         }
@@ -342,14 +382,28 @@ export class DocumentService {
             );
         }
 
-        switch (documentEntity.documentType) {
-            case DocumentEnum.PDD: {
-                await this.performPDDAction(
-                    documentEntity,
-                    requestData,
-                    jwtData,
-                );
+        const queryRunner = this.dataSource.createQueryRunner();
+        queryRunner.connect();
+        try {
+            queryRunner.startTransaction();
+            switch (documentEntity.documentType) {
+                case DocumentEnum.PDD: {
+                    await this.performPDDAction(
+                        documentEntity,
+                        requestData,
+                        jwtData,
+                        queryRunner,
+                    );
+                }
             }
+
+            queryRunner.commitTransaction();
+        } catch (err) {
+            console.log(err);
+            queryRunner.rollbackTransaction();
+            throw err;
+        } finally {
+            queryRunner.release();
         }
     }
 
