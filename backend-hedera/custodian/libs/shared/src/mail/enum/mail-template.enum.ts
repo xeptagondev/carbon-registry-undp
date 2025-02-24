@@ -14,6 +14,7 @@ export enum MailTemplateEnum {
     PDD_IC_REJECT = './pddRejectIC',
     PDD_CREATE = './pddCreate',
     PDD_APPROVAL_IC_TO_PD = 'pddApprovalICtoPD',
+    PDD_APPROVAL_IC_TO_DNA = 'pddApprovalICtoDNA',
     VR_CREATE = './vrCreate',
     VR_CREATE_DNA = './vrCreateToDNA',
 }

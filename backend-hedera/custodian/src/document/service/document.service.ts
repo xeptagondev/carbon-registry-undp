@@ -14,6 +14,7 @@ import { MailService } from '@app/shared/mail/service/mail.service';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import {
     PDD_CREATE_HEADER,
+    PDD_IC_APPROVE_HEADER,
     PDD_IC_REJECT_HEADER,
     VR_CREATE_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
@@ -168,11 +169,11 @@ export class DocumentService {
         const dnaAdmins = await this.getDNAAdmins(queryRunner);
 
         const dnaAdminEmails: string[] = dnaAdmins.map((user) => user.email);
+        const countryName = this.configService.get('country');
 
         // TODO: send emails and other actions
         if (requestData.action === DocumentStateEnum.IC_REJECTED) {
             // send IC rejection email(s) and perform other actions
-            const countryName = this.configService.get('country');
 
             const mailDTO: MailTemplateDTO = {
                 subject: PDD_IC_REJECT_HEADER.replace(
@@ -192,7 +193,39 @@ export class DocumentService {
             await this.mailService.sendMail(mailDTO);
         } else if (requestData.action === DocumentStateEnum.IC_APPROVED) {
             // send one email to PD admins
+            const mailDTO: MailTemplateDTO = {
+                subject: PDD_IC_APPROVE_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+                template: MailTemplateEnum.PDD_APPROVAL_IC_TO_PD,
+                to: projectAdminEmails,
+                context: {
+                    organizationName: document.project.organization.name,
+                    icOrganizationName: jwtData.organizationName,
+                    countryName: countryName,
+                },
+            };
+
+            await this.mailService.sendMail(mailDTO);
+
             // send second email to DNA admins
+            const mailDTO: MailTemplateDTO = {
+                subject: PDD_IC_APPROVE_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+                template: MailTemplateEnum.PDD_APPROVAL_IC_TO_DNA,
+                to: dnaAdminEmails,
+                context: {
+                    organizationName: document.project.organization.name,
+                    icOrganizationName: jwtData.organizationName,
+                    countryName: countryName,
+                    // TODO: fix the link
+                    programmePageLink: this.configService.get('url') + '/',
+                },
+            };
+            await this.mailService.sendMail(mailDTO);
         }
     }
 
