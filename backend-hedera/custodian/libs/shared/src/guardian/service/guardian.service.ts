@@ -233,7 +233,7 @@ export class GuardianService {
         }
     }
 
-    public async createProject(
+    public async createEntity(
         email: string,
         blockId: string,
         payload: any,

@@ -71,6 +71,10 @@ export default () => ({
         userQuery: 'user_grid',
         organizationQuery: 'multiple_organizations_approve_grid',
         approveProject: 'project_approve_reject_buttons',
+        createActivity: '',
+        createDocument: '',
+        activityQuery: '',
+        monitoringQuery: '',
     },
     metadata: {
         approve: {

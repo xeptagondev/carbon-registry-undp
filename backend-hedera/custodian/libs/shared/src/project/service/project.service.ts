@@ -127,7 +127,7 @@ export class ProjectService {
                 );
             });
 
-            await this.guardianService.createProject(
+            await this.guardianService.createEntity(
                 requestUser.email,
                 this.utilService.getBlock(
                     this.configService.get('blocks.createProject'),
@@ -285,24 +285,18 @@ export class ProjectService {
         );
         const countryName = this.configService.get('country');
 
-        for (const admin of admins) {
-            const mailDTO: MailTemplateDTO = {
-                subject: INF_CREATE_HEADER.replace(
-                    '{{countryName}}',
-                    countryName,
-                ),
-                template: MailTemplateEnum.INF_CREATE,
-                to: admin.email,
-                context: {
-                    userName: admin?.name,
-                    organizationName: requestUser.organizationName,
-                    countryName: countryName,
-                    projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
-                },
-            };
+        const mailDTO: MailTemplateDTO = {
+            subject: INF_CREATE_HEADER.replace('{{countryName}}', countryName),
+            template: MailTemplateEnum.INF_CREATE,
+            to: admins.map((admin) => admin.email),
+            context: {
+                organizationName: requestUser.organizationName,
+                countryName: countryName,
+                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+            },
+        };
 
-            await this.mailService.sendMail(mailDTO);
-        }
+        await this.mailService.sendMail(mailDTO);
     }
     private async notifyCertifiers(
         refId: string,
@@ -315,21 +309,18 @@ export class ProjectService {
         const admins = await this.userService.getAdminsByIds(ids);
         const countryName = this.configService.get('country');
 
-        for (const admin of admins) {
-            const mailDTO: MailTemplateDTO = {
-                subject: INF_ASSIGN_HEADER,
-                template: MailTemplateEnum.INF_ASSIGN,
-                to: admin.email,
-                context: {
-                    userName: admin?.name,
-                    organizationName: requestUser.organizationName,
-                    countryName: countryName,
-                    projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
-                },
-            };
+        const mailDTO: MailTemplateDTO = {
+            subject: INF_ASSIGN_HEADER,
+            template: MailTemplateEnum.INF_ASSIGN,
+            to: admins.map((admin) => admin.email),
+            context: {
+                organizationName: requestUser.organizationName,
+                countryName: countryName,
+                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+            },
+        };
 
-            await this.mailService.sendMail(mailDTO);
-        }
+        await this.mailService.sendMail(mailDTO);
     }
 
     public async query(
@@ -614,12 +605,12 @@ export class ProjectService {
             project.title,
             id,
         );
-        // await this.notifyProjectStageChange(
-        //     project,
-        //     requestUser,
-        //     MailTemplateEnum.INF_APPROVE,
-        //     INF_APPROVE_HEADER,
-        // );
+        await this.notifyProjectStageChange(
+            project,
+            requestUser,
+            MailTemplateEnum.INF_APPROVE,
+            INF_APPROVE_HEADER,
+        );
         await this.logProjectStage(
             `Project with id: ${id} has been approved by ${requestUser.userId}`,
         );
