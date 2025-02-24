@@ -33,4 +33,7 @@ export const PDD_IC_REJECT_HEADER: string =
 export const PDD_CREATE_HEADER: string =
     '{{countryName}} Carbon Registry: Project Design Document Submitted!';
 
+export const PDD_IC_APPROVE_HEADER: string =
+    '{{countryName}} Carbon Registry: Project Design Document Certified';
+
 export const VR_CREATE_HEADER: string = 'New Validation Report Submitted!';
