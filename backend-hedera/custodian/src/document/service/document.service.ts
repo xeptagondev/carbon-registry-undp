@@ -467,7 +467,7 @@ export class DocumentService {
 
             // create document in 'PENDING' state
             const document: DocumentEntity = {
-                name: dto.name,
+                title: dto.name,
                 project: project,
                 documentType: dto.documentType,
                 state: DocumentStateEnum.PENDING,
