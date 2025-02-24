@@ -210,7 +210,7 @@ export class DocumentService {
             await this.mailService.sendMail(mailDTO);
 
             // send second email to DNA admins
-            const mailDTO: MailTemplateDTO = {
+            const dnaMailDTO: MailTemplateDTO = {
                 subject: PDD_IC_APPROVE_HEADER.replace(
                     '{{countryName}}',
                     countryName,
@@ -225,7 +225,7 @@ export class DocumentService {
                     programmePageLink: this.configService.get('url') + '/',
                 },
             };
-            await this.mailService.sendMail(mailDTO);
+            await this.mailService.sendMail(dnaMailDTO);
         }
     }
 
