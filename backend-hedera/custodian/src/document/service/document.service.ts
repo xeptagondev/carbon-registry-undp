@@ -14,6 +14,7 @@ import { MailService } from '@app/shared/mail/service/mail.service';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import {
     PDD_CREATE_HEADER,
+    PDD_DNA_REJECT_HEADER,
     PDD_IC_APPROVE_HEADER,
     PDD_IC_REJECT_HEADER,
     VR_CREATE_HEADER,
@@ -47,8 +48,27 @@ export class DocumentService {
                     organization: true,
                 },
                 submittedUser: true,
+                approvedUser: {
+                    organization: true,
+                },
             },
         });
+    }
+
+    async sendEmail(
+        to: string | string[],
+        subject: string,
+        template: MailTemplateEnum,
+        context: any,
+    ) {
+        const mailDTO: MailTemplateDTO = {
+            subject: subject,
+            template: template,
+            to: to,
+            context: context,
+        };
+
+        await this.mailService.sendMail(mailDTO);
     }
 
     async performPDDAction(
@@ -60,7 +80,9 @@ export class DocumentService {
         /*
             1. Authorize the call
         */
-
+        const assigneeOrgEmails: string[] = document.project.assignees.map(
+            (user) => user.email,
+        );
         // if IC approve/rejection call
         if (
             requestData.action === DocumentStateEnum.IC_APPROVED ||
@@ -75,10 +97,7 @@ export class DocumentService {
             }
 
             // can only be performed by project assignees
-            const assigneeEmails: string[] = document.project.assignees.map(
-                (user) => user.email,
-            );
-            if (!(jwtData.email in assigneeEmails)) {
+            if (!(jwtData.email in assigneeOrgEmails)) {
                 throw new HttpException(
                     'Unauthorised',
                     HttpStatus.UNAUTHORIZED,
@@ -134,6 +153,8 @@ export class DocumentService {
             },
         );
 
+        const prevApproveUser = document.approvedUser;
+
         // set user who approved the current state change
         document.approvedUser = user;
 
@@ -175,57 +196,98 @@ export class DocumentService {
         if (requestData.action === DocumentStateEnum.IC_REJECTED) {
             // send IC rejection email(s) and perform other actions
 
-            const mailDTO: MailTemplateDTO = {
-                subject: PDD_IC_REJECT_HEADER.replace(
-                    '{{countryName}}',
-                    countryName,
-                ),
-                template: MailTemplateEnum.PDD_IC_REJECT,
-                to: projectAdminEmails,
-                context: {
-                    organizationName: jwtData.organizationName,
-                    countryName: countryName,
-                    // TODO: fix the link
-                    programmePageLink: this.configService.get('url') + '/',
-                },
+            const subject: string = PDD_IC_REJECT_HEADER.replace(
+                '{{countryName}}',
+                countryName,
+            );
+            const context: any = {
+                organizationName: jwtData.organizationName,
+                countryName: countryName,
+                // TODO: fix the link
+                programmePageLink: this.configService.get('url') + '/',
             };
 
-            await this.mailService.sendMail(mailDTO);
+            await this.sendEmail(
+                projectAdminEmails,
+                subject,
+                MailTemplateEnum.PDD_IC_REJECT,
+                context,
+            );
         } else if (requestData.action === DocumentStateEnum.IC_APPROVED) {
             // send one email to PD admins
-            const mailDTO: MailTemplateDTO = {
-                subject: PDD_IC_APPROVE_HEADER.replace(
-                    '{{countryName}}',
-                    countryName,
-                ),
-                template: MailTemplateEnum.PDD_APPROVAL_IC_TO_PD,
-                to: projectAdminEmails,
-                context: {
-                    organizationName: document.project.organization.name,
-                    icOrganizationName: jwtData.organizationName,
-                    countryName: countryName,
-                },
+            const subject = PDD_IC_APPROVE_HEADER.replace(
+                '{{countryName}}',
+                countryName,
+            );
+            const toPDContext = {
+                organizationName: document.project.organization.name,
+                icOrganizationName: jwtData.organizationName,
+                countryName: countryName,
             };
 
-            await this.mailService.sendMail(mailDTO);
+            await this.sendEmail(
+                projectAdminEmails,
+                subject,
+                MailTemplateEnum.PDD_APPROVAL_IC_TO_PD,
+                toPDContext,
+            );
 
             // send second email to DNA admins
-            const dnaMailDTO: MailTemplateDTO = {
-                subject: PDD_IC_APPROVE_HEADER.replace(
-                    '{{countryName}}',
-                    countryName,
-                ),
-                template: MailTemplateEnum.PDD_APPROVAL_IC_TO_DNA,
-                to: dnaAdminEmails,
-                context: {
-                    organizationName: document.project.organization.name,
-                    icOrganizationName: jwtData.organizationName,
-                    countryName: countryName,
-                    // TODO: fix the link
-                    programmePageLink: this.configService.get('url') + '/',
-                },
+            const toDNAContext = {
+                organizationName: document.project.organization.name,
+                icOrganizationName: jwtData.organizationName,
+                countryName: countryName,
+                // TODO: fix the link
+                programmePageLink: this.configService.get('url') + '/',
             };
-            await this.mailService.sendMail(dnaMailDTO);
+
+            await this.sendEmail(
+                dnaAdminEmails,
+                subject,
+                MailTemplateEnum.PDD_APPROVAL_IC_TO_DNA,
+                toDNAContext,
+            );
+        } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
+            // send email to IC (assignee) admin
+            const approvedOrgAdminsEmails = await this.getOrgAdminEmails(
+                [prevApproveUser.organization.email],
+                queryRunner,
+            );
+
+            const toICCtx = {
+                pdOrganizationName: document.project.organization.name,
+                icOrganizationName: jwtData.organizationName,
+                countryName: countryName,
+            };
+
+            const subject = PDD_DNA_REJECT_HEADER.replace(
+                '{{countryName}}',
+                countryName,
+            );
+
+            await this.sendEmail(
+                approvedOrgAdminsEmails,
+                subject,
+                MailTemplateEnum.PDD_DNA_REJECT_TO_IC,
+                toICCtx,
+            );
+
+            // send email to PD admin
+            const toPDCtx = {
+                pdOrganizationName: document.project.organization.name,
+                countryName: countryName,
+                // TODO: fix the link
+                programmePageLink: this.configService.get('url') + '/',
+            };
+
+            await this.sendEmail(
+                dnaAdminEmails,
+                subject,
+                MailTemplateEnum.PDD_DNA_REJECT_TO_PD,
+                toPDCtx,
+            );
+        } else if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
+            
         }
     }
 
@@ -314,6 +376,34 @@ export class DocumentService {
         return dnaAdmins;
     }
 
+    async getOrgAdminEmails(orgEmails: string[], queryRunner: QueryRunner) {
+        const orgsWithAdmins = await queryRunner.manager
+            .getRepository(OrganizationEntity)
+            .createQueryBuilder('organization')
+            .innerJoinAndSelect('organization.users', 'users')
+            .innerJoinAndSelect('users.guardianRole', 'guardianRole')
+            .innerJoinAndSelect('guardianRole.role', 'role')
+            .where('organization.email IN (:...orgEmails)', {
+                orgEmails,
+            })
+            .andWhere('role.name = :roleName', {
+                roleName: RoleEnum.Admin,
+            })
+            .getMany();
+
+        const assigneeEmails: string[] = [];
+
+        for (let i = 0; i < orgsWithAdmins.length; i++) {
+            const org = orgsWithAdmins[i];
+            const admins = org.users;
+            for (let j = 0; j < admins.length; j++) {
+                assigneeEmails.push(admins[j].email);
+            }
+        }
+
+        return assigneeEmails;
+    }
+
     async authorizeAndSendEmail(
         docType: DocumentEnum,
         jwtData: JWTPayload,
@@ -348,32 +438,8 @@ export class DocumentService {
                     );
 
                     // get assignee org admins
-                    const orgsWithAdmins = await queryRunner.manager
-                        .getRepository(OrganizationEntity)
-                        .createQueryBuilder('organization')
-                        .innerJoinAndSelect('organization.users', 'users')
-                        .innerJoinAndSelect(
-                            'users.guardianRole',
-                            'guardianRole',
-                        )
-                        .innerJoinAndSelect('guardianRole.role', 'role')
-                        .where('organization.email IN (:...orgEmails)', {
-                            orgEmails,
-                        })
-                        .andWhere('role.name = :roleName', {
-                            roleName: RoleEnum.Admin,
-                        })
-                        .getMany();
-
-                    const assigneeEmails: string[] = [];
-
-                    for (let i = 0; i < orgsWithAdmins.length; i++) {
-                        const org = orgsWithAdmins[i];
-                        const admins = org.users;
-                        for (let j = 0; j < admins.length; j++) {
-                            assigneeEmails.push(admins[j].email);
-                        }
-                    }
+                    const assigneeEmails: string[] =
+                        await this.getOrgAdminEmails(orgEmails, queryRunner);
 
                     // send PDD create email to assignees
                     const countryName = this.configService.get('country');
