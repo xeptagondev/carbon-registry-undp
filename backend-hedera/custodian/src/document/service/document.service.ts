@@ -18,7 +18,9 @@ import {
     PDD_DNA_REJECT_HEADER,
     PDD_IC_APPROVE_HEADER,
     PDD_IC_REJECT_HEADER,
+    VR_APPROVE_HEADER,
     VR_CREATE_HEADER,
+    VR_REJECT_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
@@ -48,7 +50,9 @@ export class DocumentService {
                     assignees: true,
                     organization: true,
                 },
-                submittedUser: true,
+                submittedUser: {
+                    organization: true,
+                },
                 approvedUser: {
                     organization: true,
                 },
@@ -70,6 +74,176 @@ export class DocumentService {
         };
 
         await this.mailService.sendMail(mailDTO);
+    }
+
+    async performVRAction(
+        document: DocumentEntity,
+        requestData: DocumentActionDTO,
+        jwtData: JWTPayload,
+        queryRunner: QueryRunner,
+    ) {
+        /*
+            1. Authorize the call
+        */
+        const dnaAdminEmails = (await this.getDNAAdmins(queryRunner)).map(
+            (user) => user.email,
+        );
+        if (
+            requestData.action === DocumentStateEnum.DNA_APPROVED ||
+            requestData.action === DocumentStateEnum.DNA_REJECTED
+        ) {
+            // Previous state has to be pending
+            if (document.state !== DocumentStateEnum.PENDING) {
+                throw new HttpException(
+                    `Document not in ${DocumentStateEnum.PENDING} state`,
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            // can only be made by DNA admin(s)
+            if (!(jwtData.email in dnaAdminEmails)) {
+                throw new HttpException(
+                    'Unauthorised',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
+            // last PDD version has to be in DNA_APPROVED state
+            const lastPDD: DocumentEntity = await queryRunner.manager.findOne(
+                DocumentEntity,
+                {
+                    where: {
+                        project: {
+                            id: document.project.id,
+                        },
+                        documentType: DocumentEnum.PDD,
+                    },
+                    order: {
+                        version: 'DESC',
+                    },
+                },
+            );
+
+            if (!lastPDD || lastPDD.state !== DocumentStateEnum.DNA_APPROVED) {
+                throw new HttpException(
+                    `Project Design Document not in ${DocumentStateEnum.DNA_APPROVED} state`,
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+        } else {
+            // VR only has DNA Approve/Reject phases
+            throw new HttpException(
+                'Incorrect state change request',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        /*
+            2. VR state change
+        */
+
+        // set state change and remarks
+        document.state = requestData.action;
+        document.remarks = requestData.remarks;
+
+        // get approving user
+        const user: UsersEntity = await queryRunner.manager.findOneBy(
+            UsersEntity,
+            {
+                email: jwtData.email,
+            },
+        );
+
+        // const prevApproveUser = document.approvedUser;
+
+        // set user who approved the current state change
+        document.approvedUser = user;
+
+        // TODO: Guardian call
+
+        // save document
+        await queryRunner.manager.save(DocumentEntity, document);
+
+        /*
+            3. Send emails based on action
+        */
+
+        // get project organization admins
+        const projectOrgAdmins = await queryRunner.manager
+            .getRepository(UsersEntity)
+            .createQueryBuilder('users')
+            .innerJoinAndSelect('users.organization', 'organization')
+            .innerJoinAndSelect('users.guardianRole', 'guardianRole')
+            .innerJoinAndSelect('guardianRole.role', 'role')
+            .where('organization.id = :id', {
+                id: document.project.organization.id,
+            })
+            .andWhere('role.name = :roleName', {
+                roleName: RoleEnum.Admin,
+            })
+            .getMany();
+
+        const projectAdminEmails: string[] = projectOrgAdmins.map(
+            (user) => user.email,
+        );
+
+        const assigneeAdminEmails = await this.getOrgAdminEmails(
+            document.project.assignees.map((org) => org.email),
+            queryRunner,
+        );
+
+        const countryName = this.configService.get('country');
+
+        // send emails and other actions
+        if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
+            // send email to PD
+            const ctx = {
+                icOrganizationName: document.submittedUser.organization.name,
+                pdOrganizationName: document.project.organization.name,
+                programmeName: document.project.title,
+                countryName: countryName,
+            };
+
+            await this.sendEmail(
+                projectAdminEmails,
+                VR_APPROVE_HEADER,
+                MailTemplateEnum.VR_APPROVE_PD,
+                ctx,
+            );
+
+            // send email to IC
+            await this.sendEmail(
+                assigneeAdminEmails,
+                VR_APPROVE_HEADER,
+                MailTemplateEnum.VR_APPROVE_IC,
+                ctx,
+            );
+        } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
+            // send email to PD
+            const ctx = {
+                icOrganizationName: document.submittedUser.organization.name,
+                pdOrganizationName: document.project.organization.name,
+                programmeName: document.project.title,
+                countryName: countryName,
+                // TODO: fix the link
+                programmePageLink: this.configService.get('url') + '/',
+            };
+
+            await this.sendEmail(
+                projectAdminEmails,
+                VR_REJECT_HEADER,
+                MailTemplateEnum.VR_REJECT_PD,
+                ctx,
+            );
+
+            // send email to IC
+            await this.sendEmail(
+                assigneeAdminEmails,
+                VR_REJECT_HEADER,
+                MailTemplateEnum.VR_REJECT_IC,
+                ctx,
+            );
+        }
     }
 
     async performPDDAction(
@@ -176,7 +350,7 @@ export class DocumentService {
             .innerJoinAndSelect('users.guardianRole', 'guardianRole')
             .innerJoinAndSelect('guardianRole.role', 'role')
             .where('organization.id = :id', {
-                id: jwtData.organizationId,
+                id: document.project.organization.id,
             })
             .andWhere('role.name = :roleName', {
                 roleName: RoleEnum.Admin,
@@ -193,7 +367,7 @@ export class DocumentService {
         const dnaAdminEmails: string[] = dnaAdmins.map((user) => user.email);
         const countryName = this.configService.get('country');
 
-        // TODO: send emails and other actions
+        // send emails and other actions
         if (requestData.action === DocumentStateEnum.IC_REJECTED) {
             // send IC rejection email(s) and perform other actions
 
@@ -348,8 +522,18 @@ export class DocumentService {
         try {
             queryRunner.startTransaction();
             switch (documentEntity.documentType) {
-                case DocumentEnum.PDD: {
-                    await this.performPDDAction(
+                case DocumentEnum.PDD:
+                    {
+                        await this.performPDDAction(
+                            documentEntity,
+                            requestData,
+                            jwtData,
+                            queryRunner,
+                        );
+                    }
+                    break;
+                case DocumentEnum.VALIDATION_REPORT: {
+                    await this.performVRAction(
                         documentEntity,
                         requestData,
                         jwtData,
@@ -387,8 +571,18 @@ export class DocumentService {
         try {
             queryRunner.startTransaction();
             switch (documentEntity.documentType) {
-                case DocumentEnum.PDD: {
-                    await this.performPDDAction(
+                case DocumentEnum.PDD:
+                    {
+                        await this.performPDDAction(
+                            documentEntity,
+                            requestData,
+                            jwtData,
+                            queryRunner,
+                        );
+                    }
+                    break;
+                case DocumentEnum.VALIDATION_REPORT: {
+                    await this.performVRAction(
                         documentEntity,
                         requestData,
                         jwtData,
