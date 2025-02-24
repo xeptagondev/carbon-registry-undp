@@ -43,6 +43,7 @@ export class DocumentService {
             relations: {
                 project: {
                     assignees: true,
+                    organization: true,
                 },
                 submittedUser: true,
             },
@@ -53,7 +54,12 @@ export class DocumentService {
         document: DocumentEntity,
         requestData: DocumentActionDTO,
         jwtData: JWTPayload,
+        queryRunner: QueryRunner,
     ) {
+        /*
+            1. Authorize the call
+        */
+
         // if IC approve/rejection call
         if (
             requestData.action === DocumentStateEnum.IC_APPROVED ||
@@ -111,14 +117,21 @@ export class DocumentService {
             );
         }
 
+        /*
+            2. PDD state change
+        */
+
         // set state change and remarks
         document.state = requestData.action;
         document.remarks = requestData.remarks;
 
         // get approving user
-        const user: UsersEntity = await this.usersRepository.findOneBy({
-            email: jwtData.email,
-        });
+        const user: UsersEntity = await queryRunner.manager.findOneBy(
+            UsersEntity,
+            {
+                email: jwtData.email,
+            },
+        );
 
         // set user who approved the current state change
         document.approvedUser = user;
@@ -126,7 +139,35 @@ export class DocumentService {
         // TODO: Guardian call
 
         // save document
-        await this.documentRepository.save(document);
+        await queryRunner.manager.save(DocumentEntity, document);
+
+        /*
+            3. Send emails based on action
+        */
+
+        // get project organization admins
+        const projectOrgAdmins = await queryRunner.manager
+            .getRepository(UsersEntity)
+            .createQueryBuilder('users')
+            .innerJoinAndSelect('users.organization', 'organization')
+            .innerJoinAndSelect('users.guardianRole', 'guardianRole')
+            .innerJoinAndSelect('guardianRole.role', 'role')
+            .where('organization.id = :id', {
+                id: jwtData.organizationId,
+            })
+            .andWhere('role.name = :roleName', {
+                roleName: RoleEnum.Admin,
+            })
+            .getMany();
+
+        const projectAdminEmails: string[] = projectOrgAdmins.map(
+            (user) => user.email,
+        );
+
+        // get DNA admins
+        const dnaAdmins = await this.getDNAAdmins(queryRunner);
+
+        const dnaAdminEmails: string[] = dnaAdmins.map((user) => user.email);
 
         // TODO: send emails and other actions
         if (requestData.action === DocumentStateEnum.IC_REJECTED) {
@@ -139,9 +180,8 @@ export class DocumentService {
                     countryName,
                 ),
                 template: MailTemplateEnum.PDD_IC_REJECT,
-                to: document.submittedUser.email,
+                to: projectAdminEmails,
                 context: {
-                    username: document.submittedUser.name,
                     organizationName: jwtData.organizationName,
                     countryName: countryName,
                     // TODO: fix the link
@@ -150,8 +190,9 @@ export class DocumentService {
             };
 
             await this.mailService.sendMail(mailDTO);
-        } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
-            // send IC rejection email(s) and perform other actions
+        } else if (requestData.action === DocumentStateEnum.IC_APPROVED) {
+            // send one email to PD admins
+            // send second email to DNA admins
         }
     }
 
@@ -169,14 +210,26 @@ export class DocumentService {
             );
         }
 
-        switch (documentEntity.documentType) {
-            case DocumentEnum.PDD: {
-                await this.performPDDAction(
-                    documentEntity,
-                    requestData,
-                    jwtData,
-                );
+        const queryRunner = this.dataSource.createQueryRunner();
+        queryRunner.connect();
+        try {
+            queryRunner.startTransaction();
+            switch (documentEntity.documentType) {
+                case DocumentEnum.PDD: {
+                    await this.performPDDAction(
+                        documentEntity,
+                        requestData,
+                        jwtData,
+                        queryRunner,
+                    );
+                }
             }
+
+            queryRunner.commitTransaction();
+        } catch (err) {
+            queryRunner.rollbackTransaction();
+        } finally {
+            queryRunner.release();
         }
     }
 
@@ -203,6 +256,29 @@ export class DocumentService {
                 );
             }
         }
+    }
+
+    async getDNAAdmins(queryRunner: QueryRunner) {
+        // get DNA admins
+        const dnaAdmins = await queryRunner.manager
+            .getRepository(UsersEntity)
+            .createQueryBuilder('users')
+            .innerJoinAndSelect('users.organization', 'organization')
+            .innerJoinAndSelect(
+                'organization.organizationType',
+                'organizationType',
+            )
+            .innerJoinAndSelect('users.guardianRole', 'guardianRole')
+            .innerJoinAndSelect('guardianRole.role', 'role')
+            .where('organizationType.name = :orgType', {
+                orgType: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+            })
+            .andWhere('role.name = :roleName', {
+                roleName: RoleEnum.Admin,
+            })
+            .getMany();
+
+        return dnaAdmins;
     }
 
     async authorizeAndSendEmail(
@@ -242,8 +318,11 @@ export class DocumentService {
                     const orgsWithAdmins = await queryRunner.manager
                         .getRepository(OrganizationEntity)
                         .createQueryBuilder('organization')
-                        .innerJoinAndSelect('organization.users', 'user')
-                        .innerJoinAndSelect('user.guardianRole', 'guardianRole')
+                        .innerJoinAndSelect('organization.users', 'users')
+                        .innerJoinAndSelect(
+                            'users.guardianRole',
+                            'guardianRole',
+                        )
                         .innerJoinAndSelect('guardianRole.role', 'role')
                         .where('organization.email IN (:...orgEmails)', {
                             orgEmails,
@@ -320,13 +399,13 @@ export class DocumentService {
                         // send emails to PD admins (project organization admins)
                         const orgAdminUsers = await queryRunner.manager
                             .getRepository(UsersEntity)
-                            .createQueryBuilder('user')
+                            .createQueryBuilder('users')
                             .innerJoinAndSelect(
-                                'user.organization',
+                                'users.organization',
                                 'organization',
                             )
                             .innerJoinAndSelect(
-                                'user.guardianRole',
+                                'users.guardianRole',
                                 'guardianRole',
                             )
                             .innerJoinAndSelect('guardianRole.role', 'role')
@@ -344,12 +423,40 @@ export class DocumentService {
                         template = MailTemplateEnum.VR_CREATE;
                         context = {
                             organizationName: jwtData.organizationName,
+                            pdOrganizationName: project.organization.name,
                             programmeName: project.title,
                             countryName: this.configService.get('country'),
                             // TODO: fix the link
                             programmePageLink:
                                 this.configService.get('url') + '/',
                         };
+
+                        // send another email to DNA admins
+                        const dnaHeading = heading;
+                        const dnaTemplate = MailTemplateEnum.VR_CREATE_DNA;
+                        const dnaContext = {
+                            icOrganizationName: jwtData.organizationName,
+                            pdOrganizationName: project.organization.name,
+                            countryName: this.configService.get('country'),
+                            programmeName: project.title,
+                            // TODO: fix the link
+                            programmePageLink:
+                                this.configService.get('url') + '/',
+                        };
+
+                        const dnaAdminEmails = (
+                            await this.getDNAAdmins(queryRunner)
+                        ).map((user) => user.email);
+
+                        // send email
+                        const dnaMailDTO: MailTemplateDTO = {
+                            subject: dnaHeading,
+                            template: dnaTemplate,
+                            to: dnaAdminEmails,
+                            context: dnaContext,
+                        };
+
+                        await this.mailService.sendMail(dnaMailDTO);
                     } else {
                         throw new HttpException(
                             'Unauthorized',
@@ -375,12 +482,6 @@ export class DocumentService {
         };
 
         await this.mailService.sendMail(mailDTO);
-    }
-
-    async verifyDocData(docType: DocumentEnum, data: any) {
-        if (docType === DocumentEnum.PDD) {
-            // verify from PDD DTO
-        }
     }
 
     async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
