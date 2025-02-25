@@ -90,6 +90,16 @@ export class HelperService {
         }
     }
 
+    public enumToString(enumObj, value) {
+        const keys = Object.keys(enumObj);
+        for (const key of keys) {
+            if (enumObj[key] === value) {
+                return key;
+            }
+        }
+        return null;
+    }
+
     private prepareValue(value: any, table?: string, toLower?: boolean) {
         if (value instanceof Array) {
             return '(' + value.map((e) => `'${e}'`).join(',') + ')';

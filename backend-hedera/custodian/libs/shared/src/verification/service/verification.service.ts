@@ -21,20 +21,27 @@ import {
     MONITORING_APPROVE_HEADER,
     MONITORING_CREATE_HEADER,
     MONITORING_REJECT_HEADER,
+    VERIFICATION_APPROVE_HEADER,
+    VERIFICATION_CREATE_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { VerifyReportDto } from '../dto/verify.report.dto';
+import { VerificationReportDto } from '../dto/verification.report.dto';
+import { CreditIssueCertificateGenerator } from '@app/shared/util/service/credit.issue.certificate.gen';
+import { DateUtilService } from '@app/shared/util/service/date.util.service';
 
 @Injectable()
 export class VerificationService {
     constructor(
         private readonly helperService: HelperService,
+        private readonly dateUtilService: DateUtilService,
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
         private readonly userService: UserService,
         private readonly fileHandler: FileHandlerInterface,
         private readonly guardianService: GuardianService,
         private readonly utilService: UtilService,
+        private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
     ) {}
 
     //MARK: create Monitoring Report
@@ -363,468 +370,600 @@ export class VerificationService {
     }
 
     //MARK: create Verification Report
-    // async createVerificationReport(
-    //     verificationReportDto: VerificationReportDto,
-    //     user: User,
-    // ) {
-    //     if (user.companyRole !== CompanyRole.CLIMATE_FUND) {
-    //         throw new HttpException(
-    //             this.helperService.formatReqMessagesString(
-    //                 'verification.uploadVerificationReportWrongUser',
-    //                 [],
-    //             ),
-    //             HttpStatus.BAD_REQUEST,
-    //         );
-    //     }
+    async createVerificationReport(
+        verificationReportDto: VerificationReportDto,
+        reqUser: JWTPayload,
+    ) {
+        if (
+            reqUser.organizationRole !==
+            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+        ) {
+            throw new HttpException(
+                this.helperService.formatReqMessagesString(
+                    'verification.uploadVerificationReportWrongUser',
+                    [],
+                ),
+                HttpStatus.BAD_REQUEST,
+            );
+        }
 
-    //     const docContent = JSON.parse(verificationReportDto.content);
+        const docContent = JSON.parse(verificationReportDto.content);
 
-    //     if (
-    //         docContent.annexures.optionalDocuments &&
-    //         docContent.annexures.optionalDocuments.length > 0
-    //     ) {
-    //         const docUrls = [];
-    //         for (const doc of docContent.annexures.optionalDocuments) {
-    //             let docUrl;
+        if (
+            docContent.annexures.optionalDocuments &&
+            docContent.annexures.optionalDocuments.length > 0
+        ) {
+            const docUrls = [];
+            for (const doc of docContent.annexures.optionalDocuments) {
+                let docUrl;
 
-    //             if (this.isValidHttpUrl(doc)) {
-    //                 docUrl = doc;
-    //             } else {
-    //                 docUrl = await this.uploadDocument(
-    //                     DocType.VERIFICATION_REPORT_ANNEXURES_OPTIONAL_DOCUMENT,
-    //                     verificationReportDto.programmeId,
-    //                     doc,
-    //                 );
-    //             }
-    //             docUrls.push(docUrl);
-    //         }
-    //         docContent.annexures.optionalDocuments = docUrls;
-    //     }
+                if (this.isValidHttpUrl(doc)) {
+                    docUrl = doc;
+                } else {
+                    docUrl = await this.uploadDocument(
+                        AdditionalDocType.VERIFICATION_REPORT_ANNEXURES_OPTIONAL_DOCUMENT,
+                        verificationReportDto.programmeId,
+                        doc,
+                    );
+                }
+                docUrls.push(docUrl);
+            }
+            docContent.annexures.optionalDocuments = docUrls;
+        }
 
-    //     if (
-    //         docContent.verificationFinding.optionalDocuments &&
-    //         docContent.verificationFinding.optionalDocuments.length > 0
-    //     ) {
-    //         const docUrls = [];
-    //         for (const doc of docContent.verificationFinding
-    //             .optionalDocuments) {
-    //             let docUrl;
+        if (
+            docContent.verificationFinding.optionalDocuments &&
+            docContent.verificationFinding.optionalDocuments.length > 0
+        ) {
+            const docUrls = [];
+            for (const doc of docContent.verificationFinding
+                .optionalDocuments) {
+                let docUrl;
 
-    //             if (this.isValidHttpUrl(doc)) {
-    //                 docUrl = doc;
-    //             } else {
-    //                 docUrl = await this.uploadDocument(
-    //                     DocType.VERIFICATION_REPORT_VERIFICATION_FINDING_OPTIONAL_DOCUMENT,
-    //                     verificationReportDto.programmeId,
-    //                     doc,
-    //                 );
-    //             }
-    //             docUrls.push(docUrl);
-    //         }
-    //         docContent.verificationFinding.optionalDocuments = docUrls;
-    //     }
+                if (this.isValidHttpUrl(doc)) {
+                    docUrl = doc;
+                } else {
+                    docUrl = await this.uploadDocument(
+                        AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_FINDING_OPTIONAL_DOCUMENT,
+                        verificationReportDto.programmeId,
+                        doc,
+                    );
+                }
+                docUrls.push(docUrl);
+            }
+            docContent.verificationFinding.optionalDocuments = docUrls;
+        }
 
-    //     if (
-    //         docContent.verificationOpinion.signature1 &&
-    //         docContent.verificationOpinion.signature1.length > 0
-    //     ) {
-    //         const signUrls = [];
-    //         for (const sign of docContent.verificationOpinion.signature1) {
-    //             let signUrl;
+        if (
+            docContent.verificationOpinion.signature1 &&
+            docContent.verificationOpinion.signature1.length > 0
+        ) {
+            const signUrls = [];
+            for (const sign of docContent.verificationOpinion.signature1) {
+                let signUrl;
 
-    //             if (this.isValidHttpUrl(sign)) {
-    //                 signUrl = sign;
-    //             } else {
-    //                 signUrl = await this.uploadDocument(
-    //                     DocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
-    //                     verificationReportDto.programmeId,
-    //                     sign,
-    //                 );
-    //             }
-    //             signUrls.push(signUrl);
-    //         }
-    //         docContent.verificationOpinion.signature1 = signUrls;
-    //     }
+                if (this.isValidHttpUrl(sign)) {
+                    signUrl = sign;
+                } else {
+                    signUrl = await this.uploadDocument(
+                        AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
+                        verificationReportDto.programmeId,
+                        sign,
+                    );
+                }
+                signUrls.push(signUrl);
+            }
+            docContent.verificationOpinion.signature1 = signUrls;
+        }
 
-    //     if (
-    //         docContent.verificationOpinion.signature2 &&
-    //         docContent.verificationOpinion.signature2.length > 0
-    //     ) {
-    //         const signUrls = [];
-    //         for (const sign of docContent.verificationOpinion.signature2) {
-    //             let signUrl;
+        if (
+            docContent.verificationOpinion.signature2 &&
+            docContent.verificationOpinion.signature2.length > 0
+        ) {
+            const signUrls = [];
+            for (const sign of docContent.verificationOpinion.signature2) {
+                let signUrl;
 
-    //             if (this.isValidHttpUrl(sign)) {
-    //                 signUrl = sign;
-    //             } else {
-    //                 signUrl = await this.uploadDocument(
-    //                     DocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
-    //                     verificationReportDto.programmeId,
-    //                     sign,
-    //                 );
-    //             }
-    //             signUrls.push(signUrl);
-    //         }
-    //         docContent.verificationOpinion.signature2 = signUrls;
-    //     }
+                if (this.isValidHttpUrl(sign)) {
+                    signUrl = sign;
+                } else {
+                    signUrl = await this.uploadDocument(
+                        AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
+                        verificationReportDto.programmeId,
+                        sign,
+                    );
+                }
+                signUrls.push(signUrl);
+            }
+            docContent.verificationOpinion.signature2 = signUrls;
+        }
 
-    //     const programme = await this.programmeSlService.getProjectById(
-    //         verificationReportDto.programmeId,
-    //     );
+        // const programme = await this.programmeSlService.getProjectById(
+        //     verificationReportDto.programmeId,
+        // );
 
-    //     const creditReceived =
-    //         (Number(programme.creditBalance) || 0) +
-    //         (Number(programme.creditFrozen) || 0) +
-    //         (Number(programme.creditRetired) || 0) +
-    //         (Number(programme.creditTransferred) || 0);
+        const projects = await this.guardianService.query(
+            reqUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.find((project) => {
+            return (
+                project?.document?.credentialSubject[0]?.refId ===
+                verificationReportDto.programmeId
+            );
+        });
+        const activities = await this.guardianService.query(
+            reqUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.activityQuery'),
+            ),
+        );
+        const projectActivities = activities?.data.filter((activity) => {
+            return (
+                activity?.document?.credentialSubject[0]?.project?.refId ===
+                verificationReportDto.programmeId
+            );
+        });
 
-    //     if (
-    //         programme.creditEst - creditReceived <
-    //         Number(docContent?.projectDetails?.verifiedScer)
-    //     ) {
-    //         throw new HttpException(
-    //             this.helperService.formatReqMessagesString(
-    //                 'verification.cannotIssueMoreThanEstimatedCredits',
-    //                 [],
-    //             ),
-    //             HttpStatus.BAD_REQUEST,
-    //         );
-    //     }
+        const creditReceived =
+            (Number(project?.creditBalance) || 0) +
+            (Number(project?.creditFrozen) || 0) +
+            (Number(project?.creditRetired) || 0) +
+            (Number(project?.creditTransferred) || 0);
 
-    //     const verificationReportDocument = new DocumentEntity();
-    //     verificationReportDocument.userId = user.id;
-    //     verificationReportDocument.companyId = user.companyId;
+        if (
+            project.creditEst - creditReceived <
+            Number(docContent?.projectDetails?.verifiedScer)
+        ) {
+            throw new HttpException(
+                this.helperService.formatReqMessagesString(
+                    'verification.cannotIssueMoreThanEstimatedCredits',
+                    [],
+                ),
+                HttpStatus.BAD_REQUEST,
+            );
+        }
 
-    //     verificationReportDocument.programmeId =
-    //         verificationReportDto.programmeId;
-    //     verificationReportDocument.status = DocumentStatus.PENDING;
-    //     verificationReportDocument.type = DocumentTypeEnum.VERIFICATION_REPORT;
-    //     verificationReportDocument.createdTime = new Date().getTime();
-    //     verificationReportDocument.updatedTime = new Date().getTime();
+        // const verificationReportDocument = new DocumentEntity();
+        // verificationReportDocument.userId = user.id;
+        // verificationReportDocument.companyId = user.companyId;
 
-    //     const savedReport = await this.entityManager.transaction(async (em) => {
-    //         const verificationRequest =
-    //             await this.verificationRequestRepository.findOne({
-    //                 where: {
-    //                     programmeId: verificationReportDto.programmeId,
-    //                 },
-    //                 order: {
-    //                     id: 'DESC',
-    //                 },
-    //             });
-    //         if (
-    //             verificationRequest &&
-    //             (verificationRequest.status ==
-    //                 VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED ||
-    //                 verificationRequest.status ==
-    //                     VerificationRequestStatusEnum.MONITORING_REPORT_VERIFIED)
-    //         ) {
-    //             await em.update(
-    //                 VerificationRequestEntity,
-    //                 {
-    //                     id: verificationRequest.id,
-    //                 },
-    //                 {
-    //                     status: VerificationRequestStatusEnum.VERIFICATION_REPORT_UPLOADED,
-    //                     userId: user.id,
-    //                     monitoringStartDate:
-    //                         docContent?.projectDetails?.monitoringPeriodStart,
-    //                     monitoringEndDate:
-    //                         docContent?.projectDetails?.monitoringPeriodEnd,
-    //                     creditAmount: docContent?.projectDetails?.verifiedScer,
+        // verificationReportDocument.programmeId =
+        //     verificationReportDto.programmeId;
+        // verificationReportDocument.status = DocumentStatus.PENDING;
+        // verificationReportDocument.type = DocumentTypeEnum.VERIFICATION_REPORT;
+        // verificationReportDocument.createdTime = new Date().getTime();
+        // verificationReportDocument.updatedTime = new Date().getTime();
 
-    //                     updatedTime: new Date().getTime(),
-    //                 },
-    //             );
-    //             const lastVerificationDocument =
-    //                 await this.documentRepository.findOne({
-    //                     where: {
-    //                         verificationRequestId: verificationRequest.id,
-    //                         type: DocumentTypeEnum.VERIFICATION_REPORT,
-    //                     },
-    //                     order: {
-    //                         id: 'DESC',
-    //                     },
-    //                 });
-    //             verificationReportDocument.verificationRequestId =
-    //                 verificationRequest.id;
-    //             verificationReportDocument.version = lastVerificationDocument
-    //                 ? lastVerificationDocument.version + 1
-    //                 : 1;
-    //         } else {
-    //             throw new HttpException(
-    //                 this.helperService.formatReqMessagesString(
-    //                     'verification.verificationRequestDoesNotExists',
-    //                     [],
-    //                 ),
-    //                 HttpStatus.BAD_REQUEST,
-    //             );
-    //         }
-    //         verificationReportDocument.content = docContent;
+        const verificationPayload = {
+            refId: '',
+            project: '',
+            activity: '',
+            name: '',
+            version: 1,
+            type: DocumentEnum.VERIFICATION,
+            data: '',
+        };
 
-    //         //updating verification report id
-    //         const currentYear = new Date().getFullYear();
-    //         const programmeId = verificationReportDocument.programmeId;
-    //         const verificationRequestIdByProgramme =
-    //             await this.getVerificationRequestIdByProgramme(
-    //                 verificationReportDocument.programmeId,
-    //             );
-    //         const version = verificationReportDocument.version;
-    //         docContent.projectDetails.reportID = `SLCCS/VRR/${currentYear}/${programmeId}/${verificationRequestIdByProgramme}/${version}`;
-    //         return await em.save(verificationReportDocument);
-    //     });
+        //TODO update activity status by calling button and update verification version if already existing
+        await this.guardianService.createEntity(
+            reqUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.createDocument'),
+            ),
+            {
+                document: verificationPayload,
+                ref: null,
+            },
+        );
 
-    //     //send email to SLCF
-    //     await this.emailHelperService.sendEmailToExCom(
-    //         EmailTemplates.VERIFICATION_CREATE,
-    //         null,
-    //         verificationReportDto.programmeId,
-    //     );
+        // const savedReport = await this.entityManager.transaction(async (em) => {
+        //     const verificationRequest =
+        //         await this.verificationRequestRepository.findOne({
+        //             where: {
+        //                 programmeId: verificationReportDto.programmeId,
+        //             },
+        //             order: {
+        //                 id: 'DESC',
+        //             },
+        //         });
+        //     if (
+        //         verificationRequest &&
+        //         (verificationRequest.status ==
+        //             VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED ||
+        //             verificationRequest.status ==
+        //                 VerificationRequestStatusEnum.MONITORING_REPORT_VERIFIED)
+        //     ) {
+        //         await em.update(
+        //             VerificationRequestEntity,
+        //             {
+        //                 id: verificationRequest.id,
+        //             },
+        //             {
+        //                 status: VerificationRequestStatusEnum.VERIFICATION_REPORT_UPLOADED,
+        //                 userId: user.id,
+        //                 monitoringStartDate:
+        //                     docContent?.projectDetails?.monitoringPeriodStart,
+        //                 monitoringEndDate:
+        //                     docContent?.projectDetails?.monitoringPeriodEnd,
+        //                 creditAmount: docContent?.projectDetails?.verifiedScer,
 
-    //     if (savedReport) {
-    //         const log = new ProgrammeAuditLogSl();
-    //         log.programmeId = verificationReportDto.programmeId;
-    //         log.logType = ProgrammeAuditLogType.VERIFICATION_CREATE;
-    //         log.userId = user.id;
+        //                 updatedTime: new Date().getTime(),
+        //             },
+        //         );
+        //         const lastVerificationDocument =
+        //             await this.documentRepository.findOne({
+        //                 where: {
+        //                     verificationRequestId: verificationRequest.id,
+        //                     type: DocumentTypeEnum.VERIFICATION_REPORT,
+        //                 },
+        //                 order: {
+        //                     id: 'DESC',
+        //                 },
+        //             });
+        //         verificationReportDocument.verificationRequestId =
+        //             verificationRequest.id;
+        //         verificationReportDocument.version = lastVerificationDocument
+        //             ? lastVerificationDocument.version + 1
+        //             : 1;
+        //     } else {
+        //         throw new HttpException(
+        //             this.helperService.formatReqMessagesString(
+        //                 'verification.verificationRequestDoesNotExists',
+        //                 [],
+        //             ),
+        //             HttpStatus.BAD_REQUEST,
+        //         );
+        //     }
+        //     verificationReportDocument.content = docContent;
 
-    //         await this.programmeAuditSlRepo.save(log);
-    //     }
+        //     //updating verification report id
+        //     const currentYear = new Date().getFullYear();
+        //     const programmeId = verificationReportDocument.programmeId;
+        //     const verificationRequestIdByProgramme =
+        //         await this.getVerificationRequestIdByProgramme(
+        //             verificationReportDocument.programmeId,
+        //         );
+        //     const version = verificationReportDocument.version;
+        //     docContent.projectDetails.reportID = `SLCCS/VRR/${currentYear}/${programmeId}/${verificationRequestIdByProgramme}/${version}`;
+        //     return await em.save(verificationReportDocument);
+        // });
 
-    //     return new DataResponseDto(HttpStatus.OK, savedReport);
-    // }
+        const countryName = this.configService.get('country');
+        const mailToPD: MailTemplateDTO = {
+            subject: VERIFICATION_CREATE_HEADER,
+            template: MailTemplateEnum.VERIFICATION_CREATE_PD,
+            to: project?.createdBy?.email,
+            context: {
+                organizationNameIC: reqUser.organizationName,
+                organizationNamePD: project?.createdBy?.organization?.name,
+                countryName: countryName,
+                projectName: project?.title,
+                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${verificationReportDto.programmeId}`,
+            },
+        };
+
+        await this.mailService.sendMail(mailToPD);
+
+        const mailToDNA: MailTemplateDTO = {
+            subject: VERIFICATION_CREATE_HEADER,
+            template: MailTemplateEnum.VERIFICATION_CREATE_DNA,
+            to: project?.createdBy?.email,
+            context: {
+                organizationNameIC: reqUser.organizationName,
+                organizationNamePD: project?.createdBy?.organization?.name,
+                countryName: countryName,
+                projectName: project?.title,
+                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${verificationReportDto.programmeId}`,
+            },
+        };
+
+        await this.mailService.sendMail(mailToDNA);
+
+        // if (savedReport) {
+        //     const log = new ProgrammeAuditLogSl();
+        //     log.programmeId = verificationReportDto.programmeId;
+        //     log.logType = ProgrammeAuditLogType.VERIFICATION_CREATE;
+        //     log.userId = user.id;
+
+        //     await this.programmeAuditSlRepo.save(log);
+        // }
+
+        return new DataResponseDto(
+            HttpStatus.OK,
+            'Verification Report is submitted successfully',
+        );
+    }
 
     //MARK: verify Verification Report
-    // async verifyVerificationReport(
-    //     verifyReportDto: VerifyReportDto,
-    //     user: User,
-    // ) {
-    //     if (user.companyRole !== CompanyRole.EXECUTIVE_COMMITTEE) {
-    //         throw new HttpException(
-    //             this.helperService.formatReqMessagesString(
-    //                 'verification.verifyVerificationReportWrongUser',
-    //                 [],
-    //             ),
-    //             HttpStatus.BAD_REQUEST,
-    //         );
-    //     }
+    async verifyVerificationReport(
+        verifyReportDto: VerifyReportDto,
+        reqUser: JWTPayload,
+    ) {
+        if (
+            reqUser.organizationRole !==
+            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+        ) {
+            throw new HttpException(
+                this.helperService.formatReqMessagesString(
+                    'verification.verifyVerificationReportWrongUser',
+                    [],
+                ),
+                HttpStatus.BAD_REQUEST,
+            );
+        }
 
-    //     const verificationRequest =
-    //         await this.verificationRequestRepository.findOneBy({
-    //             id: verifyReportDto.verificationRequestId,
-    //         });
+        const activities = await this.guardianService.query(
+            reqUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.activityQuery'),
+            ),
+        );
+        const activity = activities?.data.filter((activity) => {
+            return (
+                activity?.document?.credentialSubject[0]?.refId ===
+                verifyReportDto.verificationRequestId
+            );
+        });
+        const projects = await this.guardianService.query(
+            reqUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.projectQuery'),
+            ),
+        );
+        const project = projects?.data.filter((activity) => {
+            return (
+                activity?.document?.credentialSubject[0]?.refId ===
+                verifyReportDto.verificationRequestId
+            );
+        });
+        if (!activity) {
+            throw new HttpException(
+                this.helperService.formatReqMessagesString(
+                    'verification.verificationRequestDoesNotExists',
+                    [],
+                ),
+                HttpStatus.BAD_REQUEST,
+            );
+        }
 
-    //     if (!verificationRequest) {
-    //         throw new HttpException(
-    //             this.helperService.formatReqMessagesString(
-    //                 'verification.verificationRequestDoesNotExists',
-    //                 [],
-    //             ),
-    //             HttpStatus.BAD_REQUEST,
-    //         );
-    //     }
+        const verificationReports = await this.guardianService.query(
+            reqUser.email,
+            this.utilService.getBlock(
+                this.configService.get('blocks.verificationQuery'),
+            ),
+        );
 
-    //     let updatedProgramme;
-    //     let isInitialCreditIssue = false;
-    //     if (verifyReportDto.verify === true) {
-    //         const programme = await this.programmeSlService.getProjectById(
-    //             verificationRequest.programmeId,
-    //         );
+        const verificationReport = verificationReports?.data.filter(
+            (verificationReport) => {
+                return (
+                    verificationReport?.document?.credentialSubject[0]
+                        ?.refId === verifyReportDto.reportId
+                );
+            },
+        );
+        if (!activity) {
+            throw new HttpException(
+                this.helperService.formatReqMessagesString(
+                    'verification.verificationRequestDoesNotExists',
+                    [],
+                ),
+                HttpStatus.BAD_REQUEST,
+            );
+        }
 
-    //         isInitialCreditIssue = !programme.creditStartSerialNumber;
-    //         const txRef = this.txRefGen.getCreditIssueApproveRef(
-    //             user,
-    //             programme,
-    //             verificationRequest,
-    //         );
+        // let updatedProgramme;
+        // let isInitialCreditIssue = false;
+        if (verifyReportDto.verify === true) {
+            // const programme = await this.programmeSlService.getProjectById(
+            //     verificationRequest.programmeId,
+            // );
+            // isInitialCreditIssue = !programme.creditStartSerialNumber;
+            // const txRef = this.txRefGen.getCreditIssueApproveRef(
+            //     user,
+            //     programme,
+            //     verificationRequest,
+            // );
+            // updatedProgramme = await this.programmeLedgerService.issueSlCredits(
+            //     verificationRequest,
+            //     programme.purposeOfCreditDevelopment,
+            //     programme.company.companyId,
+            //     txRef,
+            // );
+        }
 
-    //         updatedProgramme = await this.programmeLedgerService.issueSlCredits(
-    //             verificationRequest,
-    //             programme.purposeOfCreditDevelopment,
-    //             programme.company.companyId,
-    //             txRef,
-    //         );
-    //     }
+        // let creditIssueCertificateSerial = undefined;
+        // if (updatedProgramme) {
+        //     const previousCreditIssueCertificateSerial =
+        //         await this.getPreviousCertificateSerial(
+        //             verificationRequest.programmeId,
+        //         );
+        //     creditIssueCertificateSerial =
+        //         this.serialGenerator.generateCreditIssueCertificateNumber(
+        //             updatedProgramme.serialNo,
+        //             previousCreditIssueCertificateSerial,
+        //         );
+        let certificateUrl = await this.getCreditIssuanceCertificateURL(
+            activity,
+            project,
+        );
 
-    //     let certificateUrl = undefined;
-    //     let creditIssueCertificateSerial = undefined;
-    //     if (updatedProgramme) {
-    //         const previousCreditIssueCertificateSerial =
-    //             await this.getPreviousCertificateSerial(
-    //                 verificationRequest.programmeId,
-    //             );
-    //         creditIssueCertificateSerial =
-    //             this.serialGenerator.generateCreditIssueCertificateNumber(
-    //                 updatedProgramme.serialNo,
-    //                 previousCreditIssueCertificateSerial,
-    //             );
-    //         certificateUrl = await this.getCreditIssuanceCertificateURL(
-    //             verificationRequest,
-    //             creditIssueCertificateSerial,
-    //             isInitialCreditIssue,
-    //         );
+        //TODO update document, activity, project accordingly
+        //     const hostAddress = this.configService.get('host');
+        //     await this.emailHelperService.sendEmailToOrganisationAdmins(
+        //         updatedProgramme.companyId,
+        //         EmailTemplates.CREDIT_ISSUANCE_SL,
+        //         {
+        //             programmeName: updatedProgramme.title,
+        //             credits: verificationRequest.creditAmount,
+        //             serialNumber: updatedProgramme.serialNo,
+        //             pageLink:
+        //                 hostAddress +
+        //                 `/programmeManagementSLCF/view/${updatedProgramme.programmeId}`,
+        //         },
+        //     );
 
-    //         const hostAddress = this.configService.get('host');
-    //         await this.emailHelperService.sendEmailToOrganisationAdmins(
-    //             updatedProgramme.companyId,
-    //             EmailTemplates.CREDIT_ISSUANCE_SL,
-    //             {
-    //                 programmeName: updatedProgramme.title,
-    //                 credits: verificationRequest.creditAmount,
-    //                 serialNumber: updatedProgramme.serialNo,
-    //                 pageLink:
-    //                     hostAddress +
-    //                     `/programmeManagementSLCF/view/${updatedProgramme.programmeId}`,
-    //             },
-    //         );
+        //     const logs: ProgrammeAuditLogSl[] = [];
 
-    //         const logs: ProgrammeAuditLogSl[] = [];
+        //     const VerificationApprovedLog = new ProgrammeAuditLogSl();
+        //     VerificationApprovedLog.programmeId =
+        //         verificationRequest.programmeId;
+        //     VerificationApprovedLog.logType =
+        //         ProgrammeAuditLogType.VERIFICATION_APPROVED;
+        //     VerificationApprovedLog.userId = user.id;
+        //     logs.push(VerificationApprovedLog);
 
-    //         const VerificationApprovedLog = new ProgrammeAuditLogSl();
-    //         VerificationApprovedLog.programmeId =
-    //             verificationRequest.programmeId;
-    //         VerificationApprovedLog.logType =
-    //             ProgrammeAuditLogType.VERIFICATION_APPROVED;
-    //         VerificationApprovedLog.userId = user.id;
-    //         logs.push(VerificationApprovedLog);
+        //     const creditIssueLog = new ProgrammeAuditLogSl();
+        //     creditIssueLog.programmeId = verificationRequest.programmeId;
+        //     creditIssueLog.logType = ProgrammeAuditLogType.CREDIT_ISSUED;
+        //     creditIssueLog.data = {
+        //         creditIssued: Number(verificationRequest.creditAmount),
+        //     };
+        //     creditIssueLog.userId = user.id;
+        //     logs.push(creditIssueLog);
 
-    //         const creditIssueLog = new ProgrammeAuditLogSl();
-    //         creditIssueLog.programmeId = verificationRequest.programmeId;
-    //         creditIssueLog.logType = ProgrammeAuditLogType.CREDIT_ISSUED;
-    //         creditIssueLog.data = {
-    //             creditIssued: Number(verificationRequest.creditAmount),
-    //         };
-    //         creditIssueLog.userId = user.id;
-    //         logs.push(creditIssueLog);
+        //     await this.programmeAuditSlRepo.save(logs);
+        // }
 
-    //         await this.programmeAuditSlRepo.save(logs);
-    //     }
+        // await this.entityManager.transaction(async (em) => {
+        //     await em.update(
+        //         VerificationRequestEntity,
+        //         {
+        //             id: verifyReportDto.verificationRequestId,
+        //         },
+        //         {
+        //             status: verifyReportDto.verify
+        //                 ? VerificationRequestStatusEnum.VERIFICATION_REPORT_VERIFIED
+        //                 : VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED,
+        //             userId: user.id,
+        //             updatedTime: new Date().getTime(),
+        //             creditIssueCertificateUrl: certificateUrl,
+        //             verificationSerialNo: creditIssueCertificateSerial,
+        //         },
+        //     );
 
-    //     await this.entityManager.transaction(async (em) => {
-    //         await em.update(
-    //             VerificationRequestEntity,
-    //             {
-    //                 id: verifyReportDto.verificationRequestId,
-    //             },
-    //             {
-    //                 status: verifyReportDto.verify
-    //                     ? VerificationRequestStatusEnum.VERIFICATION_REPORT_VERIFIED
-    //                     : VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED,
-    //                 userId: user.id,
-    //                 updatedTime: new Date().getTime(),
-    //                 creditIssueCertificateUrl: certificateUrl,
-    //                 verificationSerialNo: creditIssueCertificateSerial,
-    //             },
-    //         );
+        //     const verificationDocument = await this.documentRepository.find({
+        //         where: {
+        //             id: verifyReportDto.reportId,
+        //         },
+        //     });
+        //     if (verificationDocument) {
+        //         await em.update(
+        //             DocumentEntity,
+        //             {
+        //                 id: verifyReportDto.reportId,
+        //             },
+        //             {
+        //                 status: verifyReportDto.verify
+        //                     ? DocumentStatus.ACCEPTED
+        //                     : DocumentStatus.REJECTED,
+        //                 updatedTime: new Date().getTime(),
+        //             },
+        //         );
+        //     } else {
+        //         throw new HttpException(
+        //             this.helperService.formatReqMessagesString(
+        //                 'verification.verificationReportDoesNotExists',
+        //                 [],
+        //             ),
+        //             HttpStatus.BAD_REQUEST,
+        //         );
+        //         return;
+        //     }
+        // });
 
-    //         const verificationDocument = await this.documentRepository.find({
-    //             where: {
-    //                 id: verifyReportDto.reportId,
-    //             },
-    //         });
-    //         if (verificationDocument) {
-    //             await em.update(
-    //                 DocumentEntity,
-    //                 {
-    //                     id: verifyReportDto.reportId,
-    //                 },
-    //                 {
-    //                     status: verifyReportDto.verify
-    //                         ? DocumentStatus.ACCEPTED
-    //                         : DocumentStatus.REJECTED,
-    //                     updatedTime: new Date().getTime(),
-    //                 },
-    //             );
-    //         } else {
-    //             throw new HttpException(
-    //                 this.helperService.formatReqMessagesString(
-    //                     'verification.verificationReportDoesNotExists',
-    //                     [],
-    //                 ),
-    //                 HttpStatus.BAD_REQUEST,
-    //             );
-    //             return;
-    //         }
-    //     });
+        if (verifyReportDto.verify) {
+            const countryName = this.configService.get('country');
+            const mailToPD: MailTemplateDTO = {
+                subject: VERIFICATION_APPROVE_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+                template: MailTemplateEnum.VERIFICATION_APPROVE_PD,
+                to: project?.createdBy?.email,
+                context: {
+                    organizationNameIC:
+                        verificationReport?.createdBy?.organization?.name,
+                    organizationNamePD: project?.createdBy?.organization?.name,
+                    countryName: countryName,
+                    projectName: project?.title,
+                    userName: project?.createdBy?.userName,
+                },
+            };
 
-    //     //send email to Project Participant and SLCF
-    //     await this.emailHelperService.sendEmailToSLCFAdmins(
-    //         verifyReportDto.verify
-    //             ? EmailTemplates.VERIFICATION_APPROVED
-    //             : EmailTemplates.VERIFICATION_REJECTED,
-    //         verifyReportDto.remark ? { remark: verifyReportDto.remark } : null,
-    //         verificationRequest.programmeId,
-    //     );
+            await this.mailService.sendMail(mailToPD);
 
-    //     if (!verifyReportDto.verify) {
-    //         const log = new ProgrammeAuditLogSl();
-    //         log.programmeId = verificationRequest.programmeId;
-    //         log.logType = ProgrammeAuditLogType.VERIFICATION_REJECTED;
-    //         log.userId = user.id;
-    //         if (verifyReportDto.remark)
-    //             log.data = { remark: verifyReportDto.remark };
+            const mailToIC: MailTemplateDTO = {
+                subject: VERIFICATION_APPROVE_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+                template: MailTemplateEnum.VERIFICATION_APPROVE_IC,
+                to: project?.createdBy?.email,
+                context: {
+                    organizationNameIC:
+                        verificationReport?.createdBy?.organization?.name,
+                    organizationNamePD: project?.createdBy?.organization?.name,
+                    countryName: countryName,
+                    projectName: project?.title,
+                    userName: project?.createdBy?.userName,
+                },
+            };
 
-    //         await this.programmeAuditSlRepo.save(log);
-    //     }
-    // }
+            await this.mailService.sendMail(mailToIC);
+        }
+
+        // if (!verifyReportDto.verify) {
+        //     const log = new ProgrammeAuditLogSl();
+        //     log.programmeId = verificationRequest.programmeId;
+        //     log.logType = ProgrammeAuditLogType.VERIFICATION_REJECTED;
+        //     log.userId = user.id;
+        //     if (verifyReportDto.remark)
+        //         log.data = { remark: verifyReportDto.remark };
+
+        //     await this.programmeAuditSlRepo.save(log);
+        // }
+    }
 
     //MARK: get Credit Issuance Certificate URL
-    // async getCreditIssuanceCertificateURL(
-    //     verificationRequest: VerificationRequestEntity,
-    //     verificationSerialNo: string,
-    //     isInitialCreditIssue: boolean,
-    // ) {
-    //     const programme = await this.programmeSlService.getProjectById(
-    //         verificationRequest.programmeId,
-    //     );
+    async getCreditIssuanceCertificateURL(
+        verificationRequest: any,
+        project: any,
+    ) {
+        if (!project) {
+            throw new HttpException(
+                this.helperService.formatReqMessagesString(
+                    'programme.programmeNotExist',
+                    [],
+                ),
+                HttpStatus.BAD_REQUEST,
+            );
+        }
 
-    //     if (!programme) {
-    //         throw new HttpException(
-    //             this.helperService.formatReqMessagesString(
-    //                 'programme.programmeNotExist',
-    //                 [],
-    //             ),
-    //             HttpStatus.BAD_REQUEST,
-    //         );
-    //     }
+        const certificateData = {
+            projectName: project.title,
+            companyName: project.company.name,
+            creditType: project.purposeOfCreditDevelopment,
+            certificateNo: '01',
+            issueDate: this.dateUtilService.formatCustomDate(),
+            issuedCredits: verificationRequest.creditAmount,
+            monitoringStartDate: this.dateUtilService.formatCustomDate(
+                verificationRequest.monitoringStartDate,
+            ),
+            monitoringEndDate: this.dateUtilService.formatCustomDate(
+                verificationRequest.monitoringEndDate,
+            ),
+        };
 
-    //     const blockStart = isInitialCreditIssue
-    //         ? programme.creditStartSerialNumber
-    //         : this.serialGenerator.calculateCreditSerialNumber(
-    //               programme.creditStartSerialNumber,
-    //               programme.creditBalance > 0
-    //                   ? programme.creditBalance -
-    //                         verificationRequest.creditAmount
-    //                   : 0,
-    //           );
-    //     const blockEnd = this.serialGenerator.calculateCreditSerialNumber(
-    //         programme.creditStartSerialNumber,
-    //         programme.creditBalance - 1,
-    //     );
+        const url =
+            await this.creditIssueCertificateGenerator.generateCreditIssueCertificate(
+                certificateData,
+            );
 
-    //     const certificateData = {
-    //         projectName: programme.title,
-    //         companyName: programme.company.name,
-    //         creditType: programme.purposeOfCreditDevelopment,
-    //         certificateNo: verificationSerialNo,
-    //         issueDate: this.dateUtilService.formatCustomDate(),
-    //         issuedCredits: verificationRequest.creditAmount,
-    //         monitoringStartDate: this.dateUtilService.formatCustomDate(
-    //             verificationRequest.monitoringStartDate,
-    //         ),
-    //         monitoringEndDate: this.dateUtilService.formatCustomDate(
-    //             verificationRequest.monitoringEndDate,
-    //         ),
-    //         startCreditSerialNo: blockStart,
-    //         endCreditSerialNo: blockEnd,
-    //     };
-
-    //     const url =
-    //         await this.creditIssueCertificateGenerator.generateCreditIssueCertificate(
-    //             certificateData,
-    //         );
-
-    //     return url;
-    // }
+        return url;
+    }
 
     //MARK: Aggregate Documents
     // aggregateDocuments(rawData) {
@@ -925,7 +1064,7 @@ export class VerificationService {
 
         try {
             url = new URL(attachment);
-        } catch (_) {
+        } catch (e) {
             return false;
         }
 
@@ -1001,14 +1140,14 @@ export class VerificationService {
         return fileType;
     };
 
-    private async getVerificationRequestIdByProgramme(programmeId: string) {
-        const count = await this.verificationRequestRepository.count({
-            where: {
-                programmeId: programmeId,
-                status: VerificationRequestStatusEnum.VERIFICATION_REPORT_VERIFIED,
-            },
-        });
+    // private async getVerificationRequestIdByProgramme(programmeId: string) {
+    //     const count = await this.verificationRequestRepository.count({
+    //         where: {
+    //             programmeId: programmeId,
+    //             status: VerificationRequestStatusEnum.VERIFICATION_REPORT_VERIFIED,
+    //         },
+    //     });
 
-        return count + 1;
-    }
+    //     return count + 1;
+    // }
 }

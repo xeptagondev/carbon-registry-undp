@@ -16,7 +16,10 @@ export enum MailTemplateEnum {
     MONITORING_CREATE = './monitoringCreate',
     MONITORING_APPROVE = './monitoringApprove',
     MONITORING_REJECT = './monitoringReject',
-    VERIFICATION_CREATE = './verificationCreate',
-    VERIFICATION_APPROVE = './verificationApprove',
-    VERIFICATION_REJECT = './verificationReject',
+    VERIFICATION_CREATE_PD = './verificationCreatePD',
+    VERIFICATION_CREATE_DNA = './verificationCreateDNA',
+    VERIFICATION_APPROVE_IC = './verificationApproveIC',
+    VERIFICATION_APPROVE_PD = './verificationApprovePD',
+    VERIFICATION_REJECT_IC = './verificationRejectIC',
+    VERIFICATION_REJECT_PD = './verificationRejectPD',
 }

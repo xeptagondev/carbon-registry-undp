@@ -7,6 +7,7 @@ import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { MailModule } from '@app/shared/mail/mail.module';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
             UsersEntity,
             OrganizationEntity,
         ]),
+        MailModule,
     ],
     providers: [DocumentService],
     controllers: [DocumentController],
