@@ -18,8 +18,8 @@ export class DocumentEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
-    @Column({ type: 'string' })
-    name: string;
+    @Column({ type: String })
+    title: string;
 
     @Column({ type: Number, generated: 'increment' })
     version?: number;
@@ -33,7 +33,7 @@ export class DocumentEntity {
     @Column({ type: 'enum', enum: DocumentStateEnum, nullable: false })
     state: DocumentStateEnum;
 
-    @Column({ type: 'string', nullable: true, default: '' })
+    @Column({ type: String, nullable: true, default: '' })
     remarks?: string;
 
     @ManyToOne(() => UsersEntity, (userEntity) => userEntity.submittedDocuments)
