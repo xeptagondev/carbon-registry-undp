@@ -1,0 +1,23 @@
+export const GUARDIAN_API = {
+    LOGIN: '/api/v1/accounts/login',
+    REGISTER: '/api/v1/accounts/register',
+    ACCESS_TOKEN: '/api/v1/accounts/access-token',
+    PROFILE_UPDATE: '/api/v1/profiles/push',
+    CHANGE_PASSWORD: '/api/v1/accounts/change-password',
+    POLICY_ASSIGN_ONE: '/api/v1/permissions/users',
+    POLICY_ASSIGN_TWO: '/policies/assign',
+    POLICIES: '/api/v1/policies/',
+    BLOCKS: {
+        CREATE_GROUP_TYPE: 'create_organizations',
+        CREATE_SINGLE_ORGANIZATION: 'single_organizations_creation_form',
+        CREATE_MULTIPLE_ORGANIZATION: 'multiple_organizations_creation_form',
+        CREATE_USER: 'user_creation_form',
+        USER_CREATE_INVITE: 'user_create_invite',
+        APPROVE_ORGANIZATION: 'organizations_active_reject_buttons',
+        CREATE_PROJECT: 'project_creation_form',
+        PROJECT_QUERY: 'project_grid',
+        USER_QUERY: 'user_grid',
+        ORGANIZATION_QUERY: 'organizations_grid',
+        APPROVE_PROJECT: 'project_approve_reject_buttons',
+    },
+};
