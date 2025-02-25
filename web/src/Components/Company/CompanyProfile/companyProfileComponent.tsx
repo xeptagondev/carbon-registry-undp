@@ -26,6 +26,7 @@ import moment from 'moment';
 import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
 import { Role } from '../../../Definitions/Enums/role.enum';
+import { API_PATHS } from '../../../Config/apiConfig';
 
 export const CompanyProfileComponent = (props: any) => {
   const {
@@ -59,7 +60,7 @@ export const CompanyProfileComponent = (props: any) => {
   const getCompanyDetails = async (companyId: string) => {
     try {
       setIsLoading(true);
-      const response = await get(`organisation/profile?id=${companyId}`);
+      const response = await get(API_PATHS.COMPANY_PROFILE_DETAILS(companyId));
       if (response.data) {
         setCompanyDetails(response.data);
         setIsLoading(false);
@@ -70,7 +71,7 @@ export const CompanyProfileComponent = (props: any) => {
   const getUserDetails = async (companyId: string) => {
     setIsLoading(true);
     try {
-      const response: any = await post('user/query', {
+      const response: any = await post(API_PATHS.USER_DETAILS_BY_ID, {
         page: 1,
         size: 10,
         filterAnd: [

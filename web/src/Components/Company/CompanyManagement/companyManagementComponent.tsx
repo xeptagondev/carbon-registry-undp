@@ -51,6 +51,7 @@ import { RoleIcon } from '../../IconComponents/RoleIcon/role.icon';
 import { ProfileIcon } from '../../IconComponents/ProfileIcon/profile.icon';
 import { OrganisationStatus } from '../../OrganisationStatus/organisationStatus';
 import CompanyRoleIcon from '../../IconComponents/CompanyRoleIcon/companyRoleIcon';
+import { API_PATHS } from '../../../Config/apiConfig';
 
 const { Search } = Input;
 
@@ -325,7 +326,7 @@ export const CompanyManagementComponent = (props: any) => {
   const getAllCompany = async () => {
     setLoading(true);
     try {
-      const response: any = await post('organisation/query', getAllOrganisationParams());
+      const response: any = await post(API_PATHS.ALL_COMPANY, getAllOrganisationParams());
       if (response && response.data) {
         const availableCompanies = response.data.filter(
           (company: any) => company.companyRole !== CompanyRole.API
@@ -354,7 +355,7 @@ export const CompanyManagementComponent = (props: any) => {
     setLoading(true);
 
     try {
-      const response: any = await post('organisation/download', {
+      const response: any = await post(API_PATHS.DOWNLOAD_COMPANY_DATA, {
         filterAnd: dataQuery.filterAnd,
         filterOr: dataQuery.filterOr?.length > 0 ? dataQuery.filterOr : undefined,
         sort: dataQuery.sort,
