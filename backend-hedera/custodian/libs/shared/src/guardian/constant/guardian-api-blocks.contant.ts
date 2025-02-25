@@ -19,6 +19,12 @@ export const GUARDIAN_API = {
         PROJECT_QUERY: 'project_grid',
         USER_QUERY: 'user_grid',
         ORGANIZATION_QUERY: 'organizations_grid',
+        INF_QUERY: 'inf_grid',
+        PDD_QUERY: 'pdd_grid',
+        VALIDATION_QUERY: 'validation_report_grid',
+        ACTIVITY_QUERY: 'activity_grid',
+        MONITORING_QUERY: 'monitoring_report_grid',
+        VERIFICATION_QUERY: 'verification_report_grid',
         APPROVE_PROJECT: 'project_approve_reject_buttons',
     },
 };
