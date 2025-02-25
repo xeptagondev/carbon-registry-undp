@@ -13,6 +13,7 @@ import ResetPassword from './resetPassword';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import { LoginProps } from '../../Definitions/Definitions/userLogin.definitions';
+import { API_PATHS } from '../../Config/apiConfig';
 
 export interface LoginPageProps {
   forgotPassword?: boolean;
@@ -43,7 +44,7 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
     setErrorMsg(undefined);
     try {
       const email = values.email.trim();
-      const response = await post('auth/login', {
+      const response = await post(API_PATHS.LOGIN, {
         username: email.trim(),
         password: values.password.trim(),
       });
@@ -68,6 +69,7 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
           companyLogo: response.data.companyLogo,
           companyName: response.data.companyName,
           companyState: response.data.companyState,
+          name: response.data.name,
         });
         removeToken();
         setIsTokenExpired(false);

@@ -39,7 +39,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
   const navigate = useNavigate();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${id}`);
+    navigate(`/programmeManagement/view/${id}`);
   };
 
   const viewDataMapToFields = (val: any) => {

@@ -49,6 +49,8 @@ import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataExportUserDto } from '@app/shared/util/dto/data.export.user.dto';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
 import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
+import { CounterService } from '@app/shared/util/service/counter.service';
+import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -62,6 +64,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         private readonly helperService: HelperService,
         private readonly dataExportService: DataExportService,
         private readonly orgaisationService: OrganizationService,
+        private readonly counterService: CounterService,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(GuardianRoleEntity)
@@ -107,6 +110,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 email: userDTO.email,
             },
             {
+                updatedTime: new Date().getTime(),
                 organization: orgEntity,
                 guardianRole: guardRole,
             },
@@ -244,16 +248,21 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             await this.guardianService.registerUser(userDto.email, hashedPass);
             await this.delay(5000);
-
+            const refId = await this.counterService.incrementCount(
+                CounterType.USER,
+                4,
+            );
             const userEntity: UsersEntity = {
                 email: userDto.email,
                 name: userDto.name,
+                refId: refId,
                 password: hashedPass,
                 phoneNumber: userDto.phoneNo,
                 hederaAccount: userDto.hederaAccount,
                 stage: UserStageEnum.REGISTER,
                 isActive: isUserActive,
                 createdTime: new Date().getTime(),
+                updatedTime: new Date().getTime(),
             };
 
             // i. Save user in db without organization and role
@@ -278,7 +287,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 {
                     email: userDto.email,
                 },
-                { stage: UserStageEnum.ASIGN_REGISTRY },
+                {
+                    updatedTime: new Date().getTime(),
+                    stage: UserStageEnum.ASIGN_REGISTRY,
+                },
             );
         }
         // 5. Assign the policy for the user
@@ -291,7 +303,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 {
                     email: userDto.email,
                 },
-                { stage: UserStageEnum.ASIGN_POLICY },
+                {
+                    updatedTime: new Date().getTime(),
+                    stage: UserStageEnum.ASIGN_POLICY,
+                },
             );
         }
 
@@ -409,7 +424,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     {
                         email: userDto.email,
                     },
-                    { stage: UserStageEnum.CREATE_GROUP_TYPE },
+                    {
+                        updatedTime: new Date().getTime(),
+                        stage: UserStageEnum.CREATE_GROUP_TYPE,
+                    },
                 );
             }
             // 3. Create the user with the role
@@ -425,6 +443,29 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         document: {
                             name: userDto.name,
                             role: userDto.role,
+                            email: userDto.email,
+                            phoneNumber: userDto.phoneNo,
+                            hederaAccount: userDto.hederaAccount,
+                            refId: user.refId,
+                            createdTime: Number(user.createdTime),
+                            updatedTime: Number(new Date().getTime()),
+                            organization: {
+                                // Need to fetch from policy and update
+                                name: 'AA',
+                                role: 'DNA',
+                                email: 'AA',
+                                taxId: 'AA',
+                                phoneNumber: 'AA',
+                                paymentId: 'AA',
+                                faxNumber: 'AA',
+                                provinces: ['AA'],
+                                website: 'AA',
+                                address: 'AA',
+                                logo: 'AA',
+                                createdTime: 121212,
+                                updatedTime: 213134,
+                                refId: 'AA',
+                            },
                         },
                         ref: null,
                     },
@@ -449,6 +490,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         email: userDto.email,
                     },
                     {
+                        updatedTime: new Date().getTime(),
                         stage: UserStageEnum.APPROVE_USER,
                     },
                 );
@@ -487,7 +529,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     {
                         email: userDto.email,
                     },
-                    { stage: UserStageEnum.CREATE_GROUP_TYPE },
+                    {
+                        updatedTime: new Date().getTime(),
+                        stage: UserStageEnum.CREATE_GROUP_TYPE,
+                    },
                 );
                 await this.delay(5000);
             }
@@ -504,6 +549,28 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 groupUser &&
                 groupUser.stage === UserStageEnum.CREATE_GROUP_TYPE
             ) {
+                const orgCreateTime = new Date().getTime();
+                const orgRefId = await this.counterService.incrementCount(
+                    CounterType.ORGANIZATION,
+                    4,
+                );
+                if (
+                    userDto?.company?.logo &&
+                    this.helperService.isBase64(userDto?.company?.logo)
+                ) {
+                    const response: any = await this.fileHandler.uploadFile(
+                        `profile_images/${orgRefId}_${new Date().getTime()}.png`,
+                        userDto?.company?.logo,
+                    );
+                    if (response) {
+                        userDto.company.logo = response;
+                    } else {
+                        throw new HttpException(
+                            'Error while uploading company logo',
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
+                    }
+                }
                 const blockName = orgType.multiple
                     ? 'blocks.createMultipleOrganization'
                     : 'blocks.createSingleOrganization';
@@ -518,6 +585,19 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             document: {
                                 name: userDto.company.name,
                                 role: userDto.company.companyRole,
+                                // Need to fetch from policy and update
+                                email: userDto.company.email,
+                                taxId: userDto.company.taxId || 'NG',
+                                phoneNumber: userDto.company.phoneNo,
+                                paymentId: userDto.company.paymentId,
+                                faxNumber: userDto.company.faxNo,
+                                provinces: userDto.company.provinces,
+                                website: userDto.company.website || 'sss',
+                                address: userDto.company.address,
+                                logo: userDto.company.logo,
+                                createdTime: Number(orgCreateTime),
+                                updatedTime: Number(new Date().getTime()),
+                                refId: orgRefId,
                             },
                             ref: null,
                         },
@@ -530,6 +610,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 let orgEntity: OrganizationEntity = {
                     name: userDto.company.name,
                     organizationType: orgType,
+                    refId: orgRefId,
                     state: OrganizationStateEnum.PENDING,
                     email: userDto?.company?.email,
                     taxId: userDto?.company?.taxId,
@@ -539,7 +620,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     provinces: userDto?.company?.provinces,
                     website: userDto?.company?.website,
                     address: userDto?.company?.address,
-                    createdTime: new Date().getTime(),
+                    createdTime: orgCreateTime,
+                    updatedTime: new Date().getTime(),
                 };
 
                 // iii. Save organization
@@ -549,28 +631,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
                 await this.delay(10000);
 
-                if (
-                    userDto?.company?.logo &&
-                    this.helperService.isBase64(userDto?.company?.logo)
-                ) {
-                    const response: any = await this.fileHandler.uploadFile(
-                        `profile_images/${orgEntity.id}_${new Date().getTime()}.png`,
-                        userDto?.company?.logo,
-                    );
-                    if (response) {
-                        userDto.company.logo = response;
-                    } else {
-                        throw new HttpException(
-                            'Error while uploading company logo',
-                            HttpStatus.INTERNAL_SERVER_ERROR,
-                        );
-                    }
-                }
                 await this.usersRepository.update(
                     {
                         email: userDto.email,
                     },
-                    { stage: UserStageEnum.CREATE_GROUP },
+                    {
+                        updatedTime: new Date().getTime(),
+                        stage: UserStageEnum.CREATE_GROUP,
+                    },
                 );
             }
             const user = await this.findUser(userDto.email);
@@ -585,6 +653,29 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         document: {
                             name: userDto.name,
                             role: userDto.role,
+                            email: userDto.email,
+                            phoneNumber: userDto.phoneNo,
+                            hederaAccount: userDto.hederaAccount,
+                            refId: user.refId,
+                            createdTime: Number(user.createdTime),
+                            updatedTime: Number(new Date().getTime()),
+                            organization: {
+                                // Need to fetch from policy and update
+                                name: 'AA',
+                                role: 'DNA',
+                                email: 'AA',
+                                taxId: 'AA',
+                                phoneNumber: 'AA',
+                                paymentId: 'AA',
+                                faxNumber: 'AA',
+                                provinces: ['AA'],
+                                website: 'AA',
+                                address: 'AA',
+                                logo: 'AA',
+                                createdTime: 121212,
+                                updatedTime: 213134,
+                                refId: 'AA',
+                            },
                         },
                         ref: null,
                     },
@@ -599,7 +690,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     {
                         email: userDto.email,
                     },
-                    { stage: UserStageEnum.CREATE_USER },
+                    {
+                        updatedTime: new Date().getTime(),
+                        stage: UserStageEnum.CREATE_USER,
+                    },
                 );
 
                 // // 4. Send request for approval
@@ -614,6 +708,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         payload: payload,
                         group: createOrganizationResponse?.group,
                         logo: userDto?.company?.logo,
+                        updatedTime: new Date().getTime(),
                     },
                 );
             }
@@ -652,93 +747,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 'Error occurred while creating group type, group and user',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
-        }
-    }
-
-    async init() {
-        if (this.configService.get('system.initPolicy') === 'true') {
-            await this.utilService.fetchPolicyBlocks();
-        }
-        if (this.configService.get('system.initOrgs') === 'true') {
-            await this.createInitialOrganizations();
-        }
-    }
-
-    async createInitialOrganizations() {
-        try {
-            const singleOrgTypes: OrganizationTypeEntity[] =
-                await this.organizationTypeRepository.find({
-                    where: { multiple: false },
-                });
-            for (const orgType of singleOrgTypes) {
-                const org: OrganizationEntity =
-                    await this.organizationRepository.findOne({
-                        where: {
-                            organizationType: orgType,
-                        },
-                    });
-                if (!org) {
-                    const orgDto = new OrganizationDto();
-                    orgDto.companyRole =
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY;
-                    orgDto.name = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgName`,
-                    );
-                    orgDto.email = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgEmail`,
-                    );
-                    orgDto.paymentId = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgPaymentId`,
-                    );
-                    orgDto.phoneNo = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgPhoneNo`,
-                    );
-                    orgDto.address = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgAddress`,
-                    );
-                    orgDto.logo = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgLogo`,
-                    );
-                    const user = new UsersDTO();
-                    user.email = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
-                    );
-                    user.name = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.name`,
-                    );
-                    user.hederaAccount = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaAccount`,
-                    );
-                    user.hederaKey = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaKey`,
-                    );
-                    user.password = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.password`,
-                    );
-                    user.phoneNo = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.phoneNo`,
-                    );
-                    user.role = RoleEnum.Root;
-                    user.company = orgDto;
-                    const groupResponse = await this.register(
-                        user,
-                        user.password,
-                        undefined,
-                        UserStateConstant.ACTIVE,
-                    );
-                    await this.organizationRepository.update(
-                        {
-                            email: orgDto.email,
-                        },
-                        { state: OrganizationStateEnum.ACTIVE },
-                    );
-                }
-            }
-        } catch (e) {
-            this.logger.error(
-                'Error occurred while creating inital organizations',
-            );
-            throw e;
         }
     }
 

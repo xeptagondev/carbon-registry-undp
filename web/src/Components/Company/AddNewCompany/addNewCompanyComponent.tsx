@@ -42,6 +42,7 @@ import { GovDepartment } from '../../../Definitions/Enums/govDep.enum';
 import { Ministry } from '../../../Definitions/Enums/ministry.enum';
 import { SectoralScope } from '../../../Definitions/Enums/sectoralScope.enum';
 import { formatBytes } from '../../../Utils/utilityHelper';
+import { API_PATHS } from '../../../Config/apiConfig';
 
 const ministries: any = [
   'Agriculture',
@@ -322,7 +323,7 @@ export const AddNewCompanyComponent = (props: any) => {
       let leftmins: string[] = [];
       const excludingmin: string[] = [];
       for (const min of ministries) {
-        const response: any = await post('national/organisation/query', {
+        const response: any = await post(API_PATHS.MINISTRY_LIST, {
           page: 1,
           size: 100,
           filterAnd: [

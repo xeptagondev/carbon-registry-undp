@@ -38,7 +38,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
   const navigate = useNavigate();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${id}`);
+    navigate(`/programmeManagement/view/${id}`);
   };
   const [countries, setCountries] = useState<[]>([]);
 

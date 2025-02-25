@@ -41,6 +41,10 @@ export class ProjectDto {
     @IsNotEmpty()
     @IsString()
     postalCode: string;
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
+    projectParticipant: string;
 
     @ApiProperty()
     @IsNotEmpty()

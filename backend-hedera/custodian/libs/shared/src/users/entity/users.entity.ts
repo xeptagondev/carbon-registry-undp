@@ -16,6 +16,9 @@ export class UsersEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
+    @Column({ name: 'ref_id', nullable: false })
+    refId?: string;
+
     @Column({ unique: true })
     email: string;
 
@@ -31,7 +34,7 @@ export class UsersEntity {
     @Column({ nullable: true })
     refreshToken?: string;
 
-    @Column({ name: 'hedera_account_id', nullable: false, unique: true })
+    @Column({ name: 'hedera_account_id', nullable: true, unique: true })
     hederaAccount?: string;
 
     @ManyToOne(
@@ -58,6 +61,9 @@ export class UsersEntity {
 
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
+
+    @Column({ type: 'bigint', nullable: true })
+    updatedTime: number;
 
     @OneToMany(
         () => ProjectEntity,
