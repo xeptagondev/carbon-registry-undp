@@ -27,6 +27,7 @@ import {
 } from './viewDataMap';
 import { Loading } from '../Loading/loading';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const CMA_STEPS = {};
 
@@ -104,13 +105,13 @@ const StepperComponent = (props: any) => {
   const getProgrammeDetailsById = async (programId: any) => {
     try {
       setLoading(true);
-      const { data } = await post('national/programmeSl/getProjectById', {
+      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
         programmeId: programId,
       });
 
       const {
         data: { user },
-      } = await get('national/User/profile');
+      } = await get(API_PATHS.USER_PROFILE);
 
       if (!(isView || isEdit)) {
         form1.setFieldsValue({
@@ -154,13 +155,13 @@ const StepperComponent = (props: any) => {
         let res;
         try {
           if (isView && selectedVersion) {
-            res = await post('national/programmeSl/getDocByVersion', {
+            res = await post(API_PATHS.DOC_BY_VERSION, {
               programmeId: id,
               docType: 'cma',
               version: selectedVersion,
             });
           } else {
-            res = await post('national/programmeSl/getDocLastVersion', {
+            res = await post(API_PATHS.LAST_DOC_VERSION, {
               programmeId: id,
               docType: 'cma',
             });
@@ -236,7 +237,7 @@ const StepperComponent = (props: any) => {
 
     try {
       setLoading(true);
-      const res = await post('national/programmeSl/createCMA', tempValues);
+      const res = await post(API_PATHS.CMA_CREATION, tempValues);
       if (res?.response?.data?.statusCode === 200) {
         message.open({
           type: 'success',
@@ -262,7 +263,7 @@ const StepperComponent = (props: any) => {
 
   const getCountryList = async () => {
     try {
-      const response = await get('national/organisation/countries');
+      const response = await get(API_PATHS.COUNTRY_LIST);
       if (response.data) {
         const alpha2Names = response.data.map((item: any) => {
           return item.alpha2;
