@@ -10,6 +10,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import TextArea from 'antd/lib/input/TextArea';
 import { isValidateFileType } from '../../Utils/DocumentValidator';
 import { DocType } from '../../Definitions/Enums/document.type';
+import { API_PATHS } from '../../Config/apiConfig';
 const { Text } = Typography;
 
 export const AddCostQuotationForm = (props: any) => {
@@ -169,7 +170,7 @@ export const AddCostQuotationForm = (props: any) => {
     };
 
     try {
-      const res = await post('national/programmeSl/createCostQuotation', body);
+      const res = await post(API_PATHS.CREATE_COST_COTATION, body);
       if (res?.response?.data?.statusCode === 200) {
         message.open({
           type: 'success',
