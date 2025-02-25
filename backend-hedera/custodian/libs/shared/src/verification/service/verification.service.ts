@@ -253,7 +253,7 @@ export class VerificationService {
 
     private async notifyCertifiers(
         refId: string,
-        ids: number[],
+        ids: string[],
         requestUser: JWTPayload,
     ) {
         console.log(
