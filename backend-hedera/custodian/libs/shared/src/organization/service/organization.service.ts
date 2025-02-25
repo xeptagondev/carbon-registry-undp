@@ -1,6 +1,7 @@
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 import { SuperService } from '@app/core/service/super.service';
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     ORG_DEACTIVATE_HEADER,
@@ -432,7 +433,7 @@ export class OrganizationService extends SuperService<
             approveResponse = await this.guardianService.approve(
                 email,
                 this.utilService.getBlock(
-                    this.configService.get('blocks.appoveOrganization'),
+                    GUARDIAN_API.BLOCKS.APPROVE_ORGANIZATION,
                 ),
                 orgEntity.payload,
             );
@@ -544,7 +545,7 @@ export class OrganizationService extends SuperService<
                 approveResponse = await this.guardianService.approve(
                     refreshToken,
                     this.utilService.getBlock(
-                        this.configService.get('blocks.appoveOrganization'),
+                        GUARDIAN_API.BLOCKS.APPROVE_ORGANIZATION,
                     ),
                     orgEntity.payload,
                 );
