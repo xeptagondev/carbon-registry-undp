@@ -557,7 +557,10 @@ export class OrganizationService extends SuperService<
                 {
                     id: orgEntity.id,
                 },
-                { state: OrganizationStateEnum.REJECTED },
+                {
+                    updatedTime: new Date().getTime(),
+                    state: OrganizationStateEnum.REJECTED,
+                },
             );
             return approveResponse;
         } catch (e) {
@@ -613,6 +616,7 @@ export class OrganizationService extends SuperService<
             logo: dto.logo,
             provinces: dto.provinces,
             address: dto.address,
+            updatedTime: new Date().getTime(),
         };
 
         if (
@@ -696,7 +700,10 @@ export class OrganizationService extends SuperService<
 
             await this.organizationRepository.update(
                 { id: dto.id },
-                { state: dto.state },
+                {
+                    updatedTime: new Date().getTime(),
+                    state: dto.state,
+                },
             );
 
             await queryRunner.commitTransaction();

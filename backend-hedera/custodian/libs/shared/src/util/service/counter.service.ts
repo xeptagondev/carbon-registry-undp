@@ -29,7 +29,7 @@ export class CounterService {
             .set({ counter: () => `counter + ${increment}` })
             .returning('counter')
             .execute()
-            .catch((e) => {});
+            .catch(() => {});
         if (resp && resp['raw'] && resp['raw'].length > 0) {
             return this.padLeft(resp['raw'][0]['counter'], length);
         } else {
