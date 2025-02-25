@@ -31,6 +31,7 @@ import PhoneInput, {
 } from 'react-phone-number-input';
 import InfDocumentInformation from './infDocumentInfo';
 import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
+import { API_PATHS } from '../../Config/apiConfig';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -85,7 +86,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
   const getProvinces = async () => {
     try {
-      const { data } = await post('location/province');
+      const { data } = await post(API_PATHS.PROVINCE);
       const tempProvinces = data.map((provinceData: any) => provinceData.provinceName);
       setProvinces(tempProvinces);
     } catch (error) {
@@ -95,7 +96,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
   const getDistricts = async (provinceName: string) => {
     try {
-      const { data } = await post('location/district', {
+      const { data } = await post(API_PATHS.DISTRICT, {
         filterAnd: [
           {
             key: 'provinceName',
@@ -113,7 +114,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
   const getCities = async (division?: string) => {
     try {
-      const { data } = await post('location/city', {
+      const { data } = await post(API_PATHS.CITY, {
         filterAnd: [
           {
             key: 'districtName',
@@ -132,7 +133,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
   const getPostalCodes = async (city?: string) => {
     try {
-      const { data } = await post('location/postalCode', {
+      const { data } = await post(API_PATHS.POSTALCODE, {
         filterAnd: [
           {
             key: 'cityName',
@@ -152,7 +153,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const getCountryList = async () => {
     setIsCountryListLoading(true);
     try {
-      const response = await get('location/countries');
+      const response = await get(API_PATHS.COUNTRIES);
       if (response.data) {
         const alpha2Names = response.data.map((item: any) => {
           return item.alpha2;
@@ -175,7 +176,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const getIndependentCertifiers = async () => {
     setOrganizationsLoading(true);
     try {
-      const response = await post('organisation/byType', {
+      const response = await post(API_PATHS.ORGANIZATION_TYPE, {
         companyRole: CompanyRole.INDEPENDENT_CERTIFIER,
       });
       if (response.data) {
@@ -288,7 +289,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
     setLoading(true);
     try {
-      const res = await post('project/create', body);
+      const res = await post(API_PATHS.PROJECT, body);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
