@@ -135,16 +135,16 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   };
 
   const navigateToCMACreate = () => {
-    navigate(`/programmeManagement/cmaForm/${programmeId}`);
+    navigate(`/programmeManagement/pdd/${programmeId}`);
   };
 
   const navigateToCMAView = () => {
-    navigate(`/programmeManagement/cmaForm/${programmeId}`, {
+    navigate(`/programmeManagement/pdd/${programmeId}`, {
       state: { isView: true },
     });
   };
   const navigateToCMAEdit = () => {
-    navigate(`/programmeManagement/cmaForm/${programmeId}`, {
+    navigate(`/programmeManagement/pdd/${programmeId}`, {
       state: { isEdit: true },
     });
   };

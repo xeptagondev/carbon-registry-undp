@@ -39,7 +39,7 @@ export enum ProjectProposalStage {
   PDD_APPROVED_BY_DNA = 'PDD_APPROVED_BY_DNA',
   VALIDATION_REPORT_SUBMITTED = 'VALIDATION_REPORT_SUBMITTED',
   VALIDATION_DNA_REJECTED = 'VALIDATION_REPORT_REJECTED',
-  AUTHORIZED = 'AUTHORIZED'
+  AUTHORIZED = 'AUTHORIZED',
 }
 
 export enum ProjectProposalStageMap {
@@ -67,7 +67,7 @@ export enum ProjectProposalStageMap {
   PDD_APPROVED_BY_DNA = 'PDD Approved by DNA',
   VALIDATION_REPORT_SUBMITTED = 'Validation Report Submitted',
   VALIDATION_DNA_REJECTED = 'Validation Report Rejected',
-  AUTHORIZED = 'Authorised'
+  AUTHORIZED = 'Authorised',
 }
 
 export enum CreditType {
