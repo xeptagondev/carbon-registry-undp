@@ -71,36 +71,6 @@ export class ProjectService {
         this.validateProjectParticipant(requestUser);
 
         try {
-            // const user = await this.getUserById(requestUser.userId);
-            // const organization = await this.getOrganizationById(
-            //     requestUser.organizationId,
-            // );
-
-            // const project = await this.buildProjectEntity(
-            //     projectDto,
-            //     requestUser,
-            //     user,
-            //     organization,
-            // );
-
-            // project.projectId = refId;
-            // const projectEntity = await this.projectRepository.save(project);
-            // delete project.address;
-            // delete project.telephone;
-            // delete project.fax;
-            // delete project.website;
-            // delete project.contactPerson;
-            // delete project.organization;
-            // delete project.createdBy;
-            // delete project.street;
-            // delete project.assignees;
-            // delete project.projectProposalStage;
-            // delete project.id;
-            // for (const key in project) {
-            //     if (project[key] === null || project[key] === undefined) {
-            //         delete project[key];
-            //     }
-            // }
             const users = await this.guardianService.query(
                 requestUser.email,
                 this.utilService.getBlock(GUARDIAN_API.BLOCKS.USER_QUERY),
@@ -113,6 +83,12 @@ export class ProjectService {
                 ),
             );
 
+            const assignees = organizations.filter((org) => {
+                projectDto.independentCertifiers.includes(
+                    org?.document?.credentialSubject[0]?.refId,
+                );
+            });
+
             const createdBy = users?.data.find((user) => {
                 return (
                     user?.document?.credentialSubject[0]?.name ===
@@ -120,65 +96,73 @@ export class ProjectService {
                 );
             });
 
-            const assignees = organizations?.data.filter((organization) => {
-                return projectDto.independentCertifiers.includes(
-                    organization?.document?.credentialSubject[0]?.refId,
-                );
-            });
+            const projectRefId = await this.counterService.incrementCount(
+                CounterType.PROJECT,
+                4,
+            );
 
-            await this.guardianService.createProject(
+            const infRefId = await this.counterService.incrementCount(
+                CounterType.INF,
+                4,
+            );
+
+            const project: ProjectSchema = {
+                refId: projectRefId,
+                createdBy: createdBy
+                    ? createdBy?.document?.credentialSubject[0]
+                    : undefined,
+                assignee: assignees.map((assignee) => {
+                    return {
+                        refId: assignee.document?.credentialSubject[0]?.refId,
+                        type: assignee.document?.credentialSubject[0]?.type,
+                        name: assignee.document?.credentialSubject[0]?.name,
+                        role: assignee.document?.credentialSubject[0]?.role,
+                        email: assignee.document?.credentialSubject[0]?.email,
+                        taxId: assignee.document?.credentialSubject[0]?.taxId,
+                        phoneNumber:
+                            assignee.document?.credentialSubject[0]
+                                ?.phoneNumber,
+                        address:
+                            assignee.document?.credentialSubject[0]?.address,
+                        logo: assignee.document?.credentialSubject[0]?.logo,
+                        createdTime:
+                            assignee.document?.credentialSubject[0]
+                                ?.createdTime,
+                    };
+                }),
+            };
+            const infDocument: DocumentSchema = {
+                refId: infRefId,
+                documentType: DocumentEnum.INF,
+                createdBy: createdBy
+                    ? createdBy?.document?.credentialSubject[0]
+                    : undefined,
+                project: project,
+                name: '$',
+                version: 1,
+                data: JSON.stringify(projectDto),
+            };
+
+            await this.guardianService.createEntity(
                 requestUser.email,
                 this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_PROJECT),
                 {
-                    document: {
-                        title: projectDto.title,
-                        projectCategory:
-                            SlProjectCategoryMap[projectDto.projectCategory],
-                        otherProjectCategory: projectDto.otherProjectCategory,
-                        landExtentReforestation: projectDto.landExtent,
-                        speciesPlantedReforestation: projectDto.speciesPlanted,
-                        landExtentAfforestation: projectDto.landExtent,
-                        speciesPlantedAfforestation: projectDto.speciesPlanted,
-                        projectCapacity: projectDto.proposedProjectCapacity,
-                        province: projectDto.province,
-                        district: projectDto.district,
-                        city: projectDto.city,
-                        geographicalLocationCoordinates: {
-                            type: 'MultiPoint',
-                            coordinates: [[1, 2]],
-                        },
-                        projectGeography: projectDto.projectGeography,
-                        proposedProjectCapacity:
-                            projectDto.proposedProjectCapacity,
-                        projectDescription: projectDto.projectDescription,
-                        additionalDocuments: 'doc',
-                        projectStatus: projectDto.projectStatus,
-                        projectStatusDescription:
-                            projectDto.projectStatusDescription,
-                        startDate: '2025-02-19',
-                        postalZipCode: projectDto.postalCode,
-                        StreetNameAndNumber: projectDto.street,
-                        postalCode: projectDto.postalCode,
-                        projectParticipant: projectDto.projectParticipant,
-                        contactName: projectDto.contactName,
-                        contactEmail: projectDto.contactEmail,
-                        contactPhoneNo: projectDto.contactPhoneNo,
-                        contactWebsite: projectDto.contactWebsite,
-                        contactAddress: projectDto.contactAddress,
-                        createdBy: createdBy
-                            ? createdBy?.document?.credentialSubject[0]
-                            : undefined,
-                        organization: createdOrg
-                            ? createdOrg?.document?.credentialSubject[0]
-                            : undefined,
-                        refId: refId,
-                    },
+                    document: project,
                     ref: null,
                 },
             );
-            await this.notifyAdmins(refId, requestUser);
+            await this.guardianService.createEntity(
+                requestUser.email,
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_INF),
+                {
+                    document: infDocument,
+                    ref: null,
+                },
+            );
+
+            await this.notifyAdmins(projectRefId, requestUser);
             await this.notifyCertifiers(
-                refId,
+                projectRefId,
                 projectDto.independentCertifiers,
                 requestUser,
             );
@@ -298,7 +282,7 @@ export class ProjectService {
     }
     private async notifyCertifiers(
         refId: string,
-        ids: number[],
+        ids: string[],
         requestUser: JWTPayload,
     ) {
         console.log(
