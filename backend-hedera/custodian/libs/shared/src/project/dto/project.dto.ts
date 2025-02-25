@@ -72,7 +72,7 @@ export class ProjectDto {
 
     @ApiProperty()
     @IsArray()
-    independentCertifiers: number[];
+    independentCertifiers: string[];
 
     @ApiProperty({ enum: ProjectGeography })
     @IsNotEmpty()

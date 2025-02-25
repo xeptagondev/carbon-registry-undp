@@ -1,6 +1,11 @@
 import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
 import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
 import { AuditService } from '@app/shared/audit/service/audit.service';
+import { DocumentEnum } from '@app/shared/document/enum/document.enum';
+import {
+    DocumentSchema,
+    ProjectSchema,
+} from '@app/shared/guardian/guardian.schema.interface';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     INF_APPROVE_HEADER,
@@ -77,10 +82,6 @@ export class ProjectService {
             //     organization,
             // );
 
-            const refId = await this.counterService.incrementCount(
-                CounterType.PROJECT,
-                4,
-            );
             // project.projectId = refId;
             // const projectEntity = await this.projectRepository.save(project);
             // delete project.address;
@@ -120,12 +121,40 @@ export class ProjectService {
                 );
             });
 
-            const createdOrg = organizations?.data.find((organization) => {
-                return (
-                    organization?.document?.credentialSubject[0]?.name ===
-                    requestUser.organizationName
+            const assignees = organizations?.data.filter((organization) => {
+                return projectDto.independentCertifiers.includes(
+                    organization?.document?.credentialSubject[0]?.refId,
                 );
             });
+
+            const projectRefId = await this.counterService.incrementCount(
+                CounterType.PROJECT,
+                4,
+            );
+
+            const infRefId = await this.counterService.incrementCount(
+                CounterType.INF,
+                4,
+            );
+
+            const project: ProjectSchema = {
+                refId: projectRefId,
+                createdBy: createdBy
+                    ? createdBy?.document?.credentialSubject[0]
+                    : undefined,
+                assignee: assignees.map((assignee) => {}),
+            };
+            const infDocument: DocumentSchema = {
+                refId: infRefId,
+                documentType: DocumentEnum.INF,
+                createdBy: createdBy
+                    ? createdBy?.document?.credentialSubject[0]
+                    : undefined,
+                project: project,
+                name: '$',
+                version: 1,
+                data: JSON.stringify(projectDto),
+            };
 
             await this.guardianService.createEntity(
                 requestUser.email,
@@ -133,49 +162,17 @@ export class ProjectService {
                     this.configService.get('blocks.createProject'),
                 ),
                 {
-                    document: {
-                        title: projectDto.title,
-                        projectCategory:
-                            SlProjectCategoryMap[projectDto.projectCategory],
-                        otherProjectCategory: projectDto.otherProjectCategory,
-                        landExtentReforestation: projectDto.landExtent,
-                        speciesPlantedReforestation: projectDto.speciesPlanted,
-                        landExtentAfforestation: projectDto.landExtent,
-                        speciesPlantedAfforestation: projectDto.speciesPlanted,
-                        projectCapacity: projectDto.proposedProjectCapacity,
-                        province: projectDto.province,
-                        district: projectDto.district,
-                        city: projectDto.city,
-                        geographicalLocationCoordinates: {
-                            type: 'MultiPoint',
-                            coordinates: [[1, 2]],
-                        },
-                        projectGeography: projectDto.projectGeography,
-                        proposedProjectCapacity:
-                            projectDto.proposedProjectCapacity,
-                        projectDescription: projectDto.projectDescription,
-                        additionalDocuments: 'doc',
-                        projectStatus: projectDto.projectStatus,
-                        projectStatusDescription:
-                            projectDto.projectStatusDescription,
-                        startDate: '2025-02-19',
-                        postalZipCode: projectDto.postalCode,
-                        StreetNameAndNumber: projectDto.street,
-                        postalCode: projectDto.postalCode,
-                        projectParticipant: projectDto.projectParticipant,
-                        contactName: projectDto.contactName,
-                        contactEmail: projectDto.contactEmail,
-                        contactPhoneNo: projectDto.contactPhoneNo,
-                        contactWebsite: projectDto.contactWebsite,
-                        contactAddress: projectDto.contactAddress,
-                        createdBy: createdBy
-                            ? createdBy?.document?.credentialSubject[0]
-                            : undefined,
-                        organization: createdOrg
-                            ? createdOrg?.document?.credentialSubject[0]
-                            : undefined,
-                        refId: refId,
-                    },
+                    document: project,
+                    ref: null,
+                },
+            );
+            await this.guardianService.createEntity(
+                requestUser.email,
+                this.utilService.getBlock(
+                    this.configService.get('blocks.createDocument'),
+                ),
+                {
+                    document: project,
                     ref: null,
                 },
             );
