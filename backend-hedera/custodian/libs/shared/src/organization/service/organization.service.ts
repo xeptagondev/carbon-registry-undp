@@ -24,10 +24,8 @@ import { DataExportCompanyDto } from '@app/shared/util/dto/data.export.company.d
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
-import { FilterBy } from '@app/shared/util/dto/filter.by';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
-import { SortEntry } from '@app/shared/util/dto/sort.entry';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
@@ -559,7 +557,10 @@ export class OrganizationService extends SuperService<
                 {
                     id: orgEntity.id,
                 },
-                { state: OrganizationStateEnum.REJECTED },
+                {
+                    updatedTime: new Date().getTime(),
+                    state: OrganizationStateEnum.REJECTED,
+                },
             );
             return approveResponse;
         } catch (e) {
@@ -615,6 +616,7 @@ export class OrganizationService extends SuperService<
             logo: dto.logo,
             provinces: dto.provinces,
             address: dto.address,
+            updatedTime: new Date().getTime(),
         };
 
         if (
@@ -698,7 +700,10 @@ export class OrganizationService extends SuperService<
 
             await this.organizationRepository.update(
                 { id: dto.id },
-                { state: dto.state },
+                {
+                    updatedTime: new Date().getTime(),
+                    state: dto.state,
+                },
             );
 
             await queryRunner.commitTransaction();
