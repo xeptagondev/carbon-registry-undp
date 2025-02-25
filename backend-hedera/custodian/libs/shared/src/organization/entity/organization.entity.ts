@@ -17,6 +17,9 @@ export class OrganizationEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
+    @Column({ name: 'ref_id', nullable: false })
+    refId?: string;
+
     @Column()
     name: string;
 
@@ -83,6 +86,9 @@ export class OrganizationEntity {
 
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
+
+    @Column({ type: 'bigint', nullable: true })
+    updatedTime: number;
 
     @OneToMany(() => ProjectEntity, (project) => project.organization, {
         nullable: true,
