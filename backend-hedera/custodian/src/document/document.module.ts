@@ -8,6 +8,7 @@ import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { MailModule } from '@app/shared/mail/mail.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
     imports: [
@@ -19,6 +20,7 @@ import { MailModule } from '@app/shared/mail/mail.module';
             OrganizationEntity,
         ]),
         MailModule,
+        JwtModule,
     ],
     providers: [DocumentService],
     controllers: [DocumentController],

@@ -705,10 +705,16 @@ export class OrganizationService extends SuperService<
                 let header = '';
                 let template;
 
-                const admins = await this.usersRepository.findBy({
-                    organization: { id: dto.id },
-                    guardianRole: { role: { name: RoleEnum.Admin } },
-                });
+                const admins = await this.usersRepository
+                    .createQueryBuilder('users')
+                    .innerJoinAndSelect('users.organization', 'organization')
+                    .innerJoinAndSelect('users.guardianRole', 'guardianRole')
+                    .innerJoinAndSelect('guardianRole.role', 'role')
+                    .where('organization.id = :id', { id: dto.id })
+                    .andWhere('role.name = :roleName', {
+                        roleName: RoleEnum.Admin,
+                    })
+                    .getMany();
 
                 const adminEmails = admins.map((user) => user.email);
 
