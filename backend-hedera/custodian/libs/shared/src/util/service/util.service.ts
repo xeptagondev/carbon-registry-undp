@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
 import { Injectable } from '@nestjs/common';
@@ -60,9 +62,8 @@ export class UtilService {
                 this.configService.get('sru.username'),
             );
             const response = await axios.get(
-                `${this.configService.get('guardian.url')}${this.configService.get(
-                    'guardian.policies',
-                )}${this.configService.get('policy.id')}`,
+                // eslint-disable-next-line max-len
+                `${this.configService.get('guardian.url')}${GUARDIAN_API.POLICIES}${this.configService.get('policy.id')}`,
                 {
                     headers: {
                         Authorization: `Bearer ${await this.guardianService.accessToken(refreshToken)}`,

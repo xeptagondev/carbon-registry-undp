@@ -6,6 +6,7 @@ import {
     DocumentSchema,
     ProjectSchema,
 } from '@app/shared/guardian/guardian.schema.interface';
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     INF_APPROVE_HEADER,
@@ -102,15 +103,13 @@ export class ProjectService {
             // }
             const users = await this.guardianService.query(
                 requestUser.email,
-                this.utilService.getBlock(
-                    this.configService.get('blocks.userQuery'),
-                ),
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.USER_QUERY),
             );
 
             const organizations = await this.guardianService.query(
                 requestUser.email,
                 this.utilService.getBlock(
-                    this.configService.get('blocks.organizationQuery'),
+                    GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY,
                 ),
             );
 
@@ -127,52 +126,53 @@ export class ProjectService {
                 );
             });
 
-            const projectRefId = await this.counterService.incrementCount(
-                CounterType.PROJECT,
-                4,
-            );
-
-            const infRefId = await this.counterService.incrementCount(
-                CounterType.INF,
-                4,
-            );
-
-            const project: ProjectSchema = {
-                refId: projectRefId,
-                createdBy: createdBy
-                    ? createdBy?.document?.credentialSubject[0]
-                    : undefined,
-                assignee: assignees.map((assignee) => {}),
-            };
-            const infDocument: DocumentSchema = {
-                refId: infRefId,
-                documentType: DocumentEnum.INF,
-                createdBy: createdBy
-                    ? createdBy?.document?.credentialSubject[0]
-                    : undefined,
-                project: project,
-                name: '$',
-                version: 1,
-                data: JSON.stringify(projectDto),
-            };
-
-            await this.guardianService.createEntity(
+            await this.guardianService.createProject(
                 requestUser.email,
-                this.utilService.getBlock(
-                    this.configService.get('blocks.createProject'),
-                ),
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_PROJECT),
                 {
-                    document: project,
-                    ref: null,
-                },
-            );
-            await this.guardianService.createEntity(
-                requestUser.email,
-                this.utilService.getBlock(
-                    this.configService.get('blocks.createDocument'),
-                ),
-                {
-                    document: project,
+                    document: {
+                        title: projectDto.title,
+                        projectCategory:
+                            SlProjectCategoryMap[projectDto.projectCategory],
+                        otherProjectCategory: projectDto.otherProjectCategory,
+                        landExtentReforestation: projectDto.landExtent,
+                        speciesPlantedReforestation: projectDto.speciesPlanted,
+                        landExtentAfforestation: projectDto.landExtent,
+                        speciesPlantedAfforestation: projectDto.speciesPlanted,
+                        projectCapacity: projectDto.proposedProjectCapacity,
+                        province: projectDto.province,
+                        district: projectDto.district,
+                        city: projectDto.city,
+                        geographicalLocationCoordinates: {
+                            type: 'MultiPoint',
+                            coordinates: [[1, 2]],
+                        },
+                        projectGeography: projectDto.projectGeography,
+                        proposedProjectCapacity:
+                            projectDto.proposedProjectCapacity,
+                        projectDescription: projectDto.projectDescription,
+                        additionalDocuments: 'doc',
+                        projectStatus: projectDto.projectStatus,
+                        projectStatusDescription:
+                            projectDto.projectStatusDescription,
+                        startDate: '2025-02-19',
+                        postalZipCode: projectDto.postalCode,
+                        StreetNameAndNumber: projectDto.street,
+                        postalCode: projectDto.postalCode,
+                        projectParticipant: projectDto.projectParticipant,
+                        contactName: projectDto.contactName,
+                        contactEmail: projectDto.contactEmail,
+                        contactPhoneNo: projectDto.contactPhoneNo,
+                        contactWebsite: projectDto.contactWebsite,
+                        contactAddress: projectDto.contactAddress,
+                        createdBy: createdBy
+                            ? createdBy?.document?.credentialSubject[0]
+                            : undefined,
+                        organization: createdOrg
+                            ? createdOrg?.document?.credentialSubject[0]
+                            : undefined,
+                        refId: refId,
+                    },
                     ref: null,
                 },
             );
@@ -185,6 +185,7 @@ export class ProjectService {
             await this.logProjectStage(
                 `Project with title: ${projectDto.title} has been created by ${requestUser.userName}`,
             );
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             throw new HttpException(
                 'An error occurred while creating the project',
@@ -373,9 +374,7 @@ export class ProjectService {
 
         const data = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const oldFormatData = data?.data.map((project) => {
             return this.mapNewQueryToOldQuery(
@@ -455,9 +454,7 @@ export class ProjectService {
 
         const projects = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const project = projects?.data.find((project) => {
             return project?.document?.credentialSubject[0]?.refId === id;
@@ -566,9 +563,7 @@ export class ProjectService {
 
         const projects = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const project = projects?.data.find((project) => {
             return project?.document?.credentialSubject[0]?.refId === id;
@@ -591,9 +586,7 @@ export class ProjectService {
 
         const approveResponse = await this.guardianService.approve(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.approveProject'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_PROJECT),
             { document: { ...project }, tag: 'Button_0' },
         );
 
@@ -624,9 +617,7 @@ export class ProjectService {
 
         const projects = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const project = projects?.data.find((project) => {
             return project?.document?.credentialSubject[0]?.refId === id;
@@ -649,9 +640,7 @@ export class ProjectService {
 
         const rejectResponse = await this.guardianService.approve(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.rejectProject'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_PROJECT),
             { document: { ...project }, tag: 'Button_1' },
         );
 
