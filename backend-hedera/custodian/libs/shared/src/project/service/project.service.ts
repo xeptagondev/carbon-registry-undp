@@ -83,7 +83,7 @@ export class ProjectService {
                 ),
             );
 
-            const assignees = organizations.filter((org) => {
+            const assignees = organizations?.data.filter((org) => {
                 projectDto.independentCertifiers.includes(
                     org?.document?.credentialSubject[0]?.refId,
                 );
@@ -171,6 +171,7 @@ export class ProjectService {
             );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
+            console.log(error);
             throw new HttpException(
                 'An error occurred while creating the project',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -188,76 +189,6 @@ export class ProjectService {
                 HttpStatus.BAD_REQUEST,
             );
         }
-    }
-
-    private async getUserById(userId: number): Promise<UsersEntity> {
-        return this.userRepository.findOne({ where: { id: userId } });
-    }
-
-    private async getOrganizationById(
-        orgId: number,
-    ): Promise<OrganizationEntity> {
-        return this.organizationRepository.findOne({ where: { id: orgId } });
-    }
-
-    private async buildProjectEntity(
-        projectDto: ProjectDto,
-        requestUser: JWTPayload,
-        user: UsersEntity,
-        organization: OrganizationEntity,
-    ): Promise<ProjectEntity> {
-        const project = new ProjectEntity();
-        project.title = projectDto.title;
-        project.projectCategory = projectDto.projectCategory;
-        project.postalCode = projectDto.postalCode;
-        project.province = projectDto.province;
-        project.district = projectDto.district;
-        project.city = projectDto.city;
-        project.geographicalLocationCoordinates =
-            projectDto.geographicalLocationCoordinates;
-        project.projectGeography = projectDto.projectGeography;
-        project.startDate = projectDto.startDate;
-        project.projectDescription = projectDto.projectDescription;
-        project.projectStatus = projectDto.projectStatus;
-
-        project.projectParticipant = requestUser.organizationName;
-        project.address = projectDto.contactAddress;
-        project.telephone = projectDto.contactPhoneNo;
-        project.fax = projectDto.contactFax;
-        project.email = projectDto.contactEmail;
-        project.website = projectDto.contactWebsite;
-        project.contactPerson = projectDto.contactName;
-        project.organization = organization;
-        project.createdBy = user;
-        project.street = projectDto.street;
-
-        project.assignees = await this.organizationRepository.find({
-            where: { id: In(projectDto.independentCertifiers) },
-        });
-        project.projectProposalStage = ProjectProposalStage.SUBMITTED_INF;
-        if (
-            [
-                ProjectCategoryEnum.AFFORESTATION,
-                ProjectCategoryEnum.REFORESTATION,
-                ProjectCategoryEnum.OTHER,
-            ].includes(projectDto.projectCategory)
-        ) {
-            project.proposedProjectCapacity = null;
-        }
-
-        if (
-            [
-                ProjectCategoryEnum.RENEWABLE_ENERGY,
-                ProjectCategoryEnum.OTHER,
-            ].includes(projectDto.projectCategory)
-        ) {
-            project.speciesPlanted = null;
-        }
-        if (ProjectCategoryEnum.OTHER === projectDto.projectCategory) {
-            project.otherProjectCategory = projectDto.otherProjectCategory;
-        }
-
-        return project;
     }
 
     private async notifyAdmins(refId: string, requestUser: JWTPayload) {
@@ -356,20 +287,22 @@ export class ProjectService {
         //     total ? total : undefined,
         // );
 
-        const data = await this.guardianService.query(
+        const infData = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY),
         );
-        const oldFormatData = data?.data.map((project) => {
-            return this.mapNewQueryToOldQuery(
-                project.id,
-                project?.document?.credentialSubject[0],
-            );
+
+        const oldFormatData = infData?.data.map((inf) => {
+            return this.mapNewQueryToOldQuery(inf);
         });
         return new DataListResponseDto(oldFormatData, oldFormatData.length);
     }
 
-    mapNewQueryToOldQuery(id: any, project: any) {
+    mapNewQueryToOldQuery(inf: any) {
+        const id = inf?.document?.credentialSubject[0]?.project?.refId;
+        const project = JSON.parse(inf?.document?.credentialSubject[0]?.data);
+        const createdBy =
+            inf?.document?.credentialSubject[0]?.project?.createdBy;
         return {
             id: id,
             title: project.title,
@@ -400,13 +333,14 @@ export class ProjectService {
             projectProposalStage:
                 project.projectProposalStage ||
                 ProjectProposalStage.SUBMITTED_INF,
-            company: project.organization
+            company: createdBy.organization
                 ? {
-                      companyId: project.organization.id,
-                      name: project.organization.name,
-                      companyRole: project.organization?.organizationType?.name,
-                      logo: project.organization.logo,
-                      email: project.organization.email,
+                      companyId: createdBy.organization.id,
+                      name: createdBy.organization.name,
+                      companyRole:
+                          createdBy.organization?.organizationType?.name,
+                      logo: createdBy.organization.logo,
+                      email: createdBy.organization.email,
                   }
                 : null,
         };
@@ -436,19 +370,17 @@ export class ProjectService {
         //     return acc;
         // }, {});
 
-        const projects = await this.guardianService.query(
+        const infData = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY),
         );
-        const project = projects?.data.find((project) => {
-            return project?.document?.credentialSubject[0]?.refId === id;
-        });
+
+        const inf = infData?.data.find(
+            (inf) => inf?.document?.credentialSubject[0]?.project?.refId == id,
+        );
 
         const updatedProject = {
-            ...this.mapNewQueryToOldQuery(
-                project.id,
-                project?.document?.credentialSubject[0],
-            ),
+            ...this.mapNewQueryToOldQuery(inf),
             documents: [],
         };
         return updatedProject;
@@ -508,21 +440,22 @@ export class ProjectService {
     }
 
     private async notifyProjectStageChange(
-        project: ProjectEntity,
+        email: string,
         requestUser: JWTPayload,
         template: MailTemplateEnum,
         header: string,
+        refId: string,
     ): Promise<void> {
         const countryName = this.configService.get('country');
         const mailDTO: MailTemplateDTO = {
             subject: header,
             template: template,
-            to: project?.createdBy?.email,
+            to: email,
             context: {
                 userName: requestUser.userName,
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${project.id}`,
+                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
@@ -545,19 +478,17 @@ export class ProjectService {
     ): Promise<DataResponseDto> {
         this.validateUserAuthorization(requestUser);
 
-        const projects = await this.guardianService.query(
+        const infData = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY),
         );
-        const project = projects?.data.find((project) => {
-            return project?.document?.credentialSubject[0]?.refId === id;
-        });
+
+        const inf = infData?.data.find(
+            (inf) => inf?.document?.credentialSubject[0]?.project?.refId == id,
+        );
 
         const updatedProject = {
-            ...this.mapNewQueryToOldQuery(
-                project.id,
-                project?.document?.credentialSubject[0],
-            ),
+            ...this.mapNewQueryToOldQuery(inf),
             documents: [],
         };
 
@@ -571,19 +502,24 @@ export class ProjectService {
         const approveResponse = await this.guardianService.approve(
             requestUser.email,
             this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_PROJECT),
-            { document: { ...project }, tag: 'Button_0' },
+            { document: { ...inf }, tag: 'Button_0' },
         );
 
+        const createdBy =
+            inf?.document?.credentialSubject[0]?.project?.createdBy;
+
         await this.objectionLetterGenerateService.generateReport(
-            project?.organization?.name,
-            project.title,
+            createdBy?.organization?.name,
+            inf?.document?.credentialSubject[0]?.name,
             id,
         );
+
         await this.notifyProjectStageChange(
-            project,
+            createdBy.email,
             requestUser,
             MailTemplateEnum.INF_APPROVE,
             INF_APPROVE_HEADER,
+            inf?.document?.credentialSubject[0]?.project?.refId,
         );
         await this.logProjectStage(
             `Project with id: ${id} has been approved by ${requestUser.userId}`,
@@ -599,19 +535,17 @@ export class ProjectService {
     ): Promise<DataResponseDto> {
         this.validateUserAuthorization(requestUser);
 
-        const projects = await this.guardianService.query(
+        const infData = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY),
         );
-        const project = projects?.data.find((project) => {
-            return project?.document?.credentialSubject[0]?.refId === id;
-        });
+
+        const inf = infData?.data.find(
+            (inf) => inf?.document?.credentialSubject[0]?.project?.refId == id,
+        );
 
         const updatedProject = {
-            ...this.mapNewQueryToOldQuery(
-                project.id,
-                project?.document?.credentialSubject[0],
-            ),
+            ...this.mapNewQueryToOldQuery(inf),
             documents: [],
         };
 
@@ -625,14 +559,17 @@ export class ProjectService {
         const rejectResponse = await this.guardianService.approve(
             requestUser.email,
             this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_PROJECT),
-            { document: { ...project }, tag: 'Button_1' },
+            { document: { ...inf }, tag: 'Button_1' },
         );
+        const createdBy =
+            inf?.document?.credentialSubject[0]?.project?.createdBy;
 
         await this.notifyProjectStageChange(
-            project,
+            createdBy.email,
             requestUser,
             MailTemplateEnum.INF_REJECT,
             INF_REJECT_HEADER,
+            inf?.document?.credentialSubject[0]?.project?.refId,
         );
         await this.logProjectStage(
             `Project with id: ${id} has been rejected by ${requestUser.userId}`,
