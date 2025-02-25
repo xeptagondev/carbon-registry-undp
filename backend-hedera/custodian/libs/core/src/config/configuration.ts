@@ -68,6 +68,7 @@ export default () => ({
         userCreateInvite: 'user_create_invite',
         appoveOrganization: 'organizations_active_reject_buttons',
         createProject: 'project_creation_form',
+        createInf: 'inf_creation_form',
         projectQuery: 'project_grid',
         userQuery: 'user_grid',
         organizationQuery: 'organizations_grid',
