@@ -15,6 +15,7 @@ export const GUARDIAN_API = {
         USER_CREATE_INVITE: 'user_create_invite',
         APPROVE_ORGANIZATION: 'organizations_active_reject_buttons',
         CREATE_PROJECT: 'project_creation_form',
+        CREATE_INF: 'inf_creation_form',
         PROJECT_QUERY: 'project_grid',
         USER_QUERY: 'user_grid',
         ORGANIZATION_QUERY: 'organizations_grid',
