@@ -12,6 +12,7 @@ import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Repository } from 'typeorm';
 import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
 import { GUARDIAN_ERROR } from '../constant/guardian-error.constant';
+import { GUARDIAN_API } from '../constant/guardian-api-blocks.contant';
 
 @Injectable()
 export class GuardianService {
@@ -49,9 +50,7 @@ export class GuardianService {
 
     async accessToken(refreshToken: string) {
         const accessTokenResponse = await axios.post(
-            `${this.configService.get('guardian.url')}${this.configService.get(
-                'guardian.accessToken',
-            )}`,
+            `${this.configService.get('guardian.url')}${GUARDIAN_API.ACCESS_TOKEN}`,
             {
                 refreshToken: refreshToken,
             },
@@ -65,9 +64,7 @@ export class GuardianService {
 
     private async getAccessToken(refreshToken: string): Promise<string> {
         try {
-            const url = `${this.configService.get('guardian.url')}${this.configService.get(
-                'guardian.accessToken',
-            )}`;
+            const url = `${this.configService.get('guardian.url')}${GUARDIAN_API.ACCESS_TOKEN}`;
             const accessTokenResponse = await axios.post(url, {
                 refreshToken: refreshToken,
             });
@@ -79,12 +76,11 @@ export class GuardianService {
 
     public async registerUser(email: string, password: string): Promise<any> {
         try {
-            const url = this.buildGuardianUrl(
-                this.configService.get('guardian.register'),
-            );
+            const url = this.buildGuardianUrl(GUARDIAN_API.REGISTER);
             await axios.post(url, {
                 username: email,
                 password,
+                // eslint-disable-next-line camelcase
                 password_confirmation: password,
                 role: 'USER',
             });
@@ -105,7 +101,7 @@ export class GuardianService {
                 username: email,
                 password: hashedPass,
             });
-            const url = `${this.buildGuardianUrl(this.configService.get('guardian.profileUpdate'))}/${email}`;
+            const url = `${this.buildGuardianUrl(GUARDIAN_API.PROFILE_UPDATE)}/${email}`;
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
             );
@@ -142,9 +138,7 @@ export class GuardianService {
     ): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
-                `${this.configService.get('guardian.policyAsign1')}/${email}${this.configService.get(
-                    'guardian.policyAsign2',
-                )}`,
+                `${GUARDIAN_API.POLICY_ASSIGN_ONE}/${email}${GUARDIAN_API.POLICY_ASSIGN_TWO}`,
             );
 
             const userLoginResponse = await this.login({
@@ -232,6 +226,13 @@ export class GuardianService {
             await this.getGuardianError(error, 'createOrganization');
         }
     }
+
+    // public async getGridDataUsingRefId(
+    //     grid:
+
+    // ){
+
+    // }
 
     public async createProject(
         email: string,
@@ -362,9 +363,7 @@ export class GuardianService {
     public async login(loginDto: LoginDto): Promise<any> {
         try {
             const response = await axios.post(
-                `${this.configService.get('guardian.url')}${this.configService.get(
-                    'guardian.login',
-                )}`,
+                `${this.configService.get('guardian.url')}${GUARDIAN_API.LOGIN}`,
                 loginDto,
             );
 
@@ -406,7 +405,7 @@ export class GuardianService {
             password: guardianPwChangeDto.oldPassword,
         });
 
-        const url = `${this.buildGuardianUrl(this.configService.get('guardian.changePassword'))}`;
+        const url = `${this.buildGuardianUrl(GUARDIAN_API.CHANGE_PASSWORD)}`;
         const token = await this.getAccessToken(logInDetails?.refreshToken);
         const response = await axios.post(url, guardianPwChangeDto, {
             headers: {
