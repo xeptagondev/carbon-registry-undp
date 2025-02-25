@@ -554,6 +554,23 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     CounterType.ORGANIZATION,
                     4,
                 );
+                if (
+                    userDto?.company?.logo &&
+                    this.helperService.isBase64(userDto?.company?.logo)
+                ) {
+                    const response: any = await this.fileHandler.uploadFile(
+                        `profile_images/${orgRefId}_${new Date().getTime()}.png`,
+                        userDto?.company?.logo,
+                    );
+                    if (response) {
+                        userDto.company.logo = response;
+                    } else {
+                        throw new HttpException(
+                            'Error while uploading company logo',
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
+                    }
+                }
                 const blockName = orgType.multiple
                     ? 'blocks.createMultipleOrganization'
                     : 'blocks.createSingleOrganization';
@@ -574,9 +591,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                                 phoneNumber: userDto.company.phoneNo,
                                 paymentId: userDto.company.paymentId,
                                 faxNumber: userDto.company.faxNo,
-                                provinces: [
-                                    userDto.company.provinces || 'National',
-                                ],
+                                provinces: userDto.company.provinces,
                                 website: userDto.company.website || 'sss',
                                 address: userDto.company.address,
                                 logo: userDto.company.logo,
@@ -616,23 +631,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
                 await this.delay(10000);
 
-                if (
-                    userDto?.company?.logo &&
-                    this.helperService.isBase64(userDto?.company?.logo)
-                ) {
-                    const response: any = await this.fileHandler.uploadFile(
-                        `profile_images/${orgEntity.id}_${new Date().getTime()}.png`,
-                        userDto?.company?.logo,
-                    );
-                    if (response) {
-                        userDto.company.logo = response;
-                    } else {
-                        throw new HttpException(
-                            'Error while uploading company logo',
-                            HttpStatus.INTERNAL_SERVER_ERROR,
-                        );
-                    }
-                }
                 await this.usersRepository.update(
                     {
                         email: userDto.email,
@@ -749,98 +747,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 'Error occurred while creating group type, group and user',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
-        }
-    }
-
-    async init() {
-        if (this.configService.get('system.initPolicy') === 'true') {
-            await this.utilService.fetchPolicyBlocks();
-        }
-        if (this.configService.get('system.initOrgs') === 'true') {
-            await this.createInitialOrganizations();
-        }
-    }
-
-    async createInitialOrganizations() {
-        try {
-            const singleOrgTypes: OrganizationTypeEntity[] =
-                await this.organizationTypeRepository.find({
-                    where: { multiple: false },
-                });
-            for (const orgType of singleOrgTypes) {
-                const org: OrganizationEntity =
-                    await this.organizationRepository.findOne({
-                        where: {
-                            organizationType: orgType,
-                        },
-                    });
-                if (!org) {
-                    const orgDto = new OrganizationDto();
-                    orgDto.companyRole =
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY;
-                    orgDto.name = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgName`,
-                    );
-                    orgDto.taxId =
-                        this.configService.get('countryCode') + '00000';
-                    orgDto.email = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgEmail`,
-                    );
-                    orgDto.paymentId = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgPaymentId`,
-                    );
-                    orgDto.phoneNo = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgPhoneNo`,
-                    );
-                    orgDto.address = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgAddress`,
-                    );
-                    orgDto.logo = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgLogo`,
-                    );
-                    const user = new UsersDTO();
-                    user.email = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
-                    );
-                    user.name = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.name`,
-                    );
-                    user.hederaAccount = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaAccount`,
-                    );
-                    user.hederaKey = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaKey`,
-                    );
-                    user.password = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.password`,
-                    );
-                    user.phoneNo = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.phoneNo`,
-                    );
-                    user.role = RoleEnum.Root;
-                    user.company = orgDto;
-                    const groupResponse = await this.register(
-                        user,
-                        user.password,
-                        undefined,
-                        UserStateConstant.ACTIVE,
-                    );
-                    await this.organizationRepository.update(
-                        {
-                            email: orgDto.email,
-                        },
-                        {
-                            updatedTime: new Date().getTime(),
-                            state: OrganizationStateEnum.ACTIVE,
-                        },
-                    );
-                }
-            }
-        } catch (e) {
-            this.logger.error(
-                'Error occurred while creating inital organizations',
-            );
-            throw e;
         }
     }
 

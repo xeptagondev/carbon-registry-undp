@@ -54,6 +54,9 @@ export class UserInitializationService implements OnModuleInit {
                     });
                 if (!org) {
                     const orgDto = new OrganizationDto();
+                    orgDto.taxId =
+                        this.configService.get('countryCode') + '00000';
+                    orgDto.provinces = ['National'];
                     orgDto.companyRole =
                         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY;
                     orgDto.name = this.configService.get(
