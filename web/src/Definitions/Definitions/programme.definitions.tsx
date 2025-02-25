@@ -291,6 +291,7 @@ export interface ProgrammeSl {
   sector: string;
   countryCodeA2: string;
   projectStatus: ProgrammeStatus;
+  postalCode: number;
   projectCategory: ProgrammeCategory;
   purposeOfCreditDevelopment: string;
   currentStage: ProgrammeStageR | ProgrammeStageMRV | ProgrammeStageUnified;
@@ -360,6 +361,7 @@ export interface ProgrammeSlU extends ProgrammeSl {
   emissionReductionAchieved: number;
   geographicalLocationCoordinates: any[];
   documents: any;
+  contactPerson: string;
 }
 
 export interface ProgrammeU extends Programme {
@@ -414,7 +416,7 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     projectStatus: programme.projectStatus,
     projectCategory: getProjectCategory[programme.projectCategory],
     startDate: DateTime.fromSeconds(Number(programme.startDate)),
-    purposeOfCreditDevelopment: programme.purposeOfCreditDevelopment,
+    // purposeOfCreditDevelopment: programme.purposeOfCreditDevelopment,
     creditReceived:
       safeNumber(programme.creditBalance) +
       safeNumber(programme.creditFrozen) +
@@ -425,6 +427,7 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     province: programme.province,
     district: programme.district,
     dsDivision: programme.dsDivision,
+    postalCode: programme.postalCode,
     city: programme.city,
     community: programme.community,
     projectDescription: programme.projectDescription,

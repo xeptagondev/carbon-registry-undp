@@ -54,6 +54,7 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
       : process.env.STORYBOOK_COMPANY_STATE
       ? parseInt(process.env.STORYBOOK_COMPANY_STATE)
       : 0,
+    name: localStorage.getItem('name') || '',
   };
   const [userInfoState, setUserInfoState] = useState<UserProps>(initialUserProps);
 
@@ -67,6 +68,7 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
       companyLogo,
       companyName,
       companyState = state,
+      name,
     } = value;
     if (id) {
       setUserInfoState((prev) => ({ ...prev, id }));
@@ -99,6 +101,10 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
     if (userRole) {
       setUserInfoState((prev) => ({ ...prev, companyRole }));
       localStorage.setItem('companyRole', companyRole);
+    }
+    if (name) {
+      setUserInfoState((prev) => ({ ...prev, name }));
+      localStorage.setItem('name', name);
     }
 
     setUserInfoState((prev) => ({ ...prev, companyState }));

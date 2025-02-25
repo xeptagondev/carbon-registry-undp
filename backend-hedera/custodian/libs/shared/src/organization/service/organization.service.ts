@@ -416,8 +416,7 @@ export class OrganizationService extends SuperService<
                 `Request received to approve organization ${organizationApproveDto}`,
             );
             await this.utilService.setTagToIdMap();
-            const refreshToken =
-                await this.guardianService.getRefreshToken(email);
+
             const orgEntity: OrganizationEntity =
                 await this.organizationRepository.findOne({
                     where: {
@@ -431,7 +430,7 @@ export class OrganizationService extends SuperService<
             let approveResponse = {};
 
             approveResponse = await this.guardianService.approve(
-                refreshToken,
+                email,
                 this.utilService.getBlock(
                     this.configService.get('blocks.appoveOrganization'),
                 ),
@@ -558,7 +557,10 @@ export class OrganizationService extends SuperService<
                 {
                     id: orgEntity.id,
                 },
-                { state: OrganizationStateEnum.REJECTED },
+                {
+                    updatedTime: new Date().getTime(),
+                    state: OrganizationStateEnum.REJECTED,
+                },
             );
             return approveResponse;
         } catch (e) {
@@ -614,6 +616,7 @@ export class OrganizationService extends SuperService<
             logo: dto.logo,
             provinces: dto.provinces,
             address: dto.address,
+            updatedTime: new Date().getTime(),
         };
 
         if (
@@ -697,7 +700,10 @@ export class OrganizationService extends SuperService<
 
             await this.organizationRepository.update(
                 { id: dto.id },
-                { state: dto.state },
+                {
+                    updatedTime: new Date().getTime(),
+                    state: dto.state,
+                },
             );
 
             await queryRunner.commitTransaction();

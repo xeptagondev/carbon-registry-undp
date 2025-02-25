@@ -7,6 +7,7 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import { useLocation, useParams } from 'react-router-dom';
 import { DocumentTypeEnum } from '../../Definitions/Enums/document.type';
 import { getDocumentStatusColor } from '../../Definitions/Definitions/programme.definitions';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const SLCFCMAForm = (props: { translator: i18n }) => {
   const { translator } = props;
@@ -27,7 +28,7 @@ const SLCFCMAForm = (props: { translator: i18n }) => {
 
   const getDocVersions = async () => {
     try {
-      const { data } = await post('national/programmeSl/getDocVersions', {
+      const { data } = await post(API_PATHS.LAST_DOC_VERSIONS, {
         programmeId: id,
         docType: DocumentTypeEnum.CMA,
       });

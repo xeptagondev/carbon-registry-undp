@@ -7,10 +7,12 @@ import { GuardianModule } from '../guardian/guardian.module';
 import { DataExportService } from './service/data-export.service';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
 import { ObjectionLetterGenerateService } from './service/objection.letter.gen';
+import { CounterService } from './service/counter.service';
+import { Counter } from './entity/counter.entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([PolicyBlocksEntity]),
+        TypeOrmModule.forFeature([PolicyBlocksEntity, Counter]),
         GuardianModule,
         FileHandlerModule,
     ],
@@ -19,12 +21,14 @@ import { ObjectionLetterGenerateService } from './service/objection.letter.gen';
         UtilService,
         DataExportService,
         ObjectionLetterGenerateService,
+        CounterService,
     ],
     exports: [
         HelperService,
         UtilService,
         DataExportService,
         ObjectionLetterGenerateService,
+        CounterService,
     ],
 })
 export class UtilModule {}

@@ -14,9 +14,10 @@ import GetLocationMapComponent from '../Maps/GetLocationMapComponent';
 import moment from 'moment';
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
-import { PURPOSE_CREDIT_DEVELOPMENT } from '../SLCFProgramme/AddNewProgramme/SLCFProgrammeCreationComponent';
+import { PURPOSE_CREDIT_DEVELOPMENT } from '../AddNewProgramme/ProgrammeCreationComponent';
 import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
 import { CMASectoralScope } from '../../Definitions/Enums/programmeStage.enum';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
   const { next, prev, form, current, t, countries, handleValuesUpdate, disableFields } = props;
@@ -43,7 +44,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const getProvinces = async () => {
     try {
-      const { data } = await post('national/location/province');
+      const { data } = await post(API_PATHS.PROVINCES);
       const tempProvinces = data.map((provinceData: any) => provinceData.provinceName);
       setProvinces(tempProvinces);
     } catch (error) {
@@ -53,7 +54,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const getDistricts = async (provinceName: string, index: number) => {
     try {
-      const { data } = await post('national/location/district', {
+      const { data } = await post(API_PATHS.DISTRICTS, {
         filterAnd: [
           {
             key: 'provinceName',
@@ -71,7 +72,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const getDivisions = async (districtName: string, index: number) => {
     try {
-      const { data } = await post('national/location/division', {
+      const { data } = await post(API_PATHS.DIVISIONS, {
         filterAnd: [
           {
             key: 'districtName',
@@ -90,7 +91,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const getCities = async (division: string, index: number) => {
     try {
-      const { data } = await post('national/location/city', {
+      const { data } = await post(API_PATHS.CITIES, {
         filterAnd: [
           {
             key: 'divisionName',

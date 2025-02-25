@@ -17,6 +17,9 @@ export class OrganizationEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
+    @Column({ name: 'ref_id', nullable: false })
+    refId?: string;
+
     @Column()
     name: string;
 
@@ -51,13 +54,13 @@ export class OrganizationEntity {
     })
     state?: OrganizationStateEnum;
 
-    @Column({ unique: true })
+    @Column({ unique: true, nullable: true })
     email: string;
 
     @Column({ nullable: true })
     taxId?: string;
 
-    @Column()
+    @Column({ nullable: true })
     phoneNumber: string;
 
     @Column({ nullable: true })
@@ -72,7 +75,7 @@ export class OrganizationEntity {
     @Column({ nullable: true })
     website?: string;
 
-    @Column()
+    @Column({ nullable: true })
     address: string;
 
     @Column({ name: 'number_of_projects', nullable: true })
@@ -83,6 +86,9 @@ export class OrganizationEntity {
 
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
+
+    @Column({ type: 'bigint', nullable: true })
+    updatedTime: number;
 
     @OneToMany(() => ProjectEntity, (project) => project.organization, {
         nullable: true,

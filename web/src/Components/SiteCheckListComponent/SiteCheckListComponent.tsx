@@ -32,7 +32,7 @@ import { DocType } from '../../Definitions/Enums/document.type';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
-import { PURPOSE_CREDIT_DEVELOPMENT } from '../SLCFProgramme/AddNewProgramme/SLCFProgrammeCreationComponent';
+import { PURPOSE_CREDIT_DEVELOPMENT } from '../AddNewProgramme/ProgrammeCreationComponent';
 import GetMultipleLocationsMapComponent from '../Maps/GetMultipleLocationsMapComponent';
 import { Loading } from '../Loading/loading';
 
@@ -54,7 +54,7 @@ const SiteCheckListComponent = (props: { translator: i18n }) => {
   const { get, post } = useConnection();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagementSLCF/view/${id}`);
+    navigate(`/programmeManagement/view/${id}`);
   };
 
   const getDataToPopulate = async (programmeId: any) => {

@@ -13,22 +13,24 @@ export class ObjectionLetterGenerateService {
     async generateReport(
         orgName: string,
         projectName: string,
-        projectId: number,
+        projectId: string,
     ) {
         const ministerWithDesignation = this.configService.get(
             'docGenerate.ministerNameAndDesignation',
         );
         const ministry = this.configService.get('docGenerate.ministryName');
-        const country = this.configService.get('systemCountryName');
+        const country = this.configService.get('country');
         const capital = this.configService.get('docGenerate.countryCapital');
 
-        const filepath = `NO_OBJECTION_LETTER_${projectId}.pdf`;
+        const fileName = `NO_OBJECTION_LETTER_${projectId}.pdf`;
 
         const date = new Date().toDateString();
 
         // Create a document
         const doc = new PDFDocument();
-        const stream = fs.createWriteStream('/tmp/' + filepath);
+        const tmpDir = './';
+        const filepath = `${tmpDir}/${fileName}`;
+        const stream = fs.createWriteStream(filepath);
         doc.pipe(stream);
         doc.fontSize(8).text(capital + ', ' + date, {
             align: 'right',
@@ -36,7 +38,7 @@ export class ObjectionLetterGenerateService {
 
         doc.fontSize(9);
         doc.font('fonts/Inter-Bold.ttf').text(
-            `\n\nRe: INF Document by ${orgName} regarding ${projectName}`,
+            `\n\nRe: Programme Design Document by ${orgName} `,
         );
 
         doc.text('\n\nNo Objection Letter', {
@@ -66,17 +68,17 @@ export class ObjectionLetterGenerateService {
         );
         // Finalize PDF file
         doc.end();
-
         const content = await new Promise<string>((resolve) => {
             stream.on('finish', () => {
-                const contents = fs.readFileSync('/tmp/' + filepath, {
+                const contents = fs.readFileSync(filepath, {
                     encoding: 'base64',
                 });
                 resolve(contents);
             });
         });
+
         const url = await this.fileHandler.uploadFile(
-            'documents/' + filepath,
+            'documents/' + fileName,
             content,
         );
         return url;
