@@ -43,7 +43,7 @@ export const MONITORING_REJECT_HEADER: string =
     '{{countryName}} Carbon Registry:  Monitoring Report Rejected';
 
 export const VERIFICATION_CREATE_HEADER: string =
-    '{{countryName}} Carbon Registry: Monitoring Report Submitted!';
+    'New Verfication Report Submitted!';
 
 export const VERIFICATION_APPROVE_HEADER: string =
     '{{countryName}} Carbon Registry:  Verfication Report Accepted';

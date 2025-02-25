@@ -43,29 +43,29 @@ export class VerificationController {
         );
     }
 
-    // @UseGuards(AuthGuardService)
-    // @Post('createVerificationReport')
-    // createVerificationReport(
-    //     @Body() verificationReportDto: VerificationReportDto,
-    //     @Request() req,
-    // ) {
-    //     return this.verificationService.createVerificationReport(
-    //         verificationReportDto,
-    //         req.user,
-    //     );
-    // }
+    @UseGuards(AuthGuardService)
+    @Post('createVerificationReport')
+    createVerificationReport(
+        @Body() verificationReportDto: VerificationReportDto,
+        @Request() req,
+    ) {
+        return this.verificationService.createVerificationReport(
+            verificationReportDto,
+            req.user,
+        );
+    }
 
-    // @UseGuards(AuthGuardService)
-    // @Post('verifyVerificationReport')
-    // verifyVerificationReport(
-    //     @Body() verifyReportDto: VerifyReportDto,
-    //     @Request() req,
-    // ) {
-    //     return this.verificationService.verifyVerificationReport(
-    //         verifyReportDto,
-    //         req.user,
-    //     );
-    // }
+    @UseGuards(AuthGuardService)
+    @Post('verifyVerificationReport')
+    verifyVerificationReport(
+        @Body() verifyReportDto: VerifyReportDto,
+        @Request() req,
+    ) {
+        return this.verificationService.verifyVerificationReport(
+            verifyReportDto,
+            req.user,
+        );
+    }
 
     // @UseGuards(AuthGuardService)
     // @Get()

@@ -1,9 +1,21 @@
 import { Module } from '@nestjs/common';
 import { VerificationService } from './service/verification.service';
 import { DocumentModule } from '../document/document.module';
+import { UtilModule } from '../util/util.module';
+import { MailModule } from '../mail/mail.module';
+import { UsersModule } from '../users/users.module';
+import { FileHandlerModule } from '../file-handler/file-handler.module';
+import { GuardianModule } from '../guardian/guardian.module';
 
 @Module({
-    imports: [DocumentModule],
+    imports: [
+        DocumentModule,
+        UtilModule,
+        MailModule,
+        UsersModule,
+        FileHandlerModule,
+        GuardianModule,
+    ],
     exports: [VerificationService],
     providers: [VerificationService],
 })
