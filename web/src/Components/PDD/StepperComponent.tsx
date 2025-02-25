@@ -35,7 +35,7 @@ const CMA_STEPS = {};
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(1);
 
   const navigate = useNavigate();
 
@@ -102,7 +102,6 @@ const StepperComponent = (props: any) => {
   const [form6] = useForm();
   const [form7] = useForm();
   const [form8] = useForm();
-  const [form9] = useForm();
 
   const getProgrammeDetailsById = async (programId: any) => {
     try {
@@ -344,7 +343,7 @@ const StepperComponent = (props: any) => {
         <ApplicationOfMethodology
           next={next}
           prev={prev}
-          form={form6}
+          form={form3}
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
@@ -382,7 +381,7 @@ const StepperComponent = (props: any) => {
         <EnvironmentImpacts
           next={next}
           prev={prev}
-          form={form3}
+          form={form5}
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
@@ -419,7 +418,7 @@ const StepperComponent = (props: any) => {
         <LocalStakeholderConsultation
           next={next}
           prev={prev}
-          form={form4}
+          form={form6}
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
@@ -457,7 +456,7 @@ const StepperComponent = (props: any) => {
         <Appendix
           next={navigateToDetailsPage} // will take user to details page
           prev={prev}
-          form={form9}
+          form={form8}
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}

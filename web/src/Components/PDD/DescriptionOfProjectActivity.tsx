@@ -359,36 +359,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
               }}
             >
               <>
-                <LabelWithTooltip
-                  label={`1.1 ${t('CMAForm:projectActivity')}`}
-                  required={true}
-                  tooltipPosition={TooltipPostion.bottom}
-                  tooltipContent={
-                    <div>
-                      <p>Should include:</p>
-                      <ul>
-                        <li>
-                          A summary description of the technologies/measures to be implemented by
-                          the project.{' '}
-                        </li>
-                        <li>The location of the project.</li>
-                        <li>
-                          An explanation of how the project is expected to generate GHG emission
-                          reductions or removals.{' '}
-                        </li>
-                        <li>
-                          A brief description of the scenario existing prior to the implementation
-                          of the project.
-                        </li>
-                        <li>
-                          An estimate of annual average and total GHG emission reductions and
-                          removals.
-                        </li>
-                      </ul>
-                    </div>
-                  }
-                  tooltipWidth={600}
-                />
+                <LabelWithTooltip label={`${t('PDD:projectActivity')}`} required={true} />
                 <Form.Item
                   className="full-width-form-item"
                   name="introduction"
@@ -405,7 +376,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                           value === null ||
                           value === undefined
                         ) {
-                          throw new Error(`${t('CMAForm:projectActivity')} ${t('isRequired')}`);
+                          throw new Error(`${t('PDD:projectActivity')} ${t('isRequired')}`);
                         }
                       },
                     },
@@ -413,756 +384,19 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                 >
                   <TextArea
                     rows={4}
-                    placeholder={`${t('CMAForm:projectActivityPlaceholder')}`}
+                    // placeholder={`${t('PDD:projectActivityPlaceholder')}`}
                     disabled={disableFields}
                   />
                 </Form.Item>
               </>
 
-              <Form.Item
-                className="half-width-form-item"
-                label={`1.2 ${t('CMAForm:sectoralScope')}`}
-                name="sectoralScope"
-                rules={[
-                  {
-                    required: true,
-                    message: ``,
-                  },
-                  {
-                    validator: async (rule, value) => {
-                      if (
-                        String(value).trim() === '' ||
-                        String(value).trim() === undefined ||
-                        value === null ||
-                        value === undefined
-                      ) {
-                        throw new Error(`${t('CMAForm:sectoralScope')} ${t('isRequired')}`);
-                      }
-                    },
-                  },
-                ]}
-              >
-                <Select size="large" disabled={disableFields}>
-                  {Object.values(CMASectoralScope).map((sectoralScope: string, index: number) => (
-                    <Select.Option value={sectoralScope} key={sectoralScope + index}>
-                      {sectoralScope}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
               <>
-                <h4 className="form-section-title">{`1.3 ${t('CMAForm:projectProponent')}`}</h4>
-                <div className="form-section">
-                  <Row justify={'space-between'} gutter={[40, 16]}>
-                    <Col xl={12} md={24}>
-                      <div className="step-form-right-col">
-                        <Form.Item
-                          label={t('CMAForm:organizationName')}
-                          name="organizationName"
-                          rules={[
-                            {
-                              required: true,
-                              message: ``,
-                            },
-                            {
-                              validator: async (rule, value) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(
-                                    `${t('CMAForm:organizationName')} ${t('isRequired')}`
-                                  );
-                                }
-                              },
-                            },
-                          ]}
-                        >
-                          <Input size="large" disabled />
-                        </Form.Item>
-
-                        <Form.Item
-                          label={t('CMAForm:contactPerson')}
-                          name="contactPerson"
-                          rules={[
-                            {
-                              required: true,
-                              message: ``,
-                            },
-                            {
-                              validator: async (rule, value) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(
-                                    `${t('CMAForm:contactPerson')} ${t('isRequired')}`
-                                  );
-                                }
-                              },
-                            },
-                          ]}
-                        >
-                          <Input size="large" disabled />
-                        </Form.Item>
-
-                        <Form.Item
-                          label={t('CMAForm:telephone')}
-                          name="telephone"
-                          rules={[
-                            {
-                              required: true,
-                              message: ``,
-                            },
-                            {
-                              validator: async (rule: any, value: any) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(`${t('CMAForm:telephone')} ${t('isRequired')}`);
-                                } else {
-                                  const phoneNo = formatPhoneNumber(String(value));
-                                  if (String(value).trim() !== '') {
-                                    if (
-                                      phoneNo === null ||
-                                      phoneNo === '' ||
-                                      phoneNo === undefined
-                                    ) {
-                                      throw new Error(
-                                        `${t('CMAForm:telephone')} ${t('isRequired')}`
-                                      );
-                                    } else {
-                                      if (!isPossiblePhoneNumber(String(value))) {
-                                        throw new Error(
-                                          `${t('CMAForm:telephone')} ${t('isInvalid')}`
-                                        );
-                                      }
-                                    }
-                                  }
-                                }
-                              },
-                            },
-                          ]}
-                        >
-                          <PhoneInput
-                            // placeholder={t('CMAForm:telephone')}
-                            international
-                            value={formatPhoneNumberIntl(contactNoInput)}
-                            defaultCountry="LK"
-                            countryCallingCodeEditable={false}
-                            onChange={(v) => {}}
-                            countries={countries as Country[]}
-                            disabled
-                          />
-                        </Form.Item>
-                      </div>
-                    </Col>
-
-                    <Col xl={12} md={24}>
-                      <Form.Item
-                        label={t('CMAForm:email')}
-                        name="email"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('CMAForm:email')} ${t('isRequired')}`);
-                              } else {
-                                const val = value.trim();
-                                const reg =
-                                  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                                const matches = val.match(reg) ? val.match(reg) : [];
-                                if (matches.length === 0) {
-                                  throw new Error(`${t('CMAForm:email')} ${t('isInvalid')}`);
-                                }
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <Input size="large" disabled />
-                      </Form.Item>
-
-                      <Form.Item
-                        label={t('CMAForm:designation')}
-                        name="title"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('CMAForm:title')} ${t('isRequired')}`);
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <Input size="large" disabled={disableFields} />
-                      </Form.Item>
-
-                      <Form.Item
-                        label={t('CMAForm:address')}
-                        name="address"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('CMAForm:address')} ${t('isRequired')}`);
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <TextArea rows={4} disabled />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </div>
-              </>
-
-              <>
-                <h4 className="form-section-title">{`1.4 ${t(
-                  'CMAForm:otherEntitiesInProject'
-                )}`}</h4>
-
-                <h4 className="list-item-title">Entity 1</h4>
-                <Row justify={'space-between'} gutter={[40, 16]} className="form-section">
-                  <Col xl={12} md={24}>
-                    <div className="step-form-right-col">
-                      <Form.Item
-                        label={t('CMAForm:organizationName')}
-                        name="entityOrganizationName"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(
-                                  `${t('CMAForm:organizationName')} ${t('isRequired')}`
-                                );
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <Input size="large" disabled={disableFields} />
-                      </Form.Item>
-
-                      <Form.Item
-                        label={t('CMAForm:contactPerson')}
-                        name="entityContactPerson"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('CMAForm:contactPerson')} ${t('isRequired')}`);
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <Input size="large" disabled={disableFields} />
-                      </Form.Item>
-
-                      <Form.Item
-                        label={t('CMAForm:roleInTheProject')}
-                        name={'entityRoleInTheProject'}
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(
-                                  `${t('CMAForm:roleInTheProject')} ${t('isRequired')}`
-                                );
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <TextArea rows={4} disabled={disableFields} />
-                      </Form.Item>
-
-                      <Form.Item
-                        label={t('CMAForm:telephone')}
-                        name="entityTelephone"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule: any, value: any) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('CMAForm:telephone')} ${t('isRequired')}`);
-                              } else {
-                                const phoneNo = formatPhoneNumber(String(value));
-                                if (String(value).trim() !== '') {
-                                  if (phoneNo === null || phoneNo === '' || phoneNo === undefined) {
-                                    throw new Error(`${t('CMAForm:telephone')} ${t('isRequired')}`);
-                                  } else {
-                                    if (!isPossiblePhoneNumber(String(value))) {
-                                      throw new Error(
-                                        `${t('CMAForm:telephone')} ${t('isInvalid')}`
-                                      );
-                                    }
-                                  }
-                                }
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <PhoneInput
-                          // placeholder={t('CMAForm:telephone')}
-                          international
-                          value={formatPhoneNumberIntl(contactNoInput)}
-                          defaultCountry="LK"
-                          countryCallingCodeEditable={false}
-                          onChange={(v) => {}}
-                          countries={countries as Country[]}
-                          disabled={disableFields}
-                        />
-                      </Form.Item>
-                    </div>
-                  </Col>
-
-                  <Col xl={12} md={24}>
-                    <Form.Item
-                      label={t('CMAForm:email')}
-                      name="entityEmail"
-                      rules={[
-                        {
-                          required: true,
-                          message: ``,
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(`${t('CMAForm:email')} ${t('isRequired')}`);
-                            } else {
-                              const val = value.trim();
-                              const reg =
-                                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                              const matches = val.match(reg) ? val.match(reg) : [];
-                              if (matches.length === 0) {
-                                throw new Error(`${t('CMAForm:email')} ${t('isInvalid')}`);
-                              }
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('CMAForm:designation')}
-                      name="entityTitle"
-                      rules={[
-                        {
-                          required: true,
-                          message: ``,
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(`${t('CMAForm:designation')} ${t('isRequired')}`);
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('CMAForm:address')}
-                      name="entityAddress"
-                      rules={[
-                        {
-                          required: true,
-                          message: ``,
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(`${t('CMAForm:address')} ${t('isRequired')}`);
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <TextArea rows={4} disabled={disableFields} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Form.List name="extraOtherEntities">
-                  {(fields, { add, remove }) => (
-                    <>
-                      {fields.map(({ key, name, ...restField }) => (
-                        <>
-                          <div className="form-list-actions">
-                            <h4 className="list-item-title">Entity {name + 2}</h4>
-                            <Form.Item>
-                              <Button
-                                // type="dashed"
-                                onClick={() => {
-                                  remove(name);
-                                }}
-                                size="large"
-                                className="addMinusBtn"
-                                // block
-                                icon={<MinusOutlined />}
-                                disabled={disableFields}
-                              >
-                                {/* Remove Entity */}
-                              </Button>
-                            </Form.Item>
-                          </div>
-                          <Row justify={'space-between'} gutter={[40, 16]} className="form-section">
-                            <Col xl={12} md={24}>
-                              <div className="step-form-right-col">
-                                <Form.Item
-                                  label={t('CMAForm:organizationName')}
-                                  name={[name, 'organizationName']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: ``,
-                                    },
-                                    {
-                                      validator: async (rule, value) => {
-                                        if (
-                                          String(value).trim() === '' ||
-                                          String(value).trim() === undefined ||
-                                          value === null ||
-                                          value === undefined
-                                        ) {
-                                          throw new Error(
-                                            `${t('CMAForm:organizationName')} ${t('isRequired')}`
-                                          );
-                                        }
-                                      },
-                                    },
-                                  ]}
-                                >
-                                  <Input size="large" disabled={disableFields} />
-                                </Form.Item>
-
-                                <Form.Item
-                                  label={t('CMAForm:contactPerson')}
-                                  name={[name, 'contactPerson']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: ``,
-                                    },
-                                    {
-                                      validator: async (rule, value) => {
-                                        if (
-                                          String(value).trim() === '' ||
-                                          String(value).trim() === undefined ||
-                                          value === null ||
-                                          value === undefined
-                                        ) {
-                                          throw new Error(
-                                            `${t('CMAForm:contactPerson')} ${t('isRequired')}`
-                                          );
-                                        }
-                                      },
-                                    },
-                                  ]}
-                                >
-                                  <Input size="large" disabled={disableFields} />
-                                </Form.Item>
-
-                                <Form.Item
-                                  label={t('CMAForm:roleInTheProject')}
-                                  name={[name, 'roleInTheProject']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: ``,
-                                    },
-                                    {
-                                      validator: async (rule, value) => {
-                                        if (
-                                          String(value).trim() === '' ||
-                                          String(value).trim() === undefined ||
-                                          value === null ||
-                                          value === undefined
-                                        ) {
-                                          throw new Error(
-                                            `${t('CMAForm:roleInTheProject')} ${t('isRequired')}`
-                                          );
-                                        }
-                                      },
-                                    },
-                                  ]}
-                                >
-                                  <TextArea rows={4} disabled={disableFields} />
-                                </Form.Item>
-
-                                <Form.Item
-                                  label={t('CMAForm:telephone')}
-                                  name={[name, 'telephone']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: ``,
-                                    },
-                                    {
-                                      validator: async (rule: any, value: any) => {
-                                        if (
-                                          String(value).trim() === '' ||
-                                          String(value).trim() === undefined ||
-                                          value === null ||
-                                          value === undefined
-                                        ) {
-                                          throw new Error(
-                                            `${t('CMAForm:telephone')} ${t('isRequired')}`
-                                          );
-                                        } else {
-                                          const phoneNo = formatPhoneNumber(String(value));
-                                          if (String(value).trim() !== '') {
-                                            if (
-                                              phoneNo === null ||
-                                              phoneNo === '' ||
-                                              phoneNo === undefined
-                                            ) {
-                                              throw new Error(
-                                                `${t('CMAForm:telephone')} ${t('isRequired')}`
-                                              );
-                                            } else {
-                                              if (!isPossiblePhoneNumber(String(value))) {
-                                                throw new Error(
-                                                  `${t('CMAForm:telephone')} ${t('isInvalid')}`
-                                                );
-                                              }
-                                            }
-                                          }
-                                        }
-                                      },
-                                    },
-                                  ]}
-                                >
-                                  <PhoneInput
-                                    // placeholder={t('CMAForm:telephone')}
-                                    international
-                                    value={formatPhoneNumberIntl(contactNoInput)}
-                                    defaultCountry="LK"
-                                    countryCallingCodeEditable={false}
-                                    onChange={(v) => {}}
-                                    countries={countries as Country[]}
-                                    disabled={disableFields}
-                                  />
-                                </Form.Item>
-                              </div>
-                            </Col>
-
-                            <Col xl={12} md={24}>
-                              <Form.Item
-                                label={t('CMAForm:email')}
-                                name={[name, 'email']}
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: ``,
-                                  },
-                                  {
-                                    validator: async (rule, value) => {
-                                      if (
-                                        String(value).trim() === '' ||
-                                        String(value).trim() === undefined ||
-                                        value === null ||
-                                        value === undefined
-                                      ) {
-                                        throw new Error(`${t('CMAForm:email')} ${t('isRequired')}`);
-                                      } else {
-                                        const val = value.trim();
-                                        const reg =
-                                          /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                                        const matches = val.match(reg) ? val.match(reg) : [];
-                                        if (matches.length === 0) {
-                                          throw new Error(
-                                            `${t('CMAForm:email')} ${t('isInvalid')}`
-                                          );
-                                        }
-                                      }
-                                    },
-                                  },
-                                ]}
-                              >
-                                <Input size="large" disabled={disableFields} />
-                              </Form.Item>
-
-                              <Form.Item
-                                label={t('CMAForm:designation')}
-                                name={[name, 'title']}
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: ``,
-                                  },
-                                  {
-                                    validator: async (rule, value) => {
-                                      if (
-                                        String(value).trim() === '' ||
-                                        String(value).trim() === undefined ||
-                                        value === null ||
-                                        value === undefined
-                                      ) {
-                                        throw new Error(
-                                          `${t('CMAForm:designation')} ${t('isRequired')}`
-                                        );
-                                      }
-                                    },
-                                  },
-                                ]}
-                              >
-                                <Input size="large" disabled={disableFields} />
-                              </Form.Item>
-
-                              <Form.Item
-                                label={t('CMAForm:address')}
-                                name={[name, 'address']}
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: ``,
-                                  },
-                                  {
-                                    validator: async (rule, value) => {
-                                      if (
-                                        String(value).trim() === '' ||
-                                        String(value).trim() === undefined ||
-                                        value === null ||
-                                        value === undefined
-                                      ) {
-                                        throw new Error(
-                                          `${t('CMAForm:address')} ${t('isRequired')}`
-                                        );
-                                      }
-                                    },
-                                  },
-                                ]}
-                              >
-                                <TextArea rows={4} disabled={disableFields} />
-                              </Form.Item>
-                            </Col>
-                          </Row>
-                        </>
-                      ))}
-                      <div className="form-list-actions">
-                        <Form.Item>
-                          <Button
-                            // type="dashed"
-                            onClick={() => {
-                              add();
-                            }}
-                            size="large"
-                            className="addMinusBtn"
-                            // block
-                            icon={<PlusOutlined />}
-                            disabled={disableFields}
-                          >
-                            {/* Add Entity */}
-                          </Button>
-                        </Form.Item>
-                      </div>
-                    </>
-                  )}
-                </Form.List>
-              </>
-
-              <>
-                <h4 className="form-section-title">{`${t('CMAForm:projectActivityLocations')}`}</h4>
+                <h4 className="form-section-title">{`${t('PDD:projectActivityLocations')}`}</h4>
 
                 <h4 className="list-item-title">Location 1</h4>
                 <div className="form-section">
                   <h4 className="form-section-title">{`1.5 ${t(
-                    'CMAForm:locationOfProjectActivity'
+                    'PDD:locationOfProjectActivity'
                   )}`}</h4>
 
                   <Row
@@ -1172,7 +406,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                   >
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t('CMAForm:locationOfProjectActivity')}
+                        label={t('PDD:locationOfProjectActivity')}
                         name="locationOfProjectActivity"
                         rules={[
                           {
@@ -1188,7 +422,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t('CMAForm:locationOfProjectActivity')} ${t('isRequired')}`
+                                  `${t('PDD:locationOfProjectActivity')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -1199,7 +433,32 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                       </Form.Item>
 
                       <Form.Item
-                        label={t('CMAForm:province')}
+                        label={t('PDD:siteNo')}
+                        name="siteNo"
+                        rules={[
+                          {
+                            required: true,
+                            message: ``,
+                          },
+                          {
+                            validator: async (rule, value) => {
+                              if (
+                                String(value).trim() === '' ||
+                                String(value).trim() === undefined ||
+                                value === null ||
+                                value === undefined
+                              ) {
+                                throw new Error(`${t('PDD:siteNo')} ${t('isRequired')}`);
+                              }
+                            },
+                          },
+                        ]}
+                      >
+                        <Input size="large" disabled={disableFields} />
+                      </Form.Item>
+
+                      <Form.Item
+                        label={t('PDD:province')}
                         name="province"
                         rules={[
                           {
@@ -1214,7 +473,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:province')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:province')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1223,7 +482,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         <Select
                           size="large"
                           onChange={(value) => onProvinceSelect(value, 0)}
-                          placeholder={t('CMAForm:provincePlaceholder')}
+                          placeholder={t('PDD:provincePlaceholder')}
                           disabled={disableFields}
                         >
                           {provinces.map((province: string, index: number) => (
@@ -1235,7 +494,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                       </Form.Item>
 
                       <Form.Item
-                        label={t('CMAForm:district')}
+                        label={t('PDD:district')}
                         name="district"
                         rules={[
                           {
@@ -1250,7 +509,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:district')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:district')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1258,7 +517,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                       >
                         <Select
                           size="large"
-                          placeholder={t('CMAForm:districtPlaceholder')}
+                          placeholder={t('PDD:districtPlaceholder')}
                           onSelect={(value) => onDistrictSelect(value, 0)}
                           disabled={disableFields}
                         >
@@ -1270,7 +529,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         </Select>
                       </Form.Item>
                       <Form.Item
-                        label={t('CMAForm:dsDivision')}
+                        label={t('PDD:dsDivision')}
                         name="dsDivision"
                         rules={[
                           {
@@ -1285,7 +544,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:dsDivision')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:dsDivision')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1293,7 +552,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                       >
                         <Select
                           size="large"
-                          placeholder={t('CMAForm:dsDivisionPlaceholder')}
+                          placeholder={t('PDD:dsDivisionPlaceholder')}
                           disabled={disableFields}
                           onSelect={(value) => onDivisionSelect(value, 0)}
                         >
@@ -1305,7 +564,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         </Select>
                       </Form.Item>
                       <Form.Item
-                        label={t('CMAForm:city')}
+                        label={t('PDD:city')}
                         name="city"
                         rules={[
                           {
@@ -1320,7 +579,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:city')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:city')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1328,7 +587,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                       >
                         <Select
                           size="large"
-                          placeholder={t('CMAForm:cityPlaceholder')}
+                          placeholder={t('PDD:cityPlaceholder')}
                           disabled={disableFields}
                         >
                           {cities[0]?.map((city: string, index) => (
@@ -1339,7 +598,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         </Select>
                       </Form.Item>
                       <Form.Item
-                        label={t('CMAForm:community')}
+                        label={t('PDD:community')}
                         name="community"
                         rules={[
                           {
@@ -1354,7 +613,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:community')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:community')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1366,7 +625,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t('CMAForm:setLocation')}
+                        label={t('PDD:setLocation')}
                         name="location"
                         rules={[
                           {
@@ -1381,7 +640,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:location')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:location')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1398,7 +657,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t('CMAForm:uploadImages')}
+                        label={t('PDD:uploadImages')}
                         name="optionalImages"
                         valuePropName="fileList"
                         getValueFromEvent={normFile}
@@ -1435,102 +694,9 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                             icon={<UploadOutlined />}
                             disabled={disableFields}
                           >
-                            {t('CMAForm:upload')}
+                            {t('PDD:upload')}
                           </Button>
                         </Upload>
-                      </Form.Item>
-                    </Col>
-
-                    <Col xl={12} md={24}>
-                      <Form.Item
-                        label={`1.6 ${t('CMAForm:projectFundings')}`}
-                        name="projectFundings"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(
-                                  `${t('CMAForm:projectFundings')} ${t('isRequired')}`
-                                );
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <Input size={'large'} disabled={disableFields} />
-                      </Form.Item>
-
-                      <Form.Item
-                        label={`1.8 ${t('CMAForm:projectCommisionDate')}`}
-                        name="projectCommisionDate"
-                        rules={[
-                          {
-                            required: true,
-                            message: '',
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(
-                                  `${t('CMAForm:projectCommisionDate')} ${t('isRequired')}`
-                                );
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <DatePicker
-                          disabled={disableFields}
-                          size="large"
-                          disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
-                        />
-                      </Form.Item>
-                    </Col>
-
-                    <Col xl={12} md={24}>
-                      <Form.Item
-                        label={`1.7 ${t('CMAForm:projectStartDate')}`}
-                        name="projectStartDate"
-                        rules={[
-                          {
-                            required: true,
-                            message: '',
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(
-                                  `${t('CMAForm:projectStartDate')} ${t('isRequired')}`
-                                );
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <DatePicker
-                          disabled={disableFields}
-                          size="large"
-                          disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
-                        />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -1570,7 +736,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                           </div>
                           <div className="form-section">
                             <h4 className="form-section-title">
-                              {`1.5 ${t('CMAForm:locationOfProjectActivity')}`}
+                              {`${t('PDD:locationOfProjectActivity')}`}
                             </h4>
                             <Row
                               justify={'space-between'}
@@ -1579,7 +745,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                             >
                               <Col xl={12} md={24}>
                                 <Form.Item
-                                  label={t('CMAForm:locationOfProjectActivity')}
+                                  label={t('PDD:locationOfProjectActivity')}
                                   name={[name, 'locationOfProjectActivity']}
                                   rules={[
                                     {
@@ -1595,7 +761,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                           value === undefined
                                         ) {
                                           throw new Error(
-                                            `${t('CMAForm:locationOfProjectActivity')} ${t(
+                                            `${t('PDD:locationOfProjectActivity')} ${t(
                                               'isRequired'
                                             )}`
                                           );
@@ -1608,7 +774,32 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 </Form.Item>
 
                                 <Form.Item
-                                  label={t('CMAForm:province')}
+                                  label={t('PDD:siteNo')}
+                                  name={[name, 'siteNo']}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:siteNo')} ${t('isRequired')}`);
+                                        }
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input size="large" disabled={disableFields} />
+                                </Form.Item>
+
+                                <Form.Item
+                                  label={t('PDD:province')}
                                   name={[name, 'province']}
                                   rules={[
                                     {
@@ -1624,7 +815,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                           value === undefined
                                         ) {
                                           throw new Error(
-                                            `${t('CMAForm:province')} ${t('isRequired')}`
+                                            `${t('PDD:province')} ${t('isRequired')}`
                                           );
                                         }
                                       },
@@ -1634,7 +825,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   <Select
                                     size="large"
                                     onChange={(value) => onProvinceSelect(value, name + 1)}
-                                    placeholder={t('CMAForm:provincePlaceholder')}
+                                    placeholder={t('PDD:provincePlaceholder')}
                                     disabled={disableFields}
                                   >
                                     {provinces.map((province: string, index: number) => (
@@ -1646,7 +837,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 </Form.Item>
 
                                 <Form.Item
-                                  label={t('CMAForm:district')}
+                                  label={t('PDD:district')}
                                   name={[name, 'district']}
                                   rules={[
                                     {
@@ -1662,7 +853,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                           value === undefined
                                         ) {
                                           throw new Error(
-                                            `${t('CMAForm:district')} ${t('isRequired')}`
+                                            `${t('PDD:district')} ${t('isRequired')}`
                                           );
                                         }
                                       },
@@ -1671,7 +862,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 >
                                   <Select
                                     size="large"
-                                    placeholder={t('CMAForm:districtPlaceholder')}
+                                    placeholder={t('PDD:districtPlaceholder')}
                                     onSelect={(value) => onDistrictSelect(value, name + 1)}
                                     disabled={disableFields}
                                   >
@@ -1683,7 +874,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   </Select>
                                 </Form.Item>
                                 <Form.Item
-                                  label={t('CMAForm:dsDivision')}
+                                  label={t('PDD:dsDivision')}
                                   name={[name, 'dsDivision']}
                                   rules={[
                                     {
@@ -1699,7 +890,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                           value === undefined
                                         ) {
                                           throw new Error(
-                                            `${t('CMAForm:dsDivision')} ${t('isRequired')}`
+                                            `${t('PDD:dsDivision')} ${t('isRequired')}`
                                           );
                                         }
                                       },
@@ -1708,7 +899,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 >
                                   <Select
                                     size="large"
-                                    placeholder={t('CMAForm:dsDivisionPlaceholder')}
+                                    placeholder={t('PDD:dsDivisionPlaceholder')}
                                     disabled={disableFields}
                                     onSelect={(value) => onDivisionSelect(value, name + 1)}
                                   >
@@ -1725,7 +916,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   </Select>
                                 </Form.Item>
                                 <Form.Item
-                                  label={t('CMAForm:city')}
+                                  label={t('PDD:city')}
                                   name={[name, 'city']}
                                   rules={[
                                     {
@@ -1740,9 +931,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(
-                                            `${t('CMAForm:city')} ${t('isRequired')}`
-                                          );
+                                          throw new Error(`${t('PDD:city')} ${t('isRequired')}`);
                                         }
                                       },
                                     },
@@ -1750,7 +939,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 >
                                   <Select
                                     size="large"
-                                    placeholder={t('CMAForm:cityPlaceholder')}
+                                    placeholder={t('PDD:cityPlaceholder')}
                                     disabled={disableFields}
                                   >
                                     {cities[name + 1]?.map((city: string, index: number) => (
@@ -1761,7 +950,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   </Select>
                                 </Form.Item>
                                 <Form.Item
-                                  label={t('CMAForm:community')}
+                                  label={t('PDD:community')}
                                   name={[name, 'community']}
                                   rules={[
                                     {
@@ -1777,7 +966,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                           value === undefined
                                         ) {
                                           throw new Error(
-                                            `${t('CMAForm:community')} ${t('isRequired')}`
+                                            `${t('PDD:community')} ${t('isRequired')}`
                                           );
                                         }
                                       },
@@ -1790,7 +979,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
                               <Col xl={12} md={24}>
                                 <Form.Item
-                                  label={t('CMAForm:setLocation')}
+                                  label={t('PDD:setLocation')}
                                   name={[name, 'location']}
                                   rules={[
                                     {
@@ -1806,7 +995,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                           value === undefined
                                         ) {
                                           throw new Error(
-                                            `${t('CMAForm:location')} ${t('isRequired')}`
+                                            `${t('PDD:location')} ${t('isRequired')}`
                                           );
                                         }
                                       },
@@ -1827,7 +1016,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
                               <Col xl={24} md={24}>
                                 <Form.Item
-                                  label={t('CMAForm:uploadImages')}
+                                  label={t('PDD:uploadImages')}
                                   name={[name, 'optionalImages']}
                                   valuePropName="fileList"
                                   getValueFromEvent={normFile}
@@ -1869,109 +1058,11 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   </Upload>
                                 </Form.Item>
                               </Col>
-
-                              <Col xl={12} md={24}>
-                                <Form.Item
-                                  label={`1.6 ${t('CMAForm:projectFundings')}`}
-                                  name={[name, 'projectFundings']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: ``,
-                                    },
-                                    {
-                                      validator: async (rule, value) => {
-                                        if (
-                                          String(value).trim() === '' ||
-                                          String(value).trim() === undefined ||
-                                          value === null ||
-                                          value === undefined
-                                        ) {
-                                          throw new Error(
-                                            `${t('CMAForm:projectFundings')} ${t('isRequired')}`
-                                          );
-                                        }
-                                      },
-                                    },
-                                  ]}
-                                >
-                                  <Input size={'large'} disabled={disableFields} />
-                                </Form.Item>
-
-                                <Form.Item
-                                  label={`1.8 ${t('CMAForm:projectCommisionDate')}`}
-                                  name={[name, 'projectCommisionDate']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: '',
-                                    },
-                                    {
-                                      validator: async (rule, value) => {
-                                        if (
-                                          String(value).trim() === '' ||
-                                          String(value).trim() === undefined ||
-                                          value === null ||
-                                          value === undefined
-                                        ) {
-                                          throw new Error(
-                                            `${t('CMAForm:projectCommisionDate')} ${t(
-                                              'isRequired'
-                                            )}`
-                                          );
-                                        }
-                                      },
-                                    },
-                                  ]}
-                                >
-                                  <DatePicker
-                                    size="large"
-                                    disabled={disableFields}
-                                    disabledDate={(currentDate: any) =>
-                                      currentDate < moment().startOf('day')
-                                    }
-                                  />
-                                </Form.Item>
-                              </Col>
-
-                              <Col xl={12} md={24}>
-                                <Form.Item
-                                  label={`1.7 ${t('CMAForm:projectStartDate')}`}
-                                  name={[name, 'projectStartDate']}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: '',
-                                    },
-                                    {
-                                      validator: async (rule, value) => {
-                                        if (
-                                          String(value).trim() === '' ||
-                                          String(value).trim() === undefined ||
-                                          value === null ||
-                                          value === undefined
-                                        ) {
-                                          throw new Error(
-                                            `${t('CMAForm:projectStartDate')} ${t('isRequired')}`
-                                          );
-                                        }
-                                      },
-                                    },
-                                  ]}
-                                >
-                                  <DatePicker
-                                    size="large"
-                                    disabled={disableFields}
-                                    disabledDate={(currentDate: any) =>
-                                      currentDate < moment().startOf('day')
-                                    }
-                                  />
-                                </Form.Item>
-                              </Col>
                             </Row>
                           </div>
                         </>
                       ))}
+
                       <div className="form-list-actions">
                         <Form.Item>
                           <Button
@@ -1994,175 +1085,35 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                 </Form.List>
               </>
 
-              <Row gutter={[60, 16]}>
-                <Col xl={12} md={24}>
-                  <Form.Item
-                    label={`1.9 ${t('CMAForm:projectOwnership')}`}
-                    name="projectOwnership"
-                    rules={[
-                      {
-                        required: true,
-                        message: ``,
-                      },
-                      {
-                        validator: async (rule, value) => {
-                          if (
-                            String(value).trim() === '' ||
-                            String(value).trim() === undefined ||
-                            value === null ||
-                            value === undefined
-                          ) {
-                            throw new Error(`${t('CMAForm:projectOwnership')} ${t('isRequired')}`);
-                          }
-                        },
-                      },
-                    ]}
-                  >
-                    <Input size="large" disabled={disableFields} />
-                  </Form.Item>
-
-                  <div className="form-item-flex-row">
-                    <div className="half-width-form-item">
-                      <p className="custom-required project-track">{t('CMAForm:projectTrack')}</p>
-                      <Input
-                        size="large"
-                        disabled
-                        value={PURPOSE_CREDIT_DEVELOPMENT[form.getFieldValue('projectTrack')]}
-                      />
-                    </div>
-
-                    <div style={{ fontSize: '12px', marginLeft: '8px', marginTop: '36px' }}>
-                      {form.getFieldValue('projectTrack') === 'TRACK_2' && (
-                        <>
-                          *Issued carbon credits from project will only be used for internal
-                          offsetting of emissions.
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </Col>
-
-                <Col xl={12} md={24}>
-                  <h4 className="crediting-period-title custom-required">
-                    1.11 {t('CMAForm:projectCreditingPeriod')}
-                  </h4>
-
-                  <div className="crediting-period-flex-row">
-                    <Form.Item
-                      label={``}
-                      name="creditingPeriodStartDate"
-                      className="crediting-datepicker"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('CMAForm:projectStartDate')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <DatePicker
-                        size="large"
-                        placeholder="Start Date"
-                        disabled={disableFields}
-                        disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
-                        onChange={handleCreditingPeriodDateChange}
-                      />
-                    </Form.Item>
-                    <p>to</p>
-                    <Form.Item
-                      label={``}
-                      name="creditingPeriodEndDate"
-                      className="crediting-datepicker"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('CMAForm:projectStartDate')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <DatePicker
-                        size="large"
-                        placeholder="End Date"
-                        disabled={disableFields}
-                        disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
-                        onChange={handleCreditingPeriodDateChange}
-                      />
-                    </Form.Item>
-                  </div>
-                  <Form.Item
-                    name="creditingPeriodDescription"
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('CMAForm:required')}`,
-                      },
-                    ]}
-                  >
-                    <TextArea
-                      rows={4}
-                      placeholder={`${t('CMAForm:projectCreditingDescriptionPlaceholder')}`}
-                      disabled={disableFields}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-
               <>
-                <h4 className="form-section-title custom-required">{`1.12 ${t(
-                  'CMAForm:scaleOfProjectAndEstimatedEmission'
+                {/* <h4 className="form-section-title custom-required">{`1.12 ${t(
+                  'PDD:scaleOfProjectAndEstimatedEmission'
                 )}`}</h4>
 
                 <Row>
                   <Col xl={12} md={24}>
                     <Form.Item
-                      label={t('CMAForm:selectyourProjectScale')}
+                      label={t('PDD:selectyourProjectScale')}
                       name="projectScale"
                       rules={[
                         {
                           required: true,
-                          message: `${t('CMAForm:required')}`,
+                          message: `${t('PDD:required')}`,
                         },
                       ]}
                     >
                       <Radio.Group className="radio-btn-flex-row" disabled={disableFields}>
-                        <Radio value="MICRO">{t('CMAForm:micro')}</Radio>
-                        <Radio value="SMALL">{t('CMAForm:small')}</Radio>
-                        <Radio value="LARGE">{t('CMAForm:large')}</Radio>
+                        <Radio value="MICRO">{t('PDD:micro')}</Radio>
+                        <Radio value="SMALL">{t('PDD:small')}</Radio>
+                        <Radio value="LARGE">{t('PDD:large')}</Radio>
                       </Radio.Group>
                     </Form.Item>
                   </Col>
-                </Row>
+                </Row> */}
 
                 {/* Estimated Annual GHG Emissions Years Start */}
-                <div className="annualGHGEmissions">
-                  <Form.List name="extraGHGEmmissions">
+                {/* <div className="annualGHGEmissions"> */}
+                {/* <Form.List name="extraGHGEmmissions">
                     {(fields, { add, remove }) => (
                       <>
                         {fields.map(({ key, name, ...restField }) => (
@@ -2174,7 +1125,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   rules={[
                                     {
                                       required: true,
-                                      message: `${t('CMAForm:required')}`,
+                                      message: `${t('PDD:required')}`,
                                     },
                                   ]}
                                 >
@@ -2183,7 +1134,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                               </Col>
                               <Col md={10}>
                                 <p className="list-item-title">
-                                  {t('CMAForm:estimatedGHGEmissionsReductions')}
+                                  {t('PDD:estimatedGHGEmissionsReductions')}
                                 </p>
                               </Col>
                               <Col md={4} xl={4}>
@@ -2192,7 +1143,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   rules={[
                                     {
                                       required: true,
-                                      message: `${t('CMAForm:required')}`,
+                                      message: `${t('PDD:required')}`,
                                     },
                                     {
                                       validator(rule, value) {
@@ -2222,11 +1173,11 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         ))}
                       </>
                     )}
-                  </Form.List>
+                  </Form.List> */}
 
-                  <Row gutter={15}>
+                {/* <Row gutter={15}>
                     <Col xl={16}>
-                      <p>{t('CMAForm:totalEstimatedERs')}</p>
+                      <p>{t('PDD:totalEstimatedERs')}</p>
                     </Col>
                     <Col md={4} xl={4}>
                       <Form.Item
@@ -2234,7 +1185,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         rules={[
                           {
                             required: true,
-                            message: `${t('CMAForm:required')}`,
+                            message: `${t('PDD:required')}`,
                           },
                           {
                             validator(rule, value) {
@@ -2257,7 +1208,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                     </Col>
 
                     <Col xl={16}>
-                      <p>{t('CMAForm:totalNumberOfCreditingYears')}</p>
+                      <p>{t('PDD:totalNumberOfCreditingYears')}</p>
                     </Col>
                     <Col md={4} xl={4}>
                       <Form.Item
@@ -2265,7 +1216,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         rules={[
                           {
                             required: true,
-                            message: `${t('CMAForm:required')}`,
+                            message: `${t('PDD:required')}`,
                           },
                           {
                             validator(rule, value) {
@@ -2288,7 +1239,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                     </Col>
 
                     <Col xl={16}>
-                      <p>{t('CMAForm:averageAnnualERs')}</p>
+                      <p>{t('PDD:averageAnnualERs')}</p>
                     </Col>
                     <Col md={4} xl={4}>
                       <Form.Item
@@ -2296,7 +1247,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         rules={[
                           {
                             required: true,
-                            message: `${t('CMAForm:required')}`,
+                            message: `${t('PDD:required')}`,
                           },
                           {
                             validator(rule, value) {
@@ -2317,14 +1268,14 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         <Input size="large" disabled />
                       </Form.Item>
                     </Col>
-                  </Row>
-                </div>
+                  </Row> */}
+                {/* </div> */}
                 {/* Estimated Annual GHG Emissions Years End */}
               </>
 
-              <>
+              {/* <>
                 <LabelWithTooltip
-                  label={`1.13 ${t('CMAForm:descriptionOfTheProjectActivity')}`}
+                  label={` ${t('PDD:descriptionOfTheProjectActivity')}`}
                   tooltipPosition={TooltipPostion.top}
                   tooltipWidth={800}
                   required={true}
@@ -2391,7 +1342,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                           value === undefined
                         ) {
                           throw new Error(
-                            `${t('CMAForm:descriptionOfTheProjectActivity')} ${t('isRequired')}`
+                            `${t('PDD:descriptionOfTheProjectActivity')} ${t('isRequired')}`
                           );
                         }
                       },
@@ -2400,14 +1351,14 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                 >
                   <TextArea
                     rows={4}
-                    placeholder={`${t('CMAForm:descriptionOfTheProjectActivityPlaceholder')}`}
+                    placeholder={`${t('PDD:descriptionOfTheProjectActivityPlaceholder')}`}
                     disabled={disableFields}
                   />
                 </Form.Item>
-              </>
+              </> */}
 
-              <Form.Item
-                label={t('CMAForm:additionalDocuments')}
+              {/* <Form.Item
+                label={t('PDD:additionalDocuments')}
                 name="optionalProjectActivityDocuments"
                 valuePropName="fileList"
                 getValueFromEvent={normFile}
@@ -2446,42 +1397,40 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                     icon={<UploadOutlined />}
                     disabled={disableFields}
                   >
-                    {t('CMAForm:upload')}
+                    {t('PDD:upload')}
                   </Button>
                 </Upload>
+              </Form.Item> */}
+
+              <Form.Item
+                label={`${t('PDD:technologies')}`}
+                name="technologies"
+                className="half-width-form-item"
+                rules={[
+                  {
+                    required: true,
+                    message: ``,
+                  },
+                  {
+                    validator: async (rule, value) => {
+                      if (
+                        String(value).trim() === '' ||
+                        String(value).trim() === undefined ||
+                        value === null ||
+                        value === undefined
+                      ) {
+                        throw new Error(`${t('PDD:technologies')} ${t('isRequired')}`);
+                      }
+                    },
+                  },
+                ]}
+              >
+                <Input size="large" />
               </Form.Item>
 
-              <>
-                <LabelWithTooltip
-                  label={`1.14 ${t('CMAForm:conditionsPriorToProjectInitiation')}`}
-                  required={true}
-                  tooltipContent={
-                    <div>
-                      <p>
-                        Describe the conditions existing prior to project initiation and demonstrate
-                        that the project has not been implemented to generate GHG emissions for the
-                        purpose of their subsequent reduction, removal or destruction.
-                      </p>
-                      <p>
-                        Where the baseline scenario is the same as the conditions existing prior to
-                        the project initiation, there is no need to repeat the description of the
-                        scenarios (rather, just state that this is the case and refer the reader to
-                        Section 3.4 (Baseline Scenario)).
-                      </p>
-                      <p>
-                        For AFOLU projects, include the present and prior environmental conditions
-                        of the project area, including as appropriate information on the climate,
-                        hydrology, topography, relevant historic conditions, soils, vegetation and
-                        ecosystems
-                      </p>
-                    </div>
-                  }
-                  tooltipWidth={600}
-                />
-              </>
               <Form.Item
-                className="full-width-form-item"
-                name="conditionsPriorToProjectInitiation"
+                label={`${t('PDD:publicFundingOfProjectActivity')}`}
+                name="publicFundingOfProjectActivity"
                 rules={[
                   {
                     required: true,
@@ -2496,7 +1445,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t('CMAForm:conditionsPriorToProjectInitiation')} ${t('isRequired')}`
+                          `${t('PDD:publicFundingOfProjectActivity')} ${t('isRequired')}`
                         );
                       }
                     },
@@ -2506,14 +1455,13 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                 <TextArea
                   rows={4}
                   disabled={disableFields}
-                  placeholder="Provide a summary description of the project to enable an understanding of the nature  of the project and its implementation"
+                  // placeholder={`${t('PDD:commerciallySensitiveInformationPlaceholder')}`}
                 />
               </Form.Item>
 
               <Form.Item
-                label={`1.15 ${t('CMAForm:complianceWithLawsRegulatory')}`}
-                className="full-width-form-item"
-                name="complianceWithLaws"
+                label={`${t('PDD:histroyOfProjectActivity')}`}
+                name="histroyOfProjectActivity"
                 rules={[
                   {
                     required: true,
@@ -2527,92 +1475,18 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         value === null ||
                         value === undefined
                       ) {
-                        throw new Error(
-                          `${t('CMAForm:complianceWithLawsRegulatory')} ${t('isRequired')}`
-                        );
+                        throw new Error(`${t('PDD:histroyOfProjectActivity')} ${t('isRequired')}`);
                       }
                     },
                   },
                 ]}
               >
-                <TextArea
-                  rows={4}
-                  disabled={disableFields}
-                  placeholder={`${t('CMAForm:complianceWithLawsRegulatoryPlaceholder')}`}
-                />
+                <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
 
-              <Row gutter={[60, 16]}>
-                <Col md={24} xl={12}>
-                  <Form.Item
-                    label={`1.1.6 ${t('CMAForm:participationPrograms')}`}
-                    name="participationPrograms"
-                    rules={[
-                      {
-                        required: true,
-                        message: ``,
-                      },
-                      {
-                        validator: async (rule, value) => {
-                          if (
-                            String(value).trim() === '' ||
-                            String(value).trim() === undefined ||
-                            value === null ||
-                            value === undefined
-                          ) {
-                            throw new Error(
-                              `${t('CMAForm:participationPrograms')} ${t('isRequired')}`
-                            );
-                          }
-                        },
-                      },
-                    ]}
-                  >
-                    <TextArea
-                      rows={5}
-                      disabled={disableFields}
-                      placeholder={`${t('CMAForm:participationProgramsPlaceholder')}`}
-                    />
-                  </Form.Item>
-                </Col>
-
-                <Col md={24} xl={12}>
-                  <Form.Item
-                    label={`1.17 ${t('CMAForm:otherFormsOfCredit')}`}
-                    name="otherFormsOfCredit"
-                    rules={[
-                      {
-                        required: true,
-                        message: ``,
-                      },
-                      {
-                        validator: async (rule, value) => {
-                          if (
-                            String(value).trim() === '' ||
-                            String(value).trim() === undefined ||
-                            value === null ||
-                            value === undefined
-                          ) {
-                            throw new Error(
-                              `${t('CMAForm:otherFormsOfCredit')} ${t('isRequired')}`
-                            );
-                          }
-                        },
-                      },
-                    ]}
-                  >
-                    <TextArea
-                      rows={5}
-                      disabled={disableFields}
-                      placeholder={`${t('CMAForm:otherFormsOfCreditPlaceholder')}`}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-
               <Form.Item
-                label={`1.18 ${t('CMAForm:sustainableDevelopment')}`}
-                name="sustainableDevelopment"
+                label={`${t('PDD:unbundling')}`}
+                name="unbundling"
                 rules={[
                   {
                     required: true,
@@ -2626,88 +1500,22 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         value === null ||
                         value === undefined
                       ) {
-                        throw new Error(
-                          `${t('CMAForm:sustainableDevelopment')} ${t('isRequired')}`
-                        );
+                        throw new Error(`${t('PDD:unbundling')} ${t('isRequired')}`);
                       }
                     },
                   },
                 ]}
               >
-                <TextArea
-                  rows={4}
-                  disabled={disableFields}
-                  placeholder={`${t('CMAForm:sustainableDevelopmentPlaceholder')}`}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={`1.19 ${t('CMAForm:leakageManagement')}`}
-                name="leakageManagement"
-                rules={[
-                  {
-                    required: true,
-                    message: ``,
-                  },
-                  {
-                    validator: async (rule, value) => {
-                      if (
-                        String(value).trim() === '' ||
-                        String(value).trim() === undefined ||
-                        value === null ||
-                        value === undefined
-                      ) {
-                        throw new Error(`${t('CMAForm:leakageManagement')} ${t('isRequired')}`);
-                      }
-                    },
-                  },
-                ]}
-              >
-                <TextArea
-                  disabled={disableFields}
-                  rows={4}
-                  placeholder={`${t('CMAForm:leakageManagementPlaceholder')}`}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={`1.20 ${t('CMAForm:commerciallySensitiveInformation')}`}
-                name="commerciallySensitiveInformation"
-                rules={[
-                  {
-                    required: true,
-                    message: ``,
-                  },
-                  {
-                    validator: async (rule, value) => {
-                      if (
-                        String(value).trim() === '' ||
-                        String(value).trim() === undefined ||
-                        value === null ||
-                        value === undefined
-                      ) {
-                        throw new Error(
-                          `${t('CMAForm:commerciallySensitiveInformation')} ${t('isRequired')}`
-                        );
-                      }
-                    },
-                  },
-                ]}
-              >
-                <TextArea
-                  rows={4}
-                  disabled={disableFields}
-                  placeholder={`${t('CMAForm:commerciallySensitiveInformationPlaceholder')}`}
-                />
+                <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
 
               <Row justify={'end'} className="step-actions-end">
                 <Button danger size={'large'} onClick={prev}>
-                  {t('CMAForm:prev')}
+                  {t('PDD:prev')}
                 </Button>
                 {disableFields ? (
                   <Button type="primary" onClick={next}>
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 ) : (
                   <Button
@@ -2716,7 +1524,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                     htmlType={'submit'}
                     // onClick={next}
                   >
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 )}
               </Row>
