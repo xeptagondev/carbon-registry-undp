@@ -1,6 +1,7 @@
 import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
 import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
 import { AuditService } from '@app/shared/audit/service/audit.service';
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     INF_APPROVE_HEADER,
@@ -101,15 +102,13 @@ export class ProjectService {
             // }
             const users = await this.guardianService.query(
                 requestUser.email,
-                this.utilService.getBlock(
-                    this.configService.get('blocks.userQuery'),
-                ),
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.USER_QUERY),
             );
 
             const organizations = await this.guardianService.query(
                 requestUser.email,
                 this.utilService.getBlock(
-                    this.configService.get('blocks.organizationQuery'),
+                    GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY,
                 ),
             );
 
@@ -129,9 +128,7 @@ export class ProjectService {
 
             await this.guardianService.createProject(
                 requestUser.email,
-                this.utilService.getBlock(
-                    this.configService.get('blocks.createProject'),
-                ),
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_PROJECT),
                 {
                     document: {
                         title: projectDto.title,
@@ -188,6 +185,7 @@ export class ProjectService {
             await this.logProjectStage(
                 `Project with title: ${projectDto.title} has been created by ${requestUser.userName}`,
             );
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             throw new HttpException(
                 'An error occurred while creating the project',
@@ -385,9 +383,7 @@ export class ProjectService {
 
         const data = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const oldFormatData = data?.data.map((project) => {
             return this.mapNewQueryToOldQuery(
@@ -467,9 +463,7 @@ export class ProjectService {
 
         const projects = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const project = projects?.data.find((project) => {
             return project?.document?.credentialSubject[0]?.refId === id;
@@ -578,9 +572,7 @@ export class ProjectService {
 
         const projects = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const project = projects?.data.find((project) => {
             return project?.document?.credentialSubject[0]?.refId === id;
@@ -603,9 +595,7 @@ export class ProjectService {
 
         const approveResponse = await this.guardianService.approve(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.approveProject'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_PROJECT),
             { document: { ...project }, tag: 'Button_0' },
         );
 
@@ -636,9 +626,7 @@ export class ProjectService {
 
         const projects = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const project = projects?.data.find((project) => {
             return project?.document?.credentialSubject[0]?.refId === id;
@@ -661,9 +649,7 @@ export class ProjectService {
 
         const rejectResponse = await this.guardianService.approve(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.rejectProject'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_PROJECT),
             { document: { ...project }, tag: 'Button_1' },
         );
 
