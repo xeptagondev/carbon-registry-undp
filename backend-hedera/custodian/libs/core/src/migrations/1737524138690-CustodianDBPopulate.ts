@@ -82,6 +82,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
         await queryRunner.query(
             "INSERT INTO users_entity ( \
                 email, \
+                ref_id, \
                 name, \
                 password, \
                 phone_number, \
@@ -91,6 +92,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
             ) \
             VALUES ( \
                 'amilareg', \
+                '0000000', \
                 'Registry user', \
                 '123456', \
                 '0.0.5449556', \

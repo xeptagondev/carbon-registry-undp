@@ -15,6 +15,9 @@ export class UsersEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
+    @Column({ name: 'ref_id', nullable: false })
+    refId?: string;
+
     @Column({ unique: true })
     email: string;
 
@@ -57,6 +60,9 @@ export class UsersEntity {
 
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
+
+    @Column({ type: 'bigint', nullable: true })
+    updatedTime: number;
 
     @OneToMany(
         () => ProjectEntity,
