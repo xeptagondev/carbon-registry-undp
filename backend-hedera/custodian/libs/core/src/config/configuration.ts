@@ -1,5 +1,6 @@
 export default () => ({
     country: process.env.COUNTRY,
+    countryCode: process.env.COUNTRY_CODE || 'NG',
     url: process.env.URL,
     backendHost: process.env.BACKEND_HOST || 'http://localhost:3000',
     docGenerate: {
@@ -65,11 +66,11 @@ export default () => ({
         createMultipleOrganization: 'multiple_organizations_creation_form',
         createUser: 'user_creation_form',
         userCreateInvite: 'user_create_invite',
-        appoveOrganization: 'multiple_organizations_approve_reject_buttons',
+        appoveOrganization: 'organizations_active_reject_buttons',
         createProject: 'project_creation_form',
-        projectQuery: 'project_approve_grid',
+        projectQuery: 'project_grid',
         userQuery: 'user_grid',
-        organizationQuery: 'multiple_organizations_approve_grid',
+        organizationQuery: 'organizations_grid',
         approveProject: 'project_approve_reject_buttons',
     },
     metadata: {
