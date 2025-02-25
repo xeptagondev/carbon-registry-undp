@@ -1,6 +1,6 @@
 import { Button, Col, DatePicker, Form, Input, Radio, Row, Select, Upload } from 'antd';
 import { useEffect, useState } from 'react';
-import { CustomStepsProps } from './StepProps';
+// import { CustomStepsProps } from './StepProps';
 import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import TextArea from 'antd/lib/input/TextArea';
 import PhoneInput, {
@@ -18,6 +18,7 @@ import { PURPOSE_CREDIT_DEVELOPMENT } from '../AddNewProgramme/ProgrammeCreation
 import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
 import { CMASectoralScope } from '../../Definitions/Enums/programmeStage.enum';
 import { API_PATHS } from '../../Config/apiConfig';
+import { CustomStepsProps } from './StepProps';
 
 const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
   const { next, prev, form, current, t, countries, handleValuesUpdate, disableFields } = props;
