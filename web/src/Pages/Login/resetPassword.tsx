@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { API_PATHS } from '../../Config/apiConfig';
 
 export interface ResetPasswordPageProps {
   forgotPassword?: boolean;
@@ -25,7 +26,10 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
   const onSubmit = async (values: any) => {
     try {
       setLoading(true);
-      const response: any = await put(`auth/resetPassword?requestId=${requestid}`, {
+      if (!requestid) {
+        throw new Error('Request ID is missing');
+      }
+      const response: any = await put(API_PATHS.RESET_PW(requestid), {
         newPassword: values.password,
       });
       if (response.status === 200 || response.status === 201) {
