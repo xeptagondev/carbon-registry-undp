@@ -21,7 +21,7 @@ export class ActivityEntity {
     @OneToMany(
         () => DocumentEntity,
         (documentEntity) => documentEntity.activity,
-        { cascade: true },
+        { cascade: true, nullable: true },
     )
     documents?: ActivityDocEntity[];
 }

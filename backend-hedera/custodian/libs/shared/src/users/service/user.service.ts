@@ -52,6 +52,8 @@ import { UserStateConstant } from '@app/shared/users/constants/user.state.consta
 import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
+import { OrganizationSchema } from '@app/shared/guardian/interface/guardian.schema.interface';
+import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -434,6 +436,23 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             // 3. Create the user with the role
             const user = await this.findUser(userDto.email);
             if (user && user.stage === UserStageEnum.CREATE_GROUP_TYPE) {
+                const org: OrganizationEntity =
+                    await this.organizationRepository.findOne({
+                        where: {
+                            id: reqUser?.organizationId,
+                        },
+                        relations: {
+                            organizationType: true,
+                        },
+                    });
+
+                const organizationSchema: OrganizationSchema =
+                    await this.guardianService.getGridDataUsingRefId(
+                        GridTypeEnum.ORGANIZATION_GRID,
+                        org.refId,
+                        reqUser?.email ? reqUser?.email : userDto.email,
+                    );
+
                 await this.guardianService.createUser(
                     userDto.email,
                     user.password,
@@ -449,35 +468,25 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             createdTime: Number(user.createdTime),
                             updatedTime: Number(new Date().getTime()),
                             organization: {
-                                // Need to fetch from policy and update
-                                name: 'AA',
-                                role: 'DNA',
-                                email: 'AA',
-                                taxId: 'AA',
-                                phoneNumber: 'AA',
-                                paymentId: 'AA',
-                                faxNumber: 'AA',
-                                provinces: ['AA'],
-                                website: 'AA',
-                                address: 'AA',
-                                logo: 'AA',
-                                createdTime: 121212,
-                                updatedTime: 213134,
-                                refId: 'AA',
+                                name: organizationSchema.name,
+                                role: organizationSchema.role,
+                                email: organizationSchema.email,
+                                taxId: organizationSchema.taxId,
+                                phoneNumber: organizationSchema.phoneNumber,
+                                paymentId: organizationSchema.paymentId,
+                                faxNumber: organizationSchema.faxNumber,
+                                provinces: organizationSchema.provinces,
+                                website: organizationSchema.website,
+                                address: organizationSchema.address,
+                                logo: organizationSchema.logo,
+                                createdTime: organizationSchema.createdTime,
+                                updatedTime: organizationSchema.updatedTime,
+                                refId: organizationSchema.refId,
                             },
                         },
                         ref: null,
                     },
                 );
-                const org: OrganizationEntity =
-                    await this.organizationRepository.findOne({
-                        where: {
-                            id: reqUser?.organizationId,
-                        },
-                        relations: {
-                            organizationType: true,
-                        },
-                    });
                 const guardianRole = await this.getGuardianRole(
                     org?.organizationType?.id,
                     userDto.role,
@@ -512,16 +521,21 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 groupTypeUser &&
                 groupTypeUser.stage === UserStageEnum.ASIGN_POLICY
             ) {
+                const createGroup = {
+                    group: userDto.company.companyRole,
+                    ...(userDto.company.companyRole !==
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY && {
+                        label: userDto.company.name,
+                    }),
+                };
+
                 await this.guardianService.createGroupType(
                     userDto.email,
                     groupTypeUser.password,
                     this.utilService.getBlock(
                         GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
                     ),
-                    {
-                        group: userDto.company.companyRole,
-                        label: userDto.company.name,
-                    },
+                    { ...createGroup },
                 );
 
                 await this.usersRepository.update(
@@ -584,12 +598,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                                 role: userDto.company.companyRole,
                                 // Need to fetch from policy and update
                                 email: userDto.company.email,
-                                taxId: userDto.company.taxId || 'NG',
+                                taxId: userDto.company.taxId,
                                 phoneNumber: userDto.company.phoneNo,
                                 paymentId: userDto.company.paymentId,
                                 faxNumber: userDto.company.faxNo,
                                 provinces: userDto.company.provinces,
-                                website: userDto.company.website || 'sss',
+                                website: userDto.company.website,
                                 address: userDto.company.address,
                                 logo: userDto.company.logo,
                                 createdTime: Number(orgCreateTime),
@@ -640,6 +654,17 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
             const user = await this.findUser(userDto.email);
             if (user && user.stage === UserStageEnum.CREATE_GROUP) {
+                const orgEntity = await this.organizationRepository.findOne({
+                    where: { email: userDto?.company?.email },
+                });
+
+                const organizationSchema: OrganizationSchema =
+                    await this.guardianService.getGridDataUsingRefId(
+                        GridTypeEnum.ORGANIZATION_GRID,
+                        orgEntity.refId,
+                        reqUser?.email ? reqUser?.email : userDto.email,
+                    );
+
                 await this.guardianService.createUser(
                     userDto.email,
                     user.password,
@@ -655,21 +680,20 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             createdTime: Number(user.createdTime),
                             updatedTime: Number(new Date().getTime()),
                             organization: {
-                                // Need to fetch from policy and update
-                                name: 'AA',
-                                role: 'DNA',
-                                email: 'AA',
-                                taxId: 'AA',
-                                phoneNumber: 'AA',
-                                paymentId: 'AA',
-                                faxNumber: 'AA',
-                                provinces: ['AA'],
-                                website: 'AA',
-                                address: 'AA',
-                                logo: 'AA',
-                                createdTime: 121212,
-                                updatedTime: 213134,
-                                refId: 'AA',
+                                name: organizationSchema.name,
+                                role: organizationSchema.role,
+                                email: organizationSchema.email,
+                                taxId: organizationSchema.taxId,
+                                phoneNumber: organizationSchema.phoneNumber,
+                                paymentId: organizationSchema.paymentId,
+                                faxNumber: organizationSchema.faxNumber,
+                                provinces: organizationSchema.provinces,
+                                website: organizationSchema.website,
+                                address: organizationSchema.address,
+                                logo: organizationSchema.logo,
+                                createdTime: organizationSchema.createdTime,
+                                updatedTime: organizationSchema.updatedTime,
+                                refId: organizationSchema.refId,
                             },
                         },
                         ref: null,
@@ -692,9 +716,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 );
 
                 // // 4. Send request for approval
-                const orgEntity = await this.organizationRepository.findOne({
-                    where: { email: userDto?.company?.email },
-                });
                 await this.organizationRepository.update(
                     {
                         id: orgEntity.id,
@@ -738,6 +759,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             return true;
         } catch (e) {
+            console.log(e);
             throw new HttpException(
                 'Error occurred while creating group type, group and user',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1274,7 +1296,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async getAdminsByIds(ids: number[]): Promise<UsersEntity[]> {
+    async getAdminsByIds(ids: string[]): Promise<UsersEntity[]> {
         return this.usersRepository.find({
             where: {
                 organization: { id: In(ids) },
