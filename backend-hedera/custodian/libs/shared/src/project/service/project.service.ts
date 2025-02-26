@@ -5,7 +5,7 @@ import { DocumentEnum } from '@app/shared/document/enum/document.enum';
 import {
     DocumentSchema,
     ProjectSchema,
-} from '@app/shared/guardian/guardian.schema.interface';
+} from '@app/shared/guardian/interface/guardian.schema.interface';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
