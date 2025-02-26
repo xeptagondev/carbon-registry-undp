@@ -176,7 +176,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const getIndependentCertifiers = async () => {
     setOrganizationsLoading(true);
     try {
-      const response = await post(API_PATHS.ORGANIZATION_TYPE, {
+      const response = await post(API_PATHS.ORGANIZATION_BY_TYPE, {
         companyRole: CompanyRole.INDEPENDENT_CERTIFIER,
       });
       if (response.data) {

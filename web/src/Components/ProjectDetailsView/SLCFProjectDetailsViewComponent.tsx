@@ -130,6 +130,7 @@ import ProgrammeStatusTimelineComponent from './programmeStatusTimeline/programm
 import { OrganisationSlStatus } from '../OrganisationSlStatus/organisationSlStatus';
 import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -303,7 +304,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     setLoadingHistory(true);
     setLoadingInvestment(true);
     try {
-      const response: any = await post('national/programme/investmentQuery', {
+      const response: any = await post(API_PATHS.INVESTMENT_LIST, {
         page: 1,
         size: 100,
         filterAnd: [
@@ -454,7 +455,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const getProgrammeById = async () => {
     try {
-      const response: any = await post('project/getProjectById', {
+      const response: any = await post(API_PATHS.PROGRAMME_BY_ID, {
         programmeId: id,
       });
 
@@ -475,7 +476,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const rejectNotificationForm = async (remark: string) => {
     try {
-      const response: any = await post('national/programmeSl/inf/reject', {
+      const response: any = await post(API_PATHS.REJECT_NOTIFICATION_FORM, {
         programmeId: id,
         remark,
       });
@@ -503,7 +504,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const getCarbonNeutralCertificates = async (companyId: number) => {
     try {
-      const response: any = await post('national/programmeSl/getCarbonNeutralCertificates', {
+      const response: any = await post(API_PATHS.CARBON_NEUTRAL_CERTIFICATES, {
         companyId: companyId,
       });
       if (response.status === 200 || response.status === 201) {
@@ -523,7 +524,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const requestCarbonNeutralCertificate = async () => {
     try {
-      const response: any = await post('national/programmeSl/requestCarbonNeutralCertificate', {
+      const response: any = await post(API_PATHS.REQUEST_CARBON_NEUTRAL_CERTIFICATE, {
         companyId: data?.companyId,
         programmeId: data?.programmeId,
       });
@@ -587,7 +588,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const rejectProposal = async (remark: string) => {
     try {
-      const response: any = await post('project/proposal/reject', {
+      const response: any = await post(API_PATHS.REJECT_PROPOSAL, {
         programmeId: id,
         remark,
       });
@@ -615,7 +616,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const approveProposal = async () => {
     try {
-      const response: any = await post('national/programmeSl/proposal/approve', {
+      const response: any = await post(API_PATHS.APPROVE_PROPOSAL, {
         programmeId: id,
       });
 
@@ -642,7 +643,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const rejectCMA = async (remark: string) => {
     try {
-      const response: any = await post('national/programmeSl/cma/reject', {
+      const response: any = await post(API_PATHS.REJECT_CMA, {
         programmeId: id,
         remark,
       });
@@ -673,7 +674,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
   const rejectValidation = async (remark: string) => {
     try {
-      const response: any = await post('national/programmeSl/validation/reject', {
+      const response: any = await post(API_PATHS.REJECT_VALIDATION, {
         programmeId: id,
         remark,
       });
@@ -710,7 +711,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const approveValidation = async () => {
     try {
-      const response: any = await post('national/programmeSl/validation/approve', {
+      const response: any = await post(API_PATHS.APPROVE_VALIDATION, {
         programmeId: id,
       });
 
@@ -1469,7 +1470,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     setLoadingHistory(true);
     setLoadingNDC(true);
     try {
-      const response: any = await post('national/programme/queryDocs', {
+      const response: any = await post(API_PATHS.PROGRAMME_DOCS, {
         page: 1,
         size: 100,
         filterAnd: [
@@ -1560,7 +1561,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     body.programmeId = data?.programmeId;
     let error;
     try {
-      const response: any = await post(`national/retire/create`, body);
+      const response: any = await post(API_PATHS.CREDIT_RETIRE_TRANSFER_ACTION, body);
       if (response.status === 201) {
         setOpenModal(false);
         setComment(undefined);
@@ -1600,7 +1601,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       if (action !== 'Transfer') {
         setConfirmLoading(true);
         const response: any = await put(
-          `national/programme/${
+          API_PATHS.PROGRAMME_ACTION(
             action === 'Reject'
               ? 'reject'
               : action === 'Authorise'
@@ -1612,7 +1613,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
               : action === 'Revoke'
               ? 'revoke'
               : 'retire'
-          }`,
+          ),
           body
         );
         if (response.statusCode === 200 || response.status === 200) {
@@ -1710,7 +1711,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     setLoadingAll(true);
     try {
       const userId = userInfoState?.id;
-      const response: any = await post('national/user/query', {
+      const response: any = await post(API_PATHS.USER_DETAILS, {
         page: 1,
         size: 10,
         filterAnd: [
@@ -1794,7 +1795,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     setLoadingHistory(true);
     setLoadingNDC(true);
     try {
-      const response: any = await get(`national/verification?programmeId=${programmeId}`);
+      const response: any = await get(API_PATHS.VERIFICATION_HISTORY_BY_ID(programmeId));
       if (response) {
         setVerificationHistoryData(response.data);
         setVerificationHistoryDataLoaded(true);
@@ -1818,11 +1819,15 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   const getProgrammeHistory = async (programmeId: string) => {
     setLoadingHistory(true);
     try {
-      const response: any = await get(`national/logs?programmeId=${id}`);
-      if (response && response.data) {
-        setProgrammeHistoryLogData(response.data);
-        setProgrammeHistoryLogDataLoaded(true);
-        console.log(response);
+      if (id) {
+        const response: any = await get(API_PATHS.PROGRAMME_HISTORY_BY_ID(id));
+        if (response && response.data) {
+          setProgrammeHistoryLogData(response.data);
+          setProgrammeHistoryLogDataLoaded(true);
+          console.log(response);
+        }
+      } else {
+        throw new Error('Programme Id is not available');
       }
     } catch (error: any) {
       console.log('Error in getting programme history logs', error);
