@@ -18,6 +18,7 @@ import { extractFilePropertiesFromLink, fileUploadValueExtract } from '../../Uti
 import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
 import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { API_PATHS } from '../../Config/apiConfig';
 const StepperComponent = (props: any) => {
   const { useLocation, translator, countries, selectedVersion, handleDocumentStatus } = props;
   const navigationLocation = useLocation();
@@ -61,7 +62,7 @@ const StepperComponent = (props: any) => {
       remark,
     };
     try {
-      const res = await post('national/verification/verifyVerificationReport', body);
+      const res = await post(API_PATHS.VERIFY_VERIFICATION_REPORT, body);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
@@ -173,7 +174,7 @@ const StepperComponent = (props: any) => {
         .valueOf();
       const body = { content: JSON.stringify(content), programmeId: id };
       try {
-        const res = await post('national/verification/createVerificationReport', body);
+        const res = await post(API_PATHS.CREATE_VERIFICATION_REPORT, body);
         if (res?.statusText === 'SUCCESS') {
           message.open({
             type: 'success',
@@ -226,7 +227,7 @@ const StepperComponent = (props: any) => {
 
   const getProjectById = async (programId: any) => {
     try {
-      const { data } = await post('national/programmeSl/getProjectById', {
+      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
         programmeId: programId,
       });
       const creditReceived =
@@ -249,13 +250,13 @@ const StepperComponent = (props: any) => {
       if (mode === FormMode.VIEW || mode === FormMode.EDIT) {
         const { data } =
           mode === FormMode.VIEW && selectedVersion
-            ? await post('national/programmeSl/getVerificationDocByVersion', {
+            ? await post(API_PATHS.VERIFICATION_DOC_BY_VERSION, {
                 programmeId: id,
                 docType: DocumentTypeEnum.VERIFICATION_REPORT,
                 version: selectedVersion,
                 verificationRequestId: Number(verificationRequestId),
               })
-            : await post('national/programmeSl/getVerificationDocLastVersion', {
+            : await post(API_PATHS.VERIFICATION_DOC_LAST_VERSION, {
                 programmeId: id,
                 docType: DocumentTypeEnum.VERIFICATION_REPORT,
                 verificationRequestId: Number(verificationRequestId),
@@ -354,19 +355,16 @@ const StepperComponent = (props: any) => {
           });
         }
       } else {
-        const { data } = await post('national/programmeSl/getDocLastVersion', {
+        const { data } = await post(API_PATHS.LAST_DOC_VERSION, {
           programmeId: programId,
           docType: DocumentTypeEnum.CMA,
         });
 
-        const { data: monitoringData } = await post(
-          'national/programmeSl/getVerificationDocLastVersion',
-          {
-            programmeId: programId,
-            docType: DocumentTypeEnum.MONITORING_REPORT,
-            verificationRequestId: verificationRequestId,
-          }
-        );
+        const { data: monitoringData } = await post(API_PATHS.VERIFICATION_DOC_LAST_VERSION, {
+          programmeId: programId,
+          docType: DocumentTypeEnum.MONITORING_REPORT,
+          verificationRequestId: verificationRequestId,
+        });
 
         const cmaData = JSON.parse(data?.content);
 
