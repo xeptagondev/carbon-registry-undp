@@ -44,6 +44,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
+import { FileHelperService } from '@app/shared/util/service/file-helper.service';
+import { AdditionalDocType } from '@app/shared/document/enum/additional.document.type';
 
 @Injectable()
 export class ProjectService {
@@ -65,6 +67,7 @@ export class ProjectService {
         private readonly counterService: CounterService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         private readonly logger: InstantLogger,
+        private readonly fileHelperService: FileHelperService,
     ) {}
 
     async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
@@ -136,6 +139,22 @@ export class ProjectService {
                     };
                 }),
             };
+
+            const docUrls = [];
+            for (const doc of projectDto.additionalDocuments) {
+                let docUrl;
+
+                if (this.fileHelperService.isValidHttpUrl(doc)) {
+                    docUrl = doc;
+                } else {
+                    docUrl = await this.fileHelperService.uploadDocument(
+                        AdditionalDocType.INF_ADDITIONAL_DOCUMENT,
+                        projectRefId,
+                        doc,
+                    );
+                }
+                docUrls.push(docUrl);
+            }
             const infDocument: DocumentSchema = {
                 refId: infRefId,
                 documentType: DocumentEnum.INF,
@@ -145,7 +164,10 @@ export class ProjectService {
                 project: project,
                 name: '$',
                 version: 1,
-                data: JSON.stringify(projectDto),
+                data: JSON.stringify({
+                    ...projectDto,
+                    additionalDocuments: docUrls,
+                }),
             };
 
             await this.guardianService.createEntity(
@@ -315,6 +337,7 @@ export class ProjectService {
     mapNewQueryToOldQuery(inf: any) {
         const id = inf?.document?.credentialSubject[0]?.project?.refId;
         const project = JSON.parse(inf?.document?.credentialSubject[0]?.data);
+        this.logger.log(JSON.stringify(project));
         const createdBy =
             inf?.document?.credentialSubject[0]?.project?.createdBy;
         return {
@@ -333,17 +356,17 @@ export class ProjectService {
             proposedProjectCapacity: project.proposedProjectCapacity,
             speciesPlanted: project.speciesPlanted,
             projectDescription: project.projectDescription,
-            additionalDocuments: [], //need to update
+            additionalDocuments: project.additionalDocuments,
             projectStatus: project.projectStatus,
             projectStatusDescription: project.projectStatusDescription,
             startDate: project.startDate,
             companyId: project?.organization?.id,
             postalCode: project.postalCode,
-            contactName: project.contactPerson,
-            contactEmail: project.email,
-            contactPhoneNo: project.telephone,
-            contactWebsite: project.website,
-            contactAddress: project.address,
+            contactName: project.contactName,
+            contactEmail: project.contactEmail,
+            contactPhoneNo: project.contactPhoneNo,
+            contactWebsite: project.contactWebsite,
+            contactAddress: project.contactAddress,
             projectProposalStage:
                 project.projectProposalStage || ProjectProposalStage.PENDING,
             company: createdBy.organization

@@ -14,6 +14,7 @@ import { DateUtilService } from './service/date.util.service';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { InstantLogger } from './service/instant.logger.service';
+import { FileHelperService } from './service/file-helper.service';
 
 @Module({
     imports: [
@@ -41,6 +42,7 @@ import { InstantLogger } from './service/instant.logger.service';
         CounterService,
         DateUtilService,
         InstantLogger,
+        FileHelperService,
     ],
     exports: [
         HelperService,
@@ -51,6 +53,7 @@ import { InstantLogger } from './service/instant.logger.service';
         CounterService,
         DateUtilService,
         InstantLogger,
+        FileHelperService,
     ],
 })
 export class UtilModule {}
