@@ -21,7 +21,7 @@ const CustomLayout = (props: any) => {
 
   // const getTransferFrozenStatus = async () => {
   //   const response = await get(
-  //     `national/Settings/query?id=${ConfigurationSettingsType.isTransferFrozen}`
+  //     API_PATHS.TRANSFER_FORZEN_STATUS(ConfigurationSettingsType.isTransferFrozen)
   //   );
   //   if (response && response.data) {
   //     setTransferFrozen(response.data);

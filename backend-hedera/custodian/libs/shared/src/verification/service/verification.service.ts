@@ -145,7 +145,7 @@ export class VerificationService {
 
         const activities = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY.GRID),
         );
         const activity = activities?.data.find((activity) => {
             return (
@@ -177,7 +177,9 @@ export class VerificationService {
 
             const monitoringReports = await this.guardianService.query(
                 requestUser.email,
-                this.utilService.getBlock(GUARDIAN_API.BLOCKS.MONITORING_QUERY),
+                this.utilService.getBlock(
+                    GUARDIAN_API.BLOCKS.MONITORING_QUERY.GRID,
+                ),
             );
             //find last monitoring report
             const monitoringReport = monitoringReports?.data.find(
@@ -230,7 +232,8 @@ export class VerificationService {
         //         monitoringReportDocument.programmeId,
         //     );
         // const version = monitoringReportDocument.version;
-        // docContent.projectDetails.reportID = `SLCCS/MR/${currentYear}/${programmeId}/${verificationRequestIdByProgramme}/${version}`;
+        // docContent.projectDetails.reportID = `SLCCS/MR/${currentYear}/
+        // ${programmeId}/${verificationRequestIdByProgramme}/${version}`;
 
         // monitoringReportDocument.content = docContent;
 
@@ -305,7 +308,9 @@ export class VerificationService {
 
         const monitoringReports = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.MONITORING_QUERY),
+            this.utilService.getBlock(
+                GUARDIAN_API.BLOCKS.MONITORING_QUERY.GRID,
+            ),
         );
         const monitoringReport = monitoringReports?.data.find(
             (monitoringReport) => {
@@ -487,7 +492,7 @@ export class VerificationService {
 
         const projects = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY.GRID),
         );
         const project = projects?.data.find((project) => {
             return (
@@ -497,7 +502,7 @@ export class VerificationService {
         });
         const activities = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY.GRID),
         );
         const projectActivities = activities?.data.filter((activity) => {
             return (
@@ -701,7 +706,7 @@ export class VerificationService {
 
         const activities = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY.GRID),
         );
         const activity = activities?.data.filter((activity) => {
             return (
@@ -711,7 +716,7 @@ export class VerificationService {
         });
         const projects = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY.GRID),
         );
         const project = projects?.data.filter((activity) => {
             return (
@@ -731,7 +736,9 @@ export class VerificationService {
 
         const verificationReports = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.VERIFICATION_QUERY),
+            this.utilService.getBlock(
+                GUARDIAN_API.BLOCKS.VERIFICATION_QUERY.GRID,
+            ),
         );
 
         const verificationReport = verificationReports?.data.filter(

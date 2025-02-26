@@ -35,6 +35,7 @@ import {
 import { SLStatisticsCard } from './SlStatisticsCard/slStatisticsCard';
 import { CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
 import { SLCFDetailsBarChartsStatComponent } from './slcfDetailsBarChartStatsComponent';
+import { API_PATHS } from '../../Config/apiConfig';
 const { RangePicker } = DatePicker;
 
 export const SLCFDashboardComponent = (props: any) => {
@@ -122,7 +123,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingWithoutTimeRange(true);
     try {
       const response: any = await post(
-        'stats/programme/totalSLProjects',
+        API_PATHS.TOTAL_PROGRAM_COUNT,
         null,
         undefined,
         statServerUrl
@@ -158,7 +159,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingWithoutTimeRange(true);
     try {
       const response: any = await post(
-        'stats/programme/totalIssuedCredits',
+        API_PATHS.TOTAL_ISSUED_CREDITS,
         null,
         undefined,
         statServerUrl
@@ -194,7 +195,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingWithoutTimeRange(true);
     try {
       const response: any = await post(
-        'stats/programme/totalRetiredCredits',
+        API_PATHS.TOTAL_RETIERED_CREDITS,
         null,
         undefined,
         statServerUrl
@@ -292,7 +293,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingCharts(true);
     try {
       const response: any = await post(
-        'stats/programme/queryProgrammesByStatus',
+        API_PATHS.PROGRAMME_BY_STATUS,
         { filterAnd: getFilters() },
         undefined,
         statServerUrl
@@ -427,7 +428,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingPieChart(true);
     try {
       const response: any = await post(
-        'stats/programme/queryProgrammesByCategory',
+        API_PATHS.PROGRAMME_BY_CATEGORY,
         { filterAnd: getFilters() },
         undefined,
         statServerUrl
@@ -463,7 +464,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingRetirementsByDateCharts(true);
     try {
       const response: any = await post(
-        'stats/programme/queryRetirementsByDate',
+        API_PATHS.RETIREMENTS_BY_DATE,
         { filterAnd: getFilters() },
         undefined,
         statServerUrl
@@ -698,7 +699,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingCreditsByPurposeCharts(true);
     try {
       const response: any = await post(
-        'stats/programme/queryCreditsByPurpose',
+        API_PATHS.CREDITS_BY_PURPOSE,
         { filterAnd: getFilters() },
         undefined,
         statServerUrl
