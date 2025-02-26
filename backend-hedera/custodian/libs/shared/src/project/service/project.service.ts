@@ -5,7 +5,7 @@ import { DocumentEnum } from '@app/shared/document/enum/document.enum';
 import {
     DocumentSchema,
     ProjectSchema,
-} from '@app/shared/guardian/guardian.schema.interface';
+} from '@app/shared/guardian/interface/guardian.schema.interface';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
@@ -41,7 +41,7 @@ import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ProjectService {
@@ -73,13 +73,13 @@ export class ProjectService {
         try {
             const users = await this.guardianService.query(
                 requestUser.email,
-                this.utilService.getBlock(GUARDIAN_API.BLOCKS.USER_QUERY),
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.USER_QUERY.GRID),
             );
 
             const organizations = await this.guardianService.query(
                 requestUser.email,
                 this.utilService.getBlock(
-                    GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY,
+                    GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY.GRID,
                 ),
             );
 
@@ -289,7 +289,7 @@ export class ProjectService {
 
         const infData = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
         );
 
         const oldFormatData = infData?.data.map((inf) => {
@@ -371,7 +371,7 @@ export class ProjectService {
 
         const infData = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
         );
 
         const inf = infData?.data.find(
@@ -477,7 +477,7 @@ export class ProjectService {
 
         const infData = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
         );
 
         const inf = infData?.data.find(
@@ -534,7 +534,7 @@ export class ProjectService {
 
         const infData = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
         );
 
         const inf = infData?.data.find(
