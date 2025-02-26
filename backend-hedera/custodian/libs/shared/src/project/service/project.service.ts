@@ -43,6 +43,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
+import { RoleEnum } from '@app/shared/role/enum/role.enum';
 
 @Injectable()
 export class ProjectService {
@@ -186,7 +187,8 @@ export class ProjectService {
     private validateProjectParticipant(requestUser: JWTPayload) {
         if (
             requestUser.organizationRole !==
-            OrganizationTypeEnum.PROJECT_DEVELOPER
+                OrganizationTypeEnum.PROJECT_DEVELOPER &&
+            requestUser.userRole !== RoleEnum.Admin
         ) {
             throw new HttpException(
                 'Unauthorized user request',
