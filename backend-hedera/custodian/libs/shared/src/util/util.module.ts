@@ -9,10 +9,25 @@ import { FileHandlerModule } from '../file-handler/file-handler.module';
 import { ObjectionLetterGenerateService } from './service/objection.letter.gen';
 import { CounterService } from './service/counter.service';
 import { Counter } from './entity/counter.entity';
+import { CreditIssueCertificateGenerator } from './service/credit.issue.certificate.gen';
+import { DateUtilService } from './service/date.util.service';
+import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import * as path from 'path';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([PolicyBlocksEntity, Counter]),
+        I18nModule.forRoot({
+            fallbackLanguage: 'en',
+            loaderOptions: {
+                path: path.join(__dirname, '../i18n/'),
+                watch: true,
+            },
+            resolvers: [
+                { use: QueryResolver, options: ['lang'] },
+                AcceptLanguageResolver,
+            ],
+        }),
         GuardianModule,
         FileHandlerModule,
     ],
@@ -21,14 +36,18 @@ import { Counter } from './entity/counter.entity';
         UtilService,
         DataExportService,
         ObjectionLetterGenerateService,
+        CreditIssueCertificateGenerator,
         CounterService,
+        DateUtilService,
     ],
     exports: [
         HelperService,
         UtilService,
         DataExportService,
         ObjectionLetterGenerateService,
+        CreditIssueCertificateGenerator,
         CounterService,
+        DateUtilService,
     ],
 })
 export class UtilModule {}

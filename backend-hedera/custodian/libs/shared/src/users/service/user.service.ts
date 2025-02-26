@@ -1274,7 +1274,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async getAdminsByIds(ids: number[]): Promise<UsersEntity[]> {
+    async getAdminsByIds(ids: string[]): Promise<UsersEntity[]> {
         return this.usersRepository.find({
             where: {
                 organization: { id: In(ids) },
