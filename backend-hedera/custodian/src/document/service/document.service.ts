@@ -255,9 +255,16 @@ export class DocumentService {
         /*
             1. Authorize the call
         */
-        const assigneeOrgEmails: string[] = document.project.assignees.map(
+        // fix
+        const OrgEmails: string[] = document.project.assignees.map(
             (user) => user.email,
         );
+
+        const assigneeAdminEmails = await this.getOrgAdminEmails(
+            OrgEmails,
+            queryRunner,
+        );
+
         // if IC approve/rejection call
         if (
             requestData.action === DocumentStateEnum.IC_APPROVED ||
@@ -272,7 +279,7 @@ export class DocumentService {
             }
 
             // can only be performed by project assignees
-            if (!(jwtData.email in assigneeOrgEmails)) {
+            if (!(jwtData.email in assigneeAdminEmails)) {
                 throw new HttpException(
                     'Unauthorised',
                     HttpStatus.UNAUTHORIZED,
@@ -935,6 +942,8 @@ export class DocumentService {
                 project,
                 queryRunner,
             );
+
+            // TODO: do guardian calls
 
             await queryRunner.commitTransaction();
         } catch (err) {

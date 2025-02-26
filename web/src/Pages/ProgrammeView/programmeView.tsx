@@ -94,6 +94,7 @@ import { ProgrammeTransferForm } from '../../Components/Models/programmeTransfer
 import { InfoView } from '../../Components/InfoView/info.view';
 import { ProgrammeDocuments } from '../../Components/ProgrammeDocuments/programmeDocuments';
 import { MapComponent } from '../../Components/Maps/mapComponent';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const ProgrammeView = () => {
   const { get, put, post } = useConnection();
@@ -254,7 +255,7 @@ const ProgrammeView = () => {
     setLoadingHistory(true);
     setLoadingInvestment(true);
     try {
-      const response: any = await post('national/programme/investmentQuery', {
+      const response: any = await post(API_PATHS.INVESTMENT_LIST, {
         page: 1,
         size: 100,
         filterAnd: [
@@ -396,7 +397,7 @@ const ProgrammeView = () => {
 
   const getProgrammeById = async (programmeId: string) => {
     try {
-      const response: any = await post('national/programme/query', {
+      const response: any = await post(API_PATHS.ALL_PROJECTS, {
         page: 1,
         size: 2,
         filterAnd: [
@@ -708,9 +709,9 @@ const ProgrammeView = () => {
   const getProgrammeHistory = async (programmeId: string) => {
     setLoadingHistory(true);
     try {
-      const historyPromise = get(`national/programme/getHistory?programmeId=${programmeId}`);
+      const historyPromise = get(API_PATHS.PROGRAMME_HISTORY_BY_PROGRAMME_ID(programmeId));
       const transferPromise = get(
-        `national/programme/transfersByProgrammeId?programmeId=${programmeId}`
+        API_PATHS.TRANSFER_BY_PROGRAMMEID(programmeId)
       );
 
       const [response, transfers] = await Promise.all([historyPromise, transferPromise]);
@@ -1141,7 +1142,7 @@ const ProgrammeView = () => {
     setLoadingHistory(true);
     setLoadingNDC(true);
     try {
-      const response: any = await post('national/programme/queryDocs', {
+      const response: any = await post(API_PATHS.PROGRAMME_DOCS, {
         page: 1,
         size: 100,
         filterAnd: [
@@ -1202,7 +1203,7 @@ const ProgrammeView = () => {
     body.programmeId = data?.programmeId;
     let error;
     try {
-      const response: any = await httpMode(`national/programme/${endpoint}`, body);
+      const response: any = await httpMode(API_PATHS.POPUP_ACTION, body);
       if (response.statusCode < 300 || response.status < 300) {
         if (!response.data.certifier) {
           response.data.certifier = [];
@@ -1354,7 +1355,7 @@ const ProgrammeView = () => {
     setLoadingAll(true);
     try {
       const userId = userInfoState?.id;
-      const response: any = await post('national/user/query', {
+      const response: any = await post(API_PATHS.USER_DETAILS, {
         page: 1,
         size: 10,
         filterAnd: [
@@ -1450,7 +1451,7 @@ const ProgrammeView = () => {
     setLoadingHistory(true);
     setLoadingNDC(true);
     try {
-      const response: any = await post('national/programme/queryNdcActions', {
+      const response: any = await post(API_PATHS.NDC_ACTION_HISTORY, {
         page: 1,
         size: 100,
         filterAnd: [

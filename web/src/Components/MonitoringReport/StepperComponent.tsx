@@ -18,6 +18,7 @@ import { extractFilePropertiesFromLink, fileUploadValueExtract } from '../../Uti
 import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { API_PATHS } from '../../Config/apiConfig';
 const StepperComponent = (props: any) => {
   const navigate = useNavigate();
   const { useLocation, translator, countries, selectedVersion, handleDocumentStatus } = props;
@@ -60,7 +61,7 @@ const StepperComponent = (props: any) => {
       remark,
     };
     try {
-      const res = await post('national/verification/verifyMonitoringReport', body);
+      const res = await post(API_PATHS.VERIFY_MONITORING_REPORT, body);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
@@ -98,13 +99,13 @@ const StepperComponent = (props: any) => {
 
   const getProgrammeDetailsById = async () => {
     try {
-      const { data } = await post('national/programmeSL/getProjectById', {
+      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
         programmeId: id,
       });
 
       const {
         data: { user },
-      } = await get('national/User/profile');
+      } = await get(API_PATHS.USER_PROFILE);
 
       setProjectCategory(data?.projectCategory);
     } catch (error) {
@@ -161,7 +162,7 @@ const StepperComponent = (props: any) => {
       );
       const body = { content: JSON.stringify(content), programmeId: id };
       try {
-        const res = await post('national/verification/createMonitoringReport', body);
+        const res = await post(API_PATHS.CREATE_MONITORING_REPORT, body);
         if (res?.statusText === 'SUCCESS') {
           message.open({
             type: 'success',
@@ -215,11 +216,11 @@ const StepperComponent = (props: any) => {
     try {
       // if (docId === null) {
       if (mode === FormMode.CREATE) {
-        const { data } = await post('national/programmeSl/getDocLastVersion', {
+        const { data } = await post(API_PATHS.LAST_DOC_VERSION, {
           programmeId: programId,
           docType: DocumentTypeEnum.CMA,
         });
-        const { data: projectDetails } = await post('national/programmeSL/getProjectById', {
+        const { data: projectDetails } = await post(API_PATHS.PROJECT_BY_ID, {
           programmeId: id,
         });
 
@@ -295,13 +296,13 @@ const StepperComponent = (props: any) => {
       } else if (mode === FormMode.VIEW || mode === FormMode.EDIT) {
         const { data } =
           mode === FormMode.VIEW && selectedVersion
-            ? await post('national/programmeSl/getVerificationDocByVersion', {
+            ? await post(API_PATHS.VERIFICATION_DOC_BY_VERSION, {
                 programmeId: id,
                 docType: DocumentTypeEnum.MONITORING_REPORT,
                 version: selectedVersion,
                 verificationRequestId: Number(verificationRequestId),
               })
-            : await post('national/programmeSl/getVerificationDocLastVersion', {
+            : await post(API_PATHS.VERIFICATION_DOC_LAST_VERSION, {
                 programmeId: id,
                 docType: DocumentTypeEnum.MONITORING_REPORT,
                 verificationRequestId: Number(verificationRequestId),
