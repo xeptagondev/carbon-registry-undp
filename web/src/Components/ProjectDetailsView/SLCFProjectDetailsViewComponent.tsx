@@ -1916,7 +1916,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   const actionBtns = [];
   // MARK: Action Buttons
   if (userInfoState?.userRole !== 'ViewOnly') {
-    if (userInfoState && data.projectProposalStage === ProjectProposalStage.SUBMITTED_INF) {
+    if (userInfoState && data.projectProposalStage === ProjectProposalStage.PENDING) {
       if (userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         actionBtns.push(
           <Button
@@ -1961,7 +1961,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       }
     } else if (
       userInfoState &&
-      data.projectProposalStage === ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT
+      data.projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_SUBMITTED
     ) {
       if (userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER) {
         actionBtns.push(
@@ -2005,7 +2005,10 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
           </Button>
         );
       }
-    } else if (userInfoState && data.projectProposalStage === ProjectProposalStage.SUBMITTED_CMA) {
+    } else if (
+      userInfoState &&
+      data.projectProposalStage === ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER
+    ) {
       if (userInfoState?.companyRole === CompanyRole.CLIMATE_FUND) {
         actionBtns.push(
           <Button
@@ -2050,7 +2053,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       }
     } else if (
       userInfoState &&
-      data.projectProposalStage === ProjectProposalStage.VALIDATION_PENDING
+      data.projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_REJECTED
     ) {
       if (userInfoState?.companyRole === CompanyRole.EXECUTIVE_COMMITTEE) {
         actionBtns.push(
