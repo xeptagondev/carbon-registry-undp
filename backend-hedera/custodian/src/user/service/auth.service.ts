@@ -82,9 +82,11 @@ export class AuthService {
             user.name,
             user.email,
             user.id,
+            user.refId,
             user.guardianRole.role.name,
             user.isActive,
             user.organization.id,
+            user.organization.refId,
             organisationDetails.organizationType.name,
             organisationDetails.state,
         );
