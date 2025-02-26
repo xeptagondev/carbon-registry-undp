@@ -40,6 +40,7 @@ import { useUserContext } from '../../../Context/UserInformationContext/userInfo
 import { ProgrammeStageMRV, ProgrammeStageR } from '../../../Definitions/Enums/programmeStage.enum';
 import { ProfileIcon } from '../../IconComponents/ProfileIcon/profile.icon';
 import { ProgrammeEntity } from '../../../Definitions/Entities/programme';
+import { API_PATHS } from '../../../Config/apiConfig';
 
 const { Search } = Input;
 
@@ -377,7 +378,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     }
 
     try {
-      const response: any = await post('national/programme/query', {
+      const response: any = await post(API_PATHS.ALL_PROJECTS, {
         page: currentPage,
         size: pageSize,
         filterAnd: filter,
@@ -408,7 +409,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     setLoading(true);
     try {
       const userId = userInfoState?.id;
-      const response: any = await post('national/user/query', {
+      const response: any = await post(API_PATHS.USER_DETAILS, {
         page: 1,
         size: 10,
         filterAnd: [
@@ -439,7 +440,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     setLoading(true);
 
     try {
-      const response: any = await post('national/programme/download', {
+      const response: any = await post(API_PATHS.PROGRAMME_DOWNLOAD, {
         filterAnd: dataQuery.filterAnd,
         filterOr: dataQuery.filterOr?.length > 0 ? dataQuery.filterOr : undefined,
         sort: dataQuery.sort,

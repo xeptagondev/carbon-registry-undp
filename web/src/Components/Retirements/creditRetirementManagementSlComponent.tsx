@@ -46,6 +46,7 @@ import { ConfigurationSettingsType } from '../../Definitions/Definitions/setting
 import { CreditRetirementSlActionModel } from '../Models/creditRetirementSlActionModel';
 import { CreditRetirementSl } from '../../Definitions/Entities/creditRetirementSl';
 import { CreditTransferSlStage, CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
+import { API_PATHS } from '../../Config/apiConfig';
 
 type PopupInfo = {
   title: string;
@@ -175,7 +176,7 @@ export const CreditRetirementSlComponent = (props: any) => {
     let filterBy: any;
 
     try {
-      const response: any = await post('national/retire/query', {
+      const response: any = await post(API_PATHS.PROGRAM_TRANSFERS, {
         page: currentPage,
         size: pageSize,
         filterAnd: filter,
@@ -247,7 +248,7 @@ export const CreditRetirementSlComponent = (props: any) => {
     setLoading(true);
     try {
       const userId = userInfoState?.id;
-      const response: any = await post('national/user/query', {
+      const response: any = await post(API_PATHS.USER_DETAILS, {
         page: 1,
         size: 10,
         filterAnd: [
@@ -300,7 +301,7 @@ export const CreditRetirementSlComponent = (props: any) => {
   ) => {
     setLoading(true);
     try {
-      const response: any = await post('national/retire/status', {
+      const response: any = await post(API_PATHS.CANCEL_TRANSFER_REQUEST, {
         requestId: reqId,
         status: updatedStatus,
         comment: remarks,

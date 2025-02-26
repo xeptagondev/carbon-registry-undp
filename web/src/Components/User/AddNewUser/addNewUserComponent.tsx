@@ -20,6 +20,7 @@ import ChangePasswordModel from '../../Models/changePasswordModel';
 import { Role } from '../../../Definitions/Enums/role.enum';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
 import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
+import { API_PATHS } from '../../../Config/apiConfig';
 
 export const AddNewUserComponent = (props: any) => {
   const {
@@ -79,7 +80,7 @@ export const AddNewUserComponent = (props: any) => {
       } else {
         values.phoneNo = undefined;
       }
-      const response = await post('user/add', values);
+      const response = await post(API_PATHS.ADD_USER, values);
       if (response.status === 200 || response.status === 201) {
         message.open({
           type: 'success',
@@ -120,7 +121,7 @@ export const AddNewUserComponent = (props: any) => {
       if (ability.can(Action.Update, plainToClass(User, state?.record), 'email'))
         values.email = formOneValues?.email;
 
-      const response = await put('user/update', values);
+      const response = await put(API_PATHS.UPDATE_USER, values);
       if (response.status === 200 || response.status === 201) {
         message.open({
           type: 'success',
@@ -176,7 +177,7 @@ export const AddNewUserComponent = (props: any) => {
     try {
       setIsLoading(true);
       const userId = userInfoState?.id;
-      await del(`user/delete?userId=${userId}`);
+      await del(API_PATHS.DELETE_USER(String(userId)));
       setOpenDeleteConfirmationModal(false);
       message.open({
         type: 'success',
@@ -197,7 +198,7 @@ export const AddNewUserComponent = (props: any) => {
   const onPasswordChangeCompleted = async (props: any) => {
     setIsLoading(true);
     try {
-      const response = await put('user/resetPassword', {
+      const response = await put(API_PATHS.RESET_PASSWORD_USER, {
         newPassword: props.newPassword,
         oldPassword: props.oldPassword,
       });

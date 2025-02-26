@@ -14,6 +14,7 @@ import { RcFile } from 'antd/lib/upload';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 import { Loading } from '../Loading/loading';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const ValidationAgreement = (props: { translator: i18n }) => {
   const { translator } = props;
@@ -119,7 +120,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
   const setMigratedData = async () => {
     try {
       setLoading(true);
-      const { data } = await post('national/programmeSl/getProjectById', {
+      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
         programmeId: id,
       });
 
@@ -138,7 +139,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
       if (isView) {
         setLoading(true);
         try {
-          const res = await post('national/programmeSl/getDocLastVersion', {
+          const res = await post(API_PATHS.LAST_DOC_VERSION, {
             programmeId: id,
             docType: 'validationAgreement',
           });
@@ -236,7 +237,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
 
     try {
       setLoading(true);
-      const res = await post('national/programmeSl/createValidationAgreement', tempValues);
+      const res = await post(API_PATHS.CREATE_VALIDATION_AGGREMENT, tempValues);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
