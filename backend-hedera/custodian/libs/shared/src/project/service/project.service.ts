@@ -42,9 +42,11 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 
 @Injectable()
 export class ProjectService {
+    private readonly loggerContext = 'ProjectService';
     constructor(
         private readonly helperService: HelperService,
         private readonly auditService: AuditService,
@@ -61,11 +63,13 @@ export class ProjectService {
         private readonly mailService: MailService,
         private readonly counterService: CounterService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
+        private readonly logger: InstantLogger,
     ) {}
 
     async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
-        console.log(
+        this.logger.log(
             `Request received to create project with details ${projectDto} from user ${requestUser.userName}`,
+            this.loggerContext,
         );
 
         this.validateProjectParticipant(requestUser);
@@ -171,7 +175,7 @@ export class ProjectService {
             );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            console.log(error);
+            this.logger.error(error);
             throw new HttpException(
                 'An error occurred while creating the project',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -192,7 +196,10 @@ export class ProjectService {
     }
 
     private async notifyAdmins(refId: string, requestUser: JWTPayload) {
-        console.log(`Request received to notify admins for project ${refId}`);
+        this.logger.log(
+            `Request received to notify admins for project ${refId}`,
+            this.loggerContext,
+        );
         const admins = await this.userService.getAdminsByType(
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
         );
@@ -216,8 +223,9 @@ export class ProjectService {
         ids: string[],
         requestUser: JWTPayload,
     ) {
-        console.log(
+        this.logger.log(
             `Request received to notify certifiers for project ${refId}`,
+            this.loggerContext,
         );
         const admins = await this.userService.getAdminsByIds(ids);
         const countryName = this.configService.get('country');
@@ -241,6 +249,10 @@ export class ProjectService {
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
         this.helperService.validateRequestUser(requestUser);
+        this.logger.log(
+            `Project query request with ${query}`,
+            this.loggerContext,
+        );
         // if (!query.filterAnd) {
         //     const filterAnd: FilterEntry[] = [];
         //     query.filterAnd = filterAnd;
