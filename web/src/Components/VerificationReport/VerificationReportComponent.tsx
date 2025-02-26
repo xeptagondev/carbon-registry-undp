@@ -7,6 +7,7 @@ import { DocumentTypeEnum } from '../../Definitions/Enums/document.type';
 import { Col, Row, Select, Tag } from 'antd';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { getDocumentStatusColor } from '../../Definitions/Definitions/programme.definitions';
+import { API_PATHS } from '../../Config/apiConfig';
 
 export const VerificationReportComponent = (props: any) => {
   const [countries, setCountries] = useState<[]>([]);
@@ -28,7 +29,7 @@ export const VerificationReportComponent = (props: any) => {
 
   const getDocVersions = async () => {
     try {
-      const { data } = await post('national/programmeSl/getVerificationDocVersions', {
+      const { data } = await post(API_PATHS.VERIFICATION_DOC_VERSIONS, {
         programmeId: id,
         verificationRequestId: Number(verificationRequestId),
         docType: DocumentTypeEnum.VERIFICATION_REPORT,
@@ -56,7 +57,7 @@ export const VerificationReportComponent = (props: any) => {
   }, [versions]);
 
   const getCountryList = async () => {
-    const response = await get('national/organisation/countries');
+    const response = await get(API_PATHS.COUNTRY_LIST);
     if (response.data) {
       const alpha2Names = response.data.map((item: any) => {
         return item.alpha2;
