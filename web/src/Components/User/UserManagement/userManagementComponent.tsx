@@ -69,6 +69,7 @@ import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
 import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
 import CompanyRoleIcon from '../../IconComponents/CompanyRoleIcon/companyRoleIcon';
+import { API_PATHS } from '../../../Config/apiConfig';
 
 const { Search } = Input;
 
@@ -150,7 +151,7 @@ export const UserManagementComponent = (props: any) => {
   const deleteUser = async (record: UserTableDataType) => {
     setLoading(true);
     try {
-      const response = await del(`user/delete?userId=${record?.id}`);
+      const response = await del(API_PATHS.DELETE_USER(String(record?.id)));
       if (response.status === 200) {
         message.open({
           type: 'success',
@@ -480,7 +481,7 @@ export const UserManagementComponent = (props: any) => {
   const getAllUser = async () => {
     setLoading(true);
     try {
-      const response: any = await post('user/query', getAllUserParams());
+      const response: any = await post(API_PATHS.USER_DETAILS_BY_ID, getAllUserParams());
       if (response && response.data) {
         const availableUsers = response.data.filter(
           (user: any) => user.companyRole !== CompanyRole.API
@@ -509,7 +510,7 @@ export const UserManagementComponent = (props: any) => {
   const downloadUserData = async () => {
     setLoading(true);
     try {
-      const response: any = await post('user/download', {
+      const response: any = await post(API_PATHS.DOWNLOAD_USER_DATA, {
         filterAnd: dataQuery.filterAnd,
         filterOr: dataQuery.filterOr?.length > 0 ? dataQuery.filterOr : undefined,
         sort: dataQuery.sort,

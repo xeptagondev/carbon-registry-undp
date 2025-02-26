@@ -118,7 +118,7 @@ export const CompanyProfileComponent = (props: any) => {
       // const response: any = await put(`organisation/suspend?id=${companyDetails.companyId}`, {
       //   remarks: remarks,
       // });
-      const response: any = await post('organisation/changeStatus', {
+      const response: any = await post(API_PATHS.ORG_CHANGE_STATUS, {
         id: companyDetails.companyId,
         state: '0',
       });
@@ -143,7 +143,7 @@ export const CompanyProfileComponent = (props: any) => {
       // const response: any = await put(`organisation/activate?id=${companyDetails.companyId}`, {
       //   remarks: remarks,
       // });
-      const response: any = await post('organisation/changeStatus', {
+      const response: any = await post(API_PATHS.ORG_CHANGE_STATUS, {
         id: companyDetails.companyId,
         state: '1',
       });
@@ -165,7 +165,7 @@ export const CompanyProfileComponent = (props: any) => {
   const onApproveOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(`organisation/approve?id=${companyDetails.companyId}`, {
+      const response: any = await put(API_PATHS.ORG_APPROVE(companyDetails.companyId), {
         remarks: remarks,
       });
       setOpenApproveModal(false);
@@ -191,7 +191,7 @@ export const CompanyProfileComponent = (props: any) => {
   const onRejectOrgConfirmed = async (remarks: string) => {
     try {
       setIsLoading(true);
-      const response: any = await put(`organisation/reject?id=${companyDetails.companyId}`, {
+      const response: any = await put(API_PATHS.ORG_REJECT(companyDetails.companyId), {
         remarks: remarks,
       });
       setOpenRejectModal(false);
@@ -357,7 +357,7 @@ export const CompanyProfileComponent = (props: any) => {
   ) => {
     setIsLoading(true);
     try {
-      await post('programmeSl/issueCarbonNeutralCertificate', {
+      await post(API_PATHS.ISSURE_CARBON_NEUTRAL_CERTIFICATE, {
         documentId: docId,
         scope: level,
         assessmentPeriodStart: startDate,
