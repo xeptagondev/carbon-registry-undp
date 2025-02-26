@@ -331,8 +331,7 @@ export class ProjectService {
             contactWebsite: project.website,
             contactAddress: project.address,
             projectProposalStage:
-                project.projectProposalStage ||
-                ProjectProposalStage.SUBMITTED_INF,
+                project.projectProposalStage || ProjectProposalStage.PENDING,
             company: createdBy.organization
                 ? {
                       companyId: createdBy.organization.id,
@@ -419,9 +418,7 @@ export class ProjectService {
             );
         }
 
-        if (
-            project.projectProposalStage !== ProjectProposalStage.SUBMITTED_INF
-        ) {
+        if (project.projectProposalStage !== ProjectProposalStage.PENDING) {
             throw new HttpException(
                 'Project not in a suitable stage to proceed',
                 HttpStatus.BAD_REQUEST,
