@@ -29,6 +29,9 @@ import { VerifyReportDto } from '../dto/verify.report.dto';
 import { VerificationReportDto } from '../dto/verification.report.dto';
 import { CreditIssueCertificateGenerator } from '@app/shared/util/service/credit.issue.certificate.gen';
 import { DateUtilService } from '@app/shared/util/service/date.util.service';
+import { CounterService } from '@app/shared/util/service/counter.service';
+import { CounterType } from '@app/shared/util/enum/counter.type.enum';
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 
 @Injectable()
 export class VerificationService {
@@ -41,6 +44,7 @@ export class VerificationService {
         private readonly fileHandler: FileHandlerInterface,
         private readonly guardianService: GuardianService,
         private readonly utilService: UtilService,
+        private readonly counterService: CounterService,
         private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
     ) {}
 
@@ -141,9 +145,7 @@ export class VerificationService {
 
         const activities = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.activityQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY),
         );
         const activity = activities?.data.find((activity) => {
             return (
@@ -152,8 +154,13 @@ export class VerificationService {
             );
         });
 
+        const monitoringRefId = await this.counterService.incrementCount(
+            CounterType.MONITORING_REPORT,
+            4,
+        );
+
         const monitoringPayload = {
-            refId: '',
+            refId: monitoringRefId,
             project: '',
             activity: '',
             name: '',
@@ -170,9 +177,7 @@ export class VerificationService {
 
             const monitoringReports = await this.guardianService.query(
                 requestUser.email,
-                this.utilService.getBlock(
-                    this.configService.get('blocks.monitoringQuery'),
-                ),
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.MONITORING_QUERY),
             );
             //find last monitoring report
             const monitoringReport = monitoringReports?.data.find(
@@ -187,14 +192,16 @@ export class VerificationService {
                 ? monitoringReport.version + 1
                 : 1;
         } else {
+            const activityRefId = await this.counterService.incrementCount(
+                CounterType.ACTIVITY,
+                4,
+            );
             await this.guardianService.createEntity(
                 requestUser.email,
-                this.utilService.getBlock(
-                    this.configService.get('blocks.createActivity'),
-                ),
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_ACTIVITY),
                 {
                     document: {
-                        refId: '',
+                        refId: activityRefId,
                         project: '',
                         status: VerificationRequestStatusEnum.MONITORING_REPORT_UPLOADED,
                     },
@@ -207,7 +214,7 @@ export class VerificationService {
         await this.guardianService.createEntity(
             requestUser.email,
             this.utilService.getBlock(
-                this.configService.get('blocks.createDocument'),
+                GUARDIAN_API.BLOCKS.CREATE_MONITORING_REPORT,
             ),
             {
                 document: monitoringPayload,
@@ -298,9 +305,7 @@ export class VerificationService {
 
         const monitoringReports = await this.guardianService.query(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.monitoringQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.MONITORING_QUERY),
         );
         const monitoringReport = monitoringReports?.data.find(
             (monitoringReport) => {
@@ -313,9 +318,7 @@ export class VerificationService {
 
         await this.guardianService.approve(
             requestUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.approveMonitoring'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_MONITORING),
             {
                 document: { ...monitoringReport },
                 tag: verifyReportDto.verify ? 'Button_0' : 'Button_1',
@@ -484,9 +487,7 @@ export class VerificationService {
 
         const projects = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const project = projects?.data.find((project) => {
             return (
@@ -496,9 +497,7 @@ export class VerificationService {
         });
         const activities = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.activityQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY),
         );
         const projectActivities = activities?.data.filter((activity) => {
             return (
@@ -537,8 +536,13 @@ export class VerificationService {
         // verificationReportDocument.createdTime = new Date().getTime();
         // verificationReportDocument.updatedTime = new Date().getTime();
 
+        const verificationRefId = await this.counterService.incrementCount(
+            CounterType.VERIFICATION_REPORT,
+            4,
+        );
+
         const verificationPayload = {
-            refId: '',
+            refId: verificationRefId,
             project: '',
             activity: '',
             name: '',
@@ -551,7 +555,7 @@ export class VerificationService {
         await this.guardianService.createEntity(
             reqUser.email,
             this.utilService.getBlock(
-                this.configService.get('blocks.createDocument'),
+                GUARDIAN_API.BLOCKS.CREATE_VERIFICATION_REPORT,
             ),
             {
                 document: verificationPayload,
@@ -697,9 +701,7 @@ export class VerificationService {
 
         const activities = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.activityQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY),
         );
         const activity = activities?.data.filter((activity) => {
             return (
@@ -709,9 +711,7 @@ export class VerificationService {
         });
         const projects = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.projectQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY),
         );
         const project = projects?.data.filter((activity) => {
             return (
@@ -731,9 +731,7 @@ export class VerificationService {
 
         const verificationReports = await this.guardianService.query(
             reqUser.email,
-            this.utilService.getBlock(
-                this.configService.get('blocks.verificationQuery'),
-            ),
+            this.utilService.getBlock(GUARDIAN_API.BLOCKS.VERIFICATION_QUERY),
         );
 
         const verificationReport = verificationReports?.data.filter(
