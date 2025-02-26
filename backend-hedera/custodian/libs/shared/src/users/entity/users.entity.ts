@@ -1,3 +1,4 @@
+import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 import { GuardianRoleEntity } from '@app/shared/guardian-role/entity/guardian-role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
@@ -77,4 +78,18 @@ export class UsersEntity {
         { nullable: true },
     )
     approvedProjects?: ProjectEntity[];
+
+    @OneToMany(
+        () => DocumentEntity,
+        (documentEntity) => documentEntity.approvedUser,
+        { nullable: true },
+    )
+    approvedDocuments?: DocumentEntity[];
+
+    @OneToMany(
+        () => DocumentEntity,
+        (documentEntity) => documentEntity.submittedUser,
+        { nullable: true },
+    )
+    submittedDocuments?: DocumentEntity[];
 }
