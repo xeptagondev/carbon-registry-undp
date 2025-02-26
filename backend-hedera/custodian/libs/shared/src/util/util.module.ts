@@ -13,6 +13,7 @@ import { CreditIssueCertificateGenerator } from './service/credit.issue.certific
 import { DateUtilService } from './service/date.util.service';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
+import { InstantLogger } from './service/instant.logger.service';
 
 @Module({
     imports: [
@@ -39,6 +40,7 @@ import * as path from 'path';
         CreditIssueCertificateGenerator,
         CounterService,
         DateUtilService,
+        InstantLogger,
     ],
     exports: [
         HelperService,
@@ -48,6 +50,7 @@ import * as path from 'path';
         CreditIssueCertificateGenerator,
         CounterService,
         DateUtilService,
+        InstantLogger,
     ],
 })
 export class UtilModule {}
