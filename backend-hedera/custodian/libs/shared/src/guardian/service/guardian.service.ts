@@ -14,14 +14,15 @@ import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
 import { GUARDIAN_ERROR } from '../constant/guardian-error.constant';
 import { GUARDIAN_API } from '../constant/guardian-api-blocks.contant';
 import { GridTypeEnum } from '../enum/grid-type.enum';
-import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { GridInterface } from '../interface/guardian.grid.interface';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export class GuardianService {
     constructor(
         private readonly configService: ConfigService,
         private readonly auditService: AuditService,
+        private readonly utilService: UtilService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
     ) {}
@@ -233,7 +234,7 @@ export class GuardianService {
     public async getGridDataUsingRefId(
         grid: GridTypeEnum,
         refId: string,
-        requestedUser: JWTPayload,
+        email: string,
     ): Promise<any> {
         let gridApis: GridInterface;
 
@@ -270,22 +271,22 @@ export class GuardianService {
         }
 
         const user = await this.usersRepository.findOne({
-            where: { email: requestedUser.email },
+            where: { email: email },
         });
 
         const token = await this.getAccessToken(user.refreshToken);
         const policyId = this.configService.get('policy.id');
 
         const refIdFilterUrl = this.buildGuardianUrl(
-            `/api/v1/policies/${policyId}/blocks/${gridApis.FILTER_REF_ID}`,
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.FILTER_REF_ID)}`,
         );
 
         const notStatusFilterUrl = this.buildGuardianUrl(
-            `/api/v1/policies/${policyId}/blocks/${gridApis.FILTER_NOT_STATUS}`,
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.FILTER_NOT_STATUS)}`,
         );
 
         const gridUrl = this.buildGuardianUrl(
-            `/api/v1/policies/${policyId}/blocks/${gridApis.GRID}`,
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.GRID)}`,
         );
 
         const notStatusFilterResponse = await axios.get(notStatusFilterUrl, {
@@ -336,12 +337,15 @@ export class GuardianService {
             throw new Error('Failed to fetch grid data');
         }
 
-        // Assuming gridResponse.data is an array, find the matching document.
-        const document = gridResponse.data.find((response: any) => {
+        const fullVCDocument = gridResponse.data?.data.find((response: any) => {
             return response?.document?.credentialSubject[0]?.refId === refId;
         });
 
-        return document;
+        if (!fullVCDocument) {
+            throw new Error('No document found for the given refId');
+        }
+
+        return fullVCDocument.document?.credentialSubject[0];
     }
 
     public async createEntity(
