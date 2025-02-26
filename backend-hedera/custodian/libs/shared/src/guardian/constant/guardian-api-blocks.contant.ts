@@ -15,6 +15,9 @@ export const GUARDIAN_API = {
         USER_CREATE_INVITE: 'user_create_invite',
         APPROVE_ORGANIZATION: 'organizations_active_reject_buttons',
         CREATE_PROJECT: 'project_creation_form',
+        CREATE_ACTIVITY: 'activity_creation_form',
+        CREATE_MONITORING_REPORT: 'monitoring_report_creation_form',
+        CREATE_VERIFICATION_REPORT: 'verification_report_creation_form',
         CREATE_INF: 'inf_creation_form',
         PROJECT_QUERY: 'project_grid',
         USER_QUERY: 'user_grid',
@@ -26,5 +29,6 @@ export const GUARDIAN_API = {
         MONITORING_QUERY: 'monitoring_report_grid',
         VERIFICATION_QUERY: 'verification_report_grid',
         APPROVE_PROJECT: 'project_approve_reject_buttons',
+        APPROVE_MONITORING: 'monitoring_report_ic_approve_reject_buttons',
     },
 };
