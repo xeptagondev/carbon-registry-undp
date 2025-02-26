@@ -43,6 +43,7 @@ import {
 import { ProfileIcon } from '../IconComponents/ProfileIcon/profile.icon';
 import { CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
 import { Role } from '../../Definitions/Enums/role.enum';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const { Search } = Input;
 
@@ -307,7 +308,7 @@ export const SLCFProgrammeManagementComponent = (props: any) => {
     }
 
     try {
-      const response: any = await post('project/query', {
+      const response: any = await post(API_PATHS.GET_PROJECT, {
         page: currentPage,
         size: pageSize,
         filterAnd: filter,
@@ -338,7 +339,7 @@ export const SLCFProgrammeManagementComponent = (props: any) => {
     setLoading(true);
     try {
       const userId = userInfoState?.id;
-      const response: any = await post('user/query', {
+      const response: any = await post(API_PATHS.USER_DETAILS_BY_ID, {
         page: 1,
         size: 10,
         filterAnd: [

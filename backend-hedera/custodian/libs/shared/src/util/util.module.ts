@@ -13,6 +13,7 @@ import { DateUtilService } from './service/date.util.service';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { UsersEntity } from '../users/entity/users.entity';
+import { InstantLogger } from './service/instant.logger.service';
 
 @Module({
     imports: [
@@ -38,6 +39,7 @@ import { UsersEntity } from '../users/entity/users.entity';
         CreditIssueCertificateGenerator,
         CounterService,
         DateUtilService,
+        InstantLogger,
     ],
     exports: [
         HelperService,
@@ -47,6 +49,7 @@ import { UsersEntity } from '../users/entity/users.entity';
         CreditIssueCertificateGenerator,
         CounterService,
         DateUtilService,
+        InstantLogger,
     ],
 })
 export class UtilModule {}
