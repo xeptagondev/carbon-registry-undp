@@ -1,18 +1,25 @@
 export const API_PATHS = {
-  //Pages
+  //AUTH
   LOGIN: 'auth/login',
   FORGOT_PW: 'auth/forgotPassword',
   RESET_PW: (requestId: string) => `auth/resetPassword?requestId=${requestId}`,
-  TRANSFER_QUERY: 'national/programme/transferQuery',
-  TRANSFER_DOWNLOAD: 'national/programme/transfers/download',
+  REFRESH_ACCESS_TOKEN: 'auth/login/refresh',
+  //USER
+  USER_PROFILE: 'national/User/profile',
   USER_DETAILS: 'national/user/query',
-  TRANSFER_ACTION: 'national/programme/',
-  TRANSFER_ON_FREEZE: 'national/Settings/update',
-  //Components
-  LAST_DOC_VERSION: 'national/programmeSl/getDocLastVersion',
-  LAST_DOC_VERSIONS: 'national/programmeSl/getDocVersions',
-  DOC_BY_VERSION: 'national/programmeSl/getDocByVersion',
-  CREATE_COST_COTATION: 'national/programmeSl/createCostQuotation',
+  USER_DETAILS_BY_ID: 'user/query',
+  ADD_USER: 'user/add',
+  UPDATE_USER: 'user/update',
+  DELETE_USER: (userId: string) => `user/delete?userId=${userId}`,
+  RESET_PASSWORD_USER: 'user/resetPassword',
+  USER_PROFILE_DETAILS: 'user/profile',
+  DOWNLOAD_USER_DATA: 'user/download',
+  //PROJECT
+  PROJECT: 'project/create',
+  GET_PROJECT: 'project/query',
+  PROJECT_BY_ID: 'national/programmeSl/getProjectById',
+  ALL_PROJECTS: 'national/programme/query',
+  //LOCATION
   PROVINCE: 'location/province',
   PROVINCES: 'national/location/province',
   DISTRICT: 'location/district',
@@ -23,14 +30,102 @@ export const API_PATHS = {
   DIVISIONS: 'national/location/division',
   COUNTRIES: 'location/countries',
   COUNTRY_LIST: 'national/organisation/countries',
-  ORGANIZATION_TYPE: 'organisation/byType',
-  PROJECT: 'project/create',
-  PROJECT_BY_ID: 'national/programmeSl/getProjectById',
-  USER_PROFILE: 'national/User/profile',
-  CMA_CREATION: 'national/programmeSl/createCMA',
+  REGIONS: 'national/organisation/regions',
+  //PROGRAMME
+  ADD_PROGRAMME_DOC: 'national/programme/addDocument',
+  PROGRAMME_DOC_ACTION: 'national/programme/docAction',
+  PROGRAMME_DOCS: 'national/programme/queryDocs',
+  NEW_PROGRAMME: 'national/programme/create',
+  PROGRAMME_DOWNLOAD: 'national/programme/download',
+  PROGRAMME_BY_ID: 'project/getProjectById',
+  PROGRAMME_HISTORY_BY_PROGRAMME_ID: (programmeId: string) =>
+    `national/programme/getHistory?programmeId=${programmeId}`,
+  PROGRAMME_BY_STATUS: 'stats/programme/queryProgrammesByStatus',
+  PROGRAMME_BY_CATEGORY: 'stats/programme/queryProgrammesByCategory',
+  PROGRAMME_ACTION: (action: string) => `national/programme/${action}`,
+  //DOC-VERSIONS
+  LAST_DOC_VERSION: 'national/programmeSl/getDocLastVersion',
+  LAST_DOC_VERSIONS: 'national/programmeSl/getDocVersions',
+  DOC_BY_VERSION: 'national/programmeSl/getDocByVersion',
+  CREATE_COST_COTATION: 'national/programmeSl/createCostQuotation',
+  //ORGANIZATION
+  ORGANIZATION_BY_TYPE: 'organisation/byType',
   MINISTRY_LIST: 'national/organisation/query',
+  ORGANIZATION_NAMES: 'national/organisation/queryNames',
   ALL_COMPANY: 'organisation/query',
   DOWNLOAD_COMPANY_DATA: 'organisation/download',
   COMPANY_PROFILE_DETAILS: (companyId: string) => `organisation/profile?id=${companyId}`,
-  USER_DETAILS_BY_ID: 'user/query',
+  ORG_CHANGE_STATUS: 'organisation/changeStatus',
+  ORG_APPROVE: (companyId: string) => `organisation/approve?id=${companyId}`,
+  ORG_REJECT: (companyId: string) => `organisation/reject?id=${companyId}`,
+  //CARBON_NEUTRAL
+  ISSURE_CARBON_NEUTRAL_CERTIFICATE: 'programmeSl/issueCarbonNeutralCertificate',
+  CARBON_NEUTRAL_CERTIFICATES: 'national/programmeSl/getCarbonNeutralCertificates',
+  REQUEST_CARBON_NEUTRAL_CERTIFICATE: 'national/programmeSl/requestCarbonNeutralCertificate',
+  //INVESTMENT
+  INVESTMENT_LIST: 'national/programme/investmentQuery',
+  ADD_PROGRAMME_INVESTMENT: 'national/programme/addInvestment',
+  ADD_ORGANIZATION_INVESTMENT: 'national/organisation/addInvestment',
+  DOWNLOAD_INVESTMENT_DATA: 'national/programme/investments/download',
+  //VERIFICATION
+  VERIFICATION_DOC_VERSIONS: 'national/programmeSl/getVerificationDocVersions',
+  VERIFICATION_DOC_BY_VERSION: 'national/programmeSl/getVerificationDocByVersion',
+  VERIFICATION_DOC_LAST_VERSION: 'national/programmeSl/getVerificationDocLastVersion',
+  VERIFY_VERIFICATION_REPORT: 'national/verification/verifyVerificationReport',
+  CREATE_VERIFICATION_REPORT: 'national/verification/createVerificationReport',
+  VERIFICATION_HISTORY_BY_ID: (programmeId: string) =>
+    `national/verification?programmeId=${programmeId}`,
+  //MONITORING
+  VERIFY_MONITORING_REPORT: 'national/verification/verifyMonitoringReport',
+  CREATE_MONITORING_REPORT: 'national/verification/createMonitoringReport',
+  //NDC
+  NDC_ACTION: 'national/programme/addNDCAction',
+  NDC_ACTION_HISTORY: 'national/programme/queryNdcActions',
+  NDC_ACTIONS_DOWNLOAD: 'national/programme/queryNdcActions/download',
+  //NOTIFICATION
+  REJECT_NOTIFICATION_FORM: 'national/programmeSl/inf/reject',
+  APPROVE_NOTIFICATION_FORM: 'project/inf/approve',
+  //PROPOSAL
+  REJECT_PROPOSAL: 'project/proposal/reject',
+  APPROVE_PROPOSAL: 'national/programmeSl/proposal/approve',
+  CREATE_PROJECT_PROPOSAL: 'national/programmeSl/createProjectProposal',
+  //CMA
+  REJECT_CMA: 'national/programmeSl/cma/reject',
+  APPROVE_CMA: 'national/programmeSl/cma/approve',
+  CMA_CREATION: 'national/programmeSl/createCMA',
+  //TRANSFER
+  TRANSFER_ACTION: 'national/programme/',
+  TRANSFER_ON_FREEZE: 'national/Settings/update',
+  TRANSFER_QUERY: 'national/programme/transferQuery',
+  TRANSFER_DOWNLOAD: 'national/programme/transfers/download',
+  CREDIT_RETIRE_TRANSFER_ACTION: `national/retire/create`,
+  PROGRAM_TRANSFERS: 'national/retire/query',
+  CANCEL_TRANSFER_REQUEST: 'national/retire/status',
+  TRANSFER_BY_PROGRAMMEID: (programmeId: string) =>
+    `national/programme/transfersByProgrammeId?programmeId=${programmeId}`,
+  PROGRAMME_HISTORY_BY_ID: (id: string) => `national/logs?programmeId=${id}`,
+  // TRANSFER_FORZEN_STATUS: (isTransferFrozen:string) => `national/Settings/query?id=${isTransferFrozen}`
+  TRANSACTION_RECORDS_WITHOUT_TIME_RANGE: 'stats/national-accounting/query',
+  //DASHBOARD
+  ALL_PROGRAMS_AGG_CHART_STATS: 'stats/programme/agg',
+  TOTAL_PROGRAM_COUNT: 'stats/programme/totalSLProjects',
+  TOTAL_ISSUED_CREDITS: 'stats/programme/totalIssuedCredits',
+  TOTAL_CREDITS: 'stats/national-accounting/total',
+  CREDITS_BY_STATUS: 'stats/programme/queryCreditsByStatus',
+  CREDITS_BY_DATE: 'stats/programme/queryCreditsByDate',
+  CREDITS_BY_PURPOSE: 'stats/programme/queryCreditsByPurpose',
+  COUNTRY_CREDIT_RECORDS: 'stats/national-accounting/query-by-country',
+  TOTAL_RETIERED_CREDITS: 'stats/programme/totalRetiredCredits',
+  RETIREMENTS_BY_DATE: 'stats/programme/queryRetirementsByDate',
+  //SIGN
+  SIGNS_UPDATE: 'national/Settings/signs/update',
+  CEO_SIGN: (ceoSign: string) => `national/Settings/query?id=${ceoSign}`,
+  CHAIRMAN_SIGN: (chairmanSign: string) => `national/Settings/query?id=${chairmanSign}`,
+  PREVIEW_CERTIFICATE: (type: string) => `national/Settings/certificates?type=${type}`,
+  //VALIDATION
+  CREATE_VALIDATION_AGGREMENT: 'national/programmeSl/createValidationAgreement',
+  CREATE_VALIIDATION_REPORT: 'national/programmeSL/validation/create',
+  REJECT_VALIDATION: 'national/programmeSl/validation/reject',
+  APPROVE_VALIDATION: 'national/programmeSl/validation/approve',
+  POPUP_ACTION: (endpoint: string) => `national/programme/${endpoint}`,
 };

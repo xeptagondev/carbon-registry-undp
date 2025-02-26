@@ -19,6 +19,7 @@ const { Text } = Typography;
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Loading } from '../Loading/loading';
 import { DocumentTypeEnum } from '../../Definitions/Enums/document.type';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const ProjectProposalComponent = (props: { translator: i18n }) => {
   const { translator } = props;
@@ -51,10 +52,10 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
   const setMigratedData = async () => {
     try {
       setLoading(true);
-      const { data } = await post('national/programmeSl/getProjectById', {
+      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
         programmeId: id,
       });
-      const res = await post('national/programmeSl/getDocLastVersion', {
+      const res = await post(API_PATHS.LAST_DOC_VERSION, {
         programmeId: id,
         docType: DocumentTypeEnum.COST_QUOTATION,
       });
@@ -165,7 +166,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
 
   const getCountryList = async () => {
     try {
-      const response = await get('national/organisation/countries');
+      const response = await get(API_PATHS.COUNTRY_LIST);
       if (response.data) {
         const alpha2Names = response.data.map((item: any) => {
           return item.alpha2;
@@ -380,7 +381,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
     const getViewData = async () => {
       if (isView) {
         try {
-          const res = await post('national/programmeSl/getDocLastVersion', {
+          const res = await post(API_PATHS.LAST_DOC_VERSION, {
             programmeId: id,
             docType: 'projectProposal',
           });
@@ -557,7 +558,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
 
     try {
       setLoading(true);
-      const res = await post('national/programmeSl/createProjectProposal', tempValues);
+      const res = await post(API_PATHS.CREATE_PROJECT_PROPOSAL, tempValues);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
