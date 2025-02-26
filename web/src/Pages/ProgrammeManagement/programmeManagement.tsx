@@ -24,7 +24,7 @@ const ProgrammeManagement = () => {
   ];
 
   const onNavigateToProgrammeView = (record: any) => {
-    navigate(`/programmeManagement/view/${record.refId}`, { state: { record } });
+    navigate(`/programmeManagement/view/${record.id}`, { state: { record } });
   };
 
   const onClickAddProgramme = () => {

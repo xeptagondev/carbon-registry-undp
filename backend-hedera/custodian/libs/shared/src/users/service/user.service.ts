@@ -51,6 +51,7 @@ import { DataExportService } from '@app/shared/util/service/data-export.service'
 import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
 import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -399,7 +400,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     await this.guardianService.createInvitation(
                         reqUser?.email,
                         this.utilService.getBlock(
-                            this.configService.get('blocks.userCreateInvite'),
+                            GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
                         ),
                         {
                             action: 'invite',
@@ -414,7 +415,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.email,
                     groupTypeUser.password,
                     this.utilService.getBlock(
-                        this.configService.get('blocks.createGroupType'),
+                        GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
                     ),
                     {
                         invitation: inviteResponse.invitation,
@@ -436,9 +437,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.guardianService.createUser(
                     userDto.email,
                     user.password,
-                    this.utilService.getBlock(
-                        this.configService.get('blocks.createUser'),
-                    ),
+                    this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_USER),
                     {
                         document: {
                             name: userDto.name,
@@ -517,7 +516,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.email,
                     groupTypeUser.password,
                     this.utilService.getBlock(
-                        this.configService.get('blocks.createGroupType'),
+                        GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
                     ),
                     {
                         group: userDto.company.companyRole,
@@ -572,15 +571,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     }
                 }
                 const blockName = orgType.multiple
-                    ? 'blocks.createMultipleOrganization'
-                    : 'blocks.createSingleOrganization';
+                    ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
+                    : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
                 createOrganizationResponse =
                     await this.guardianService.createOrganization(
                         userDto.email,
                         groupUser.password,
-                        this.utilService.getBlock(
-                            this.configService.get(blockName),
-                        ),
+                        this.utilService.getBlock(blockName),
                         {
                             document: {
                                 name: userDto.company.name,
@@ -646,9 +643,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.guardianService.createUser(
                     userDto.email,
                     user.password,
-                    this.utilService.getBlock(
-                        this.configService.get('blocks.createUser'),
-                    ),
+                    this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_USER),
                     {
                         document: {
                             name: userDto.name,
@@ -1279,7 +1274,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async getAdminsByIds(ids: number[]): Promise<UsersEntity[]> {
+    async getAdminsByIds(ids: string[]): Promise<UsersEntity[]> {
         return this.usersRepository.find({
             where: {
                 organization: { id: In(ids) },
