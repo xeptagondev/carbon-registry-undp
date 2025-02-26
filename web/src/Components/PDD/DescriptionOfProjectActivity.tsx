@@ -1,14 +1,8 @@
 import { Button, Col, DatePicker, Form, Input, Radio, Row, Select, Upload } from 'antd';
 import { useEffect, useState } from 'react';
-// import { CustomStepsProps } from './StepProps';
 import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import TextArea from 'antd/lib/input/TextArea';
-import PhoneInput, {
-  formatPhoneNumber,
-  formatPhoneNumberIntl,
-  isPossiblePhoneNumber,
-  Country,
-} from 'react-phone-number-input';
+
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import GetLocationMapComponent from '../Maps/GetLocationMapComponent';
 import moment from 'moment';

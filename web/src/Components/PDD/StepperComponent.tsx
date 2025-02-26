@@ -31,12 +31,13 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import ApprovalAndAuthoriziation from './ApprovalAndAuthoriziation';
 import StartDateCreditingPeriod from './StartDateCreditingPeriod';
 import { API_PATHS } from '../../Config/apiConfig';
+import Monitoring from './Monitoring';
 
 const CMA_STEPS = {};
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(1);
+  const [current, setCurrent] = useState(2);
 
   const navigate = useNavigate();
 
@@ -369,6 +370,15 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           disableFields={disableFields}
         />
+        // <Monitoring
+        //   next={next}
+        //   prev={prev}
+        //   form={form4}
+        //   current={current}
+        //   t={t}
+        //   handleValuesUpdate={handleValuesUpdate}
+        //   disableFields={disableFields}
+        // />
       ),
     },
     {

@@ -19,7 +19,7 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
   };
   return (
     <>
-      {current === 3 && (
+      {current === 5 && (
         <div>
           <div className="step-form-container">
             <Form
@@ -38,7 +38,7 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
             >
               <>
                 <LabelWithTooltip
-                  label={`3.1 ${t('CMAForm:stakeHolderConsultationProcess')}`}
+                  label={`${t('PDD:stakeHolderConsultationProcess')}`}
                   required={true}
                   tooltipPosition={TooltipPostion.bottom}
                   tooltipWidth={700}
@@ -108,7 +108,7 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
                           value === undefined
                         ) {
                           throw new Error(
-                            `${t('CMAForm:stakeHolderConsultationProcess')} ${t('isRequired')}`
+                            `${t('PDD:stakeHolderConsultationProcess')} ${t('isRequired')}`
                           );
                         }
                       },
@@ -121,7 +121,7 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
 
               <Form.Item
                 className="full-width-form-item"
-                label={`3.2 ${t('CMAForm:summaryOfCommentsRecieved')}`}
+                label={`${t('PDD:summaryOfCommentsRecieved')}`}
                 name="summaryOfCommentsRecieved"
                 rules={[
                   {
@@ -136,9 +136,7 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
                         value === null ||
                         value === undefined
                       ) {
-                        throw new Error(
-                          `${t('CMAForm:summaryOfCommentsRecieved')} ${t('isRequired')}`
-                        );
+                        throw new Error(`${t('PDD:summaryOfCommentsRecieved')} ${t('isRequired')}`);
                       }
                     },
                   },
@@ -146,14 +144,14 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
               >
                 <TextArea
                   rows={4}
-                  placeholder={`${t('CMAForm:summaryOfCommentsRecievedPlaceholder')}`}
+                  // placeholder={`${t('PDD:summaryOfCommentsRecievedPlaceholder')}`}
                   disabled={disableFields}
                 />
               </Form.Item>
 
               <Form.Item
                 className="full-width-form-item"
-                label={`3.3 ${t('CMAForm:considerationOfCommentsRecieved')}`}
+                label={`${t('PDD:considerationOfCommentsRecieved')}`}
                 name="considerationOfCommentsRecieved"
                 rules={[
                   {
@@ -169,7 +167,7 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t('CMAForm:considerationOfCommentsRecieved')} ${t('isRequired')}`
+                          `${t('PDD:considerationOfCommentsRecieved')} ${t('isRequired')}`
                         );
                       }
                     },
@@ -178,18 +176,18 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
               >
                 <TextArea
                   rows={4}
-                  placeholder={`${t('CMAForm:considerationOfCommentsRecievedPlaceholder')}`}
+                  // placeholder={`${t('PDD:considerationOfCommentsRecievedPlaceholder')}`}
                   disabled={disableFields}
                 />
               </Form.Item>
 
               <Row justify={'end'} className="step-actions-end">
                 <Button danger size={'large'} onClick={prev}>
-                  {t('CMAForm:prev')}
+                  {t('PDD:prev')}
                 </Button>
                 {disableFields ? (
                   <Button type="primary" onClick={next}>
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 ) : (
                   <Button
@@ -198,7 +196,7 @@ const LocalStakeholderConsultation = (props: CustomStepsProps) => {
                     htmlType={'submit'}
                     // onClick={next}
                   >
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 )}
               </Row>
