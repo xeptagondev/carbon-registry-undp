@@ -10,6 +10,7 @@ import moment from 'moment';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { API_PATHS } from '../../Config/apiConfig';
 
 export const ProjectDetailsStep = (props: any) => {
   const {
@@ -33,7 +34,7 @@ export const ProjectDetailsStep = (props: any) => {
     : 'pk.eyJ1IjoicGFsaW5kYSIsImEiOiJjbGMyNTdqcWEwZHBoM3FxdHhlYTN4ZmF6In0.KBvFaMTjzzvoRCr1Z1dN_g';
 
   const getCountryList = async () => {
-    const response = await get('national/organisation/countries');
+    const response = await get(API_PATHS.COUNTRY_LIST);
     if (response.data) {
       setCountryList(response.data);
     }
