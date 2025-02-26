@@ -62,6 +62,7 @@ import { Sector } from '../../Definitions/Enums/sector.enum';
 import { LegendItem } from '../LegendItem/legendItem';
 import { MapComponent } from '../Maps/mapComponent';
 import { StasticCard } from '../StatisticsCard/statisticsCard';
+import { API_PATHS } from '../../Config/apiConfig';
 const { RangePicker } = DatePicker;
 
 export const RegistryDashboardComponent = (props: any) => {
@@ -544,7 +545,7 @@ export const RegistryDashboardComponent = (props: any) => {
     setLoadingCharts(true);
     try {
       const response: any = await post(
-        'stats/programme/agg',
+        API_PATHS.ALL_PROGRAMS_AGG_CHART_STATS,
         getAllChartsParams(),
         undefined,
         statServerUrl
@@ -901,7 +902,7 @@ export const RegistryDashboardComponent = (props: any) => {
     setLoadingWithoutTimeRange(true);
     try {
       const response: any = await post(
-        'stats/programme/agg',
+        API_PATHS.ALL_PROGRAMS_AGG_CHART_STATS,
         getAllProgrammeAnalyticsStatsParamsWithoutTimeRange(),
         undefined,
         statServerUrl
@@ -1025,7 +1026,7 @@ export const RegistryDashboardComponent = (props: any) => {
     const pieSeriesCreditsCerifiedData: any[] = [];
     try {
       const response: any = await post(
-        'stats/programme/agg',
+        API_PATHS.ALL_PROGRAMS_AGG_CHART_STATS,
         getAllProgrammeAnalyticsStatsParams(),
         undefined,
         statServerUrl
@@ -1726,7 +1727,7 @@ ${total}
   };
   const fetchProgrammeIds = async () => {
     try {
-      const responses = await post('national/programme/queryDocs', {
+      const responses = await post(API_PATHS.PROGRAMME_DOCS, {
         page: 1,
         size: 100,
         filterAnd: [

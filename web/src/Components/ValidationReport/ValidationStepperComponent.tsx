@@ -19,6 +19,7 @@ import ValidationReportAppendix from './ValidationReportAppendix';
 import { projectScopeList } from './validationReportHelper';
 import { extractFilePropertiesFromLink } from '../../Utils/utilityHelper';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { API_PATHS } from '../../Config/apiConfig';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -86,7 +87,7 @@ const StepperComponent = (props: any) => {
     };
 
     try {
-      const res = await post('national/programmeSL/validation/create', validationData);
+      const res = await post(API_PATHS.CREATE_VALIIDATION_REPORT, validationData);
       console.log(res);
       if (res?.response?.data?.statusCode === 200) {
         message.open({
@@ -140,13 +141,13 @@ const StepperComponent = (props: any) => {
 
   const getProgrammeDetailsById = async (id: string) => {
     try {
-      const { data } = await post('national/programmeSL/getProjectById', {
+      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
         programmeId: id,
       });
 
       const {
         data: { user },
-      } = await get('national/User/profile');
+      } = await get(API_PATHS.USER_PROFILE);
 
       form1.setFieldsValue({
         projectTitle: data?.title,
@@ -167,7 +168,7 @@ const StepperComponent = (props: any) => {
 
   const getCountryList = async () => {
     try {
-      const response = await get('national/organisation/countries');
+      const response = await get(API_PATHS.COUNTRY_LIST);
       if (response.data) {
         const alpha2Names = response.data.map((item: any) => {
           return item.alpha2;
@@ -183,7 +184,7 @@ const StepperComponent = (props: any) => {
     try {
       const {
         data: { content },
-      } = await post('national/programmeSL/getDocLastVersion', {
+      } = await post(API_PATHS.LAST_DOC_VERSION, {
         programmeId: id,
         docType: 'cma',
       });
@@ -361,12 +362,12 @@ const StepperComponent = (props: any) => {
     try {
       const res =
         mode === FormMode.VIEW && selectedVersion
-          ? await post('national/programmeSL/getDocByVersion', {
+          ? await post(API_PATHS.DOC_BY_VERSION, {
               programmeId: id,
               docType: 'validationReport',
               version: selectedVersion,
             })
-          : await post('national/programmeSL/getDocLastVersion', {
+          : await post(API_PATHS.LAST_DOC_VERSION, {
               programmeId: id,
               docType: 'validationReport',
             });

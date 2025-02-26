@@ -14,6 +14,7 @@ import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import GetLocationMapComponent from '../Maps/GetLocationMapComponent';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
+import { API_PATHS } from '../../Config/apiConfig';
 export const ProjectActivityStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, countries, prev, onValueChange } =
     props;
@@ -47,7 +48,7 @@ export const ProjectActivityStep = (props: any) => {
 
   const getProvinces = async () => {
     try {
-      const { data } = await post('national/location/province');
+      const { data } = await post(API_PATHS.PROVINCES);
       const tempProvinces = data.map((provinceData: any) => provinceData.provinceName);
       setProvinces(tempProvinces);
     } catch (error) {
@@ -57,7 +58,7 @@ export const ProjectActivityStep = (props: any) => {
 
   const getDistricts = async (provinceName: string, index: number) => {
     try {
-      const { data } = await post('national/location/district', {
+      const { data } = await post(API_PATHS.DISTRICT, {
         filterAnd: [
           {
             key: 'provinceName',
@@ -75,7 +76,7 @@ export const ProjectActivityStep = (props: any) => {
 
   const getDivisions = async (districtName: string, index: number) => {
     try {
-      const { data } = await post('national/location/division', {
+      const { data } = await post(API_PATHS.DIVISIONS, {
         filterAnd: [
           {
             key: 'districtName',
@@ -94,7 +95,7 @@ export const ProjectActivityStep = (props: any) => {
 
   const getCities = async (division: string, index: number) => {
     try {
-      const { data } = await post('national/location/city', {
+      const { data } = await post(API_PATHS.CITIES, {
         filterAnd: [
           {
             key: 'divisionName',

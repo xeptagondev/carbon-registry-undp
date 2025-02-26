@@ -35,6 +35,7 @@ import { RcFile } from 'antd/lib/upload';
 import { PURPOSE_CREDIT_DEVELOPMENT } from '../AddNewProgramme/ProgrammeCreationComponent';
 import GetMultipleLocationsMapComponent from '../Maps/GetMultipleLocationsMapComponent';
 import { Loading } from '../Loading/loading';
+import { API_PATHS } from '../../Config/apiConfig';
 
 const SiteCheckListComponent = (props: { translator: i18n }) => {
   const [form] = useForm();
@@ -60,7 +61,7 @@ const SiteCheckListComponent = (props: { translator: i18n }) => {
   const getDataToPopulate = async (programmeId: any) => {
     setLoading(true);
     try {
-      const { data } = await post('national/programmeSL/getProjectById', {
+      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
         programmeId: programmeId,
       });
 
@@ -95,7 +96,7 @@ const SiteCheckListComponent = (props: { translator: i18n }) => {
 
   const getCountryList = async () => {
     try {
-      const response = await get('national/organisation/countries');
+      const response = await get(API_PATHS.COUNTRY_LIST);
       if (response.data) {
         const alpha2Names = response.data.map((item: any) => {
           return item.alpha2;
@@ -214,7 +215,7 @@ const SiteCheckListComponent = (props: { translator: i18n }) => {
       if (isView) {
         setLoading(true);
         try {
-          const res = await post('national/programmeSl/getDocLastVersion', {
+          const res = await post(API_PATHS.LAST_DOC_VERSION, {
             programmeId: id,
             docType: 'siteVisitChecklist',
           });
@@ -333,7 +334,7 @@ const SiteCheckListComponent = (props: { translator: i18n }) => {
     setLoading(true);
 
     try {
-      const res = await post('national/programmeSl/cma/approve', {
+      const res = await post(API_PATHS.APPROVE_CMA, {
         programmeId: id,
         content: tempValues,
       });

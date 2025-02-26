@@ -2,9 +2,13 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { QueryDto } from '../dto/query.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class HelperService {
+    constructor(private i18n: I18nService) {}
     public mapNewWhereClausetoOldWhereClause(
         query: QueryDto,
         newToOldFieldMap: Record<string, string>,
@@ -31,6 +35,35 @@ export class HelperService {
         return query;
     }
 
+    /**
+     * Validates an object against the validation rules defined in the class.
+     *
+     * @param cls The class to validate against.
+     * @param obj The plain object to validate.
+     * @returns true if the object is valid, false otherwise.
+     */
+    public isValidInstance<T extends object>(
+        cls: { new (...args: any[]): T },
+        obj: any,
+    ): obj is T {
+        // Transform the plain object to an instance of the class.
+        const instance = plainToInstance(cls, obj);
+        // Synchronously validate the instance.
+        const errors = validateSync(instance);
+        return errors.length === 0;
+    }
+
+    public formatReqMessagesString(langTag: string, vargs: any[]) {
+        const str: any = this.i18n.t(langTag);
+        const parts: any = str.split('{}');
+        let insertAt = 1;
+        for (const arg of vargs) {
+            parts.splice(insertAt, 0, arg);
+            insertAt += 2;
+        }
+        return parts.join('');
+    }
+
     public isBase64(text: string): boolean {
         return Buffer.from(text, 'base64').toString('base64') === text;
     }
@@ -55,6 +88,16 @@ export class HelperService {
                 HttpStatus.UNAUTHORIZED,
             );
         }
+    }
+
+    public enumToString(enumObj, value) {
+        const keys = Object.keys(enumObj);
+        for (const key of keys) {
+            if (enumObj[key] === value) {
+                return key;
+            }
+        }
+        return null;
     }
 
     private prepareValue(value: any, table?: string, toLower?: boolean) {
