@@ -36,6 +36,7 @@ import { SLStatisticsCard } from './SlStatisticsCard/slStatisticsCard';
 import { CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
 import { SLCFDetailsBarChartsStatComponent } from './slcfDetailsBarChartStatsComponent';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 const { RangePicker } = DatePicker;
 
 export const SLCFDashboardComponent = (props: any) => {
@@ -928,7 +929,7 @@ export const SLCFDashboardComponent = (props: any) => {
               <Button type="primary" className="slcf-primary">
                 SLCF PROJECTS
               </Button>
-              <Link to="/dashboard/cr">
+              <Link to={ROUTES.REGISTRY_DASHBOARD}>
                 <Button className="slcf-default">ARTICLE 6.4 PROJECTS</Button>
               </Link>
             </ButtonGroup>

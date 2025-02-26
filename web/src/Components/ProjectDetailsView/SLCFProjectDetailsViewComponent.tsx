@@ -131,6 +131,7 @@ import { OrganisationSlStatus } from '../OrganisationSlStatus/organisationSlStat
 import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -670,7 +671,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const approveCMA = () => {
-    navigate(`/programmeManagement/siteVisitCheckList/${id}`);
+    navigate(ROUTES.SITE_VISIT_CHECKLIST(String(id)));
   };
   const rejectValidation = async (remark: string) => {
     try {
@@ -701,7 +702,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const navigateToMonitoringReportCreate = () => {
-    navigate(`/programmeManagement/monitoringReport/${id}`, {
+    navigate(ROUTES.MONITORING_REPORT_CREATE(String(id)), {
       state: {
         mode: FormMode.CREATE,
         docId: null,
@@ -1748,7 +1749,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     if (id) {
       getProgrammeById();
     } else {
-      navigate('/programmeManagement/viewAll', { replace: true });
+      navigate(ROUTES.VIEW_PROGRAMMES, { replace: true });
     }
     // }
 
@@ -1782,7 +1783,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   }, [data]);
 
   // const onClickedAddAction = () => {
-  //   navigate('/programmeManagement/addNdcAction', { state: { record: data } });
+  //   navigate(ROUTES.ADD_NDC_ACTION, { state: { record: data } });
   // };
 
   // const methodologyDocumentApproved = () => {

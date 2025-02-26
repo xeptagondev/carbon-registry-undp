@@ -63,6 +63,7 @@ import { LegendItem } from '../LegendItem/legendItem';
 import { MapComponent } from '../Maps/mapComponent';
 import { StasticCard } from '../StatisticsCard/statisticsCard';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 const { RangePicker } = DatePicker;
 
 export const RegistryDashboardComponent = (props: any) => {
@@ -1791,7 +1792,7 @@ ${total}
       {isMultipleDashboardsVisible && (
         <div className="systemchange-container" style={{ marginLeft: `20px` }}>
           <ButtonGroup>
-            <Link to="/dashboard">
+            <Link to={ROUTES.DASHBOARD}>
               <Button className="rgdefault">SLCF PROJECTS</Button>
             </Link>
             <Button type="primary" className="rgprimary">
