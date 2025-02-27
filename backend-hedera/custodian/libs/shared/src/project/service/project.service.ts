@@ -78,19 +78,6 @@ export class ProjectService {
         this.validateProjectParticipant(requestUser);
 
         try {
-            // const organizations = await this.guardianService.query(
-            //     requestUser.email,
-            //     this.utilService.getBlock(
-            //         GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY.GRID,
-            //     ),
-            // );
-
-            // const assignees = organizations?.data.filter((org) => {
-            //     projectDto.independentCertifiers.includes(
-            //         org?.document?.credentialSubject[0]?.refId,
-            //     );
-            // });
-
             const assignees = [];
             for (const assignee of projectDto.independentCertifiers) {
                 const org: OrganizationSchema =
@@ -463,7 +450,7 @@ export class ProjectService {
     }
 
     private async notifyProjectStageChange(
-        email: string,
+        createdBy: any,
         requestUser: JWTPayload,
         template: MailTemplateEnum,
         header: string,
@@ -473,10 +460,10 @@ export class ProjectService {
         const mailDTO: MailTemplateDTO = {
             subject: header,
             template: template,
-            to: email,
+            to: createdBy.email,
             context: {
-                userName: requestUser.userName,
-                organizationName: requestUser.organizationName,
+                userName: createdBy.name,
+                organizationName: createdBy?.organization?.name,
                 countryName: countryName,
                 projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
@@ -499,6 +486,10 @@ export class ProjectService {
         id: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
+        this.logger.log(
+            `Request received to approve project with id ${id} from user ${requestUser.userName}`,
+            this.loggerContext,
+        );
         this.validateUserAuthorization(requestUser);
 
         const infData = await this.guardianService.query(
@@ -516,11 +507,6 @@ export class ProjectService {
         };
 
         this.validateProject(updatedProject);
-
-        // const updateResponse = await this.updateProjectStage(
-        //     id,
-        //     ProjectProposalStage.APPROVED_INF,
-        // );
 
         const approveResponse = await this.guardianService.approve(
             requestUser.email,
@@ -552,7 +538,7 @@ export class ProjectService {
         );
 
         await this.notifyProjectStageChange(
-            createdBy.email,
+            createdBy,
             requestUser,
             MailTemplateEnum.INF_APPROVE,
             INF_APPROVE_HEADER,
@@ -570,6 +556,10 @@ export class ProjectService {
         remark: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
+        this.logger.log(
+            `Request received to reject project with id ${id} from user ${requestUser.userName}`,
+            this.loggerContext,
+        );
         this.validateUserAuthorization(requestUser);
 
         const infData = await this.guardianService.query(
@@ -587,11 +577,6 @@ export class ProjectService {
         };
 
         this.validateProject(updatedProject);
-
-        // const updateResponse = await this.updateProjectStage(
-        //     id,
-        //     ProjectProposalStage.APPROVED_INF,
-        // );
 
         const rejectResponse = await this.guardianService.approve(
             requestUser.email,
@@ -617,7 +602,7 @@ export class ProjectService {
             inf?.document?.credentialSubject[0]?.project?.createdBy;
 
         await this.notifyProjectStageChange(
-            createdBy.email,
+            createdBy,
             requestUser,
             MailTemplateEnum.INF_REJECT,
             INF_REJECT_HEADER,
