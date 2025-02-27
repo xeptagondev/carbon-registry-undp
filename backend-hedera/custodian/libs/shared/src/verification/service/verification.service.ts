@@ -33,6 +33,10 @@ import { FileHelperService } from '@app/shared/util/service/file-helper.service'
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { ProjectSchema } from '@app/shared/guardian/interface/guardian.schema.interface';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
+import {
+    ButtonActionEnum,
+    ButtonNameEnum,
+} from '@app/shared/guardian/enum/button-type.enum';
 
 @Injectable()
 export class VerificationService {
@@ -337,13 +341,13 @@ export class VerificationService {
             },
         );
 
-        await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.PROJECT_APPROVE_REJECT,
+            verifyReportDto.verify
+                ? ButtonActionEnum.APPROVE
+                : ButtonActionEnum.REJECT,
+            monitoringReport,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_MONITORING),
-            {
-                document: { ...monitoringReport },
-                tag: verifyReportDto.verify ? 'Button_0' : 'Button_1',
-            },
         );
 
         //send email to Project Participant
