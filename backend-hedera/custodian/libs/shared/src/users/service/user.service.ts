@@ -52,7 +52,7 @@ import { UserStateConstant } from '@app/shared/users/constants/user.state.consta
 import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
-import { OrganizationSchema } from '@app/shared/guardian/interface/guardian.schema.interface';
+import { OrganizationSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 
 @Injectable()
