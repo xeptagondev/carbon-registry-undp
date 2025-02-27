@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
-export class TaskMonitorService {
-  getHello(): string {
-    return 'Hello World!';
-  }
+export class TaskMonitorService implements OnModuleInit {
+    constructor() {}
+
+    async onModuleInit() {
+        while (true) {
+            console.log('abc');
+        }
+    }
 }
