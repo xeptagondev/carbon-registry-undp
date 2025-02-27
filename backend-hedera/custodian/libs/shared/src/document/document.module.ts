@@ -5,9 +5,9 @@ import { ProjectEntity } from '../project/entity/project.entity';
 import { ActivityEntity } from '../activity/entity/activity.entity';
 import { UsersEntity } from '../users/entity/users.entity';
 import { OrganizationEntity } from '../organization/entity/organization.entity';
-import { MailModule } from '../mail/mail.module';
 import { JwtModule } from '@nestjs/jwt';
 import { DocumentService } from './service/document.service';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
     imports: [
@@ -22,5 +22,6 @@ import { DocumentService } from './service/document.service';
         JwtModule,
     ],
     providers: [DocumentService],
+    exports: [DocumentService],
 })
 export class DocumentModule {}

@@ -1,8 +1,8 @@
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common';
-import { ProjectService } from '../../../libs/shared/src/project/service/project.service';
 import { ProjectDto } from '@app/shared/project/dto/project.dto';
+import { ProjectService } from '@app/shared/project/service/project.service';
 
 @Controller('project')
 export class ProjectController {
