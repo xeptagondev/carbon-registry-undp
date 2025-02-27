@@ -661,11 +661,6 @@ export class OrganizationService extends SuperService<
         dto: Partial<OrganizationDto>,
         requestData: JWTPayload,
     ): Promise<any> {
-        // console.log(
-        //     'update status',
-        //     requestData.userRole,
-        //     requestData.organizationRole,
-        // );
         if (
             !this.validateAccess(
                 [
@@ -702,10 +697,11 @@ export class OrganizationService extends SuperService<
                 },
             );
 
+            let isActive = false;
+
             // change the active state of the users
             for (let i = 0; i < orgEnt?.users?.length; i++) {
                 const user = orgEnt.users[i];
-                let isActive = false;
                 if (dto.state === OrganizationStateEnum.ACTIVE) {
                     isActive = true;
                 } else if (dto.state !== OrganizationStateEnum.SUSPENDED) {
@@ -727,7 +723,25 @@ export class OrganizationService extends SuperService<
                 },
             );
 
-            await queryRunner.commitTransaction();
+            // Get Organization details from Guardian
+
+            const organizationData =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgEnt.refId,
+                    requestData.email,
+                );
+
+            // Submit Status Changes to the Guardian
+
+            await this.guardianService.buttonActionRequest(
+                isActive
+                    ? ButtonNameEnum.ORGANIZATION_ACTIVE
+                    : ButtonNameEnum.ORGANIZATION_SUSPEND,
+                ButtonActionEnum.SUBMIT,
+                organizationData,
+                requestData.email,
+            );
 
             try {
                 let header = '';
@@ -769,6 +783,8 @@ export class OrganizationService extends SuperService<
             } catch (err) {
                 console.log('Email send failed for org status update', err);
             }
+
+            await queryRunner.commitTransaction();
 
             return true;
         } catch (err) {

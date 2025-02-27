@@ -586,51 +586,51 @@ export class GuardianService {
         requestUserEmail: string,
         remarks?: string,
     ): Promise<void> {
-        const buttonUrl = this.buildGuardianUrl(
-            // eslint-disable-next-line max-len
-            `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(buttonBlockName)}`,
-        );
-        const refreshToken = await this.getRefreshToken(requestUserEmail);
-        let buttonType: ButtonTypeEnum = ButtonTypeEnum.SELECTOR;
+        try {
+            const buttonUrl = this.buildGuardianUrl(
+                // eslint-disable-next-line max-len
+                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(buttonBlockName)}`,
+            );
+            const refreshToken = await this.getRefreshToken(requestUserEmail);
+            let buttonType: ButtonTypeEnum = ButtonTypeEnum.SELECTOR;
 
-        // Check if Remark Exists
-        if (remarks?.trim()) {
-            const buttonGetResponse = await axios.get(buttonUrl, {
-                headers: {
-                    Authorization: `Bearer ${await this.getAccessToken(refreshToken)}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+            // Check if Remark Exists
+            if (remarks?.trim()) {
+                const buttonGetResponse = await axios.get(buttonUrl, {
+                    headers: {
+                        Authorization: `Bearer ${await this.getAccessToken(refreshToken)}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
 
-            if (buttonGetResponse.status == HttpStatus.OK) {
-                const isRemarkButton =
-                    buttonGetResponse.data?.uiMetaData.buttons.find(
-                        (button: any) =>
-                            button?.tag === action &&
-                            button?.type === ButtonTypeEnum.SELECTOR_DIALOG,
-                    );
-                if (isRemarkButton) {
-                    buttonType = ButtonTypeEnum.SELECTOR_DIALOG;
+                if (buttonGetResponse.status == HttpStatus.OK) {
+                    const isRemarkButton =
+                        buttonGetResponse.data?.uiMetaData.buttons.find(
+                            (button: any) =>
+                                button?.tag === action &&
+                                button?.type === ButtonTypeEnum.SELECTOR_DIALOG,
+                        );
+                    if (isRemarkButton) {
+                        buttonType = ButtonTypeEnum.SELECTOR_DIALOG;
+                    }
                 }
             }
-        }
 
-        if (buttonType == ButtonTypeEnum.SELECTOR_DIALOG) {
-            if (!document.option) {
-                document.option = {};
+            if (buttonType == ButtonTypeEnum.SELECTOR_DIALOG) {
+                if (!document.option) {
+                    document.option = {};
+                }
+                if (!Array.isArray(document.option.comment)) {
+                    document.option.comment = [];
+                }
+                document.option.comment.push(remarks);
             }
-            if (!Array.isArray(document.option.comment)) {
-                document.option.comment = [];
-            }
-            document.option.comment.push(remarks);
-        }
 
-        const finalPayload: ButtonPayloadInterface = {
-            document: { ...document },
-            tag: action,
-        };
+            const finalPayload: ButtonPayloadInterface = {
+                document: { ...document },
+                tag: action,
+            };
 
-        try {
             const buttonPostResponse = await axios.post(
                 buttonUrl,
                 finalPayload,
@@ -649,6 +649,10 @@ export class GuardianService {
             }
         } catch (error) {
             await this.getGuardianError(error, 'buttonActionRequest');
+            throw new HttpException(
+                'Action Failed',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
