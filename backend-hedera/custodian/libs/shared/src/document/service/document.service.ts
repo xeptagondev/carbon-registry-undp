@@ -470,6 +470,7 @@ export class DocumentService {
             );
         } else if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
             // send email to assigned IC admins
+            let assigneeOrgEmails = [];
             const assignedICAdmins = await this.getOrgAdminEmails(
                 assigneeOrgEmails,
                 queryRunner,
