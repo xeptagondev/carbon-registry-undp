@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AddNewCompanyComponent } from '../../Components/Company/AddNewCompany/addNewCompanyComponent';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const AddNewCompany = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const AddNewCompany = () => {
     : 1048576;
 
   const onNavigateToCompanyManagement = () => {
-    navigate('/companyManagement/viewAll', { replace: true });
+    navigate(ROUTES.VIEW_ORGANIZATIONS, { replace: true });
   };
 
   return (

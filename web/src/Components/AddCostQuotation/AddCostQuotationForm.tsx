@@ -11,6 +11,7 @@ import TextArea from 'antd/lib/input/TextArea';
 import { isValidateFileType } from '../../Utils/DocumentValidator';
 import { DocType } from '../../Definitions/Enums/document.type';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 const { Text } = Typography;
 
 export const AddCostQuotationForm = (props: any) => {
@@ -28,7 +29,7 @@ export const AddCostQuotationForm = (props: any) => {
   const [form] = Form.useForm();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${id}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
   const t = translator.t;

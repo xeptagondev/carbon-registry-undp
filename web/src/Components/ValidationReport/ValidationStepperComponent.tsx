@@ -20,6 +20,7 @@ import { projectScopeList } from './validationReportHelper';
 import { extractFilePropertiesFromLink } from '../../Utils/utilityHelper';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -59,7 +60,7 @@ const StepperComponent = (props: any) => {
   });
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${programId}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(programId)));
   };
 
   const scrollToDiv = () => {

@@ -6,6 +6,7 @@ import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 export interface ResetPasswordPageProps {
   forgotPassword?: boolean;
@@ -39,7 +40,7 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
           duration: 3,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
-        navigate('/login');
+        navigate(ROUTES.LOGIN);
       } else {
         setResetError(true);
       }
@@ -52,7 +53,7 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
   };
 
   const onClickBacktoSignIn = () => {
-    navigate('/login', { replace: true });
+    navigate(ROUTES.LOGIN, { replace: true });
   };
 
   return (
