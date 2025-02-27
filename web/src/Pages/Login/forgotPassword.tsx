@@ -8,6 +8,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { userForgotPasswordProps } from '../../Definitions/Definitions/userForgotPassword.definitions';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const ForgotPassword = () => {
   const { post } = useConnection();
@@ -38,7 +39,7 @@ const ForgotPassword = () => {
   };
 
   const onClickBacktoSignIn = () => {
-    navigate('/login', { replace: true });
+    navigate(ROUTES.LOGIN, { replace: true });
   };
 
   const onChangeEmail = () => {

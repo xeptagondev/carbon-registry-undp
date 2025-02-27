@@ -4,6 +4,7 @@ import { useAbilityContext } from '../../Casl/Can';
 import { ProgrammeManagementColumns } from '../../Definitions/Enums/programme.management.columns.enum';
 import { ProgrammeManagementSlColumns } from '../../Definitions/Enums/programme.management.sl.columns.enum';
 import { SLCFProgrammeManagementComponent } from '../../Components/SLCFProgrammeManagement/SLCFProgrammeManagementComponent';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const ProgrammeManagement = () => {
   const navigate = useNavigate();
@@ -24,15 +25,15 @@ const ProgrammeManagement = () => {
   ];
 
   const onNavigateToProgrammeView = (record: any) => {
-    navigate(`/programmeManagement/view/${record.id}`, { state: { record } });
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(record.id), { state: { record } });
   };
 
   const onClickAddProgramme = () => {
-    navigate('/programmeManagement/addProgramme');
+    navigate(ROUTES.ADD_PROGRAMME);
   };
 
   const onClickAddInvestment = () => {
-    navigate('/programmeManagement/addInvestment');
+    navigate(ROUTES.ADD_INVESTMENT_TO_PROGRAMME);
   };
 
   return (

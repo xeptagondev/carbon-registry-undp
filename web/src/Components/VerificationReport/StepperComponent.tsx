@@ -19,6 +19,7 @@ import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions'
 import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 const StepperComponent = (props: any) => {
   const { useLocation, translator, countries, selectedVersion, handleDocumentStatus } = props;
   const navigationLocation = useLocation();
@@ -51,7 +52,7 @@ const StepperComponent = (props: any) => {
   };
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${id}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
   const approveOrReject = async (verify: boolean, remark?: string) => {
@@ -72,7 +73,7 @@ const StepperComponent = (props: any) => {
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
-        navigate(`/programmeManagement/view/${id}`);
+        navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
       }
     } catch (error: any) {
       if (error && error.errors && error.errors.length > 0) {
@@ -182,7 +183,7 @@ const StepperComponent = (props: any) => {
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
-          navigate(`/programmeManagement/view/${id}`);
+          navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
         }
       } catch (error: any) {
         if (error && error.errors && error.errors.length > 0) {
