@@ -1,5 +1,6 @@
 export default () => ({
     country: process.env.COUNTRY,
+    countryCode: process.env.COUNTRY_CODE || 'NG',
     url: process.env.URL,
     backendHost: process.env.BACKEND_HOST || 'http://localhost:3000',
     docGenerate: {
@@ -41,14 +42,6 @@ export default () => ({
     },
     guardian: {
         url: process.env.GUARDIAN_URL || 'http://3.93.78.104:3000',
-        login: '/api/v1/accounts/login',
-        register: '/api/v1/accounts/register',
-        accessToken: '/api/v1/accounts/access-token',
-        profileUpdate: '/api/v1/profiles/push',
-        changePassword: '/api/v1/accounts/change-password',
-        policyAsign1: '/api/v1/permissions/users',
-        policyAsign2: '/policies/assign',
-        policies: '/api/v1/policies/',
     },
     policy: {
         id: process.env.POLICY_ID,
@@ -58,19 +51,6 @@ export default () => ({
         username: process.env.STANDARD_REGISTRY_USERNAME,
         password: process.env.STANDARD_REGISTRY_PASSWORD,
         did: process.env.STANDARD_REGISTRY_DID,
-    },
-    blocks: {
-        createGroupType: 'create_organizations',
-        createSingleOrganization: 'single_organizations_creation_form',
-        createMultipleOrganization: 'multiple_organizations_creation_form',
-        createUser: 'user_creation_form',
-        userCreateInvite: 'user_create_invite',
-        appoveOrganization: 'multiple_organizations_approve_reject_buttons',
-        createProject: 'project_creation_form',
-        projectQuery: 'project_approve_grid',
-        userQuery: 'user_grid',
-        organizationQuery: 'multiple_organizations_approve_grid',
-        approveProject: 'project_approve_reject_buttons',
     },
     metadata: {
         approve: {

@@ -16,6 +16,7 @@ import { DocumentModule } from './document/document.module';
 import { OrganizationAppModule } from './organization/organization.module';
 import { ProjectAppModule } from './project/project.module';
 import { UserAppModule } from './user/user.module';
+import { VerificationAppModule } from './verification/verification.module';
 
 @Module({
     imports: [
@@ -39,6 +40,7 @@ import { UserAppModule } from './user/user.module';
         ProjectAppModule,
         LocationAppModule,
         DocumentModule,
+        VerificationAppModule,
     ],
     controllers: [AppController],
     providers: [AppService],

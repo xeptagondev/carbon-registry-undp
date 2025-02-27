@@ -829,7 +829,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   allowClear
                                 >
                                   {independentCertifiers.map((ic: any) => (
-                                    <Select.Option value={ic.id}>{ic.name}</Select.Option>
+                                    <Select.Option value={ic.refId}>{ic.name}</Select.Option>
                                   ))}
                                 </Select>
                               </Form.Item>

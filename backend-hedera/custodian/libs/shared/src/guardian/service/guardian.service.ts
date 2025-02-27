@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
@@ -12,12 +12,17 @@ import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Repository } from 'typeorm';
 import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
 import { GUARDIAN_ERROR } from '../constant/guardian-error.constant';
+import { GUARDIAN_API } from '../constant/guardian-api-blocks.contant';
+import { GridTypeEnum } from '../enum/grid-type.enum';
+import { GridInterface } from '../interface/guardian.grid.interface';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export class GuardianService {
     constructor(
         private readonly configService: ConfigService,
         private readonly auditService: AuditService,
+        private readonly utilService: UtilService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
     ) {}
@@ -49,9 +54,7 @@ export class GuardianService {
 
     async accessToken(refreshToken: string) {
         const accessTokenResponse = await axios.post(
-            `${this.configService.get('guardian.url')}${this.configService.get(
-                'guardian.accessToken',
-            )}`,
+            `${this.configService.get('guardian.url')}${GUARDIAN_API.ACCESS_TOKEN}`,
             {
                 refreshToken: refreshToken,
             },
@@ -65,9 +68,7 @@ export class GuardianService {
 
     private async getAccessToken(refreshToken: string): Promise<string> {
         try {
-            const url = `${this.configService.get('guardian.url')}${this.configService.get(
-                'guardian.accessToken',
-            )}`;
+            const url = `${this.configService.get('guardian.url')}${GUARDIAN_API.ACCESS_TOKEN}`;
             const accessTokenResponse = await axios.post(url, {
                 refreshToken: refreshToken,
             });
@@ -79,12 +80,11 @@ export class GuardianService {
 
     public async registerUser(email: string, password: string): Promise<any> {
         try {
-            const url = this.buildGuardianUrl(
-                this.configService.get('guardian.register'),
-            );
+            const url = this.buildGuardianUrl(GUARDIAN_API.REGISTER);
             await axios.post(url, {
                 username: email,
                 password,
+                // eslint-disable-next-line camelcase
                 password_confirmation: password,
                 role: 'USER',
             });
@@ -105,7 +105,7 @@ export class GuardianService {
                 username: email,
                 password: hashedPass,
             });
-            const url = `${this.buildGuardianUrl(this.configService.get('guardian.profileUpdate'))}/${email}`;
+            const url = `${this.buildGuardianUrl(GUARDIAN_API.PROFILE_UPDATE)}/${email}`;
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
             );
@@ -142,9 +142,7 @@ export class GuardianService {
     ): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
-                `${this.configService.get('guardian.policyAsign1')}/${email}${this.configService.get(
-                    'guardian.policyAsign2',
-                )}`,
+                `${GUARDIAN_API.POLICY_ASSIGN_ONE}/${email}${GUARDIAN_API.POLICY_ASSIGN_TWO}`,
             );
 
             const userLoginResponse = await this.login({
@@ -233,7 +231,358 @@ export class GuardianService {
         }
     }
 
-    public async createProject(
+    public async getGridDataUsingRefId(
+        grid: GridTypeEnum,
+        refId: string,
+        email: string,
+    ): Promise<any> {
+        let gridApis: GridInterface;
+
+        switch (grid) {
+            case GridTypeEnum.USER_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.USER_QUERY;
+                break;
+            case GridTypeEnum.ORGANIZATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY;
+                break;
+            case GridTypeEnum.PROJECT_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.PROJECT_QUERY;
+                break;
+            case GridTypeEnum.INF_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.INF_QUERY;
+                break;
+            case GridTypeEnum.PDD_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.PDD_QUERY;
+                break;
+            case GridTypeEnum.VALIDATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.VALIDATION_QUERY;
+                break;
+            case GridTypeEnum.ACTIVITY_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.ACTIVITY_QUERY;
+                break;
+            case GridTypeEnum.MONITORING_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.MONITORING_QUERY;
+                break;
+            case GridTypeEnum.VERIFICATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.VERIFICATION_QUERY;
+                break;
+            default:
+                throw new Error(`Unsupported grid type: ${grid}`);
+        }
+
+        const user = await this.usersRepository.findOne({
+            where: { email: email },
+        });
+
+        const token = await this.getAccessToken(user.refreshToken);
+        const policyId = this.configService.get('policy.id');
+
+        const refIdFilterUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.FILTER_REF_ID)}`,
+        );
+
+        const notStatusFilterUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.FILTER_NOT_STATUS)}`,
+        );
+
+        const gridUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.GRID)}`,
+        );
+
+        const notStatusFilterResponse = await axios.get(notStatusFilterUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        let activeFilterResponse: AxiosResponse;
+        if (notStatusFilterResponse.status === HttpStatus.OK) {
+            activeFilterResponse = await axios.post(
+                notStatusFilterUrl,
+                { filterValue: 'REVOKED' },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                },
+            );
+            if (activeFilterResponse.status !== HttpStatus.OK) {
+                throw new Error('Failed to set the Filter');
+            }
+        }
+
+        const filterResponse = await axios.post(
+            refIdFilterUrl,
+            { filterValue: refId },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            },
+        );
+        if (filterResponse.status !== HttpStatus.OK) {
+            throw new Error('Failed to set the Filter');
+        }
+
+        const gridResponse = await axios.get(gridUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (gridResponse.status !== HttpStatus.OK) {
+            throw new Error('Failed to fetch grid data');
+        }
+
+        const fullVCDocument = gridResponse.data?.data.find((response: any) => {
+            return response?.document?.credentialSubject[0]?.refId === refId;
+        });
+
+        if (!fullVCDocument) {
+            throw new Error('No document found for the given refId');
+        }
+
+        return fullVCDocument.document?.credentialSubject[0];
+    }
+
+    public async getGridDocumentUsingRefId(
+        grid: GridTypeEnum,
+        refId: string,
+        email: string,
+    ): Promise<any> {
+        let gridApis: GridInterface;
+
+        switch (grid) {
+            case GridTypeEnum.USER_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.USER_QUERY;
+                break;
+            case GridTypeEnum.ORGANIZATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY;
+                break;
+            case GridTypeEnum.PROJECT_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.PROJECT_QUERY;
+                break;
+            case GridTypeEnum.INF_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.INF_QUERY;
+                break;
+            case GridTypeEnum.PDD_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.PDD_QUERY;
+                break;
+            case GridTypeEnum.VALIDATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.VALIDATION_QUERY;
+                break;
+            case GridTypeEnum.ACTIVITY_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.ACTIVITY_QUERY;
+                break;
+            case GridTypeEnum.MONITORING_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.MONITORING_QUERY;
+                break;
+            case GridTypeEnum.VERIFICATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.VERIFICATION_QUERY;
+                break;
+            default:
+                throw new Error(`Unsupported grid type: ${grid}`);
+        }
+
+        const user = await this.usersRepository.findOne({
+            where: { email: email },
+        });
+
+        const token = await this.getAccessToken(user.refreshToken);
+        const policyId = this.configService.get('policy.id');
+
+        const refIdFilterUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.FILTER_REF_ID)}`,
+        );
+
+        const notStatusFilterUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.FILTER_NOT_STATUS)}`,
+        );
+
+        const gridUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.GRID)}`,
+        );
+
+        const notStatusFilterResponse = await axios.get(notStatusFilterUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        let activeFilterResponse: AxiosResponse;
+        if (notStatusFilterResponse.status === HttpStatus.OK) {
+            activeFilterResponse = await axios.post(
+                notStatusFilterUrl,
+                { filterValue: 'REVOKED' },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                },
+            );
+            if (activeFilterResponse.status !== HttpStatus.OK) {
+                throw new Error('Failed to set the Filter');
+            }
+        }
+
+        const filterResponse = await axios.post(
+            refIdFilterUrl,
+            { filterValue: refId },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            },
+        );
+        if (filterResponse.status !== HttpStatus.OK) {
+            throw new Error('Failed to set the Filter');
+        }
+
+        const gridResponse = await axios.get(gridUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (gridResponse.status !== HttpStatus.OK) {
+            throw new Error('Failed to fetch grid data');
+        }
+
+        const fullVCDocument = gridResponse.data?.data.find((response: any) => {
+            return response?.document?.credentialSubject[0]?.refId === refId;
+        });
+
+        if (!fullVCDocument) {
+            throw new Error('No document found for the given refId');
+        }
+
+        return fullVCDocument;
+    }
+
+    public async getGridHistoryByRefId(
+        grid: GridTypeEnum,
+        refId: string,
+        email: string,
+    ): Promise<any> {
+        let gridApis: GridInterface;
+
+        switch (grid) {
+            case GridTypeEnum.USER_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.USER_QUERY;
+                break;
+            case GridTypeEnum.ORGANIZATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY;
+                break;
+            case GridTypeEnum.PROJECT_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.PROJECT_QUERY;
+                break;
+            case GridTypeEnum.INF_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.INF_QUERY;
+                break;
+            case GridTypeEnum.PDD_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.PDD_QUERY;
+                break;
+            case GridTypeEnum.VALIDATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.VALIDATION_QUERY;
+                break;
+            case GridTypeEnum.ACTIVITY_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.ACTIVITY_QUERY;
+                break;
+            case GridTypeEnum.MONITORING_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.MONITORING_QUERY;
+                break;
+            case GridTypeEnum.VERIFICATION_GRID:
+                gridApis = GUARDIAN_API.BLOCKS.VERIFICATION_QUERY;
+                break;
+            default:
+                throw new Error(`Unsupported grid type: ${grid}`);
+        }
+
+        const user = await this.usersRepository.findOne({
+            where: { email: email },
+        });
+
+        const token = await this.getAccessToken(user.refreshToken);
+        const policyId = this.configService.get('policy.id');
+
+        const refIdFilterUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.FILTER_REF_ID)}`,
+        );
+
+        const notStatusFilterUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.FILTER_NOT_STATUS)}`,
+        );
+
+        const gridUrl = this.buildGuardianUrl(
+            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.GRID)}`,
+        );
+
+        const notStatusFilterResponse = await axios.get(notStatusFilterUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        let activeFilterResponse: AxiosResponse;
+        if (notStatusFilterResponse.status === HttpStatus.OK) {
+            activeFilterResponse = await axios.post(
+                notStatusFilterUrl,
+                { filterValue: 'REVOKED' },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                },
+            );
+            if (activeFilterResponse.status !== HttpStatus.OK) {
+                throw new Error('Failed to set the Filter');
+            }
+        }
+
+        const filterResponse = await axios.post(
+            refIdFilterUrl,
+            { filterValue: refId },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            },
+        );
+        if (filterResponse.status !== HttpStatus.OK) {
+            throw new Error('Failed to set the Filter');
+        }
+
+        const gridResponse = await axios.get(gridUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (gridResponse.status !== HttpStatus.OK) {
+            throw new Error('Failed to fetch grid data');
+        }
+
+        const fullVCDocument = gridResponse.data?.data.find((response: any) => {
+            return response?.document?.credentialSubject[0]?.refId === refId;
+        });
+
+        if (!fullVCDocument) {
+            throw new Error('No document found for the given refId');
+        }
+
+        return fullVCDocument?.history;
+    }
+
+    public async createEntity(
         email: string,
         blockId: string,
         payload: any,
@@ -362,9 +711,7 @@ export class GuardianService {
     public async login(loginDto: LoginDto): Promise<any> {
         try {
             const response = await axios.post(
-                `${this.configService.get('guardian.url')}${this.configService.get(
-                    'guardian.login',
-                )}`,
+                `${this.configService.get('guardian.url')}${GUARDIAN_API.LOGIN}`,
                 loginDto,
             );
 
@@ -406,7 +753,7 @@ export class GuardianService {
             password: guardianPwChangeDto.oldPassword,
         });
 
-        const url = `${this.buildGuardianUrl(this.configService.get('guardian.changePassword'))}`;
+        const url = `${this.buildGuardianUrl(GUARDIAN_API.CHANGE_PASSWORD)}`;
         const token = await this.getAccessToken(logInDetails?.refreshToken);
         const response = await axios.post(url, guardianPwChangeDto, {
             headers: {

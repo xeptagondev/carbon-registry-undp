@@ -1,6 +1,7 @@
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 import { SuperService } from '@app/core/service/super.service';
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     ORG_DEACTIVATE_HEADER,
@@ -24,10 +25,8 @@ import { DataExportCompanyDto } from '@app/shared/util/dto/data.export.company.d
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
-import { FilterBy } from '@app/shared/util/dto/filter.by';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
-import { SortEntry } from '@app/shared/util/dto/sort.entry';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { UtilService } from '@app/shared/util/service/util.service';
@@ -434,7 +433,7 @@ export class OrganizationService extends SuperService<
             approveResponse = await this.guardianService.approve(
                 email,
                 this.utilService.getBlock(
-                    this.configService.get('blocks.appoveOrganization'),
+                    GUARDIAN_API.BLOCKS.APPROVE_ORGANIZATION,
                 ),
                 orgEntity.payload,
             );
@@ -546,7 +545,7 @@ export class OrganizationService extends SuperService<
                 approveResponse = await this.guardianService.approve(
                     refreshToken,
                     this.utilService.getBlock(
-                        this.configService.get('blocks.appoveOrganization'),
+                        GUARDIAN_API.BLOCKS.APPROVE_ORGANIZATION,
                     ),
                     orgEntity.payload,
                 );
@@ -559,7 +558,10 @@ export class OrganizationService extends SuperService<
                 {
                     id: orgEntity.id,
                 },
-                { state: OrganizationStateEnum.REJECTED },
+                {
+                    updatedTime: new Date().getTime(),
+                    state: OrganizationStateEnum.REJECTED,
+                },
             );
             return approveResponse;
         } catch (e) {
@@ -615,11 +617,12 @@ export class OrganizationService extends SuperService<
             logo: dto.logo,
             provinces: dto.provinces,
             address: dto.address,
+            updatedTime: new Date().getTime(),
         };
 
         if (
-            user.organizationRole == OrganizationTypeEnum.PROJECT_DEVELOPER ||
-            user.organizationRole == OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER ||
+            user.organizationRole === OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
             editData.paymentId = dto.paymentId;
         }
@@ -698,7 +701,10 @@ export class OrganizationService extends SuperService<
 
             await this.organizationRepository.update(
                 { id: dto.id },
-                { state: dto.state },
+                {
+                    updatedTime: new Date().getTime(),
+                    state: dto.state,
+                },
             );
 
             await queryRunner.commitTransaction();
@@ -707,10 +713,16 @@ export class OrganizationService extends SuperService<
                 let header = '';
                 let template;
 
-                const admins = await this.usersRepository.findBy({
-                    organization: { id: dto.id },
-                    guardianRole: { role: { name: RoleEnum.Admin } },
-                });
+                const admins = await this.usersRepository
+                    .createQueryBuilder('users')
+                    .innerJoinAndSelect('users.organization', 'organization')
+                    .innerJoinAndSelect('users.guardianRole', 'guardianRole')
+                    .innerJoinAndSelect('guardianRole.role', 'role')
+                    .where('organization.id = :id', { id: dto.id })
+                    .andWhere('role.name = :roleName', {
+                        roleName: RoleEnum.Admin,
+                    })
+                    .getMany();
 
                 const adminEmails = admins.map((user) => user.email);
 

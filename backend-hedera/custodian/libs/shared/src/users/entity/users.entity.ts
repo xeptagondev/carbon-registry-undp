@@ -1,3 +1,4 @@
+import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 import { GuardianRoleEntity } from '@app/shared/guardian-role/entity/guardian-role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
@@ -14,6 +15,9 @@ import {
 export class UsersEntity {
     @PrimaryGeneratedColumn()
     id?: number;
+
+    @Column({ name: 'ref_id', nullable: false })
+    refId?: string;
 
     @Column({ unique: true })
     email: string;
@@ -58,6 +62,9 @@ export class UsersEntity {
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
 
+    @Column({ type: 'bigint', nullable: true })
+    updatedTime: number;
+
     @OneToMany(
         () => ProjectEntity,
         (projectEntity) => projectEntity.createdBy,
@@ -71,4 +78,18 @@ export class UsersEntity {
         { nullable: true },
     )
     approvedProjects?: ProjectEntity[];
+
+    @OneToMany(
+        () => DocumentEntity,
+        (documentEntity) => documentEntity.approvedUser,
+        { nullable: true },
+    )
+    approvedDocuments?: DocumentEntity[];
+
+    @OneToMany(
+        () => DocumentEntity,
+        (documentEntity) => documentEntity.submittedUser,
+        { nullable: true },
+    )
+    submittedDocuments?: DocumentEntity[];
 }
