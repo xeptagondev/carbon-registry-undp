@@ -11,7 +11,7 @@ export enum ButtonTypeEnum {
 
 export enum ButtonNameEnum {
     ORGANIZATION_ACTIVE_REJECT = 'organizations_active_reject_buttons',
-    ORGANIZATION_ACTIVE_BUTTON = 'organizations_active_button',
+    ORGANIZATION_ACTIVE = 'organizations_active_button',
     ORGANIZATION_SUSPEND = 'organizations_suspend_button',
     ORGANIZATION_REVOKE = 'organizations_revoke_button',
     USER_DELETE = 'user_delete_button',
