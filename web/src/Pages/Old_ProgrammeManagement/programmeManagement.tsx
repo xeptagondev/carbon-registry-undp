@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAbilityContext } from '../../Casl/Can';
 import { ProgrammeManagementColumns } from '../../Definitions/Enums/programme.management.columns.enum';
 import { ProgrammeManagementComponent } from '../../Components/Programme/ProgrammeManagement/programmeManagementComponent';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const ProgrammeManagement = () => {
   const navigate = useNavigate();
@@ -24,15 +25,15 @@ const ProgrammeManagement = () => {
   ];
 
   const onNavigateToProgrammeView = (record: any) => {
-    navigate(`/programmeManagement/view/${record.programmeId}`, { state: { record } });
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(record.programmeId)), { state: { record } });
   };
 
   const onClickAddProgramme = () => {
-    navigate('/programmeManagement/addProgramme');
+    navigate(ROUTES.ADD_PROGRAMME);
   };
 
   const onClickAddInvestment = () => {
-    navigate('/programmeManagement/addInvestment');
+    navigate(ROUTES.ADD_INVESTMENT);
   };
 
   return (

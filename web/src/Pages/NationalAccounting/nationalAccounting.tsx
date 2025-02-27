@@ -32,6 +32,7 @@ import { CreditAuditLogType } from '../../Definitions/Enums/creditAuditLogType.e
 import Search from 'antd/lib/input/Search';
 import { CheckboxValueType } from 'antd/lib/checkbox/Group';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const NationalAccountingDashboard = () => {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ const NationalAccountingDashboard = () => {
   const { RangePicker } = DatePicker;
 
   const onNavigateToProgrammeView = (programmeId: any) => {
-    navigate('/programmeManagement/view/' + programmeId);
+    navigate(ROUTES.VIEW_PROGRAMME + programmeId);
   };
 
   const recordsTableColumns = [

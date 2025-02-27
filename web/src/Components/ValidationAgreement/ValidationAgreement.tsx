@@ -15,6 +15,7 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 import { Loading } from '../Loading/loading';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const ValidationAgreement = (props: { translator: i18n }) => {
   const { translator } = props;
@@ -40,7 +41,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
   const navigate = useNavigate();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${id}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
   const viewDataMapToFields = (val: any) => {

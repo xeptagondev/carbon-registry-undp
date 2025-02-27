@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AddCostQuotationForm } from '../../Components/AddCostQuotation/AddCostQuotationForm';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const CostQuotationForm = () => {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ const CostQuotationForm = () => {
   const { id } = useParams();
 
   const onNavigateToProgrammeManagementView = () => {
-    navigate('/programmeManagement/viewAll');
+    navigate(ROUTES.VIEW_PROGRAMMES);
   };
 
   return (
