@@ -73,7 +73,8 @@ export const GUARDIAN_API = {
             FILTER_STATUS: 'verification_report_status_filter',
             FILTER_NOT_STATUS: 'verification_report_not_status_filter',
         },
-        APPROVE_PROJECT: 'project_approve_reject_buttons',
+        APPROVE_REJECT_INF: 'inf_approve_reject_buttons',
+        APPROVE_REJECT_PROJECT: 'project_approve_reject_button',
         APPROVE_MONITORING: 'monitoring_report_ic_approve_reject_buttons',
     },
 };

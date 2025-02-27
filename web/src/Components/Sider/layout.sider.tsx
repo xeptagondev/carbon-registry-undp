@@ -18,6 +18,7 @@ import { LayoutSiderProps } from '../../Definitions/Definitions/layout.sider.def
 import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { Role } from '../../Definitions/Enums/role.enum';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const { Sider } = Layout;
 const { SubMenu } = Menu;
@@ -106,7 +107,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
       <div className="layout-sider-div-container">
         <div
           className="layout-sider-heading-container"
-          onClick={() => navigate('/dashboard', { replace: true })}
+          onClick={() => navigate(ROUTES.DASHBOARD, { replace: true })}
         >
           <div className="logo">
             <img src={sliderLogo} alt="slider-logo" />

@@ -18,6 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { FormMode } from '../../../Definitions/Enums/formMode.enum';
 import { ProgrammeSlU } from '../../../Definitions/Definitions/programme.definitions';
+import { ROUTES } from '../../../Config/uiRoutingConfig';
 
 export interface ProjectFormProps {
   data: any;
@@ -63,26 +64,26 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   const navigate = useNavigate();
 
   const navigateToCostQuotationView = () => {
-    navigate(`/programmeManagement/addCostQuotation/${programmeId}`, {
+    navigate(ROUTES.COST_QUOTATION_VIEW(programmeId), {
       state: { isView: true },
     });
   };
 
   const navigateToCostQuotationCreate = () => {
-    navigate(`/programmeManagement/addCostQuotation/${programmeId}`);
+    navigate(ROUTES.COST_QUOTATION_VIEW(programmeId));
   };
 
   const navigateToProposalView = () => {
-    navigate(`/programmeManagement/projectProposal/${programmeId}`, {
+    navigate(ROUTES.PROJECT_PROPOSAL_VIEW(programmeId), {
       state: { isView: true },
     });
   };
   const navigateToProposalCreate = () => {
-    navigate(`/programmeManagement/projectProposal/${programmeId}`);
+    navigate(ROUTES.PROJECT_PROPOSAL_VIEW(programmeId));
   };
 
   const navigateToSiteVisitCheckListView = () => {
-    navigate(`/programmeManagement/siteVisitCheckList/${programmeId}`, {
+    navigate(ROUTES.SITE_VISIT_REPORT_BY_PROGRAMME_ID(programmeId), {
       state: { isView: true },
     });
   };
@@ -135,32 +136,32 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   };
 
   const navigateToCMACreate = () => {
-    navigate(`/programmeManagement/cmaForm/${programmeId}`);
+    navigate(ROUTES.CMA_FORM(programmeId));
   };
 
   const navigateToCMAView = () => {
-    navigate(`/programmeManagement/cmaForm/${programmeId}`, {
+    navigate(ROUTES.CMA_FORM(programmeId), {
       state: { isView: true },
     });
   };
   const navigateToCMAEdit = () => {
-    navigate(`/programmeManagement/cmaForm/${programmeId}`, {
+    navigate(ROUTES.CMA_FORM(programmeId), {
       state: { isEdit: true },
     });
   };
 
   function navigateToValidationAgreementCreate(): void {
-    navigate(`/programmeManagement/validationAgreement/${programmeId}`);
+    navigate(ROUTES.VALIDATION_AGREEMENT(programmeId));
   }
 
   function navigateToValidationAgreementView(): void {
-    navigate(`/programmeManagement/validationAgreement/${programmeId}`, {
+    navigate(ROUTES.VALIDATION_AGREEMENT(programmeId), {
       state: { isView: true },
     });
   }
 
   function navigateToValidationReportCreate(): void {
-    navigate(`/programmeManagement/validationReport/${programmeId}`, {
+    navigate(ROUTES.VALIDATION_REPORT(programmeId), {
       state: {
         mode: FormMode.CREATE,
       },
@@ -168,7 +169,7 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   }
 
   function navigateToValidationReportEdit(): void {
-    navigate(`/programmeManagement/validationReport/${programmeId}`, {
+    navigate(ROUTES.VALIDATION_REPORT(programmeId), {
       state: {
         mode: FormMode.EDIT,
       },
@@ -176,7 +177,7 @@ export const ProjectForms: FC<ProjectFormProps> = (props: ProjectFormProps) => {
   }
 
   function navigateToValidationReportView(): void {
-    navigate(`/programmeManagement/validationReport/${programmeId}`, {
+    navigate(ROUTES.VALIDATION_REPORT(programmeId), {
       state: { mode: FormMode.VIEW },
     });
   }

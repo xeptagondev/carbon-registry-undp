@@ -1,13 +1,14 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { VerificationReportComponent } from '../../Components/VerificationReport/VerificationReportComponent';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const VerificationReport = () => {
   const navigate = useNavigate();
   const { i18n } = useTranslation(['common', 'verificationReport']);
 
   const onNavigateToProgrammeManagementView = () => {
-    navigate('/programmeManagement/viewAll');
+    navigate(ROUTES.VIEW_PROGRAMMES);
   };
 
   return (
