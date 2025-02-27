@@ -9,7 +9,6 @@ import {
     Delete,
     Query,
 } from '@nestjs/common';
-import { UserService } from '../../../libs/shared/src/users/service/user.service';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
@@ -17,6 +16,7 @@ import { PasswordUpdateDto } from '@app/shared/users/dto/password-update.dto';
 import { UserUpdateDto } from '@app/shared/users/dto/user-update.dto';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
+import { UserService } from '@app/shared/users/service/user.service';
 
 @Controller('user')
 export class UserController {
