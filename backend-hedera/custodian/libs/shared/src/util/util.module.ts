@@ -10,7 +10,13 @@ import { CounterService } from './service/counter.service';
 import { Counter } from './entity/counter.entity';
 import { CreditIssueCertificateGenerator } from './service/credit.issue.certificate.gen';
 import { DateUtilService } from './service/date.util.service';
-import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import {
+    AcceptLanguageResolver,
+    CookieResolver,
+    HeaderResolver,
+    I18nModule,
+    QueryResolver,
+} from 'nestjs-i18n';
 import * as path from 'path';
 import { UsersEntity } from '../users/entity/users.entity';
 import { InstantLogger } from './service/instant.logger.service';
@@ -26,7 +32,9 @@ import { FileHelperService } from './service/file-helper.service';
                 watch: true,
             },
             resolvers: [
-                { use: QueryResolver, options: ['lang'] },
+                new QueryResolver(['lang']),
+                new HeaderResolver(['lang']),
+                new CookieResolver(),
                 AcceptLanguageResolver,
             ],
         }),

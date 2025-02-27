@@ -7,8 +7,7 @@ import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, QueryRunner, Repository } from 'typeorm';
-import { DocumentActionDTO } from '../dto/document-action-request.dto';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
@@ -27,6 +26,7 @@ import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { DocumentActionDTO } from '../dto/document-action-request.dto';
 
 @Injectable()
 export class DocumentService {
@@ -256,12 +256,12 @@ export class DocumentService {
             1. Authorize the call
         */
         // fix
-        const OrgEmails: string[] = document.project.assignees.map(
+        const assigneeOrgEmails: string[] = document.project.assignees.map(
             (user) => user.email,
         );
 
         const assigneeAdminEmails = await this.getOrgAdminEmails(
-            OrgEmails,
+            assigneeOrgEmails,
             queryRunner,
         );
 
@@ -470,6 +470,7 @@ export class DocumentService {
             );
         } else if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
             // send email to assigned IC admins
+            let assigneeOrgEmails = [];
             const assignedICAdmins = await this.getOrgAdminEmails(
                 assigneeOrgEmails,
                 queryRunner,
