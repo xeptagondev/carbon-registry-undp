@@ -208,5 +208,6 @@
   "creditingPeriodOption2": "Renewable",
   "projectCreditingPeriodDuration": "Duration of crediting Period",
   "partiesInvolved": "Parties Involved",
-  "projectParticipant": "Project Participants"
+  "projectParticipant": "Project Participants",
+  "addProjectParticipant": "Add Project Participant"
 }

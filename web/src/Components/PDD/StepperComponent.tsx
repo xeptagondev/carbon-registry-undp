@@ -34,8 +34,6 @@ import { API_PATHS } from '../../Config/apiConfig';
 import Monitoring from './Monitoring';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 
-const CMA_STEPS = {};
-
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
   const [current, setCurrent] = useState(1);
@@ -111,52 +109,51 @@ const StepperComponent = (props: any) => {
   const getProgrammeDetailsById = async (programId: any) => {
     try {
       setLoading(true);
-      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-        programmeId: programId,
-      });
+      // const { data } = await post(API_PATHS.PROJECT_BY_ID, {
+      //   programmeId: programId,
+      // });
 
-      const {
-        data: { user },
-      } = await get(API_PATHS.USER_PROFILE);
+      // const {
+      //   data: { user },
+      // } = await get(API_PATHS.USER_PROFILE);
 
       if (!(isView || isEdit)) {
         form1.setFieldsValue({
-          title: data?.title,
-          dateOfIssue: moment(),
-          preparedBy: data?.company?.name,
-          physicalAddress: data?.company?.address,
-          email: data?.company?.email,
-          projectProponent: data?.company?.name, // changed to project participants in the UI but key is kept the same
-          telephone: data?.company?.phoneNo,
-          website: data?.company?.website,
+          // title: data?.title,
+          // dateOfIssue: moment(),
+          // preparedBy: data?.company?.name,
+          // physicalAddress: data?.company?.address,
+          // email: data?.company?.email,
+          // projectProponent: data?.company?.name, // changed to project participants in the UI but key is kept the same
+          // telephone: data?.company?.phoneNo,
+          // website: data?.company?.website,
         });
 
-        setProjectCategory(data?.projectCategory);
+        // setProjectCategory(data?.projectCategory);
         form2.setFieldsValue({
-          projectTrack: data?.purposeOfCreditDevelopment,
-          organizationName: data?.company?.name,
-          email: data?.company?.email,
-          telephone: data?.company?.phoneNo,
-          address: data?.company?.address,
-          fax: data?.company?.faxNo,
-          contactPerson: data?.contactName,
+          // projectTrack: data?.purposeOfCreditDevelopment,
+          // organizationName: data?.company?.name,
+          // email: data?.company?.email,
+          // telephone: data?.company?.phoneNo,
+          // address: data?.company?.address,
+          // fax: data?.company?.faxNo,
+          // contactPerson: data?.contactName,
+          // projectParticipants: [{ partiesInvolved: '', projectParticipant: '' }],
         });
       }
 
+      console.log('----------running form values--------', form2.getFieldsValue());
       setValues((prevVal) => ({
         ...prevVal,
-        companyId: data?.company?.companyId,
+        // companyId: data?.company?.companyId,
       }));
     } catch (error) {
-      console.log('error');
+      console.log('error', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    form2.setFieldValue('projectParticipants', [{ partiesInvolved: '', projectParticipant: '' }]);
-  }, []);
   useEffect(() => {
     const getViewData = async () => {
       if (isView || isEdit) {
@@ -287,6 +284,9 @@ const StepperComponent = (props: any) => {
   useEffect(() => {
     getCountryList();
     getProgrammeDetailsById(id);
+    form2.setFieldValue('projectParticipants', [
+      { partiesInvolved: '', projectParticipants: [{ participant: '' }] },
+    ]);
   }, []);
 
   const steps = [
