@@ -30,10 +30,15 @@ import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
+import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
+import { ProjectSchema } from '@app/shared/guardian/interface/guardian.schema.interface';
+import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 
 @Injectable()
 export class VerificationService {
+    private readonly loggerContext = 'VerificationService';
     constructor(
+        private readonly logger: InstantLogger,
         private readonly helperService: HelperService,
         private readonly dateUtilService: DateUtilService,
         private readonly mailService: MailService,
@@ -51,6 +56,11 @@ export class VerificationService {
         monitoringReportDto: MonitoringReportDto,
         requestUser: JWTPayload,
     ) {
+        this.logger.log(
+            `Request received to create monitoring report with details ${monitoringReportDto}
+             from user ${requestUser.userName}`,
+            this.loggerContext,
+        );
         if (
             requestUser.organizationRole !==
             OrganizationTypeEnum.PROJECT_DEVELOPER
@@ -67,8 +77,8 @@ export class VerificationService {
         const docContent = JSON.parse(monitoringReportDto.content);
 
         if (
-            docContent.annexures.optionalDocuments &&
-            docContent.annexures.optionalDocuments.length > 0
+            docContent?.annexures?.optionalDocuments &&
+            docContent?.annexures?.optionalDocuments.length > 0
         ) {
             const docUrls = [];
             for (const doc of docContent.annexures.optionalDocuments) {
@@ -89,8 +99,8 @@ export class VerificationService {
         }
 
         if (
-            docContent.projectActivity.projectActivityLocationsList &&
-            docContent.projectActivity.projectActivityLocationsList.length > 0
+            docContent?.projectActivity?.projectActivityLocationsList &&
+            docContent?.projectActivity?.projectActivityLocationsList.length > 0
         ) {
             for (const location of docContent.projectActivity
                 .projectActivityLocationsList) {
@@ -121,8 +131,8 @@ export class VerificationService {
         }
 
         if (
-            docContent.quantifications.optionalDocuments &&
-            docContent.quantifications.optionalDocuments.length > 0
+            docContent?.quantifications?.optionalDocuments &&
+            docContent?.quantifications?.optionalDocuments.length > 0
         ) {
             const docUrls = [];
             for (const doc of docContent.quantifications.optionalDocuments) {
@@ -152,6 +162,12 @@ export class VerificationService {
                 monitoringReportDto.programmeId
             );
         });
+        const project: ProjectSchema =
+            await this.guardianService.getGridDataUsingRefId(
+                GridTypeEnum.PROJECT_GRID,
+                monitoringReportDto.programmeId,
+                requestUser.email,
+            );
 
         const monitoringRefId = await this.counterService.incrementCount(
             CounterType.MONITORING_REPORT,
@@ -160,8 +176,8 @@ export class VerificationService {
 
         const monitoringPayload = {
             refId: monitoringRefId,
-            project: '',
-            activity: '',
+            project: project,
+            activity: activity,
             name: '',
             version: 1,
             type: DocumentEnum.MONITORING,
@@ -197,18 +213,19 @@ export class VerificationService {
                 CounterType.ACTIVITY,
                 4,
             );
+            console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$');
             await this.guardianService.createEntity(
                 requestUser.email,
                 this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_ACTIVITY),
                 {
                     document: {
                         refId: activityRefId,
-                        project: '',
-                        status: VerificationRequestStatusEnum.MONITORING_REPORT_UPLOADED,
+                        project: project,
                     },
                     ref: null,
                 },
             );
+            console.log('######');
             monitoringPayload.version = 1;
         }
 
