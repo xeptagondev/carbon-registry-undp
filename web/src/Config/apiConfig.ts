@@ -83,7 +83,7 @@ export const API_PATHS = {
   NDC_ACTION_HISTORY: 'national/programme/queryNdcActions',
   NDC_ACTIONS_DOWNLOAD: 'national/programme/queryNdcActions/download',
   //NOTIFICATION
-  REJECT_NOTIFICATION_FORM: 'national/programmeSl/inf/reject',
+  REJECT_NOTIFICATION_FORM: 'project/inf/reject',
   APPROVE_NOTIFICATION_FORM: 'project/inf/approve',
   //PROPOSAL
   REJECT_PROPOSAL: 'project/proposal/reject',
