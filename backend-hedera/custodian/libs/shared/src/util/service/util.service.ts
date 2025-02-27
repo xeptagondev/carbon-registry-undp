@@ -1,5 +1,8 @@
-import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
+import { LoginDto } from '@app/shared/users/dto/login.dto';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,8 +14,9 @@ export class UtilService {
     constructor(
         @InjectRepository(PolicyBlocksEntity)
         private readonly policyBlocksRepository: Repository<PolicyBlocksEntity>,
+        @InjectRepository(UsersEntity)
+        private readonly usersRepository: Repository<UsersEntity>,
         private readonly configService: ConfigService,
-        private readonly guardianService: GuardianService,
     ) {}
     private tagToIdMap: Record<string, string> = {};
 
@@ -28,7 +32,7 @@ export class UtilService {
                 where: { policyId: policyId },
             });
             return blocks;
-        } catch (error) {
+        } catch (_) {
             throw new Error('Failed to execute getBlocksByPolicy');
         }
     }
@@ -51,21 +55,44 @@ export class UtilService {
 
     private async loadPolicyJson() {
         try {
-            const sruLoginResponse = await this.guardianService.login({
+            const srUserLoginCredentials: LoginDto = {
                 username: this.configService.get('sru.username'),
                 password: this.configService.get('sru.password'),
+            };
+
+            const loginResponse = await axios.post(
+                `${this.configService.get('guardian.url')}${GUARDIAN_API.LOGIN}`,
+                srUserLoginCredentials,
+            );
+
+            await this.usersRepository.update(
+                {
+                    email: srUserLoginCredentials.username,
+                },
+                { refreshToken: loginResponse?.data?.refreshToken },
+            );
+
+            const user: UsersEntity = await this.usersRepository.findOne({
+                where: { email: srUserLoginCredentials.username },
             });
 
-            const refreshToken = await this.guardianService.getRefreshToken(
-                this.configService.get('sru.username'),
+            const refreshToken = user?.refreshToken;
+
+            const accessTokenResponse = await axios.post(
+                `${this.configService.get('guardian.url')}${GUARDIAN_API.ACCESS_TOKEN}`,
+                {
+                    refreshToken: refreshToken,
+                },
             );
+
             const response = await axios.get(
-                `${this.configService.get('guardian.url')}${this.configService.get(
-                    'guardian.policies',
-                )}${this.configService.get('policy.id')}`,
+                // eslint-disable-next-line max-len
+                `${this.configService.get('guardian.url')}${GUARDIAN_API.POLICIES}${this.configService.get('policy.id')}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${await this.guardianService.accessToken(refreshToken)}`,
+                        Authorization: `Bearer ${
+                            accessTokenResponse.data.accessToken
+                        }`,
                         'Content-Type': 'application/json',
                     },
                 },
@@ -142,7 +169,7 @@ export class UtilService {
                 where: { policyId: policyId, blockName: blockName },
             });
             return block;
-        } catch (error) {
+        } catch (_) {
             throw new Error('Failed to execute getBlocksByBlockName');
         }
     }

@@ -1,14 +1,12 @@
+/* eslint-disable no-magic-numbers */
 export enum CounterType {
     USER = 0,
-    PROJECT = 1,
-    ITMO = 2,
-    COMPANY = 3,
-    REPLICATE_SEQ = 4,
-    REPLICATE_SEQ_COMP = 5,
-    ASYNC_OPERATIONS = 6,
-    NDC_ACTION = 7,
-    ITMO_SYSTEM = 8,
-    PROGRAMME_SL = 9,
-    REPLICATE_SEQ_PROGRAMME_SL = 10,
-    RETIREMENT_REQUEST_SL = 11,
+    ORGANIZATION = 1,
+    PROJECT = 2,
+    INF = 3,
+    PDD = 4,
+    VALIDATION_REPORT = 5,
+    ACTIVITY = 6,
+    MONITORING_REPORT = 7,
+    VERIFICATION_REPORT = 8,
 }

@@ -6,9 +6,11 @@ export class JWTPayload {
         public userName: string,
         public email: string,
         public userId: number,
+        public userRefId: string,
         public userRole: string,
         public userState: boolean,
         public organizationId: number,
+        public organizationRefId: string,
         public organizationRole: string,
         public organizationState: OrganizationStateEnum,
     ) {}

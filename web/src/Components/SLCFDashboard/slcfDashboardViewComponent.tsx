@@ -315,9 +315,10 @@ export const SLCFDashboardComponent = (props: any) => {
         if (response?.data?.proposalStageData) {
           const combinedStage = 'PROPOSAL_PENDING';
           const combinedStages = [
-            ProjectProposalStage.SUBMITTED_COST_QUOTATION,
-            ProjectProposalStage.SUBMITTED_PROPOSAL,
-            ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT,
+            // ProjectProposalStage.SUBMITTED_COST_QUOTATION,
+            // ProjectProposalStage.SUBMITTED_PROPOSAL,
+            // ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT,
+            ProjectProposalStage.PENDING,
           ];
 
           const processedData = [
@@ -347,7 +348,7 @@ export const SLCFDashboardComponent = (props: any) => {
               (stage) => !combinedStages.includes(stage)
             ),
           ];
-          const rejectedInfIndex = allStages.indexOf(ProjectProposalStage.REJECTED_INF);
+          const rejectedInfIndex = allStages.indexOf(ProjectProposalStage.REJECTED);
           allStages.splice(rejectedInfIndex + 1, 0, combinedStage); // Insert after REJECTED_INF
 
           // Generate the result array
