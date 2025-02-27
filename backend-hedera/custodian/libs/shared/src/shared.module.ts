@@ -21,6 +21,7 @@ import { FileHandlerModule } from './file-handler/file-handler.module';
 import { LocationModule } from './location/location.module';
 import { VerificationModule } from './verification/verification.module';
 import { CarbonCreditTokenModule } from './carbon-credit-token/carbon-credit-token.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
     providers: [SharedService],
@@ -47,6 +48,7 @@ import { CarbonCreditTokenModule } from './carbon-credit-token/carbon-credit-tok
         LocationModule,
         VerificationModule,
         CarbonCreditTokenModule,
+        TaskModule,
     ],
 })
 export class SharedModule {}

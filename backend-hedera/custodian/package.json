@@ -7,8 +7,10 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "build:task-monitor": "nest build task-monitor",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
+    "start:task-monitor": "nest start task-monitor",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/custodian/main",
