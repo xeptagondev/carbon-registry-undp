@@ -14,23 +14,33 @@ import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
 import { GUARDIAN_ERROR } from '../constant/guardian-error.constant';
 import { GUARDIAN_API } from '../constant/guardian-api-blocks.contant';
 import { GridTypeEnum } from '../enum/grid-type.enum';
-import { GridInterface } from '../interface/guardian.grid.interface';
+import { GridInterface } from '../interface/guardian-grid.interface';
 import { UtilService } from '@app/shared/util/service/util.service';
+import {
+    ButtonActionEnum,
+    ButtonNameEnum,
+    ButtonTypeEnum,
+} from '../enum/button-type.enum';
+import { ButtonPayloadInterface } from '../interface/guardian-button-payload.interface';
+import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 
 @Injectable()
 export class GuardianService {
+    private readonly loggerContext = 'GuardianService';
     constructor(
         private readonly configService: ConfigService,
         private readonly auditService: AuditService,
         private readonly utilService: UtilService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
+        private readonly logger: InstantLogger,
     ) {}
 
-    async getGuardianError(error: unknown, calledMainFunction: string) {
-        console.log(
+    async getGuardianError(error: any, calledMainFunction: string) {
+        this.logger.error(
             `Error Occurred in Guardian Service ${calledMainFunction}`,
             error,
+            this.loggerContext,
         );
         if (axios.isAxiosError(error)) {
             throw new HttpException(
@@ -684,6 +694,80 @@ export class GuardianService {
             await this.getGuardianError(error, 'createInvitation');
         }
     }
+
+    public async buttonActionRequest(
+        buttonBlockName: ButtonNameEnum,
+        action: ButtonActionEnum,
+        document: any,
+        requestUserEmail: string,
+        remarks?: string,
+    ): Promise<void> {
+        const buttonUrl = this.buildGuardianUrl(
+            // eslint-disable-next-line max-len
+            `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(buttonBlockName)}`,
+        );
+        const refreshToken = await this.getRefreshToken(requestUserEmail);
+        let buttonType: ButtonTypeEnum = ButtonTypeEnum.SELECTOR;
+
+        // Check if Remark Exists
+        if (remarks.trim()) {
+            const buttonGetResponse = await axios.get(buttonUrl, {
+                headers: {
+                    Authorization: `Bearer ${await this.getAccessToken(refreshToken)}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (buttonGetResponse.status == HttpStatus.OK) {
+                const isRemarkButton =
+                    buttonGetResponse.data?.uiMetaData.buttons.find(
+                        (button: any) =>
+                            button?.tag === action &&
+                            button?.type === ButtonTypeEnum.SELECTOR_DIALOG,
+                    );
+                if (isRemarkButton) {
+                    buttonType = ButtonTypeEnum.SELECTOR_DIALOG;
+                }
+            }
+        }
+
+        if (buttonType == ButtonTypeEnum.SELECTOR_DIALOG) {
+            if (!document.option) {
+                document.option = {};
+            }
+            if (!Array.isArray(document.option.comment)) {
+                document.option.comment = [];
+            }
+            document.option.comment.push(remarks);
+        }
+
+        const finalPayload: ButtonPayloadInterface = {
+            document: { ...document },
+            tag: action,
+        };
+
+        try {
+            const buttonPostResponse = await axios.post(
+                buttonUrl,
+                finalPayload,
+                {
+                    headers: {
+                        Authorization: `Bearer ${await this.getAccessToken(refreshToken)}`,
+                        'Content-Type': 'application/json',
+                    },
+                },
+            );
+            if (buttonPostResponse.status == HttpStatus.OK) {
+                this.logger.log(
+                    `Successfully ${action} called ${buttonBlockName} by ${requestUserEmail}`,
+                    this.loggerContext,
+                );
+            }
+        } catch (error) {
+            await this.getGuardianError(error, 'buttonActionRequest');
+        }
+    }
+
     public async approve(
         email: string,
         blockId: string,
