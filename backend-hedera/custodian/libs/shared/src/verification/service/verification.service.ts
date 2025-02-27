@@ -30,6 +30,10 @@ import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
+import {
+    ButtonActionEnum,
+    ButtonNameEnum,
+} from '@app/shared/guardian/enum/button-type.enum';
 
 @Injectable()
 export class VerificationService {
@@ -320,13 +324,13 @@ export class VerificationService {
             },
         );
 
-        await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.PROJECT_APPROVE_REJECT,
+            verifyReportDto.verify
+                ? ButtonActionEnum.APPROVE
+                : ButtonActionEnum.REJECT,
+            monitoringReport,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_MONITORING),
-            {
-                document: { ...monitoringReport },
-                tag: verifyReportDto.verify ? 'Button_0' : 'Button_1',
-            },
         );
 
         //send email to Project Participant

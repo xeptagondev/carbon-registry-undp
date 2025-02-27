@@ -7,7 +7,7 @@ import {
     OrganizationSchema,
     ProjectSchema,
     UserSchema,
-} from '@app/shared/guardian/interface/guardian.schema.interface';
+} from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
@@ -45,6 +45,10 @@ import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '@app/shared/document/enum/additional.document.type';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
+import {
+    ButtonActionEnum,
+    ButtonNameEnum,
+} from '@app/shared/guardian/enum/button-type.enum';
 
 @Injectable()
 export class ProjectService {
@@ -522,10 +526,11 @@ export class ProjectService {
         //     ProjectProposalStage.APPROVED_INF,
         // );
 
-        const approveResponse = await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.INF_APPROVE_REJECT,
+            ButtonActionEnum.APPROVE,
+            inf,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_REJECT_INF),
-            { document: { ...inf }, tag: 'Button_0' },
         );
 
         const project = await this.guardianService.getGridDocumentUsingRefId(
@@ -534,12 +539,11 @@ export class ProjectService {
             requestUser.email,
         );
 
-        const projectApproveResponse = await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.PROJECT_APPROVE_REJECT,
+            ButtonActionEnum.APPROVE,
+            project,
             requestUser.email,
-            this.utilService.getBlock(
-                GUARDIAN_API.BLOCKS.APPROVE_REJECT_PROJECT,
-            ),
-            { document: { ...project }, tag: 'Button_0' },
         );
 
         const createdBy =
@@ -562,7 +566,10 @@ export class ProjectService {
             `Project with id: ${id} has been approved by ${requestUser.userId}`,
         );
 
-        return new DataResponseDto(HttpStatus.OK, approveResponse);
+        return new DataResponseDto(
+            HttpStatus.OK,
+            `Project with id: ${id} has been approved by ${requestUser.userId}`,
+        );
     }
 
     async rejectINF(
@@ -593,10 +600,11 @@ export class ProjectService {
         //     ProjectProposalStage.APPROVED_INF,
         // );
 
-        const rejectResponse = await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.INF_APPROVE_REJECT,
+            ButtonActionEnum.REJECT,
+            inf,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_REJECT_INF),
-            { document: { ...inf }, tag: 'Button_1' },
         );
 
         const project = await this.guardianService.getGridDocumentUsingRefId(
@@ -605,12 +613,11 @@ export class ProjectService {
             requestUser.email,
         );
 
-        const projectRejectResponse = await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.PROJECT_APPROVE_REJECT,
+            ButtonActionEnum.REJECT,
+            project,
             requestUser.email,
-            this.utilService.getBlock(
-                GUARDIAN_API.BLOCKS.APPROVE_REJECT_PROJECT,
-            ),
-            { document: { ...project }, tag: 'Button_1' },
         );
 
         const createdBy =
@@ -627,6 +634,9 @@ export class ProjectService {
             `Project with id: ${id} has been rejected by ${requestUser.userId}`,
         );
 
-        return new DataResponseDto(HttpStatus.OK, rejectResponse);
+        return new DataResponseDto(
+            HttpStatus.OK,
+            `Project with id: ${id} has been rejected by ${requestUser.userId}`,
+        );
     }
 }
