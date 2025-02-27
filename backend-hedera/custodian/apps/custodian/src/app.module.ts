@@ -12,7 +12,7 @@ import { SharedModule } from '@app/shared';
 import { MailModule } from '@app/shared/mail/mail.module';
 // import { UserService } from '../libs/shared/src/users/service/user.service';
 import { LocationAppModule } from './location/location.module';
-import { DocumentModule } from './document/document.module';
+import { DocumentAppModule } from './document/document.module';
 import { OrganizationAppModule } from './organization/organization.module';
 import { ProjectAppModule } from './project/project.module';
 import { UserAppModule } from './user/user.module';
@@ -39,7 +39,7 @@ import { VerificationAppModule } from './verification/verification.module';
         UserAppModule,
         ProjectAppModule,
         LocationAppModule,
-        DocumentModule,
+        DocumentAppModule,
         VerificationAppModule,
     ],
     controllers: [AppController],

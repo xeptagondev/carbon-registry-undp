@@ -20,6 +20,7 @@ import {
   getVerificationTimelineCurrentStep,
 } from '../../../Definitions/Definitions/verificationSl.definition';
 import { VerificationRequest } from '../../../Definitions/Entities/verificationRequest';
+import { ROUTES } from '../../../Config/uiRoutingConfig';
 
 export interface VerificationFormsProps {
   data: any;
@@ -64,7 +65,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   const navigateToMonitoringReportCreate = (docId: any) => {
-    navigate(`/programmeManagement/monitoringReport/${programmeId}`, {
+    navigate(ROUTES.MONITORING_REPORT_CREATE_BY_PROGRAMME_ID(programmeId), {
       state: {
         mode: FormMode.CREATE,
         docId: docId,
@@ -73,7 +74,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   const navigateToMonitoringReportEdit = (docId: any, verificationRequestId: any) => {
-    navigate(`/programmeManagement/monitoringReport/${programmeId}/${verificationRequestId}`, {
+    navigate(ROUTES.MONITORING_REPORT_ACTION(programmeId, verificationRequestId), {
       state: {
         mode: FormMode.EDIT,
         docId: docId,
@@ -82,7 +83,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   const navigateToMonitoringReportView = (verificationRequestId: any) => {
-    navigate(`/programmeManagement/monitoringReport/${programmeId}/${verificationRequestId}`, {
+    navigate(ROUTES.MONITORING_REPORT_ACTION(programmeId, verificationRequestId), {
       state: {
         mode: FormMode.VIEW,
       },
@@ -128,7 +129,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   function navigateToVerificationReportCreate(docId: any): void {
-    navigate(`/programmeManagement/verificationReport/${programmeId}`, {
+    navigate(ROUTES.VERIFICATION_REPORT(programmeId), {
       state: {
         mode: FormMode.CREATE,
         docId: docId,
@@ -137,7 +138,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   }
 
   const navigateToVerificationReportEdit = (docId: any, verificationRequestId: any) => {
-    navigate(`/programmeManagement/verificationReport/${programmeId}/${verificationRequestId}`, {
+    navigate(ROUTES.VERIFICATION_REPORT_ACTION(programmeId, verificationRequestId), {
       state: {
         mode: FormMode.EDIT,
         docId: docId,
@@ -146,7 +147,7 @@ export const VerificationForms: FC<VerificationFormsProps> = (props: Verificatio
   };
 
   function navigateToVerificationReportView(verificationRequestId: any): void {
-    navigate(`/programmeManagement/verificationReport/${programmeId}/${verificationRequestId}`, {
+    navigate(ROUTES.VERIFICATION_REPORT_ACTION(programmeId, verificationRequestId), {
       state: {
         mode: FormMode.VIEW,
       },

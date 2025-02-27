@@ -131,6 +131,7 @@ import { OrganisationSlStatus } from '../OrganisationSlStatus/organisationSlStat
 import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -670,7 +671,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const approveCMA = () => {
-    navigate(`/programmeManagement/siteVisitCheckList/${id}`);
+    navigate(ROUTES.SITE_VISIT_CHECKLIST(String(id)));
   };
   const rejectValidation = async (remark: string) => {
     try {
@@ -701,7 +702,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const navigateToMonitoringReportCreate = () => {
-    navigate(`/programmeManagement/monitoringReport/${id}`, {
+    navigate(ROUTES.MONITORING_REPORT_CREATE(String(id)), {
       state: {
         mode: FormMode.CREATE,
         docId: null,
@@ -1748,7 +1749,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     if (id) {
       getProgrammeById();
     } else {
-      navigate('/programmeManagement/viewAll', { replace: true });
+      navigate(ROUTES.VIEW_PROGRAMMES, { replace: true });
     }
     // }
 
@@ -1782,7 +1783,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   }, [data]);
 
   // const onClickedAddAction = () => {
-  //   navigate('/programmeManagement/addNdcAction', { state: { record: data } });
+  //   navigate(ROUTES.ADD_NDC_ACTION, { state: { record: data } });
   // };
 
   // const methodologyDocumentApproved = () => {
@@ -1916,7 +1917,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   const actionBtns = [];
   // MARK: Action Buttons
   if (userInfoState?.userRole !== 'ViewOnly') {
-    if (userInfoState && data.projectProposalStage === ProjectProposalStage.SUBMITTED_INF) {
+    if (userInfoState && data.projectProposalStage === ProjectProposalStage.PENDING) {
       if (userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
         actionBtns.push(
           <Button
@@ -1961,7 +1962,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       }
     } else if (
       userInfoState &&
-      data.projectProposalStage === ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT
+      data.projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_SUBMITTED
     ) {
       if (userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER) {
         actionBtns.push(
@@ -2005,7 +2006,10 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
           </Button>
         );
       }
-    } else if (userInfoState && data.projectProposalStage === ProjectProposalStage.SUBMITTED_CMA) {
+    } else if (
+      userInfoState &&
+      data.projectProposalStage === ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER
+    ) {
       if (userInfoState?.companyRole === CompanyRole.CLIMATE_FUND) {
         actionBtns.push(
           <Button
@@ -2050,7 +2054,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       }
     } else if (
       userInfoState &&
-      data.projectProposalStage === ProjectProposalStage.VALIDATION_PENDING
+      data.projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_REJECTED
     ) {
       if (userInfoState?.companyRole === CompanyRole.EXECUTIVE_COMMITTEE) {
         actionBtns.push(
