@@ -14,6 +14,7 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import { LoginProps } from '../../Definitions/Definitions/userLogin.definitions';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 export interface LoginPageProps {
   forgotPassword?: boolean;
@@ -74,10 +75,10 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
         removeToken();
         setIsTokenExpired(false);
         return IsAuthenticated(response.data.access_token)
-          ? navigate(redirectLocation ? redirectLocation : '/userManagement/viewAll', {
+          ? navigate(redirectLocation ? redirectLocation : ROUTES.VIEW_USERS, {
               replace: true,
             })
-          : navigate('/login');
+          : navigate(ROUTES.LOGIN);
       }
     } catch (error: any) {
       console.log('Error in Login', error);
@@ -95,7 +96,7 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
   }, []);
 
   const onClickForgotPassword = () => {
-    navigate('/forgotPassword', { replace: true });
+    navigate(ROUTES.FORGOT_PASSWORD, { replace: true });
   };
 
   return (
@@ -265,7 +266,7 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
                             {t('login:register-acc')}&nbsp;&nbsp;
                             <span
                               className="login-register-new-txt-span"
-                              onClick={() => navigate('/registerCompany')}
+                              onClick={() => navigate(ROUTES.REGISTER_ORGANIZATION_FROM_LOGIN)}
                             >
                               {t('login:register-here')}
                             </span>

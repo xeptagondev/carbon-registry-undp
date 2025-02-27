@@ -95,6 +95,7 @@ import { InfoView } from '../../Components/InfoView/info.view';
 import { ProgrammeDocuments } from '../../Components/ProgrammeDocuments/programmeDocuments';
 import { MapComponent } from '../../Components/Maps/mapComponent';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const ProgrammeView = () => {
   const { get, put, post } = useConnection();
@@ -1396,7 +1397,7 @@ const ProgrammeView = () => {
       if (id) {
         getProgrammeById(id);
       } else {
-        navigate('/programmeManagement/viewAll', { replace: true });
+        navigate(ROUTES.VIEW_PROGRAMMES, { replace: true });
       }
     }
 
@@ -1438,7 +1439,7 @@ const ProgrammeView = () => {
   }, [data]);
 
   const onClickedAddAction = () => {
-    navigate('/programmeManagement/addNdcAction', { state: { record: data } });
+    navigate(ROUTES.ADD_NDC_ACTION, { state: { record: data } });
   };
 
   const methodologyDocumentApproved = () => {
@@ -1610,7 +1611,7 @@ const ProgrammeView = () => {
           <Button
             type="primary"
             onClick={() => {
-              navigate('/investmentManagement/addInvestment', { state: { record: data } });
+              navigate(ROUTES.ADD_INVESTMENT, { state: { record: data } });
             }}
           >
             {t('view:addInvestment')}
