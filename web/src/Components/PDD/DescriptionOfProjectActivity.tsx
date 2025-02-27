@@ -168,50 +168,51 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
   const onFinish = async (values: any) => {
     const tempValues: any = {
       introduction: values?.introduction,
-      sectoralScope: values?.sectoralScope,
-      projectProponent: {
-        organizationName: values?.organizationName,
-        email: values?.email,
-        contactPerson: values?.contactPerson,
-        title: values?.title,
-        telephone: values?.telephone,
-        address: values?.address,
-      },
-      otherEntities: (function () {
-        const tempList: any[] = [];
-        const firstObj = {
-          orgainzationName: values?.entityOrganizationName,
-          email: values?.entityEmail,
-          title: values?.entityTitle,
-          contactPerson: values?.entityContactPerson,
-          role: values?.entityRoleInTheProject,
-          telephone: values?.entityTelephone,
-          address: values?.entityAddress,
-        };
+      // sectoralScope: values?.sectoralScope,
+      // projectProponent: {
+      //   organizationName: values?.organizationName,
+      //   email: values?.email,
+      //   contactPerson: values?.contactPerson,
+      //   title: values?.title,
+      //   telephone: values?.telephone,
+      //   address: values?.address,
+      // },
+      // otherEntities: (function () {
+      //   const tempList: any[] = [];
+      //   const firstObj = {
+      //     orgainzationName: values?.entityOrganizationName,
+      //     email: values?.entityEmail,
+      //     title: values?.entityTitle,
+      //     contactPerson: values?.entityContactPerson,
+      //     role: values?.entityRoleInTheProject,
+      //     telephone: values?.entityTelephone,
+      //     address: values?.entityAddress,
+      //   };
 
-        tempList.push(firstObj);
-        if (values?.extraOtherEntities) {
-          values.extraOtherEntities.forEach((item: any) => {
-            const tempObj = {
-              organizationName: item?.organizationName,
-              email: item?.email,
-              contactPerson: item?.contactPerson,
-              title: item?.title,
-              role: item?.roleInTheProject,
-              telephone: item?.telephone,
-              address: item?.address,
-            };
+      //   tempList.push(firstObj);
+      //   if (values?.extraOtherEntities) {
+      //     values.extraOtherEntities.forEach((item: any) => {
+      //       const tempObj = {
+      //         organizationName: item?.organizationName,
+      //         email: item?.email,
+      //         contactPerson: item?.contactPerson,
+      //         title: item?.title,
+      //         role: item?.roleInTheProject,
+      //         telephone: item?.telephone,
+      //         address: item?.address,
+      //       };
 
-            tempList.push(tempObj);
-          });
-        }
+      //       tempList.push(tempObj);
+      //     });
+      //   }
 
-        return tempList;
-      })(),
+      //   return tempList;
+      // })(),
       locationsOfProjectActivity: await (async function () {
         const tempList: any[] = [];
         const firstObj = {
           locationOfProjectActivity: values?.locationOfProjectActivity,
+          siteNo: values?.siteNo,
           province: values?.province,
           district: values?.district,
           dsDivision: values?.dsDivision,
@@ -244,6 +245,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
           values?.extraLocations.forEach(async (item: any) => {
             const tempObj = {
               locationOfProjectActivity: item?.locationOfProjectActivity,
+              siteNo: item?.siteNo,
               province: item?.province,
               district: item?.district,
               dsDivision: item?.dsDivision,
@@ -277,59 +279,63 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
         }
         return tempList;
       })(),
-      projectOwnership: values?.projectOwnership,
-      projectTrack: form.getFieldValue('projectTrack'),
-      creditingPeriodStartDate: moment(values?.creditingPeriodStartDate).startOf('day').unix(),
-      creditingPeriodEndDate: moment(values?.creditingPeriodEndDate).startOf('day').unix(),
-      creditingPeriodDescription: values?.creditingPeriodDescription,
-      projectScaleType: values?.projectScale,
-      estimatedAnnualGHGEmissions: (function () {
-        const tempList: any = [];
+      technologies: values?.technologies,
+      publicFundingOfProjectActivity: values?.publicFundingOfProjectActivity,
+      histroyOfProjectActivity: values?.histroyOfProjectActivity,
+      unbundling: values?.unbundling,
+      // projectOwnership: values?.projectOwnership,
+      // projectTrack: form.getFieldValue('projectTrack'),
+      // creditingPeriodStartDate: moment(values?.creditingPeriodStartDate).startOf('day').unix(),
+      // creditingPeriodEndDate: moment(values?.creditingPeriodEndDate).startOf('day').unix(),
+      // creditingPeriodDescription: values?.creditingPeriodDescription,
+      // projectScaleType: values?.projectScale,
+      // estimatedAnnualGHGEmissions: (function () {
+      //   const tempList: any = [];
 
-        if (values?.extraGHGEmmissions) {
-          values?.extraGHGEmmissions.forEach((item: any) => {
-            const tempObj = {
-              year: moment(item?.estimatedAnnualGHGEmissionsYear).startOf('year').unix(),
-              ghgEmissionReduction: Number(item?.estimatedAnnualGHGEmissionsValue),
-            };
+      //   if (values?.extraGHGEmmissions) {
+      //     values?.extraGHGEmmissions.forEach((item: any) => {
+      //       const tempObj = {
+      //         year: moment(item?.estimatedAnnualGHGEmissionsYear).startOf('year').unix(),
+      //         ghgEmissionReduction: Number(item?.estimatedAnnualGHGEmissionsValue),
+      //       };
 
-            tempList.push(tempObj);
-          });
-        }
+      //       tempList.push(tempObj);
+      //     });
+      //   }
 
-        return tempList;
-      })(),
-      totalEstimatedGHGERs: Number(values?.totalEstimatedGHGERs),
-      totalCreditingYears: Number(values?.totalCreditingYears),
-      avgAnnualERs: Number(values?.avgAnnualERs),
-      description: values?.projectActivityDescription,
-      additionalDocuments: await (async function () {
-        const base64Docs: string[] = [];
+      //   return tempList;
+      // })(),
+      // totalEstimatedGHGERs: Number(values?.totalEstimatedGHGERs),
+      // totalCreditingYears: Number(values?.totalCreditingYears),
+      // avgAnnualERs: Number(values?.avgAnnualERs),
+      // description: values?.projectActivityDescription,
+      // additionalDocuments: await (async function () {
+      //   const base64Docs: string[] = [];
 
-        if (
-          values?.optionalProjectActivityDocuments &&
-          values?.optionalProjectActivityDocuments.length > 0
-        ) {
-          const docs = values.optionalProjectActivityDocuments;
-          for (let i = 0; i < docs.length; i++) {
-            if (docs[i]?.originFileObj === undefined) {
-              base64Docs.push(docs[i]?.url);
-            } else {
-              const temp = await getBase64(docs[i]?.originFileObj as RcFile);
-              base64Docs.push(temp); // No need for Promise.resolve
-            }
-          }
-        }
+      //   if (
+      //     values?.optionalProjectActivityDocuments &&
+      //     values?.optionalProjectActivityDocuments.length > 0
+      //   ) {
+      //     const docs = values.optionalProjectActivityDocuments;
+      //     for (let i = 0; i < docs.length; i++) {
+      //       if (docs[i]?.originFileObj === undefined) {
+      //         base64Docs.push(docs[i]?.url);
+      //       } else {
+      //         const temp = await getBase64(docs[i]?.originFileObj as RcFile);
+      //         base64Docs.push(temp); // No need for Promise.resolve
+      //       }
+      //     }
+      //   }
 
-        return base64Docs;
-      })(),
-      conditionsPriorToProjectInitiation: values?.conditionsPriorToProjectInitiation,
-      complianceWithLaws: values?.complianceWithLaws,
-      participationUnderOtherGHGPrograms: values?.participationPrograms,
-      otherFormsOfCredit: values?.otherFormsOfCredit,
-      sustainableDevelopment: values?.sustainableDevelopment,
-      leakageManagement: values?.leakageManagement,
-      commerciallySensitiveInfo: values?.commerciallySensitiveInformation,
+      //   return base64Docs;
+      // })(),
+      // conditionsPriorToProjectInitiation: values?.conditionsPriorToProjectInitiation,
+      // complianceWithLaws: values?.complianceWithLaws,
+      // participationUnderOtherGHGPrograms: values?.participationPrograms,
+      // otherFormsOfCredit: values?.otherFormsOfCredit,
+      // sustainableDevelopment: values?.sustainableDevelopment,
+      // leakageManagement: values?.leakageManagement,
+      // commerciallySensitiveInfo: values?.commerciallySensitiveInformation,
     };
 
     handleValuesUpdate({ projectActivity: tempValues });
@@ -1423,6 +1429,75 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
               >
                 <Input size="large" />
               </Form.Item>
+
+              {/* project participant table start */}
+              {/* need to check again */}
+              <div className="projectParticipantsTable">
+                <div className="header">
+                  <div className="col-1">{t('PDD:partiesInvolved')}</div>
+                  <div className="col-2">{t('PDD:projectParticipant')}</div>
+                </div>
+
+                <div className="data-body">
+                  <Form.List name="projectParticipants">
+                    {(fields, { add, remove }) => (
+                      <>
+                        {fields.map(({ key, name, ...restField }) => {
+                          <>
+                            <div className="col-1">
+                              <Form.Item
+                                name={[name, 'partiesInvolved']}
+                                rules={[
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('PDD:partiesInvolved')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Input />
+                              </Form.Item>
+                            </div>
+                            <div className="col-2">
+                              <Form.Item
+                                name={[name, 'projectParticipant']}
+                                rules={[
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('PDD:projectParticipant')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Input />
+                              </Form.Item>
+                            </div>
+                          </>;
+                        })}
+                      </>
+                    )}
+                  </Form.List>
+                </div>
+              </div>
+              {/* project participant table end */}
 
               <Form.Item
                 label={`${t('PDD:publicFundingOfProjectActivity')}`}

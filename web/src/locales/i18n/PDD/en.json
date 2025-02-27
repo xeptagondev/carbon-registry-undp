@@ -206,5 +206,7 @@
   "creditingPeriodType": "Type of crediting Period",
   "creditingPeriodOption1": "Fixed",
   "creditingPeriodOption2": "Renewable",
-  "projectCreditingPeriodDuration": "Duration of crediting Period"
+  "projectCreditingPeriodDuration": "Duration of crediting Period",
+  "partiesInvolved": "Parties Involved",
+  "projectParticipant": "Project Participants"
 }

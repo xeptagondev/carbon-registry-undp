@@ -7,7 +7,9 @@ import TextArea from 'antd/lib/input/TextArea';
 const ApprovalAndAuthoriziation = (props: CustomStepsProps) => {
   const { next, prev, form, current, handleValuesUpdate, disableFields } = props;
 
-  const onFinish = (values: any) => {};
+  const onFinish = (values: any) => {
+    handleValuesUpdate({ approvalAndAuthorization: values });
+  };
   return (
     <>
       {current === 6 && (

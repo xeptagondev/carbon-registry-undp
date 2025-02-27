@@ -138,8 +138,40 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
     const tempValues: any = {
       titleAndReference: values?.titleAndReferenceOfMethodology,
       applicability: values?.applicabilityOfMethodology,
-      baselineScenario: values?.baselineScenario,
-      additionality: values?.additionality,
+      // baselineScenario: values?.baselineScenario,
+      // additionality: values?.additionality,
+      descriptionOfBaselineScenario: values?.descriptionOfBaselineScenario,
+      demonstrationOfAdditionality: values?.demonstrationOfAdditionality,
+      exAnteCalculationOfEmissionReduction: values?.exAnteCalculationOfEmissionReduction,
+      emissionReductionEstimation: values?.emissionReductionEstimation,
+      monitoringPlan: values?.monitoringPlan,
+      dataAndParametersExAnte: {
+        parameter: values?.parameter,
+        unit: values?.unit,
+        description: values?.description,
+        dataSource: values?.dataSource,
+        justificationOfChoice: values?.justificationOfChoice,
+        purpose: values?.purpose,
+        comments: values?.comments,
+      },
+      dataAndParametersMonitored: {
+        monitoringParameter: values?.monitoringParameter,
+        monitoringUnit: values?.monitoringUnit,
+        unitPlaceholder: values?.unitPlaceholder,
+        monitoringDescription: values?.monitoringDescription,
+        data_parameterDescriptionPlaceholder: values?.data_parameterDescriptionPlaceholder,
+        monitoringSource: values?.monitoringSource,
+        monitoringMeasurementMethods: values?.monitoringMeasurementMethods,
+        monitoringFrequency: values?.monitoringFrequency,
+        monitoringValueApplied: values?.monitoringValueApplied,
+        monitoringEquipment: values?.monitoringEquipment,
+        monitoringQAProcedures: values?.monitoringQAProcedures,
+        monitoringPurpose: values?.monitoringPurpose,
+        monitoringCalculation: values?.monitoringCalculation,
+        monitoringComments: values?.monitoringComments,
+      },
+      samplingPlan: values?.samplingPlan,
+      otherElementsOfMonitoringPlan: values?.otherElementsOfMonitoringPlan,
       methodologyDeviations: values?.methodologyDeviations,
       projectBoundary: (function () {
         const tempVal: any = {
@@ -212,6 +244,51 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         tempVal.project = tempProject;
 
         return tempVal;
+      })(),
+      netGHGEmissionReductions: (function () {
+        const tempGHG: any = {
+          description: values?.netGHGEmissionReductionsAndRemovals,
+        };
+
+        const tempYearlyReductions: any = [];
+
+        const firstReduction = {
+          startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
+          endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
+          baselineEmissionReductions: Number(values?.baselineEmissionReductions),
+          projectEmissionReductions: Number(values?.projectEmissionReductions),
+          leakageEmissionReductions: Number(values?.leakageEmissionReductions),
+          netEmissionReductions: Number(values?.netEmissionReductions),
+        };
+
+        tempYearlyReductions.push(firstReduction);
+
+        if (values?.extraEmissionReductions) {
+          values.extraEmissionReductions.forEach((item: any) => {
+            const tempObj = {
+              startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
+              endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
+              baselineEmissionReductions: Number(item?.baselineEmissionReductions),
+              projectEmissionReductions: Number(item?.projectEmissionReductions),
+              leakageEmissionReductions: Number(item?.leakageEmissionReductions),
+              netEmissionReductions: Number(item?.netEmissionReductions),
+            };
+
+            tempYearlyReductions.push(tempObj);
+          });
+        }
+        tempGHG.yearlyGHGEmissionReductions = tempYearlyReductions;
+        tempGHG.totalBaselineEmissionReductions = Number(values?.totalBaselineEmissionReductions);
+        tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
+        tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
+        tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
+        tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
+        tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
+        tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
+        tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);
+        tempGHG.avgNetEmissionReductions = Number(values?.avgNetEmissionReductions);
+
+        return tempGHG;
       })(),
     };
 
@@ -2872,16 +2949,16 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         <LabelWithTooltip
                           label={t('PDD:purpose')}
                           required={true}
-                          tooltipContent={
-                            <div className="tooltip">
-                              <p>Indicate one of the following:</p>
-                              <ul>
-                                <li>Calculation of baseline emissions. </li>
-                                <li>Calculation of project emissions</li>
-                                <li>Calculation of leakage </li>
-                              </ul>
-                            </div>
-                          }
+                          // tooltipContent={
+                          //   <div className="tooltip">
+                          //     <p>Indicate one of the following:</p>
+                          //     <ul>
+                          //       <li>Calculation of baseline emissions. </li>
+                          //       <li>Calculation of project emissions</li>
+                          //       <li>Calculation of leakage </li>
+                          //     </ul>
+                          //   </div>
+                          // }
                           tooltipPosition={TooltipPostion.top}
                           tooltipWidth={290}
                         />
