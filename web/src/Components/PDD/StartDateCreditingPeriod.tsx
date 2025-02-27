@@ -9,7 +9,23 @@ import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 const StartDateCreditingPeriod = (props: CustomStepsProps) => {
   const { next, prev, form, current, handleValuesUpdate, disableFields } = props;
 
-  const onFinish = (values: any) => {};
+  const onFinish = (values: any) => {
+    const tempValues: any = {
+      projectActivityStartDate: moment(values?.projectActivityStartDate).startOf('day').unix(),
+      projectCreditingPeriodStartDate: moment(values?.projectCreditingPeriodStartDate)
+        .startOf('day')
+        .unix(),
+      projectCreditingPeriodEndDate: moment(values?.projectCreditingPeriodEndDate)
+        .startOf('day')
+        .unix(),
+      creditingPeriodStart: moment(values?.creditingPeriodStart).startOf('day').unix(),
+      operationalLifetime: values?.operationalLifetime,
+      creditingPeriodType: values?.creditingPeriodType,
+      projectCreditingPeriodDuration: values?.projectCreditingPeriodDuration,
+    };
+
+    handleValuesUpdate({ startDateCreditingPeriod: tempValues });
+  };
 
   const updateCreditingPeriodDuration = () => {
     const projectCreditingPeriodStartDate = form.getFieldValue('projectCreditingPeriodStartDate');

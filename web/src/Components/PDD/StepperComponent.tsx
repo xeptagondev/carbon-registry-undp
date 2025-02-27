@@ -32,12 +32,13 @@ import ApprovalAndAuthoriziation from './ApprovalAndAuthoriziation';
 import StartDateCreditingPeriod from './StartDateCreditingPeriod';
 import { API_PATHS } from '../../Config/apiConfig';
 import Monitoring from './Monitoring';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 
 const CMA_STEPS = {};
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(2);
+  const [current, setCurrent] = useState(1);
 
   const navigate = useNavigate();
 
@@ -66,9 +67,11 @@ const StepperComponent = (props: any) => {
   };
 
   const [values, setValues] = useState({
-    programmeId: id,
+    projectId: id,
+    name: 'PDD',
     companyId: undefined,
-    content: {},
+    documentType: DocumentEnum.PDD,
+    data: {},
   });
 
   const handleValuesUpdate = (val: any) => {
@@ -152,6 +155,9 @@ const StepperComponent = (props: any) => {
   };
 
   useEffect(() => {
+    form2.setFieldValue('projectParticipants', [{ partiesInvolved: '', projectParticipant: '' }]);
+  }, []);
+  useEffect(() => {
     const getViewData = async () => {
       if (isView || isEdit) {
         setLoading(true);
@@ -232,8 +238,8 @@ const StepperComponent = (props: any) => {
   const submitForm = async (appendixVals: any) => {
     const tempValues = {
       ...values,
-      content: {
-        ...values.content,
+      data: {
+        ...values.data,
         appendix: appendixVals,
       },
     };
