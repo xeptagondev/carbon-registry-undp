@@ -178,14 +178,18 @@
       border: 0.5px solid #c4c4c4;
       padding: 10px 20px;
     }
+
+    .col-3 {
+      width: 20%;
+      padding: 10px 20px;
+    }
+
     .header {
       display: flex;
       flex-direction: row;
 
       .col-1 {
         background-color: #fbfbfb;
-
-        
       }
 
       .col-2 {
@@ -195,8 +199,30 @@
 
     .data-body {
       display: flex;
-      flex-direction: row;
-      
+      flex-direction: column;
+
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .participant-col {
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 16px;
+      }
+
+      .addMinusBtn {
+        height: 32px !important;
+        width: 20px !important;
+        margin-left: 16px;
+      }
+
+      .participant-form-item {
+        width: 60% !important;
+        margin-bottom: 16px;
+      }
+
       .col-1 {
         background-color: white !important;
 

@@ -119,6 +119,13 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
     getCities(value, index);
   };
 
+  // useEffect(() => {
+  //   form.setFieldValue('projectParticipants', [
+  //     { partiesInvolved: '', projectParticipant: '' },
+  //     { partiesInvolved: '', projectParticipant: '' },
+  //   ]);
+  // }, []);
+
   const calculateAvgAnnualERs = () => {
     const totalEstimatedGHGERs = form.getFieldValue('totalEstimatedGHGERs') || 0;
     const totalCreditingYears = form.getFieldValue('totalCreditingYears') || 0;
@@ -340,6 +347,8 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
     handleValuesUpdate({ projectActivity: tempValues });
   };
+
+  console.log('---------form values------------', form.getFieldsValue());
 
   return (
     <>
@@ -1442,9 +1451,146 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                   <Form.List name="projectParticipants">
                     {(fields, { add, remove }) => (
                       <>
-                        {fields.map(({ key, name, ...restField }) => {
-                          <>
+                        {fields.map(({ key, name, ...restFields }) => (
+                          <div className="row" key={key}>
                             <div className="col-1">
+                              <Form.Item
+                                name={[name, 'partiesInvolved']}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: ``,
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('PDD:partiesInvolved')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Input />
+                              </Form.Item>
+                            </div>
+                            <div className="col-2">
+                              <Form.List name={[name, 'projectParticipants']}>
+                                {(
+                                  fields2,
+                                  { add: addParticipants, remove: removeParticipants }
+                                ) => (
+                                  <div key={key + name} className="participant-row">
+                                    {fields2.map(({ key: key2, name: name2 }) => (
+                                      <div className="participant-col">
+                                        <Form.Item
+                                          name={[name2, 'participant']}
+                                          className="participant-form-item"
+                                          rules={[
+                                            {
+                                              required: true,
+                                              message: ``,
+                                            },
+                                            {
+                                              validator: async (rule, value) => {
+                                                if (
+                                                  String(value).trim() === '' ||
+                                                  String(value).trim() === undefined ||
+                                                  value === null ||
+                                                  value === undefined
+                                                ) {
+                                                  throw new Error(
+                                                    `${t('PDD:projectParticipant')} ${t(
+                                                      'isRequired'
+                                                    )}`
+                                                  );
+                                                }
+                                              },
+                                            },
+                                          ]}
+                                        >
+                                          <Input />
+                                        </Form.Item>
+
+                                        <Form.Item>
+                                          <Button
+                                            // type="dashed"
+                                            onClick={() => {
+                                              addParticipants();
+                                            }}
+                                            size="large"
+                                            className="addMinusBtn"
+                                            // block
+                                            icon={<PlusOutlined />}
+                                            disabled={disableFields}
+                                          >
+                                            {/* Add Entity */}
+                                          </Button>
+                                        </Form.Item>
+
+                                        <Form.Item>
+                                          <Button
+                                            // type="dashed"
+                                            onClick={() => {
+                                              removeParticipants(name2);
+                                            }}
+                                            size="large"
+                                            className="addMinusBtn"
+                                            // block
+                                            icon={<MinusOutlined />}
+                                            disabled={disableFields}
+                                          >
+                                            {/* Add Entity */}
+                                          </Button>
+                                        </Form.Item>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </Form.List>
+                            </div>
+                            {/* <div className="col-3">hello</div> */}
+                          </div>
+                        ))}
+
+                        <div>
+                          <Form.Item>
+                            <Button
+                              onClick={() => {
+                                // add();
+                                const temp = form.getFieldValue('projectParticipants');
+                                console.log('---------temp--------', temp);
+                                temp[fields.length] = {
+                                  partiesInvolved: '',
+                                  projectParticipants: [{ participant: '' }],
+                                };
+                                console.log('---------temp after--------', temp);
+                                form.setFieldValue('projectParticipants', temp);
+                              }}
+                            >
+                              {t('PDD:addProjectParticipant')}
+                            </Button>
+                          </Form.Item>
+                        </div>
+                      </>
+                    )}
+                  </Form.List>
+                  {/* <Form.List name="projectParticipants">
+                    {(fields, { add, remove }) => (
+                      <>
+                        1212345
+                        <>{console.log('fields', fields[0])}</>
+                        {fields.map(({ key, name, ...restField }) => {
+                          <div>
+                            123
+                            <div className="col-1">
+                              a
                               <Form.Item
                                 name={[name, 'partiesInvolved']}
                                 rules={[
@@ -1468,6 +1614,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                               </Form.Item>
                             </div>
                             <div className="col-2">
+                              b
                               <Form.Item
                                 name={[name, 'projectParticipant']}
                                 rules={[
@@ -1490,11 +1637,12 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 <Input />
                               </Form.Item>
                             </div>
-                          </>;
+                            <button onClick={add}>+</button>
+                          </div>;
                         })}
                       </>
                     )}
-                  </Form.List>
+                  </Form.List> */}
                 </div>
               </div>
               {/* project participant table end */}
