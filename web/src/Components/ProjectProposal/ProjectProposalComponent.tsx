@@ -20,6 +20,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Loading } from '../Loading/loading';
 import { DocumentTypeEnum } from '../../Definitions/Enums/document.type';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const ProjectProposalComponent = (props: { translator: i18n }) => {
   const { translator } = props;
@@ -39,7 +40,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
   const navigate = useNavigate();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${id}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
   const [countries, setCountries] = useState<[]>([]);
 

@@ -19,6 +19,7 @@ import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 const StepperComponent = (props: any) => {
   const navigate = useNavigate();
   const { useLocation, translator, countries, selectedVersion, handleDocumentStatus } = props;
@@ -45,7 +46,7 @@ const StepperComponent = (props: any) => {
   const scrollSection = useRef({} as any);
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${id}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
   const showModalOnAction = (info: PopupInfo) => {
@@ -71,7 +72,7 @@ const StepperComponent = (props: any) => {
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
-        navigate(`/programmeManagement/view/${id}`);
+        navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
       }
     } catch (error: any) {
       if (error && error.errors && error.errors.length > 0) {

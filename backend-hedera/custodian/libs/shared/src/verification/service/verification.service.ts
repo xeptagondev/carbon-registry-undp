@@ -1,6 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
@@ -8,7 +6,6 @@ import { HelperService } from '@app/shared/util/service/helper.service';
 import { MonitoringReportDto } from '../dto/monitoring.report.dto';
 import { AdditionalDocType } from '@app/shared/document/enum/additional.document.type';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
-import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { UtilService } from '@app/shared/util/service/util.service';
 import { MailService } from '@app/shared/mail/service/mail.service';
@@ -32,6 +29,7 @@ import { DateUtilService } from '@app/shared/util/service/date.util.service';
 import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
+import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 
 @Injectable()
 export class VerificationService {
@@ -41,10 +39,10 @@ export class VerificationService {
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
         private readonly userService: UserService,
-        private readonly fileHandler: FileHandlerInterface,
         private readonly guardianService: GuardianService,
         private readonly utilService: UtilService,
         private readonly counterService: CounterService,
+        private readonly fileHelperService: FileHelperService,
         private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
     ) {}
 
@@ -76,10 +74,10 @@ export class VerificationService {
             for (const doc of docContent.annexures.optionalDocuments) {
                 let docUrl;
 
-                if (this.isValidHttpUrl(doc)) {
+                if (this.fileHelperService.isValidHttpUrl(doc)) {
                     docUrl = doc;
                 } else {
-                    docUrl = await this.uploadDocument(
+                    docUrl = await this.fileHelperService.uploadDocument(
                         AdditionalDocType.MONITORING_REPORT_ANNEXURES_OPTIONAL_DOCUMENT,
                         monitoringReportDto.programmeId,
                         doc,
@@ -104,14 +102,15 @@ export class VerificationService {
                     for (const doc of location.optionalDocuments) {
                         let docUrl;
 
-                        if (this.isValidHttpUrl(doc)) {
+                        if (this.fileHelperService.isValidHttpUrl(doc)) {
                             docUrl = doc;
                         } else {
-                            docUrl = await this.uploadDocument(
-                                AdditionalDocType.MONITORING_REPORT_LOCATION_OF_PROJECT_ACTIVITY_OPTIONAL_DOCUMENT,
-                                monitoringReportDto.programmeId,
-                                doc,
-                            );
+                            docUrl =
+                                await this.fileHelperService.uploadDocument(
+                                    AdditionalDocType.MONITORING_REPORT_LOCATION_OF_PROJECT_ACTIVITY_OPTIONAL_DOCUMENT,
+                                    monitoringReportDto.programmeId,
+                                    doc,
+                                );
                         }
                         docUrls.push(docUrl);
                     }
@@ -129,10 +128,10 @@ export class VerificationService {
             for (const doc of docContent.quantifications.optionalDocuments) {
                 let docUrl;
 
-                if (this.isValidHttpUrl(doc)) {
+                if (this.fileHelperService.isValidHttpUrl(doc)) {
                     docUrl = doc;
                 } else {
-                    docUrl = await this.uploadDocument(
+                    docUrl = await this.fileHelperService.uploadDocument(
                         AdditionalDocType.MONITORING_REPORT_QUANTIFICATIONS_OPTIONAL_DOCUMENT,
                         monitoringReportDto.programmeId,
                         doc,
@@ -405,10 +404,10 @@ export class VerificationService {
             for (const doc of docContent.annexures.optionalDocuments) {
                 let docUrl;
 
-                if (this.isValidHttpUrl(doc)) {
+                if (this.fileHelperService.isValidHttpUrl(doc)) {
                     docUrl = doc;
                 } else {
-                    docUrl = await this.uploadDocument(
+                    docUrl = await this.fileHelperService.uploadDocument(
                         AdditionalDocType.VERIFICATION_REPORT_ANNEXURES_OPTIONAL_DOCUMENT,
                         verificationReportDto.programmeId,
                         doc,
@@ -428,10 +427,10 @@ export class VerificationService {
                 .optionalDocuments) {
                 let docUrl;
 
-                if (this.isValidHttpUrl(doc)) {
+                if (this.fileHelperService.isValidHttpUrl(doc)) {
                     docUrl = doc;
                 } else {
-                    docUrl = await this.uploadDocument(
+                    docUrl = await this.fileHelperService.uploadDocument(
                         AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_FINDING_OPTIONAL_DOCUMENT,
                         verificationReportDto.programmeId,
                         doc,
@@ -450,10 +449,10 @@ export class VerificationService {
             for (const sign of docContent.verificationOpinion.signature1) {
                 let signUrl;
 
-                if (this.isValidHttpUrl(sign)) {
+                if (this.fileHelperService.isValidHttpUrl(sign)) {
                     signUrl = sign;
                 } else {
-                    signUrl = await this.uploadDocument(
+                    signUrl = await this.fileHelperService.uploadDocument(
                         AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
                         verificationReportDto.programmeId,
                         sign,
@@ -472,10 +471,10 @@ export class VerificationService {
             for (const sign of docContent.verificationOpinion.signature2) {
                 let signUrl;
 
-                if (this.isValidHttpUrl(sign)) {
+                if (this.fileHelperService.isValidHttpUrl(sign)) {
                     signUrl = sign;
                 } else {
-                    signUrl = await this.uploadDocument(
+                    signUrl = await this.fileHelperService.uploadDocument(
                         AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
                         verificationReportDto.programmeId,
                         sign,
@@ -1063,87 +1062,6 @@ export class VerificationService {
 
     //     return latestVerifiedRequest?.verificationSerialNo;
     // }
-
-    private isValidHttpUrl(attachment: string): boolean {
-        let url;
-
-        try {
-            url = new URL(attachment);
-        } catch (e) {
-            return false;
-        }
-
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    }
-
-    private async uploadDocument(
-        type: AdditionalDocType,
-        id: string,
-        data: string,
-    ) {
-        let filetype;
-        try {
-            filetype = this.getFileExtension(data);
-            data = data.split(',')[1];
-            if (filetype == undefined) {
-                throw new HttpException(
-                    this.helperService.formatReqMessagesString(
-                        'programme.invalidDocumentUpload',
-                        [],
-                    ),
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                );
-            }
-        } catch (Exception: any) {
-            throw new HttpException(
-                this.helperService.formatReqMessagesString(
-                    'programme.invalidDocumentUpload',
-                    [],
-                ),
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-
-        const response: any = await this.fileHandler.uploadFile(
-            `documents/${this.helperService.enumToString(AdditionalDocType, type)}${
-                id ? '_' + id : ''
-            }_${Date.now()}.${filetype}`,
-            data,
-        );
-        if (response) {
-            return response;
-        } else {
-            throw new HttpException(
-                this.helperService.formatReqMessagesString(
-                    'programme.docUploadFailed',
-                    [],
-                ),
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
-
-    private fileExtensionMap = new Map([
-        ['pdf', 'pdf'],
-        ['vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'],
-        ['vnd.ms-excel', 'xls'],
-        ['vnd.ms-powerpoint', 'ppt'],
-        [
-            'vnd.openxmlformats-officedocument.presentationml.presentation',
-            'pptx',
-        ],
-        ['msword', 'doc'],
-        ['vnd.openxmlformats-officedocument.wordprocessingml.document', 'docx'],
-        ['csv', 'csv'],
-        ['png', 'png'],
-        ['jpeg', 'jpg'],
-    ]);
-
-    private getFileExtension = (file: string): string => {
-        let fileType = file.split(';')[0].split('/')[1];
-        fileType = this.fileExtensionMap.get(fileType);
-        return fileType;
-    };
 
     // private async getVerificationRequestIdByProgramme(programmeId: string) {
     //     const count = await this.verificationRequestRepository.count({

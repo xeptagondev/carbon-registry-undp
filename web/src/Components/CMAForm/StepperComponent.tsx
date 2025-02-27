@@ -28,6 +28,7 @@ import {
 import { Loading } from '../Loading/loading';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const CMA_STEPS = {};
 
@@ -58,7 +59,7 @@ const StepperComponent = (props: any) => {
   const [disableFields, setDisableFields] = useState<boolean>(false);
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${id}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
   const [values, setValues] = useState({

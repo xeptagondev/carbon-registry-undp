@@ -3,7 +3,6 @@ import { HelperService } from './service/helper.service';
 import { UtilService } from './service/util.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PolicyBlocksEntity } from '../policy-block/entity/policy-blocks.entity';
-import { GuardianModule } from '../guardian/guardian.module';
 import { DataExportService } from './service/data-export.service';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
 import { ObjectionLetterGenerateService } from './service/objection.letter.gen';
@@ -13,11 +12,13 @@ import { CreditIssueCertificateGenerator } from './service/credit.issue.certific
 import { DateUtilService } from './service/date.util.service';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
+import { UsersEntity } from '../users/entity/users.entity';
 import { InstantLogger } from './service/instant.logger.service';
+import { FileHelperService } from './service/file-helper.service';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([PolicyBlocksEntity, Counter]),
+        TypeOrmModule.forFeature([PolicyBlocksEntity, Counter, UsersEntity]),
         I18nModule.forRoot({
             fallbackLanguage: 'en',
             loaderOptions: {
@@ -29,7 +30,6 @@ import { InstantLogger } from './service/instant.logger.service';
                 AcceptLanguageResolver,
             ],
         }),
-        GuardianModule,
         FileHandlerModule,
     ],
     providers: [
@@ -41,6 +41,7 @@ import { InstantLogger } from './service/instant.logger.service';
         CounterService,
         DateUtilService,
         InstantLogger,
+        FileHelperService,
     ],
     exports: [
         HelperService,
@@ -51,6 +52,7 @@ import { InstantLogger } from './service/instant.logger.service';
         CounterService,
         DateUtilService,
         InstantLogger,
+        FileHelperService,
     ],
 })
 export class UtilModule {}

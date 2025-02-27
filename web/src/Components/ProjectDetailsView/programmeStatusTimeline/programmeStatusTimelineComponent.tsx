@@ -24,34 +24,34 @@ interface ProgrammeStatusTimelineComponentProps {
 
 const getCurrentStep = (stage: ProjectProposalStage) => {
   switch (getProjectProposalStageEnumVal(stage)) {
-    case ProjectProposalStage.SUBMITTED_INF:
-      return 0;
-    case ProjectProposalStage.APPROVED_INF:
-      return 1;
-    case ProjectProposalStage.REJECTED_INF:
-      return 0;
-    case ProjectProposalStage.SUBMITTED_COST_QUOTATION:
-      return 1;
-    case ProjectProposalStage.SUBMITTED_PROPOSAL:
-      return 1;
-    case ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT:
-      return 1;
-    case ProjectProposalStage.ACCEPTED_PROPOSAL:
-      return 2;
-    case ProjectProposalStage.REJECTED_PROPOSAL:
-      return 1;
-    case ProjectProposalStage.SUBMITTED_CMA:
-      return 2;
-    case ProjectProposalStage.APPROVED_CMA:
-      return 3;
-    case ProjectProposalStage.REJECTED_CMA:
-      return 2;
-    case ProjectProposalStage.VALIDATION_PENDING:
-      return 3;
-    case ProjectProposalStage.AUTHORISED:
-      return 4;
-    case ProjectProposalStage.REJECTED_VALIDATION:
-      return 3;
+    // case ProjectProposalStage.SUBMITTED_INF:
+    //   return 0;
+    // case ProjectProposalStage.APPROVED_INF:
+    //   return 1;
+    // case ProjectProposalStage.REJECTED_INF:
+    //   return 0;
+    // case ProjectProposalStage.SUBMITTED_COST_QUOTATION:
+    //   return 1;
+    // case ProjectProposalStage.SUBMITTED_PROPOSAL:
+    //   return 1;
+    // case ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT:
+    //   return 1;
+    // case ProjectProposalStage.ACCEPTED_PROPOSAL:
+    //   return 2;
+    // case ProjectProposalStage.REJECTED_PROPOSAL:
+    //   return 1;
+    // case ProjectProposalStage.SUBMITTED_CMA:
+    //   return 2;
+    // case ProjectProposalStage.APPROVED_CMA:
+    //   return 3;
+    // case ProjectProposalStage.REJECTED_CMA:
+    //   return 2;
+    // case ProjectProposalStage.VALIDATION_PENDING:
+    //   return 3;
+    // case ProjectProposalStage.AUTHORISED:
+    //   return 4;
+    // case ProjectProposalStage.REJECTED_VALIDATION:
+    //   return 3;
 
     default:
       return 0;
@@ -60,24 +60,24 @@ const getCurrentStep = (stage: ProjectProposalStage) => {
 
 const getINFContent = (stage: ProjectProposalStage, t: any) => {
   switch (getProjectProposalStageEnumVal(stage)) {
-    case ProjectProposalStage.SUBMITTED_INF:
-      return {
-        subTitle: t('slcfRoadmapTimeline:submitted'),
-        statusKey: 'submitted',
-        icon: <NotificationOutlined />,
-        className: 'inf-submitted',
-        subTaskOne: true,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.REJECTED_INF:
-      return {
-        subTitle: t('slcfRoadmapTimeline:rejected'),
-        statusKey: 'rejected',
-        icon: <CloseCircleFilled />,
-        className: 'inf-rejected',
-        subTaskOne: true,
-        subTaskTwo: true,
-      };
+    // case ProjectProposalStage.SUBMITTED_INF:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:submitted'),
+    //     statusKey: 'submitted',
+    //     icon: <NotificationOutlined />,
+    //     className: 'inf-submitted',
+    //     subTaskOne: true,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.REJECTED_INF:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:rejected'),
+    //     statusKey: 'rejected',
+    //     icon: <CloseCircleFilled />,
+    //     className: 'inf-rejected',
+    //     subTaskOne: true,
+    //     subTaskTwo: true,
+    //   };
     default:
       return {
         subTitle: t('slcfRoadmapTimeline:approved'),
@@ -121,45 +121,45 @@ const getINFContent = (stage: ProjectProposalStage, t: any) => {
 
 const getProposalContent = (stage: ProjectProposalStage, t: any) => {
   switch (getProjectProposalStageEnumVal(stage)) {
-    case ProjectProposalStage.SUBMITTED_INF:
-    case ProjectProposalStage.APPROVED_INF:
-    case ProjectProposalStage.SUBMITTED_COST_QUOTATION:
-    case ProjectProposalStage.SUBMITTED_PROPOSAL:
-      return {
-        subTitle: t('slcfRoadmapTimeline:pending'),
-        statusKey: 'pending',
-        icon: <ReadOutlined />,
-        className: 'proposal-pending',
-        subTaskOne: false,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.REJECTED_INF:
-      return {
-        subTitle: '',
-        statusKey: '',
-        icon: <CloseOutlined />,
-        className: 'proposal-pending',
-        subTaskOne: false,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT:
-      return {
-        subTitle: t('slcfRoadmapTimeline:submitted'),
-        statusKey: 'submitted',
-        icon: <ReadOutlined />,
-        className: 'proposal-submitted',
-        subTaskOne: true,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.REJECTED_PROPOSAL:
-      return {
-        subTitle: t('slcfRoadmapTimeline:rejected'),
-        statusKey: 'rejected',
-        icon: <CloseCircleFilled />,
-        className: 'proposal-rejected',
-        subTaskOne: true,
-        subTaskTwo: true,
-      };
+    // case ProjectProposalStage.SUBMITTED_INF:
+    // case ProjectProposalStage.APPROVED_INF:
+    // case ProjectProposalStage.SUBMITTED_COST_QUOTATION:
+    // case ProjectProposalStage.SUBMITTED_PROPOSAL:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:pending'),
+    //     statusKey: 'pending',
+    //     icon: <ReadOutlined />,
+    //     className: 'proposal-pending',
+    //     subTaskOne: false,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.REJECTED_INF:
+    //   return {
+    //     subTitle: '',
+    //     statusKey: '',
+    //     icon: <CloseOutlined />,
+    //     className: 'proposal-pending',
+    //     subTaskOne: false,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:submitted'),
+    //     statusKey: 'submitted',
+    //     icon: <ReadOutlined />,
+    //     className: 'proposal-submitted',
+    //     subTaskOne: true,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.REJECTED_PROPOSAL:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:rejected'),
+    //     statusKey: 'rejected',
+    //     icon: <CloseCircleFilled />,
+    //     className: 'proposal-rejected',
+    //     subTaskOne: true,
+    //     subTaskTwo: true,
+    //   };
     default:
       return {
         subTitle: t('slcfRoadmapTimeline:accepted'),
@@ -174,48 +174,48 @@ const getProposalContent = (stage: ProjectProposalStage, t: any) => {
 
 const getCMAContent = (stage: ProjectProposalStage, t: any) => {
   switch (getProjectProposalStageEnumVal(stage)) {
-    case ProjectProposalStage.SUBMITTED_INF:
-    case ProjectProposalStage.APPROVED_INF:
-    case ProjectProposalStage.SUBMITTED_COST_QUOTATION:
-    case ProjectProposalStage.SUBMITTED_PROPOSAL:
-    case ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT:
-    case ProjectProposalStage.ACCEPTED_PROPOSAL:
-      return {
-        subTitle: t('slcfRoadmapTimeline:pending'),
-        statusKey: 'pending',
-        icon: <FileDoneOutlined />,
-        className: 'cma-pending',
-        subTaskOne: false,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.REJECTED_INF:
-    case ProjectProposalStage.REJECTED_PROPOSAL:
-      return {
-        subTitle: '',
-        statusKey: '',
-        icon: <CloseOutlined />,
-        className: 'cma-pending',
-        subTaskOne: false,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.SUBMITTED_CMA:
-      return {
-        subTitle: t('slcfRoadmapTimeline:submitted'),
-        statusKey: 'submitted',
-        icon: <FileDoneOutlined />,
-        className: 'cma-submitted',
-        subTaskOne: true,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.REJECTED_CMA:
-      return {
-        subTitle: t('slcfRoadmapTimeline:rejected'),
-        statusKey: 'rejected',
-        icon: <CloseCircleFilled />,
-        className: 'cma-rejected',
-        subTaskOne: true,
-        subTaskTwo: true,
-      };
+    // case ProjectProposalStage.SUBMITTED_INF:
+    // case ProjectProposalStage.APPROVED_INF:
+    // case ProjectProposalStage.SUBMITTED_COST_QUOTATION:
+    // case ProjectProposalStage.SUBMITTED_PROPOSAL:
+    // case ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT:
+    // case ProjectProposalStage.ACCEPTED_PROPOSAL:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:pending'),
+    //     statusKey: 'pending',
+    //     icon: <FileDoneOutlined />,
+    //     className: 'cma-pending',
+    //     subTaskOne: false,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.REJECTED_INF:
+    // case ProjectProposalStage.REJECTED_PROPOSAL:
+    //   return {
+    //     subTitle: '',
+    //     statusKey: '',
+    //     icon: <CloseOutlined />,
+    //     className: 'cma-pending',
+    //     subTaskOne: false,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.SUBMITTED_CMA:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:submitted'),
+    //     statusKey: 'submitted',
+    //     icon: <FileDoneOutlined />,
+    //     className: 'cma-submitted',
+    //     subTaskOne: true,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.REJECTED_CMA:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:rejected'),
+    //     statusKey: 'rejected',
+    //     icon: <CloseCircleFilled />,
+    //     className: 'cma-rejected',
+    //     subTaskOne: true,
+    //     subTaskTwo: true,
+    //   };
     default:
       return {
         subTitle: t('slcfRoadmapTimeline:approved'),
@@ -230,44 +230,44 @@ const getCMAContent = (stage: ProjectProposalStage, t: any) => {
 
 const getValidationContent = (stage: ProjectProposalStage, t: any) => {
   switch (getProjectProposalStageEnumVal(stage)) {
-    case ProjectProposalStage.REJECTED_INF:
-    case ProjectProposalStage.REJECTED_PROPOSAL:
-    case ProjectProposalStage.REJECTED_CMA:
-      return {
-        subTitle: '',
-        statusKey: '',
-        icon: <CloseOutlined />,
-        className: 'validation-pending',
-        subTaskOne: false,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.VALIDATION_PENDING:
-      return {
-        subTitle: t('slcfRoadmapTimeline:submitted'),
-        statusKey: 'submitted',
-        icon: <SafetyCertificateOutlined />,
-        className: 'validation-submitted',
-        subTaskOne: true,
-        subTaskTwo: false,
-      };
-    case ProjectProposalStage.AUTHORISED:
-      return {
-        subTitle: t('slcfRoadmapTimeline:approved'),
-        statusKey: 'approved',
-        icon: <Icon.CheckCircleFill />,
-        className: 'validation-approved',
-        subTaskOne: true,
-        subTaskTwo: true,
-      };
-    case ProjectProposalStage.REJECTED_VALIDATION:
-      return {
-        subTitle: t('slcfRoadmapTimeline:rejected'),
-        statusKey: 'rejected',
-        icon: <CloseCircleFilled />,
-        className: 'validation-rejected',
-        subTaskOne: true,
-        subTaskTwo: true,
-      };
+    // case ProjectProposalStage.REJECTED_INF:
+    // case ProjectProposalStage.REJECTED_PROPOSAL:
+    // case ProjectProposalStage.REJECTED_CMA:
+    //   return {
+    //     subTitle: '',
+    //     statusKey: '',
+    //     icon: <CloseOutlined />,
+    //     className: 'validation-pending',
+    //     subTaskOne: false,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.VALIDATION_PENDING:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:submitted'),
+    //     statusKey: 'submitted',
+    //     icon: <SafetyCertificateOutlined />,
+    //     className: 'validation-submitted',
+    //     subTaskOne: true,
+    //     subTaskTwo: false,
+    //   };
+    // case ProjectProposalStage.AUTHORISED:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:approved'),
+    //     statusKey: 'approved',
+    //     icon: <Icon.CheckCircleFill />,
+    //     className: 'validation-approved',
+    //     subTaskOne: true,
+    //     subTaskTwo: true,
+    //   };
+    // case ProjectProposalStage.REJECTED_VALIDATION:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:rejected'),
+    //     statusKey: 'rejected',
+    //     icon: <CloseCircleFilled />,
+    //     className: 'validation-rejected',
+    //     subTaskOne: true,
+    //     subTaskTwo: true,
+    //   };
     default:
       return {
         subTitle: t('slcfRoadmapTimeline:pending'),
@@ -282,23 +282,23 @@ const getValidationContent = (stage: ProjectProposalStage, t: any) => {
 
 const getAuthorisedContent = (stage: ProjectProposalStage, t: any) => {
   switch (getProjectProposalStageEnumVal(stage)) {
-    case ProjectProposalStage.REJECTED_INF:
-    case ProjectProposalStage.REJECTED_CMA:
-    case ProjectProposalStage.REJECTED_PROPOSAL:
-    case ProjectProposalStage.REJECTED_VALIDATION:
-      return {
-        subTitle: '',
-        statusKey: '',
-        icon: <CloseOutlined />,
-        className: 'auth-pending',
-      };
-    case ProjectProposalStage.AUTHORISED:
-      return {
-        subTitle: t('slcfRoadmapTimeline:completed'),
-        statusKey: 'completed',
-        icon: <Icon.CheckCircleFill />,
-        className: 'auth-approved',
-      };
+    // case ProjectProposalStage.REJECTED_INF:
+    // case ProjectProposalStage.REJECTED_CMA:
+    // case ProjectProposalStage.REJECTED_PROPOSAL:
+    // case ProjectProposalStage.REJECTED_VALIDATION:
+    //   return {
+    //     subTitle: '',
+    //     statusKey: '',
+    //     icon: <CloseOutlined />,
+    //     className: 'auth-pending',
+    //   };
+    // case ProjectProposalStage.AUTHORISED:
+    //   return {
+    //     subTitle: t('slcfRoadmapTimeline:completed'),
+    //     statusKey: 'completed',
+    //     icon: <Icon.CheckCircleFill />,
+    //     className: 'auth-approved',
+    //   };
     default:
       return {
         subTitle: t('slcfRoadmapTimeline:pending'),

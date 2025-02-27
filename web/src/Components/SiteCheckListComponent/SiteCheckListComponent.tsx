@@ -36,6 +36,7 @@ import { PURPOSE_CREDIT_DEVELOPMENT } from '../AddNewProgramme/ProgrammeCreation
 import GetMultipleLocationsMapComponent from '../Maps/GetMultipleLocationsMapComponent';
 import { Loading } from '../Loading/loading';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const SiteCheckListComponent = (props: { translator: i18n }) => {
   const [form] = useForm();
@@ -55,7 +56,7 @@ const SiteCheckListComponent = (props: { translator: i18n }) => {
   const { get, post } = useConnection();
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${id}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
   const getDataToPopulate = async (programmeId: any) => {
