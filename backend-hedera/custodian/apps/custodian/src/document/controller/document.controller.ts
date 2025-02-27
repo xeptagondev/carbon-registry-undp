@@ -8,8 +8,8 @@ import {
     Request,
     UseGuards,
 } from '@nestjs/common';
-import { DocumentService } from '../service/document.service';
-import { DocumentActionDTO } from '../dto/document-action-request.dto';
+import { DocumentService } from '@app/shared/document/service/document.service';
+import { DocumentActionDTO } from '@app/shared/document/dto/document-action-request.dto';
 
 @Controller('document')
 export class DocumentController {
