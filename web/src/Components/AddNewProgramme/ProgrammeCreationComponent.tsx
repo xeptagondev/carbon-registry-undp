@@ -32,6 +32,7 @@ import PhoneInput, {
 import InfDocumentInformation from './infDocumentInfo';
 import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -289,7 +290,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
     setLoading(true);
     try {
-      const res = await post(API_PATHS.PROJECT, body);
+      const res = await post(API_PATHS.PROJECT_CREATE, body);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
@@ -297,7 +298,7 @@ export const ProgrammeCreationComponent = (props: any) => {
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
-        navigate('/programmeManagement/viewAll');
+        navigate(ROUTES.VIEW_PROGRAMMES);
       }
     } catch (error: any) {
       if (error && error.errors && error.errors.length > 0) {
@@ -828,7 +829,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   allowClear
                                 >
                                   {independentCertifiers.map((ic: any) => (
-                                    <Select.Option value={ic.id}>{ic.name}</Select.Option>
+                                    <Select.Option value={ic.refId}>{ic.name}</Select.Option>
                                   ))}
                                 </Select>
                               </Form.Item>

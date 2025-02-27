@@ -1,29 +1,73 @@
 {
-  "$schema": "https://json.schemastore.org/nest-cli",
-  "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
-  "compilerOptions": {
-    "deleteOutDir": true,
-    "webpack": true
-  },
-  "projects": {
-    "core": {
-      "type": "library",
-      "root": "libs/core",
-      "entryFile": "index",
-      "sourceRoot": "libs/core/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/core/tsconfig.lib.json"
-      }
+    "$schema": "https://json.schemastore.org/nest-cli",
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "apps/custodian/src",
+    "compilerOptions": {
+        "deleteOutDir": true,
+        "webpack": true,
+        "tsConfigPath": "apps/custodian/tsconfig.app.json",
+        "assets": [
+            {
+                "include": "../../../libs/shared/src/i18n/**/*",
+                "watchAssets": true,
+                "outDir": "dist/apps/custodian"
+            }
+        ]
     },
-    "shared": {
-      "type": "library",
-      "root": "libs/shared",
-      "entryFile": "index",
-      "sourceRoot": "libs/shared/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/shared/tsconfig.lib.json"
-      }
-    }
-  }
+    "projects": {
+        "core": {
+            "type": "library",
+            "root": "libs/core",
+            "entryFile": "index",
+            "sourceRoot": "libs/core/src",
+            "compilerOptions": {
+                "tsConfigPath": "libs/core/tsconfig.lib.json"
+            }
+        },
+        "shared": {
+            "type": "library",
+            "root": "libs/shared",
+            "entryFile": "index",
+            "sourceRoot": "libs/shared/src",
+            "compilerOptions": {
+                "tsConfigPath": "libs/shared/tsconfig.lib.json"
+            }
+        },
+        "custodian": {
+            "type": "application",
+            "root": "apps/custodian",
+            "entryFile": "main",
+            "sourceRoot": "apps/custodian/src",
+            "compilerOptions": {
+                "deleteOutDir": true,
+                "tsConfigPath": "apps/custodian/tsconfig.app.json",
+                "assets": [
+                    {
+                        "include": "../../../libs/shared/src/i18n/**/*",
+                        "watchAssets": true,
+                        "outDir": "dist/apps/custodian"
+                    }
+                ]
+            }
+        },
+        "task-monitor": {
+            "type": "application",
+            "root": "apps/task-monitor",
+            "entryFile": "main",
+            "sourceRoot": "apps/task-monitor/src",
+            "compilerOptions": {
+                "deleteOutDir": true,
+                "tsConfigPath": "apps/task-monitor/tsconfig.app.json",
+                "assets": [
+                    {
+                        "include": "../../../libs/shared/src/i18n/**/*",
+                        "watchAssets": true,
+                        "outDir": "dist/apps/task-monitor"
+                    }
+                ]
+            }
+        }
+    },
+    "monorepo": true,
+    "root": "apps/custodian"
 }

@@ -33,6 +33,9 @@ import StartDateCreditingPeriod from './StartDateCreditingPeriod';
 import { API_PATHS } from '../../Config/apiConfig';
 import Monitoring from './Monitoring';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import { ROUTES } from '../../Config/uiRoutingConfig';
+
+const CMA_STEPS = {};
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
@@ -61,7 +64,7 @@ const StepperComponent = (props: any) => {
   const [disableFields, setDisableFields] = useState<boolean>(false);
 
   const navigateToDetailsPage = () => {
-    navigate(`/programmeManagement/view/${id}`);
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
   const [values, setValues] = useState({

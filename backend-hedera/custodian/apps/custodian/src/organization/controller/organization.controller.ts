@@ -10,7 +10,6 @@ import {
     HttpException,
     HttpStatus,
 } from '@nestjs/common';
-import { OrganizationService } from '../../../libs/shared/src/organization/service/organization.service';
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
@@ -19,6 +18,7 @@ import { OrganizationDto } from '@app/shared/organization/dto/organization.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
+import { OrganizationService } from '@app/shared/organization/service/organization.service';
 
 @Controller('organisation')
 export class OrganizationController {
