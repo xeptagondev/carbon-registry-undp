@@ -22,7 +22,7 @@ export class TaskEntity {
     @Column('jsonb')
     args: [];
 
-    @Column({ enum: TaskEnum })
+    @Column({ type: 'enum', enum: TaskEnum })
     state: TaskEnum;
 
     @ManyToOne(() => UsersEntity, (usersEntity) => usersEntity.submittedTasks)
