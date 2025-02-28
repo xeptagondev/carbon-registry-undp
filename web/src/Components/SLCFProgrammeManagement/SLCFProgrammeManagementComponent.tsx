@@ -339,7 +339,7 @@ export const SLCFProgrammeManagementComponent = (props: any) => {
     setLoading(true);
     try {
       const userId = userInfoState?.id;
-      const response: any = await post(API_PATHS.USER_DETAILS_BY_ID, {
+      const response: any = await post(API_PATHS.USER_DETAILS, {
         page: 1,
         size: 10,
         filterAnd: [
