@@ -1,11 +1,17 @@
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 import { SuperService } from '@app/core/service/super.service';
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
+import {
+    OrganizationSchemaDtos,
+    UserSchemaDtos,
+} from '@app/shared/guardian/dto/guardian-schema.dto';
 import {
     ButtonActionEnum,
     ButtonNameEnum,
 } from '@app/shared/guardian/enum/button-type.enum';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
+import { GuardianStateEnum } from '@app/shared/guardian/enum/guardian-state.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     ORG_DEACTIVATE_HEADER,
@@ -604,6 +610,7 @@ export class OrganizationService extends SuperService<
             where: { id: orgId },
             relations: {
                 organizationType: true,
+                users: true,
             },
         });
 
@@ -640,11 +647,126 @@ export class OrganizationService extends SuperService<
             updatedTime: new Date().getTime(),
         };
 
+        const organizationVcDocument =
+            await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.ORGANIZATION_GRID,
+                orgEnt.refId,
+                user.email,
+            );
+
+        if (
+            !organizationVcDocument ||
+            !organizationVcDocument.document ||
+            !organizationVcDocument.document.credentialSubject ||
+            organizationVcDocument.document.credentialSubject.length === 0
+        ) {
+            throw new HttpException(
+                'Organization grid not found',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+
+        const organizationData: OrganizationSchemaDtos =
+            new OrganizationSchemaDtos(
+                organizationVcDocument.document.credentialSubject[0],
+            );
+
+        organizationData.name = dto.name;
+        organizationData.email = dto.email;
+        organizationData.phoneNumber = dto.phoneNo;
+        organizationData.website = dto.website;
+        organizationData.faxNumber = dto.faxNo;
+        organizationData.logo = dto.logo;
+        organizationData.provinces = dto.provinces;
+        organizationData.address = dto.address;
+        organizationData.updatedTime = new Date().getTime();
+
         if (
             user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER ||
             user.organizationRole === OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
             editData.paymentId = dto.paymentId;
+            organizationData.paymentId = dto.paymentId;
+        }
+
+        const blockName = orgEnt.organizationType.multiple
+            ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
+            : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
+
+        if (
+            organizationVcDocument.option.status !== GuardianStateEnum.REVOKED
+        ) {
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ORGANIZATION_REVOKE,
+                ButtonActionEnum.SUBMIT,
+                organizationVcDocument,
+                user.email,
+            );
+        }
+
+        await this.guardianService.updateDocument(user.email, blockName, {
+            document: { ...organizationData },
+            ref: null,
+        });
+
+        const updatedOrganizationVcDocument =
+            await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.ORGANIZATION_GRID,
+                orgEnt.refId,
+                user.email,
+            );
+
+        if (orgEnt.organizationType.multiple) {
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ORGANIZATION_ACTIVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                updatedOrganizationVcDocument,
+                user.email,
+            );
+        }
+
+        const updatedOrgDataForUser: OrganizationSchemaDtos =
+            new OrganizationSchemaDtos(
+                updatedOrganizationVcDocument.document.credentialSubject[0],
+            );
+
+        for (const orgUser of orgEnt.users) {
+            if (orgUser.isActive) {
+                const userVcDocument =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.USER_GRID,
+                        orgUser.refId,
+                        orgUser.email,
+                    );
+
+                const orgUserData: UserSchemaDtos = new UserSchemaDtos(
+                    userVcDocument.document.credentialSubject[0],
+                );
+
+                orgUserData.organization = updatedOrgDataForUser;
+
+                const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
+
+                if (
+                    userVcDocument.option.status !== GuardianStateEnum.REVOKED
+                ) {
+                    await this.guardianService.buttonActionRequest(
+                        ButtonNameEnum.USER_REVOKE,
+                        ButtonActionEnum.SUBMIT,
+                        userVcDocument,
+                        user.email,
+                    );
+                }
+
+                await this.guardianService.updateDocument(
+                    user.email,
+                    blockName,
+                    {
+                        document: { ...orgUserData },
+                        ref: null,
+                    },
+                );
+            }
         }
 
         await this.organizationRepository.update({ id: orgEnt.id }, editData);
