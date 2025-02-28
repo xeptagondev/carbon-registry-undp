@@ -399,7 +399,7 @@ export const InvestmentCreationComponent = (props: any) => {
         payload.programmeId = projectData?.programmeId;
         payload.fromCompanyIds = projectData?.companyId.map((e) => Number(e));
         payload.percentage = val.percentage;
-        response = await post(API_PATHS.ADD_PROGRAMME_INVESTMENT, payload);
+        response = await post(API_PATHS.ADD_PROJECT_INVESTMENT, payload);
       } else {
         payload.instrument = payload.instrument;
         response = await post(API_PATHS.ADD_ORGANIZATION_INVESTMENT, payload);
