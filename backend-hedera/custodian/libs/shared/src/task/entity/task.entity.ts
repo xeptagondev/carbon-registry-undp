@@ -6,6 +6,7 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm';
+import { TaskEnum } from '../enum/task.enum';
 
 @Entity()
 export class TaskEntity {
@@ -19,7 +20,10 @@ export class TaskEntity {
     functionName: string;
 
     @Column('jsonb')
-    args: object;
+    args: [];
+
+    @Column({ enum: TaskEnum })
+    state: TaskEnum;
 
     @ManyToOne(() => UsersEntity, (usersEntity) => usersEntity.submittedTasks)
     @JoinColumn([{ name: 'submitted_user_id', referencedColumnName: 'id' }])
