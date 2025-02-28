@@ -323,7 +323,7 @@ export const AddNewCompanyComponent = (props: any) => {
       let leftmins: string[] = [];
       const excludingmin: string[] = [];
       for (const min of ministries) {
-        const response: any = await post(API_PATHS.MINISTRY_LIST, {
+        const response: any = await post(API_PATHS.ORGANIZATION_DETAILS, {
           page: 1,
           size: 100,
           filterAnd: [
