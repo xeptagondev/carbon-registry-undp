@@ -1728,7 +1728,7 @@ ${total}
   };
   const fetchProgrammeIds = async () => {
     try {
-      const responses = await post(API_PATHS.PROGRAMME_DOCS, {
+      const responses = await post(API_PATHS.PROJECT_DOCS, {
         page: 1,
         size: 100,
         filterAnd: [

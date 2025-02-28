@@ -621,7 +621,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const saveNewProgramme = async (payload: any) => {
     setLoading(true);
     try {
-      const response: any = await post(API_PATHS.NEW_PROGRAMME, payload);
+      const response: any = await post(API_PATHS.NEW_PROJECT, payload);
       if (response?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',

@@ -18,6 +18,17 @@ export const API_PATHS = {
   GET_PROJECT: 'project/query',
   PROJECT_BY_ID: 'programmeSl/getProjectById',
   ALL_PROJECTS: 'programme/query',
+  ADD_PROJECT_DOC: 'programme/addDocument',
+  PROJECT_DOC_ACTION: 'programme/docAction',
+  PROJECT_DOCS: 'programme/queryDocs',
+  NEW_PROJECT: 'programme/create',
+  PROJECT_DOWNLOAD: 'programme/download',
+  PROGRAMME_BY_ID: 'project/getProjectById', //Change this to project later
+  PROJECT_HISTORY_BY_ID: (programmeId: string) =>
+    `programme/getHistory?programmeId=${programmeId}`,
+  PROJECT_BY_STATUS: 'stats/programme/queryProgrammesByStatus',
+  PROJECT_BY_CATEGORY: 'stats/programme/queryProgrammesByCategory',
+  PROJECT_ACTION: (action: string) => `programme/${action}`,
   //LOCATION
   PROVINCES: 'location/province',
   DISTRICTS: 'location/district',
@@ -25,18 +36,6 @@ export const API_PATHS = {
   POSTALCODE: 'location/postalCode',
   DIVISIONS: 'location/division',
   COUNTRIES: 'location/countries',
-  //PROGRAMME
-  ADD_PROGRAMME_DOC: 'programme/addDocument',
-  PROGRAMME_DOC_ACTION: 'programme/docAction',
-  PROGRAMME_DOCS: 'programme/queryDocs',
-  NEW_PROGRAMME: 'programme/create',
-  PROGRAMME_DOWNLOAD: 'programme/download',
-  PROGRAMME_BY_ID: 'project/getProjectById',
-  PROGRAMME_HISTORY_BY_PROGRAMME_ID: (programmeId: string) =>
-    `programme/getHistory?programmeId=${programmeId}`,
-  PROGRAMME_BY_STATUS: 'stats/programme/queryProgrammesByStatus',
-  PROGRAMME_BY_CATEGORY: 'stats/programme/queryProgrammesByCategory',
-  PROGRAMME_ACTION: (action: string) => `programme/${action}`,
   //DOC-VERSIONS
   LAST_DOC_VERSION: 'programmeSl/getDocLastVersion',
   LAST_DOC_VERSIONS: 'programmeSl/getDocVersions',
