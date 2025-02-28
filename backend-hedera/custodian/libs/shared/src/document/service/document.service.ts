@@ -27,6 +27,8 @@ import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { DocumentActionDTO } from '../dto/document-action-request.dto';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { TaskEnum } from '@app/shared/task/enum/task.enum';
 
 @Injectable()
 export class DocumentService {
@@ -35,10 +37,30 @@ export class DocumentService {
         private readonly documentRepository: Repository<DocumentEntity>,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
+        @InjectRepository(TaskEntity)
+        private readonly taskRepository: Repository<TaskEntity>,
         private readonly configService: ConfigService,
         private readonly mailService: MailService,
         private readonly dataSource: DataSource,
     ) {}
+
+    // async taskTest2(arg1, arg2, arg3) {
+    //     console.log(
+    //         `Test task function call 2 executed. arg1: ${arg1}, arg2: ${arg2}, arg3: ${arg3}`,
+    //     );
+    // }
+
+    // async taskTest() {
+    //     console.log('Test task function call executed');
+    //     const task: TaskEntity = {
+    //         className: 'DocumentService',
+    //         functionName: 'taskTest2',
+    //         args: ['agr1', { kk: 'arg2' }, 3],
+    //         state: TaskEnum.PENDING,
+    //     };
+
+    //     await this.taskRepository.save(task);
+    // }
 
     async getDocumentWithProjectAssignees(id: number) {
         return await this.documentRepository.findOne({
@@ -470,7 +492,7 @@ export class DocumentService {
             );
         } else if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
             // send email to assigned IC admins
-            let assigneeOrgEmails = [];
+            const assigneeOrgEmails = [];
             const assignedICAdmins = await this.getOrgAdminEmails(
                 assigneeOrgEmails,
                 queryRunner,

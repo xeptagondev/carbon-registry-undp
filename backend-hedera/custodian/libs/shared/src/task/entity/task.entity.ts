@@ -11,7 +11,7 @@ import { TaskEnum } from '../enum/task.enum';
 @Entity()
 export class TaskEntity {
     @PrimaryGeneratedColumn()
-    id: number;
+    id?: number;
 
     @Column()
     className: string;
@@ -19,13 +19,15 @@ export class TaskEntity {
     @Column()
     functionName: string;
 
-    @Column('jsonb')
-    args: [];
+    @Column('jsonb', { nullable: true })
+    args?: any[];
 
     @Column({ type: 'enum', enum: TaskEnum })
     state: TaskEnum;
 
-    @ManyToOne(() => UsersEntity, (usersEntity) => usersEntity.submittedTasks)
+    @ManyToOne(() => UsersEntity, (usersEntity) => usersEntity.submittedTasks, {
+        nullable: true,
+    })
     @JoinColumn([{ name: 'submitted_user_id', referencedColumnName: 'id' }])
-    submittedUser: UsersEntity;
+    submittedUser?: UsersEntity;
 }
