@@ -58,9 +58,9 @@ export const API_PATHS = {
   REQUEST_CARBON_NEUTRAL_CERTIFICATE: 'programmeSl/requestCarbonNeutralCertificate',
   //INVESTMENT
   INVESTMENT_LIST: 'programme/investmentQuery',
-  ADD_PROGRAMME_INVESTMENT: 'programme/addInvestment',
+  ADD_PROJECT_INVESTMENT: 'programme/addInvestment',
   ADD_ORGANIZATION_INVESTMENT: 'organisation/addInvestment',
-  DOWNLOAD_INVESTMENT_DATA: 'programme/investments/download',
+  DOWNLOAD_PROJECT_INVESTMENT_DATA: 'programme/investments/download',
   //VERIFICATION
   VERIFICATION_DOC_VERSIONS: 'programmeSl/getVerificationDocVersions',
   VERIFICATION_DOC_BY_VERSION: 'programmeSl/getVerificationDocByVersion',
