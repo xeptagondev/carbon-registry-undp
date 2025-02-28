@@ -440,7 +440,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     setLoading(true);
 
     try {
-      const response: any = await post(API_PATHS.PROGRAMME_DOWNLOAD, {
+      const response: any = await post(API_PATHS.PROJECT_DOWNLOAD, {
         filterAnd: dataQuery.filterAnd,
         filterOr: dataQuery.filterOr?.length > 0 ? dataQuery.filterOr : undefined,
         sort: dataQuery.sort,

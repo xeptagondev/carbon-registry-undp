@@ -54,6 +54,12 @@ import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { OrganizationSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
+import { UserSchemaDtos } from '@app/shared/guardian/dto/guardian-schema.dto';
+import {
+    ButtonActionEnum,
+    ButtonNameEnum,
+} from '@app/shared/guardian/enum/button-type.enum';
+import { GuardianStateEnum } from '@app/shared/guardian/enum/guardian-state.enum';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -1123,7 +1129,43 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 HttpStatus.NOT_FOUND,
             );
         }
-        // Guardian Implmentation Not Yet Completed
+
+        const userVcDocument =
+            await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.USER_GRID,
+                userDetails.refId,
+                requestUser.email,
+            );
+
+        const userData: UserSchemaDtos = new UserSchemaDtos(
+            userVcDocument.document.credentialSubject[0],
+        );
+
+        userData.name = userUpdateDto.name;
+        userData.phoneNumber = userUpdateDto.phoneNo
+            ? userUpdateDto.phoneNo
+            : userDetails.phoneNumber;
+
+        const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
+
+        if (userVcDocument.option.status !== GuardianStateEnum.REVOKED) {
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.USER_REVOKE,
+                ButtonActionEnum.SUBMIT,
+                userVcDocument,
+                requestUser.email,
+            );
+        }
+
+        await this.guardianService.updateDocument(
+            requestUser.email,
+            blockName,
+            {
+                document: { ...userData },
+                ref: null,
+            },
+        );
+
         const result = await this.usersRepository
             .update(
                 {
@@ -1257,6 +1299,20 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             await this.guardianService.assignPolicyToUser(
                 userDetails?.email,
                 false,
+            );
+
+            const userVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.USER_GRID,
+                    userDetails.refId,
+                    requestUser.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.USER_REVOKE,
+                ButtonActionEnum.SUBMIT,
+                userVcDocument,
+                requestUser.email,
             );
         } catch (e) {
             throw new HttpException(

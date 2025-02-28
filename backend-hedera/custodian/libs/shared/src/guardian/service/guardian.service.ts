@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
@@ -38,8 +38,8 @@ export class GuardianService {
 
     async getGuardianError(error: any, calledMainFunction: string) {
         this.logger.error(
-            `Error Occurred in Guardian Service ${calledMainFunction}`,
-            error,
+            `Error Occurred in Guardian Service ${calledMainFunction} 
+            ${JSON.stringify(error)}`,
             this.loggerContext,
         );
         if (axios.isAxiosError(error)) {
@@ -241,6 +241,36 @@ export class GuardianService {
         }
     }
 
+    public async updateDocument(
+        email: string,
+        blockName: string,
+        payload: any,
+    ): Promise<any> {
+        try {
+            const url = this.buildGuardianUrl(
+                // eslint-disable-next-line max-len
+                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(blockName)}`,
+            );
+
+            const user = await this.usersRepository.findOne({
+                where: { email: email },
+            });
+
+            const token = await this.getAccessToken(user.refreshToken);
+
+            const response = await axios.post(url, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            return response.data;
+        } catch (error) {
+            await this.getGuardianError(error, 'updateOrganization');
+            return;
+        }
+    }
+
     private getGridApi(grid: GridTypeEnum): GridInterface {
         const gridMappings = {
             [GridTypeEnum.USER_GRID]: GUARDIAN_API.BLOCKS.USER_QUERY,
@@ -438,10 +468,14 @@ export class GuardianService {
             gridApis.FILTER_NOT_STATUS,
             'REVOKED',
         );
+
+        // const gridDataOne = await this.fetchGridData(gridApis, policyId, token);
+        // console.log('---------------One----------', gridDataOne);
+
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
 
         const gridData = await this.fetchGridData(gridApis, policyId, token);
-
+        // console.log('---------------Two----------', gridData);
         const fullVCDocument = gridData.find(
             (response: any) =>
                 response?.document?.credentialSubject[0]?.refId === refId,
