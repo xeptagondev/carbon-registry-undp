@@ -9,14 +9,14 @@ import {
 
 export class VerifyReportDto {
     @IsNotEmpty()
-    @IsNumber()
+    @IsString()
     @ApiProperty()
-    reportId: number;
+    reportId: string;
 
     @IsNotEmpty()
-    @IsNumber()
+    @IsString()
     @ApiProperty()
-    verificationRequestId: number;
+    verificationRequestId: string;
 
     @IsNotEmpty()
     @IsBoolean()
