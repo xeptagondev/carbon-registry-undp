@@ -10,6 +10,7 @@ import PhoneInput, {
   isPossiblePhoneNumber,
 } from 'react-phone-number-input';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { CMASectoralScope } from '../../Definitions/Enums/programmeStage.enum';
 
 const ProjectDetails = (props: CustomStepsProps) => {
   const { next, form, current, t, countries, handleValuesUpdate, disableFields, prev, formMode } =
@@ -18,19 +19,23 @@ const ProjectDetails = (props: CustomStepsProps) => {
   const [contactNoInput] = useState<any>();
 
   const onFinish = (values: any) => {
+    console.log('-----------temp Values before-------');
     const tempValues: any = {
       projectDetails: {
-        title: values?.title,
-        dateOfIssue: moment(values?.dateOfIssue).startOf('day').unix(),
+        projectTitle: values?.projectTitle,
+        versionNumber: values?.versionNumber,
+        appliedMethodologies: values?.appliedMethodologies,
+        estimatedAvgGHGEmissionReductionBasicInformation:
+          values?.estimatedAvgGHGEmissionReductionBasicInformation,
+        // dateOfIssue: moment(values?.dateOfIssue).startOf('day').unix(),
         projectProponent: values?.projectProponent,
-        preparedBy: values?.preparedBy,
-        telephone: values?.telephone,
-        physicalAddress: values?.physicalAddress,
-        email: values?.email,
-        website: values?.website,
+        completionDate: moment(values?.completionDate).startOf('day').unix(),
+        hostParty: values?.hostParty,
+        sectoralScope: values?.sectoralScope,
       },
     };
 
+    console.log('----------tempValues-------------', tempValues);
     handleValuesUpdate(tempValues);
   };
 
@@ -58,7 +63,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                   <div className="step-form-right-col">
                     <Form.Item
                       label={t('PDD:projectTitle')}
-                      name="title"
+                      name="projectTitle"
                       rules={[
                         {
                           required: true,
@@ -74,7 +79,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
 
                     <Form.Item
                       label={t('PDD:versionNumber')}
-                      name="title"
+                      name="versionNumber"
                       rules={[
                         {
                           required: true,
@@ -90,7 +95,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
 
                     <Form.Item
                       label={t('PDD:appliedMethodologies')}
-                      name="title"
+                      name="appliedMethodologies"
                       rules={[
                         {
                           required: true,
@@ -106,7 +111,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
 
                     <Form.Item
                       label={t('PDD:estimatedAvgGHGEmissionReductionBasicInformation')}
-                      name="title"
+                      name="estimatedAvgGHGEmissionReductionBasicInformation"
                       rules={[
                         {
                           required: true,
@@ -255,7 +260,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                               value === null ||
                               value === undefined
                             ) {
-                              throw new Error(`${t('PDD:dateOfIssue')} ${t('isRequired')}`);
+                              throw new Error(`${t('PDD:completionDate')} ${t('isRequired')}`);
                             }
                           },
                         },
@@ -294,7 +299,15 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Select />
+                      <Select size="large" disabled={disableFields}>
+                        {Object.values(CMASectoralScope).map(
+                          (sectoralScope: string, index: number) => (
+                            <Select.Option value={sectoralScope} key={sectoralScope + index}>
+                              {sectoralScope}
+                            </Select.Option>
+                          )
+                        )}
+                      </Select>
                     </Form.Item>
 
                     {/* <Form.Item
