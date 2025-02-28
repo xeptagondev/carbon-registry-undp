@@ -111,6 +111,7 @@ export class ProjectService {
 
             const project: ProjectSchema = {
                 refId: projectRefId,
+                name: projectDto.title,
                 createdBy: createdBy,
                 assignee: assignees,
             };

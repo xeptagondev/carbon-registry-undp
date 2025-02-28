@@ -24,8 +24,7 @@ export const API_PATHS = {
   NEW_PROJECT: 'programme/create',
   PROJECT_DOWNLOAD: 'programme/download',
   PROGRAMME_BY_ID: 'project/getProjectById', //Change this to project later
-  PROJECT_HISTORY_BY_ID: (programmeId: string) =>
-    `programme/getHistory?programmeId=${programmeId}`,
+  PROJECT_HISTORY_BY_ID: (programmeId: string) => `programme/getHistory?programmeId=${programmeId}`,
   PROJECT_BY_STATUS: 'stats/programme/queryProgrammesByStatus',
   PROJECT_BY_CATEGORY: 'stats/programme/queryProgrammesByCategory',
   PROJECT_ACTION: (action: string) => `programme/${action}`,
@@ -67,8 +66,7 @@ export const API_PATHS = {
   VERIFICATION_DOC_LAST_VERSION: 'programmeSl/getVerificationDocLastVersion',
   VERIFY_VERIFICATION_REPORT: 'verification/verifyVerificationReport',
   CREATE_VERIFICATION_REPORT: 'verification/createVerificationReport',
-  VERIFICATION_HISTORY_BY_ID: (programmeId: string) =>
-    `verification?programmeId=${programmeId}`,
+  VERIFICATION_HISTORY_BY_ID: (programmeId: string) => `verification?programmeId=${programmeId}`,
   //MONITORING
   VERIFY_MONITORING_REPORT: 'verification/verifyMonitoringReport',
   CREATE_MONITORING_REPORT: 'verification/createMonitoringReport',
