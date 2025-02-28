@@ -90,14 +90,14 @@ export const API_PATHS = {
   //TRANSFER
   TRANSFER_ACTION: 'programme/',
   TRANSFER_ON_FREEZE: 'Settings/update',
-  TRANSFER_QUERY: 'programme/transferQuery',
+  PROJECT_TRANSFERS: 'programme/transferQuery',
   TRANSFER_DOWNLOAD: 'programme/transfers/download',
-  CREDIT_RETIRE_TRANSFER_ACTION: `retire/create`,
+  CREDIT_RETIRE_TRANSFER_ACTION: 'retire/create',
   PROGRAM_TRANSFERS: 'retire/query',
   CANCEL_TRANSFER_REQUEST: 'retire/status',
-  TRANSFER_BY_PROGRAMMEID: (programmeId: string) =>
+  TRANSFER_BY_PROJECT_ID: (programmeId: string) =>
     `programme/transfersByProgrammeId?programmeId=${programmeId}`,
-  PROGRAMME_HISTORY_BY_ID: (id: string) => `logs?programmeId=${id}`,
+  PROJECT_HISTORY_LOGS: (id: string) => `logs?programmeId=${id}`,
   // TRANSFER_FORZEN_STATUS: (isTransferFrozen:string) => `Settings/query?id=${isTransferFrozen}`
   TRANSACTION_RECORDS_WITHOUT_TIME_RANGE: 'stats/national-accounting/query',
   //DASHBOARD
