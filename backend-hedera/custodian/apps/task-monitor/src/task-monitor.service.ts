@@ -2,6 +2,7 @@ import { DocumentService } from '@app/shared/document/service/document.service';
 import { OrganizationService } from '@app/shared/organization/service/organization.service';
 import { ProjectService } from '@app/shared/project/service/project.service';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { UserService } from '@app/shared/users/service/user.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -21,18 +22,59 @@ export class TaskMonitorService implements OnModuleInit {
         private readonly projectService: ProjectService,
     ) {
         this.serviceMap = {
-            UserService: userService,
-            DocumentService: documentService,
-            OrganizationService: organizationService,
-            ProjectService: projectService,
+            UserService: this.userService,
+            DocumentService: this.documentService,
+            OrganizationService: this.organizationService,
+            ProjectService: this.projectService,
         };
     }
 
     async onModuleInit() {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             try {
                 // 1. Query for any pending submitted tasks
-                // 2. Execute the function
+                const pendingWork: TaskEntity[] =
+                    await this.taskRepository.find({
+                        where: { state: TaskEnum.PENDING },
+                    });
+                // 2. Evaluate tasks
+                for (let i = 0; i < pendingWork.length; i++) {
+                    const task: TaskEntity = pendingWork[i];
+                    const clsName: string = task.className;
+                    const fnName: string = task.functionName;
+                    const args: [] = task.args;
+                    try {
+                        // 3. Execute the task function
+                        await this.executeFunction(clsName, fnName, args);
+                        // 4. Update the state to complete
+                        await this.taskRepository.update(
+                            {
+                                id: task.id,
+                            },
+                            {
+                                state: TaskEnum.COMPLETED,
+                            },
+                        );
+                    } catch (err) {
+                        this.logger.error(
+                            `Failed to complete task! ID: ${task.id}.\nError: ${err}`,
+                        );
+                        // 4. Update the state to failed
+                        await this.taskRepository.update(
+                            {
+                                id: task.id,
+                            },
+                            {
+                                state: TaskEnum.FAILED,
+                            },
+                        );
+                    }
+                }
+
+                // time out of 3 mins (1000 * 60 * 3)
+                const timeOutMins = 180000;
+                await new Promise((r) => setTimeout(r, timeOutMins));
             } catch (err) {
                 this.logger.error(err);
             }
@@ -43,7 +85,7 @@ export class TaskMonitorService implements OnModuleInit {
         return this.serviceMap[clsName] ? this.serviceMap[clsName] : null;
     }
 
-    async executeFunction(clsName: string, fnName: string, args: any[]) {
+    async executeFunction(clsName: string, fnName: string, args: []) {
         // get the service object for the class
         const instance = this.getService(clsName);
         if (!instance) {
