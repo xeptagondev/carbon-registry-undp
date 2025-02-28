@@ -274,8 +274,15 @@ export class GuardianService {
         filterType: string,
         filterValue: string,
     ) {
+        const filterBlock = this.utilService.getBlock(filterType);
+
+        if (!filterBlock) {
+            this.logger.warn(`Filter not found, skipping the ${filterType}`);
+            return;
+        }
+
         const filterUrl = this.buildGuardianUrl(
-            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(filterType)}`,
+            `/api/v1/policies/${policyId}/blocks/${filterBlock}`,
         );
 
         const filterResponse = await axios.post(
