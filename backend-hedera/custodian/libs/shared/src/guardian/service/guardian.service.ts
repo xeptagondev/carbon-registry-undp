@@ -363,12 +363,12 @@ export class GuardianService {
         const token = await this.getAuthenticatedUserToken(email);
         const policyId = this.configService.get('policy.id');
 
-        await this.applyFilters(
-            policyId,
-            token,
-            gridApis.FILTER_NOT_STATUS,
-            'REVOKED',
-        );
+        // await this.applyFilters(
+        //     policyId,
+        //     token,
+        //     gridApis.FILTER_NOT_STATUS,
+        //     'REVOKED',
+        // );
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
 
         const gridData = await this.fetchGridData(gridApis, policyId, token);
@@ -393,12 +393,12 @@ export class GuardianService {
         const token = await this.getAuthenticatedUserToken(email);
         const policyId = this.configService.get('policy.id');
 
-        await this.applyFilters(
-            policyId,
-            token,
-            gridApis.FILTER_NOT_STATUS,
-            'REVOKED',
-        );
+        // await this.applyFilters(
+        //     policyId,
+        //     token,
+        //     gridApis.FILTER_NOT_STATUS,
+        //     'REVOKED',
+        // );
         await this.applyFilters(
             policyId,
             token,
@@ -411,9 +411,6 @@ export class GuardianService {
         const fullVCDocuments = gridData.map(
             (response: any) => response?.document?.credentialSubject[0],
         );
-        if (!fullVCDocuments.length) {
-            throw new Error('No document found for the given project ID');
-        }
 
         return fullVCDocuments;
     }

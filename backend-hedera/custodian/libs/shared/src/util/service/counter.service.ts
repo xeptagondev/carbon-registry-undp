@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CounterType } from '../enum/counter.type.enum';
 import { Counter } from '../entity/counter.entity';
+import { v4 as uuidv4 } from 'uuid';
+
 @Injectable()
 export class CounterService {
     constructor(
@@ -18,6 +20,14 @@ export class CounterService {
     }
 
     async incrementCount(
+        type: CounterType,
+        length: number,
+        increment: number = 1,
+    ): Promise<string> {
+        const counter = await this.incrementCountDB(type, length, increment);
+        return `${counter}-${uuidv4()}`;
+    }
+    async incrementCountDB(
         type: CounterType,
         length: number,
         increment: number = 1,

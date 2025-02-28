@@ -20,6 +20,7 @@ import {
     MONITORING_REJECT_HEADER,
     VERIFICATION_APPROVE_HEADER,
     VERIFICATION_CREATE_HEADER,
+    VERIFICATION_REJECT_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 import { VerifyReportDto } from '../dto/verify.report.dto';
@@ -42,6 +43,7 @@ import {
     ButtonActionEnum,
     ButtonNameEnum,
 } from '@app/shared/guardian/enum/button-type.enum';
+import { ProjectSchemaDtos } from '@app/shared/guardian/dto/guardian-schema.dto';
 
 @Injectable()
 export class VerificationService {
@@ -66,7 +68,7 @@ export class VerificationService {
         requestUser: JWTPayload,
     ) {
         this.logger.log(
-            `Request received to create monitoring report with details ${monitoringReportDto}
+            `Request received to create monitoring report with details ${JSON.stringify(monitoringReportDto)}
              from user ${requestUser.userName}`,
             this.loggerContext,
         );
@@ -154,7 +156,6 @@ export class VerificationService {
                 requestUser.userRefId,
                 requestUser.email,
             );
-
         // Handle monitoring report creation logic
         if (activities.length) {
             const lastActivity = activities[activities.length - 1];
@@ -453,6 +454,11 @@ export class VerificationService {
         verificationReportDto: VerificationReportDto,
         requestUser: JWTPayload,
     ) {
+        this.logger.log(
+            `Request received to create verification report with details ${verificationReportDto}
+             from user ${requestUser.userName}`,
+            this.loggerContext,
+        );
         if (
             requestUser.organizationRole !==
             OrganizationTypeEnum.INDEPENDENT_CERTIFIER
@@ -468,116 +474,51 @@ export class VerificationService {
 
         const docContent = JSON.parse(verificationReportDto.content);
 
-        if (
-            docContent?.annexures?.optionalDocuments &&
-            docContent?.annexures?.optionalDocuments.length > 0
-        ) {
-            const docUrls = [];
-            for (const doc of docContent.annexures.optionalDocuments) {
-                let docUrl;
+        // Handle document uploads
+        await this.uploadOptionalDocuments(
+            docContent?.annexures?.optionalDocuments,
+            AdditionalDocType.VERIFICATION_REPORT_ANNEXURES_OPTIONAL_DOCUMENT,
+            verificationReportDto.programmeId,
+        );
 
-                if (this.fileHelperService.isValidHttpUrl(doc)) {
-                    docUrl = doc;
-                } else {
-                    docUrl = await this.fileHelperService.uploadDocument(
-                        AdditionalDocType.VERIFICATION_REPORT_ANNEXURES_OPTIONAL_DOCUMENT,
-                        verificationReportDto.programmeId,
-                        doc,
-                    );
-                }
-                docUrls.push(docUrl);
-            }
-            docContent.annexures.optionalDocuments = docUrls;
-        }
+        await this.uploadOptionalDocuments(
+            docContent?.verificationFinding?.optionalDocuments,
+            AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_FINDING_OPTIONAL_DOCUMENT,
+            verificationReportDto.programmeId,
+        );
 
-        if (
-            docContent?.verificationFinding?.optionalDocuments &&
-            docContent?.verificationFinding?.optionalDocuments.length > 0
-        ) {
-            const docUrls = [];
-            for (const doc of docContent.verificationFinding
-                .optionalDocuments) {
-                let docUrl;
+        await this.uploadOptionalDocuments(
+            docContent?.verificationOpinion?.signature1,
+            AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
+            verificationReportDto.programmeId,
+        );
 
-                if (this.fileHelperService.isValidHttpUrl(doc)) {
-                    docUrl = doc;
-                } else {
-                    docUrl = await this.fileHelperService.uploadDocument(
-                        AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_FINDING_OPTIONAL_DOCUMENT,
-                        verificationReportDto.programmeId,
-                        doc,
-                    );
-                }
-                docUrls.push(docUrl);
-            }
-            docContent.verificationFinding.optionalDocuments = docUrls;
-        }
+        await this.uploadOptionalDocuments(
+            docContent?.verificationOpinion?.signature2,
+            AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
+            verificationReportDto.programmeId,
+        );
 
-        if (
-            docContent?.verificationOpinion?.signature1 &&
-            docContent?.verificationOpinion?.signature1.length > 0
-        ) {
-            const signUrls = [];
-            for (const sign of docContent.verificationOpinion.signature1) {
-                let signUrl;
-
-                if (this.fileHelperService.isValidHttpUrl(sign)) {
-                    signUrl = sign;
-                } else {
-                    signUrl = await this.fileHelperService.uploadDocument(
-                        AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
-                        verificationReportDto.programmeId,
-                        sign,
-                    );
-                }
-                signUrls.push(signUrl);
-            }
-            docContent.verificationOpinion.signature1 = signUrls;
-        }
-
-        if (
-            docContent?.verificationOpinion?.signature2 &&
-            docContent?.verificationOpinion?.signature2.length > 0
-        ) {
-            const signUrls = [];
-            for (const sign of docContent.verificationOpinion.signature2) {
-                let signUrl;
-
-                if (this.fileHelperService.isValidHttpUrl(sign)) {
-                    signUrl = sign;
-                } else {
-                    signUrl = await this.fileHelperService.uploadDocument(
-                        AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
-                        verificationReportDto.programmeId,
-                        sign,
-                    );
-                }
-                signUrls.push(signUrl);
-            }
-            docContent.verificationOpinion.signature2 = signUrls;
-        }
-
-        const project: ProjectSchema =
-            await this.guardianService.getGridDataUsingRefId(
+        // Fetch related entities
+        const [project, activities, createdBy] = await Promise.all([
+            this.guardianService.getGridDataUsingRefId(
                 GridTypeEnum.PROJECT_GRID,
                 verificationReportDto.programmeId,
                 requestUser.email,
-            );
-
-        const activities: ActivitySchema[] =
-            await this.guardianService.getGridDataUsingProjectId(
+            ),
+            this.guardianService.getGridDataUsingProjectId(
                 GridTypeEnum.ACTIVITY_GRID,
                 verificationReportDto.programmeId,
                 requestUser.email,
-            );
-
-        const createdBy: UserSchema =
-            await this.guardianService.getGridDataUsingRefId(
+            ),
+            this.guardianService.getGridDataUsingRefId(
                 GridTypeEnum.USER_GRID,
                 requestUser.userRefId,
                 requestUser.email,
-            );
+            ),
+        ]);
 
+        // Validate credit issuance limit
         const creditReceived =
             (Number(project?.creditBalance) || 0) +
             (Number(project?.creditFrozen) || 0) +
@@ -597,74 +538,7 @@ export class VerificationService {
             );
         }
 
-        if (activities.length) {
-            const lastActivity = activities[activities.length - 1];
-            const activityHistory =
-                await this.guardianService.getGridHistoryByRefId(
-                    GridTypeEnum.ACTIVITY_GRID,
-                    lastActivity.refId,
-                    requestUser.email,
-                );
-
-            if (
-                activityHistory &&
-                activityHistory.length &&
-                (activityHistory[activityHistory.length - 1].labelValue ===
-                    VerificationRequestStatusEnum.MONITORING_REPORT_VERIFIED ||
-                    activityHistory[activityHistory.length - 1].labelValue ===
-                        VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED)
-            ) {
-                const verificationRepors: DocumentSchema[] =
-                    await this.guardianService.getGridDataUsingActivityId(
-                        GridTypeEnum.VERIFICATION_GRID,
-                        lastActivity.refId,
-                        requestUser.email,
-                    );
-                const verificationRefId =
-                    await this.counterService.incrementCount(
-                        CounterType.VERIFICATION_REPORT,
-                        4,
-                    );
-
-                await this.guardianService.createEntity(
-                    requestUser.email,
-                    this.utilService.getBlock(
-                        GUARDIAN_API.BLOCKS.CREATE_VERIFICATION_REPORT,
-                    ),
-                    {
-                        document: {
-                            refId: verificationRefId,
-                            project: project,
-                            activity: lastActivity,
-                            name: '',
-                            version: verificationRepors.length + 1,
-                            documentType: DocumentEnum.VERIFICATION,
-                            data: JSON.stringify(verificationReportDto),
-                            createdBy: createdBy,
-                        },
-                        ref: null,
-                    },
-                );
-                const lastActivityDoc =
-                    await this.guardianService.getGridDocumentUsingRefId(
-                        GridTypeEnum.ACTIVITY_GRID,
-                        lastActivity.refId,
-                        requestUser.email,
-                    );
-                console.log(lastActivityDoc);
-                await this.guardianService.buttonActionRequest(
-                    ButtonNameEnum.ACTIVITY_VERIFICATION_REPORT_SUBMIT,
-                    ButtonActionEnum.SUBMIT,
-                    lastActivityDoc,
-                    requestUser.email,
-                );
-            } else {
-                throw new HttpException(
-                    'Verification request not in the correct status',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-        } else {
+        if (!activities.length) {
             throw new HttpException(
                 this.helperService.formatReqMessagesString(
                     'verification.verificationRequestDoesNotExists',
@@ -674,51 +548,148 @@ export class VerificationService {
             );
         }
 
-        const countryName = this.configService.get('country');
-        const mailToPD: MailTemplateDTO = {
-            subject: VERIFICATION_CREATE_HEADER,
-            template: MailTemplateEnum.VERIFICATION_CREATE_PD,
-            to: project?.createdBy?.email,
-            context: {
-                organizationNameIC: requestUser.organizationName,
-                organizationNamePD: project?.createdBy?.organization?.name,
-                countryName: countryName,
-                projectName: '', //TODO
-                // eslint-disable-next-line max-len
-                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${verificationReportDto.programmeId}`,
-            },
-        };
+        // Process verification request
+        const lastActivity = activities[activities.length - 1];
+        const activityHistory =
+            await this.guardianService.getGridHistoryByRefId(
+                GridTypeEnum.ACTIVITY_GRID,
+                lastActivity.refId,
+                requestUser.email,
+            );
 
-        await this.mailService.sendMail(mailToPD);
+        if (
+            activityHistory &&
+            activityHistory.length &&
+            (activityHistory[activityHistory.length - 1].labelValue ===
+                VerificationRequestStatusEnum.MONITORING_REPORT_VERIFIED ||
+                activityHistory[activityHistory.length - 1].labelValue ===
+                    VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED)
+        ) {
+            const verificationReports =
+                await this.guardianService.getGridDataUsingActivityId(
+                    GridTypeEnum.VERIFICATION_GRID,
+                    lastActivity.refId,
+                    requestUser.email,
+                );
 
-        const mailToDNA: MailTemplateDTO = {
-            subject: VERIFICATION_CREATE_HEADER,
-            template: MailTemplateEnum.VERIFICATION_CREATE_DNA,
-            to: project?.createdBy?.email,
-            context: {
-                organizationNameIC: requestUser.organizationName,
-                organizationNamePD: project?.createdBy?.organization?.name,
-                countryName: countryName,
-                projectName: '', //TODO
-                // eslint-disable-next-line max-len
-                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${verificationReportDto.programmeId}`,
-            },
-        };
+            const verificationRefId = await this.counterService.incrementCount(
+                CounterType.VERIFICATION_REPORT,
+                4,
+            );
 
-        await this.mailService.sendMail(mailToDNA);
+            await this.guardianService.createEntity(
+                requestUser.email,
+                this.utilService.getBlock(
+                    GUARDIAN_API.BLOCKS.CREATE_VERIFICATION_REPORT,
+                ),
+                {
+                    document: {
+                        refId: verificationRefId,
+                        project: project,
+                        activity: lastActivity,
+                        name: '',
+                        version: verificationReports.length + 1,
+                        documentType: DocumentEnum.VERIFICATION,
+                        data: JSON.stringify(verificationReportDto),
+                        createdBy: createdBy,
+                    },
+                    ref: null,
+                },
+            );
 
-        // if (savedReport) {
-        //     const log = new ProgrammeAuditLogSl();
-        //     log.programmeId = verificationReportDto.programmeId;
-        //     log.logType = ProgrammeAuditLogType.VERIFICATION_CREATE;
-        //     log.userId = user.id;
+            const lastActivityDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ACTIVITY_GRID,
+                    lastActivity.refId,
+                    requestUser.email,
+                );
 
-        //     await this.programmeAuditSlRepo.save(log);
-        // }
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ACTIVITY_VERIFICATION_REPORT_SUBMIT,
+                ButtonActionEnum.SUBMIT,
+                lastActivityDoc,
+                requestUser.email,
+            );
+        } else {
+            throw new HttpException(
+                'Verification request not in the correct status',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        // Notify stakeholders via email
+        await this.notifyStakeholders(
+            verificationReportDto.programmeId,
+            project,
+            requestUser.organizationName,
+        );
 
         return new DataResponseDto(
             HttpStatus.OK,
             'Verification Report is submitted successfully',
+        );
+    }
+
+    private async uploadOptionalDocuments(
+        documents: string[] | undefined,
+        docType: AdditionalDocType,
+        programmeId: string,
+    ) {
+        if (!documents || documents.length === 0) return;
+
+        const docUrls = await Promise.all(
+            documents.map(async (doc) => {
+                if (this.fileHelperService.isValidHttpUrl(doc)) {
+                    return doc;
+                }
+                return await this.fileHelperService.uploadDocument(
+                    docType,
+                    programmeId,
+                    doc,
+                );
+            }),
+        );
+
+        documents.length = 0;
+        documents.push(...docUrls);
+    }
+
+    private async notifyStakeholders(
+        programmeId: string,
+        project: ProjectSchema,
+        organizationNameIC: string,
+    ) {
+        const countryName = this.configService.get('country');
+
+        const mailTemplates = [
+            {
+                recipient: project?.createdBy?.email,
+                template: MailTemplateEnum.VERIFICATION_CREATE_PD,
+                subject: VERIFICATION_CREATE_HEADER,
+            },
+            {
+                recipient: project?.createdBy?.email,
+                template: MailTemplateEnum.VERIFICATION_CREATE_DNA,
+                subject: VERIFICATION_CREATE_HEADER,
+            },
+        ];
+
+        await Promise.all(
+            mailTemplates.map((mail) =>
+                this.mailService.sendMail({
+                    subject: mail.subject,
+                    template: mail.template,
+                    to: mail.recipient,
+                    context: {
+                        organizationNameIC: organizationNameIC,
+                        organizationNamePD:
+                            project?.createdBy?.organization?.name,
+                        countryName: countryName,
+                        projectName: project.name,
+                        programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${programmeId}`,
+                    },
+                }),
+            ),
         );
     }
 
@@ -727,6 +698,13 @@ export class VerificationService {
         verifyReportDto: VerifyReportDto,
         reqUser: JWTPayload,
     ) {
+        this.logger.log(
+            `Request received to verify verification report with details ${verifyReportDto}
+             from user ${reqUser.userName}`,
+            this.loggerContext,
+        );
+
+        // Validate user role
         if (
             reqUser.organizationRole !==
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
@@ -740,232 +718,123 @@ export class VerificationService {
             );
         }
 
-        const activities = await this.guardianService.query(
-            reqUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY.GRID),
-        );
-        const activity = activities?.data.filter((activity) => {
-            return (
-                activity?.document?.credentialSubject[0]?.refId ===
-                verifyReportDto.verificationRequestId
-            );
-        });
-        const projects = await this.guardianService.query(
-            reqUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.PROJECT_QUERY.GRID),
-        );
-        const project = projects?.data.filter((activity) => {
-            return (
-                activity?.document?.credentialSubject[0]?.refId ===
-                verifyReportDto.verificationRequestId
-            );
-        });
-        if (!activity) {
-            throw new HttpException(
-                this.helperService.formatReqMessagesString(
-                    'verification.verificationRequestDoesNotExists',
-                    [],
-                ),
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-
-        const verificationReports = await this.guardianService.query(
-            reqUser.email,
-            this.utilService.getBlock(
-                GUARDIAN_API.BLOCKS.VERIFICATION_QUERY.GRID,
+        // Fetch verification report and activity concurrently
+        const [verificationReport, activity] = await Promise.all([
+            this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.VERIFICATION_GRID,
+                verifyReportDto.reportId,
+                reqUser.email,
             ),
-        );
+            this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.ACTIVITY_GRID,
+                verifyReportDto.verificationRequestId,
+                reqUser.email,
+            ),
+        ]);
 
-        const verificationReport = verificationReports?.data.filter(
-            (verificationReport) => {
-                return (
-                    verificationReport?.document?.credentialSubject[0]
-                        ?.refId === verifyReportDto.reportId
-                );
-            },
-        );
-        if (!activity) {
+        if (!activity || !verificationReport) {
             throw new HttpException(
-                this.helperService.formatReqMessagesString(
-                    'verification.verificationRequestDoesNotExists',
-                    [],
-                ),
+                'Activity and Verification report do not exist with the provided reference IDs',
                 HttpStatus.BAD_REQUEST,
             );
         }
 
-        // let updatedProgramme;
-        // let isInitialCreditIssue = false;
-        if (verifyReportDto.verify === true) {
-            // const programme = await this.programmeSlService.getProjectById(
-            //     verificationRequest.programmeId,
-            // );
-            // isInitialCreditIssue = !programme.creditStartSerialNumber;
-            // const txRef = this.txRefGen.getCreditIssueApproveRef(
-            //     user,
-            //     programme,
-            //     verificationRequest,
-            // );
-            // updatedProgramme = await this.programmeLedgerService.issueSlCredits(
-            //     verificationRequest,
-            //     programme.purposeOfCreditDevelopment,
-            //     programme.company.companyId,
-            //     txRef,
-            // );
-        }
+        // Fetch project details
+        const activityVC: ActivitySchema =
+            await this.guardianService.getGridDataUsingRefId(
+                GridTypeEnum.ACTIVITY_GRID,
+                verifyReportDto.verificationRequestId,
+                reqUser.email,
+            );
 
-        // let creditIssueCertificateSerial = undefined;
-        // if (updatedProgramme) {
-        //     const previousCreditIssueCertificateSerial =
-        //         await this.getPreviousCertificateSerial(
-        //             verificationRequest.programmeId,
-        //         );
-        //     creditIssueCertificateSerial =
-        //         this.serialGenerator.generateCreditIssueCertificateNumber(
-        //             updatedProgramme.serialNo,
-        //             previousCreditIssueCertificateSerial,
-        //         );
-        let certificateUrl = await this.getCreditIssuanceCertificateURL(
-            activity,
+        const project: ProjectSchema =
+            await this.guardianService.getGridDataUsingRefId(
+                GridTypeEnum.PROJECT_GRID,
+                activityVC?.project?.refId,
+                reqUser.email,
+            );
+
+        // Determine action (approve/reject)
+        const action = verifyReportDto.verify
+            ? ButtonActionEnum.APPROVE
+            : ButtonActionEnum.REJECT;
+
+        // Perform verification action concurrently
+        await Promise.all([
+            this.guardianService.buttonActionRequest(
+                ButtonNameEnum.VERIFICATION_REPORT_APPROVE_REJECT,
+                action,
+                verificationReport,
+                reqUser.email,
+            ),
+            this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ACTIVITY_VERIFICATION_REPORT_APPROVE_REJECT,
+                action,
+                activity,
+                reqUser.email,
+            ),
+        ]);
+
+        // Send notification emails
+        const countryName = this.configService.get('country');
+        const emailTemplate = verifyReportDto.verify
+            ? {
+                  pd: MailTemplateEnum.VERIFICATION_APPROVE_PD,
+                  ic: MailTemplateEnum.VERIFICATION_APPROVE_IC,
+                  subject: VERIFICATION_APPROVE_HEADER.replace(
+                      '{{countryName}}',
+                      countryName,
+                  ),
+              }
+            : {
+                  pd: MailTemplateEnum.VERIFICATION_REJECT_PD,
+                  ic: MailTemplateEnum.VERIFICATION_REJECT_IC,
+                  subject: VERIFICATION_REJECT_HEADER.replace(
+                      '{{countryName}}',
+                      countryName,
+                  ),
+              };
+
+        await this.sendVerificationEmail(
+            project?.createdBy?.email,
+            emailTemplate.pd,
+            emailTemplate.subject,
+            verificationReport,
             project,
         );
 
-        //TODO update document, activity, project accordingly
-        //     const hostAddress = this.configService.get('host');
-        //     await this.emailHelperService.sendEmailToOrganisationAdmins(
-        //         updatedProgramme.companyId,
-        //         EmailTemplates.CREDIT_ISSUANCE_SL,
-        //         {
-        //             programmeName: updatedProgramme.title,
-        //             credits: verificationRequest.creditAmount,
-        //             serialNumber: updatedProgramme.serialNo,
-        //             pageLink:
-        //                 hostAddress +
-        //                 `/programmeManagementSLCF/view/${updatedProgramme.programmeId}`,
-        //         },
-        //     );
+        await this.sendVerificationEmail(
+            verificationReport?.createdBy?.email,
+            emailTemplate.ic,
+            emailTemplate.subject,
+            verificationReport,
+            project,
+        );
+    }
 
-        //     const logs: ProgrammeAuditLogSl[] = [];
+    private async sendVerificationEmail(
+        recipientEmail: string,
+        template: MailTemplateEnum,
+        subject: string,
+        verificationReport: DocumentSchema,
+        project: ProjectSchema,
+    ) {
+        const countryName = this.configService.get('country');
+        const mailDTO: MailTemplateDTO = {
+            subject: subject,
+            template: template,
+            to: recipientEmail,
+            context: {
+                organisationNameIC:
+                    verificationReport?.createdBy?.organization?.name,
+                organisationNamePD: project?.createdBy?.organization?.name,
+                countryName: countryName,
+                projectName: project?.name,
+                userName: project?.createdBy?.name,
+            },
+        };
 
-        //     const VerificationApprovedLog = new ProgrammeAuditLogSl();
-        //     VerificationApprovedLog.programmeId =
-        //         verificationRequest.programmeId;
-        //     VerificationApprovedLog.logType =
-        //         ProgrammeAuditLogType.VERIFICATION_APPROVED;
-        //     VerificationApprovedLog.userId = user.id;
-        //     logs.push(VerificationApprovedLog);
-
-        //     const creditIssueLog = new ProgrammeAuditLogSl();
-        //     creditIssueLog.programmeId = verificationRequest.programmeId;
-        //     creditIssueLog.logType = ProgrammeAuditLogType.CREDIT_ISSUED;
-        //     creditIssueLog.data = {
-        //         creditIssued: Number(verificationRequest.creditAmount),
-        //     };
-        //     creditIssueLog.userId = user.id;
-        //     logs.push(creditIssueLog);
-
-        //     await this.programmeAuditSlRepo.save(logs);
-        // }
-
-        // await this.entityManager.transaction(async (em) => {
-        //     await em.update(
-        //         VerificationRequestEntity,
-        //         {
-        //             id: verifyReportDto.verificationRequestId,
-        //         },
-        //         {
-        //             status: verifyReportDto.verify
-        //                 ? VerificationRequestStatusEnum.VERIFICATION_REPORT_VERIFIED
-        //                 : VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED,
-        //             userId: user.id,
-        //             updatedTime: new Date().getTime(),
-        //             creditIssueCertificateUrl: certificateUrl,
-        //             verificationSerialNo: creditIssueCertificateSerial,
-        //         },
-        //     );
-
-        //     const verificationDocument = await this.documentRepository.find({
-        //         where: {
-        //             id: verifyReportDto.reportId,
-        //         },
-        //     });
-        //     if (verificationDocument) {
-        //         await em.update(
-        //             DocumentEntity,
-        //             {
-        //                 id: verifyReportDto.reportId,
-        //             },
-        //             {
-        //                 status: verifyReportDto.verify
-        //                     ? DocumentStatus.ACCEPTED
-        //                     : DocumentStatus.REJECTED,
-        //                 updatedTime: new Date().getTime(),
-        //             },
-        //         );
-        //     } else {
-        //         throw new HttpException(
-        //             this.helperService.formatReqMessagesString(
-        //                 'verification.verificationReportDoesNotExists',
-        //                 [],
-        //             ),
-        //             HttpStatus.BAD_REQUEST,
-        //         );
-        //         return;
-        //     }
-        // });
-
-        if (verifyReportDto.verify) {
-            const countryName = this.configService.get('country');
-            const mailToPD: MailTemplateDTO = {
-                subject: VERIFICATION_APPROVE_HEADER.replace(
-                    '{{countryName}}',
-                    countryName,
-                ),
-                template: MailTemplateEnum.VERIFICATION_APPROVE_PD,
-                to: project?.createdBy?.email,
-                context: {
-                    organizationNameIC:
-                        verificationReport?.createdBy?.organization?.name,
-                    organizationNamePD: project?.createdBy?.organization?.name,
-                    countryName: countryName,
-                    projectName: project?.title,
-                    userName: project?.createdBy?.userName,
-                },
-            };
-
-            await this.mailService.sendMail(mailToPD);
-
-            const mailToIC: MailTemplateDTO = {
-                subject: VERIFICATION_APPROVE_HEADER.replace(
-                    '{{countryName}}',
-                    countryName,
-                ),
-                template: MailTemplateEnum.VERIFICATION_APPROVE_IC,
-                to: project?.createdBy?.email,
-                context: {
-                    organizationNameIC:
-                        verificationReport?.createdBy?.organization?.name,
-                    organizationNamePD: project?.createdBy?.organization?.name,
-                    countryName: countryName,
-                    projectName: project?.title,
-                    userName: project?.createdBy?.userName,
-                },
-            };
-
-            await this.mailService.sendMail(mailToIC);
-        }
-
-        // if (!verifyReportDto.verify) {
-        //     const log = new ProgrammeAuditLogSl();
-        //     log.programmeId = verificationRequest.programmeId;
-        //     log.logType = ProgrammeAuditLogType.VERIFICATION_REJECTED;
-        //     log.userId = user.id;
-        //     if (verifyReportDto.remark)
-        //         log.data = { remark: verifyReportDto.remark };
-
-        //     await this.programmeAuditSlRepo.save(log);
-        // }
+        await this.mailService.sendMail(mailDTO);
     }
 
     //MARK: get Credit Issuance Certificate URL
