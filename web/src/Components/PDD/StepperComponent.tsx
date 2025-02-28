@@ -39,7 +39,7 @@ const CMA_STEPS = {};
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(1);
+  const [current, setCurrent] = useState(0);
 
   const navigate = useNavigate();
 
@@ -76,6 +76,7 @@ const StepperComponent = (props: any) => {
   });
 
   const handleValuesUpdate = (val: any) => {
+    console.log('----------temp vals-------------', val);
     setValues((prevVal: any) => {
       const tempContent = {
         ...prevVal.content,
@@ -342,15 +343,6 @@ const StepperComponent = (props: any) => {
         </div>
       ),
       description: (
-        // <EnvironmentImpacts
-        //   next={next}
-        //   prev={prev}
-        //   form={form3}
-        //   current={current}
-        //   t={t}
-        //   handleValuesUpdate={handleValuesUpdate}
-        //   disableFields={disableFields}
-        // />
         <ApplicationOfMethodology
           next={next}
           prev={prev}
