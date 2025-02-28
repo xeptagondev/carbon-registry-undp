@@ -209,7 +209,7 @@ export const InvestmentManagementComponent = (props: any) => {
   const downloadInvestmentData = async () => {
     setLoading(true);
     try {
-      const response: any = await post(API_PATHS.DOWNLOAD_INVESTMENT_DATA, {
+      const response: any = await post(API_PATHS.DOWNLOAD_PROJECT_INVESTMENT_DATA, {
         filterAnd: dataQuery.filterAnd,
         filterOr: dataQuery.filterOr?.length > 0 ? dataQuery.filterOr : undefined,
         sort: dataQuery.sort,

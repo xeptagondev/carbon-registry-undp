@@ -7,7 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UtilService {
@@ -20,8 +20,8 @@ export class UtilService {
     ) {}
     private tagToIdMap: Record<string, string> = {};
 
-    getBlock(blokName: string) {
-        return this.tagToIdMap[blokName];
+    getBlock(blockName: string) {
+        return this.tagToIdMap[blockName];
     }
 
     public async getBlocksByPolicy(
@@ -102,9 +102,10 @@ export class UtilService {
             throw new Error('Failed to fetch the policy');
         }
     }
-    mapTagsToIds(policy) {
-        const result = {};
-        function traverse(block) {
+
+    mapTagsToIds(policy: any): Record<string, string> {
+        const result: Record<string, string> = {};
+        function traverse(block: any) {
             if (block.tag && block.id) {
                 result[block.tag] = block.id;
             }
@@ -128,33 +129,20 @@ export class UtilService {
             return;
         }
         try {
+            const policyId = this.configService.get<string>('policy.id');
             const tagIdMap = this.tagToIdMap;
-
             const policyBlocks = Object.entries(tagIdMap).map(
                 ([blockName, blockId]) => ({
                     blockName,
                     blockId,
-                    policyId: this.configService.get<string>('policy.id'),
+                    policyId,
                 }),
             );
 
-            const existingBlocks = await this.policyBlocksRepository.find({
-                where: { blockId: In(Object.values(tagIdMap)) },
-            });
-
-            const existingBlockIds = existingBlocks.map(
-                (block) => block.blockId,
-            );
-
-            const newPolicyBlocks = policyBlocks.filter(
-                (block) => !existingBlockIds.includes(block.blockId),
-            );
-
-            if (newPolicyBlocks.length === 0) {
-                return;
-            }
-
-            await this.policyBlocksRepository.save(newPolicyBlocks);
+            await this.policyBlocksRepository.upsert(policyBlocks, [
+                'policyId',
+                'blockName',
+            ]);
         } catch (error) {
             throw new Error('Failed to save tagIdMap to PolicyBlocksEntity');
         }

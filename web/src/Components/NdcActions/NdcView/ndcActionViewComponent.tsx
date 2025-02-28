@@ -176,7 +176,7 @@ export const NdcActionViewComponent = (props: any) => {
       ),
     };
     try {
-      const response: any = await post(API_PATHS.PROGRAMME_DOCS, {
+      const response: any = await post(API_PATHS.PROJECT_DOCS, {
         page: 1,
         size: 100,
         filterAnd: [
