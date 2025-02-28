@@ -209,7 +209,7 @@ export class ProjectService {
             context: {
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
@@ -234,7 +234,7 @@ export class ProjectService {
             context: {
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
@@ -469,7 +469,7 @@ export class ProjectService {
                 userName: createdBy.name,
                 organizationName: createdBy?.organization?.name,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
