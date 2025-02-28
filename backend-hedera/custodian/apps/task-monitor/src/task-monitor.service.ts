@@ -33,6 +33,7 @@ export class TaskMonitorService implements OnModuleInit {
         // eslint-disable-next-line no-constant-condition
         while (true) {
             try {
+                this.logger.log('Pending task evaluation started');
                 // 1. Query for any pending submitted tasks
                 const pendingWork: TaskEntity[] =
                     await this.taskRepository.find({
@@ -43,7 +44,7 @@ export class TaskMonitorService implements OnModuleInit {
                     const task: TaskEntity = pendingWork[i];
                     const clsName: string = task.className;
                     const fnName: string = task.functionName;
-                    const args: [] = task.args;
+                    const args: any[] = task.args;
                     try {
                         // 3. Execute the task function
                         await this.executeFunction(clsName, fnName, args);
@@ -72,6 +73,9 @@ export class TaskMonitorService implements OnModuleInit {
                     }
                 }
 
+                this.logger.log(
+                    'Pending task evaluation finished. Sleeping for 3mins',
+                );
                 // time out of 3 mins (1000 * 60 * 3)
                 const timeOutMins = 180000;
                 await new Promise((r) => setTimeout(r, timeOutMins));
@@ -85,7 +89,7 @@ export class TaskMonitorService implements OnModuleInit {
         return this.serviceMap[clsName] ? this.serviceMap[clsName] : null;
     }
 
-    async executeFunction(clsName: string, fnName: string, args: []) {
+    async executeFunction(clsName: string, fnName: string, args: any[]) {
         // get the service object for the class
         const instance = this.getService(clsName);
         if (!instance) {
@@ -99,8 +103,11 @@ export class TaskMonitorService implements OnModuleInit {
                 `Method '${fnName}' not found on '${clsName} methods list'`,
             );
         }
-
         // execute the function
-        return await instance[fnName](...args);
+        if (args) {
+            return await instance[fnName](...args);
+        } else {
+            return await instance[fnName]();
+        }
     }
 }
