@@ -31,7 +31,11 @@ import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
-import { ProjectSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
+import {
+    ActivitySchema,
+    DocumentSchema,
+    ProjectSchema,
+} from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 import {
     ButtonActionEnum,
@@ -156,16 +160,6 @@ export class VerificationService {
             docContent.quantifications.optionalDocuments = docUrls;
         }
 
-        const activities = await this.guardianService.query(
-            requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.ACTIVITY_QUERY.GRID),
-        );
-        const activity = activities?.data.find((activity) => {
-            return (
-                activity?.document?.credentialSubject[0]?.project ===
-                monitoringReportDto.programmeId
-            );
-        });
         const project: ProjectSchema =
             await this.guardianService.getGridDataUsingRefId(
                 GridTypeEnum.PROJECT_GRID,
@@ -178,46 +172,46 @@ export class VerificationService {
             4,
         );
 
-        const monitoringPayload = {
-            refId: monitoringRefId,
-            project: project,
-            activity: activity,
-            name: '',
-            version: 1,
-            type: DocumentEnum.MONITORING,
-            data: '',
-        };
-        if (
-            activity &&
-            activity.status ===
-                VerificationRequestStatusEnum.MONITORING_REPORT_REJECTED
-        ) {
+        if (monitoringReportDto.activityId) {
             //TODO call activity status button when monitoring report is created
 
-            const monitoringReports = await this.guardianService.query(
+            const activity: ActivitySchema =
+                await this.guardianService.getGridDataUsingRefId(
+                    GridTypeEnum.ACTIVITY_GRID,
+                    monitoringReportDto.activityId,
+                    requestUser.email,
+                );
+
+            const monitoringReports: DocumentSchema[] =
+                await this.guardianService.getGridDataUsingActivityId(
+                    GridTypeEnum.MONITORING_GRID,
+                    monitoringReportDto.activityId,
+                    requestUser.email,
+                );
+
+            await this.guardianService.createEntity(
                 requestUser.email,
                 this.utilService.getBlock(
-                    GUARDIAN_API.BLOCKS.MONITORING_QUERY.GRID,
+                    GUARDIAN_API.BLOCKS.CREATE_MONITORING_REPORT,
                 ),
-            );
-            //find last monitoring report
-            const monitoringReport = monitoringReports?.data.find(
-                (monitoringReport) => {
-                    return (
-                        monitoringReport?.document?.credentialSubject[0]
-                            ?.activity?.id === activity?.id
-                    );
+                {
+                    document: {
+                        refId: monitoringRefId,
+                        project: project,
+                        activity: activity,
+                        name: '',
+                        version: monitoringReports.length + 1,
+                        type: DocumentEnum.MONITORING,
+                        data: JSON.stringify(monitoringReportDto),
+                    },
+                    ref: null,
                 },
             );
-            monitoringPayload.version = monitoringReport
-                ? monitoringReport.version + 1
-                : 1;
         } else {
             const activityRefId = await this.counterService.incrementCount(
                 CounterType.ACTIVITY,
                 4,
             );
-            console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$');
             await this.guardianService.createEntity(
                 requestUser.email,
                 this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_ACTIVITY),
@@ -229,51 +223,34 @@ export class VerificationService {
                     ref: null,
                 },
             );
-            console.log('######');
-            monitoringPayload.version = 1;
+            await this.guardianService.createEntity(
+                requestUser.email,
+                this.utilService.getBlock(
+                    GUARDIAN_API.BLOCKS.CREATE_MONITORING_REPORT,
+                ),
+                {
+                    document: {
+                        refId: monitoringRefId,
+                        project: project,
+                        activity: {
+                            refId: activityRefId,
+                            project: project,
+                        },
+                        name: '',
+                        version: 1,
+                        type: DocumentEnum.MONITORING,
+                        data: JSON.stringify(monitoringReportDto),
+                    },
+                    ref: null,
+                },
+            );
         }
 
-        await this.guardianService.createEntity(
-            requestUser.email,
-            this.utilService.getBlock(
-                GUARDIAN_API.BLOCKS.CREATE_MONITORING_REPORT,
-            ),
-            {
-                document: monitoringPayload,
-                ref: null,
-            },
-        );
-
-        //updating monitoring report id
-        // const currentYear = new Date().getFullYear();
-        // const programmeId = monitoringReportDto.programmeId;
-        // const verificationRequestIdByProgramme =
-        //     await this.getVerificationRequestIdByProgramme(
-        //         monitoringReportDocument.programmeId,
-        //     );
-        // const version = monitoringReportDocument.version;
-        // docContent.projectDetails.reportID = `SLCCS/MR/${currentYear}/
-        // ${programmeId}/${verificationRequestIdByProgramme}/${version}`;
-
-        // monitoringReportDocument.content = docContent;
-
-        // return await em.save(monitoringReportDocument);
-
-        //send email to SLCF
         await this.notifyCertifiers(
             monitoringReportDto.programmeId,
             [],
             requestUser,
         );
-
-        // if (savedReport) {
-        //     const log = new ProgrammeAuditLogSl();
-        //     log.programmeId = monitoringReportDto.programmeId;
-        //     log.logType = ProgrammeAuditLogType.MONITORING_CREATE;
-        //     log.userId = user.id;
-
-        //     await this.programmeAuditSlRepo.save(log);
-        // }
 
         return new DataResponseDto(
             HttpStatus.OK,
