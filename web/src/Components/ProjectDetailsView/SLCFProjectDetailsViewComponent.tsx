@@ -1821,7 +1821,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     setLoadingHistory(true);
     try {
       if (id) {
-        const response: any = await get(API_PATHS.PROGRAMME_HISTORY_BY_ID(id));
+        const response: any = await get(API_PATHS.PROJECT_HISTORY_LOGS(id));
         if (response && response.data) {
           setProgrammeHistoryLogData(response.data);
           setProgrammeHistoryLogDataLoaded(true);

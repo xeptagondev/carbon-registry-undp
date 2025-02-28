@@ -712,7 +712,7 @@ const ProgrammeView = () => {
     try {
       const historyPromise = get(API_PATHS.PROJECT_HISTORY_BY_ID(programmeId));
       const transferPromise = get(
-        API_PATHS.TRANSFER_BY_PROGRAMMEID(programmeId)
+        API_PATHS.TRANSFER_BY_PROJECT_ID(programmeId)
       );
 
       const [response, transfers] = await Promise.all([historyPromise, transferPromise]);
