@@ -71,7 +71,7 @@ export const CompanyProfileComponent = (props: any) => {
   const getUserDetails = async (companyId: string) => {
     setIsLoading(true);
     try {
-      const response: any = await post(API_PATHS.USER_DETAILS_BY_ID, {
+      const response: any = await post(API_PATHS.USER_DETAILS, {
         page: 1,
         size: 10,
         filterAnd: [

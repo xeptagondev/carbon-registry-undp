@@ -7,7 +7,6 @@ export const API_PATHS = {
   //USER
   USER_PROFILE: 'User/profile',
   USER_DETAILS: 'user/query',
-  USER_DETAILS_BY_ID: 'user/query',
   ADD_USER: 'user/add',
   UPDATE_USER: 'user/update',
   DELETE_USER: (userId: string) => `user/delete?userId=${userId}`,
@@ -20,17 +19,12 @@ export const API_PATHS = {
   PROJECT_BY_ID: 'programmeSl/getProjectById',
   ALL_PROJECTS: 'programme/query',
   //LOCATION
-  PROVINCE: 'location/province',
   PROVINCES: 'location/province',
-  DISTRICT: 'location/district',
   DISTRICTS: 'location/district',
-  CITY: 'location/city',
   CITIES: 'location/city',
   POSTALCODE: 'location/postalCode',
   DIVISIONS: 'location/division',
   COUNTRIES: 'location/countries',
-  COUNTRY_LIST: 'organisation/countries',
-  REGIONS: 'organisation/regions',
   //PROGRAMME
   ADD_PROGRAMME_DOC: 'programme/addDocument',
   PROGRAMME_DOC_ACTION: 'programme/docAction',
@@ -49,6 +43,8 @@ export const API_PATHS = {
   DOC_BY_VERSION: 'programmeSl/getDocByVersion',
   CREATE_COST_COTATION: 'programmeSl/createCostQuotation',
   //ORGANIZATION
+  COUNTRY_LIST: 'organisation/countries',
+  REGIONS: 'organisation/regions',
   ORGANIZATION_BY_TYPE: 'organisation/byType',
   MINISTRY_LIST: 'organisation/query',
   ORGANIZATION_NAMES: 'organisation/queryNames',

@@ -481,7 +481,7 @@ export const UserManagementComponent = (props: any) => {
   const getAllUser = async () => {
     setLoading(true);
     try {
-      const response: any = await post(API_PATHS.USER_DETAILS_BY_ID, getAllUserParams());
+      const response: any = await post(API_PATHS.USER_DETAILS, getAllUserParams());
       if (response && response.data) {
         const availableUsers = response.data.filter(
           (user: any) => user.companyRole !== CompanyRole.API
