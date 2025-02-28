@@ -1471,7 +1471,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     setLoadingHistory(true);
     setLoadingNDC(true);
     try {
-      const response: any = await post(API_PATHS.PROGRAMME_DOCS, {
+      const response: any = await post(API_PATHS.PROJECT_DOCS, {
         page: 1,
         size: 100,
         filterAnd: [
@@ -1602,7 +1602,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       if (action !== 'Transfer') {
         setConfirmLoading(true);
         const response: any = await put(
-          API_PATHS.PROGRAMME_ACTION(
+          API_PATHS.PROJECT_ACTION(
             action === 'Reject'
               ? 'reject'
               : action === 'Authorise'

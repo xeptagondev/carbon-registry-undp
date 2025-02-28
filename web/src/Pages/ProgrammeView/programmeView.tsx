@@ -710,7 +710,7 @@ const ProgrammeView = () => {
   const getProgrammeHistory = async (programmeId: string) => {
     setLoadingHistory(true);
     try {
-      const historyPromise = get(API_PATHS.PROGRAMME_HISTORY_BY_PROGRAMME_ID(programmeId));
+      const historyPromise = get(API_PATHS.PROJECT_HISTORY_BY_ID(programmeId));
       const transferPromise = get(
         API_PATHS.TRANSFER_BY_PROGRAMMEID(programmeId)
       );
@@ -1143,7 +1143,7 @@ const ProgrammeView = () => {
     setLoadingHistory(true);
     setLoadingNDC(true);
     try {
-      const response: any = await post(API_PATHS.PROGRAMME_DOCS, {
+      const response: any = await post(API_PATHS.PROJECT_DOCS, {
         page: 1,
         size: 100,
         filterAnd: [
