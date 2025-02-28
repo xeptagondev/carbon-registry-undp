@@ -272,7 +272,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const getGovernmentDetails = async () => {
     setLoading(true);
     try {
-      const response = await post(API_PATHS.MINISTRY_LIST, {
+      const response = await post(API_PATHS.ORGANIZATION_DETAILS, {
         page: 1,
         size: 100,
         filterAnd: [
@@ -309,7 +309,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const getMinistryDetails = async () => {
     setLoading(true);
     try {
-      const response = await post(API_PATHS.MINISTRY_LIST, {
+      const response = await post(API_PATHS.ORGANIZATION_DETAILS, {
         page: 1,
         size: 100,
         filterOr: [

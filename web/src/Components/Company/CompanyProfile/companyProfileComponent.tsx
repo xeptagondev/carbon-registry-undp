@@ -60,7 +60,7 @@ export const CompanyProfileComponent = (props: any) => {
   const getCompanyDetails = async (companyId: string) => {
     try {
       setIsLoading(true);
-      const response = await get(API_PATHS.COMPANY_PROFILE_DETAILS(companyId));
+      const response = await get(API_PATHS.ORGANIZATION_PROFILE_DETAILS(companyId));
       if (response.data) {
         setCompanyDetails(response.data);
         setIsLoading(false);
