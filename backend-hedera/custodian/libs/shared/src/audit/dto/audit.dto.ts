@@ -1,7 +1,7 @@
-import { LogLevel } from '../enum/log-level.enum';
+import { ProjectAuditLogType } from '../enum/project.audit.log.type.enum';
 
 export class AuditDTO {
-    logLevel: LogLevel;
+    logLevel: ProjectAuditLogType;
 
     data: any;
 

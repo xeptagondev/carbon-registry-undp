@@ -43,13 +43,16 @@ import {
     ButtonActionEnum,
     ButtonNameEnum,
 } from '@app/shared/guardian/enum/button-type.enum';
-import { ProjectSchemaDtos } from '@app/shared/guardian/dto/guardian-schema.dto';
+import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
+import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
+import { AuditService } from '@app/shared/audit/service/audit.service';
 
 @Injectable()
 export class VerificationService {
     private readonly loggerContext = 'VerificationService';
     constructor(
         private readonly logger: InstantLogger,
+        private readonly auditService: AuditService,
         private readonly helperService: HelperService,
         private readonly dateUtilService: DateUtilService,
         private readonly mailService: MailService,
@@ -225,6 +228,11 @@ export class VerificationService {
             requestUser,
         );
 
+        await this.logProjectStage(
+            project.refId,
+            ProjectAuditLogType.MONITORING_CREATE,
+            requestUser.userId,
+        );
         return new DataResponseDto(
             HttpStatus.OK,
             'Monitoring Report was submitted successfully.',
@@ -422,6 +430,13 @@ export class VerificationService {
             emailTemplate,
             emailHeader,
             verifyReportDto.remark,
+        );
+        await this.logProjectStage(
+            activity?.project?.refId,
+            verifyReportDto.verify
+                ? ProjectAuditLogType.MONITORING_APPROVED
+                : ProjectAuditLogType.MONITORING_REJECTED,
+            requestUser.userId,
         );
     }
 
@@ -624,6 +639,12 @@ export class VerificationService {
             requestUser.organizationName,
         );
 
+        await this.logProjectStage(
+            project.refId,
+            ProjectAuditLogType.VERIFICATION_CREATE,
+            requestUser.userId,
+        );
+
         return new DataResponseDto(
             HttpStatus.OK,
             'Verification Report is submitted successfully',
@@ -810,6 +831,13 @@ export class VerificationService {
             verificationReport,
             project,
         );
+        await this.logProjectStage(
+            activity?.project?.refId,
+            verifyReportDto.verify
+                ? ProjectAuditLogType.VERIFICATION_APPROVED
+                : ProjectAuditLogType.VERIFICATION_REJECTED,
+            reqUser.userId,
+        );
     }
 
     private async sendVerificationEmail(
@@ -979,4 +1007,17 @@ export class VerificationService {
 
     //     return count + 1;
     // }
+
+    private async logProjectStage(
+        refId: string,
+        type: ProjectAuditLogType,
+        userId: number,
+    ): Promise<void> {
+        const log = new AuditEntity();
+        log.refId = refId;
+        log.logType = type;
+        log.userId = userId;
+
+        await this.auditService.save(log);
+    }
 }
