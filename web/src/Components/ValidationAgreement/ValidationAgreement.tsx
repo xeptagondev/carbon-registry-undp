@@ -21,6 +21,8 @@ const ValidationAgreement = (props: { translator: i18n }) => {
   const { translator } = props;
   const t = translator.t;
 
+  const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
+
   const { state } = useLocation();
   const [isView, setIsView] = useState<boolean>(!!state?.isView);
   const [loading, setLoading] = useState<boolean>(isView);
@@ -588,11 +590,11 @@ const ValidationAgreement = (props: { translator: i18n }) => {
 
                 <div className="authorized-signatory">
                   <p>Authorized Signatory </p>
-                  <p>Zimbabwe Climate Fund (Pvt) Ltd.</p>
+                  <p>{countryName} Climate Fund (Pvt) Ltd.</p>
                   <p>“Sobadam Piyasa”, </p>
                   <p>No. 416/C/1, </p>
                   <p>Robert Gunawardana Mawatha, </p>
-                  <p>Battaramulla, Zimbabwe.</p>
+                  <p>Battaramulla, {countryName}.</p>
                 </div>
               </Col>
 
@@ -688,8 +690,8 @@ const ValidationAgreement = (props: { translator: i18n }) => {
               <Col md={24} xl={10}>
                 <Form.Item name="SLCFWitness" label="Witness" className="witness-input">
                   <Input
-                    defaultValue={'Zimbabwe Climate Fund (PVT) Ltd'}
-                    placeholder="Zimbabwe Climate Fund (PVT) Ltd"
+                    defaultValue={'{countryName} Climate Fund (PVT) Ltd'}
+                    placeholder="{countryName} Climate Fund (PVT) Ltd"
                     disabled
                   />
                 </Form.Item>
