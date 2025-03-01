@@ -158,7 +158,7 @@
   "draftValidationDesc": "After reviewing all relevant documents and taken all other relevant information into account, the  validation team issues all findings in the course of a draft validation report and hands this report over  to the project proponent in order to respond on the issues raised and to revise the project  documentation accordingly.",
   "resolutionsOfFindings": "Resolutions of Findings",
   "typeOfFindings": "Type of the Finding",
-  "sriLankaClimateFund": "Zimbabwe Climate Fund",
+  "sriLankaClimateFund": "{{countryName}} Climate Fund",
   "cl": "CL",
   "car": "CAR",
   "far": "FAR",

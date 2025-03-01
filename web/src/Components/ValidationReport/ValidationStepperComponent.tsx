@@ -43,6 +43,7 @@ const StepperComponent = (props: any) => {
   const scrollSection = useRef({} as any);
   const { mode } = navigationLocation.state || {};
   const isEdit = true;
+  const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
 
   const [existingFormValues, setExistingFormValues] = useState({
     programmeId: programId,
@@ -257,7 +258,7 @@ const StepperComponent = (props: any) => {
         teamMembers: [
           {
             name: '',
-            company: `${t('validationReport:sriLankaClimateFund')}`,
+            company: `${t('validationReport:sriLankaClimateFund', { countryName: countryName })}`,
             function: '',
             taskPerformed: '',
           },
