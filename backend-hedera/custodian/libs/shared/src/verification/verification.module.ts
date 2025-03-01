@@ -6,6 +6,7 @@ import { MailModule } from '../mail/mail.module';
 import { UsersModule } from '../users/users.module';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
 import { GuardianModule } from '../guardian/guardian.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { GuardianModule } from '../guardian/guardian.module';
         UsersModule,
         FileHandlerModule,
         GuardianModule,
+        AuditModule,
     ],
     exports: [VerificationService],
     providers: [VerificationService],

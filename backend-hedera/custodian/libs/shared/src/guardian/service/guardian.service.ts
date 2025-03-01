@@ -4,9 +4,6 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
-import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
-import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
-import { AuditService } from '@app/shared/audit/service/audit.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Repository } from 'typeorm';
@@ -29,7 +26,6 @@ export class GuardianService {
     private readonly loggerContext = 'GuardianService';
     constructor(
         private readonly configService: ConfigService,
-        private readonly auditService: AuditService,
         private readonly utilService: UtilService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
@@ -727,13 +723,8 @@ export class GuardianService {
 
             if (response?.status === 200) {
                 const message: string = `User: ${loginDto.username} has logged into the system.`;
-                const auditLog: AuditDTO = {
-                    logLevel: LogLevel.INFO,
-                    data: { message: message },
-                    createdTime: Date.now(),
-                };
+
                 try {
-                    await this.auditService.save(auditLog);
                     await this.usersRepository.update(
                         {
                             email: loginDto.username,
