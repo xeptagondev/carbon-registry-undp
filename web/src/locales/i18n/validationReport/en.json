@@ -134,7 +134,7 @@
   "memberDescription2": "DR-Document Review / SV-Site Visit / RI-Report Issuance / TR-Technical Review",
   "publicReview": "Publication of the Carbon Management Assessment for Public Review",
   "deskReviewCMA": "Desk Review of CMA and Supporting Documents",
-  "deskReviewDesc": "Desk review was conducted on 07-08 August 2023 at the office of Sri Lanka Climate Fund. The  objective of desk review is to confirm the accuracy and validity of information provided in the CMA  against the respective supporting documents. As part of desk review, following documents were  reviewed by the validation team.",
+  "deskReviewDesc": "Desk review was conducted on 07-08 August 2023 at the office of {{countryName}} Climate Fund. The  objective of desk review is to confirm the accuracy and validity of information provided in the CMA  against the respective supporting documents. As part of desk review, following documents were  reviewed by the validation team.",
   "deskReviewP1": "Carbon Management assessment report",
   "deskReviewP2": "Contract agreements entered into with suppliers",
   "deskReviewP4": "Completion / taking over certificate",
