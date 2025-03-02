@@ -595,7 +595,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
 
                 <Col md={24} xl={24}>
                   <Form.Item label={`3.1.3 ${t('validationReport:deskReviewCMA')}`}>
-                    <p>{t('validationReport:deskReviewDesc')}</p>
+                    <p>{t('validationReport:deskReviewDesc', { countryName: countryName })}</p>
                     <ul>
                       <li>{t('validationReport:deskReviewP1')}</li>
                       <li>{t('validationReport:deskReviewP2')}</li>

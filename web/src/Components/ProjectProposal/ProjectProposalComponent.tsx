@@ -70,7 +70,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
         clientContactPerson: data?.contactName,
         clientMobile: data?.contactPhoneNo,
         clientEmail: data?.contactEmail,
-        serviceProviderName: 'Sri Lanka Climate Fund (Pvt.) Ltd.',
+        serviceProviderName: `${countryName} Climate Fund (Pvt.) Ltd.`,
         developProjectConcept: data?.company?.name,
         notificationSLCSS: data?.company?.name,
         prepareCMA: data?.company?.name,
@@ -1212,7 +1212,9 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
 
           {/* Sri Lanka Carbon Crediting Scheme(SLCCS) start */}
           <>
-            <h4 className="section-title mg-top-2">3. {t('projectProposal:creditingScheme')}</h4>
+            <h4 className="section-title mg-top-2">
+              3. {t('projectProposal:creditingScheme', { countryName: countryName })}
+            </h4>
 
             <p className="section-description">
               {countryName} Carbon Crediting Scheme (SLCCS) is a Greenhouse Gas (GHG) reduction
