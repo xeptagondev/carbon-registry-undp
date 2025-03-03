@@ -33,6 +33,7 @@ import InfDocumentInformation from './infDocumentInfo';
 import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
+import { SectoralScope } from '../../Definitions/Enums/sectoralScope.enum';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -62,6 +63,23 @@ const PROJECT_STATUS: { [key: string]: string } = {
 export const PURPOSE_CREDIT_DEVELOPMENT: { [key: string]: string } = {
   TRACK_1: 'Track 1',
   TRACK_2: 'Track 2',
+};
+
+const INF_SECTOR: { [key: string]: string } = {
+  ENERGY: 'Energy',
+  HEALTH: 'Health',
+  EDUCATION: 'Education',
+  TRANSPORT: 'Transport',
+  MANUFACTURING: 'Manufacturing',
+  HOSPITALITY: 'Hospitality',
+  FORESTRY: 'Forestry',
+  WASTE: 'Waste',
+};
+
+const INF_SECTORAL_SCOPE: { [key: string]: string } = {
+  ENERGY_INDUSTRIES: 'Energy Industries (Renewable)',
+  ENERGY_DISTRIBUTION: 'Energy Distribution',
+  ENERGY_DEMAND: 'Energy Deamdn',
 };
 
 export const ProgrammeCreationComponent = (props: any) => {
@@ -251,6 +269,8 @@ export const ProgrammeCreationComponent = (props: any) => {
     const body: any = {
       title: values?.title,
       projectCategory: values?.projectCategory,
+      sector: values?.sector,
+      SectoralScope: values?.sectoralScope,
       province: values?.province || 'test',
       district: values?.district || 'test',
       city: values?.city || 'test',
@@ -391,7 +411,71 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Input size="large" />
                               </Form.Item>
 
-                              <Row justify="space-between">
+                              <Form.Item
+                                label={t('addProgramme:sector')}
+                                name="sector"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: '',
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('addProgramme:sector')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Select size="large">
+                                  {Object.keys(INF_SECTOR).map((key) => (
+                                    <Select.Option value={key}>{INF_SECTOR[key]}</Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+
+                              <Form.Item
+                                label={t('addProgramme:sectoralScope')}
+                                name="sectoralScope"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: '',
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('addProgramme:sectoralScope')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Select size="large">
+                                  {Object.keys(INF_SECTORAL_SCOPE).map((key) => (
+                                    <Select.Option value={key}>
+                                      {INF_SECTORAL_SCOPE[key]}
+                                    </Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+
+                              {/* <Row justify="space-between">
                                 <Col span={24}>
                                   <Form.Item
                                     label={t('addProgramme:projectCategory')}
@@ -430,9 +514,9 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     </Form.Item>
                                   </Col>
                                 )}
-                              </Row>
+                              </Row> */}
 
-                              {(projectCategory === 'AFFORESTATION' ||
+                              {/* {(projectCategory === 'AFFORESTATION' ||
                                 projectCategory === 'REFORESTATION') && (
                                 <>
                                   <Form.Item
@@ -556,9 +640,9 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     </>
                                   )}
                                 </>
-                              )}
+                              )} */}
 
-                              {(projectCategory === 'AFFORESTATION' ||
+                              {/* {(projectCategory === 'AFFORESTATION' ||
                                 projectCategory === 'REFORESTATION') && (
                                 <>
                                   <Form.Item
@@ -584,7 +668,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     <Input size="large" />
                                   </Form.Item>
                                 </>
-                              )}
+                              )} */}
 
                               <Form.Item
                                 label={t('addProgramme:province')}
