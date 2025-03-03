@@ -97,7 +97,7 @@ export const API_PATHS = {
   CANCEL_TRANSFER_REQUEST: 'retire/status',
   TRANSFER_BY_PROJECT_ID: (programmeId: string) =>
     `programme/transfersByProgrammeId?programmeId=${programmeId}`,
-  PROJECT_HISTORY_LOGS: (id: string) => `logs?programmeId=${id}`,
+  PROJECT_HISTORY_LOGS: (id: string) => `project/logs?refId=${id}`,
   // TRANSFER_FORZEN_STATUS: (isTransferFrozen:string) => `Settings/query?id=${isTransferFrozen}`
   TRANSACTION_RECORDS_WITHOUT_TIME_RANGE: 'stats/national-accounting/query',
   //DASHBOARD
