@@ -106,5 +106,9 @@
   "revision": "Revisions",
   "projectDetails": "Project Details",
   "upload": "Upload",
-  "submit": "Submit"
+  "submit": "Submit",
+  "confirmModalMessage": "Are you sure you want to submit",
+  "confirmModalSubMessage": "You can't undo this action",
+  "sectorPlaceholder": "Select your Sector",
+  "sectoralScopePlaceholder": "Select your Sectoral Scope"
 }
