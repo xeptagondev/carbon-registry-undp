@@ -93,6 +93,8 @@ export const API_PATHS = {
   REJECT_CMA: 'national/programmeSl/cma/reject',
   APPROVE_CMA: 'national/programmeSl/cma/approve',
   CMA_CREATION: 'national/programmeSl/createCMA',
+  // DOCUMENT
+  ADD_DOCUMENT: 'document/add',
   //TRANSFER
   TRANSFER_ACTION: 'national/programme/',
   TRANSFER_ON_FREEZE: 'national/Settings/update',

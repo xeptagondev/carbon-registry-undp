@@ -34,12 +34,12 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const [provinces, setProvinces] = useState<string[]>([]);
   const [districts, setDistricts] = useState<{ [key: number]: string[] }>({});
-  const [dsDivisions, setDsDivisions] = useState<{ [key: number]: string[] }>({});
+  // const [dsDivisions, setDsDivisions] = useState<{ [key: number]: string[] }>({});
   const [cities, setCities] = useState<{ [key: number]: string[] }>({});
 
   const getProvinces = async () => {
     try {
-      const { data } = await post(API_PATHS.PROVINCES);
+      const { data } = await post(API_PATHS.PROVINCE);
       const tempProvinces = data.map((provinceData: any) => provinceData.provinceName);
       setProvinces(tempProvinces);
     } catch (error) {
@@ -49,7 +49,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const getDistricts = async (provinceName: string, index: number) => {
     try {
-      const { data } = await post(API_PATHS.DISTRICTS, {
+      const { data } = await post(API_PATHS.DISTRICT, {
         filterAnd: [
           {
             key: 'provinceName',
@@ -65,31 +65,31 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
     }
   };
 
-  const getDivisions = async (districtName: string, index: number) => {
-    try {
-      const { data } = await post(API_PATHS.DIVISIONS, {
-        filterAnd: [
-          {
-            key: 'districtName',
-            operation: '=',
-            value: districtName,
-          },
-        ],
-      });
+  // const getDivisions = async (districtName: string, index: number) => {
+  //   try {
+  //     const { data } = await post(API_PATHS.DIVISION, {
+  //       filterAnd: [
+  //         {
+  //           key: 'districtName',
+  //           operation: '=',
+  //           value: districtName,
+  //         },
+  //       ],
+  //     });
 
-      const tempDivisions = data.map((divisionData: any) => divisionData.divisionName);
-      setDsDivisions((prev2) => ({ ...prev2, [index]: tempDivisions }));
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  //     const tempDivisions = data.map((divisionData: any) => divisionData.divisionName);
+  //     setDsDivisions((prev2) => ({ ...prev2, [index]: tempDivisions }));
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   const getCities = async (division: string, index: number) => {
     try {
-      const { data } = await post(API_PATHS.CITIES, {
+      const { data } = await post(API_PATHS.CITY, {
         filterAnd: [
           {
-            key: 'divisionName',
+            key: 'districtName',
             operation: '=',
             value: division,
           },
@@ -112,12 +112,13 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
   };
 
   const onDistrictSelect = (value: string, index: number) => {
-    getDivisions(value, index);
-  };
-
-  const onDivisionSelect = (value: string, index: number) => {
+    // getDivisions(value, index);
     getCities(value, index);
   };
+
+  // const onDivisionSelect = (value: string, index: number) => {
+  //   getCities(value, index);
+  // };
 
   // useEffect(() => {
   //   form.setFieldValue('projectParticipants', [
@@ -222,7 +223,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
           siteNo: values?.siteNo,
           province: values?.province,
           district: values?.district,
-          dsDivision: values?.dsDivision,
+          // dsDivision: values?.dsDivision,
           city: values?.city,
           community: values?.community,
           geographicalLocationCoordinates: values?.location,
@@ -255,7 +256,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
               siteNo: item?.siteNo,
               province: item?.province,
               district: item?.district,
-              dsDivision: item?.dsDivision,
+              // dsDivision: item?.dsDivision,
               city: item?.city,
               community: item?.community,
               geographicalLocationCoordinates: item?.location,
@@ -286,6 +287,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
         }
         return tempList;
       })(),
+      projectParticipants: values?.projectParticipants,
       technologies: values?.technologies,
       publicFundingOfProjectActivity: values?.publicFundingOfProjectActivity,
       histroyOfProjectActivity: values?.histroyOfProjectActivity,
@@ -493,7 +495,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                         <Select
                           size="large"
                           onChange={(value) => onProvinceSelect(value, 0)}
-                          placeholder={t('PDD:provincePlaceholder')}
+                          // placeholder={t('PDD:provincePlaceholder')}
                           disabled={disableFields}
                         >
                           {provinces.map((province: string, index: number) => (
@@ -528,7 +530,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                       >
                         <Select
                           size="large"
-                          placeholder={t('PDD:districtPlaceholder')}
+                          // placeholder={t('PDD:districtPlaceholder')}
                           onSelect={(value) => onDistrictSelect(value, 0)}
                           disabled={disableFields}
                         >
@@ -539,7 +541,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                           ))}
                         </Select>
                       </Form.Item>
-                      <Form.Item
+                      {/* <Form.Item
                         label={t('PDD:dsDivision')}
                         name="dsDivision"
                         rules={[
@@ -573,7 +575,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                             </Select.Option>
                           ))}
                         </Select>
-                      </Form.Item>
+                      </Form.Item> */}
                       <Form.Item
                         label={t('PDD:city')}
                         name="city"
@@ -598,7 +600,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                       >
                         <Select
                           size="large"
-                          placeholder={t('PDD:cityPlaceholder')}
+                          // placeholder={t('PDD:cityPlaceholder')}
                           disabled={disableFields}
                         >
                           {cities[0]?.map((city: string, index) => (
@@ -728,9 +730,9 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   if (districts[name + 1]) {
                                     delete districts[name + 1];
                                   }
-                                  if (dsDivisions[name + 1]) {
-                                    delete dsDivisions[name + 1];
-                                  }
+                                  // if (dsDivisions[name + 1]) {
+                                  //   delete dsDivisions[name + 1];
+                                  // }
                                   if (cities[name + 1]) {
                                     delete cities[name + 1];
                                   }
@@ -836,7 +838,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   <Select
                                     size="large"
                                     onChange={(value) => onProvinceSelect(value, name + 1)}
-                                    placeholder={t('PDD:provincePlaceholder')}
+                                    // placeholder={t('PDD:provincePlaceholder')}
                                     disabled={disableFields}
                                   >
                                     {provinces.map((province: string, index: number) => (
@@ -873,7 +875,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 >
                                   <Select
                                     size="large"
-                                    placeholder={t('PDD:districtPlaceholder')}
+                                    // placeholder={t('PDD:districtPlaceholder')}
                                     onSelect={(value) => onDistrictSelect(value, name + 1)}
                                     disabled={disableFields}
                                   >
@@ -884,7 +886,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                     ))}
                                   </Select>
                                 </Form.Item>
-                                <Form.Item
+                                {/* <Form.Item
                                   label={t('PDD:dsDivision')}
                                   name={[name, 'dsDivision']}
                                   rules={[
@@ -925,7 +927,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                       )
                                     )}
                                   </Select>
-                                </Form.Item>
+                                </Form.Item> */}
                                 <Form.Item
                                   label={t('PDD:city')}
                                   name={[name, 'city']}
@@ -950,7 +952,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 >
                                   <Select
                                     size="large"
-                                    placeholder={t('PDD:cityPlaceholder')}
+                                    // placeholder={t('PDD:cityPlaceholder')}
                                     disabled={disableFields}
                                   >
                                     {cities[name + 1]?.map((city: string, index: number) => (
@@ -1530,25 +1532,27 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                             icon={<PlusOutlined />}
                                             disabled={disableFields}
                                           >
-                                            {/* Add Entity */}
+                                            {/* Add Participant */}
                                           </Button>
                                         </Form.Item>
 
-                                        <Form.Item>
-                                          <Button
-                                            // type="dashed"
-                                            onClick={() => {
-                                              removeParticipants(name2);
-                                            }}
-                                            size="large"
-                                            className="addMinusBtn"
-                                            // block
-                                            icon={<MinusOutlined />}
-                                            disabled={disableFields}
-                                          >
-                                            {/* Add Entity */}
-                                          </Button>
-                                        </Form.Item>
+                                        {key2 !== 0 && (
+                                          <Form.Item>
+                                            <Button
+                                              // type="dashed"
+                                              onClick={() => {
+                                                removeParticipants(name2);
+                                              }}
+                                              size="large"
+                                              className="addMinusBtn"
+                                              // block
+                                              icon={<MinusOutlined />}
+                                              disabled={disableFields}
+                                            >
+                                              {/* Minus Participant */}
+                                            </Button>
+                                          </Form.Item>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
