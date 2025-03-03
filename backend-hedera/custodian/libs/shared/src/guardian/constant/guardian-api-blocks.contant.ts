@@ -25,7 +25,7 @@ export const GUARDIAN_API = {
             FILTER_ACTIVITY_ID: '',
             FILTER_REF_ID: 'project_refId_filter',
             FILTER_STATUS: 'project_status_filter',
-            FILTER_NOT_STATUS: 'project_not_status_filter',
+            FILTER_NOT_STATUS: '',
         },
         USER_QUERY: {
             GRID: 'user_grid',
@@ -73,7 +73,7 @@ export const GUARDIAN_API = {
             FILTER_PROJECT_ID: 'activity_project_id_filter',
             FILTER_ACTIVITY_ID: '',
             FILTER_STATUS: 'activity_status_filter',
-            FILTER_NOT_STATUS: 'activity_not_status_filter',
+            FILTER_NOT_STATUS: '',
         },
         MONITORING_QUERY: {
             GRID: 'monitoring_report_grid',

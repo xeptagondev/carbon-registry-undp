@@ -284,71 +284,71 @@ export const AddNewCompanyComponent = (props: any) => {
   const [loadingList, setLoadingList] = useState<boolean>(false);
   const [regionsList, setRegionsList] = useState<any[]>([]);
   const [companyRole, setCompanyRole] = useState<any>(state?.record?.companyRole);
-  const [selectedMinistry, setSelectedMinistry] = useState<string>('');
-  const [existgovDep, setexistGovdep] = useState<string[]>([]);
-  const [ministryDropdown, setMinistryDropdown] = useState<string[]>(ministries);
-  const [intialGovDep, selectInitialGovDep] = useState<any>(
-    state?.record?.govDep ? state?.record?.govDep : ''
-  );
-  const [initialMinistry, selectInitialministry] = useState<any>(
-    state?.record?.ministry ? state?.record?.ministry : ''
-  );
+  // const [selectedMinistry, setSelectedMinistry] = useState<string>('');
+  // const [existgovDep, setexistGovdep] = useState<string[]>([]);
+  // const [ministryDropdown, setMinistryDropdown] = useState<string[]>(ministries);
+  // const [intialGovDep, selectInitialGovDep] = useState<any>(
+  //   state?.record?.govDep ? state?.record?.govDep : ''
+  // );
+  // const [initialMinistry, selectInitialministry] = useState<any>(
+  //   state?.record?.ministry ? state?.record?.ministry : ''
+  // );
 
   const [faxNumber, setFaxNumber] = useState(state?.record?.faxNo || '');
 
-  let selectedGovDepatments = ministryOrgs[selectedMinistry];
-  if (existgovDep && existgovDep.length > 0) {
-    selectedGovDepatments = selectedGovDepatments.filter((x: string) => !existgovDep.includes(x));
-  }
-  const onChangeMinistry = async (val: any) => {
-    const key = Object.keys(Ministry)[Object.values(Ministry).indexOf(val as Ministry)];
-    setSelectedMinistry(String(key));
-    if (isUpdate && val === initialMinistry) {
-      formOne.setFieldValue(
-        'govDep',
-        Object.keys(GovDepartment)[
-          Object.values(GovDepartment).indexOf(intialGovDep as GovDepartment)
-        ]
-      );
-    } else {
-      formOne.setFieldValue('govDep', '');
-    }
-    // eslint-disable-next-line no-use-before-define, @typescript-eslint/no-use-before-define
-    getGovDep(val);
-  };
+  // let selectedGovDepatments = ministryOrgs[selectedMinistry];
+  // if (existgovDep && existgovDep.length > 0) {
+  //   selectedGovDepatments = selectedGovDepatments.filter((x: string) => !existgovDep.includes(x));
+  // }
+  // const onChangeMinistry = async (val: any) => {
+  //   const key = Object.keys(Ministry)[Object.values(Ministry).indexOf(val as Ministry)];
+  //   setSelectedMinistry(String(key));
+  //   if (isUpdate && val === initialMinistry) {
+  //     formOne.setFieldValue(
+  //       'govDep',
+  //       Object.keys(GovDepartment)[
+  //         Object.values(GovDepartment).indexOf(intialGovDep as GovDepartment)
+  //       ]
+  //     );
+  //   } else {
+  //     formOne.setFieldValue('govDep', '');
+  //   }
+  //   // eslint-disable-next-line no-use-before-define, @typescript-eslint/no-use-before-define
+  //   getGovDep(val);
+  // };
 
-  const getMinistryList = async () => {
-    setLoadingList(true);
-    try {
-      let leftmins: string[] = [];
-      const excludingmin: string[] = [];
-      for (const min of ministries) {
-        const response: any = await post(API_PATHS.MINISTRY_LIST, {
-          page: 1,
-          size: 100,
-          filterAnd: [
-            {
-              key: 'ministry',
-              operation: '=',
-              value: min,
-            },
-          ],
-        });
-        const minkey = Object.keys(Ministry)[Object.values(Ministry).indexOf(min as Ministry)];
-        if (response.data.length === ministryOrgs[minkey].length) {
-          if (!isUpdate && min !== initialMinistry) {
-            excludingmin.push(min);
-          }
-        }
-      }
-      leftmins = ministries.filter((x: string) => !excludingmin.includes(x));
-      setMinistryDropdown(leftmins);
-    } catch (error: any) {
-      console.log('Error in getting min list', error);
-    } finally {
-      setLoadingList(false);
-    }
-  };
+  // const getMinistryList = async () => {
+  //   setLoadingList(true);
+  //   try {
+  //     let leftmins: string[] = [];
+  //     const excludingmin: string[] = [];
+  //     for (const min of ministries) {
+  //       const response: any = await post(API_PATHS.ORGANIZATION_DETAILS, {
+  //         page: 1,
+  //         size: 100,
+  //         filterAnd: [
+  //           {
+  //             key: 'ministry',
+  //             operation: '=',
+  //             value: min,
+  //           },
+  //         ],
+  //       });
+  //       const minkey = Object.keys(Ministry)[Object.values(Ministry).indexOf(min as Ministry)];
+  //       if (response.data.length === ministryOrgs[minkey].length) {
+  //         if (!isUpdate && min !== initialMinistry) {
+  //           excludingmin.push(min);
+  //         }
+  //       }
+  //     }
+  //     leftmins = ministries.filter((x: string) => !excludingmin.includes(x));
+  //     setMinistryDropdown(leftmins);
+  //   } catch (error: any) {
+  //     console.log('Error in getting min list', error);
+  //   } finally {
+  //     setLoadingList(false);
+  //   }
+  // };
 
   // const getCountryList = async () => {
   //   const response = await get('national/organisation/countries');
@@ -388,49 +388,49 @@ export const AddNewCompanyComponent = (props: any) => {
     setRegionsList(provinces);
   };
 
-  const getGovDep = async (val: any) => {
-    setLoadingList(true);
-    try {
-      const response: any = await post('national/organisation/query', {
-        page: 1,
-        size: 200,
-        filterAnd: [
-          {
-            key: 'ministry',
-            operation: '=',
-            value: val,
-          },
-        ],
-      });
-      if (response && response.data) {
-        const existDep: string[] = [];
-        for (const i in response.data) {
-          if (response.data[i].govDep && response.data[i].govDep.length > 0) {
-            const departName =
-              Object.keys(GovDepartment)[
-                Object.values(GovDepartment).indexOf(response.data[i].govDep as GovDepartment)
-              ];
-            if (response.data[i].govDep !== intialGovDep) {
-              existDep.push(departName);
-            } else {
-              continue;
-            }
-          }
-        }
-        setexistGovdep(existDep);
-      }
-    } catch (error: any) {
-      console.log('Error in getting exist Government Department list', error);
-    } finally {
-      setLoadingList(false);
-    }
-  };
+  // const getGovDep = async (val: any) => {
+  //   setLoadingList(true);
+  //   try {
+  //     const response: any = await post('national/organisation/query', {
+  //       page: 1,
+  //       size: 200,
+  //       filterAnd: [
+  //         {
+  //           key: 'ministry',
+  //           operation: '=',
+  //           value: val,
+  //         },
+  //       ],
+  //     });
+  //     if (response && response.data) {
+  //       const existDep: string[] = [];
+  //       for (const i in response.data) {
+  //         if (response.data[i].govDep && response.data[i].govDep.length > 0) {
+  //           const departName =
+  //             Object.keys(GovDepartment)[
+  //               Object.values(GovDepartment).indexOf(response.data[i].govDep as GovDepartment)
+  //             ];
+  //           if (response.data[i].govDep !== intialGovDep) {
+  //             existDep.push(departName);
+  //           } else {
+  //             continue;
+  //           }
+  //         }
+  //       }
+  //       setexistGovdep(existDep);
+  //     }
+  //   } catch (error: any) {
+  //     console.log('Error in getting exist Government Department list', error);
+  //   } finally {
+  //     setLoadingList(false);
+  //   }
+  // };
 
   useEffect(() => {
     setIsUpdate(state?.record ? true : false);
     // getCountryList();
     getRegionList();
-    getMinistryList();
+    // getMinistryList();
     if (state?.record?.logo) {
       setFileList([
         {
@@ -442,12 +442,12 @@ export const AddNewCompanyComponent = (props: any) => {
         },
       ]);
     }
-    if (state?.record?.ministry) {
-      const key =
-        Object.keys(Ministry)[Object.values(Ministry).indexOf(state?.record?.ministry as Ministry)];
-      setSelectedMinistry(key);
-      getGovDep(state?.record?.ministry);
-    }
+    // if (state?.record?.ministry) {
+    //   const key =
+    //     Object.keys(Ministry)[Object.values(Ministry).indexOf(state?.record?.ministry as Ministry)];
+    //   setSelectedMinistry(key);
+    //   getGovDep(state?.record?.ministry);
+    // }
   }, []);
 
   const normFile = (e: any) => {

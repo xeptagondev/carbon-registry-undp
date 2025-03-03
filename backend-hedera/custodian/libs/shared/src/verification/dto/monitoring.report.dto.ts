@@ -7,10 +7,6 @@ export class MonitoringReportDto {
     @ApiProperty()
     programmeId: string;
 
-    @IsString()
-    @ApiPropertyOptional()
-    activityId?: string;
-
     @IsNotEmpty()
     @IsString()
     @ApiProperty()

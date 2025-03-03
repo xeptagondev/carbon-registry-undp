@@ -326,7 +326,7 @@ export const CompanyManagementComponent = (props: any) => {
   const getAllCompany = async () => {
     setLoading(true);
     try {
-      const response: any = await post(API_PATHS.ALL_COMPANY, getAllOrganisationParams());
+      const response: any = await post(API_PATHS.ORGANIZATION_DETAILS, getAllOrganisationParams());
       if (response && response.data) {
         const availableCompanies = response.data.filter(
           (company: any) => company.companyRole !== CompanyRole.API
@@ -355,7 +355,7 @@ export const CompanyManagementComponent = (props: any) => {
     setLoading(true);
 
     try {
-      const response: any = await post(API_PATHS.DOWNLOAD_COMPANY_DATA, {
+      const response: any = await post(API_PATHS.DOWNLOAD_ORGANIZATION_DATA, {
         filterAnd: dataQuery.filterAnd,
         filterOr: dataQuery.filterOr?.length > 0 ? dataQuery.filterOr : undefined,
         sort: dataQuery.sort,

@@ -105,7 +105,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
   const getProvinces = async () => {
     try {
-      const { data } = await post(API_PATHS.PROVINCE);
+      const { data } = await post(API_PATHS.PROVINCES);
       const tempProvinces = data.map((provinceData: any) => provinceData.provinceName);
       setProvinces(tempProvinces);
     } catch (error) {
@@ -115,7 +115,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
   const getDistricts = async (provinceName: string) => {
     try {
-      const { data } = await post(API_PATHS.DISTRICT, {
+      const { data } = await post(API_PATHS.DISTRICTS, {
         filterAnd: [
           {
             key: 'provinceName',
@@ -133,7 +133,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
   const getCities = async (division?: string) => {
     try {
-      const { data } = await post(API_PATHS.CITY, {
+      const { data } = await post(API_PATHS.CITIES, {
         filterAnd: [
           {
             key: 'districtName',

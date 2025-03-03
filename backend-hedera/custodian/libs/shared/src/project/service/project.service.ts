@@ -49,6 +49,8 @@ import {
     ButtonActionEnum,
     ButtonNameEnum,
 } from '@app/shared/guardian/enum/button-type.enum';
+import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
+import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
 
 @Injectable()
 export class ProjectService {
@@ -111,6 +113,7 @@ export class ProjectService {
 
             const project: ProjectSchema = {
                 refId: projectRefId,
+                name: projectDto.title,
                 createdBy: createdBy,
                 assignee: assignees,
             };
@@ -167,7 +170,9 @@ export class ProjectService {
                 requestUser,
             );
             await this.logProjectStage(
-                `Project with title: ${projectDto.title} has been created by ${requestUser.userName}`,
+                project.refId,
+                ProjectAuditLogType.CREATE,
+                requestUser.userId,
             );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
@@ -209,7 +214,7 @@ export class ProjectService {
             context: {
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
@@ -234,7 +239,7 @@ export class ProjectService {
             context: {
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
@@ -469,21 +474,24 @@ export class ProjectService {
                 userName: createdBy.name,
                 organizationName: createdBy?.organization?.name,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
         await this.mailService.sendMail(mailDTO);
     }
 
-    private async logProjectStage(message: string): Promise<void> {
-        const auditLog: AuditDTO = {
-            logLevel: LogLevel.INFO,
-            data: { message },
-            createdTime: Date.now(),
-        };
+    private async logProjectStage(
+        refId: string,
+        type: ProjectAuditLogType,
+        userId: number,
+    ): Promise<void> {
+        const log = new AuditEntity();
+        log.refId = refId;
+        log.logType = type;
+        log.userId = userId;
 
-        await this.auditService.save(auditLog);
+        await this.auditService.save(log);
     }
 
     async approveINF(
@@ -554,7 +562,9 @@ export class ProjectService {
             inf?.document?.credentialSubject[0]?.project?.refId,
         );
         await this.logProjectStage(
-            `Project with id: ${id} has been approved by ${requestUser.userId}`,
+            project.refId,
+            ProjectAuditLogType.INF_APPROVED,
+            requestUser.userId,
         );
 
         return new DataResponseDto(
@@ -625,8 +635,11 @@ export class ProjectService {
             INF_REJECT_HEADER,
             inf?.document?.credentialSubject[0]?.project?.refId,
         );
+
         await this.logProjectStage(
-            `Project with id: ${id} has been rejected by ${requestUser.userId}`,
+            project.refId,
+            ProjectAuditLogType.INF_REJECTED,
+            requestUser.userId,
         );
 
         return new DataResponseDto(
