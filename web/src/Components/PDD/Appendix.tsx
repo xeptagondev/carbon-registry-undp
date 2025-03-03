@@ -62,8 +62,8 @@ const Step08 = (props: CustomStepsProps) => {
       appendix3Comments: values?.appendix2Comments,
       appendix3Documents: await (async function () {
         const base64Docs: string[] = [];
-        if (values?.appendix2Documents && values?.appendix2Documents.length > 0) {
-          const docs = values.appendix2Documents;
+        if (values?.appendix3Documents && values?.appendix3Documents.length > 0) {
+          const docs = values.appendix3Documents;
           for (let i = 0; i < docs.length; i++) {
             if (docs[i]?.originFileObj === undefined) {
               base64Docs.push(docs[i]?.url);
@@ -78,8 +78,8 @@ const Step08 = (props: CustomStepsProps) => {
       appendix4Comments: values?.appendix2Comments,
       appendix4Documents: await (async function () {
         const base64Docs: string[] = [];
-        if (values?.appendix2Documents && values?.appendix2Documents.length > 0) {
-          const docs = values.appendix2Documents;
+        if (values?.appendix4Documents && values?.appendix4Documents.length > 0) {
+          const docs = values.appendix4Documents;
           for (let i = 0; i < docs.length; i++) {
             if (docs[i]?.originFileObj === undefined) {
               base64Docs.push(docs[i]?.url);
@@ -94,8 +94,8 @@ const Step08 = (props: CustomStepsProps) => {
       appendix5Comments: values?.appendix2Comments,
       appendix5Documents: await (async function () {
         const base64Docs: string[] = [];
-        if (values?.appendix2Documents && values?.appendix2Documents.length > 0) {
-          const docs = values.appendix2Documents;
+        if (values?.appendix5Documents && values?.appendix5Documents.length > 0) {
+          const docs = values.appendix5Documents;
           for (let i = 0; i < docs.length; i++) {
             if (docs[i]?.originFileObj === undefined) {
               base64Docs.push(docs[i]?.url);
@@ -110,23 +110,8 @@ const Step08 = (props: CustomStepsProps) => {
       appendix6Comments: values?.appendix2Comments,
       appendix6Documents: await (async function () {
         const base64Docs: string[] = [];
-        if (values?.appendix2Documents && values?.appendix2Documents.length > 0) {
-          const docs = values.appendix2Documents;
-          for (let i = 0; i < docs.length; i++) {
-            if (docs[i]?.originFileObj === undefined) {
-              base64Docs.push(docs[i]?.url);
-            } else {
-              const temp = await getBase64(docs[i]?.originFileObj as RcFile);
-              base64Docs.push(temp); // No need for Promise.resolve
-            }
-          }
-        }
-        return base64Docs;
-      })(),
-      additionalDocuments: await (async function () {
-        const base64Docs: string[] = [];
-        if (values?.appendixDocuments && values?.appendixDocuments.length > 0) {
-          const docs = values.appendixDocuments;
+        if (values?.appendix6Documents && values?.appendix6Documents.length > 0) {
+          const docs = values.appendix6Documents;
           for (let i = 0; i < docs.length; i++) {
             if (docs[i]?.originFileObj === undefined) {
               base64Docs.push(docs[i]?.url);
@@ -140,6 +125,7 @@ const Step08 = (props: CustomStepsProps) => {
       })(),
     };
 
+    console.log('----------tempValues-----------', tempValues);
     if (submitForm) {
       submitForm(tempValues);
     }

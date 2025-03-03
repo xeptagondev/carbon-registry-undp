@@ -150,16 +150,16 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         unit: values?.unit,
         description: values?.description,
         dataSource: values?.dataSource,
-        justificationOfChoice: values?.justificationOfChoice,
+        descriptionOfMeasurementMethods: values?.descriptionOfMeasurementMethods,
         purpose: values?.purpose,
         comments: values?.comments,
       },
       dataAndParametersMonitored: {
         monitoringParameter: values?.monitoringParameter,
         monitoringUnit: values?.monitoringUnit,
-        unitPlaceholder: values?.unitPlaceholder,
+        unit: values?.unit,
         monitoringDescription: values?.monitoringDescription,
-        data_parameterDescriptionPlaceholder: values?.data_parameterDescriptionPlaceholder,
+        data_parameterDescription: values?.data_parameterDescription,
         monitoringSource: values?.monitoringSource,
         monitoringMeasurementMethods: values?.monitoringMeasurementMethods,
         monitoringFrequency: values?.monitoringFrequency,
@@ -174,9 +174,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
       otherElementsOfMonitoringPlan: values?.otherElementsOfMonitoringPlan,
       methodologyDeviations: values?.methodologyDeviations,
       projectBoundary: (function () {
-        const tempVal: any = {
-          description: values?.projectBoundary,
-        };
+        const tempVal: any = {};
 
         const tempbaseline = [];
         const firstBaseline = {
@@ -1115,7 +1113,10 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           },
                                         ]}
                                       >
-                                        <Select disabled={disableFields} placeholder="Select">
+                                        <Select
+                                          disabled={disableFields}
+                                          // placeholder="Select"
+                                        >
                                           <Select.Option value={true}>Yes</Select.Option>
                                           <Select.Option value={false}>No</Select.Option>
                                         </Select>
@@ -1129,7 +1130,10 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           },
                                         ]}
                                       >
-                                        <Select disabled={disableFields} placeholder="Select">
+                                        <Select
+                                          disabled={disableFields}
+                                          // placeholder="Select"
+                                        >
                                           <Select.Option value={true}>Yes</Select.Option>
                                           <Select.Option value={false}>No</Select.Option>
                                         </Select>
@@ -1464,7 +1468,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <Input
-                          placeholder={`${t('PDD:unitPlaceholder')}`}
+                          // placeholder={`${t('PDD:unitPlaceholder')}`}
                           size="large"
                           disabled={disableFields}
                         />
@@ -1495,7 +1499,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('PDD:data_parameterDescriptionPlaceholder')}`}
+                          // placeholder={`${t('PDD:data_parameterDescriptionPlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -1527,7 +1531,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('PDD:dataSourcePlaceholder')}`}
+                          // placeholder={`${t('PDD:dataSourcePlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -1537,7 +1541,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t('PDD:justificationOfChoice')}
+                        label={t('PDD:descriptionOfMeasurementMethods')}
                         name="justification"
                         rules={[
                           {
@@ -1553,7 +1557,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t('PDD:justificationOfChoice')} ${t('isRequired')}`
+                                  `${t('PDD:descriptionOfMeasurementMethods')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -1561,7 +1565,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('PDD:justificationOfChoicePlaceholder')}`}
+                          // placeholder={`${t('PDD:justificationOfChoicePlaceholder')}`}
                           rows={5}
                           size="large"
                           disabled={disableFields}
@@ -1659,7 +1663,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               {/* need to update this */}
               <>
                 <LabelWithTooltip
-                  label={t('PDD:netEmissionsTitle')}
+                  label={t('PDD:netEmmissionsTitle')}
                   required={false}
                   labelStyles={{
                     fontSize: '16px',
@@ -2705,7 +2709,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <Input
-                          placeholder={`${t('PDD:unitPlaceholder')}`}
+                          // placeholder={`${t('PDD:unitPlaceholder')}`}
                           size="large"
                           disabled={disableFields}
                         />
@@ -2736,7 +2740,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('PDD:data_parameterDescriptionPlaceholder')}`}
+                          // placeholder={`${t('PDD:data_parameterDescriptionPlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -2768,7 +2772,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('PDD:dataSourcePlaceholder')}`}
+                          // placeholder={`${t('PDD:dataSourcePlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -2802,7 +2806,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('PDD:measuremenMethodDescriptionPlaceholder')}`}
+                          // placeholder={`${t('PDD:measuremenMethodDescriptionPlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -2836,7 +2840,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('PDD:monitoringFrequencyPlaceholder')}`}
+                          // placeholder={`${t('PDD:monitoringFrequencyPlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -2870,7 +2874,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         <TextArea
                           rows={4}
                           size="large"
-                          placeholder={`${t('PDD:valueAppliedPlaceholder')}`}
+                          // placeholder={`${t('PDD:valueAppliedPlaceholder')}`}
                           disabled={disableFields}
                         />
                       </Form.Item>
@@ -2904,7 +2908,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         <TextArea
                           rows={4}
                           size="large"
-                          placeholder={`${t('PDD:monitoringEquipmentPlaceholder')}`}
+                          // placeholder={`${t('PDD:monitoringEquipmentPlaceholder')}`}
                           disabled={disableFields}
                         />
                       </Form.Item>
@@ -2938,7 +2942,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         <TextArea
                           rows={4}
                           size="large"
-                          placeholder={`${t('PDD:monitoringQAProceduresPlaceholder')}`}
+                          // placeholder={`${t('PDD:monitoringQAProceduresPlaceholder')}`}
                           disabled={disableFields}
                         />
                       </Form.Item>
@@ -3015,7 +3019,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           rows={4}
                           size="large"
                           disabled={disableFields}
-                          placeholder="Where relevant, provide the calculation method, including  any equations, used to establish the data/parameter."
+                          // placeholder="Where relevant, provide the calculation method, including  any equations, used to establish the data/parameter."
                         />
                       </Form.Item>
                     </Col>
@@ -3048,7 +3052,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         <TextArea
                           rows={4}
                           size="large"
-                          placeholder="Provide any comments"
+                          // placeholder="Provide any comments"
                           disabled={disableFields}
                         />
                       </Form.Item>

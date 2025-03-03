@@ -39,7 +39,7 @@ const CMA_STEPS = {};
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(2);
 
   const navigate = useNavigate();
 
@@ -68,7 +68,7 @@ const StepperComponent = (props: any) => {
   };
 
   const [values, setValues] = useState({
-    projectId: id,
+    projectId: Number(id),
     name: 'PDD',
     companyId: undefined,
     documentType: DocumentEnum.PDD,
@@ -79,10 +79,10 @@ const StepperComponent = (props: any) => {
     console.log('----------temp vals-------------', val);
     setValues((prevVal: any) => {
       const tempContent = {
-        ...prevVal.content,
+        ...prevVal.data,
         ...val,
       };
-      return { ...prevVal, content: tempContent };
+      return { ...prevVal, data: tempContent };
     });
   };
 
@@ -247,7 +247,7 @@ const StepperComponent = (props: any) => {
 
     try {
       setLoading(true);
-      const res = await post(API_PATHS.CMA_CREATION, tempValues);
+      const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
       if (res?.response?.data?.statusCode === 200) {
         message.open({
           type: 'success',

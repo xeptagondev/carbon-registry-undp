@@ -8,7 +8,7 @@
   "form06Title": "Local Stakeholder Consultation",
   "form07Title": "Approval and Authorization",
   "form08Title": "Appendix",
-  "projectTitle": "Title of The Project Activity",
+  "projectTitle": "Project Name",
   "dateOfIssue": "Date of Issue",
   "preparedBy": "Prepared By",
   "appliedMethodologies": "Applied of methodologies and standardized baselines",
@@ -210,5 +210,6 @@
   "projectCreditingPeriodDuration": "Duration of crediting Period",
   "partiesInvolved": "Parties Involved",
   "projectParticipant": "Project Participants",
-  "addProjectParticipant": "Add Project Participant"
+  "addProjectParticipant": "Add Project Participant",
+  "descriptionOfMeasurementMethods": "Description of Measurement Methods and Procedures to be Applied"
 }
