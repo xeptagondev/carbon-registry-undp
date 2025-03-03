@@ -279,18 +279,18 @@ export const ProgrammeCreationComponent = (props: any) => {
       geographicalLocationCoordinates: values?.projectLocation,
       projectGeography: values?.projectGeography,
       // otherProjectCategory: values?.otherCategory,
-      landExtent: (function () {
-        if (values?.landExtent) {
-          const lands = [Number(Number(values?.landExtent).toFixed(2))];
-          if (values?.landList) {
-            values?.landList.forEach((item: any) =>
-              lands.push(Number(Number(item.land).toFixed(2)))
-            );
-          }
-          return lands;
-        }
-        return undefined;
-      })(),
+      // landExtent: (function () {
+      //   if (values?.landExtent) {
+      //     const lands = [Number(Number(values?.landExtent).toFixed(2))];
+      //     if (values?.landList) {
+      //       values?.landList.forEach((item: any) =>
+      //         lands.push(Number(Number(item.land).toFixed(2)))
+      //       );
+      //     }
+      //     return lands;
+      //   }
+      //   return undefined;
+      // })(),
       proposedProjectCapacity: values?.projectCapacity,
       projectStatusDescription: values?.projectStatusDescription,
       speciesPlanted: values?.speciesPlanted,
@@ -310,7 +310,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
     setLoading(true);
     try {
-      const res = await post(API_PATHS.PROJECT_CREATE, body);
+      const res = await post(API_PATHS.PROJECT_CREATE, { data: JSON.stringify(body) });
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
