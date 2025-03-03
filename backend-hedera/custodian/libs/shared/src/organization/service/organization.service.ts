@@ -2,6 +2,16 @@
 import { SuperService } from '@app/core/service/super.service';
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
+import {
+    OrganizationSchemaDtos,
+    UserSchemaDtos,
+} from '@app/shared/guardian/dto/guardian-schema.dto';
+import {
+    ButtonActionEnum,
+    ButtonNameEnum,
+} from '@app/shared/guardian/enum/button-type.enum';
+import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
+import { GuardianStateEnum } from '@app/shared/guardian/enum/guardian-state.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     ORG_DEACTIVATE_HEADER,
@@ -428,14 +438,20 @@ export class OrganizationService extends SuperService<
                         users: true,
                     },
                 });
-            let approveResponse = {};
 
-            approveResponse = await this.guardianService.approve(
+            const pendingDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgEntity.refId,
+                    email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ORGANIZATION_ACTIVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                pendingDocument,
                 email,
-                this.utilService.getBlock(
-                    GUARDIAN_API.BLOCKS.APPROVE_ORGANIZATION,
-                ),
-                orgEntity.payload,
+                organizationApproveDto.remarks,
             );
 
             const resultOrg = await this.organizationRepository
@@ -504,8 +520,12 @@ export class OrganizationService extends SuperService<
                     await this.mailService.sendMail(mailDTO);
                 }
             }
-
-            return approveResponse;
+            return new DataResponseDto(
+                HttpStatus.OK,
+                await this.organizationRepository.findOne({
+                    where: { id: orgEntity.id },
+                }),
+            );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             throw new HttpException(
@@ -525,8 +545,6 @@ export class OrganizationService extends SuperService<
                 `Request received to reject organization ${organizationApproveDto}`,
             );
             await this.utilService.setTagToIdMap();
-            const refreshToken =
-                await this.guardianService.getRefreshToken(email);
             const orgEntity: OrganizationEntity =
                 await this.organizationRepository.findOne({
                     where: {
@@ -536,18 +554,21 @@ export class OrganizationService extends SuperService<
                         organizationType: true,
                     },
                 });
-            let approveResponse = {};
+
             try {
-                orgEntity.payload = orgEntity.payload.replace(
-                    'Button_0',
-                    'Button_1',
-                );
-                approveResponse = await this.guardianService.approve(
-                    refreshToken,
-                    this.utilService.getBlock(
-                        GUARDIAN_API.BLOCKS.APPROVE_ORGANIZATION,
-                    ),
-                    orgEntity.payload,
+                const pendingDocument =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.ORGANIZATION_GRID,
+                        orgEntity.refId,
+                        email,
+                    );
+
+                await this.guardianService.buttonActionRequest(
+                    ButtonNameEnum.ORGANIZATION_ACTIVE_REJECT,
+                    ButtonActionEnum.REJECT,
+                    pendingDocument,
+                    email,
+                    organizationApproveDto.remarks,
                 );
             } catch (e) {
                 console.log(e);
@@ -563,7 +584,12 @@ export class OrganizationService extends SuperService<
                     state: OrganizationStateEnum.REJECTED,
                 },
             );
-            return approveResponse;
+            return new DataResponseDto(
+                HttpStatus.OK,
+                await this.organizationRepository.findOne({
+                    where: { id: orgEntity.id },
+                }),
+            );
         } catch (e) {
             console.log(e);
             throw e;
@@ -584,6 +610,7 @@ export class OrganizationService extends SuperService<
             where: { id: orgId },
             relations: {
                 organizationType: true,
+                users: true,
             },
         });
 
@@ -620,11 +647,126 @@ export class OrganizationService extends SuperService<
             updatedTime: new Date().getTime(),
         };
 
+        const organizationVcDocument =
+            await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.ORGANIZATION_GRID,
+                orgEnt.refId,
+                user.email,
+            );
+
+        if (
+            !organizationVcDocument ||
+            !organizationVcDocument.document ||
+            !organizationVcDocument.document.credentialSubject ||
+            organizationVcDocument.document.credentialSubject.length === 0
+        ) {
+            throw new HttpException(
+                'Organization grid not found',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+
+        const organizationData: OrganizationSchemaDtos =
+            new OrganizationSchemaDtos(
+                organizationVcDocument.document.credentialSubject[0],
+            );
+
+        organizationData.name = dto.name;
+        organizationData.email = dto.email;
+        organizationData.phoneNumber = dto.phoneNo;
+        organizationData.website = dto.website;
+        organizationData.faxNumber = dto.faxNo;
+        organizationData.logo = dto.logo;
+        organizationData.provinces = dto.provinces;
+        organizationData.address = dto.address;
+        organizationData.updatedTime = new Date().getTime();
+
         if (
             user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER ||
             user.organizationRole === OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
             editData.paymentId = dto.paymentId;
+            organizationData.paymentId = dto.paymentId;
+        }
+
+        const blockName = orgEnt.organizationType.multiple
+            ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
+            : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
+
+        if (
+            organizationVcDocument.option.status !== GuardianStateEnum.REVOKED
+        ) {
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ORGANIZATION_REVOKE,
+                ButtonActionEnum.SUBMIT,
+                organizationVcDocument,
+                user.email,
+            );
+        }
+
+        await this.guardianService.updateDocument(user.email, blockName, {
+            document: { ...organizationData },
+            ref: null,
+        });
+
+        const updatedOrganizationVcDocument =
+            await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.ORGANIZATION_GRID,
+                orgEnt.refId,
+                user.email,
+            );
+
+        if (orgEnt.organizationType.multiple) {
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ORGANIZATION_ACTIVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                updatedOrganizationVcDocument,
+                user.email,
+            );
+        }
+
+        const updatedOrgDataForUser: OrganizationSchemaDtos =
+            new OrganizationSchemaDtos(
+                updatedOrganizationVcDocument.document.credentialSubject[0],
+            );
+
+        for (const orgUser of orgEnt.users) {
+            if (orgUser.isActive) {
+                const userVcDocument =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.USER_GRID,
+                        orgUser.refId,
+                        orgUser.email,
+                    );
+
+                const orgUserData: UserSchemaDtos = new UserSchemaDtos(
+                    userVcDocument.document.credentialSubject[0],
+                );
+
+                orgUserData.organization = updatedOrgDataForUser;
+
+                const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
+
+                if (
+                    userVcDocument.option.status !== GuardianStateEnum.REVOKED
+                ) {
+                    await this.guardianService.buttonActionRequest(
+                        ButtonNameEnum.USER_REVOKE,
+                        ButtonActionEnum.SUBMIT,
+                        userVcDocument,
+                        user.email,
+                    );
+                }
+
+                await this.guardianService.updateDocument(
+                    user.email,
+                    blockName,
+                    {
+                        document: { ...orgUserData },
+                        ref: null,
+                    },
+                );
+            }
         }
 
         await this.organizationRepository.update({ id: orgEnt.id }, editData);
@@ -641,11 +783,6 @@ export class OrganizationService extends SuperService<
         dto: Partial<OrganizationDto>,
         requestData: JWTPayload,
     ): Promise<any> {
-        // console.log(
-        //     'update status',
-        //     requestData.userRole,
-        //     requestData.organizationRole,
-        // );
         if (
             !this.validateAccess(
                 [
@@ -682,10 +819,11 @@ export class OrganizationService extends SuperService<
                 },
             );
 
+            let isActive = false;
+
             // change the active state of the users
             for (let i = 0; i < orgEnt?.users?.length; i++) {
                 const user = orgEnt.users[i];
-                let isActive = false;
                 if (dto.state === OrganizationStateEnum.ACTIVE) {
                     isActive = true;
                 } else if (dto.state !== OrganizationStateEnum.SUSPENDED) {
@@ -707,7 +845,25 @@ export class OrganizationService extends SuperService<
                 },
             );
 
-            await queryRunner.commitTransaction();
+            // Get Organization details from Guardian
+
+            const organizationData =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgEnt.refId,
+                    requestData.email,
+                );
+
+            // Submit Status Changes to the Guardian
+
+            await this.guardianService.buttonActionRequest(
+                isActive
+                    ? ButtonNameEnum.ORGANIZATION_ACTIVE
+                    : ButtonNameEnum.ORGANIZATION_SUSPEND,
+                ButtonActionEnum.SUBMIT,
+                organizationData,
+                requestData.email,
+            );
 
             try {
                 let header = '';
@@ -749,6 +905,8 @@ export class OrganizationService extends SuperService<
             } catch (err) {
                 console.log('Email send failed for org status update', err);
             }
+
+            await queryRunner.commitTransaction();
 
             return true;
         } catch (err) {

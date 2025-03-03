@@ -58,7 +58,7 @@ export const ProjectActivityStep = (props: any) => {
 
   const getDistricts = async (provinceName: string, index: number) => {
     try {
-      const { data } = await post(API_PATHS.DISTRICT, {
+      const { data } = await post(API_PATHS.DISTRICTS, {
         filterAnd: [
           {
             key: 'provinceName',

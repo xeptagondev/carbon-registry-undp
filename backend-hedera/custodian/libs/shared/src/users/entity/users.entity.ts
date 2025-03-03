@@ -2,6 +2,7 @@ import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 import { GuardianRoleEntity } from '@app/shared/guardian-role/entity/guardian-role.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import {
     Column,
     Entity,
@@ -92,4 +93,9 @@ export class UsersEntity {
         { nullable: true },
     )
     submittedDocuments?: DocumentEntity[];
+
+    @OneToMany(() => TaskEntity, (taskEntity) => taskEntity.submittedUser, {
+        nullable: true,
+    })
+    submittedTasks?: TaskEntity[];
 }
