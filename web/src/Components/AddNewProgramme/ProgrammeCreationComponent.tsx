@@ -107,7 +107,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
 
   const [formValues, setFormValues] = useState<any>(undefined);
-  const [showDialog, setShowDialog] = useState<boolean>(true);
+  const [showDialog, setShowDialog] = useState<boolean>(false);
 
   const closeDialog = () => {
     setShowDialog(false);
@@ -384,10 +384,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                       <ConfirmDialog
                         showDialog={showDialog}
                         Icon={ConfirmSubmitSVG}
-                        message="Are you sure you want to submit?"
-                        subMessage="you can't undo this action"
-                        okText="Yes"
-                        cancelText="No"
+                        message={t('addProgramme:confirmModalMessage')}
+                        subMessage={t('addProgramme:confirmModalSubMessage')}
+                        okText={t('common:yes')}
+                        cancelText={t('common:no')}
                         okAction={() => {
                           closeDialog();
                           submitForm(formValues);
@@ -462,7 +462,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   },
                                 ]}
                               >
-                                <Select size="large">
+                                <Select
+                                  size="large"
+                                  placeholder={t('addProgramme:sectorPlaceholder')}
+                                >
                                   {Object.keys(INF_SECTOR).map((key) => (
                                     <Select.Option value={key}>{INF_SECTOR[key]}</Select.Option>
                                   ))}
@@ -493,7 +496,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   },
                                 ]}
                               >
-                                <Select size="large">
+                                <Select
+                                  size="large"
+                                  placeholder={t('addProgramme:sectoralScopePlaceholder')}
+                                >
                                   {Object.keys(INF_SECTORAL_SCOPE).map((key) => (
                                     <Select.Option value={key}>
                                       {INF_SECTORAL_SCOPE[key]}
