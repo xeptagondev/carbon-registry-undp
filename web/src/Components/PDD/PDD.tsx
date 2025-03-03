@@ -1,6 +1,6 @@
 import { i18n } from 'i18next';
-import React, { useEffect, useState } from 'react';
-import './CMAForm.scss';
+import { useEffect, useState } from 'react';
+import './PDD.scss';
 import StepperComponent from './StepperComponent';
 import { Col, Row, Select, Tag } from 'antd';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
@@ -9,7 +9,7 @@ import { DocumentTypeEnum } from '../../Definitions/Enums/document.type';
 import { getDocumentStatusColor } from '../../Definitions/Definitions/programme.definitions';
 import { API_PATHS } from '../../Config/apiConfig';
 
-const SLCFCMAForm = (props: { translator: i18n }) => {
+const PDD = (props: { translator: i18n }) => {
   const { translator } = props;
   const { post } = useConnection();
   const { id } = useParams();
@@ -57,7 +57,7 @@ const SLCFCMAForm = (props: { translator: i18n }) => {
       <div className="title-container">
         <Row className="row" justify={'space-between'}>
           <Col xl={12} md={12}>
-            <div className="main">{t('CMAForm:cmaFormTitle')}</div>
+            <div className="main">{t('PDD:pddFormTitle')}</div>
           </Col>
           {isView ? (
             <Col xl={12} md={12} style={{ textAlign: 'right' }}>
@@ -109,4 +109,4 @@ const SLCFCMAForm = (props: { translator: i18n }) => {
   );
 };
 
-export default SLCFCMAForm;
+export default PDD;

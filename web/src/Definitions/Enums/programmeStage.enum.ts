@@ -63,6 +63,19 @@ export enum ProjectProposalStageMap {
   VALIDATION_PENDING = 'Validation Pending',
   REJECTED_VALIDATION = 'Validation Rejected',
   AUTHORISED = 'Project Authorised',
+
+  // NEW MAP`
+  PENDING = 'Pending',
+  REJECTED = 'Rejected',
+  APPROVED = 'Approved',
+  PDD_SUBMITTED = 'PDD Submitted',
+  PDD_REJECTED_BY_CERTIFIER = 'PDD Rejected by Certifier',
+  PDD_APPROVED_BY_CERTIFIER = 'PDD Approved by Certifier',
+  PDD_REJECTED_BY_DNA = 'PDD Rejected by DNA',
+  PDD_APPROVED_BY_DNA = 'PDD Approved by DNA',
+  VALIDATION_REPORT_SUBMITTED = 'Validation Report Submitted',
+  VALIDATION_DNA_REJECTED = 'Validation Report Rejected',
+  AUTHORIZED = 'Authorised',
 }
 
 export enum CreditType {

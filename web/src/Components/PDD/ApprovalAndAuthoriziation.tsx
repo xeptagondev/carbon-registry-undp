@@ -1,23 +1,18 @@
-import { Button, Form, Row } from 'antd';
 import React from 'react';
 import { CustomStepsProps } from './StepProps';
+import { Button, Form, Row } from 'antd';
 import { t } from 'i18next';
 import TextArea from 'antd/lib/input/TextArea';
 
-const EnvironmentImpacts = (props: CustomStepsProps) => {
+const ApprovalAndAuthoriziation = (props: CustomStepsProps) => {
   const { next, prev, form, current, handleValuesUpdate, disableFields } = props;
 
   const onFinish = (values: any) => {
-    const tempValues = {
-      analysis: values?.analysisEnvironmentalImpacts,
-      assessment: values?.environmentalImpactAssessment,
-    };
-
-    handleValuesUpdate({ environmentImpacts: tempValues });
+    handleValuesUpdate({ approvalAndAuthorization: values });
   };
   return (
     <>
-      {current === 2 && (
+      {current === 6 && (
         <div>
           <div className="step-form-container">
             <Form
@@ -36,8 +31,8 @@ const EnvironmentImpacts = (props: CustomStepsProps) => {
             >
               <Form.Item
                 className="full-width-form-item"
-                label={`2.1 ${t('CMAForm:analysisEnvironmentalImpacts')}`}
-                name="analysisEnvironmentalImpacts"
+                label={`${t('PDD:approvalAndAuthorization')}`}
+                name="approvalAndAuthorization"
                 rules={[
                   {
                     required: true,
@@ -51,9 +46,7 @@ const EnvironmentImpacts = (props: CustomStepsProps) => {
                         value === null ||
                         value === undefined
                       ) {
-                        throw new Error(
-                          `${t('CMAForm:analysisEnvironmentalImpacts')} ${t('isRequired')}`
-                        );
+                        throw new Error(`${t('PDD:approvalAndAuthorization')} ${t('isRequired')}`);
                       }
                     },
                   },
@@ -61,49 +54,18 @@ const EnvironmentImpacts = (props: CustomStepsProps) => {
               >
                 <TextArea
                   rows={4}
-                  placeholder={`${t('CMAForm:analysisEnvironmentalImapactsPlaceholder')}`}
+                  // placeholder={`${t('PDD:analysisEnvironmentalImapactsPlaceholder')}`}
                   disabled={disableFields}
                 />
               </Form.Item>
 
-              <Form.Item
-                className="full-width-form-item"
-                label={`2.2 ${t('CMAForm:environmentalImpactAssessment')}`}
-                name="environmentalImpactAssessment"
-                rules={[
-                  {
-                    required: true,
-                    message: ``,
-                  },
-                  {
-                    validator: async (rule, value) => {
-                      if (
-                        String(value).trim() === '' ||
-                        String(value).trim() === undefined ||
-                        value === null ||
-                        value === undefined
-                      ) {
-                        throw new Error(
-                          `${t('CMAForm:environmentalImpactAssessment')} ${t('isRequired')}`
-                        );
-                      }
-                    },
-                  },
-                ]}
-              >
-                <TextArea
-                  rows={4}
-                  placeholder={`${t('CMAForm:environmentalImpactAssessmentPlaceholder')}`}
-                  disabled={disableFields}
-                />
-              </Form.Item>
               <Row justify={'end'} className="step-actions-end">
                 <Button danger size={'large'} onClick={prev}>
-                  {t('CMAForm:prev')}
+                  {t('PDD:prev')}
                 </Button>
                 {disableFields ? (
                   <Button type="primary" onClick={next}>
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 ) : (
                   <Button
@@ -112,7 +74,7 @@ const EnvironmentImpacts = (props: CustomStepsProps) => {
                     htmlType={'submit'}
                     // onClick={next}
                   >
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 )}
               </Row>
@@ -124,4 +86,4 @@ const EnvironmentImpacts = (props: CustomStepsProps) => {
   );
 };
 
-export default EnvironmentImpacts;
+export default ApprovalAndAuthoriziation;

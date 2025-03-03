@@ -40,7 +40,7 @@ const Monitoring = (props: CustomStepsProps) => {
   };
   return (
     <>
-      {current === 7 && (
+      {current === 3 && (
         <div>
           <div className="step-form-container">
             <Form
@@ -59,7 +59,7 @@ const Monitoring = (props: CustomStepsProps) => {
             >
               <Form.Item
                 className="full-width-form-item"
-                label={`7.1 ${t('CMAForm:dataAndParametersAvailable')}`}
+                label={`7.1 ${t('PDD:dataAndParametersAvailable')}`}
                 name="dataAndParametersAvailable"
                 rules={[
                   {
@@ -75,7 +75,7 @@ const Monitoring = (props: CustomStepsProps) => {
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t('CMAForm:dataAndParametersAvailable')} ${t('isRequired')}`
+                          `${t('PDD:dataAndParametersAvailable')} ${t('isRequired')}`
                         );
                       }
                     },
@@ -84,7 +84,7 @@ const Monitoring = (props: CustomStepsProps) => {
               >
                 <TextArea
                   rows={4}
-                  placeholder={`${t('CMAForm:dataAndParametersAvailable')}`}
+                  placeholder={`${t('PDD:dataAndParametersAvailable')}`}
                   disabled={disableFields}
                 />
               </Form.Item>
@@ -94,7 +94,7 @@ const Monitoring = (props: CustomStepsProps) => {
                   <Row justify={'space-between'} gutter={[40, 16]}>
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t('CMAForm:data_parameter')}
+                        label={t('PDD:data_parameter')}
                         name="parameter"
                         rules={[
                           {
@@ -109,9 +109,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t('CMAForm:data_parameter')} ${t('isRequired')}`
-                                );
+                                throw new Error(`${t('PDD:data_parameter')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -123,7 +121,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t('CMAForm:unit')}
+                        label={t('PDD:unit')}
                         name="unit"
                         rules={[
                           {
@@ -138,14 +136,14 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:unit')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:unit')} ${t('isRequired')}`);
                               }
                             },
                           },
                         ]}
                       >
                         <Input
-                          placeholder={`${t('CMAForm:unitPlaceholder')}`}
+                          placeholder={`${t('PDD:unitPlaceholder')}`}
                           size="large"
                           disabled={disableFields}
                         />
@@ -154,7 +152,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t('CMAForm:description')}
+                        label={t('PDD:description')}
                         name="description"
                         rules={[
                           {
@@ -169,14 +167,14 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:description')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:description')} ${t('isRequired')}`);
                               }
                             },
                           },
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('CMAForm:data_parameterDescriptionPlaceholder')}`}
+                          placeholder={`${t('PDD:data_parameterDescriptionPlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -186,7 +184,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t('CMAForm:dataSource')}
+                        label={t('PDD:dataSource')}
                         name="source"
                         rules={[
                           {
@@ -201,14 +199,14 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:dataSource')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:dataSource')} ${t('isRequired')}`);
                               }
                             },
                           },
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('CMAForm:dataSourcePlaceholder')}`}
+                          placeholder={`${t('PDD:dataSourcePlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -218,7 +216,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t('CMAForm:justificationOfChoice')}
+                        label={t('PDD:justificationOfChoice')}
                         name="justification"
                         rules={[
                           {
@@ -234,7 +232,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t('CMAForm:justificationOfChoice')} ${t('isRequired')}`
+                                  `${t('PDD:justificationOfChoice')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -242,7 +240,7 @@ const Monitoring = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('CMAForm:justificationOfChoicePlaceholder')}`}
+                          placeholder={`${t('PDD:justificationOfChoicePlaceholder')}`}
                           rows={5}
                           size="large"
                           disabled={disableFields}
@@ -253,7 +251,7 @@ const Monitoring = (props: CustomStepsProps) => {
                     <Col xl={12} md={24}>
                       <div className="step-form-right-col">
                         <Form.Item
-                          label={t('CMAForm:purpose')}
+                          label={t('PDD:purpose')}
                           name="purpose"
                           rules={[
                             {
@@ -268,13 +266,13 @@ const Monitoring = (props: CustomStepsProps) => {
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t('CMAForm:purpose')} ${t('isRequired')}`);
+                                  throw new Error(`${t('PDD:purpose')} ${t('isRequired')}`);
                                 }
                               },
                             },
                           ]}
                         >
-                          {/* <Input size="large" placeholder={`${t('CMAForm:purposePlaceholder')}`} /> */}
+                          {/* <Input size="large" placeholder={`${t('PDD:purposePlaceholder')}`} /> */}
                           <Select size="large" disabled={disableFields}>
                             {projectCategory === 'RENEWABLE_ENERGY' && (
                               <Select.Option value="Determination of Baseline Scenario">
@@ -297,7 +295,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t('CMAForm:valueApplied')}
+                        label={t('PDD:valueApplied')}
                         name="valueApplied"
                         rules={[
                           {
@@ -312,7 +310,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:valueApplied')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:valueApplied')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -320,7 +318,7 @@ const Monitoring = (props: CustomStepsProps) => {
                       >
                         <Input
                           size="large"
-                          placeholder={`${t('CMAForm:valueAppliedPlaceholder')}`}
+                          placeholder={`${t('PDD:valueAppliedPlaceholder')}`}
                           disabled={disableFields}
                         />
                       </Form.Item>
@@ -331,13 +329,13 @@ const Monitoring = (props: CustomStepsProps) => {
 
               <>
                 <h4 className="form-section-title">{`7.2 ${t(
-                  'CMAForm:dataAndParametersMonitored'
+                  'PDD:dataAndParametersMonitored'
                 )}`}</h4>
                 <div className="form-section">
                   <Row justify={'space-between'} gutter={[40, 16]}>
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t('CMAForm:data_parameter')}
+                        label={t('PDD:data_parameter')}
                         name="monitoringParameter"
                         rules={[
                           {
@@ -352,9 +350,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t('CMAForm:data_parameter')} ${t('isRequired')}`
-                                );
+                                throw new Error(`${t('PDD:data_parameter')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -366,7 +362,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t('CMAForm:unit')}
+                        label={t('PDD:unit')}
                         name="monitoringUnit"
                         rules={[
                           {
@@ -381,14 +377,14 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:unit')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:unit')} ${t('isRequired')}`);
                               }
                             },
                           },
                         ]}
                       >
                         <Input
-                          placeholder={`${t('CMAForm:unitPlaceholder')}`}
+                          placeholder={`${t('PDD:unitPlaceholder')}`}
                           size="large"
                           disabled={disableFields}
                         />
@@ -397,7 +393,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t('CMAForm:description')}
+                        label={t('PDD:description')}
                         name="monitoringDescription"
                         rules={[
                           {
@@ -412,14 +408,14 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:description')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:description')} ${t('isRequired')}`);
                               }
                             },
                           },
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('CMAForm:data_parameterDescriptionPlaceholder')}`}
+                          placeholder={`${t('PDD:data_parameterDescriptionPlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -429,7 +425,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t('CMAForm:dataSource')}
+                        label={t('PDD:dataSource')}
                         name="monitoringSource"
                         rules={[
                           {
@@ -444,14 +440,14 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:dataSource')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:dataSource')} ${t('isRequired')}`);
                               }
                             },
                           },
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('CMAForm:dataSourcePlaceholder')}`}
+                          placeholder={`${t('PDD:dataSourcePlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -461,7 +457,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t('CMAForm:measurementMethodDescription')}
+                        label={t('PDD:measurementMethodDescription')}
                         name="monitoringMeasurementMethods"
                         rules={[
                           {
@@ -477,7 +473,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t('CMAForm:measurementMethodDescription')} ${t('isRequired')}`
+                                  `${t('PDD:measurementMethodDescription')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -485,7 +481,7 @@ const Monitoring = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('CMAForm:measuremenMethodDescriptionPlaceholder')}`}
+                          placeholder={`${t('PDD:measuremenMethodDescriptionPlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -495,7 +491,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={12}>
                       <Form.Item
-                        label={t('CMAForm:monitoringFrequency')}
+                        label={t('PDD:monitoringFrequency')}
                         name="monitoringFrequency"
                         rules={[
                           {
@@ -511,7 +507,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t('CMAForm:monitoringFrequency')} ${t('isRequired')}`
+                                  `${t('PDD:monitoringFrequency')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -519,7 +515,7 @@ const Monitoring = (props: CustomStepsProps) => {
                         ]}
                       >
                         <TextArea
-                          placeholder={`${t('CMAForm:monitoringFrequencyPlaceholder')}`}
+                          placeholder={`${t('PDD:monitoringFrequencyPlaceholder')}`}
                           rows={2}
                           size="large"
                           disabled={disableFields}
@@ -529,7 +525,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t('CMAForm:valueApplied')}
+                        label={t('PDD:valueApplied')}
                         name="monitoringValueApplied"
                         rules={[
                           {
@@ -544,7 +540,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('CMAForm:valueApplied')} ${t('isRequired')}`);
+                                throw new Error(`${t('PDD:valueApplied')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -553,7 +549,7 @@ const Monitoring = (props: CustomStepsProps) => {
                         <TextArea
                           rows={4}
                           size="large"
-                          placeholder={`${t('CMAForm:valueAppliedPlaceholder')}`}
+                          placeholder={`${t('PDD:valueAppliedPlaceholder')}`}
                           disabled={disableFields}
                         />
                       </Form.Item>
@@ -561,7 +557,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t('CMAForm:monitoringEquipment')}
+                        label={t('PDD:monitoringEquipment')}
                         name="monitoringEquipment"
                         rules={[
                           {
@@ -577,7 +573,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t('CMAForm:monitoringEquipment')} ${t('isRequired')}`
+                                  `${t('PDD:monitoringEquipment')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -587,7 +583,7 @@ const Monitoring = (props: CustomStepsProps) => {
                         <TextArea
                           rows={4}
                           size="large"
-                          placeholder={`${t('CMAForm:monitoringEquipmentPlaceholder')}`}
+                          placeholder={`${t('PDD:monitoringEquipmentPlaceholder')}`}
                           disabled={disableFields}
                         />
                       </Form.Item>
@@ -595,7 +591,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t('CMAForm:monitoringQAProcedures')}
+                        label={t('PDD:monitoringQAProcedures')}
                         name="monitoringQAProcedures"
                         rules={[
                           {
@@ -611,7 +607,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t('CMAForm:monitoringQAProcedures')} ${t('isRequired')}`
+                                  `${t('PDD:monitoringQAProcedures')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -621,7 +617,7 @@ const Monitoring = (props: CustomStepsProps) => {
                         <TextArea
                           rows={4}
                           size="large"
-                          placeholder={`${t('CMAForm:monitoringQAProceduresPlaceholder')}`}
+                          placeholder={`${t('PDD:monitoringQAProceduresPlaceholder')}`}
                           disabled={disableFields}
                         />
                       </Form.Item>
@@ -630,7 +626,7 @@ const Monitoring = (props: CustomStepsProps) => {
                     <Col xl={24} md={24}>
                       <>
                         <LabelWithTooltip
-                          label={t('CMAForm:purpose')}
+                          label={t('PDD:purpose')}
                           required={true}
                           tooltipContent={
                             <div className="tooltip">
@@ -660,7 +656,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t('CMAForm:purpose')} ${t('isRequired')}`);
+                                  throw new Error(`${t('PDD:purpose')} ${t('isRequired')}`);
                                 }
                               },
                             },
@@ -673,7 +669,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t('CMAForm:calculationMethod')}
+                        label={t('PDD:calculationMethod')}
                         name="monitoringCalculation"
                         rules={[
                           {
@@ -688,9 +684,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t('CMAForm:calculationMethod')} ${t('isRequired')}`
-                                );
+                                throw new Error(`${t('PDD:calculationMethod')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -707,7 +701,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t('CMAForm:monitoringComments')}
+                        label={t('PDD:monitoringComments')}
                         name="monitoringComments"
                         rules={[
                           {
@@ -723,7 +717,7 @@ const Monitoring = (props: CustomStepsProps) => {
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t('CMAForm:monitoringComments')} ${t('isRequired')}`
+                                  `${t('PDD:monitoringComments')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -744,7 +738,7 @@ const Monitoring = (props: CustomStepsProps) => {
 
               <>
                 <LabelWithTooltip
-                  label={`7.3 ${t('CMAForm:monitoringPlan')}`}
+                  label={`7.3 ${t('PDD:monitoringPlan')}`}
                   tooltipPosition={TooltipPostion.top}
                   tooltipWidth={800}
                   required={true}
@@ -800,7 +794,7 @@ const Monitoring = (props: CustomStepsProps) => {
                           value === null ||
                           value === undefined
                         ) {
-                          throw new Error(`${t('CMAForm:monitoringPlan')} ${t('isRequired')}`);
+                          throw new Error(`${t('PDD:monitoringPlan')} ${t('isRequired')}`);
                         }
                       },
                     },
@@ -812,11 +806,11 @@ const Monitoring = (props: CustomStepsProps) => {
 
               <Row justify={'end'} className="step-actions-end">
                 <Button danger size={'large'} onClick={prev}>
-                  {t('CMAForm:prev')}
+                  {t('PDD:prev')}
                 </Button>
                 {disableFields ? (
                   <Button type="primary" onClick={next}>
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 ) : (
                   <Button
@@ -825,7 +819,7 @@ const Monitoring = (props: CustomStepsProps) => {
                     htmlType={'submit'}
                     // onClick={next}
                   >
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 )}
               </Row>
