@@ -34,6 +34,8 @@ import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 import { SectoralScope } from '../../Definitions/Enums/sectoralScope.enum';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
+import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -88,6 +90,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const navigate = useNavigate();
   const { post, get } = useConnection();
   const [form] = Form.useForm();
+  // const [values, setValues] = useState<any>(undefined);
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -102,6 +105,13 @@ export const ProgrammeCreationComponent = (props: any) => {
   const [countries, setCountries] = useState<[]>([]);
   const [isCountryListLoading, setIsCountryListLoading] = useState(false);
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
+
+  const [formValues, setFormValues] = useState<any>(undefined);
+  const [showDialog, setShowDialog] = useState<boolean>(true);
+
+  const closeDialog = () => {
+    setShowDialog(false);
+  };
 
   const getProvinces = async () => {
     try {
@@ -371,6 +381,20 @@ export const ProgrammeCreationComponent = (props: any) => {
                 description: current === 0 && (
                   <div className="programme-details-form-container">
                     <div className="programme-details-form">
+                      <ConfirmDialog
+                        showDialog={showDialog}
+                        Icon={ConfirmSubmitSVG}
+                        message="Are you sure you want to submit?"
+                        subMessage="you can't undo this action"
+                        okText="Yes"
+                        cancelText="No"
+                        okAction={() => {
+                          closeDialog();
+                          submitForm(formValues);
+                        }}
+                        closeDialog={closeDialog}
+                        isReject={false}
+                      />
                       <Form
                         labelCol={{ span: 20 }}
                         wrapperCol={{ span: 24 }}
@@ -379,7 +403,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                         layout="vertical"
                         requiredMark={true}
                         form={form}
-                        onFinish={submitForm}
+                        onFinish={(values) => {
+                          setShowDialog(true);
+                          setFormValues(values);
+                        }}
                       >
                         <Row className="row" gutter={[40, 16]}>
                           <Col xl={12} md={24}>
