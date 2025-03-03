@@ -35,7 +35,7 @@ export enum ProcessSteps {
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(3);
   const navigate = useNavigate();
   const { id: programId } = useParams();
   const { get, post } = useConnection();
@@ -199,7 +199,7 @@ const StepperComponent = (props: any) => {
         address: projectContent?.projectDetails?.physicalAddress,
         website: projectContent?.projectDetails?.website,
         reportNo: `SLCCS/VDR/${new Date().getFullYear()}/${id}`,
-        workCarriedOutBy: `Validation Division - ${countryName} Climate Fund (Pvt) Ltd`,
+        workCarriedOutBy: `Validation Division - ${countryName}`,
       });
 
       form2.setFieldsValue({

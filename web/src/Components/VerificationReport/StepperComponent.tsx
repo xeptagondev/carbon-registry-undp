@@ -379,7 +379,7 @@ const StepperComponent = (props: any) => {
           telephone: cmaData?.projectDetails?.telephone,
           contactPerson: cmaData?.projectActivity?.projectProponent?.contactPerson,
           estimatedScer: monitoringData?.content?.quantifications?.totalNetEmissionReductions,
-          workCarriedOutBy: `Validation & Verification Division ${countryName} Climate Fund (Pvt) Ltd`,
+          workCarriedOutBy: `Validation & Verification Division ${countryName}`,
         });
 
         introductionForm.setFieldsValue({
