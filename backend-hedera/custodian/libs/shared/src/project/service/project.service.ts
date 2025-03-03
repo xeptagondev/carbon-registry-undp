@@ -75,14 +75,14 @@ export class ProjectService {
         private readonly fileHelperService: FileHelperService,
     ) {}
 
-    async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
+    async createProject(projectData: ProjectDto, requestUser: JWTPayload) {
         this.logger.log(
-            `Request received to create project with details ${projectDto} from user ${requestUser.userName}`,
+            `Request received to create project with details ${projectData.data} from user ${requestUser.userName}`,
             this.loggerContext,
         );
 
         this.validateProjectParticipant(requestUser);
-
+        const projectDto = JSON.parse(projectData.data);
         try {
             const assignees = [];
             for (const assignee of projectDto.independentCertifiers) {
@@ -324,47 +324,24 @@ export class ProjectService {
         const project = JSON.parse(inf?.document?.credentialSubject[0]?.data);
         const createdBy =
             inf?.document?.credentialSubject[0]?.project?.createdBy;
-        return {
-            id: id,
-            title: project.title,
-            projectCategory: project.projectCategory,
-            otherProjectCategory: project.otherProjectCategory,
-            province: project.province,
-            district: project.district,
-            city: project.city,
-            refId: project.refId,
-            geographicalLocationCoordinates:
-                project.geographicalLocationCoordinates,
-            projectGeography: project.projectGeography,
-            landExtent: project.landExtent,
-            proposedProjectCapacity: project.proposedProjectCapacity,
-            speciesPlanted: project.speciesPlanted,
-            projectDescription: project.projectDescription,
-            additionalDocuments: project.additionalDocuments,
-            projectStatus: project.projectStatus,
-            projectStatusDescription: project.projectStatusDescription,
-            startDate: project.startDate,
-            companyId: project?.organization?.id,
-            postalCode: project.postalCode,
-            contactName: project.contactName,
-            contactEmail: project.contactEmail,
-            contactPhoneNo: project.contactPhoneNo,
-            contactWebsite: project.contactWebsite,
-            contactAddress: project.contactAddress,
-            projectProposalStage:
-                projectHistory && projectHistory.length
-                    ? projectHistory[projectHistory.length - 1].labelValue
-                    : ProjectProposalStage.PENDING,
-            company: createdBy.organization
-                ? {
-                      companyId: createdBy.organization.id,
-                      name: createdBy.organization?.name,
-                      companyRole: createdBy.organization?.role,
-                      logo: createdBy.organization.logo,
-                      email: createdBy.organization.email,
-                  }
-                : null,
-        };
+
+        const mappedProject = { ...project };
+
+        mappedProject.projectProposalStage = projectHistory?.length
+            ? projectHistory[projectHistory.length - 1].labelValue
+            : ProjectProposalStage.PENDING;
+
+        mappedProject.company = createdBy?.organization
+            ? {
+                  companyId: createdBy.organization.id,
+                  name: createdBy.organization?.name,
+                  companyRole: createdBy.organization?.role,
+                  logo: createdBy.organization?.logo,
+                  email: createdBy.organization?.email,
+              }
+            : null;
+
+        return mappedProject;
     }
 
     async getProjectById(id: number, requestUser: JWTPayload) {
