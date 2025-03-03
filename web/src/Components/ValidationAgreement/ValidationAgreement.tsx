@@ -22,6 +22,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
   const t = translator.t;
 
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
+  const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
 
   const { state } = useLocation();
   const [isView, setIsView] = useState<boolean>(!!state?.isView);
@@ -527,7 +528,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
             <Row justify={'space-between'} gutter={40} className="mg-top-1">
               <Col md={24} xl={10}>
                 <p className="no-margin-p">{t('validationAgreement:onBehalf')}</p>
-                <p className="no-margin-p">{countryName}</p>
+                <p className="no-margin-p">{registryName}</p>
 
                 <div className="signature-upload">
                   <LabelWithTooltip label="Signature" required={true} />
@@ -590,7 +591,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
 
                 <div className="authorized-signatory">
                   <p>Authorized Signatory </p>
-                  <p>{countryName}</p>
+                  <p>{registryName}</p>
                   <p>“Sobadam Piyasa”, </p>
                   <p>No. 416/C/1, </p>
                   <p>Robert Gunawardana Mawatha, </p>
@@ -689,7 +690,7 @@ const ValidationAgreement = (props: { translator: i18n }) => {
             <Row justify={'space-between'} gutter={40} className="mg-top-1">
               <Col md={24} xl={10}>
                 <Form.Item name="SLCFWitness" label="Witness" className="witness-input">
-                  <Input defaultValue={'{countryName}'} placeholder="{countryName}" disabled />
+                  <Input defaultValue={registryName} placeholder={registryName} disabled />
                 </Form.Item>
 
                 <div>

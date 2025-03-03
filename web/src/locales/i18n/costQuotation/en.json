@@ -25,7 +25,7 @@
   "cannotHaveNegativeNumbers": "cannot have negative numbers!",
   "approvedBy": "Approved by,",
   "ceo": "Chief Executive Officer",
-  "sriLankaClimateFund": "{{countryName}} Climate Fund",
+  "ClimateFund": "{{countryName}} Climate Fund",
   "back": "Back",
   "cancel": "Cancel",
   "submit": "Submit",

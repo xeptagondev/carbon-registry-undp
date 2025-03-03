@@ -675,9 +675,7 @@ export const AddCostQuotationForm = (props: any) => {
                   </Row>
                   <Text>{t('costQuotation:ceo')}</Text>
                   <br />
-                  <Text>
-                    {t('costQuotation:sriLankaClimateFund', { countryName: countryName })}
-                  </Text>
+                  <Text>{t('costQuotation:ClimateFund', { countryName: countryName })}</Text>
                 </div>
                 <br />
                 <br />

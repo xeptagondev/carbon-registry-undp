@@ -35,7 +35,7 @@ export enum ProcessSteps {
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(3);
+  const [current, setCurrent] = useState(0);
   const navigate = useNavigate();
   const { id: programId } = useParams();
   const { get, post } = useConnection();
@@ -44,6 +44,7 @@ const StepperComponent = (props: any) => {
   const { mode } = navigationLocation.state || {};
   const isEdit = true;
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
+  const registryName = process.env.REACT_APP_COUNTRY_NAME || 'RegistryX';
 
   const [existingFormValues, setExistingFormValues] = useState({
     programmeId: programId,
@@ -199,7 +200,7 @@ const StepperComponent = (props: any) => {
         address: projectContent?.projectDetails?.physicalAddress,
         website: projectContent?.projectDetails?.website,
         reportNo: `SLCCS/VDR/${new Date().getFullYear()}/${id}`,
-        workCarriedOutBy: `Validation Division - ${countryName}`,
+        workCarriedOutBy: `Validation Division - ${registryName}`,
       });
 
       form2.setFieldsValue({
@@ -258,7 +259,7 @@ const StepperComponent = (props: any) => {
         teamMembers: [
           {
             name: '',
-            company: `${t('validationReport:sriLankaClimateFund', { countryName: countryName })}`,
+            company: `${t('validationReport:ClimateFund', { countryName: countryName })}`,
             function: '',
             taskPerformed: '',
           },
