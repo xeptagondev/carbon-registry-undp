@@ -7,7 +7,7 @@ import {
     OrganizationSchema,
     ProjectSchema,
     UserSchema,
-} from '@app/shared/guardian/interface/guardian.schema.interface';
+} from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
@@ -45,6 +45,12 @@ import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '@app/shared/document/enum/additional.document.type';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
+import {
+    ButtonActionEnum,
+    ButtonNameEnum,
+} from '@app/shared/guardian/enum/button-type.enum';
+import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
+import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
 
 @Injectable()
 export class ProjectService {
@@ -69,28 +75,15 @@ export class ProjectService {
         private readonly fileHelperService: FileHelperService,
     ) {}
 
-    async createProject(projectDto: ProjectDto, requestUser: JWTPayload) {
+    async createProject(projectData: ProjectDto, requestUser: JWTPayload) {
         this.logger.log(
-            `Request received to create project with details ${projectDto} from user ${requestUser.userName}`,
+            `Request received to create project with details ${projectData.data} from user ${requestUser.userName}`,
             this.loggerContext,
         );
 
         this.validateProjectParticipant(requestUser);
-
+        const projectDto = JSON.parse(projectData.data);
         try {
-            // const organizations = await this.guardianService.query(
-            //     requestUser.email,
-            //     this.utilService.getBlock(
-            //         GUARDIAN_API.BLOCKS.ORGANIZATION_QUERY.GRID,
-            //     ),
-            // );
-
-            // const assignees = organizations?.data.filter((org) => {
-            //     projectDto.independentCertifiers.includes(
-            //         org?.document?.credentialSubject[0]?.refId,
-            //     );
-            // });
-
             const assignees = [];
             for (const assignee of projectDto.independentCertifiers) {
                 const org: OrganizationSchema =
@@ -120,6 +113,7 @@ export class ProjectService {
 
             const project: ProjectSchema = {
                 refId: projectRefId,
+                name: projectDto.title,
                 createdBy: createdBy,
                 assignee: assignees,
             };
@@ -176,7 +170,9 @@ export class ProjectService {
                 requestUser,
             );
             await this.logProjectStage(
-                `Project with title: ${projectDto.title} has been created by ${requestUser.userName}`,
+                project.refId,
+                ProjectAuditLogType.CREATE,
+                requestUser.userId,
             );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
@@ -218,7 +214,7 @@ export class ProjectService {
             context: {
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
@@ -243,7 +239,7 @@ export class ProjectService {
             context: {
                 organizationName: requestUser.organizationName,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
@@ -328,47 +324,24 @@ export class ProjectService {
         const project = JSON.parse(inf?.document?.credentialSubject[0]?.data);
         const createdBy =
             inf?.document?.credentialSubject[0]?.project?.createdBy;
-        return {
-            id: id,
-            title: project.title,
-            projectCategory: project.projectCategory,
-            otherProjectCategory: project.otherProjectCategory,
-            province: project.province,
-            district: project.district,
-            city: project.city,
-            refId: project.refId,
-            geographicalLocationCoordinates:
-                project.geographicalLocationCoordinates,
-            projectGeography: project.projectGeography,
-            landExtent: project.landExtent,
-            proposedProjectCapacity: project.proposedProjectCapacity,
-            speciesPlanted: project.speciesPlanted,
-            projectDescription: project.projectDescription,
-            additionalDocuments: project.additionalDocuments,
-            projectStatus: project.projectStatus,
-            projectStatusDescription: project.projectStatusDescription,
-            startDate: project.startDate,
-            companyId: project?.organization?.id,
-            postalCode: project.postalCode,
-            contactName: project.contactName,
-            contactEmail: project.contactEmail,
-            contactPhoneNo: project.contactPhoneNo,
-            contactWebsite: project.contactWebsite,
-            contactAddress: project.contactAddress,
-            projectProposalStage:
-                projectHistory && projectHistory.length
-                    ? projectHistory[projectHistory.length - 1].labelValue
-                    : ProjectProposalStage.PENDING,
-            company: createdBy.organization
-                ? {
-                      companyId: createdBy.organization.id,
-                      name: createdBy.organization?.name,
-                      companyRole: createdBy.organization?.role,
-                      logo: createdBy.organization.logo,
-                      email: createdBy.organization.email,
-                  }
-                : null,
-        };
+
+        const mappedProject = { ...project };
+
+        mappedProject.projectProposalStage = projectHistory?.length
+            ? projectHistory[projectHistory.length - 1].labelValue
+            : ProjectProposalStage.PENDING;
+
+        mappedProject.company = createdBy?.organization
+            ? {
+                  companyId: createdBy.organization.id,
+                  name: createdBy.organization?.name,
+                  companyRole: createdBy.organization?.role,
+                  logo: createdBy.organization?.logo,
+                  email: createdBy.organization?.email,
+              }
+            : null;
+
+        return mappedProject;
     }
 
     async getProjectById(id: number, requestUser: JWTPayload) {
@@ -463,7 +436,7 @@ export class ProjectService {
     }
 
     private async notifyProjectStageChange(
-        email: string,
+        createdBy: any,
         requestUser: JWTPayload,
         template: MailTemplateEnum,
         header: string,
@@ -473,32 +446,39 @@ export class ProjectService {
         const mailDTO: MailTemplateDTO = {
             subject: header,
             template: template,
-            to: email,
+            to: createdBy.email,
             context: {
-                userName: requestUser.userName,
-                organizationName: requestUser.organizationName,
+                userName: createdBy.name,
+                organizationName: createdBy?.organization?.name,
                 countryName: countryName,
-                projectPageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
+                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
             },
         };
 
         await this.mailService.sendMail(mailDTO);
     }
 
-    private async logProjectStage(message: string): Promise<void> {
-        const auditLog: AuditDTO = {
-            logLevel: LogLevel.INFO,
-            data: { message },
-            createdTime: Date.now(),
-        };
+    private async logProjectStage(
+        refId: string,
+        type: ProjectAuditLogType,
+        userId: number,
+    ): Promise<void> {
+        const log = new AuditEntity();
+        log.refId = refId;
+        log.logType = type;
+        log.userId = userId;
 
-        await this.auditService.save(auditLog);
+        await this.auditService.save(log);
     }
 
     async approveINF(
         id: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
+        this.logger.log(
+            `Request received to approve project with id ${id} from user ${requestUser.userName}`,
+            this.loggerContext,
+        );
         this.validateUserAuthorization(requestUser);
 
         const infData = await this.guardianService.query(
@@ -522,10 +502,11 @@ export class ProjectService {
         //     ProjectProposalStage.APPROVED_INF,
         // );
 
-        const approveResponse = await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.INF_APPROVE_REJECT,
+            ButtonActionEnum.APPROVE,
+            inf,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_REJECT_INF),
-            { document: { ...inf }, tag: 'Button_0' },
         );
 
         const project = await this.guardianService.getGridDocumentUsingRefId(
@@ -534,12 +515,11 @@ export class ProjectService {
             requestUser.email,
         );
 
-        const projectApproveResponse = await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.PROJECT_APPROVE_REJECT,
+            ButtonActionEnum.APPROVE,
+            project,
             requestUser.email,
-            this.utilService.getBlock(
-                GUARDIAN_API.BLOCKS.APPROVE_REJECT_PROJECT,
-            ),
-            { document: { ...project }, tag: 'Button_0' },
         );
 
         const createdBy =
@@ -552,17 +532,22 @@ export class ProjectService {
         );
 
         await this.notifyProjectStageChange(
-            createdBy.email,
+            createdBy,
             requestUser,
             MailTemplateEnum.INF_APPROVE,
             INF_APPROVE_HEADER,
             inf?.document?.credentialSubject[0]?.project?.refId,
         );
         await this.logProjectStage(
-            `Project with id: ${id} has been approved by ${requestUser.userId}`,
+            project.refId,
+            ProjectAuditLogType.INF_APPROVED,
+            requestUser.userId,
         );
 
-        return new DataResponseDto(HttpStatus.OK, approveResponse);
+        return new DataResponseDto(
+            HttpStatus.OK,
+            `Project with id: ${id} has been approved by ${requestUser.userId}`,
+        );
     }
 
     async rejectINF(
@@ -570,6 +555,10 @@ export class ProjectService {
         remark: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
+        this.logger.log(
+            `Request received to reject project with id ${id} from user ${requestUser.userName}`,
+            this.loggerContext,
+        );
         this.validateUserAuthorization(requestUser);
 
         const infData = await this.guardianService.query(
@@ -593,10 +582,11 @@ export class ProjectService {
         //     ProjectProposalStage.APPROVED_INF,
         // );
 
-        const rejectResponse = await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.INF_APPROVE_REJECT,
+            ButtonActionEnum.REJECT,
+            inf,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.APPROVE_REJECT_INF),
-            { document: { ...inf }, tag: 'Button_1' },
         );
 
         const project = await this.guardianService.getGridDocumentUsingRefId(
@@ -605,28 +595,33 @@ export class ProjectService {
             requestUser.email,
         );
 
-        const projectRejectResponse = await this.guardianService.approve(
+        await this.guardianService.buttonActionRequest(
+            ButtonNameEnum.PROJECT_APPROVE_REJECT,
+            ButtonActionEnum.REJECT,
+            project,
             requestUser.email,
-            this.utilService.getBlock(
-                GUARDIAN_API.BLOCKS.APPROVE_REJECT_PROJECT,
-            ),
-            { document: { ...project }, tag: 'Button_1' },
         );
 
         const createdBy =
             inf?.document?.credentialSubject[0]?.project?.createdBy;
 
         await this.notifyProjectStageChange(
-            createdBy.email,
+            createdBy,
             requestUser,
             MailTemplateEnum.INF_REJECT,
             INF_REJECT_HEADER,
             inf?.document?.credentialSubject[0]?.project?.refId,
         );
+
         await this.logProjectStage(
-            `Project with id: ${id} has been rejected by ${requestUser.userId}`,
+            project.refId,
+            ProjectAuditLogType.INF_REJECTED,
+            requestUser.userId,
         );
 
-        return new DataResponseDto(HttpStatus.OK, rejectResponse);
+        return new DataResponseDto(
+            HttpStatus.OK,
+            `Project with id: ${id} has been rejected by ${requestUser.userId}`,
+        );
     }
 }

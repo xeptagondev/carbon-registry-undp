@@ -21,7 +21,7 @@ export const ROUTES = {
   PROJECT_PROPOSAL_VIEW: (programmeId: any) =>
     `/programmeManagement/projectProposal/${programmeId}`,
   //CMA
-  CMA_FORM: (programmeId: any) => `/programmeManagement/cmaForm/${programmeId}`,
+  CMA_FORM: (programmeId: any) => `/programmeManagement/pdd/${programmeId}`,
   //VALIDATION
   VALIDATION_AGREEMENT: (programmeId: any) =>
     `/programmeManagement/validationAgreement/${programmeId}`,
