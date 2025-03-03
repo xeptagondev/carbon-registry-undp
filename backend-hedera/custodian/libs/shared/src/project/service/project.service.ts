@@ -255,51 +255,6 @@ export class ProjectService {
             `Project query request with ${query}`,
             this.loggerContext,
         );
-        // if (!query.filterAnd) {
-        //     const filterAnd: FilterEntry[] = [];
-        //     query.filterAnd = filterAnd;
-        // }
-
-        // if (
-        //     !(
-        //         requestUser.organizationRole ==
-        //         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
-        //     )
-        // ) {
-        //     query.filterAnd.push({
-        //         key: 'organization"."id',
-        //         operation: '=',
-        //         value: requestUser.organizationId,
-        //     });
-        // }
-
-        // const [entities, total] = await this.projectRepository
-        //     .createQueryBuilder('project')
-        //     .leftJoinAndSelect('project.organization', 'organization')
-        //     .leftJoinAndSelect(
-        //         'organization.organizationType',
-        //         'organizationType',
-        //     )
-        //     .where(this.helperService.generateWhereSQL(query))
-        //     .orderBy(
-        //         query?.sort?.key && `"${query?.sort?.key}"`,
-        //         query?.sort?.order,
-        //         query?.sort?.nullFirst !== undefined
-        //             ? query?.sort?.nullFirst === true
-        //                 ? 'NULLS FIRST'
-        //                 : 'NULLS LAST'
-        //             : undefined,
-        //     )
-        //     .offset(query.size * query.page - query.size)
-        //     .limit(query.size)
-        //     .getManyAndCount();
-        // const oldFormatData = entities.map((project) =>
-        //     this.mapNewQueryToOldQuery(project),
-        // );
-        // return new DataListResponseDto(
-        //     oldFormatData ? oldFormatData : undefined,
-        //     total ? total : undefined,
-        // );
 
         const infData = await this.guardianService.query(
             requestUser.email,
@@ -308,24 +263,32 @@ export class ProjectService {
 
         const oldFormatData = await Promise.all(
             infData?.data.map((inf) =>
-                this.mapNewQueryToOldQuery(inf, requestUser.email),
+                this.mapNewQueryToOldQuery(
+                    inf?.document?.credentialSubject[0],
+                    requestUser.email,
+                ),
             ),
         );
         return new DataListResponseDto(oldFormatData, oldFormatData.length);
     }
 
     async mapNewQueryToOldQuery(inf: any, email: string) {
-        const id = inf?.document?.credentialSubject[0]?.project?.refId;
+        const id = inf?.project?.refId;
+        const infRefId = inf?.refId;
         const projectHistory = await this.guardianService.getGridHistoryByRefId(
             GridTypeEnum.PROJECT_GRID,
             id,
             email,
         );
-        const project = JSON.parse(inf?.document?.credentialSubject[0]?.data);
-        const createdBy =
-            inf?.document?.credentialSubject[0]?.project?.createdBy;
+        const project = JSON.parse(inf?.data);
+        const projectRefId = inf?.project?.refId;
+        const createdBy = inf?.project?.createdBy;
 
-        const mappedProject = { ...project };
+        const mappedProject = {
+            ...project,
+            refId: projectRefId,
+            infRefId: infRefId,
+        };
 
         mappedProject.projectProposalStage = projectHistory?.length
             ? projectHistory[projectHistory.length - 1].labelValue
@@ -344,41 +307,15 @@ export class ProjectService {
         return mappedProject;
     }
 
-    async getProjectById(id: number, requestUser: JWTPayload) {
-        // const project = await this.projectRepository.findOne({
-        //     where: { id: id },
-        //     relations: { organization: true },
-        // });
-
-        // let documents = await this.documentRepo.find({
-        //     select: {
-        //         version: true,
-        //         createdTime: true,
-        //         type: true,
-        //     },
-        //     where: {
-        //         programmeId: programmeId,
-        //     },
-        // });
-
-        // const lastVersions = documents.reduce((acc, doc) => {
-        //     if (!acc[doc.type] || acc[doc.type].version < doc.version) {
-        //         acc[doc.type] = doc;
-        //     }
-        //     return acc;
-        // }, {});
-
-        const infData = await this.guardianService.query(
+    async getProjectById(id: string, requestUser: JWTPayload) {
+        const infData = await this.guardianService.getGridDataUsingRefId(
+            GridTypeEnum.INF_GRID,
+            id,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
-        );
-
-        const inf = infData?.data.find(
-            (inf) => inf?.document?.credentialSubject[0]?.project?.refId == id,
         );
 
         const updatedProject = {
-            ...(await this.mapNewQueryToOldQuery(inf, requestUser.email)),
+            ...(await this.mapNewQueryToOldQuery(infData, requestUser.email)),
             documents: [],
         };
         return updatedProject;
@@ -481,37 +418,34 @@ export class ProjectService {
         );
         this.validateUserAuthorization(requestUser);
 
-        const infData = await this.guardianService.query(
+        const infData = await this.guardianService.getGridDataUsingRefId(
+            GridTypeEnum.INF_GRID,
+            id,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
         );
-
-        const inf = infData?.data.find(
-            (inf) => inf?.document?.credentialSubject[0]?.project?.refId == id,
+        const infDoc = await this.guardianService.getGridDocumentUsingRefId(
+            GridTypeEnum.INF_GRID,
+            id,
+            requestUser.email,
         );
 
         const updatedProject = {
-            ...(await this.mapNewQueryToOldQuery(inf, requestUser.email)),
+            ...(await this.mapNewQueryToOldQuery(infData, requestUser.email)),
             documents: [],
         };
 
         this.validateProject(updatedProject);
 
-        // const updateResponse = await this.updateProjectStage(
-        //     id,
-        //     ProjectProposalStage.APPROVED_INF,
-        // );
-
         await this.guardianService.buttonActionRequest(
             ButtonNameEnum.INF_APPROVE_REJECT,
             ButtonActionEnum.APPROVE,
-            inf,
+            infDoc,
             requestUser.email,
         );
 
         const project = await this.guardianService.getGridDocumentUsingRefId(
             GridTypeEnum.PROJECT_GRID,
-            id,
+            infData?.project?.refId,
             requestUser.email,
         );
 
@@ -522,12 +456,11 @@ export class ProjectService {
             requestUser.email,
         );
 
-        const createdBy =
-            inf?.document?.credentialSubject[0]?.project?.createdBy;
+        const createdBy = infData?.project?.createdBy;
 
         await this.objectionLetterGenerateService.generateReport(
             createdBy?.organization?.name,
-            inf?.document?.credentialSubject[0]?.name,
+            infData?.name,
             id,
         );
 
@@ -536,7 +469,7 @@ export class ProjectService {
             requestUser,
             MailTemplateEnum.INF_APPROVE,
             INF_APPROVE_HEADER,
-            inf?.document?.credentialSubject[0]?.project?.refId,
+            infData?.project?.refId,
         );
         await this.logProjectStage(
             project.refId,
@@ -561,37 +494,34 @@ export class ProjectService {
         );
         this.validateUserAuthorization(requestUser);
 
-        const infData = await this.guardianService.query(
+        const infData = await this.guardianService.getGridDataUsingRefId(
+            GridTypeEnum.INF_GRID,
+            id,
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
         );
-
-        const inf = infData?.data.find(
-            (inf) => inf?.document?.credentialSubject[0]?.project?.refId == id,
+        const infDoc = await this.guardianService.getGridDocumentUsingRefId(
+            GridTypeEnum.INF_GRID,
+            id,
+            requestUser.email,
         );
 
         const updatedProject = {
-            ...(await this.mapNewQueryToOldQuery(inf, requestUser.email)),
+            ...(await this.mapNewQueryToOldQuery(infData, requestUser.email)),
             documents: [],
         };
 
         this.validateProject(updatedProject);
 
-        // const updateResponse = await this.updateProjectStage(
-        //     id,
-        //     ProjectProposalStage.APPROVED_INF,
-        // );
-
         await this.guardianService.buttonActionRequest(
             ButtonNameEnum.INF_APPROVE_REJECT,
             ButtonActionEnum.REJECT,
-            inf,
+            infDoc,
             requestUser.email,
         );
 
         const project = await this.guardianService.getGridDocumentUsingRefId(
             GridTypeEnum.PROJECT_GRID,
-            id,
+            infData?.project?.refId,
             requestUser.email,
         );
 
@@ -602,15 +532,14 @@ export class ProjectService {
             requestUser.email,
         );
 
-        const createdBy =
-            inf?.document?.credentialSubject[0]?.project?.createdBy;
+        const createdBy = infData?.project?.createdBy;
 
         await this.notifyProjectStageChange(
             createdBy,
             requestUser,
             MailTemplateEnum.INF_REJECT,
             INF_REJECT_HEADER,
-            inf?.document?.credentialSubject[0]?.project?.refId,
+            infData?.project?.refId,
         );
 
         await this.logProjectStage(
