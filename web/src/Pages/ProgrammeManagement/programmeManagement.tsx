@@ -13,7 +13,6 @@ const ProgrammeManagement = () => {
   const visibleColumns = [
     ProgrammeManagementSlColumns.title,
     ProgrammeManagementSlColumns.company,
-    ProgrammeManagementSlColumns.projectCategory,
     ProgrammeManagementSlColumns.projectProposalStage,
     ProgrammeManagementSlColumns.projectStatus,
     ProgrammeManagementSlColumns.creditBalance,
