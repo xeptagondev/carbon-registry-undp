@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CustomStepsProps } from './StepProps';
-import { Button, Col, DatePicker, Form, Input, Row } from 'antd';
+import { Button, Col, DatePicker, Form, Input, Row, Select } from 'antd';
 import moment from 'moment';
 import validator from 'validator';
 import PhoneInput, {
@@ -10,6 +10,7 @@ import PhoneInput, {
   isPossiblePhoneNumber,
 } from 'react-phone-number-input';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { CMASectoralScope } from '../../Definitions/Enums/programmeStage.enum';
 
 const ProjectDetails = (props: CustomStepsProps) => {
   const { next, form, current, t, countries, handleValuesUpdate, disableFields, prev, formMode } =
@@ -18,19 +19,23 @@ const ProjectDetails = (props: CustomStepsProps) => {
   const [contactNoInput] = useState<any>();
 
   const onFinish = (values: any) => {
+    console.log('-----------temp Values before-------');
     const tempValues: any = {
       projectDetails: {
-        title: values?.title,
-        dateOfIssue: moment(values?.dateOfIssue).startOf('day').unix(),
+        projectTitle: values?.projectTitle,
+        versionNumber: values?.versionNumber,
+        appliedMethodologies: values?.appliedMethodologies,
+        estimatedAvgGHGEmissionReductionBasicInformation:
+          values?.estimatedAvgGHGEmissionReductionBasicInformation,
+        // dateOfIssue: moment(values?.dateOfIssue).startOf('day').unix(),
         projectProponent: values?.projectProponent,
-        preparedBy: values?.preparedBy,
-        telephone: values?.telephone,
-        physicalAddress: values?.physicalAddress,
-        email: values?.email,
-        website: values?.website,
+        completionDate: moment(values?.completionDate).startOf('day').unix(),
+        hostParty: values?.hostParty,
+        sectoralScope: values?.sectoralScope,
       },
     };
 
+    console.log('----------tempValues-------------', tempValues);
     handleValuesUpdate(tempValues);
   };
 
@@ -57,20 +62,73 @@ const ProjectDetails = (props: CustomStepsProps) => {
                 <Col xl={12} md={24}>
                   <div className="step-form-right-col">
                     <Form.Item
-                      label={t('CMAForm:projectTitle')}
-                      name="title"
+                      label={t('PDD:projectTitle')}
+                      name="projectTitle"
                       rules={[
                         {
                           required: true,
-                          message: `${t('CMAForm:title')} ${t('isRequired')}`,
+                          message: `${t('PDD:projectTitle')} ${t('isRequired')}`,
                         },
                       ]}
                     >
-                      <Input size="large" disabled />
+                      <Input
+                        size="large"
+                        // disabled
+                      />
                     </Form.Item>
 
                     <Form.Item
-                      label={t('CMAForm:dateOfIssue')}
+                      label={t('PDD:versionNumber')}
+                      name="versionNumber"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t('PDD:pddVersion')} ${t('isRequired')}`,
+                        },
+                      ]}
+                    >
+                      <Input
+                        size="large"
+                        // disabled
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('PDD:appliedMethodologies')}
+                      name="appliedMethodologies"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t('PDD:appliedMethodologies')} ${t('isRequired')}`,
+                        },
+                      ]}
+                    >
+                      <Input
+                        size="large"
+                        // disabled
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('PDD:estimatedAvgGHGEmissionReductionBasicInformation')}
+                      name="estimatedAvgGHGEmissionReductionBasicInformation"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t('PDD:estimatedAvgGHGEmissionReduction')} ${t(
+                            'isRequired'
+                          )}`,
+                        },
+                      ]}
+                    >
+                      <Input
+                        size="large"
+                        // disabled
+                      />
+                    </Form.Item>
+
+                    {/* <Form.Item
+                      label={t('PDD:dateOfIssue')}
                       name="dateOfIssue"
                       rules={[
                         {
@@ -85,7 +143,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                               value === null ||
                               value === undefined
                             ) {
-                              throw new Error(`${t('CMAForm:dateOfIssue')} ${t('isRequired')}`);
+                              throw new Error(`${t('PDD:dateOfIssue')} ${t('isRequired')}`);
                             }
                           },
                         },
@@ -93,39 +151,45 @@ const ProjectDetails = (props: CustomStepsProps) => {
                     >
                       <DatePicker
                         size="large"
-                        disabled
+                        // disabled
                         disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                       />
                     </Form.Item>
 
                     <Form.Item
-                      label={t('CMAForm:preparedBy')}
+                      label={t('PDD:preparedBy')}
                       name="preparedBy"
                       rules={[
                         {
                           required: true,
-                          message: `${t('CMAForm:preparedBy')} ${t('isRequired')}`,
+                          message: `${t('PDD:preparedBy')} ${t('isRequired')}`,
                         },
                       ]}
                     >
-                      <Input size="large" disabled />
+                      <Input
+                        size="large"
+                        // disabled
+                      />
                     </Form.Item>
 
                     <Form.Item
-                      label={t('CMAForm:physicalAddress')}
+                      label={t('PDD:physicalAddress')}
                       name="physicalAddress"
                       rules={[
                         {
                           required: true,
-                          message: `${t('CMAForm:physicalAddress')} ${t('isRequired')}`,
+                          message: `${t('PDD:physicalAddress')} ${t('isRequired')}`,
                         },
                       ]}
                     >
-                      <Input size="large" disabled />
+                      <Input
+                        size="large"
+                        // disabled
+                      />
                     </Form.Item>
 
                     <Form.Item
-                      label={t('CMAForm:email')}
+                      label={t('PDD:email')}
                       name="email"
                       rules={[
                         {
@@ -140,42 +204,114 @@ const ProjectDetails = (props: CustomStepsProps) => {
                               value === null ||
                               value === undefined
                             ) {
-                              throw new Error(`${t('CMAForm:email')} ${t('isRequired')}`);
+                              throw new Error(`${t('PDD:email')} ${t('isRequired')}`);
                             } else {
                               const val = value.trim();
                               const reg =
                                 /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
                               const matches = val.match(reg) ? val.match(reg) : [];
                               if (matches.length === 0) {
-                                throw new Error(`${t('CMAForm:email')} ${t('isInvalid')}`);
+                                throw new Error(`${t('PDD:email')} ${t('isInvalid')}`);
                               }
                             }
                           },
                         },
                       ]}
                     >
-                      <Input size="large" disabled />
-                    </Form.Item>
+                      <Input
+                        size="large"
+                        // disabled
+                      />
+                    </Form.Item> */}
                   </div>
                 </Col>
 
                 <Col xl={12} md={24}>
                   <div className="step-form-left-col">
                     <Form.Item
-                      label={t('CMAForm:proponents')}
+                      label={t('PDD:proponents')}
                       name="projectProponent"
                       rules={[
                         {
                           required: true,
-                          message: `${t('CMAForm:proponents')} ${t('isRequired')}`,
+                          message: `${t('PDD:proponents')} ${t('isRequired')}`,
                         },
                       ]}
                     >
-                      <Input size="large" disabled />
+                      <Input
+                        size="large"
+                        // disabled
+                      />
                     </Form.Item>
 
                     <Form.Item
-                      label={t('CMAForm:telephone')}
+                      label={t('PDD:completionDate')}
+                      name="completionDate"
+                      rules={[
+                        {
+                          required: true,
+                          message: '',
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(`${t('PDD:completionDate')} ${t('isRequired')}`);
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <DatePicker
+                        size="large"
+                        // disabled
+                        disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('PDD:hostParty')}
+                      name="hostParty"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t('PDD:hostParty')} ${t('isRequired')}`,
+                        },
+                      ]}
+                    >
+                      <Input
+                        size="large"
+                        // disabled
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('PDD:sectoralScope')}
+                      name="sectoralScope"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t('PDD:sectoralScope')} ${t('isRequired')}`,
+                        },
+                      ]}
+                    >
+                      <Select size="large" disabled={disableFields}>
+                        {Object.values(CMASectoralScope).map(
+                          (sectoralScope: string, index: number) => (
+                            <Select.Option value={sectoralScope} key={sectoralScope + index}>
+                              {sectoralScope}
+                            </Select.Option>
+                          )
+                        )}
+                      </Select>
+                    </Form.Item>
+
+                    {/* <Form.Item
+                      label={t('PDD:telephone')}
                       name="telephone"
                       rules={[
                         {
@@ -190,15 +326,15 @@ const ProjectDetails = (props: CustomStepsProps) => {
                               value === null ||
                               value === undefined
                             ) {
-                              throw new Error(`${t('CMAForm:telephone')} ${t('isRequired')}`);
+                              throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
                             } else {
                               const phoneNo = formatPhoneNumber(String(value));
                               if (String(value).trim() !== '') {
                                 if (phoneNo === null || phoneNo === '' || phoneNo === undefined) {
-                                  throw new Error(`${t('CMAForm:telephone')} ${t('isRequired')}`);
+                                  throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
                                 } else {
                                   if (!isPossiblePhoneNumber(String(value))) {
-                                    throw new Error(`${t('CMAForm:telephone')} ${t('isInvalid')}`);
+                                    throw new Error(`${t('PDD:telephone')} ${t('isInvalid')}`);
                                   }
                                 }
                               }
@@ -219,13 +355,13 @@ const ProjectDetails = (props: CustomStepsProps) => {
                     </Form.Item>
 
                     <Form.Item
-                      label={t('CMAForm:website')}
+                      label={t('PDD:website')}
                       name="website"
                       className="website-input"
                       rules={[
                         {
                           required: true,
-                          message: `${t('CMAForm:website')} ${t('isRequired')}`,
+                          message: `${t('PDD:website')} ${t('isRequired')}`,
                         },
                         {
                           validator: async (rule, value) => {
@@ -236,17 +372,17 @@ const ProjectDetails = (props: CustomStepsProps) => {
                               value !== undefined
                             ) {
                               if (value && !validator.isURL(value))
-                                throw new Error(`${t('CMAForm:website')} ${t('isInvalid')}`);
+                                throw new Error(`${t('PDD:website')} ${t('isInvalid')}`);
                             }
                           },
                         },
                       ]}
                     >
                       <Input size="large" disabled={disableFields} />
-                    </Form.Item>
+                    </Form.Item> */}
 
                     {formMode === FormMode.VIEW ? (
-                      <Form.Item label={t('CMAForm:reportID')} name="reportID">
+                      <Form.Item label={t('PDD:reportID')} name="reportID">
                         <Input size={'large'} disabled />
                       </Form.Item>
                     ) : (
@@ -258,11 +394,11 @@ const ProjectDetails = (props: CustomStepsProps) => {
               <Row justify={'end'} className="step-actions-end">
                 {/* In this page prev is navigateToDetailPage */}
                 <Button danger size={'large'} onClick={prev}>
-                  {t('CMAForm:cancel')}
+                  {t('PDD:cancel')}
                 </Button>
                 {disableFields ? (
                   <Button type="primary" onClick={next}>
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 ) : (
                   <Button
@@ -271,7 +407,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                     htmlType={'submit'}
                     // onClick={next}
                   >
-                    {t('CMAForm:next')}
+                    {t('PDD:next')}
                   </Button>
                 )}
               </Row>

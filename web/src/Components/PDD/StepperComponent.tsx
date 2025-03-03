@@ -1,13 +1,14 @@
+import BasicInformation from './BasicInformation';
 import { useEffect, useRef, useState } from 'react';
 import { Steps, message } from 'antd';
-import './CMAForm.scss';
+import './PDD.scss';
 
 import { useForm } from 'antd/lib/form/Form';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import EligibilityCriteria from './EligibilityCriteria';
 import ApplicationOfMethodology from './ApplicationOfMethodology';
 import QuantificationOfEmissions from './QuantificationOfEmissions';
-import ProjectDetails from './ProjectDetails';
+
 import DescriptionOfProjectActivity from './DescriptionOfProjectActivity';
 import EnvironmentImpacts from './EnvironmentImpacts';
 import Appendix from './Appendix';
@@ -27,14 +28,18 @@ import {
 } from './viewDataMap';
 import { Loading } from '../Loading/loading';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import ApprovalAndAuthoriziation from './ApprovalAndAuthoriziation';
+import StartDateCreditingPeriod from './StartDateCreditingPeriod';
 import { API_PATHS } from '../../Config/apiConfig';
+import Monitoring from './Monitoring';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const CMA_STEPS = {};
 
 const StepperComponent = (props: any) => {
-  const { t, form, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(0);
+  const { t, selectedVersion, handleDocumentStatus } = props;
+  const [current, setCurrent] = useState(2);
 
   const navigate = useNavigate();
 
@@ -63,18 +68,21 @@ const StepperComponent = (props: any) => {
   };
 
   const [values, setValues] = useState({
-    programmeId: id,
+    projectId: Number(id),
+    name: 'PDD',
     companyId: undefined,
-    content: {},
+    documentType: DocumentEnum.PDD,
+    data: {},
   });
 
   const handleValuesUpdate = (val: any) => {
+    console.log('----------temp vals-------------', val);
     setValues((prevVal: any) => {
       const tempContent = {
-        ...prevVal.content,
+        ...prevVal.data,
         ...val,
       };
-      return { ...prevVal, content: tempContent };
+      return { ...prevVal, data: tempContent };
     });
   };
 
@@ -101,49 +109,50 @@ const StepperComponent = (props: any) => {
   const [form6] = useForm();
   const [form7] = useForm();
   const [form8] = useForm();
-  const [form9] = useForm();
 
   const getProgrammeDetailsById = async (programId: any) => {
     try {
       setLoading(true);
-      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-        programmeId: programId,
-      });
+      // const { data } = await post(API_PATHS.PROJECT_BY_ID, {
+      //   programmeId: programId,
+      // });
 
-      const {
-        data: { user },
-      } = await get(API_PATHS.USER_PROFILE);
+      // const {
+      //   data: { user },
+      // } = await get(API_PATHS.USER_PROFILE);
 
       if (!(isView || isEdit)) {
         form1.setFieldsValue({
-          title: data?.title,
-          dateOfIssue: moment(),
-          preparedBy: data?.company?.name,
-          physicalAddress: data?.company?.address,
-          email: data?.company?.email,
-          projectProponent: data?.company?.name,
-          telephone: data?.company?.phoneNo,
-          website: data?.company?.website,
+          // title: data?.title,
+          // dateOfIssue: moment(),
+          // preparedBy: data?.company?.name,
+          // physicalAddress: data?.company?.address,
+          // email: data?.company?.email,
+          // projectProponent: data?.company?.name, // changed to project participants in the UI but key is kept the same
+          // telephone: data?.company?.phoneNo,
+          // website: data?.company?.website,
         });
 
-        setProjectCategory(data?.projectCategory);
+        // setProjectCategory(data?.projectCategory);
         form2.setFieldsValue({
-          projectTrack: data?.purposeOfCreditDevelopment,
-          organizationName: data?.company?.name,
-          email: data?.company?.email,
-          telephone: data?.company?.phoneNo,
-          address: data?.company?.address,
-          fax: data?.company?.faxNo,
-          contactPerson: data?.contactName,
+          // projectTrack: data?.purposeOfCreditDevelopment,
+          // organizationName: data?.company?.name,
+          // email: data?.company?.email,
+          // telephone: data?.company?.phoneNo,
+          // address: data?.company?.address,
+          // fax: data?.company?.faxNo,
+          // contactPerson: data?.contactName,
+          // projectParticipants: [{ partiesInvolved: '', projectParticipant: '' }],
         });
       }
 
+      console.log('----------running form values--------', form2.getFieldsValue());
       setValues((prevVal) => ({
         ...prevVal,
-        companyId: data?.company?.companyId,
+        // companyId: data?.company?.companyId,
       }));
     } catch (error) {
-      console.log('error');
+      console.log('error', error);
     } finally {
       setLoading(false);
     }
@@ -174,43 +183,43 @@ const StepperComponent = (props: any) => {
           if (res?.statusText === 'SUCCESS') {
             const content = JSON.parse(res?.data.content);
 
-            const projectDetails = projectDetailsDataMapToFields(content?.projectDetails);
-            form1.setFieldsValue(projectDetails);
-            const descripitonOfProjectActivity = descriptionOfProjectActivityDataMapToFields(
-              content?.projectActivity
-            );
-            form2.setFieldsValue(descripitonOfProjectActivity);
+            // const projectDetails = projectDetailsDataMapToFields(content?.projectDetails);
+            // form1.setFieldsValue(projectDetails);
+            // const descripitonOfProjectActivity = descriptionOfProjectActivityDataMapToFields(
+            //   content?.projectActivity
+            // );
+            // form2.setFieldsValue(descripitonOfProjectActivity);
 
-            const environmentImpacts = environmentImpactsDataMaptoFields(
-              content?.environmentImpacts
-            );
-            form3.setFieldsValue(environmentImpacts);
+            // const environmentImpacts = environmentImpactsDataMaptoFields(
+            //   content?.environmentImpacts
+            // );
+            // form3.setFieldsValue(environmentImpacts);
 
-            const localStakeholderConsultation = localStakeholderConsultationDataMaptoFields(
-              content?.localStakeholderConsultation
-            );
-            form4.setFieldsValue(localStakeholderConsultation);
+            // const localStakeholderConsultation = localStakeholderConsultationDataMaptoFields(
+            //   content?.localStakeholderConsultation
+            // );
+            // form4.setFieldsValue(localStakeholderConsultation);
 
-            const eligibilityCriteria = eligibilityCriteriaDataMapToFields(
-              content?.eligibilityCriteria
-            );
-            form5.setFieldsValue(eligibilityCriteria);
+            // const eligibilityCriteria = eligibilityCriteriaDataMapToFields(
+            //   content?.eligibilityCriteria
+            // );
+            // form5.setFieldsValue(eligibilityCriteria);
 
-            const applicationOfMethodology = applicationOfMethodologyDataMapToFields(
-              content?.applicationOfMethodology
-            );
-            form6.setFieldsValue(applicationOfMethodology);
+            // const applicationOfMethodology = applicationOfMethodologyDataMapToFields(
+            //   content?.applicationOfMethodology
+            // );
+            // form6.setFieldsValue(applicationOfMethodology);
 
-            const quantificationOfGHG = quantificationOfGHGDataMapToFields(
-              content?.quantificationOfGHG
-            );
-            form7.setFieldsValue(quantificationOfGHG);
+            // const quantificationOfGHG = quantificationOfGHGDataMapToFields(
+            //   content?.quantificationOfGHG
+            // );
+            // form7.setFieldsValue(quantificationOfGHG);
 
-            const monitoring = monitoringDataMapToFields(content?.monitoring);
-            form8.setFieldsValue(monitoring);
+            // const monitoring = monitoringDataMapToFields(content?.monitoring);
+            // form8.setFieldsValue(monitoring);
 
-            const appendix = appendixDataMapToFields(content?.appendix);
-            form9.setFieldsValue(appendix);
+            // const appendix = appendixDataMapToFields(content?.appendix);
+            // form9.setFieldsValue(appendix);
           }
         } catch (error) {
           console.log('error', error);
@@ -230,15 +239,15 @@ const StepperComponent = (props: any) => {
   const submitForm = async (appendixVals: any) => {
     const tempValues = {
       ...values,
-      content: {
-        ...values.content,
+      data: {
+        ...values.data,
         appendix: appendixVals,
       },
     };
 
     try {
       setLoading(true);
-      const res = await post(API_PATHS.CMA_CREATION, tempValues);
+      const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
       if (res?.response?.data?.statusCode === 200) {
         message.open({
           type: 'success',
@@ -279,6 +288,9 @@ const StepperComponent = (props: any) => {
   useEffect(() => {
     getCountryList();
     getProgrammeDetailsById(id);
+    form2.setFieldValue('projectParticipants', [
+      { partiesInvolved: '', projectParticipants: [{ participant: '' }] },
+    ]);
   }, []);
 
   const steps = [
@@ -286,11 +298,11 @@ const StepperComponent = (props: any) => {
       title: (
         <div ref={scrollSection} className="stepper-title-container">
           {/* <div className="step-count">00</div> */}
-          <div className="title">{t('CMAForm:form01Title')}</div>
+          <div className="title">{t('PDD:form01Title')}</div>
         </div>
       ),
       description: (
-        <ProjectDetails
+        <BasicInformation
           prev={navigateToDetailsPage} // will take user to details page
           next={next}
           form={form1}
@@ -307,7 +319,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">01</div>
-          <div className="title">{t('CMAForm:form02Title')}</div>
+          <div className="title">{t('PDD:form02Title')}</div>
         </div>
       ),
       description: (
@@ -327,11 +339,11 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">02</div>
-          <div className="title">{t('CMAForm:form03Title')}</div>
+          <div className="title">{t('PDD:form03Title')}</div>
         </div>
       ),
       description: (
-        <EnvironmentImpacts
+        <ApplicationOfMethodology
           next={next}
           prev={prev}
           form={form3}
@@ -346,11 +358,11 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">03</div>
-          <div className="title">{t('CMAForm:form04Title')}</div>
+          <div className="title">{t('PDD:form04Title')}</div>
         </div>
       ),
       description: (
-        <LocalStakeholderConsultation
+        <StartDateCreditingPeriod
           next={next}
           prev={prev}
           form={form4}
@@ -359,17 +371,26 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           disableFields={disableFields}
         />
+        // <Monitoring
+        //   next={next}
+        //   prev={prev}
+        //   form={form4}
+        //   current={current}
+        //   t={t}
+        //   handleValuesUpdate={handleValuesUpdate}
+        //   disableFields={disableFields}
+        // />
       ),
     },
     {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">04</div>
-          <div className="title">{t('CMAForm:form05Title')}</div>
+          <div className="title">{t('PDD:form05Title')}</div>
         </div>
       ),
       description: (
-        <EligibilityCriteria
+        <EnvironmentImpacts
           next={next}
           prev={prev}
           form={form5}
@@ -378,17 +399,35 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           disableFields={disableFields}
         />
+        // <EligibilityCriteria
+        //   next={next}
+        //   prev={prev}
+        //   form={form5}
+        //   current={current}
+        //   t={t}
+        //   handleValuesUpdate={handleValuesUpdate}
+        //   disableFields={disableFields}
+        // />
       ),
     },
     {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">05</div>
-          <div className="title">{t('CMAForm:form06Title')}</div>
+          <div className="title">{t('PDD:form06Title')}</div>
         </div>
       ),
       description: (
-        <ApplicationOfMethodology
+        // <ApplicationOfMethodology
+        //   next={next}
+        //   prev={prev}
+        //   form={form6}
+        //   current={current}
+        //   t={t}
+        //   handleValuesUpdate={handleValuesUpdate}
+        //   disableFields={disableFields}
+        // />
+        <LocalStakeholderConsultation
           next={next}
           prev={prev}
           form={form6}
@@ -403,11 +442,11 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">06</div>
-          <div className="title">{t('CMAForm:form07Title')}</div>
+          <div className="title">{t('PDD:form07Title')}</div>
         </div>
       ),
       description: (
-        <QuantificationOfEmissions
+        <ApprovalAndAuthoriziation
           next={next}
           prev={prev}
           form={form7}
@@ -422,14 +461,14 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">07</div>
-          <div className="title">{t('CMAForm:form09Title')}</div>
+          <div className="title">{t('PDD:form08Title')}</div>
         </div>
       ),
       description: (
         <Appendix
           next={navigateToDetailsPage} // will take user to details page
           prev={prev}
-          form={form9}
+          form={form8}
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}

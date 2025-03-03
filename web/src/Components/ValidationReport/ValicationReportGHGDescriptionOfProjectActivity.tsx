@@ -19,7 +19,7 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 import { requiredValidationRule } from '../../Utils/validationHelper';
-import { CustomStepsProps } from '../CMAForm/StepProps';
+import { CustomStepsProps } from '../PDD/StepProps';
 import GetLocationMapComponent from '../Maps/GetLocationMapComponent';
 import { ProcessSteps } from './ValidationStepperComponent';
 import { API_PATHS } from '../../Config/apiConfig';

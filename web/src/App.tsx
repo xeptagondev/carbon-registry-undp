@@ -44,7 +44,7 @@ import NationalAccountingDashboard from './Pages/NationalAccounting/nationalAcco
 // import AddProgramme from './Pages/ProgrammeManagement/AddProgramme';
 import MonitoringReport from './Pages/ProgrammeManagement/MonitoringReport';
 import ProjectDetailsView from './Pages/ProgrammeManagement/ProjectDetailsView';
-import CMAFormPage from './Pages/CMAFormPage/CMAFormPage';
+import CMAFormPage from './Pages/PDD/PDDPage';
 import ValidationReportPage from './Pages/ValidationReportPage.tsx/ValidationReportPage';
 import ProjectProposalPage from './Pages/ProjectProposalPage/ProjectProposalPage';
 import ValidationAgreementPage from './Pages/ValidationAgreementPage/ValidationAgreementPage';
@@ -139,7 +139,7 @@ const App = () => {
                       path="validationAgreement/:id"
                       element={<ValidationAgreementPage />}
                     />{' '}
-                    <Route path="cmaForm/:id/" element={<CMAFormPage />} />
+                    <Route path="pdd/:id/" element={<CMAFormPage />} />
                     <Route path="validationReport/:id" element={<ValidationReportPage />} />
                   </Route>
 

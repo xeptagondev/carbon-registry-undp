@@ -34,6 +34,11 @@
     }
   }
 
+  .netEmissionsTitle {
+    color: '#3A3541CC';
+    font-size: 16px;
+  }
+
   .forms-container {
     display: flex;
     flex-direction: column;
@@ -51,6 +56,7 @@
 
 .step-form-container {
   width: 100%;
+  padding: 20px 0;
 
   .website-input {
     .ant-input {
@@ -65,7 +71,7 @@
     background-color: #f3f3f3;
     padding: 12px;
     border-radius: 4px;
-    border: 1px solid #D9D9D9;
+    border: 1px solid #d9d9d9;
     margin: 8px 0px 16px 0px;
 
     .equation {
@@ -106,6 +112,34 @@
     font-weight: 400;
   }
 
+  .form-section-heading {
+    margin-bottom: 20px;
+    margin-top: 30px;
+    color: rgba(58, 53, 65, 0.5);
+    font-weight: 500;
+    font-size: 16;
+  }
+
+  .to-margin {
+    margin-top: 8px;
+    color: rgba(58, 53, 65, 0.5);
+  }
+
+  .appendix-title {
+    font-size: 18px;
+    margin-top: 36px;
+    color: rgba(58, 53, 65, 0.58);
+    i {
+      color: rgba(58, 53, 65, 0.5);
+    }
+  }
+
+  .appendix-fax-top-margin {
+    @media (min-width: 980px) {
+      margin-top: 38px;
+    }
+  }
+
   .list-item-title {
     color: rgba(58, 53, 65, 0.5);
     font-weight: 400;
@@ -128,6 +162,82 @@
     top: 2px;
     position: relative;
     left: 3px;
+  }
+
+  .projectParticipantsTable {
+    margin: 20px 0px;
+
+    .col-1 {
+      border: 0.5px solid #c4c4c4;
+      width: 30%;
+      padding: 10px 20px;
+    }
+
+    .col-2 {
+      width: 50%;
+      border: 0.5px solid #c4c4c4;
+      padding: 10px 20px;
+    }
+
+    .col-3 {
+      width: 20%;
+      padding: 10px 20px;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: row;
+
+      .col-1 {
+        background-color: #fbfbfb;
+      }
+
+      .col-2 {
+        background-color: #fbfbfb;
+      }
+    }
+
+    .data-body {
+      display: flex;
+      flex-direction: column;
+
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .participant-col {
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 16px;
+      }
+
+      .addMinusBtn {
+        height: 32px !important;
+        width: 20px !important;
+        margin-left: 16px;
+      }
+
+      .participant-form-item {
+        width: 60% !important;
+        margin-bottom: 16px;
+      }
+
+      .col-1 {
+        background-color: white !important;
+
+        .ant-form-item {
+          margin-bottom: 0 !important;
+        }
+      }
+
+      .col-2 {
+        background-color: white !important;
+        .ant-form-item {
+          margin-bottom: 0 !important;
+        }
+      }
+    }
   }
 
   .gases-included-container {
@@ -383,7 +493,6 @@
 
     // }
   }
-
 }
 
 .stepper-title-container {
@@ -410,5 +519,3 @@
 .ant-form-item-tooltip {
   cursor: default !important;
 }
-
-
