@@ -30,4 +30,5 @@ export enum ButtonNameEnum {
     ACTIVITY_VERIFICATION_REPORT_SUBMIT = 'activity_verification_report_submit_button',
     ACTIVITY_VERIFICATION_REPORT_APPROVE_REJECT = 'activity_verification_report_approve_reject_button',
     VERIFICATION_REPORT_APPROVE_REJECT = 'verification_report_approve_reject_buttons',
+    MONITORING_REPORT_APPROVE_REJECT = 'monitoring_report_ic_approve_reject_buttons',
 }

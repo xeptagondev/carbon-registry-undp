@@ -1,20 +1,16 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { TokenEntity } from '../entity/token.entity/token.entity';
 import { Repository } from 'typeorm';
-import { AuditService } from '@app/shared/audit/service/audit.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GenerateTokenDto } from '../dto/generate-token.dto';
 import { formatRemainingTime, generatePassword } from '@app/shared/util/util';
 import { ConfigService } from '@nestjs/config';
-import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
-import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
 import { ValidateTokenDto } from '../dto/validate-token.dto';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class TokenService {
     constructor(
-        private auditService: AuditService,
         private configService: ConfigService,
         @InjectRepository(TokenEntity)
         private tokenRepository: Repository<TokenEntity>,
@@ -39,14 +35,6 @@ export class TokenService {
                 );
             } else {
                 await this.tokenRepository.delete({ email: oldToken.email });
-
-                const message: string = `Removed expired token for user: ${oldToken.email}`;
-                const auditLog: AuditDTO = {
-                    logLevel: LogLevel.INFO,
-                    data: { message: message },
-                    createdTime: Date.now(),
-                };
-                await this.auditService.save(auditLog);
             }
         }
         const newToken = generatePassword(
@@ -67,16 +55,6 @@ export class TokenService {
         };
 
         await this.tokenRepository.save(newTokenEntity);
-
-        const message: string = oldToken
-            ? `Generated a new token (replacing expired one) for user: ${generateTokenDto.email}`
-            : `Generated a new token for user: ${generateTokenDto.email}`;
-        const auditLog: AuditDTO = {
-            logLevel: LogLevel.INFO,
-            data: { message: message },
-            createdTime: Date.now(),
-        };
-        await this.auditService.save(auditLog);
 
         return verificationToken;
     }
@@ -107,13 +85,7 @@ export class TokenService {
                     email: tokenDetails.email,
                     token: tokenDetails.token,
                 });
-                const message: string = `Removed used token for user: ${tokenDetails.email}`;
-                const auditLog: AuditDTO = {
-                    logLevel: LogLevel.INFO,
-                    data: { message: message },
-                    createdTime: Date.now(),
-                };
-                await this.auditService.save(auditLog);
+
                 return tokenDetails;
             }
         } else {

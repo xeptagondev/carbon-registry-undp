@@ -186,7 +186,7 @@ export const CreditTransferComponent = (props: any) => {
     }
 
     try {
-      const response: any = await post(API_PATHS.TRANSFER_QUERY, {
+      const response: any = await post(API_PATHS.PROJECT_TRANSFERS, {
         page: currentPage,
         size: pageSize,
         filterAnd: filter,

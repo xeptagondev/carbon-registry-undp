@@ -1,12 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
-import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
-import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
-import { AuditService } from '@app/shared/audit/service/audit.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Repository } from 'typeorm';
@@ -29,7 +26,6 @@ export class GuardianService {
     private readonly loggerContext = 'GuardianService';
     constructor(
         private readonly configService: ConfigService,
-        private readonly auditService: AuditService,
         private readonly utilService: UtilService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
@@ -38,8 +34,8 @@ export class GuardianService {
 
     async getGuardianError(error: any, calledMainFunction: string) {
         this.logger.error(
-            `Error Occurred in Guardian Service ${calledMainFunction}`,
-            error,
+            `Error Occurred in Guardian Service ${calledMainFunction} 
+            ${JSON.stringify(error)}`,
             this.loggerContext,
         );
         if (axios.isAxiosError(error)) {
@@ -241,6 +237,36 @@ export class GuardianService {
         }
     }
 
+    public async updateDocument(
+        email: string,
+        blockName: string,
+        payload: any,
+    ): Promise<any> {
+        try {
+            const url = this.buildGuardianUrl(
+                // eslint-disable-next-line max-len
+                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(blockName)}`,
+            );
+
+            const user = await this.usersRepository.findOne({
+                where: { email: email },
+            });
+
+            const token = await this.getAccessToken(user.refreshToken);
+
+            const response = await axios.post(url, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            return response.data;
+        } catch (error) {
+            await this.getGuardianError(error, 'updateOrganization');
+            return;
+        }
+    }
+
     private getGridApi(grid: GridTypeEnum): GridInterface {
         const gridMappings = {
             [GridTypeEnum.USER_GRID]: GUARDIAN_API.BLOCKS.USER_QUERY,
@@ -333,12 +359,12 @@ export class GuardianService {
         const token = await this.getAuthenticatedUserToken(email);
         const policyId = this.configService.get('policy.id');
 
-        await this.applyFilters(
-            policyId,
-            token,
-            gridApis.FILTER_NOT_STATUS,
-            'REVOKED',
-        );
+        // await this.applyFilters(
+        //     policyId,
+        //     token,
+        //     gridApis.FILTER_NOT_STATUS,
+        //     'REVOKED',
+        // );
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
 
         const gridData = await this.fetchGridData(gridApis, policyId, token);
@@ -363,12 +389,12 @@ export class GuardianService {
         const token = await this.getAuthenticatedUserToken(email);
         const policyId = this.configService.get('policy.id');
 
-        await this.applyFilters(
-            policyId,
-            token,
-            gridApis.FILTER_NOT_STATUS,
-            'REVOKED',
-        );
+        // await this.applyFilters(
+        //     policyId,
+        //     token,
+        //     gridApis.FILTER_NOT_STATUS,
+        //     'REVOKED',
+        // );
         await this.applyFilters(
             policyId,
             token,
@@ -381,9 +407,6 @@ export class GuardianService {
         const fullVCDocuments = gridData.map(
             (response: any) => response?.document?.credentialSubject[0],
         );
-        if (!fullVCDocuments.length) {
-            throw new Error('No document found for the given project ID');
-        }
 
         return fullVCDocuments;
     }
@@ -397,12 +420,12 @@ export class GuardianService {
         const token = await this.getAuthenticatedUserToken(email);
         const policyId = this.configService.get('policy.id');
 
-        await this.applyFilters(
-            policyId,
-            token,
-            gridApis.FILTER_NOT_STATUS,
-            'REVOKED',
-        );
+        // await this.applyFilters(
+        //     policyId,
+        //     token,
+        //     gridApis.FILTER_NOT_STATUS,
+        //     'REVOKED',
+        // );
 
         await this.applyFilters(
             policyId,
@@ -416,9 +439,9 @@ export class GuardianService {
         const fullVCDocuments = gridData.map(
             (response: any) => response?.document?.credentialSubject[0],
         );
-        if (!fullVCDocuments.length) {
-            throw new Error('No document found for the given project ID');
-        }
+        // if (!fullVCDocuments.length) {
+        //     throw new Error('No document found for the given project ID');
+        // }
 
         return fullVCDocuments;
     }
@@ -438,10 +461,14 @@ export class GuardianService {
             gridApis.FILTER_NOT_STATUS,
             'REVOKED',
         );
+
+        // const gridDataOne = await this.fetchGridData(gridApis, policyId, token);
+        // console.log('---------------One----------', gridDataOne);
+
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
 
         const gridData = await this.fetchGridData(gridApis, policyId, token);
-
+        // console.log('---------------Two----------', gridData);
         const fullVCDocument = gridData.find(
             (response: any) =>
                 response?.document?.credentialSubject[0]?.refId === refId,
@@ -462,12 +489,12 @@ export class GuardianService {
         const token = await this.getAuthenticatedUserToken(email);
         const policyId = this.configService.get('policy.id');
 
-        await this.applyFilters(
-            policyId,
-            token,
-            gridApis.FILTER_NOT_STATUS,
-            'REVOKED',
-        );
+        // await this.applyFilters(
+        //     policyId,
+        //     token,
+        //     gridApis.FILTER_NOT_STATUS,
+        //     'REVOKED',
+        // );
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
 
         const gridData = await this.fetchGridData(gridApis, policyId, token);
@@ -696,13 +723,8 @@ export class GuardianService {
 
             if (response?.status === 200) {
                 const message: string = `User: ${loginDto.username} has logged into the system.`;
-                const auditLog: AuditDTO = {
-                    logLevel: LogLevel.INFO,
-                    data: { message: message },
-                    createdTime: Date.now(),
-                };
+
                 try {
-                    await this.auditService.save(auditLog);
                     await this.usersRepository.update(
                         {
                             email: loginDto.username,

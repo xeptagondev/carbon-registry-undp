@@ -104,7 +104,7 @@ export const NdcActionBody: FC<NdcActionBodyProps> = (props: NdcActionBodyProps)
 
     try {
       if (isValidateFileType(file?.type)) {
-        const response: any = await post(API_PATHS.ADD_PROGRAMME_DOC, {
+        const response: any = await post(API_PATHS.ADD_PROJECT_DOC, {
           type: type,
           data: logoBase64,
           programmeId: programmeId,
@@ -175,7 +175,7 @@ export const NdcActionBody: FC<NdcActionBodyProps> = (props: NdcActionBodyProps)
   const docAction = async (id: any, status: DocumentStatus, actionId: any, type: any) => {
     setLoading(true);
     try {
-      await post(API_PATHS.PROGRAMME_DOC_ACTION, {
+      await post(API_PATHS.PROJECT_DOC_ACTION, {
         id: id,
         status: status,
         actionId: actionId,
@@ -204,7 +204,7 @@ export const NdcActionBody: FC<NdcActionBodyProps> = (props: NdcActionBodyProps)
         let programmeData = programmeRes.data[0];
 
         if (programmeData.mitigationActions) {
-          const docRepoRes: any = await post(API_PATHS.PROGRAMME_DOCS, {
+          const docRepoRes: any = await post(API_PATHS.PROJECT_DOCS, {
             page: 1,
             size: 100,
             filterAnd: [

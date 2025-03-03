@@ -294,7 +294,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingCharts(true);
     try {
       const response: any = await post(
-        API_PATHS.PROGRAMME_BY_STATUS,
+        API_PATHS.PROJECT_BY_STATUS,
         { filterAnd: getFilters() },
         undefined,
         statServerUrl
@@ -430,7 +430,7 @@ export const SLCFDashboardComponent = (props: any) => {
     setLoadingPieChart(true);
     try {
       const response: any = await post(
-        API_PATHS.PROGRAMME_BY_CATEGORY,
+        API_PATHS.PROJECT_BY_CATEGORY,
         { filterAnd: getFilters() },
         undefined,
         statServerUrl

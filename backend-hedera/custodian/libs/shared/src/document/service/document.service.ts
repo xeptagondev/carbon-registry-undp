@@ -27,6 +27,7 @@ import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { DocumentActionDTO } from '../dto/document-action-request.dto';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
 
 @Injectable()
 export class DocumentService {
@@ -35,6 +36,8 @@ export class DocumentService {
         private readonly documentRepository: Repository<DocumentEntity>,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
+        @InjectRepository(TaskEntity)
+        private readonly taskRepository: Repository<TaskEntity>,
         private readonly configService: ConfigService,
         private readonly mailService: MailService,
         private readonly dataSource: DataSource,
@@ -470,7 +473,7 @@ export class DocumentService {
             );
         } else if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
             // send email to assigned IC admins
-            let assigneeOrgEmails = [];
+            const assigneeOrgEmails = [];
             const assignedICAdmins = await this.getOrgAdminEmails(
                 assigneeOrgEmails,
                 queryRunner,

@@ -30,6 +30,7 @@ export interface UserSchema {
 
 export interface ProjectSchema {
     refId: string;
+    name: string;
     createdBy: UserSchema;
     assignee: OrganizationSchema[];
     creditBalance?: number;

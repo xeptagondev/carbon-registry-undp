@@ -183,7 +183,7 @@ export const ProgrammeDocuments: FC<ProgrammeDocumentsProps> = (props: Programme
     const logoBase64 = await getBase64(file as RcFile);
     try {
       if (isValidateFileType(file?.type, type)) {
-        const response: any = await post(API_PATHS.ADD_PROGRAMME_DOC, {
+        const response: any = await post(API_PATHS.ADD_PROJECT_DOC, {
           type: type,
           data: logoBase64,
           programmeId: programmeId,
@@ -224,7 +224,7 @@ export const ProgrammeDocuments: FC<ProgrammeDocumentsProps> = (props: Programme
   const docAction = async (id: any, status: DocumentStatus) => {
     setLoading(true);
     try {
-      const response: any = await post(API_PATHS.PROGRAMME_DOC_ACTION, {
+      const response: any = await post(API_PATHS.PROJECT_DOC_ACTION, {
         id: id,
         status: status,
       });
