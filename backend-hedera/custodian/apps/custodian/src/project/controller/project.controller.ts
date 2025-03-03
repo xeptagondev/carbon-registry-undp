@@ -7,11 +7,6 @@ import { ProjectService } from '@app/shared/project/service/project.service';
 @Controller('project')
 export class ProjectController {
     constructor(private readonly projectService: ProjectService) {}
-    @UseGuards(AuthGuardService)
-    @Post('query')
-    async query(@Body() queryDto: QueryDto, @Request() req): Promise<any> {
-        return this.projectService.query(queryDto, req.user);
-    }
 
     @UseGuards(AuthGuardService)
     @Post('create')
@@ -42,5 +37,11 @@ export class ProjectController {
         @Request() req,
     ) {
         return this.projectService.getProjectById(programmeId, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Post('query')
+    async query(@Body() queryDto: QueryDto, @Request() req): Promise<any> {
+        return this.projectService.query(queryDto, req.user);
     }
 }
