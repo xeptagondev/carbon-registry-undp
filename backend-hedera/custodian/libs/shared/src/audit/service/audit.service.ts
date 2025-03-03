@@ -14,4 +14,32 @@ export class AuditService {
     async save(entity: AuditEntity) {
         await this.auditRepository.save(entity);
     }
+
+    async getLogs(id: string) {
+        const query = `
+      SELECT 
+        projectLogs.*, 
+        "user".name, 
+        "guardianRole".name AS "userRole",
+        "organization".name AS "userCompanyName",
+        "toOrganization".name AS "toCompanyName"
+      FROM 
+        audit_entity AS projectLogs
+      LEFT JOIN 
+        "users_entity" AS "user" ON projectLogs."userId" = "user".id
+      LEFT JOIN 
+        "guardian_role_entity" AS "guardianRole" ON "user"."guardian_role_id" = "guardianRole".id
+      LEFT JOIN 
+        "organization_entity" AS "organization" ON "user"."organization_id" = "organization".id
+      LEFT JOIN 
+        "organization_entity" AS "toOrganization" ON projectLogs.data->>'toCompanyId' = CAST("toOrganization"."id" AS TEXT)
+      WHERE 
+        projectLogs."refId" = $1
+      ORDER BY 
+        projectLogs.id DESC;
+    `;
+
+        const result = await this.auditRepository.query(query, [id]);
+        return result;
+    }
 }
