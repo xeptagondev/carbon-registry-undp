@@ -39,6 +39,7 @@ const StepperComponent = (props: any) => {
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
 
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
+  const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
 
   const onValueChange = (newValues: any) => {
     setFormValues((prevValues) => ({
@@ -379,7 +380,7 @@ const StepperComponent = (props: any) => {
           telephone: cmaData?.projectDetails?.telephone,
           contactPerson: cmaData?.projectActivity?.projectProponent?.contactPerson,
           estimatedScer: monitoringData?.content?.quantifications?.totalNetEmissionReductions,
-          workCarriedOutBy: `Validation & Verification Division ${countryName}`,
+          workCarriedOutBy: `Validation & Verification Division ${registryName}`,
         });
 
         introductionForm.setFieldsValue({

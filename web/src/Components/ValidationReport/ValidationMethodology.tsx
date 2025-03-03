@@ -31,7 +31,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
 
   const emptyAppointmentTeamMembersDataSourceRow = {
     name: '',
-    company: `${t('validationReport:sriLankaClimateFund', { countryName: countryName })}`,
+    company: `${t('validationReport:ClimateFund', { countryName: countryName })}`,
     function: '',
     taskPerformed: '',
   };
@@ -489,7 +489,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                             <Form.Item name={[name, 'company']} rules={[requiredValidationRule(t)]}>
                               <Input
                                 size="large"
-                                value={t('validationReport:sriLankaClimateFund', {
+                                value={t('validationReport:ClimateFund', {
                                   countryName: countryName,
                                 })}
                                 disabled
