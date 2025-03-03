@@ -39,7 +39,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const getProvinces = async () => {
     try {
-      const { data } = await post(API_PATHS.PROVINCE);
+      const { data } = await post(API_PATHS.PROVINCES);
       const tempProvinces = data.map((provinceData: any) => provinceData.provinceName);
       setProvinces(tempProvinces);
     } catch (error) {
@@ -49,7 +49,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const getDistricts = async (provinceName: string, index: number) => {
     try {
-      const { data } = await post(API_PATHS.DISTRICT, {
+      const { data } = await post(API_PATHS.DISTRICTS, {
         filterAnd: [
           {
             key: 'provinceName',
@@ -86,7 +86,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
 
   const getCities = async (division: string, index: number) => {
     try {
-      const { data } = await post(API_PATHS.CITY, {
+      const { data } = await post(API_PATHS.CITIES, {
         filterAnd: [
           {
             key: 'districtName',

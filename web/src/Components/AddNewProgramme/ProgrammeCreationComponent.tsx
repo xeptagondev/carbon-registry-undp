@@ -268,7 +268,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
     const body: any = {
       title: values?.title,
-      projectCategory: values?.projectCategory,
+      // projectCategory: values?.projectCategory,
       sector: values?.sector,
       SectoralScope: values?.sectoralScope,
       province: values?.province || 'test',
@@ -278,7 +278,7 @@ export const ProgrammeCreationComponent = (props: any) => {
       street: values?.street,
       geographicalLocationCoordinates: values?.projectLocation,
       projectGeography: values?.projectGeography,
-      otherProjectCategory: values?.otherCategory,
+      // otherProjectCategory: values?.otherCategory,
       landExtent: (function () {
         if (values?.landExtent) {
           const lands = [Number(Number(values?.landExtent).toFixed(2))];
