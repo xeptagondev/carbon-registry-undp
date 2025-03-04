@@ -431,7 +431,7 @@ export class ProjectService {
         this.validateUserAuthorization(requestUser);
         await this.documentService.reject(
             id,
-            { remarks: null, action: DocumentStateEnum.DNA_REJECTED },
+            { remarks: remark, action: DocumentStateEnum.DNA_REJECTED },
             requestUser,
         );
 
