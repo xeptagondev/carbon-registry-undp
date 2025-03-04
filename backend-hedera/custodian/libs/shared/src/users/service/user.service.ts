@@ -1141,10 +1141,24 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             userVcDocument.document.credentialSubject[0],
         );
 
+        if (
+            userUpdateDto.name == userData?.name &&
+            userUpdateDto.phoneNo == userData?.phoneNumber
+        ) {
+            const response: HTTPResponseDto = {
+                statusCode: HttpStatus.OK,
+                message: 'The user account has been updated successfully',
+            };
+
+            return response;
+        }
+
         userData.name = userUpdateDto.name;
         userData.phoneNumber = userUpdateDto.phoneNo
             ? userUpdateDto.phoneNo
-            : userDetails.phoneNumber;
+            : userData?.phoneNumber
+              ? userData?.phoneNumber
+              : undefined;
 
         const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
 
