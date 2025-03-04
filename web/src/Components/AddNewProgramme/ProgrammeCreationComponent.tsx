@@ -314,6 +314,7 @@ export const ProgrammeCreationComponent = (props: any) => {
       //   }
       //   return undefined;
       // })(),
+      estimatedProjectCost: values?.estimatedProjectCost,
       proposedProjectCapacity: values?.projectCapacity,
       projectStatusDescription: values?.projectStatusDescription,
       speciesPlanted: values?.speciesPlanted,
