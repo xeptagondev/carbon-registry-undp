@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAbilityContext } from '../../Casl/Can';
 import { ProgrammeManagementColumns } from '../../Definitions/Enums/programme.management.columns.enum';
 import { ProgrammeManagementSlColumns } from '../../Definitions/Enums/programme.management.sl.columns.enum';
-import { SLCFProgrammeManagementComponent } from '../../Components/SLCFProgrammeManagement/SLCFProgrammeManagementComponent';
+import { ProgrammeManagementComponent } from '../../Components/ProgrammeManagement/ProgrammeManagementComponent';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 
 const ProgrammeManagement = () => {
@@ -13,14 +13,16 @@ const ProgrammeManagement = () => {
   const visibleColumns = [
     ProgrammeManagementSlColumns.title,
     ProgrammeManagementSlColumns.company,
+    ProgrammeManagementSlColumns.sector,
     ProgrammeManagementSlColumns.projectProposalStage,
-    ProgrammeManagementSlColumns.projectStatus,
+    // ProgrammeManagementSlColumns.projectStatus,
     ProgrammeManagementSlColumns.creditBalance,
     ProgrammeManagementSlColumns.purposeOfCreditDevelopment,
     ProgrammeManagementSlColumns.creditRetired,
-    ProgrammeManagementSlColumns.certifierId,
-    ProgrammeManagementSlColumns.serialNo,
-    ProgrammeManagementSlColumns.action,
+    ProgrammeManagementSlColumns.projectId,
+    // ProgrammeManagementSlColumns.certifierId,
+    // ProgrammeManagementSlColumns.serialNo,
+    // ProgrammeManagementSlColumns.action,
   ];
 
   const onNavigateToProgrammeView = (record: any) => {
@@ -36,14 +38,14 @@ const ProgrammeManagement = () => {
   };
 
   return (
-    <SLCFProgrammeManagementComponent
+    <ProgrammeManagementComponent
       t={t}
       visibleColumns={visibleColumns}
       onNavigateToProgrammeView={onNavigateToProgrammeView}
       onClickAddProgramme={onClickAddProgramme}
       enableAddProgramme
       useAbilityContext={useAbilityContext}
-    ></SLCFProgrammeManagementComponent>
+    ></ProgrammeManagementComponent>
   );
 };
 
