@@ -730,45 +730,6 @@ export class OrganizationService extends SuperService<
                 updatedOrganizationVcDocument.document.credentialSubject[0],
             );
 
-        for (const orgUser of orgEnt.users) {
-            if (orgUser.isActive) {
-                const userVcDocument =
-                    await this.guardianService.getGridDocumentUsingRefId(
-                        GridTypeEnum.USER_GRID,
-                        orgUser.refId,
-                        orgUser.email,
-                    );
-
-                const orgUserData: UserSchemaDtos = new UserSchemaDtos(
-                    userVcDocument.document.credentialSubject[0],
-                );
-
-                orgUserData.organization = updatedOrgDataForUser;
-
-                const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
-
-                if (
-                    userVcDocument.option.status !== GuardianStateEnum.REVOKED
-                ) {
-                    await this.guardianService.buttonActionRequest(
-                        ButtonNameEnum.USER_REVOKE,
-                        ButtonActionEnum.SUBMIT,
-                        userVcDocument,
-                        user.email,
-                    );
-                }
-
-                await this.guardianService.updateDocument(
-                    user.email,
-                    blockName,
-                    {
-                        document: { ...orgUserData },
-                        ref: null,
-                    },
-                );
-            }
-        }
-
         await this.organizationRepository.update({ id: orgEnt.id }, editData);
 
         return new DataResponseDto(
