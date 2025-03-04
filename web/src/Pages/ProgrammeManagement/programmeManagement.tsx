@@ -13,14 +13,16 @@ const ProgrammeManagement = () => {
   const visibleColumns = [
     ProgrammeManagementSlColumns.title,
     ProgrammeManagementSlColumns.company,
+    ProgrammeManagementSlColumns.sector,
     ProgrammeManagementSlColumns.projectProposalStage,
-    ProgrammeManagementSlColumns.projectStatus,
+    // ProgrammeManagementSlColumns.projectStatus,
     ProgrammeManagementSlColumns.creditBalance,
     ProgrammeManagementSlColumns.purposeOfCreditDevelopment,
     ProgrammeManagementSlColumns.creditRetired,
-    ProgrammeManagementSlColumns.certifierId,
-    ProgrammeManagementSlColumns.serialNo,
-    ProgrammeManagementSlColumns.action,
+    ProgrammeManagementSlColumns.projectId,
+    // ProgrammeManagementSlColumns.certifierId,
+    // ProgrammeManagementSlColumns.serialNo,
+    // ProgrammeManagementSlColumns.action,
   ];
 
   const onNavigateToProgrammeView = (record: any) => {
