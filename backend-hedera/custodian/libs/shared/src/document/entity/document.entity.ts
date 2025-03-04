@@ -19,6 +19,9 @@ export class DocumentEntity {
     id?: number;
 
     @Column({ type: String })
+    refId: string;
+
+    @Column({ type: String })
     title: string;
 
     @Column({ type: Number, generated: 'increment' })

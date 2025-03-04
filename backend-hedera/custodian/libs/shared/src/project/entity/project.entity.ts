@@ -9,9 +9,7 @@ import {
     OneToMany,
     PrimaryGeneratedColumn,
 } from 'typeorm';
-import { ProjectCategoryEnum } from '../enum/project.category.enum';
-import { ProjectGeography } from '../enum/project.geography.enum';
-import { ProjectStatus } from '../enum/project.status.enum';
+import { ProjectSectorEnum } from '../enum/project.sector.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { ProjectProposalStage } from '../enum/project.proposal.stage.enum';
@@ -23,102 +21,17 @@ export class ProjectEntity {
     id?: number;
 
     @Column({ unique: true })
-    projectId: string;
+    refId: string;
 
     @Column()
     title: string;
 
     @Column({
         type: 'enum',
-        enum: ProjectCategoryEnum,
+        enum: ProjectSectorEnum,
         array: false,
     })
-    projectCategory: ProjectCategoryEnum;
-
-    @Column({ nullable: true })
-    otherProjectCategory?: string;
-
-    @Column()
-    postalCode: string;
-
-    @Column({ nullable: true })
-    street: string;
-
-    @Column()
-    province: string;
-
-    @Column()
-    district: string;
-
-    @Column()
-    city: string;
-
-    @Column({
-        type: 'jsonb',
-        array: false,
-    })
-    geographicalLocationCoordinates: [];
-
-    @Column({
-        type: 'enum',
-        enum: ProjectGeography,
-        array: false,
-    })
-    projectGeography: ProjectGeography;
-
-    @Column({
-        type: 'decimal',
-        precision: 10,
-        nullable: true,
-        array: true,
-    })
-    landExtent?: number[];
-
-    @Column({ nullable: true })
-    proposedProjectCapacity?: string;
-
-    @Column({ type: 'bigint' })
-    startDate: number;
-
-    @Column({ nullable: true })
-    speciesPlanted?: string;
-
-    @Column()
-    projectDescription: string;
-
-    @Column('text', { array: true, nullable: true })
-    additionalDocuments?: string[];
-
-    @Column({
-        type: 'enum',
-        enum: ProjectStatus,
-        array: false,
-    })
-    projectStatus: ProjectStatus;
-
-    @Column({ nullable: true })
-    projectStatusDescription?: string;
-
-    @Column()
-    projectParticipant: string;
-
-    @Column()
-    address: string;
-
-    @Column()
-    telephone: string;
-
-    @Column()
-    fax: string;
-
-    @Column()
-    email: string;
-
-    @Column()
-    website: string;
-
-    @Column()
-    contactPerson: string;
+    sector: ProjectSectorEnum;
 
     @OneToMany(
         () => ActivityEntity,

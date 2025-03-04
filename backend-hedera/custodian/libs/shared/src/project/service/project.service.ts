@@ -39,7 +39,7 @@ import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
@@ -51,6 +51,8 @@ import {
 } from '@app/shared/guardian/enum/button-type.enum';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
+import { DocumentService } from '@app/shared/document/service/document.service';
+import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
 
 @Injectable()
 export class ProjectService {
@@ -73,6 +75,7 @@ export class ProjectService {
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         private readonly logger: InstantLogger,
         private readonly fileHelperService: FileHelperService,
+        private readonly documentService: DocumentService,
     ) {}
 
     async createProject(projectData: ProjectDto, requestUser: JWTPayload) {
@@ -84,23 +87,6 @@ export class ProjectService {
         this.validateProjectParticipant(requestUser);
         const projectDto = JSON.parse(projectData.data);
         try {
-            const assignees = [];
-            for (const assignee of projectDto.independentCertifiers) {
-                const org: OrganizationSchema =
-                    await this.guardianService.getGridDataUsingRefId(
-                        GridTypeEnum.ORGANIZATION_GRID,
-                        assignee,
-                        requestUser.email,
-                    );
-                assignees.push(org);
-            }
-            const createdBy: UserSchema =
-                await this.guardianService.getGridDataUsingRefId(
-                    GridTypeEnum.USER_GRID,
-                    requestUser.userRefId,
-                    requestUser.email,
-                );
-
             const projectRefId = await this.counterService.incrementCount(
                 CounterType.PROJECT,
                 4,
@@ -111,12 +97,42 @@ export class ProjectService {
                 4,
             );
 
-            const project: ProjectSchema = {
+            const createdBy: UsersEntity = await this.userRepository.findOne({
+                where: { id: requestUser.userId },
+            });
+            const assignees: OrganizationEntity[] =
+                await this.organizationRepository.find({
+                    where: {
+                        refId: In(projectDto.independentCertifiers),
+                    },
+                });
+
+            const projectEntity: ProjectEntity = {
+                refId: projectRefId,
+                title: projectDto.title,
+                projectProposalStage: ProjectProposalStage.PENDING,
+                sector: projectDto.setor,
+                createdBy: createdBy,
+                assignees: assignees,
+            };
+
+            const savedProject: ProjectEntity =
+                await this.projectRepository.save(projectEntity);
+
+            const projectSchema: ProjectSchema = {
                 refId: projectRefId,
                 name: projectDto.title,
-                createdBy: createdBy,
-                assignee: assignees,
+                createdBy: createdBy.refId,
+                assignee: projectDto.independentCertifiers,
             };
+            await this.guardianService.createEntity(
+                requestUser.email,
+                this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_PROJECT),
+                {
+                    document: projectSchema,
+                    ref: null,
+                },
+            );
 
             const docUrls = [];
             for (const doc of projectDto.additionalDocuments) {
@@ -133,47 +149,49 @@ export class ProjectService {
                 }
                 docUrls.push(docUrl);
             }
-            const infDocument: DocumentSchema = {
-                refId: infRefId,
-                documentType: DocumentEnum.INF,
-                createdBy: createdBy,
-                project: project,
-                name: projectDto.title,
-                version: 1,
-                data: JSON.stringify({
-                    ...projectDto,
-                    additionalDocuments: docUrls,
-                }),
-            };
+            // const infDocument: DocumentSchema = {
+            //     refId: infRefId,
+            //     documentType: DocumentEnum.INF,
+            //     createdBy: createdBy.refId,
+            //     projectRefId: projectRefId,
+            //     name: projectDto.title,
+            //     version: 1,
+            //     data: JSON.stringify({
+            //         ...projectDto,
+            //         additionalDocuments: docUrls,
+            //     }),
+            // };
 
-            await this.guardianService.createEntity(
-                requestUser.email,
-                this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_PROJECT),
-                {
-                    document: project,
-                    ref: null,
-                },
-            );
-            await this.guardianService.createEntity(
-                requestUser.email,
-                this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_INF),
-                {
-                    document: infDocument,
-                    ref: null,
-                },
-            );
+            // await this.guardianService.createEntity(
+            //     requestUser.email,
+            //     this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_INF),
+            //     {
+            //         document: infDocument,
+            //         ref: null,
+            //     },
+            // );
 
-            await this.notifyAdmins(projectRefId, requestUser);
-            await this.notifyCertifiers(
-                projectRefId,
-                projectDto.independentCertifiers,
+            this.documentService.save(
+                {
+                    projectId: savedProject.id,
+                    name: 'INF',
+                    documentType: DocumentEnum.INF,
+                    data: projectData.data,
+                },
                 requestUser,
             );
-            await this.logProjectStage(
-                infRefId,
-                ProjectAuditLogType.CREATE,
-                requestUser.userId,
-            );
+
+            // await this.notifyAdmins(projectRefId, requestUser);
+            // await this.notifyCertifiers(
+            //     projectRefId,
+            //     projectDto.independentCertifiers,
+            //     requestUser,
+            // );
+            // await this.logProjectStage(
+            //     infRefId,
+            //     ProjectAuditLogType.CREATE,
+            //     requestUser.userId,
+            // );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             this.logger.error(error);
