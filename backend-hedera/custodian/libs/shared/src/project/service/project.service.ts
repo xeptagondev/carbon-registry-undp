@@ -170,7 +170,7 @@ export class ProjectService {
                 requestUser,
             );
             await this.logProjectStage(
-                project.refId,
+                infRefId,
                 ProjectAuditLogType.CREATE,
                 requestUser.userId,
             );
@@ -261,14 +261,14 @@ export class ProjectService {
             this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
         );
 
-        const oldFormatData = await Promise.all(
-            infData?.data.map((inf) =>
-                this.mapNewQueryToOldQuery(
-                    inf?.document?.credentialSubject[0],
-                    requestUser.email,
-                ),
-            ),
-        );
+        const oldFormatData = [];
+        for (const inf of infData.data) {
+            const mappedData = await this.mapNewQueryToOldQuery(
+                inf?.document?.credentialSubject[0],
+                requestUser.email,
+            );
+            oldFormatData.push(mappedData);
+        }
         return new DataListResponseDto(oldFormatData, oldFormatData.length);
     }
 
@@ -305,6 +305,10 @@ export class ProjectService {
             : null;
 
         return mappedProject;
+    }
+
+    async getLogs(refId: string) {
+        return await this.auditService.getLogs(refId);
     }
 
     async getProjectById(id: string, requestUser: JWTPayload) {
@@ -472,7 +476,7 @@ export class ProjectService {
             infData?.project?.refId,
         );
         await this.logProjectStage(
-            project.refId,
+            id,
             ProjectAuditLogType.INF_APPROVED,
             requestUser.userId,
         );
@@ -543,7 +547,7 @@ export class ProjectService {
         );
 
         await this.logProjectStage(
-            project.refId,
+            id,
             ProjectAuditLogType.INF_REJECTED,
             requestUser.userId,
         );
