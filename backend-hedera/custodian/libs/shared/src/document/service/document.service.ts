@@ -12,6 +12,8 @@ import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import {
+    INF_ASSIGN_HEADER,
+    INF_CREATE_HEADER,
     PDD_CREATE_HEADER,
     PDD_DNA_APPROVE_HEADER,
     PDD_DNA_REJECT_HEADER,
@@ -28,6 +30,14 @@ import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { DocumentActionDTO } from '../dto/document-action-request.dto';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
+import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
+import { AuditService } from '@app/shared/audit/service/audit.service';
+import { DocumentSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
+import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+import { CounterService } from '@app/shared/util/service/counter.service';
+import { CounterType } from '@app/shared/util/enum/counter.type.enum';
+import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 
 @Injectable()
 export class DocumentService {
@@ -41,6 +51,9 @@ export class DocumentService {
         private readonly configService: ConfigService,
         private readonly mailService: MailService,
         private readonly dataSource: DataSource,
+        private readonly auditService: AuditService,
+        private readonly guardianService: GuardianService,
+        private readonly counterService: CounterService,
     ) {}
 
     async getDocumentWithProjectAssignees(id: number) {
@@ -675,6 +688,70 @@ export class DocumentService {
         let sendTo: string | string[];
         let context: any;
         switch (docType) {
+            case DocumentEnum.INF:
+                {
+                    if (
+                        jwtData.organizationRole ===
+                            OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                        jwtData.userRole === RoleEnum.Admin &&
+                        submittedUser.organization.id !==
+                            project.organization.id
+                    ) {
+                        throw new HttpException(
+                            'Unauthorized',
+                            HttpStatus.UNAUTHORIZED,
+                        );
+                    }
+
+                    const orgEmails: string[] = project.assignees.map(
+                        (org) => org.email,
+                    );
+
+                    const assigneeEmails: string[] =
+                        await this.getOrgAdminEmails(orgEmails, queryRunner);
+
+                    const countryName = this.configService.get('country');
+
+                    heading = INF_ASSIGN_HEADER;
+                    template = MailTemplateEnum.INF_ASSIGN;
+                    sendTo = assigneeEmails;
+                    context = {
+                        organizationName: jwtData.organizationName,
+                        countryName: countryName,
+                        programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
+                    };
+
+                    const dnaHeading = INF_CREATE_HEADER.replace(
+                        '{{countryName}}',
+                        countryName,
+                    );
+                    const dnaTemplate = MailTemplateEnum.INF_CREATE;
+                    const dnaContext = {
+                        organizationName: jwtData.organizationName,
+                        countryName: countryName,
+                        programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
+                    };
+
+                    const dnaAdminEmails = (
+                        await this.getDNAAdmins(queryRunner)
+                    ).map((user) => user.email);
+
+                    // send email
+                    const dnaMailDTO: MailTemplateDTO = {
+                        subject: dnaHeading,
+                        template: dnaTemplate,
+                        to: dnaAdminEmails,
+                        context: dnaContext,
+                    };
+
+                    await this.mailService.sendMail(dnaMailDTO);
+                    await this.logProjectStage(
+                        project.refId,
+                        ProjectAuditLogType.PENDING,
+                        jwtData.userId,
+                    );
+                }
+                break;
             case DocumentEnum.PDD:
                 {
                     // PDD has to be an Admin of the same organization of the project the document is being submitted to
@@ -712,9 +789,14 @@ export class DocumentService {
                     context = {
                         organizationName: jwtData.organizationName,
                         countryName: countryName,
-                        // TODO: fix the link
-                        programmePageLink: this.configService.get('url') + '/',
+                        programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
                     };
+
+                    await this.logProjectStage(
+                        project.refId,
+                        ProjectAuditLogType.PDD_SUBMITTED,
+                        jwtData.userId,
+                    );
                 }
                 break;
             case DocumentEnum.VALIDATION_REPORT:
@@ -784,9 +866,7 @@ export class DocumentService {
                             pdOrganizationName: project.organization.name,
                             programmeName: project.title,
                             countryName: this.configService.get('country'),
-                            // TODO: fix the link
-                            programmePageLink:
-                                this.configService.get('url') + '/',
+                            programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
                         };
 
                         // send another email to DNA admins
@@ -797,9 +877,7 @@ export class DocumentService {
                             pdOrganizationName: project.organization.name,
                             countryName: this.configService.get('country'),
                             programmeName: project.title,
-                            // TODO: fix the link
-                            programmePageLink:
-                                this.configService.get('url') + '/',
+                            programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
                         };
 
                         const dnaAdminEmails = (
@@ -815,6 +893,11 @@ export class DocumentService {
                         };
 
                         await this.mailService.sendMail(dnaMailDTO);
+                        await this.logProjectStage(
+                            project.refId,
+                            ProjectAuditLogType.VERIFICATION_CREATE,
+                            jwtData.userId,
+                        );
                     } else {
                         throw new HttpException(
                             'Unauthorized',
@@ -925,7 +1008,12 @@ export class DocumentService {
             }
 
             // create document in 'PENDING' state
+            const refId = await this.counterService.incrementCount(
+                CounterType[dto.documentType],
+                4,
+            );
             const document: DocumentEntity = {
+                refId: refId,
                 title: dto.name,
                 project: project,
                 documentType: dto.documentType,
@@ -947,7 +1035,24 @@ export class DocumentService {
                 queryRunner,
             );
 
-            // TODO: do guardian calls
+            const infDocument: DocumentSchema = {
+                refId: refId,
+                documentType: dto.documentType,
+                createdBy: submittedUser.refId,
+                project: project.refId,
+                name: dto.documentType,
+                version: 1,
+                data: JSON.stringify(dto.data),
+            };
+
+            // await this.guardianService.createEntity(
+            //     jwtData.email,
+            //     this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_INF),
+            //     {
+            //         document: infDocument,
+            //         ref: null,
+            //     },
+            // );
 
             await queryRunner.commitTransaction();
         } catch (err) {
@@ -963,5 +1068,18 @@ export class DocumentService {
         } finally {
             await queryRunner.release();
         }
+    }
+
+    private async logProjectStage(
+        refId: string,
+        type: ProjectAuditLogType,
+        userId: number,
+    ): Promise<void> {
+        const log = new AuditEntity();
+        log.refId = refId;
+        log.logType = type;
+        log.userId = userId;
+
+        await this.auditService.save(log);
     }
 }

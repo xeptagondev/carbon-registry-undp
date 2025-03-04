@@ -9,6 +9,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { DocumentService } from './service/document.service';
 import { MailModule } from '../mail/mail.module';
 import { TaskEntity } from '../task/entity/task.entity';
+import { AuditModule } from '../audit/audit.module';
+import { GuardianModule } from '../guardian/guardian.module';
+import { UtilModule } from '../util/util.module';
 
 @Module({
     imports: [
@@ -22,6 +25,9 @@ import { TaskEntity } from '../task/entity/task.entity';
         ]),
         MailModule,
         JwtModule,
+        AuditModule,
+        GuardianModule,
+        UtilModule,
     ],
     providers: [DocumentService],
     exports: [DocumentService],
