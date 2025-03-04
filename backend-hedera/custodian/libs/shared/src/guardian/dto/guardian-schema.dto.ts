@@ -46,12 +46,12 @@ export class UserSchemaDtos {
     name: string;
     role: string;
     email: string;
-    phoneNumber: string;
+    phoneNumber?: string;
     createdTime: number;
     updatedTime?: number;
     refId: string;
     hederaAccount: string;
-    organization: OrganizationSchemaDtos;
+    organization: string;
 
     constructor(data: UserSchema) {
         this.name = data.name;
@@ -62,14 +62,14 @@ export class UserSchemaDtos {
         this.updatedTime = data.updatedTime;
         this.refId = data.refId;
         this.hederaAccount = data.hederaAccount;
-        this.organization = new OrganizationSchemaDtos(data.organization);
+        this.organization = data.organization;
     }
 }
 
 export class ProjectSchemaDtos {
     refId: string;
-    createdBy: UserSchemaDtos;
-    assignee: OrganizationSchemaDtos[];
+    createdBy: string;
+    assignee: string[];
     creditBalance?: number;
     creditFrozen?: number;
     creditRetired?: number;
@@ -78,10 +78,8 @@ export class ProjectSchemaDtos {
 
     constructor(data: ProjectSchema) {
         this.refId = data.refId;
-        this.createdBy = new UserSchemaDtos(data.createdBy);
-        this.assignee = data.assignee.map(
-            (org) => new OrganizationSchemaDtos(org),
-        );
+        this.createdBy = data.createdBy;
+        this.assignee = data.assignee;
         this.creditBalance = data.creditBalance;
         this.creditFrozen = data.creditFrozen;
         this.creditRetired = data.creditRetired;
@@ -92,20 +90,20 @@ export class ProjectSchemaDtos {
 
 export class ActivitySchemaDtos {
     refId: string;
-    project: ProjectSchemaDtos;
+    project: string;
 
     constructor(data: ActivitySchema) {
         this.refId = data.refId;
-        this.project = new ProjectSchemaDtos(data.project);
+        this.project = data.project;
     }
 }
 
 export class DocumentSchemaDtos {
     refId: string;
     documentType: string;
-    createdBy: UserSchemaDtos;
-    project: ProjectSchemaDtos;
-    activity?: ActivitySchemaDtos;
+    createdBy: string;
+    project: string;
+    activity?: string;
     name: string;
     version: number;
     data: string;
@@ -113,10 +111,10 @@ export class DocumentSchemaDtos {
     constructor(data: DocumentSchema) {
         this.refId = data.refId;
         this.documentType = data.documentType;
-        this.createdBy = new UserSchemaDtos(data.createdBy);
-        this.project = new ProjectSchemaDtos(data.project);
+        this.createdBy = data.createdBy;
+        this.project = data.project;
         if (data.activity) {
-            this.activity = new ActivitySchemaDtos(data.activity);
+            this.activity = data.activity;
         }
         this.name = data.name;
         this.version = data.version;

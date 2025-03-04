@@ -423,14 +423,14 @@ export class VerificationService {
             ? MONITORING_APPROVE_HEADER.replace('{{countryName}}', countryName)
             : MONITORING_REJECT_HEADER.replace('{{countryName}}', countryName);
 
-        await this.notifyReportStageChange(
-            monitoringReport,
-            monitoringReport?.createdBy?.organization?.name,
-            requestUser.organizationName,
-            emailTemplate,
-            emailHeader,
-            verifyReportDto.remark,
-        );
+        // await this.notifyReportStageChange(
+        //     monitoringReport,
+        //     monitoringReport?.createdBy?.organization?.name,
+        //     requestUser.organizationName,
+        //     emailTemplate,
+        //     emailHeader,
+        //     verifyReportDto.remark,
+        // );
         await this.logProjectStage(
             activity?.project?.refId,
             verifyReportDto.verify
@@ -440,29 +440,29 @@ export class VerificationService {
         );
     }
 
-    private async notifyReportStageChange(
-        report: DocumentSchema,
-        createrOrg: string,
-        changerOrg: string,
-        template: MailTemplateEnum,
-        header: string,
-        remarks?: string,
-    ): Promise<void> {
-        const mailDTO: MailTemplateDTO = {
-            subject: header,
-            template: template,
-            to: report?.createdBy?.email,
-            context: {
-                userName: report?.createdBy?.name,
-                createrOrg: createrOrg,
-                changerOrg: changerOrg,
-                countryName: this.configService.get('country'),
-                remarks: remarks,
-            },
-        };
+    // private async notifyReportStageChange(
+    //     report: DocumentSchema,
+    //     createrOrg: string,
+    //     changerOrg: string,
+    //     template: MailTemplateEnum,
+    //     header: string,
+    //     remarks?: string,
+    // ): Promise<void> {
+    //     const mailDTO: MailTemplateDTO = {
+    //         subject: header,
+    //         template: template,
+    //         to: report?.createdBy?.email,
+    //         context: {
+    //             userName: report?.createdBy?.name,
+    //             createrOrg: createrOrg,
+    //             changerOrg: changerOrg,
+    //             countryName: this.configService.get('country'),
+    //             remarks: remarks,
+    //         },
+    //     };
 
-        await this.mailService.sendMail(mailDTO);
-    }
+    //     await this.mailService.sendMail(mailDTO);
+    // }
 
     //MARK: create Verification Report
     async createVerificationReport(
@@ -588,7 +588,7 @@ export class VerificationService {
                 );
 
             const verificationRefId = await this.counterService.incrementCount(
-                CounterType.VERIFICATION_REPORT,
+                CounterType.VERIFICATION,
                 4,
             );
 
@@ -633,11 +633,11 @@ export class VerificationService {
         }
 
         // Notify stakeholders via email
-        await this.notifyStakeholders(
-            verificationReportDto.programmeId,
-            project,
-            requestUser.organizationName,
-        );
+        // await this.notifyStakeholders(
+        //     verificationReportDto.programmeId,
+        //     project,
+        //     requestUser.organizationName,
+        // );
 
         await this.logProjectStage(
             project.refId,
@@ -675,44 +675,44 @@ export class VerificationService {
         documents.push(...docUrls);
     }
 
-    private async notifyStakeholders(
-        programmeId: string,
-        project: ProjectSchema,
-        organizationNameIC: string,
-    ) {
-        const countryName = this.configService.get('country');
+    // private async notifyStakeholders(
+    //     programmeId: string,
+    //     project: ProjectSchema,
+    //     organizationNameIC: string,
+    // ) {
+    //     const countryName = this.configService.get('country');
 
-        const mailTemplates = [
-            {
-                recipient: project?.createdBy?.email,
-                template: MailTemplateEnum.VERIFICATION_CREATE_PD,
-                subject: VERIFICATION_CREATE_HEADER,
-            },
-            {
-                recipient: project?.createdBy?.email,
-                template: MailTemplateEnum.VERIFICATION_CREATE_DNA,
-                subject: VERIFICATION_CREATE_HEADER,
-            },
-        ];
+    //     const mailTemplates = [
+    //         {
+    //             recipient: project?.createdBy?.email,
+    //             template: MailTemplateEnum.VERIFICATION_CREATE_PD,
+    //             subject: VERIFICATION_CREATE_HEADER,
+    //         },
+    //         {
+    //             recipient: project?.createdBy?.email,
+    //             template: MailTemplateEnum.VERIFICATION_CREATE_DNA,
+    //             subject: VERIFICATION_CREATE_HEADER,
+    //         },
+    //     ];
 
-        await Promise.all(
-            mailTemplates.map((mail) =>
-                this.mailService.sendMail({
-                    subject: mail.subject,
-                    template: mail.template,
-                    to: mail.recipient,
-                    context: {
-                        organizationNameIC: organizationNameIC,
-                        organizationNamePD:
-                            project?.createdBy?.organization?.name,
-                        countryName: countryName,
-                        projectName: project.name,
-                        programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${programmeId}`,
-                    },
-                }),
-            ),
-        );
-    }
+    //     // await Promise.all(
+    //     //     mailTemplates.map((mail) =>
+    //     //         this.mailService.sendMail({
+    //     //             subject: mail.subject,
+    //     //             template: mail.template,
+    //     //             to: mail.recipient,
+    //     //             context: {
+    //     //                 organizationNameIC: organizationNameIC,
+    //     //                 organizationNamePD:
+    //     //                     project?.createdBy?.organization?.name,
+    //     //                 countryName: countryName,
+    //     //                 projectName: project.name,
+    //     //                 programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${programmeId}`,
+    //     //             },
+    //     //         }),
+    //     //     ),
+    //     // );
+    // }
 
     //MARK: verify Verification Report
     async verifyVerificationReport(
@@ -768,12 +768,12 @@ export class VerificationService {
                 reqUser.email,
             );
 
-        const project: ProjectSchema =
-            await this.guardianService.getGridDataUsingRefId(
-                GridTypeEnum.PROJECT_GRID,
-                activityVC?.project?.refId,
-                reqUser.email,
-            );
+        // const project: ProjectSchema =
+        //     await this.guardianService.getGridDataUsingRefId(
+        //         GridTypeEnum.PROJECT_GRID,
+        //         activityVC?.project?.refId,
+        //         reqUser.email,
+        //     );
 
         // Determine action (approve/reject)
         const action = verifyReportDto.verify
@@ -816,21 +816,21 @@ export class VerificationService {
                   ),
               };
 
-        await this.sendVerificationEmail(
-            project?.createdBy?.email,
-            emailTemplate.pd,
-            emailTemplate.subject,
-            verificationReport,
-            project,
-        );
+        // await this.sendVerificationEmail(
+        //     project?.createdBy?.email,
+        //     emailTemplate.pd,
+        //     emailTemplate.subject,
+        //     verificationReport,
+        //     project,
+        // );
 
-        await this.sendVerificationEmail(
-            verificationReport?.createdBy?.email,
-            emailTemplate.ic,
-            emailTemplate.subject,
-            verificationReport,
-            project,
-        );
+        // await this.sendVerificationEmail(
+        //     verificationReport?.createdBy?.email,
+        //     emailTemplate.ic,
+        //     emailTemplate.subject,
+        //     verificationReport,
+        //     project,
+        // );
         await this.logProjectStage(
             activity?.project?.refId,
             verifyReportDto.verify
@@ -840,30 +840,30 @@ export class VerificationService {
         );
     }
 
-    private async sendVerificationEmail(
-        recipientEmail: string,
-        template: MailTemplateEnum,
-        subject: string,
-        verificationReport: DocumentSchema,
-        project: ProjectSchema,
-    ) {
-        const countryName = this.configService.get('country');
-        const mailDTO: MailTemplateDTO = {
-            subject: subject,
-            template: template,
-            to: recipientEmail,
-            context: {
-                organisationNameIC:
-                    verificationReport?.createdBy?.organization?.name,
-                organisationNamePD: project?.createdBy?.organization?.name,
-                countryName: countryName,
-                projectName: project?.name,
-                userName: project?.createdBy?.name,
-            },
-        };
+    // private async sendVerificationEmail(
+    //     recipientEmail: string,
+    //     template: MailTemplateEnum,
+    //     subject: string,
+    //     verificationReport: DocumentSchema,
+    //     project: ProjectSchema,
+    // ) {
+    //     const countryName = this.configService.get('country');
+    //     const mailDTO: MailTemplateDTO = {
+    //         subject: subject,
+    //         template: template,
+    //         to: recipientEmail,
+    //         context: {
+    //             organisationNameIC:
+    //                 verificationReport?.createdBy?.organization?.name,
+    //             organisationNamePD: project?.createdBy?.organization?.name,
+    //             countryName: countryName,
+    //             projectName: project?.name,
+    //             userName: project?.createdBy?.name,
+    //         },
+    //     };
 
-        await this.mailService.sendMail(mailDTO);
-    }
+    //     await this.mailService.sendMail(mailDTO);
+    // }
 
     //MARK: get Credit Issuance Certificate URL
     async getCreditIssuanceCertificateURL(

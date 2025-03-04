@@ -27,11 +27,9 @@ export class ProjectEntity {
     title: string;
 
     @Column({
-        type: 'enum',
-        enum: ProjectSectorEnum,
-        array: false,
+        nullable: false,
     })
-    sector: ProjectSectorEnum;
+    sector: string;
 
     @OneToMany(
         () => ActivityEntity,

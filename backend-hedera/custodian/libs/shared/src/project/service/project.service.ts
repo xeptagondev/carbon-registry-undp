@@ -53,6 +53,9 @@ import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
 import { DocumentService } from '@app/shared/document/service/document.service';
 import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
+import { ProjectSectorEnum } from '../enum/project.sector.enum';
+import { FilterEntry } from '@app/shared/util/dto/filter.entry';
+import { DocumentStateEnum } from '@app/shared/document/enum/document-state.enum';
 
 @Injectable()
 export class ProjectService {
@@ -80,7 +83,7 @@ export class ProjectService {
 
     async createProject(projectData: ProjectDto, requestUser: JWTPayload) {
         this.logger.log(
-            `Request received to create project with details ${projectData.data} from user ${requestUser.userName}`,
+            `Request received to create project from user ${requestUser.userName}`,
             this.loggerContext,
         );
 
@@ -92,14 +95,14 @@ export class ProjectService {
                 4,
             );
 
-            const infRefId = await this.counterService.incrementCount(
-                CounterType.INF,
-                4,
-            );
-
             const createdBy: UsersEntity = await this.userRepository.findOne({
                 where: { id: requestUser.userId },
             });
+
+            const org: OrganizationEntity =
+                await this.organizationRepository.findOne({
+                    where: { id: requestUser.organizationId },
+                });
             const assignees: OrganizationEntity[] =
                 await this.organizationRepository.find({
                     where: {
@@ -111,8 +114,9 @@ export class ProjectService {
                 refId: projectRefId,
                 title: projectDto.title,
                 projectProposalStage: ProjectProposalStage.PENDING,
-                sector: projectDto.setor,
+                sector: projectDto.sector,
                 createdBy: createdBy,
+                organization: org,
                 assignees: assignees,
             };
 
@@ -149,49 +153,19 @@ export class ProjectService {
                 }
                 docUrls.push(docUrl);
             }
-            // const infDocument: DocumentSchema = {
-            //     refId: infRefId,
-            //     documentType: DocumentEnum.INF,
-            //     createdBy: createdBy.refId,
-            //     projectRefId: projectRefId,
-            //     name: projectDto.title,
-            //     version: 1,
-            //     data: JSON.stringify({
-            //         ...projectDto,
-            //         additionalDocuments: docUrls,
-            //     }),
-            // };
 
-            // await this.guardianService.createEntity(
-            //     requestUser.email,
-            //     this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_INF),
-            //     {
-            //         document: infDocument,
-            //         ref: null,
-            //     },
-            // );
+            projectDto.additionalDocuments = docUrls;
 
             this.documentService.save(
                 {
                     projectId: savedProject.id,
                     name: 'INF',
                     documentType: DocumentEnum.INF,
-                    data: projectData.data,
+                    data: projectDto,
                 },
                 requestUser,
             );
 
-            // await this.notifyAdmins(projectRefId, requestUser);
-            // await this.notifyCertifiers(
-            //     projectRefId,
-            //     projectDto.independentCertifiers,
-            //     requestUser,
-            // );
-            // await this.logProjectStage(
-            //     infRefId,
-            //     ProjectAuditLogType.CREATE,
-            //     requestUser.userId,
-            // );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             this.logger.error(error);
@@ -268,57 +242,65 @@ export class ProjectService {
         query: QueryDto,
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
-        this.helperService.validateRequestUser(requestUser);
         this.logger.log(
             `Project query request with ${query}`,
             this.loggerContext,
         );
 
-        const infData = await this.guardianService.query(
-            requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.INF_QUERY.GRID),
-        );
+        this.helperService.validateRequestUser(requestUser);
+        if (!query.filterAnd) {
+            const filterAnd: FilterEntry[] = [];
+            query.filterAnd = filterAnd;
+        }
+
+        const [entities, total] = await this.projectRepository
+            .createQueryBuilder('project')
+            .leftJoin('project.organization', 'organization')
+            .addSelect(['organization'])
+            .where(this.helperService.generateWhereSQL(query))
+            .orderBy(
+                query?.sort?.key && `"${query?.sort?.key}"`,
+                query?.sort?.order,
+                query?.sort?.nullFirst !== undefined
+                    ? query?.sort?.nullFirst === true
+                        ? 'NULLS FIRST'
+                        : 'NULLS LAST'
+                    : undefined,
+            )
+            .offset(query.size * query.page - query.size)
+            .limit(query.size)
+            .getManyAndCount();
 
         const oldFormatData = [];
-        for (const inf of infData.data) {
-            const mappedData = await this.mapNewQueryToOldQuery(
-                inf?.document?.credentialSubject[0],
-                requestUser.email,
-            );
-            oldFormatData.push(mappedData);
+        for (const project of entities) {
+            oldFormatData.push(await this.mapNewQueryToOldQuery(project));
         }
-        return new DataListResponseDto(oldFormatData, oldFormatData.length);
+        return new DataListResponseDto(
+            entities ? oldFormatData : undefined,
+            total ? total : undefined,
+        );
     }
 
-    async mapNewQueryToOldQuery(inf: any, email: string) {
-        const id = inf?.project?.refId;
-        const infRefId = inf?.refId;
-        const projectHistory = await this.guardianService.getGridHistoryByRefId(
-            GridTypeEnum.PROJECT_GRID,
-            id,
-            email,
+    async mapNewQueryToOldQuery(project: ProjectEntity) {
+        const lastInf = await this.documentService.getLastDoc(
+            DocumentEnum.INF,
+            project.id,
         );
-        const project = JSON.parse(inf?.data);
-        const projectRefId = inf?.project?.refId;
-        const createdBy = inf?.project?.createdBy;
-
         const mappedProject = {
-            ...project,
-            refId: projectRefId,
-            infRefId: infRefId,
+            ...lastInf.data,
+            refId: project.refId,
+            infRefId: lastInf.refId,
         };
 
-        mappedProject.projectProposalStage = projectHistory?.length
-            ? projectHistory[projectHistory.length - 1].labelValue
-            : ProjectProposalStage.PENDING;
+        mappedProject.projectProposalStage = project.projectProposalStage;
 
-        mappedProject.company = createdBy?.organization
+        mappedProject.company = project?.organization
             ? {
-                  companyId: createdBy.organization.id,
-                  name: createdBy.organization?.name,
-                  companyRole: createdBy.organization?.role,
-                  logo: createdBy.organization?.logo,
-                  email: createdBy.organization?.email,
+                  companyId: project?.organization?.id,
+                  name: project?.organization?.name,
+                  companyRole: project?.organization?.organizationType?.name,
+                  logo: project?.organization?.logo,
+                  email: project?.organization?.email,
               }
             : null;
 
@@ -330,14 +312,13 @@ export class ProjectService {
     }
 
     async getProjectById(id: string, requestUser: JWTPayload) {
-        const infData = await this.guardianService.getGridDataUsingRefId(
-            GridTypeEnum.INF_GRID,
-            id,
-            requestUser.email,
-        );
+        const project = await this.projectRepository.findOne({
+            where: { refId: id },
+            relations: { organization: true },
+        });
 
         const updatedProject = {
-            ...(await this.mapNewQueryToOldQuery(infData, requestUser.email)),
+            ...(await this.mapNewQueryToOldQuery(project)),
             documents: [],
         };
         return updatedProject;
@@ -396,7 +377,6 @@ export class ProjectService {
 
     private async notifyProjectStageChange(
         createdBy: any,
-        requestUser: JWTPayload,
         template: MailTemplateEnum,
         header: string,
         refId: string,
@@ -417,19 +397,6 @@ export class ProjectService {
         await this.mailService.sendMail(mailDTO);
     }
 
-    private async logProjectStage(
-        refId: string,
-        type: ProjectAuditLogType,
-        userId: number,
-    ): Promise<void> {
-        const log = new AuditEntity();
-        log.refId = refId;
-        log.logType = type;
-        log.userId = userId;
-
-        await this.auditService.save(log);
-    }
-
     async approveINF(
         id: string,
         requestUser: JWTPayload,
@@ -440,63 +407,10 @@ export class ProjectService {
         );
         this.validateUserAuthorization(requestUser);
 
-        const infData = await this.guardianService.getGridDataUsingRefId(
-            GridTypeEnum.INF_GRID,
+        await this.documentService.approve(
             id,
-            requestUser.email,
-        );
-        const infDoc = await this.guardianService.getGridDocumentUsingRefId(
-            GridTypeEnum.INF_GRID,
-            id,
-            requestUser.email,
-        );
-
-        const updatedProject = {
-            ...(await this.mapNewQueryToOldQuery(infData, requestUser.email)),
-            documents: [],
-        };
-
-        this.validateProject(updatedProject);
-
-        await this.guardianService.buttonActionRequest(
-            ButtonNameEnum.INF_APPROVE_REJECT,
-            ButtonActionEnum.APPROVE,
-            infDoc,
-            requestUser.email,
-        );
-
-        const project = await this.guardianService.getGridDocumentUsingRefId(
-            GridTypeEnum.PROJECT_GRID,
-            infData?.project?.refId,
-            requestUser.email,
-        );
-
-        await this.guardianService.buttonActionRequest(
-            ButtonNameEnum.PROJECT_APPROVE_REJECT,
-            ButtonActionEnum.APPROVE,
-            project,
-            requestUser.email,
-        );
-
-        const createdBy = infData?.project?.createdBy;
-
-        await this.objectionLetterGenerateService.generateReport(
-            createdBy?.organization?.name,
-            infData?.name,
-            id,
-        );
-
-        await this.notifyProjectStageChange(
-            createdBy,
+            { remarks: null, action: DocumentStateEnum.DNA_APPROVED },
             requestUser,
-            MailTemplateEnum.INF_APPROVE,
-            INF_APPROVE_HEADER,
-            infData?.project?.refId,
-        );
-        await this.logProjectStage(
-            id,
-            ProjectAuditLogType.INF_APPROVED,
-            requestUser.userId,
         );
 
         return new DataResponseDto(
@@ -515,59 +429,10 @@ export class ProjectService {
             this.loggerContext,
         );
         this.validateUserAuthorization(requestUser);
-
-        const infData = await this.guardianService.getGridDataUsingRefId(
-            GridTypeEnum.INF_GRID,
+        await this.documentService.reject(
             id,
-            requestUser.email,
-        );
-        const infDoc = await this.guardianService.getGridDocumentUsingRefId(
-            GridTypeEnum.INF_GRID,
-            id,
-            requestUser.email,
-        );
-
-        const updatedProject = {
-            ...(await this.mapNewQueryToOldQuery(infData, requestUser.email)),
-            documents: [],
-        };
-
-        this.validateProject(updatedProject);
-
-        await this.guardianService.buttonActionRequest(
-            ButtonNameEnum.INF_APPROVE_REJECT,
-            ButtonActionEnum.REJECT,
-            infDoc,
-            requestUser.email,
-        );
-
-        const project = await this.guardianService.getGridDocumentUsingRefId(
-            GridTypeEnum.PROJECT_GRID,
-            infData?.project?.refId,
-            requestUser.email,
-        );
-
-        await this.guardianService.buttonActionRequest(
-            ButtonNameEnum.PROJECT_APPROVE_REJECT,
-            ButtonActionEnum.REJECT,
-            project,
-            requestUser.email,
-        );
-
-        const createdBy = infData?.project?.createdBy;
-
-        await this.notifyProjectStageChange(
-            createdBy,
+            { remarks: null, action: DocumentStateEnum.DNA_REJECTED },
             requestUser,
-            MailTemplateEnum.INF_REJECT,
-            INF_REJECT_HEADER,
-            infData?.project?.refId,
-        );
-
-        await this.logProjectStage(
-            id,
-            ProjectAuditLogType.INF_REJECTED,
-            requestUser.userId,
         );
 
         return new DataResponseDto(
