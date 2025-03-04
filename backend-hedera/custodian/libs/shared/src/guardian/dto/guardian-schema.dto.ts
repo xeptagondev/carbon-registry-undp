@@ -46,7 +46,7 @@ export class UserSchemaDtos {
     name: string;
     role: string;
     email: string;
-    phoneNumber: string;
+    phoneNumber?: string;
     createdTime: number;
     updatedTime?: number;
     refId: string;
