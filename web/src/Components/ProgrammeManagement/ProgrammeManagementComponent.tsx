@@ -13,6 +13,7 @@ import {
   Typography,
   Tag,
   Tooltip,
+  Select,
 } from 'antd';
 import { useEffect, useState } from 'react';
 import './ProgrammeManagementComponent.scss';
@@ -65,7 +66,7 @@ export const ProgrammeManagementComponent = (props: any) => {
   const [pageSize, setPageSize] = useState<number>(10);
   const [search, setSearch] = useState<string>();
   const [searchText, setSearchText] = useState<string>();
-  const [statusFilter, setStatusFilter] = useState<any>();
+  // const [statusFilter, setStatusFilter] = useState<any>();
   const [dataFilter, setDataFilter] = useState<any>();
   const [sortOrder, setSortOrder] = useState<string>();
   const [sortField, setSortField] = useState<string>();
@@ -75,8 +76,29 @@ export const ProgrammeManagementComponent = (props: any) => {
   const ability = useAbilityContext();
   const [dataQuery, setDataQuery] = useState<any>();
 
+  const [applicationStageFilter, setApplicationStageFilter] = useState<{
+    key: string;
+    operation: string;
+    value: string;
+  }>();
+
+  const onSelectedApplicationStageChange = (value: string) => {
+    if (value) {
+      setApplicationStageFilter({
+        key: 'projectProposalStage',
+        operation: '=',
+        value: value,
+      });
+    }
+  };
+
   const statusOptions = Object.keys(ProgrammeStatus).map((k, index) => ({
     label: t(`projectList:${Object.values(ProgrammeStatus)[index]}`),
+    value: k,
+  }));
+
+  const applicationStageOptions = Object.keys(ProjectProposalStage).map((k, index) => ({
+    label: t(`projectList:${Object.values(ProjectProposalStage)[index]}`),
     value: k,
   }));
 
@@ -85,36 +107,36 @@ export const ProgrammeManagementComponent = (props: any) => {
   const [indeterminate, setIndeterminate] = useState(false);
   const [checkAll, setCheckAll] = useState(true);
 
-  const onStatusQuery = async (checkedValues: CheckboxValueType[]) => {
-    if (checkedValues !== selectedStatus) {
-      setSelectedStatus(checkedValues);
+  // const onStatusQuery = async (checkedValues: CheckboxValueType[]) => {
+  //   if (checkedValues !== selectedStatus) {
+  //     setSelectedStatus(checkedValues);
 
-      setIndeterminate(
-        !!checkedValues.length && checkedValues.length < Object.keys(statusOptions).length
-      );
-      setCheckAll(checkedValues.length === Object.keys(statusOptions).length);
-    }
+  //     setIndeterminate(
+  //       !!checkedValues.length && checkedValues.length < Object.keys(statusOptions).length
+  //     );
+  //     setCheckAll(checkedValues.length === Object.keys(statusOptions).length);
+  //   }
 
-    if (checkedValues.length === 0) {
-      setTableData([]);
-      setTotalProgramme(0);
-      return;
-    }
+  //   if (checkedValues.length === 0) {
+  //     setTableData([]);
+  //     setTotalProgramme(0);
+  //     return;
+  //   }
 
-    setStatusFilter({
-      key: 'projectStatus',
-      operation: 'in',
-      value: checkedValues,
-    });
-  };
+  //   setStatusFilter({
+  //     key: 'projectStatus',
+  //     operation: 'in',
+  //     value: checkedValues,
+  //   });
+  // };
 
-  const onCheckAllChange = (e: CheckboxChangeEvent) => {
-    const nw = e.target.checked ? statusOptions.map((el) => el.value) : [];
-    setSelectedStatus(nw);
-    setIndeterminate(false);
-    setCheckAll(e.target.checked);
-    onStatusQuery(nw);
-  };
+  // const onCheckAllChange = (e: CheckboxChangeEvent) => {
+  //   const nw = e.target.checked ? statusOptions.map((el) => el.value) : [];
+  //   setSelectedStatus(nw);
+  //   setIndeterminate(false);
+  //   setCheckAll(e.target.checked);
+  //   onStatusQuery(nw);
+  // };
 
   const actionMenu = (record: any) => {
     return (
@@ -178,26 +200,36 @@ export const ProgrammeManagementComponent = (props: any) => {
         return <div className="org-list">{elements}</div>;
       },
     },
+    // {
+    //   title: t('projectList:projectCategory'),
+    //   dataIndex: 'projectCategory',
+    //   sorter: true,
+    //   key: ProgrammeManagementSlColumns.projectCategory,
+    //   align: 'center' as const,
+    //   render: (item: any) => {
+    //     return <span>{getProjectCategory[item]}</span>;
+    //   },
+    // },
     {
-      title: t('projectList:projectCategory'),
-      dataIndex: 'projectCategory',
+      title: t('projectList:sector'),
+      dataIndex: 'projectList',
+      key: ProgrammeManagementSlColumns.sector,
       sorter: true,
-      key: ProgrammeManagementSlColumns.projectCategory,
       align: 'center' as const,
       render: (item: any) => {
-        return <span>{getProjectCategory[item]}</span>;
+        return <>0{/* {t(`projectList:${item}`)} */}</>;
       },
     },
-    {
-      title: t('projectList:status'),
-      dataIndex: 'projectStatus',
-      key: ProgrammeManagementSlColumns.projectStatus,
-      sorter: true,
-      align: 'center' as const,
-      render: (item: any) => {
-        return <span>{t(`projectList:${item}`)}</span>;
-      },
-    },
+    // {
+    //   title: t('projectList:status'),
+    //   dataIndex: 'projectStatus',
+    //   key: ProgrammeManagementSlColumns.projectStatus,
+    //   sorter: true,
+    //   align: 'center' as const,
+    //   render: (item: any) => {
+    //     return <span>{t(`projectList:${item}`)}</span>;
+    //   },
+    // },
     {
       title: t('projectList:proposalStage'),
       dataIndex: 'projectProposalStage',
@@ -212,20 +244,20 @@ export const ProgrammeManagementComponent = (props: any) => {
         );
       },
     },
-    {
-      title: t('projectList:purposeOfCreditDevelopment'),
-      dataIndex: 'purposeOfCreditDevelopment',
-      key: ProgrammeManagementSlColumns.purposeOfCreditDevelopment,
-      sorter: true,
-      align: 'center' as const,
-      render: (item: any) => {
-        return (
-          <Tag color={getCreditTypeTagType(item as CreditTypeSl)}>
-            {addSpaces(getCreditTypeName(item as string))}
-          </Tag>
-        );
-      },
-    },
+    // {
+    //   title: t('projectList:purposeOfCreditDevelopment'),
+    //   dataIndex: 'purposeOfCreditDevelopment',
+    //   key: ProgrammeManagementSlColumns.purposeOfCreditDevelopment,
+    //   sorter: true,
+    //   align: 'center' as const,
+    //   render: (item: any) => {
+    //     return (
+    //       <Tag color={getCreditTypeTagType(item as CreditTypeSl)}>
+    //         {addSpaces(getCreditTypeName(item as string))}
+    //       </Tag>
+    //     );
+    //   },
+    // },
     {
       title: t('projectList:balance'),
       dataIndex: 'creditBalance',
@@ -247,30 +279,36 @@ export const ProgrammeManagementComponent = (props: any) => {
       },
     },
     {
-      title: t('projectList:regitrationSerialNo'),
-      dataIndex: 'serialNo',
-      key: ProgrammeManagementSlColumns.serialNo,
-      align: 'left' as const,
+      title: t('projectList:projectId'),
+      dataIndex: 'projectId',
+      key: ProgrammeManagementSlColumns.projectId,
+      align: 'center' as const,
     },
-    {
-      title: t(''),
-      width: 6,
-      align: 'right' as const,
-      key: ProgrammeManagementSlColumns.action,
-      render: (_: any, record: any) => {
-        const menu = actionMenu(record);
-        return (
-          menu && (
-            <Popover placement="bottomRight" content={menu} trigger="click">
-              <EllipsisOutlined
-                rotate={90}
-                style={{ fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
-              />
-            </Popover>
-          )
-        );
-      },
-    },
+    // {
+    //   title: t('projectList:regitrationSerialNo'),
+    //   dataIndex: 'serialNo',
+    //   key: ProgrammeManagementSlColumns.serialNo,
+    //   align: 'left' as const,
+    // },
+    // {
+    //   title: t(''),
+    //   width: 6,
+    //   align: 'right' as const,
+    //   key: ProgrammeManagementSlColumns.action,
+    //   render: (_: any, record: any) => {
+    //     const menu = actionMenu(record);
+    //     return (
+    //       menu && (
+    //         <Popover placement="bottomRight" content={menu} trigger="click">
+    //           <EllipsisOutlined
+    //             rotate={90}
+    //             style={{ fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
+    //           />
+    //         </Popover>
+    //       )
+    //     );
+    //   },
+    // },
   ].filter((column) => visibleColumns.includes(column.key));
 
   const getAllProgramme = async () => {
@@ -282,9 +320,14 @@ export const ProgrammeManagementComponent = (props: any) => {
     if (dataFilter) {
       filter.push(dataFilter);
     }
-    if (statusFilter) {
-      filter.push(statusFilter);
+    // if (statusFilter) {
+    //   filter.push(statusFilter);
+    // }
+
+    if (applicationStageFilter) {
+      filter.push(applicationStageFilter);
     }
+
     if (search && search !== '') {
       filter.push({
         key: 'title',
@@ -408,7 +451,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     } else {
       getAllProgramme();
     }
-  }, [statusFilter, dataFilter]);
+  }, [dataFilter, applicationStageFilter]);
 
   useEffect(() => {
     getAllProgramme();
@@ -461,7 +504,14 @@ export const ProgrammeManagementComponent = (props: any) => {
         <Row className="table-actions-section">
           <Col lg={{ span: 15 }} md={{ span: 14 }}>
             <div className="action-bar">
-              <Checkbox
+              <Select
+                className="application-stage-selector"
+                options={applicationStageOptions}
+                onChange={onSelectedApplicationStageChange}
+                placeholder={t('projectList:proposalStage')}
+                allowClear
+              />
+              {/* <Checkbox
                 className="all-check"
                 disabled={loading}
                 indeterminate={indeterminate}
@@ -477,7 +527,7 @@ export const ProgrammeManagementComponent = (props: any) => {
                 defaultValue={statusOptions.map((e) => e.value)}
                 value={selectedStatus}
                 onChange={onStatusQuery}
-              />
+              /> */}
             </div>
           </Col>
           <Col lg={{ span: 9 }} md={{ span: 10 }}>
