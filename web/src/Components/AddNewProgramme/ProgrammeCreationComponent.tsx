@@ -982,7 +982,9 @@ export const ProgrammeCreationComponent = (props: any) => {
 
                                       // eslint-disable-next-line no-restricted-globals
                                       if (isNaN(value)) {
-                                        return Promise.reject(new Error(t('addProgramme:shouldBeAnNumber')));
+                                        return Promise.reject(
+                                          new Error(t('addProgramme:shouldBeAnNumber'))
+                                        );
                                       }
 
                                       return Promise.resolve();
