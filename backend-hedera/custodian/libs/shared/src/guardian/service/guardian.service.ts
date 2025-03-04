@@ -367,17 +367,30 @@ export class GuardianService {
         // );
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
 
-        const gridData = await this.fetchGridData(gridApis, policyId, token);
+        try {
+            const gridData = await this.fetchGridData(
+                gridApis,
+                policyId,
+                token,
+            );
 
-        const fullVCDocument = gridData.find(
-            (response: any) =>
-                response?.document?.credentialSubject[0]?.refId === refId,
-        );
-        if (!fullVCDocument) {
-            throw new Error('No document found for the given refId');
+            const fullVCDocument = gridData.find(
+                (response: any) =>
+                    response?.document?.credentialSubject[0]?.refId === refId,
+            );
+            if (!fullVCDocument) {
+                throw new Error('No document found for the given refId');
+            }
+
+            return fullVCDocument.document?.credentialSubject[0];
+        } finally {
+            await this.applyFilters(
+                policyId,
+                token,
+                gridApis.FILTER_REF_ID,
+                null,
+            );
         }
-
-        return fullVCDocument.document?.credentialSubject[0];
     }
 
     public async getGridDataUsingProjectId(
@@ -401,14 +414,26 @@ export class GuardianService {
             gridApis.FILTER_PROJECT_ID,
             projectId,
         );
+        try {
+            const gridData = await this.fetchGridData(
+                gridApis,
+                policyId,
+                token,
+            );
 
-        const gridData = await this.fetchGridData(gridApis, policyId, token);
+            const fullVCDocuments = gridData.map(
+                (response: any) => response?.document?.credentialSubject[0],
+            );
 
-        const fullVCDocuments = gridData.map(
-            (response: any) => response?.document?.credentialSubject[0],
-        );
-
-        return fullVCDocuments;
+            return fullVCDocuments;
+        } finally {
+            await this.applyFilters(
+                policyId,
+                token,
+                gridApis.FILTER_PROJECT_ID,
+                null,
+            );
+        }
     }
 
     public async getGridDataUsingActivityId(
@@ -434,16 +459,29 @@ export class GuardianService {
             activityId,
         );
 
-        const gridData = await this.fetchGridData(gridApis, policyId, token);
+        try {
+            const gridData = await this.fetchGridData(
+                gridApis,
+                policyId,
+                token,
+            );
 
-        const fullVCDocuments = gridData.map(
-            (response: any) => response?.document?.credentialSubject[0],
-        );
-        // if (!fullVCDocuments.length) {
-        //     throw new Error('No document found for the given project ID');
-        // }
+            const fullVCDocuments = gridData.map(
+                (response: any) => response?.document?.credentialSubject[0],
+            );
+            // if (!fullVCDocuments.length) {
+            //     throw new Error('No document found for the given project ID');
+            // }
 
-        return fullVCDocuments;
+            return fullVCDocuments;
+        } finally {
+            await this.applyFilters(
+                policyId,
+                token,
+                gridApis.FILTER_ACTIVITY_ID,
+                null,
+            );
+        }
     }
 
     public async getGridDocumentUsingRefId(
@@ -466,18 +504,30 @@ export class GuardianService {
         // console.log('---------------One----------', gridDataOne);
 
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
+        try {
+            const gridData = await this.fetchGridData(
+                gridApis,
+                policyId,
+                token,
+            );
+            // console.log('---------------Two----------', gridData);
+            const fullVCDocument = gridData.find(
+                (response: any) =>
+                    response?.document?.credentialSubject[0]?.refId === refId,
+            );
+            if (!fullVCDocument) {
+                throw new Error('No document found for the given refId');
+            }
 
-        const gridData = await this.fetchGridData(gridApis, policyId, token);
-        // console.log('---------------Two----------', gridData);
-        const fullVCDocument = gridData.find(
-            (response: any) =>
-                response?.document?.credentialSubject[0]?.refId === refId,
-        );
-        if (!fullVCDocument) {
-            throw new Error('No document found for the given refId');
+            return fullVCDocument;
+        } finally {
+            await this.applyFilters(
+                policyId,
+                token,
+                gridApis.FILTER_REF_ID,
+                null,
+            );
         }
-
-        return fullVCDocument;
     }
 
     public async getGridHistoryByRefId(
@@ -496,18 +546,30 @@ export class GuardianService {
         //     'REVOKED',
         // );
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
+        try {
+            const gridData = await this.fetchGridData(
+                gridApis,
+                policyId,
+                token,
+            );
 
-        const gridData = await this.fetchGridData(gridApis, policyId, token);
+            const fullVCDocument = gridData.find(
+                (response: any) =>
+                    response?.document?.credentialSubject[0]?.refId === refId,
+            );
+            if (!fullVCDocument) {
+                throw new Error('No document found for the given refId');
+            }
 
-        const fullVCDocument = gridData.find(
-            (response: any) =>
-                response?.document?.credentialSubject[0]?.refId === refId,
-        );
-        if (!fullVCDocument) {
-            throw new Error('No document found for the given refId');
+            return fullVCDocument?.history;
+        } finally {
+            await this.applyFilters(
+                policyId,
+                token,
+                gridApis.FILTER_REF_ID,
+                null,
+            );
         }
-
-        return fullVCDocument?.history;
     }
     public async createEntity(
         email: string,
