@@ -47,6 +47,20 @@
     display: flex;
     margin-bottom: 2rem;
   }
+
+  .project-scale-radio-btns {
+    width: 40%;
+  }
+
+  .crediting-period-duration {
+    display: flex;
+    gap: 12px;
+
+  }
+
+  .crediting-period-duration-to {
+    margin-top: 4px;
+  }
 }
 
 .val-report-step-form-container {
@@ -57,6 +71,14 @@
     margin-top: 30px;
     color: rgba(58, 53, 65, 0.5);
     font-weight: 400;
+  }
+
+  .form-section-heading {
+    margin-bottom: 20px;
+    margin-top: 30px;
+    color: #3A3541CC;
+    font-weight: 600;
+    font-size: 16px;
   }
 
   .list-item-title {
