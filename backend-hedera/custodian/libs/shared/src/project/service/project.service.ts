@@ -293,6 +293,7 @@ export class ProjectService {
         };
 
         mappedProject.projectProposalStage = project.projectProposalStage;
+        mappedProject.title = project.title;
 
         mappedProject.company = project?.organization
             ? {

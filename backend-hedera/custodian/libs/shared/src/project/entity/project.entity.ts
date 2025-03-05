@@ -85,4 +85,41 @@ export class ProjectEntity {
         { nullable: true },
     )
     documents?: DocumentEntity[];
+
+    @Column({
+        type: 'decimal',
+        precision: 10,
+        nullable: true,
+    })
+    creditEst?: number;
+
+    @Column({
+        type: 'decimal',
+        precision: 10,
+        nullable: true,
+    })
+    creditBalance?: number;
+
+    @Column({
+        type: 'decimal',
+        precision: 10,
+        nullable: true,
+    })
+    creditChange?: number;
+
+    @Column({
+        type: 'decimal',
+        precision: 10,
+        nullable: true,
+    })
+    creditIssued?: number;
+
+    @Column('real', { nullable: true })
+    creditRetired?: number;
+
+    @Column('real', { nullable: true })
+    creditFrozen?: number;
+
+    @Column('real', { nullable: true })
+    creditTransferred?: number;
 }
