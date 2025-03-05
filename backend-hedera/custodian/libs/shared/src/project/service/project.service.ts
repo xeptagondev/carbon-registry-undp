@@ -287,9 +287,9 @@ export class ProjectService {
             project.id,
         );
         const mappedProject = {
-            ...lastInf.data,
+            ...lastInf?.data,
             refId: project.refId,
-            infRefId: lastInf.refId,
+            infRefId: lastInf?.refId,
         };
 
         mappedProject.projectProposalStage = project.projectProposalStage;
@@ -334,67 +334,6 @@ export class ProjectService {
                 HttpStatus.UNAUTHORIZED,
             );
         }
-    }
-
-    private async getProjectWithRelations(id: number): Promise<ProjectEntity> {
-        const project = await this.projectRepository.findOne({
-            where: { id },
-            relations: { organization: true, createdBy: true },
-        });
-
-        if (!project) {
-            throw new HttpException('Project not found', HttpStatus.NOT_FOUND);
-        }
-
-        return project;
-    }
-
-    private validateProject(project: any): void {
-        if (!project.company) {
-            throw new HttpException(
-                'No associated organization found for company',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-
-        if (project.projectProposalStage !== ProjectProposalStage.PENDING) {
-            throw new HttpException(
-                'Project not in a suitable stage to proceed',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-    }
-
-    private async updateProjectStage(
-        id: number,
-        stage: ProjectProposalStage,
-    ): Promise<any> {
-        return this.projectRepository.update(
-            { id },
-            { projectProposalStage: stage },
-        );
-    }
-
-    private async notifyProjectStageChange(
-        createdBy: any,
-        template: MailTemplateEnum,
-        header: string,
-        refId: string,
-    ): Promise<void> {
-        const countryName = this.configService.get('country');
-        const mailDTO: MailTemplateDTO = {
-            subject: header,
-            template: template,
-            to: createdBy.email,
-            context: {
-                userName: createdBy.name,
-                organizationName: createdBy?.organization?.name,
-                countryName: countryName,
-                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
-            },
-        };
-
-        await this.mailService.sendMail(mailDTO);
     }
 
     async approveINF(
