@@ -211,5 +211,7 @@
   "partiesInvolved": "Parties Involved",
   "projectParticipant": "Project Participants",
   "addProjectParticipant": "Add Project Participant",
-  "descriptionOfMeasurementMethods": "Description of Measurement Methods and Procedures to be Applied"
+  "descriptionOfMeasurementMethods": "Description of Measurement Methods and Procedures to be Applied",
+  "confirmModalMessage": "Are you sure you want to submit ?",
+  "confirmModalSubMessage": "You can't undo this action"
 }
