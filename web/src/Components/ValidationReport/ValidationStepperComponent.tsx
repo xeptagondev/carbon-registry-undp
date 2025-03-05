@@ -10,9 +10,8 @@ import moment from 'moment';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import DataValidationProcess from './DataValidationProcess';
 import ValidationReportIntroduction from './ValidationReportIntroduction';
-import ProjectDetails from './ProjectDetails';
-import Reference from './Reference';
-import ValicationReportGHGDescriptionOfProjectActivity from './ValicationReportGHGDescriptionOfProjectActivity';
+// import Reference from './Reference';
+// import ValicationReportGHGDescriptionOfProjectActivity from './ValicationReportGHGDescriptionOfProjectActivity';
 import ValidationMethodology from './ValidationMethodology';
 import ValidationOpinion from './ValidationOpinion';
 import ValidationReportAppendix from './ValidationReportAppendix';
@@ -21,6 +20,10 @@ import { extractFilePropertiesFromLink } from '../../Utils/utilityHelper';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
+import BasicInformation from './BasicInformation';
+import ExecutiveSummary from './ExecutiveSummary';
+import InternalQualityControl from './InternalQualityControl';
+import GHGProjectDescription from './GHGProjectDescription';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -35,7 +38,7 @@ export enum ProcessSteps {
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(1);
   const navigate = useNavigate();
   const { id: programId } = useParams();
   const { get, post } = useConnection();
@@ -563,7 +566,7 @@ const StepperComponent = (props: any) => {
         </div>
       ),
       description: (
-        <ProjectDetails
+        <BasicInformation
           next={next}
           prev={prev}
           form={form1}
@@ -579,12 +582,12 @@ const StepperComponent = (props: any) => {
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">01</div>
+          {/* <div className="step-count">01</div> */}
           <div className="title">{t('validationReport:form02Title')}</div>
         </div>
       ),
       description: (
-        <ValidationReportIntroduction
+        <GHGProjectDescription
           next={next}
           prev={prev}
           form={form2}
@@ -600,12 +603,12 @@ const StepperComponent = (props: any) => {
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">02</div>
+          <div className="step-count">01</div>
           <div className="title">{t('validationReport:form03Title')}</div>
         </div>
       ),
       description: (
-        <ValicationReportGHGDescriptionOfProjectActivity
+        <ExecutiveSummary
           next={next}
           prev={prev}
           form={form3}
@@ -620,7 +623,7 @@ const StepperComponent = (props: any) => {
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">03</div>
+          <div className="step-count">02</div>
           <div className="title">{t('validationReport:form04Title')}</div>
         </div>
       ),
@@ -640,7 +643,7 @@ const StepperComponent = (props: any) => {
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">04</div>
+          <div className="step-count">03</div>
           <div className="title">{t('validationReport:form05Title')}</div>
         </div>
       ),
@@ -661,32 +664,25 @@ const StepperComponent = (props: any) => {
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">05</div>
+          <div className="step-count">04</div>
           <div className="title">{t('validationReport:form06Title')}</div>
         </div>
       ),
       description: (
-        <ValidationOpinion
-          next={next}
-          prev={prev}
-          form={form6}
-          current={current}
-          t={t}
-          handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_OPINION]}
-          formMode={mode}
-        />
+        <p>
+          <></>Internal Quality Control
+        </p>
       ),
     },
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">06</div>
+          <div className="step-count">05</div>
           <div className="title">{t('validationReport:form07Title')}</div>
         </div>
       ),
       description: (
-        <Reference
+        <InternalQualityControl
           next={next}
           prev={prev}
           form={form7}
@@ -701,8 +697,38 @@ const StepperComponent = (props: any) => {
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">07</div>
+          <div className="step-count">06</div>
           <div className="title">{t('validationReport:form08Title')}</div>
+        </div>
+      ),
+      description: (
+        <ValidationOpinion
+          next={next}
+          prev={prev}
+          form={form6}
+          current={current}
+          t={t}
+          handleValuesUpdate={handleValuesUpdate}
+          existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_OPINION]}
+          formMode={mode}
+        />
+        // <ValidationReportAppendix
+        //   next={next}
+        //   prev={prev}
+        //   form={form8}
+        //   current={current}
+        //   t={t}
+        //   handleValuesUpdate={handleValuesUpdate}
+        //   existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
+        //   formMode={mode}
+        // />
+      ),
+    },
+    {
+      title: (
+        <div className="stepper-title-container">
+          <div className="step-count">07</div>
+          <div className="title">{t('validationReport:form09Title')}</div>
         </div>
       ),
       description: (

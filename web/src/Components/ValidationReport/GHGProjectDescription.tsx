@@ -2,11 +2,18 @@ import { ValidationStepsProps } from './StepProps';
 import { Row, Button, Form, Col } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 
-const ValidationConclusion = (props: ValidationStepsProps) => {
+const GHGProjectDescription = (props: ValidationStepsProps) => {
   const { prev, next, form, current, t, countries, handleValuesUpdate } = props;
+
+  const onFinish = (values: any) => {
+    const body = {
+      calculationOfBaselineEmissionFactor: values?.calculationOfBaselineEmissionFactor,
+    };
+    handleValuesUpdate({ ghgProjectDescription: body });
+  };
   return (
     <>
-      {current === 2 && (
+      {current === 1 && (
         <div>
           <div className="val-report-step-form-container">
             <Form
@@ -17,7 +24,7 @@ const ValidationConclusion = (props: ValidationStepsProps) => {
               requiredMark={true}
               form={form}
               onFinish={(values: any) => {
-                // onFinish(values);
+                onFinish(values);
                 if (next) {
                   next();
                 }
@@ -25,19 +32,34 @@ const ValidationConclusion = (props: ValidationStepsProps) => {
             >
               <Form.Item
                 className="full-width-form-item"
-                label={`2.1 ${t('validationReport:methodAndCriteria')}`}
-                name="methodAndCriteria"
+                label={`${t('validationReport:calculationOfBaselineEmissionFactor')}`}
+                name="calculationOfBaselineEmissionFactor"
                 rules={[
                   {
                     required: true,
-                    message: `${t('validationReport:methodAndCriteria')} ${t('isRequired')}`,
+                    message: `${t('validationReport:calculationOfBaselineEmissionFactor')} ${t(
+                      'isRequired'
+                    )}`,
                   },
                 ]}
               >
-                <TextArea
-                  rows={4}
-                  placeholder="Describe the method and criteria, including the sampling plan, used for undertaking the  validation. Where sampling plans are used as a part of the validation, include a  description of the sampling approach, important assumptions and justification of the  chosen approach."
-                />
+                <TextArea rows={4} />
+              </Form.Item>
+
+              {/* need to add grid emmission factor */}
+
+              <Form.Item
+                className="full-width-form-item"
+                label={`${t('validationReport:plantFactor')}`}
+                name="plantFactor"
+                rules={[
+                  {
+                    required: true,
+                    message: `${t('validationReport:plantFactor')} ${t('isRequired')}`,
+                  },
+                ]}
+              >
+                <TextArea rows={4} />
               </Form.Item>
 
               <Row gutter={60}>
@@ -156,4 +178,4 @@ const ValidationConclusion = (props: ValidationStepsProps) => {
   );
 };
 
-export default ValidationConclusion;
+export default GHGProjectDescription;
