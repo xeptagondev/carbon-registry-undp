@@ -509,7 +509,7 @@ export const AddNewCompanyComponent = (props: any) => {
         requestData.company.name = 'Ministry of ' + requestData.company.ministry;
       }
       if (isGuest) {
-        const response = await post('user/register', requestData);
+        const response = await post(API_PATHS.REGISTER_USER, requestData);
         if (response.status === 200 || response.status === 201) {
           message.open({
             type: 'success',
@@ -629,7 +629,7 @@ export const AddNewCompanyComponent = (props: any) => {
         }
       }
 
-      const response = await post('organisation/update', values);
+      const response = await post(API_PATHS.UPDATE_ORGANIZATION, values);
       if (response.status === 200 || response.status === 201) {
         setUserInfo({
           companyLogo: response.data.logo,
