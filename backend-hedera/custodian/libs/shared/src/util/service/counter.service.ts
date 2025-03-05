@@ -40,17 +40,18 @@ export class CounterService {
             .returning('counter')
             .execute()
             .catch(() => {});
+
         if (resp && resp['raw'] && resp['raw'].length > 0) {
             return this.padLeft(resp['raw'][0]['counter'], length);
         } else {
             return await this.counterRepo
-                .findOneBy({
-                    id: type,
-                })
+                .findOneBy({ id: type })
                 .then(async (o) => {
                     if (o) {
-                        throw Error('Internal error on unique id generation');
+                        // Return the current counter value if the record exists
+                        return this.padLeft(o.counter, length);
                     } else {
+                        // Create a new counter record if it doesn't exist
                         await this.counterRepo.save({ id: type, counter: 1 });
                         return this.padLeft(1, length);
                     }

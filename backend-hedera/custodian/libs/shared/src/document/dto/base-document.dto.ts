@@ -30,12 +30,9 @@ export class BaseDocumentDTO {
     })
     documentType: DocumentEnum;
 
-    @ApiProperty({
-        type: Number,
-    })
     @IsOptional()
-    @IsNumber()
-    activityId?: number;
+    @IsString()
+    activityId?: string;
 
     @ApiProperty({
         type: Object,

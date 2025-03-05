@@ -9,7 +9,7 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { UtilService } from '@app/shared/util/service/util.service';
 import { MailService } from '@app/shared/mail/service/mail.service';
-import { VerificationRequestStatusEnum } from '../enum/verification.request.status.enum';
+import { ActivityStateEnum } from '../../activity/enum/activity.state.enum';
 import { DocumentEnum } from '@app/shared/document/enum/document.enum';
 import { UserService } from '@app/shared/users/service/user.service';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
@@ -46,6 +46,13 @@ import {
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
 import { AuditService } from '@app/shared/audit/service/audit.service';
+import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
+import { DocumentService } from '@app/shared/document/service/document.service';
+import { DocumentEntity } from '@app/shared/document/entity/document.entity';
+import { DocumentStateEnum } from '@app/shared/document/enum/document-state.enum';
 
 @Injectable()
 export class VerificationService {
@@ -55,6 +62,7 @@ export class VerificationService {
         private readonly auditService: AuditService,
         private readonly helperService: HelperService,
         private readonly dateUtilService: DateUtilService,
+        private readonly documentService: DocumentService,
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
         private readonly userService: UserService,
@@ -63,9 +71,14 @@ export class VerificationService {
         private readonly counterService: CounterService,
         private readonly fileHelperService: FileHelperService,
         private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
+        @InjectRepository(ProjectEntity)
+        private readonly projectRepository: Repository<ProjectEntity>,
+        @InjectRepository(ActivityEntity)
+        private readonly activityRepository: Repository<ActivityEntity>,
+        @InjectRepository(DocumentEntity)
+        private readonly documentRepository: Repository<DocumentEntity>,
     ) {}
 
-    //MARK: create Monitoring Report
     async createMonitoringReport(
         monitoringReportDto: MonitoringReportDto,
         requestUser: JWTPayload,
@@ -76,7 +89,6 @@ export class VerificationService {
             this.loggerContext,
         );
 
-        // Validate user role
         if (
             requestUser.organizationRole !==
             OrganizationTypeEnum.PROJECT_DEVELOPER
@@ -92,7 +104,6 @@ export class VerificationService {
 
         const docContent = JSON.parse(monitoringReportDto.content);
 
-        // Handle optional documents in annexures
         if (
             docContent?.annexures?.optionalDocuments &&
             docContent.annexures.optionalDocuments.length > 0
@@ -105,7 +116,6 @@ export class VerificationService {
             docContent.annexures.optionalDocuments = docUrls;
         }
 
-        // Handle optional documents in project activity locations
         if (
             docContent?.projectActivity?.projectActivityLocationsList &&
             docContent.projectActivity.projectActivityLocationsList.length > 0
@@ -125,7 +135,6 @@ export class VerificationService {
             }
         }
 
-        // Handle optional documents in quantifications
         if (
             docContent?.quantifications?.optionalDocuments &&
             docContent.quantifications.optionalDocuments.length > 0
@@ -138,101 +147,52 @@ export class VerificationService {
             docContent.quantifications.optionalDocuments = docUrls;
         }
 
-        // Retrieve related data from Guardian service
-        const project: ProjectSchema =
-            await this.guardianService.getGridDataUsingRefId(
-                GridTypeEnum.PROJECT_GRID,
-                monitoringReportDto.programmeId,
-                requestUser.email,
-            );
+        const project: ProjectEntity = await this.projectRepository.findOne({
+            where: { refId: monitoringReportDto.programmeId },
+        });
 
-        const activities: ActivitySchema[] =
-            await this.guardianService.getGridDataUsingProjectId(
-                GridTypeEnum.ACTIVITY_GRID,
-                monitoringReportDto.programmeId,
-                requestUser.email,
-            );
+        let lastActivity = await this.activityRepository.findOne({
+            where: {
+                project: {
+                    refId: monitoringReportDto.programmeId,
+                },
+            },
+            order: {
+                version: 'DESC',
+            },
+        });
 
-        const createdBy: UserSchema =
-            await this.guardianService.getGridDataUsingRefId(
-                GridTypeEnum.USER_GRID,
-                requestUser.userRefId,
-                requestUser.email,
-            );
-        // Handle monitoring report creation logic
-        if (activities.length) {
-            const lastActivity = activities[activities.length - 1];
-            const activityHistory =
-                await this.guardianService.getGridHistoryByRefId(
-                    GridTypeEnum.ACTIVITY_GRID,
-                    lastActivity.refId,
-                    requestUser.email,
-                );
-
+        if (lastActivity) {
             if (
-                activityHistory &&
-                activityHistory.length &&
-                activityHistory[activityHistory.length - 1].labelValue ===
-                    VerificationRequestStatusEnum.MONITORING_REPORT_REJECTED
+                lastActivity.state !==
+                ActivityStateEnum.MONITORING_REPORT_REJECTED
             ) {
-                const monitoringReports: DocumentSchema[] =
-                    await this.guardianService.getGridDataUsingActivityId(
-                        GridTypeEnum.MONITORING_GRID,
-                        lastActivity.refId,
-                        requestUser.email,
-                    );
-
-                const monitoringRefId =
-                    await this.counterService.incrementCount(
-                        CounterType.MONITORING_REPORT,
-                        4,
-                    );
-
-                await this.guardianService.createEntity(
-                    requestUser.email,
-                    this.utilService.getBlock(
-                        GUARDIAN_API.BLOCKS.CREATE_MONITORING_REPORT,
-                    ),
-                    {
-                        document: {
-                            refId: monitoringRefId,
-                            project: project,
-                            activity: lastActivity,
-                            name: '',
-                            version: monitoringReports.length + 1,
-                            documentType: DocumentEnum.MONITORING,
-                            data: JSON.stringify(monitoringReportDto.content),
-                            createdBy: createdBy,
-                        },
-                        ref: null,
-                    },
-                );
-            } else {
                 throw new HttpException(
                     'Monitoring report already exists',
                     HttpStatus.BAD_REQUEST,
                 );
             }
         } else {
-            await this.createNewActivity(
-                requestUser,
-                project,
-                monitoringReportDto,
-                createdBy,
-            );
+            lastActivity = await this.createNewActivity(requestUser, project);
         }
 
-        await this.notifyCertifiers(
-            monitoringReportDto.programmeId,
-            [],
+        await this.documentService.save(
+            {
+                projectId: project.id,
+                name: 'MONITORING',
+                documentType: DocumentEnum.MONITORING,
+                activityId: lastActivity.refId,
+                data: docContent,
+            },
             requestUser,
         );
 
-        await this.logProjectStage(
-            project.refId,
-            ProjectAuditLogType.MONITORING_CREATE,
-            requestUser.userId,
-        );
+        // await this.notifyCertifiers(
+        //     monitoringReportDto.programmeId,
+        //     [],
+        //     requestUser,
+        // );
+
         return new DataResponseDto(
             HttpStatus.OK,
             'Monitoring Report was submitted successfully.',
@@ -267,54 +227,32 @@ export class VerificationService {
 
     private async createNewActivity(
         requestUser: JWTPayload,
-        project: ProjectSchema,
-        monitoringReportDto: MonitoringReportDto,
-        createdBy: UserSchema,
+        project: ProjectEntity,
     ) {
         const activityRefId = await this.counterService.incrementCount(
             CounterType.ACTIVITY,
             4,
         );
 
+        const activitySchema: ActivitySchema = {
+            refId: activityRefId,
+            project: project.refId,
+        };
         await this.guardianService.createEntity(
             requestUser.email,
             this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_ACTIVITY),
             {
-                document: {
-                    refId: activityRefId,
-                    project: project,
-                },
+                document: activitySchema,
                 ref: null,
             },
         );
-
-        const monitoringRefId = await this.counterService.incrementCount(
-            CounterType.MONITORING_REPORT,
-            4,
-        );
-
-        await this.guardianService.createEntity(
-            requestUser.email,
-            this.utilService.getBlock(
-                GUARDIAN_API.BLOCKS.CREATE_MONITORING_REPORT,
-            ),
-            {
-                document: {
-                    refId: monitoringRefId,
-                    project: project,
-                    activity: {
-                        refId: activityRefId,
-                        project: project,
-                    },
-                    name: '',
-                    version: 1,
-                    documentType: DocumentEnum.MONITORING,
-                    data: JSON.stringify(monitoringReportDto),
-                    createdBy: createdBy,
-                },
-                ref: null,
-            },
-        );
+        const activity: ActivityEntity = {
+            refId: activityRefId,
+            activityDocs: [],
+            project: project,
+            state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
+        };
+        return await this.activityRepository.save(activity);
     }
 
     private async notifyCertifiers(
@@ -372,19 +310,13 @@ export class VerificationService {
             );
         }
 
-        // Fetch monitoring report and activity from the database
-        const [monitoringReport, activity] = await Promise.all([
-            this.guardianService.getGridDocumentUsingRefId(
-                GridTypeEnum.MONITORING_GRID,
-                verifyReportDto.reportId,
-                requestUser.email,
-            ),
-            this.guardianService.getGridDocumentUsingRefId(
-                GridTypeEnum.ACTIVITY_GRID,
-                verifyReportDto.verificationRequestId,
-                requestUser.email,
-            ),
-        ]);
+        const activity = await this.activityRepository.findOne({
+            where: { refId: verifyReportDto.verificationRequestId },
+        });
+
+        const monitoringReport = await this.documentRepository.findOne({
+            where: { refId: verifyReportDto.reportId },
+        });
 
         if (!activity || !monitoringReport) {
             throw new HttpException(
@@ -393,51 +325,27 @@ export class VerificationService {
             );
         }
 
-        // Approve or reject the monitoring report
-        const action = verifyReportDto.verify
-            ? ButtonActionEnum.APPROVE
-            : ButtonActionEnum.REJECT;
-
-        await Promise.all([
-            this.guardianService.buttonActionRequest(
-                ButtonNameEnum.MONITORING_REPORT_APPROVE_REJECT,
-                action,
-                monitoringReport,
-                requestUser.email,
-            ),
-            this.guardianService.buttonActionRequest(
-                ButtonNameEnum.ACTIVITY_MONITORING_REPORT_APPROVE_REJECT,
-                action,
-                activity,
-                requestUser.email,
-            ),
-        ]);
-
-        // Notify project participant via email
-        const countryName = this.configService.get('country');
-        const emailTemplate = verifyReportDto.verify
-            ? MailTemplateEnum.MONITORING_APPROVE
-            : MailTemplateEnum.MONITORING_REJECT;
-
-        const emailHeader = verifyReportDto.verify
-            ? MONITORING_APPROVE_HEADER.replace('{{countryName}}', countryName)
-            : MONITORING_REJECT_HEADER.replace('{{countryName}}', countryName);
-
-        // await this.notifyReportStageChange(
-        //     monitoringReport,
-        //     monitoringReport?.createdBy?.organization?.name,
-        //     requestUser.organizationName,
-        //     emailTemplate,
-        //     emailHeader,
-        //     verifyReportDto.remark,
-        // );
-        await this.logProjectStage(
-            activity?.project?.refId,
-            verifyReportDto.verify
-                ? ProjectAuditLogType.MONITORING_APPROVED
-                : ProjectAuditLogType.MONITORING_REJECTED,
-            requestUser.userId,
-        );
+        if (verifyReportDto.verify) {
+            await this.documentService.approve(
+                monitoringReport?.project?.refId,
+                {
+                    remarks: verifyReportDto.remark,
+                    action: DocumentStateEnum.IC_APPROVED,
+                },
+                requestUser,
+                monitoringReport?.activity?.refId,
+            );
+        } else {
+            await this.documentService.reject(
+                monitoringReport?.project?.refId,
+                {
+                    remarks: verifyReportDto.remark,
+                    action: DocumentStateEnum.IC_REJECTED,
+                },
+                requestUser,
+                monitoringReport?.activity?.refId,
+            );
+        }
     }
 
     // private async notifyReportStageChange(
@@ -576,9 +484,9 @@ export class VerificationService {
             activityHistory &&
             activityHistory.length &&
             (activityHistory[activityHistory.length - 1].labelValue ===
-                VerificationRequestStatusEnum.MONITORING_REPORT_VERIFIED ||
+                ActivityStateEnum.MONITORING_REPORT_VERIFIED ||
                 activityHistory[activityHistory.length - 1].labelValue ===
-                    VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED)
+                    ActivityStateEnum.VERIFICATION_REPORT_REJECTED)
         ) {
             const verificationReports =
                 await this.guardianService.getGridDataUsingActivityId(
