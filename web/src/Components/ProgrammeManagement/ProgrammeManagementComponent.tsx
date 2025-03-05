@@ -211,13 +211,13 @@ export const ProgrammeManagementComponent = (props: any) => {
     //   },
     // },
     {
-      title: t('projectList:sector'),
-      dataIndex: 'projectList',
-      key: ProgrammeManagementSlColumns.sector,
+      title: t('projectList:sectoralScope'),
+      dataIndex: 'SectoralScope',
+      key: ProgrammeManagementSlColumns.sectoralScope,
       sorter: true,
       align: 'center' as const,
       render: (item: any) => {
-        return <>0{/* {t(`projectList:${item}`)} */}</>;
+        return <>{t(`projectList:${item}`)}</>;
       },
     },
     // {
@@ -290,25 +290,25 @@ export const ProgrammeManagementComponent = (props: any) => {
     //   key: ProgrammeManagementSlColumns.serialNo,
     //   align: 'left' as const,
     // },
-    // {
-    //   title: t(''),
-    //   width: 6,
-    //   align: 'right' as const,
-    //   key: ProgrammeManagementSlColumns.action,
-    //   render: (_: any, record: any) => {
-    //     const menu = actionMenu(record);
-    //     return (
-    //       menu && (
-    //         <Popover placement="bottomRight" content={menu} trigger="click">
-    //           <EllipsisOutlined
-    //             rotate={90}
-    //             style={{ fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
-    //           />
-    //         </Popover>
-    //       )
-    //     );
-    //   },
-    // },
+    {
+      title: t(''),
+      width: 6,
+      align: 'right' as const,
+      key: ProgrammeManagementSlColumns.action,
+      render: (_: any, record: any) => {
+        const menu = actionMenu(record);
+        return (
+          menu && (
+            <Popover placement="bottomRight" content={menu} trigger="click">
+              <EllipsisOutlined
+                rotate={90}
+                style={{ fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
+              />
+            </Popover>
+          )
+        );
+      },
+    },
   ].filter((column) => visibleColumns.includes(column.key));
 
   const getAllProgramme = async () => {
