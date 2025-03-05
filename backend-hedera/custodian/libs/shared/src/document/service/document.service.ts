@@ -24,6 +24,9 @@ import {
     PDD_DNA_REJECT_HEADER,
     PDD_IC_APPROVE_HEADER,
     PDD_IC_REJECT_HEADER,
+    VERIFICATION_APPROVE_HEADER,
+    VERIFICATION_CREATE_HEADER,
+    VERIFICATION_REJECT_HEADER,
     VR_APPROVE_HEADER,
     VR_CREATE_HEADER,
     VR_REJECT_HEADER,
@@ -137,7 +140,7 @@ export class DocumentService {
             }
 
             // can only be made by DNA admin(s)
-            if (!(jwtData.email in dnaAdminEmails)) {
+            if (!dnaAdminEmails.includes(jwtData.email)) {
                 throw new HttpException(
                     'Unauthorised',
                     HttpStatus.UNAUTHORIZED,
@@ -664,6 +667,219 @@ export class DocumentService {
             );
         }
     }
+    async performVerificationAction(
+        document: DocumentEntity,
+        requestData: DocumentActionDTO,
+        jwtData: JWTPayload,
+        queryRunner: QueryRunner,
+    ) {
+        if (document.state !== DocumentStateEnum.PENDING) {
+            throw new HttpException(
+                `Document not in ${DocumentStateEnum.PENDING} state`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        // last PDD version has to be in DNA_APPROVED state
+        const lastVerification: DocumentEntity =
+            await queryRunner.manager.findOne(DocumentEntity, {
+                where: {
+                    project: {
+                        id: document?.project?.id,
+                    },
+                    documentType: DocumentEnum.VERIFICATION,
+                },
+                relations: {
+                    project: { createdBy: true, organization: true },
+                    activity: true,
+                    submittedUser: true,
+                },
+                order: {
+                    version: 'DESC',
+                },
+            });
+
+        if (
+            !lastVerification ||
+            lastVerification.state !== DocumentStateEnum.PENDING
+        ) {
+            throw new HttpException(
+                `Monitoring not in ${DocumentStateEnum.PENDING} state`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        // set state change and remarks
+        document = await queryRunner.manager.findOne(DocumentEntity, {
+            where: { id: document.id },
+        });
+        document.state = requestData.action;
+        document.remarks = requestData.remarks;
+
+        // get approving user
+        const user: UsersEntity = await queryRunner.manager.findOneBy(
+            UsersEntity,
+            {
+                email: jwtData.email,
+            },
+        );
+
+        document.approvedUser = user;
+
+        await queryRunner.manager.save(DocumentEntity, document);
+
+        if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
+            await this.updateaActivityStage(
+                queryRunner,
+                lastVerification?.activity?.refId,
+                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
+            );
+            const activityDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ACTIVITY_GRID,
+                    lastVerification?.activity?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ACTIVITY_VERIFICATION_REPORT_APPROVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                activityDoc,
+                jwtData.email,
+            );
+            const verificationDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.VERIFICATION_GRID,
+                    lastVerification?.refId,
+                    jwtData.email,
+                );
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.VERIFICATION_REPORT_APPROVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                verificationDoc,
+                jwtData.email,
+            );
+
+            const countryName = this.configService.get('country');
+            const emailTemplate = {
+                pd: MailTemplateEnum.VERIFICATION_APPROVE_PD,
+                ic: MailTemplateEnum.VERIFICATION_APPROVE_IC,
+                subject: VERIFICATION_APPROVE_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+            };
+
+            await this.sendVerificationEmail(
+                lastVerification?.project?.createdBy?.email,
+                emailTemplate.pd,
+                emailTemplate.subject,
+                lastVerification,
+                lastVerification?.project,
+            );
+
+            await this.sendVerificationEmail(
+                lastVerification?.submittedUser?.email,
+                emailTemplate.ic,
+                emailTemplate.subject,
+                lastVerification,
+                lastVerification?.project,
+            );
+            await this.logProjectStage(
+                lastVerification?.project?.refId,
+                ProjectAuditLogType.VERIFICATION_APPROVED,
+                jwtData.userId,
+            );
+        } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
+            await this.updateaActivityStage(
+                queryRunner,
+                lastVerification?.activity?.refId,
+                ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
+            );
+            const activityDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ACTIVITY_GRID,
+                    lastVerification?.activity?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ACTIVITY_VERIFICATION_REPORT_APPROVE_REJECT,
+                ButtonActionEnum.REJECT,
+                activityDoc,
+                jwtData.email,
+            );
+
+            const verificationDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.VERIFICATION_GRID,
+                    lastVerification?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.VERIFICATION_REPORT_APPROVE_REJECT,
+                ButtonActionEnum.REJECT,
+                verificationDoc,
+                jwtData.email,
+            );
+
+            const countryName = this.configService.get('country');
+            const emailTemplate = {
+                pd: MailTemplateEnum.VERIFICATION_REJECT_PD,
+                ic: MailTemplateEnum.VERIFICATION_REJECT_IC,
+                subject: VERIFICATION_REJECT_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                ),
+            };
+
+            await this.sendVerificationEmail(
+                lastVerification?.project?.createdBy?.email,
+                emailTemplate.pd,
+                emailTemplate.subject,
+                lastVerification,
+                lastVerification?.project,
+            );
+
+            await this.sendVerificationEmail(
+                lastVerification?.submittedUser?.email,
+                emailTemplate.ic,
+                emailTemplate.subject,
+                lastVerification,
+                lastVerification?.project,
+            );
+            await this.logProjectStage(
+                lastVerification?.project?.refId,
+                ProjectAuditLogType.VERIFICATION_REJECTED,
+                jwtData.userId,
+            );
+        }
+    }
+    private async sendVerificationEmail(
+        recipientEmail: string,
+        template: MailTemplateEnum,
+        subject: string,
+        verificationReport: DocumentEntity,
+        project: ProjectEntity,
+    ) {
+        const countryName = this.configService.get('country');
+        const mailDTO: MailTemplateDTO = {
+            subject: subject,
+            template: template,
+            to: recipientEmail,
+            context: {
+                organisationNameIC:
+                    verificationReport?.submittedUser?.organization?.name,
+                organisationNamePD: project?.createdBy?.organization?.name,
+                countryName: countryName,
+                projectName: project?.title,
+                userName: project?.createdBy?.name,
+            },
+        };
+
+        await this.mailService.sendMail(mailDTO);
+    }
 
     private async notifyReportStageChange(
         report: DocumentEntity,
@@ -742,7 +958,7 @@ export class DocumentService {
             }
 
             // can only be performed by project assignees
-            if (!(jwtData.email in assigneeAdminEmails)) {
+            if (!assigneeAdminEmails.includes(jwtData.email)) {
                 throw new HttpException(
                     'Unauthorised',
                     HttpStatus.UNAUTHORIZED,
@@ -1034,6 +1250,16 @@ export class DocumentService {
                         );
                     }
                     break;
+                case DocumentEnum.VERIFICATION:
+                    {
+                        await this.performVerificationAction(
+                            documentEntity,
+                            requestData,
+                            jwtData,
+                            queryRunner,
+                        );
+                    }
+                    break;
             }
             queryRunner.commitTransaction();
         } catch (err) {
@@ -1095,6 +1321,16 @@ export class DocumentService {
                 case DocumentEnum.MONITORING:
                     {
                         await this.performMonitoringAction(
+                            documentEntity,
+                            requestData,
+                            jwtData,
+                            queryRunner,
+                        );
+                    }
+                    break;
+                case DocumentEnum.VERIFICATION:
+                    {
+                        await this.performVerificationAction(
                             documentEntity,
                             requestData,
                             jwtData,
@@ -1321,7 +1557,7 @@ export class DocumentService {
                         jwtData.organizationRole ===
                             OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
                         jwtData.userRole === RoleEnum.Admin &&
-                        jwtData.organizationId in assigneeOrgIds
+                        assigneeOrgIds.includes(jwtData.organizationId)
                     ) {
                         // send emails to PD admins (project organization admins)
                         const orgAdminUsers = await queryRunner.manager
@@ -1460,29 +1696,6 @@ export class DocumentService {
                 break;
             case DocumentEnum.VERIFICATION:
                 {
-                    // PDD has to be submitted and in approved state before VR submission
-                    const lastPdd = await this.documentRepository.findOne({
-                        where: {
-                            documentType: DocumentEnum.PDD,
-                            project: {
-                                id: project.id,
-                            },
-                        },
-                        order: {
-                            version: 'DESC',
-                        },
-                    });
-
-                    if (
-                        !lastPdd ||
-                        lastPdd.state !== DocumentStateEnum.DNA_APPROVED
-                    ) {
-                        throw new HttpException(
-                            'PDD needs to be approved',
-                            HttpStatus.BAD_REQUEST,
-                        );
-                    }
-
                     // VR can be submitted by IC Admin of an assigned org
                     // get assignee org ids
                     const assigneeOrgIds = project.assignees.map(
@@ -1493,65 +1706,13 @@ export class DocumentService {
                         jwtData.organizationRole ===
                             OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
                         jwtData.userRole === RoleEnum.Admin &&
-                        jwtData.organizationId in assigneeOrgIds
+                        assigneeOrgIds.includes(jwtData.organizationId)
                     ) {
-                        // send emails to PD admins (project organization admins)
-                        const orgAdminUsers = await queryRunner.manager
-                            .getRepository(UsersEntity)
-                            .createQueryBuilder('users')
-                            .innerJoinAndSelect(
-                                'users.organization',
-                                'organization',
-                            )
-                            .innerJoinAndSelect(
-                                'users.guardianRole',
-                                'guardianRole',
-                            )
-                            .innerJoinAndSelect('guardianRole.role', 'role')
-                            .where('organization.id = :id', {
-                                id: jwtData.organizationId,
-                            })
-                            .andWhere('role.name = :roleName', {
-                                roleName: RoleEnum.Admin,
-                            })
-                            .getMany();
+                        await this.notifyStakeholders(
+                            project,
+                            jwtData.organizationName,
+                        );
 
-                        sendTo = orgAdminUsers.map((user) => user.email);
-
-                        heading = VR_CREATE_HEADER;
-                        template = MailTemplateEnum.VR_CREATE;
-                        context = {
-                            organizationName: jwtData.organizationName,
-                            pdOrganizationName: project.organization.name,
-                            programmeName: project.title,
-                            countryName: this.configService.get('country'),
-                            programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
-                        };
-
-                        // send another email to DNA admins
-                        const dnaHeading = heading;
-                        const dnaTemplate = MailTemplateEnum.VR_CREATE_DNA;
-                        const dnaContext = {
-                            icOrganizationName: jwtData.organizationName,
-                            pdOrganizationName: project.organization.name,
-                            countryName: this.configService.get('country'),
-                            programmeName: project.title,
-                            programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
-                        };
-
-                        const dnaAdminEmails = (
-                            await this.getDNAAdmins(queryRunner)
-                        ).map((user) => user.email);
-
-                        // send email
-                        const dnaMailDTO: MailTemplateDTO = {
-                            subject: dnaHeading,
-                            template: dnaTemplate,
-                            to: dnaAdminEmails,
-                            context: dnaContext,
-                        };
-
-                        await this.mailService.sendMail(dnaMailDTO);
                         await this.logProjectStage(
                             project.refId,
                             ProjectAuditLogType.VERIFICATION_CREATE,
@@ -1582,6 +1743,44 @@ export class DocumentService {
         };
 
         await this.mailService.sendMail(mailDTO);
+    }
+
+    private async notifyStakeholders(
+        project: ProjectEntity,
+        organizationNameIC: string,
+    ) {
+        const countryName = this.configService.get('country');
+
+        const mailTemplates = [
+            {
+                recipient: project?.createdBy?.email,
+                template: MailTemplateEnum.VERIFICATION_CREATE_PD,
+                subject: VERIFICATION_CREATE_HEADER,
+            },
+            {
+                recipient: project?.createdBy?.email,
+                template: MailTemplateEnum.VERIFICATION_CREATE_DNA,
+                subject: VERIFICATION_CREATE_HEADER,
+            },
+        ];
+
+        await Promise.all(
+            mailTemplates.map((mail) =>
+                this.mailService.sendMail({
+                    subject: mail.subject,
+                    template: mail.template,
+                    to: mail.recipient,
+                    context: {
+                        organizationNameIC: organizationNameIC,
+                        organizationNamePD:
+                            project?.createdBy?.organization?.name,
+                        countryName: countryName,
+                        projectName: project?.title,
+                        programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
+                    },
+                }),
+            ),
+        );
     }
 
     async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
