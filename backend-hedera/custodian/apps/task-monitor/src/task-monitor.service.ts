@@ -61,15 +61,25 @@ export class TaskMonitorService implements OnModuleInit {
                         this.logger.error(
                             `Failed to complete task! ID: ${task.id}.\nError: ${err}`,
                         );
-                        // 4. Update the state to failed
-                        // await this.taskRepository.update(
-                        //     {
-                        //         id: task.id,
-                        //     },
-                        //     {
-                        //         state: TaskEnum.FAILED,
-                        //     },
-                        // );
+                        // 4. Update the state to FAILED if all attempts failed
+                        if (task.attemptedCount >= task.retryAttemps - 1) {
+                            await this.taskRepository.update(
+                                {
+                                    id: task.id,
+                                },
+                                {
+                                    state: TaskEnum.FAILED,
+                                },
+                            );
+                        }
+                    } finally {
+                        await this.taskRepository.increment(
+                            {
+                                id: task.id,
+                            },
+                            'attemptedCount',
+                            1,
+                        );
                     }
                 }
 
