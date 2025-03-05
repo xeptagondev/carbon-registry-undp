@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Steps, message } from 'antd';
-import { ProjectDetailsStep } from './ProjectDetailsStep';
+import { ProjectDetailsStep } from './BasicInformation';
 import './MonitoringReport.scss';
 import { ProjectActivityStep } from './ProjectActivityStep';
 import { ImplementationStatusStep } from './ImplementationStatusStep';
