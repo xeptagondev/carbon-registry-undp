@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Steps, message } from 'antd';
-import { ProjectDetailsStep } from './BasicInformation';
+import { BasicInformationStep } from './BasicInformation';
 import './MonitoringReport.scss';
 import { ProjectActivityStep } from './ProjectActivityStep';
 import { ImplementationStatusStep } from './ImplementationStatusStep';
@@ -417,7 +417,7 @@ const StepperComponent = (props: any) => {
         </div>
       ),
       description: (
-        <ProjectDetailsStep
+        <BasicInformationStep
           useLocation={useLocation}
           translator={translator}
           current={current}

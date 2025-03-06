@@ -9,7 +9,7 @@ import PhoneInput, {
 import moment from 'moment';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 
-export const ProjectDetailsStep = (props: any) => {
+export const BasicInformationStep = (props: any) => {
   const {
     useLocation,
     translator,
