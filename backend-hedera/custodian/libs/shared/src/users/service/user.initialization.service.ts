@@ -103,14 +103,8 @@ export class UserInitializationService implements OnModuleInit {
                     const groupResponse = await this.userService.register(
                         user,
                         user.password,
-                        undefined,
                         UserStateConstant.ACTIVE,
-                    );
-                    await this.organizationRepository.update(
-                        {
-                            email: orgDto.email,
-                        },
-                        { state: OrganizationStateEnum.ACTIVE },
+                        undefined,
                     );
                 }
             }

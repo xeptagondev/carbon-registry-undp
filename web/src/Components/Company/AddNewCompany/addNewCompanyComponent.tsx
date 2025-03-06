@@ -513,7 +513,7 @@ export const AddNewCompanyComponent = (props: any) => {
         if (response.status === 200 || response.status === 201) {
           message.open({
             type: 'success',
-            content: t('companyRegisteredSuccess'),
+            content: response.message, //t('companyRegisteredSuccess'),
             duration: 3,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });

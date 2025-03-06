@@ -51,9 +51,8 @@ export class OrganizationEntity {
         type: 'enum',
         enum: OrganizationStateEnum,
         nullable: false,
-        default: OrganizationStateEnum.PENDING,
     })
-    state?: OrganizationStateEnum;
+    state?: OrganizationStateEnum = OrganizationStateEnum.PENDING;
 
     @Column({ unique: true, nullable: true })
     email: string;

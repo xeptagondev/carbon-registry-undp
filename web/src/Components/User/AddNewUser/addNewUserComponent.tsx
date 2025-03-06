@@ -84,7 +84,7 @@ export const AddNewUserComponent = (props: any) => {
       if (response.status === 200 || response.status === 201) {
         message.open({
           type: 'success',
-          content: t('addUserSuccess'),
+          content: response.message, //t('addUserSuccess'),
           duration: 3,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
