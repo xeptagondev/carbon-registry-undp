@@ -183,22 +183,6 @@ export const ProjectActivityStep = (props: any) => {
                       />
                     </Form.Item>
 
-                    {/* <Form.Item
-                      label={`1.3 ${t('monitoringReport:pa_scopeAndType')}`}
-                      name="scopeAndType"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:pa_scopeAndType')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        disabled={FormMode.VIEW === formMode}
-                        rows={6}
-                        placeholder={`${t('monitoringReport:pa_scopeAndTypePlaceholder')}`}
-                      />
-                    </Form.Item>*/}
                     <h3 className="form-section-title">{`${t(
                       'monitoringReport:projectActivityLocation'
                     )}`}</h3>

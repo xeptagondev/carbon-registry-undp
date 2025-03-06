@@ -26,332 +26,246 @@ export const DataAndParametersStep = (props: any) => {
                 next();
               }}
             >
-              <h4 className="form-section-title">{`4.1 ${t('monitoringReport:dp_title')}`}</h4>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={12} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dp_dataParameter')}
-                      name="dp_dataParameter"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('monitoringReport:dp_dataParameter')} ${t('isRequired')}`
-                              );
-                            }
+              <h3 className="form-section-title">{`${t('monitoringReport:dp_title')}`}</h3>
+              <Row justify={'space-between'} gutter={[40, 16]} className="form-section">
+                <Row className="row" gutter={[40, 16]}>
+                  <Col xl={12} md={24}>
+                    <div className="step-form-left-col">
+                      <Form.Item
+                        label={t('monitoringReport:dp_dataParameter')}
+                        name="dp_dataParameter"
+                        rules={[
+                          {
+                            required: true,
+                            message: '',
                           },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  </div>
-                </Col>
-                <Col xl={12} md={24}>
-                  <div className="step-form-right-col">
-                    <Form.Item
-                      label={t('monitoringReport:dp_dataUnit')}
-                      name="dp_dataUnit"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('monitoringReport:dp_dataUnit')} ${t('isRequired')}`
-                              );
-                            }
+                          {
+                            validator: async (rule, value) => {
+                              if (
+                                String(value).trim() === '' ||
+                                String(value).trim() === undefined ||
+                                value === null ||
+                                value === undefined
+                              ) {
+                                throw new Error(
+                                  `${t('monitoringReport:dp_dataParameter')} ${t('isRequired')}`
+                                );
+                              }
+                            },
                           },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dp_description')}
-                      name="dp_description"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dp_description')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea rows={3} disabled={FormMode.VIEW === formMode} />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dp_sourceOfData')}
-                      name="dp_sourceOfData"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dp_sourceOfData')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea rows={3} disabled={FormMode.VIEW === formMode} />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dp_justification')}
-                      name="dp_justification"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dp_justification')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea rows={3} disabled={FormMode.VIEW === formMode} />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={12} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dp_purposeOfData')}
-                      name="dp_purposeOfData"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('monitoringReport:dp_purposeOfData')} ${t('isRequired')}`
-                              );
-                            }
+                        ]}
+                      >
+                        <Input size="large" />
+                      </Form.Item>
+                    </div>
+                  </Col>
+                  <Col xl={12} md={24}>
+                    <div className="step-form-right-col">
+                      <Form.Item
+                        label={t('monitoringReport:dp_dataUnit')}
+                        name="dp_dataUnit"
+                        rules={[
+                          {
+                            required: true,
+                            message: '',
                           },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  </div>
-                </Col>
-                <Col xl={12} md={24}>
-                  <div className="step-form-right-col">
-                    <Form.Item
-                      label={t('monitoringReport:dp_valueApplied')}
-                      name="dp_valueApplied"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('monitoringReport:dp_valueApplied')} ${t('isRequired')}`
-                              );
-                            }
+                          {
+                            validator: async (rule, value) => {
+                              if (
+                                String(value).trim() === '' ||
+                                String(value).trim() === undefined ||
+                                value === null ||
+                                value === undefined
+                              ) {
+                                throw new Error(
+                                  `${t('monitoringReport:dp_dataUnit')} ${t('isRequired')}`
+                                );
+                              }
+                            },
                           },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dp_comments')}
-                      name="dp_comments"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dp_comments')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea rows={3} disabled={FormMode.VIEW === formMode} />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <h4 className="form-section-title">{`4.2 ${t('monitoringReport:dpm_title')}`}</h4>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={12} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_dataParameter')}
-                      name="dpm_dataParameter"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('monitoringReport:dpm_dataParameter')} ${t('isRequired')}`
-                              );
-                            }
+                        ]}
+                      >
+                        <Input size="large" />
+                      </Form.Item>
+                    </div>
+                  </Col>
+                </Row>
+                <Row className="row" gutter={[40, 16]}>
+                  <Col xl={24} md={24}>
+                    <div className="step-form-left-col">
+                      <Form.Item
+                        label={t('monitoringReport:dp_description')}
+                        name="dp_description"
+                        rules={[
+                          {
+                            required: true,
+                            message: `${t('monitoringReport:dp_description')} ${t('isRequired')}`,
                           },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  </div>
-                </Col>
-
-                <Col xl={12} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_dataUnit')}
-                      name="dpm_dataUnit"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('monitoringReport:dpm_dataUnit')} ${t('isRequired')}`
-                              );
-                            }
+                        ]}
+                      >
+                        <TextArea
+                          rows={3}
+                          disabled={FormMode.VIEW === formMode}
+                          placeholder={`${t('monitoringReport:dp_descriptionPlaceholder')}`}
+                        />
+                      </Form.Item>
+                    </div>
+                  </Col>
+                </Row>
+                <Row className="row" gutter={[40, 16]}>
+                  <Col xl={24} md={24}>
+                    <div className="step-form-left-col">
+                      <Form.Item
+                        label={t('monitoringReport:dp_sourceOfData')}
+                        name="dp_sourceOfData"
+                        rules={[
+                          {
+                            required: true,
+                            message: `${t('monitoringReport:dp_sourceOfData')} ${t('isRequired')}`,
                           },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  </div>
-                </Col>
+                        ]}
+                      >
+                        <TextArea
+                          rows={3}
+                          disabled={FormMode.VIEW === formMode}
+                          placeholder={`${t('monitoringReport:dp_sourceOfDataPlaceholder')}`}
+                        />
+                      </Form.Item>
+                    </div>
+                  </Col>
+                </Row>
+                <Row className="row" gutter={[40, 16]}>
+                  <Col xl={24} md={24}>
+                    <div className="step-form-left-col">
+                      <Form.Item
+                        label={t('monitoringReport:dp_valueApplied')}
+                        name="dp_valueApplied"
+                        rules={[
+                          {
+                            required: true,
+                            message: `${t('monitoringReport:dp_valueApplied')} ${t('isRequired')}`,
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          rows={3}
+                          disabled={FormMode.VIEW === formMode}
+                          placeholder={`${t('monitoringReport:dp_valueAppliedPlaceholder')}`}
+                        />
+                      </Form.Item>
+                    </div>
+                  </Col>
+                </Row>
+                <Row className="row" gutter={[40, 16]}>
+                  <Col xl={24} md={24}>
+                    <div className="step-form-left-col">
+                      <Form.Item
+                        label={t('monitoringReport:dp_choiceOfDataOrMeasurement')}
+                        name="dp_choiceOfDataOrMeasurement"
+                        rules={[
+                          {
+                            required: true,
+                            message: '',
+                          },
+                          {
+                            validator: async (rule, value) => {
+                              if (
+                                String(value).trim() === '' ||
+                                String(value).trim() === undefined ||
+                                value === null ||
+                                value === undefined
+                              ) {
+                                throw new Error(
+                                  `${t('monitoringReport:dp_choiceOfDataOrMeasurement')} ${t(
+                                    'isRequired'
+                                  )}`
+                                );
+                              }
+                            },
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          rows={6}
+                          disabled={FormMode.VIEW === formMode}
+                          placeholder={`${t(
+                            'monitoringReport:dp_choiceOfDataOrMeasurementPlaceholder'
+                          )}`}
+                        />
+                      </Form.Item>
+                    </div>
+                  </Col>
+                </Row>
+                <Row className="row" gutter={[40, 16]}>
+                  <Col xl={24} md={24}>
+                    <div className="step-form-right-col">
+                      <Form.Item
+                        label={t('monitoringReport:dp_purposeOfData')}
+                        name="dp_purposeOfData"
+                        rules={[
+                          {
+                            required: true,
+                            message: '',
+                          },
+                          {
+                            validator: async (rule, value) => {
+                              if (
+                                String(value).trim() === '' ||
+                                String(value).trim() === undefined ||
+                                value === null ||
+                                value === undefined
+                              ) {
+                                throw new Error(
+                                  `${t('monitoringReport:dp_purposeOfData')} ${t('isRequired')}`
+                                );
+                              }
+                            },
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          rows={3}
+                          disabled={FormMode.VIEW === formMode}
+                          placeholder={`${t('monitoringReport:dp_purposeOfDataPlaceholder')}`}
+                        />
+                      </Form.Item>
+                    </div>
+                  </Col>
+                </Row>
+                <Row className="row" gutter={[40, 16]}>
+                  <Col xl={24} md={24}>
+                    <div className="step-form-left-col">
+                      <Form.Item
+                        label={t('monitoringReport:dp_comments')}
+                        name="dp_comments"
+                        rules={[
+                          {
+                            required: true,
+                            message: `${t('monitoringReport:dp_comments')} ${t('isRequired')}`,
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          rows={3}
+                          disabled={FormMode.VIEW === formMode}
+                          placeholder={`${t('monitoringReport:dp_commentsPlaceholder')}`}
+                        />
+                      </Form.Item>
+                    </div>
+                  </Col>
+                </Row>
               </Row>
 
               <Row className="row" gutter={[40, 16]}>
                 <Col xl={24} md={24}>
                   <div className="step-form-left-col">
                     <Form.Item
-                      label={t('monitoringReport:dpm_description')}
-                      name="dpm_description"
+                      label={t('monitoringReport:dp_implementationOfSamplingPlan')}
+                      name="dp_implementationOfSamplingPlan"
                       rules={[
                         {
                           required: true,
-                          message: `${t('monitoringReport:dpm_description')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        disabled={FormMode.VIEW === formMode}
-                        rows={3}
-                        placeholder={t('monitoringReport:dpm_descriptionPlaceholder')}
-                      />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_sourceOfData')}
-                      name="dpm_sourceOfData"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dpm_sourceOfData')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        disabled={FormMode.VIEW === formMode}
-                        rows={3}
-                        placeholder={t('monitoringReport:dpm_sourceOfDataPlaceholder')}
-                      />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_measurmentMethodsDescription')}
-                      name="dpm_measurmentMethodsDescription"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dpm_measurmentMethodsDescription')} ${t(
+                          message: `${t('monitoringReport:dp_implementationOfSamplingPlan')} ${t(
                             'isRequired'
                           )}`,
                         },
@@ -359,219 +273,9 @@ export const DataAndParametersStep = (props: any) => {
                     >
                       <TextArea
                         disabled={FormMode.VIEW === formMode}
-                        rows={3}
-                        placeholder={t(
-                          'monitoringReport:dpm_measurmentMethodsDescriptionPlaceholder'
-                        )}
+                        rows={6}
+                        // placeholder={t('monitoringReport:dpm_descriptionPlaceholder')}
                       />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={12} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_frequencyOfMonitoring')}
-                      name="dpm_frequencyOfMonitoring"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('monitoringReport:dpm_frequencyOfMonitoringPlaceholder')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_valueApplied')}
-                      name="dpm_valueApplied"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dpm_valueApplied')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        disabled={FormMode.VIEW === formMode}
-                        rows={3}
-                        placeholder={t('monitoringReport:dpm_valueAppliedPlaceholder')}
-                      />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_monitoringEquipment')}
-                      name="dpm_monitoringEquipment"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dpm_monitoringEquipment')} ${t(
-                            'isRequired'
-                          )}`,
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        disabled={FormMode.VIEW === formMode}
-                        rows={3}
-                        placeholder={t('monitoringReport:dpm_monitoringEquipmentPlaceholder')}
-                      />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_qaQcProcedures')}
-                      name="dpm_qaQcProcedures"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dpm_qaQcProcedures')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        disabled={FormMode.VIEW === formMode}
-                        rows={3}
-                        placeholder={t('monitoringReport:dpm_qaQcProceduresPlaceholder')}
-                      />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={12} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_purposeOfData')}
-                      name="dpm_purposeOfData"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('monitoringReport:dpm_purposeOfData')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input size="large" />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_calculationMethod')}
-                      name="dpm_calculationMethod"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dpm_calculationMethod')} ${t(
-                            'isRequired'
-                          )}`,
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        disabled={FormMode.VIEW === formMode}
-                        rows={3}
-                        placeholder={t('monitoringReport:dpm_calculationMethodPlaceholder')}
-                      />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:dpm_comments')}
-                      name="dpm_comments"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dpm_comments')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        disabled={FormMode.VIEW === formMode}
-                        rows={3}
-                        placeholder={t('monitoringReport:dpm_commentsPlaceholder')}
-                      />
-                    </Form.Item>
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={24} md={24}>
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={`4.3 ${t('monitoringReport:dpm_planDescription')}`}
-                      name="dpm_planDescription"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:dpm_planDescription')} ${t(
-                            'isRequired'
-                          )}`,
-                        },
-                      ]}
-                    >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
                     </Form.Item>
                   </div>
                 </Col>
