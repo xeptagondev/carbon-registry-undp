@@ -12,32 +12,16 @@ import { MailService } from '@app/shared/mail/service/mail.service';
 import { ActivityStateEnum } from '../../activity/enum/activity.state.enum';
 import { DocumentEnum } from '@app/shared/document/enum/document.enum';
 import { UserService } from '@app/shared/users/service/user.service';
-import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
-import {
-    INF_ASSIGN_HEADER,
-    MONITORING_APPROVE_HEADER,
-    MONITORING_CREATE_HEADER,
-    MONITORING_REJECT_HEADER,
-    VERIFICATION_APPROVE_HEADER,
-    VERIFICATION_CREATE_HEADER,
-    VERIFICATION_REJECT_HEADER,
-} from '@app/shared/mail/constant/mail-header.constant';
-import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+
 import { VerifyReportDto } from '../dto/verify.report.dto';
 import { VerificationReportDto } from '../dto/verification.report.dto';
 import { CreditIssueCertificateGenerator } from '@app/shared/util/service/credit.issue.certificate.gen';
 import { DateUtilService } from '@app/shared/util/service/date.util.service';
-import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
-import {
-    ActivitySchema,
-    DocumentSchema,
-    ProjectSchema,
-    UserSchema,
-} from '@app/shared/guardian/interface/guardian-schema.interface';
+import { ActivitySchema } from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 import {
     ButtonActionEnum,
@@ -69,7 +53,6 @@ export class VerificationService {
         private readonly userService: UserService,
         private readonly guardianService: GuardianService,
         private readonly utilService: UtilService,
-        private readonly counterService: CounterService,
         private readonly fileHelperService: FileHelperService,
         private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
         @InjectRepository(ProjectEntity)
@@ -196,7 +179,7 @@ export class VerificationService {
                 projectId: project.id,
                 name: 'MONITORING',
                 documentType: DocumentEnum.MONITORING,
-                activityId: lastActivity.refId,
+                activityRefId: lastActivity.refId,
                 data: docContent,
             },
             requestUser,
@@ -238,16 +221,19 @@ export class VerificationService {
         requestUser: JWTPayload,
         project: ProjectEntity,
     ) {
-        const activityRefId = await this.counterService.incrementCount(
-            CounterType.ACTIVITY,
-            4,
-        );
+        const activity = new ActivityEntity();
+        activity.activityDocs = [];
+        activity.project = project;
+        activity.state = ActivityStateEnum.MONITORING_REPORT_UPLOADED;
+
+        const saved = await this.activityRepository.save(activity);
 
         const activitySchema: ActivitySchema = {
-            refId: activityRefId,
+            refId: saved.refId,
             project: project.refId,
         };
-        await this.guardianService.createEntity(
+
+        this.guardianService.createEntity(
             requestUser.email,
             this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_ACTIVITY),
             {
@@ -255,13 +241,7 @@ export class VerificationService {
                 ref: null,
             },
         );
-        const activity: ActivityEntity = {
-            refId: activityRefId,
-            activityDocs: [],
-            project: project,
-            state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
-        };
-        return await this.activityRepository.save(activity);
+        return saved;
     }
 
     //MARK: Verify Monitoring Report
@@ -446,7 +426,7 @@ export class VerificationService {
                 projectId: project.id,
                 name: 'VERIFICATION',
                 documentType: DocumentEnum.VERIFICATION,
-                activityId: lastActivity.refId,
+                activityRefId: lastActivity.refId,
                 data: docContent,
             },
             requestUser,

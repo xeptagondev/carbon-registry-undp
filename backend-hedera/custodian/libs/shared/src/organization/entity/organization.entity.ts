@@ -1,6 +1,7 @@
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import {
+    BeforeInsert,
     Column,
     Entity,
     JoinColumn,
@@ -101,4 +102,9 @@ export class OrganizationEntity {
         { nullable: true },
     )
     assignedProjects?: ProjectEntity[];
+
+    @BeforeInsert()
+    generateRefId() {
+        this.refId = `O-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
 }

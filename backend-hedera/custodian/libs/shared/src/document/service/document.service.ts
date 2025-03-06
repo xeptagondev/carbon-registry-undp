@@ -43,7 +43,6 @@ import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { DocumentSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { UtilService } from '@app/shared/util/service/util.service';
@@ -70,7 +69,6 @@ export class DocumentService {
         private readonly dataSource: DataSource,
         private readonly auditService: AuditService,
         private readonly guardianService: GuardianService,
-        private readonly counterService: CounterService,
         private readonly utilService: UtilService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
     ) {}
@@ -1786,7 +1784,7 @@ export class DocumentService {
     async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
         // get the last document of the project of the same type
         let lastDoc: DocumentEntity = null;
-        if (dto.activityId) {
+        if (dto.activityRefId) {
             lastDoc = await this.documentRepository.findOne({
                 where: {
                     documentType: dto.documentType,
@@ -1794,7 +1792,7 @@ export class DocumentService {
                         id: dto.projectId,
                     },
                     activity: {
-                        refId: dto.activityId,
+                        refId: dto.activityRefId,
                     },
                 },
                 order: {
@@ -1859,40 +1857,38 @@ export class DocumentService {
                 });
 
             let activity: ActivityEntity = null;
-            if (dto.activityId) {
+            if (dto.activityRefId) {
                 activity = await queryRunner.manager.findOne(ActivityEntity, {
-                    where: { refId: dto.activityId },
+                    where: { refId: dto.activityRefId },
                 });
             }
 
             // create document in 'PENDING' state
-            const refId = await this.counterService.incrementCount(
-                CounterType[dto.documentType],
-                4,
-            );
-            const document: DocumentEntity = {
-                refId: refId,
-                title: dto.name,
-                project: project,
-                documentType: dto.documentType,
-                state: DocumentStateEnum.PENDING,
-                activity: activity,
-                data: dto.data,
-                submittedUser: submittedUser,
-            };
+
+            const documentEntity = new DocumentEntity();
+            documentEntity.title = dto.name;
+            documentEntity.project = project;
+            documentEntity.documentType = dto.documentType;
+            documentEntity.state = DocumentStateEnum.PENDING;
+            documentEntity.activity = activity;
+            documentEntity.data = dto.data;
+            documentEntity.submittedUser = submittedUser;
 
             // save document
-            await queryRunner.manager.save(DocumentEntity, document);
+            const savedDoc = await queryRunner.manager.save(
+                DocumentEntity,
+                documentEntity,
+            );
 
             const documentSchema: DocumentSchema = {
-                refId: refId,
+                refId: savedDoc.refId,
                 documentType: dto.documentType,
                 createdBy: submittedUser.refId,
                 project: project.refId,
                 name: dto.documentType,
                 version: lastDoc ? lastDoc.version + 1 : 1,
                 data: JSON.stringify(dto.data),
-                activity: dto.activityId,
+                activity: dto.activityRefId,
             };
 
             await this.guardianService.createEntity(
