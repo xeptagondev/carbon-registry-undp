@@ -530,7 +530,7 @@ export const AddNewCompanyComponent = (props: any) => {
           }
           message.open({
             type: 'success',
-            content: t('companyAddedSuccess'),
+            content: response.message, // t('companyAddedSuccess'),
             duration: 3,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
