@@ -19,6 +19,8 @@ export const GUARDIAN_API = {
         CREATE_MONITORING_REPORT: 'monitoring_report_creation_form',
         CREATE_VERIFICATION_REPORT: 'verification_report_creation_form',
         CREATE_INF: 'inf_creation_form',
+        CREATE_PDD: 'pdd_creation_form',
+        CREATE_VALIDATION: 'validation_report_creation_form',
         PROJECT_QUERY: {
             GRID: 'project_grid',
             FILTER_PROJECT_ID: '',

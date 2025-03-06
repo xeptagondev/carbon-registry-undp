@@ -24,7 +24,7 @@ export class DocumentController {
     @UseGuards(AuthGuardService)
     @Post('approve')
     async approve(
-        @Query('id') id: number,
+        @Query('id') id: string,
         @Body() dto: DocumentActionDTO,
         @Request() req,
     ) {
@@ -34,7 +34,7 @@ export class DocumentController {
     @UseGuards(AuthGuardService)
     @Post('reject')
     async reject(
-        @Query('id') id: number,
+        @Query('id') id: string,
         @Body() dto: DocumentActionDTO,
         @Request() req,
     ) {
