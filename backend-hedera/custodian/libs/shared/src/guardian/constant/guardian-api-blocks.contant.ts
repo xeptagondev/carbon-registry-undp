@@ -2,6 +2,8 @@ export const GUARDIAN_API = {
     LOGIN: '/api/v1/accounts/login',
     REGISTER: '/api/v1/accounts/register',
     ACCESS_TOKEN: '/api/v1/accounts/access-token',
+    GENERATE_HEDERA_ACCOUNT: '/api/v1/demo/push/random-key',
+    FETCH_TASK_BY_ID: '/api/v1/tasks/',
     PROFILE_UPDATE: '/api/v1/profiles/push',
     CHANGE_PASSWORD: '/api/v1/accounts/change-password',
     POLICY_ASSIGN_ONE: '/api/v1/permissions/users',
