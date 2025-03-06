@@ -3,10 +3,14 @@ import { TokenEntity } from '../entity/token.entity/token.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GenerateTokenDto } from '../dto/generate-token.dto';
-import { formatRemainingTime, generatePassword } from '@app/shared/util/util';
+import {
+    decryptPayload,
+    encryptPayload,
+    formatRemainingTime,
+    generatePassword,
+} from '@app/shared/util/util';
 import { ConfigService } from '@nestjs/config';
 import { ValidateTokenDto } from '../dto/validate-token.dto';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class TokenService {
@@ -41,9 +45,8 @@ export class TokenService {
             parseInt(this.configService.get<string>('token.length')),
         );
 
-        const verificationToken = this.encryptToken(
-            generateTokenDto.email,
-            newToken,
+        const verificationToken = encryptPayload(
+            { email: generateTokenDto.email, token: newToken },
             this.configService.get<string>('token.verificationSecret'),
         );
 
@@ -63,8 +66,7 @@ export class TokenService {
         validateTokenDto: ValidateTokenDto,
     ): Promise<TokenEntity> {
         const currentTime = Date.now();
-
-        const { email, token } = this.decryptToken(
+        const { email, token } = decryptPayload(
             validateTokenDto.verificationToken,
             this.configService.get<string>('token.verificationSecret'),
         );
@@ -94,40 +96,5 @@ export class TokenService {
                 HttpStatus.BAD_REQUEST,
             );
         }
-    }
-
-    encryptToken(email: string, token: string, secretKey: string): string {
-        const key = crypto
-            .createHash('sha256')
-            .update(secretKey, 'utf8')
-            .digest();
-
-        const iv = crypto.randomBytes(16);
-        const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-        const data = JSON.stringify({ email, token });
-        let encrypted = cipher.update(data, 'utf8', 'hex');
-        encrypted += cipher.final('hex');
-
-        return iv.toString('hex') + ':' + encrypted;
-    }
-
-    decryptToken(
-        encryptedData: string,
-        secretKey: string,
-    ): { email: string; token: string } {
-        const key = crypto
-            .createHash('sha256')
-            .update(secretKey, 'utf8')
-            .digest();
-        const [ivHex, encryptedText] = encryptedData.split(':');
-        if (!ivHex || !encryptedText) {
-            throw new Error('Invalid encrypted data');
-        }
-        const iv = Buffer.from(ivHex, 'hex');
-        const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-        let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-        decrypted += decipher.final('utf8');
-
-        return JSON.parse(decrypted);
     }
 }

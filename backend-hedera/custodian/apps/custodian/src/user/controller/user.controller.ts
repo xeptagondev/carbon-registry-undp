@@ -28,8 +28,8 @@ export class UserController {
         return this.userService.register(
             userDto,
             '',
-            req?.user,
             UserStateConstant.ACTIVE,
+            req?.user,
         );
     }
 
@@ -44,8 +44,8 @@ export class UserController {
         return this.userService.register(
             userDto,
             '',
-            req?.user,
             UserStateConstant.DEACTIVE,
+            req?.user,
         );
     }
 
