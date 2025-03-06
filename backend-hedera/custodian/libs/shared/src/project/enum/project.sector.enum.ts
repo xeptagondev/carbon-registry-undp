@@ -9,7 +9,7 @@ export enum ProjectSectorEnum {
     WASTE = 'Waste',
 }
 
-export enum SlProjectCategoryMap {
+export enum ProjectCategoryMap {
     RENEWABLE_ENERGY = 'Renewable Energy',
     AFFORESTATION = 'Afforestation',
     REFORESTATION = 'Reforestation',
