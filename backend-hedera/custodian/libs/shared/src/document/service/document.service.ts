@@ -1789,7 +1789,7 @@ export class DocumentService {
                 where: {
                     documentType: dto.documentType,
                     project: {
-                        id: dto.projectId,
+                        refId: dto.projectRefId,
                     },
                     activity: {
                         refId: dto.activityRefId,
@@ -1804,7 +1804,7 @@ export class DocumentService {
                 where: {
                     documentType: dto.documentType,
                     project: {
-                        id: dto.projectId,
+                        refId: dto.projectRefId,
                     },
                 },
                 order: {
@@ -1838,7 +1838,7 @@ export class DocumentService {
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
-                    where: { id: dto.projectId },
+                    where: { refId: dto.projectRefId },
                     relations: { organization: true, assignees: true },
                 },
             );
@@ -1880,6 +1880,7 @@ export class DocumentService {
                 documentEntity,
             );
 
+            console.log(submittedUser);
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
                 documentType: dto.documentType,

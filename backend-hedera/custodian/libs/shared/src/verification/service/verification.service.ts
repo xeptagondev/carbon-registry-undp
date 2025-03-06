@@ -102,9 +102,10 @@ export class VerificationService {
         });
 
         if (
-            (project &&
-                project.projectProposalStage ===
-                    ProjectProposalStage.AUTHORISED) ||
+            !(
+                project &&
+                project.projectProposalStage === ProjectProposalStage.AUTHORISED
+            ) ||
             (lastActivity &&
                 lastActivity.state ===
                     ActivityStateEnum.MONITORING_REPORT_REJECTED)
@@ -176,7 +177,7 @@ export class VerificationService {
 
         await this.documentService.save(
             {
-                projectId: project.id,
+                projectRefId: project.refId,
                 name: 'MONITORING',
                 documentType: DocumentEnum.MONITORING,
                 activityRefId: lastActivity.refId,
@@ -423,7 +424,7 @@ export class VerificationService {
 
         await this.documentService.save(
             {
-                projectId: project.id,
+                projectRefId: project.refId,
                 name: 'VERIFICATION',
                 documentType: DocumentEnum.VERIFICATION,
                 activityRefId: lastActivity.refId,

@@ -130,7 +130,7 @@ export class ProjectService {
 
             this.documentService.save(
                 {
-                    projectId: savedProject.id,
+                    projectRefId: savedProject.refId,
                     name: 'INF',
                     documentType: DocumentEnum.INF,
                     data: projectDto,
