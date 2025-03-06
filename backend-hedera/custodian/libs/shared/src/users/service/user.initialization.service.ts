@@ -84,12 +84,14 @@ export class UserInitializationService implements OnModuleInit {
                     user.name = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.name`,
                     );
-                    user.hederaAccount = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaAccount`,
-                    );
-                    user.hederaKey = this.configService.get(
-                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaKey`,
-                    );
+                    user.hederaAccount =
+                        this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaAccount`,
+                        ) || undefined;
+                    user.hederaKey =
+                        this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.hederaKey`,
+                        ) || undefined;
                     user.password = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.password`,
                     );
@@ -101,14 +103,8 @@ export class UserInitializationService implements OnModuleInit {
                     const groupResponse = await this.userService.register(
                         user,
                         user.password,
-                        undefined,
                         UserStateConstant.ACTIVE,
-                    );
-                    await this.organizationRepository.update(
-                        {
-                            email: orgDto.email,
-                        },
-                        { state: OrganizationStateEnum.ACTIVE },
+                        undefined,
                     );
                 }
             }

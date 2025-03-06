@@ -42,6 +42,12 @@ export default () => ({
     },
     guardian: {
         url: process.env.GUARDIAN_URL || 'http://3.93.78.104:3000',
+        task: {
+            retrycount: parseInt(
+                process.env.GUARDIAN_TASK_RETRY_COUNT || '3',
+                10,
+            ),
+        },
     },
     policy: {
         id: process.env.POLICY_ID,
@@ -86,6 +92,7 @@ export default () => ({
         },
     },
     security: {
+        pwdSecret: process.env.PASSWORD_SECRET,
         salt: process.env.PASSWORD_SALT,
     },
     token: {
