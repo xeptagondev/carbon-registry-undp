@@ -2,6 +2,7 @@ import { ActivityDocEntity } from '@app/shared/activity-doc/entity/activity-doc.
 import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import {
+    BeforeInsert,
     Column,
     Entity,
     ManyToOne,
@@ -15,8 +16,8 @@ export class ActivityEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
-    @Column({ type: String })
-    refId: string;
+    @Column({ nullable: true })
+    refId?: string;
 
     @OneToMany(
         () => ActivityDocEntity,
@@ -40,4 +41,9 @@ export class ActivityEntity {
 
     @Column({ type: 'enum', enum: ActivityStateEnum, nullable: false })
     state: ActivityStateEnum;
+
+    @BeforeInsert()
+    generateRefId() {
+        this.refId = `A-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
 }

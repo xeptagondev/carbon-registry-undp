@@ -49,7 +49,6 @@ import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataExportUserDto } from '@app/shared/util/dto/data.export.user.dto';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
 import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
-import { CounterService } from '@app/shared/util/service/counter.service';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { OrganizationSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
@@ -73,7 +72,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         private readonly helperService: HelperService,
         private readonly dataExportService: DataExportService,
         private readonly orgaisationService: OrganizationService,
-        private readonly counterService: CounterService,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(GuardianRoleEntity)
@@ -257,22 +255,17 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             await this.guardianService.registerUser(userDto.email, hashedPass);
             await this.delay(5000);
-            const refId = await this.counterService.incrementCount(
-                CounterType.USER,
-                4,
-            );
-            const userEntity: UsersEntity = {
-                email: userDto.email,
-                name: userDto.name,
-                refId: refId,
-                password: hashedPass,
-                phoneNumber: userDto.phoneNo,
-                hederaAccount: userDto.hederaAccount,
-                stage: UserStageEnum.REGISTER,
-                isActive: isUserActive,
-                createdTime: new Date().getTime(),
-                updatedTime: new Date().getTime(),
-            };
+
+            const userEntity = new UsersEntity();
+            userEntity.email = userDto.email;
+            userEntity.name = userDto.name;
+            userEntity.password = hashedPass;
+            userEntity.phoneNumber = userDto.phoneNo;
+            userEntity.hederaAccount = userDto.hederaAccount;
+            userEntity.stage = UserStageEnum.REGISTER;
+            userEntity.isActive = isUserActive;
+            userEntity.createdTime = new Date().getTime();
+            userEntity.updatedTime = new Date().getTime();
 
             // i. Save user in db without organization and role
             const user: UsersEntity =
@@ -554,16 +547,31 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 groupUser.stage === UserStageEnum.CREATE_GROUP_TYPE
             ) {
                 const orgCreateTime = new Date().getTime();
-                const orgRefId = await this.counterService.incrementCount(
-                    CounterType.ORGANIZATION,
-                    4,
-                );
+
+                const orgEntity = new OrganizationEntity();
+                orgEntity.name = userDto.company.name;
+                orgEntity.organizationType = orgType;
+                orgEntity.state = OrganizationStateEnum.PENDING;
+                orgEntity.email = userDto?.company?.email;
+                orgEntity.taxId = userDto?.company?.taxId;
+                orgEntity.phoneNumber = userDto?.company?.phoneNo;
+                orgEntity.paymentId = userDto?.company?.paymentId;
+                orgEntity.faxNumber = userDto?.company?.faxNo;
+                orgEntity.provinces = userDto?.company?.provinces;
+                orgEntity.website = userDto?.company?.website;
+                orgEntity.address = userDto?.company?.address;
+                orgEntity.createdTime = orgCreateTime;
+                orgEntity.updatedTime = new Date().getTime();
+
+                // iii. Save organization
+                const savedOrg =
+                    await this.organizationRepository.save(orgEntity);
                 if (
                     userDto?.company?.logo &&
                     this.helperService.isBase64(userDto?.company?.logo)
                 ) {
                     const response: any = await this.fileHandler.uploadFile(
-                        `profile_images/${orgRefId}_${new Date().getTime()}.png`,
+                        `profile_images/${savedOrg.refId}_${new Date().getTime()}.png`,
                         userDto?.company?.logo,
                     );
                     if (response) {
@@ -599,7 +607,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                                 logo: userDto.company.logo,
                                 createdTime: Number(orgCreateTime),
                                 updatedTime: Number(new Date().getTime()),
-                                refId: orgRefId,
+                                refId: savedOrg.refId,
                             },
                             ref: null,
                         },
@@ -609,25 +617,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 // i. Get orgType
 
                 // ii. Create organization
-                let orgEntity: OrganizationEntity = {
-                    name: userDto.company.name,
-                    organizationType: orgType,
-                    refId: orgRefId,
-                    state: OrganizationStateEnum.PENDING,
-                    email: userDto?.company?.email,
-                    taxId: userDto?.company?.taxId,
-                    phoneNumber: userDto?.company?.phoneNo,
-                    paymentId: userDto?.company?.paymentId,
-                    faxNumber: userDto?.company?.faxNo,
-                    provinces: userDto?.company?.provinces,
-                    website: userDto?.company?.website,
-                    address: userDto?.company?.address,
-                    createdTime: orgCreateTime,
-                    updatedTime: new Date().getTime(),
-                };
-
-                // iii. Save organization
-                orgEntity = await this.organizationRepository.save(orgEntity);
 
                 // 2. Create a group (organization) => Create the organization of org type
 

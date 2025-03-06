@@ -1,5 +1,6 @@
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import {
+    BeforeInsert,
     Column,
     Entity,
     JoinColumn,
@@ -9,7 +10,6 @@ import {
     OneToMany,
     PrimaryGeneratedColumn,
 } from 'typeorm';
-import { ProjectSectorEnum } from '../enum/project.sector.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { ProjectProposalStage } from '../enum/project.proposal.stage.enum';
@@ -20,8 +20,8 @@ export class ProjectEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
-    @Column({ unique: true })
-    refId: string;
+    @Column({ nullable: true })
+    refId?: string;
 
     @Column()
     title: string;
@@ -127,4 +127,9 @@ export class ProjectEntity {
 
     @Column('real', { nullable: true })
     creditTransferred?: number;
+
+    @BeforeInsert()
+    generateRefId() {
+        this.refId = `P-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
 }

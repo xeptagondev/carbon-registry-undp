@@ -32,7 +32,7 @@ export class BaseDocumentDTO {
 
     @IsOptional()
     @IsString()
-    activityId?: string;
+    activityRefId?: string;
 
     @ApiProperty({
         type: Object,

@@ -1,20 +1,11 @@
-import { AuditDTO } from '@app/shared/audit/dto/audit.dto';
-import { LogLevel } from '@app/shared/audit/enum/log-level.enum';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { DocumentEnum } from '@app/shared/document/enum/document.enum';
-import {
-    DocumentSchema,
-    OrganizationSchema,
-    ProjectSchema,
-    UserSchema,
-} from '@app/shared/guardian/interface/guardian-schema.interface';
+import { ProjectSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
-    INF_APPROVE_HEADER,
     INF_ASSIGN_HEADER,
     INF_CREATE_HEADER,
-    INF_REJECT_HEADER,
 } from '@app/shared/mail/constant/mail-header.constant';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
 import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
@@ -32,7 +23,6 @@ import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { CounterType } from '@app/shared/util/enum/counter.type.enum';
-import { CounterService } from '@app/shared/util/service/counter.service';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
 import { UtilService } from '@app/shared/util/service/util.service';
@@ -44,16 +34,7 @@ import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '@app/shared/document/enum/additional.document.type';
-import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
-import {
-    ButtonActionEnum,
-    ButtonNameEnum,
-} from '@app/shared/guardian/enum/button-type.enum';
-import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
-import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
 import { DocumentService } from '@app/shared/document/service/document.service';
-import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
-import { ProjectSectorEnum } from '../enum/project.sector.enum';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { DocumentStateEnum } from '@app/shared/document/enum/document-state.enum';
 
@@ -74,8 +55,6 @@ export class ProjectService {
         private readonly configService: ConfigService,
         private readonly utilService: UtilService,
         private readonly mailService: MailService,
-        private readonly counterService: CounterService,
-        private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         private readonly logger: InstantLogger,
         private readonly fileHelperService: FileHelperService,
         private readonly documentService: DocumentService,
@@ -90,11 +69,6 @@ export class ProjectService {
         this.validateProjectParticipant(requestUser);
         const projectDto = JSON.parse(projectData.data);
         try {
-            const projectRefId = await this.counterService.incrementCount(
-                CounterType.PROJECT,
-                4,
-            );
-
             const createdBy: UsersEntity = await this.userRepository.findOne({
                 where: { id: requestUser.userId },
             });
@@ -110,22 +84,19 @@ export class ProjectService {
                     },
                 });
 
-            const projectEntity: ProjectEntity = {
-                refId: projectRefId,
-                title: projectDto.title,
-                projectProposalStage: ProjectProposalStage.PENDING,
-                sector: projectDto.sector,
-                sectoralScope: projectDto.sectoralScope,
-                createdBy: createdBy,
-                organization: org,
-                assignees: assignees,
-            };
-
+            const projectEntity = new ProjectEntity();
+            projectEntity.title = projectDto.title;
+            projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
+            projectEntity.sector = projectDto.sector;
+            projectEntity.sectoralScope = projectDto.sectoralScope;
+            projectEntity.createdBy = createdBy;
+            projectEntity.organization = org;
+            projectEntity.assignees = assignees;
             const savedProject: ProjectEntity =
                 await this.projectRepository.save(projectEntity);
 
             const projectSchema: ProjectSchema = {
-                refId: projectRefId,
+                refId: savedProject.refId,
                 name: projectDto.title,
                 createdBy: createdBy.refId,
                 assignee: projectDto.independentCertifiers,
@@ -148,7 +119,7 @@ export class ProjectService {
                 } else {
                     docUrl = await this.fileHelperService.uploadDocument(
                         AdditionalDocType.INF_ADDITIONAL_DOCUMENT,
-                        projectRefId,
+                        savedProject.refId,
                         doc,
                     );
                 }
