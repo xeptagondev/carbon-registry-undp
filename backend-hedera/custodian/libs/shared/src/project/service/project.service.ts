@@ -260,7 +260,7 @@ export class ProjectService {
     async mapNewQueryToOldQuery(project: ProjectEntity) {
         const lastInf = await this.documentService.getLastDoc(
             DocumentEnum.INF,
-            project.id,
+            project.refId,
         );
         const mappedProject = {
             ...lastInf?.data,
@@ -315,17 +315,27 @@ export class ProjectService {
     }
 
     async approveINF(
-        id: string,
+        projectRefId: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
         this.logger.log(
-            `Request received to approve project with id ${id} from user ${requestUser.userName}`,
+            `Request received to approve project with id ${projectRefId} from user ${requestUser.userName}`,
             this.loggerContext,
         );
         this.validateUserAuthorization(requestUser);
 
+        const inf = await this.documentService.getLastDoc(
+            DocumentEnum.INF,
+            projectRefId,
+        );
+        if (!inf) {
+            throw new HttpException(
+                'INF did not found for given project id',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
         await this.documentService.approve(
-            id,
+            inf.refId,
             { remarks: null, action: DocumentStateEnum.DNA_APPROVED },
             requestUser,
         );
@@ -337,17 +347,27 @@ export class ProjectService {
     }
 
     async rejectINF(
-        id: string,
+        projectRefId: string,
         remark: string,
         requestUser: JWTPayload,
     ): Promise<DataResponseDto> {
         this.logger.log(
-            `Request received to reject project with id ${id} from user ${requestUser.userName}`,
+            `Request received to reject project with id ${projectRefId} from user ${requestUser.userName}`,
             this.loggerContext,
         );
         this.validateUserAuthorization(requestUser);
+        const inf = await this.documentService.getLastDoc(
+            DocumentEnum.INF,
+            projectRefId,
+        );
+        if (!inf) {
+            throw new HttpException(
+                'INF did not found for given project id',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
         await this.documentService.reject(
-            id,
+            inf.refId,
             { remarks: remark, action: DocumentStateEnum.DNA_REJECTED },
             requestUser,
         );
