@@ -3,8 +3,8 @@ import { Steps, message } from 'antd';
 import { BasicInformationStep } from './BasicInformation';
 import './MonitoringReport.scss';
 import { ProjectActivityStep } from './ProjectActivityStep';
-import { ImplementationStatusStep } from './ImplementationStatusStep';
-import { SafeguardsStep } from './SafeguardsStep';
+import { ImplementationOfProjectActivityStep } from './ImplementationOfProjectActivity';
+import { DescriptionOfMSStep } from './DescriptionOfMonitoringSystemStep';
 import { DataAndParametersStep } from './DataAndParametersStep';
 import { QualificationStep } from './QuantificationStep';
 import { AnnexureStep } from './AnnexureStep';
@@ -459,7 +459,7 @@ const StepperComponent = (props: any) => {
         </div>
       ),
       description: (
-        <ImplementationStatusStep
+        <ImplementationOfProjectActivityStep
           useLocation={useLocation}
           translator={translator}
           current={current}
@@ -479,7 +479,7 @@ const StepperComponent = (props: any) => {
         </div>
       ),
       description: (
-        <SafeguardsStep
+        <DescriptionOfMSStep
           useLocation={useLocation}
           translator={translator}
           current={current}
