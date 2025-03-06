@@ -2,7 +2,7 @@ export enum ProgrammeManagementSlColumns {
   title = 'title',
   company = 'company',
   projectCategory = 'projectCategory',
-  sector = 'sector',
+  sectoralScope = 'SectoralScope',
   projectProposalStage = 'projectProposalStage',
   projectStatus = 'projectStatus',
   currentStage = 'currentStage',
