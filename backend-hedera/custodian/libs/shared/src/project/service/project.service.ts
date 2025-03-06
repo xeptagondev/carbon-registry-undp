@@ -115,6 +115,7 @@ export class ProjectService {
                 title: projectDto.title,
                 projectProposalStage: ProjectProposalStage.PENDING,
                 sector: projectDto.sector,
+                sectoralScope: projectDto.sectoralScope,
                 createdBy: createdBy,
                 organization: org,
                 assignees: assignees,
@@ -166,6 +167,10 @@ export class ProjectService {
                 requestUser,
             );
 
+            return new DataResponseDto(
+                HttpStatus.OK,
+                'Initial Notification was submitted successfully',
+            );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             this.logger.error(error);
@@ -293,6 +298,7 @@ export class ProjectService {
         };
 
         mappedProject.projectProposalStage = project.projectProposalStage;
+        mappedProject.sectoralScope = project.sectoralScope;
         mappedProject.title = project.title;
 
         mappedProject.company = project?.organization
@@ -355,7 +361,7 @@ export class ProjectService {
 
         return new DataResponseDto(
             HttpStatus.OK,
-            `Project with id: ${id} has been approved by ${requestUser.userId}`,
+            'Initial Notification was approved successfully',
         );
     }
 
@@ -377,7 +383,7 @@ export class ProjectService {
 
         return new DataResponseDto(
             HttpStatus.OK,
-            `Project with id: ${id} has been rejected by ${requestUser.userId}`,
+            'Initial Notification was rejected.',
         );
     }
 }

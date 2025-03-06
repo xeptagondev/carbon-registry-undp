@@ -31,6 +31,11 @@ export class ProjectEntity {
     })
     sector: string;
 
+    @Column({
+        nullable: true,
+    })
+    sectoralScope: string;
+
     @OneToMany(
         () => ActivityEntity,
         (activityEntity) => activityEntity.project,
