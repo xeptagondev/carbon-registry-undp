@@ -90,7 +90,7 @@ export class TaskMonitorService implements OnModuleInit {
                     'Pending task evaluation finished. Sleeping for 3mins',
                 );
                 // time out of 3 mins (1000 * 60 * 3)
-                const timeOutMins = 180000;
+                const timeOutMins = 20000;
                 await new Promise((r) => setTimeout(r, timeOutMins));
             } catch (err) {
                 this.logger.error(err);

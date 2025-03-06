@@ -259,9 +259,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     // User/Organization Registration Flow
     public async register(
         userDto: UsersDTO,
-        defaultPass = '',
+        defaultPass: string = '',
+        isUserActive: boolean,
         requestUser?: JWTPayload,
-        isUserActive = UserStateConstant.DEACTIVE,
     ): Promise<HTTPResponseDto> {
         const user = await this.findUser(userDto.email);
         if (user) {
@@ -286,7 +286,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         userDto: UsersDTO,
         currentStage: UserStageEnum | string,
         defaultPass = '',
-        isUserActive = UserStateConstant.DEACTIVE,
+        isUserActive: boolean,
         requestUser?: JWTPayload,
     ): Promise<HTTPResponseDto> {
         this.utilService.setTagToIdMap();
@@ -676,9 +676,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         const orgEntity = new OrganizationEntity();
         orgEntity.name = userDto.company.name;
         orgEntity.organizationType = orgType;
-        orgEntity.state = OrganizationStateEnum.PENDING;
         orgEntity.email = userDto?.company?.email;
         orgEntity.taxId = userDto?.company?.taxId;
+        orgEntity.state = OrganizationStateEnum.PENDING;
         orgEntity.phoneNumber = userDto?.company?.phoneNo;
         orgEntity.paymentId = userDto?.company?.paymentId;
         orgEntity.faxNumber = userDto?.company?.faxNo;
@@ -737,9 +737,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         // userDto.company.companyRole,
         // );
         await this.organizationRepository.update(
-            { id: orgEntity.id },
+            { id: savedOrg.id },
             {
-                // payload: payload,
+                state: orgType.multiple
+                    ? OrganizationStateEnum.PENDING
+                    : OrganizationStateEnum.ACTIVE,
                 group: createOrganizationResponse.group,
                 logo: userDto.company.logo,
                 updatedTime: new Date().getTime(),
@@ -929,7 +931,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 UserStageEnum.ASSIGN_POLICY,
             );
         }
-        await this.register(userDto, '', requestUser, isUserActive);
+        await this.register(userDto, '', isUserActive, requestUser);
     }
 
     private async inviteNewUser(
@@ -979,15 +981,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     invitation: inviteResponse.invitation,
                 },
             );
-            await this.usersRepository.update(
-                {
-                    email: userDto.email,
-                },
-                {
-                    updatedTime: new Date().getTime(),
-                    stage: UserStageEnum.CREATE_GROUP_TYPE,
-                },
-            );
+
+            const userData = await this.findUser(userDto.email);
 
             await this.guardianService.saveDocument(
                 userDto.email,
@@ -998,7 +993,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         role: userDto.role,
                         email: userDto.email,
                         phoneNumber: userDto.phoneNo,
-                        hederaAccount: userDto.hederaAccount,
+                        hederaAccount: userData.hederaAccount,
                         refId: user.refId,
                         createdTime: Number(user.createdTime),
                         updatedTime: Number(new Date().getTime()),
@@ -1010,15 +1005,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             await this.updateUser(userDto, org, guardianRole);
 
-            await this.usersRepository.update(
-                {
-                    email: userDto.email,
-                },
-                {
-                    updatedTime: new Date().getTime(),
-                    stage: UserStageEnum.APPROVE_USER,
-                },
-            );
             return true;
         } catch (e) {
             throw new HttpException(
