@@ -287,23 +287,21 @@ export class VerificationService {
 
         if (verifyReportDto.verify) {
             await this.documentService.approve(
-                monitoringReport?.project?.refId,
+                monitoringReport?.refId,
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.IC_APPROVED,
                 },
                 requestUser,
-                monitoringReport?.activity?.refId,
             );
         } else {
             await this.documentService.reject(
-                monitoringReport?.project?.refId,
+                monitoringReport?.refId,
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.IC_REJECTED,
                 },
                 requestUser,
-                monitoringReport?.activity?.refId,
             );
         }
         return new DataResponseDto(
@@ -519,23 +517,21 @@ export class VerificationService {
 
         if (verifyReportDto.verify) {
             await this.documentService.approve(
-                verificationReport?.project?.refId,
+                verificationReport?.refId,
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.DNA_APPROVED,
                 },
                 requestUser,
-                verificationReport?.activity?.refId,
             );
         } else {
             await this.documentService.reject(
-                verificationReport?.project?.refId,
+                verificationReport?.refId,
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.DNA_REJECTED,
                 },
                 requestUser,
-                verificationReport?.activity?.refId,
             );
         }
 

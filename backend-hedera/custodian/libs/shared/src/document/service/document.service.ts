@@ -73,11 +73,10 @@ export class DocumentService {
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
     ) {}
 
-    async getDocumentWithProjectAssignees(refId: string, activityId?: string) {
+    async getDocumentWithProjectAssignees(refId: string) {
         return await this.documentRepository.findOne({
             where: {
-                project: { refId: refId },
-                activity: { refId: activityId },
+                refId: refId,
             },
             relations: {
                 project: {
@@ -233,6 +232,37 @@ export class DocumentService {
 
         // send emails and other actions
         if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
+            await this.updateProjectStage(
+                queryRunner,
+                document?.project?.refId,
+                ProjectProposalStage.AUTHORISED,
+            );
+            const pddDoc = await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.VALIDATION_GRID,
+                document?.refId,
+                jwtData.email,
+            );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.VALIDATION_REPORT_APPROVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                pddDoc,
+                jwtData.email,
+            );
+
+            const projectDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.PROJECT_GRID,
+                    document?.project?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PROJECT_VALIDATION_REPORT_APPROVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                projectDoc,
+                jwtData.email,
+            );
             // send email to PD
             const ctx = {
                 icOrganizationName: document.submittedUser.organization.name,
@@ -256,6 +286,37 @@ export class DocumentService {
                 ctx,
             );
         } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
+            await this.updateProjectStage(
+                queryRunner,
+                document?.project?.refId,
+                ProjectProposalStage.VALIDATION_REPORT_REJECTED,
+            );
+            const pddDoc = await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.VALIDATION_GRID,
+                document?.refId,
+                jwtData.email,
+            );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.VALIDATION_REPORT_APPROVE_REJECT,
+                ButtonActionEnum.REJECT,
+                pddDoc,
+                jwtData.email,
+            );
+
+            const projectDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.PROJECT_GRID,
+                    document?.project?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PROJECT_VALIDATION_REPORT_APPROVE_REJECT,
+                ButtonActionEnum.REJECT,
+                projectDoc,
+                jwtData.email,
+            );
             // send email to PD
             const ctx = {
                 icOrganizationName: document.submittedUser.organization.name,
@@ -933,7 +994,7 @@ export class DocumentService {
             1. Authorize the call
         */
         // fix
-        const assigneeOrgEmails: string[] = document.project.assignees.map(
+        const assigneeOrgEmails: string[] = document?.project?.assignees.map(
             (user) => user.email,
         );
 
@@ -1053,6 +1114,38 @@ export class DocumentService {
 
         // send emails and other actions
         if (requestData.action === DocumentStateEnum.IC_REJECTED) {
+            await this.updateProjectStage(
+                queryRunner,
+                document?.project?.refId,
+                ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER,
+            );
+            const pddDoc = await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.PDD_GRID,
+                document?.refId,
+                jwtData.email,
+            );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PDD_IC_APPROVE_REJECT,
+                ButtonActionEnum.REJECT,
+                pddDoc,
+                jwtData.email,
+            );
+
+            const projectDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.PROJECT_GRID,
+                    document?.project?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PROJECT_PDD_IC_APPROVE_REJECT,
+                ButtonActionEnum.REJECT,
+                projectDoc,
+                jwtData.email,
+            );
+
             // send IC rejection email(s) and perform other actions
 
             const subject: string = PDD_IC_REJECT_HEADER.replace(
@@ -1073,6 +1166,38 @@ export class DocumentService {
                 context,
             );
         } else if (requestData.action === DocumentStateEnum.IC_APPROVED) {
+            await this.updateProjectStage(
+                queryRunner,
+                document?.project?.refId,
+                ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER,
+            );
+            const pddDoc = await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.PDD_GRID,
+                document?.refId,
+                jwtData.email,
+            );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PDD_IC_APPROVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                pddDoc,
+                jwtData.email,
+            );
+
+            const projectDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.PROJECT_GRID,
+                    document?.project?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PROJECT_PDD_IC_APPROVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                projectDoc,
+                jwtData.email,
+            );
+
             // send one email to PD admins
             const subject = PDD_IC_APPROVE_HEADER.replace(
                 '{{countryName}}',
@@ -1107,6 +1232,38 @@ export class DocumentService {
                 toDNAContext,
             );
         } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
+            await this.updateProjectStage(
+                queryRunner,
+                document?.project?.refId,
+                ProjectProposalStage.PDD_REJECTED_BY_DNA,
+            );
+            const pddDoc = await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.PDD_GRID,
+                document?.refId,
+                jwtData.email,
+            );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PDD_DNA_APPROVE_REJECT,
+                ButtonActionEnum.REJECT,
+                pddDoc,
+                jwtData.email,
+            );
+
+            const projectDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.PROJECT_GRID,
+                    document?.project?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PROJECT_PDD_DNA_APPROVE_REJECT,
+                ButtonActionEnum.REJECT,
+                projectDoc,
+                jwtData.email,
+            );
+
             // send email to IC (assignee) admin
             const approvedOrgAdminsEmails = await this.getOrgAdminEmails(
                 [prevApproveUser.organization.email],
@@ -1146,6 +1303,37 @@ export class DocumentService {
                 toPDCtx,
             );
         } else if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
+            await this.updateProjectStage(
+                queryRunner,
+                document?.project?.refId,
+                ProjectProposalStage.PDD_APPROVED_BY_DNA,
+            );
+            const pddDoc = await this.guardianService.getGridDocumentUsingRefId(
+                GridTypeEnum.PDD_GRID,
+                document?.refId,
+                jwtData.email,
+            );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PDD_DNA_APPROVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                pddDoc,
+                jwtData.email,
+            );
+
+            const projectDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.PROJECT_GRID,
+                    document?.project?.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.PROJECT_PDD_DNA_APPROVE_REJECT,
+                ButtonActionEnum.APPROVE,
+                projectDoc,
+                jwtData.email,
+            );
             // send email to assigned IC admins
             const assigneeOrgEmails = [];
             const assignedICAdmins = await this.getOrgAdminEmails(
@@ -1189,13 +1377,12 @@ export class DocumentService {
     }
 
     async approve(
-        id: string,
+        refId: string,
         requestData: DocumentActionDTO,
         jwtData: JWTPayload,
-        activityId?: string,
     ) {
         const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(id, activityId);
+            await this.getDocumentWithProjectAssignees(refId);
         if (!documentEntity) {
             throw new HttpException(
                 'Invalid document id',
@@ -1218,7 +1405,7 @@ export class DocumentService {
                         );
                     }
                     break;
-                case DocumentEnum.VALIDATION_REPORT:
+                case DocumentEnum.VALIDATION:
                     {
                         await this.performVRAction(
                             documentEntity,
@@ -1267,13 +1454,12 @@ export class DocumentService {
     }
 
     async reject(
-        id: string,
+        refId: string,
         requestData: DocumentActionDTO,
         jwtData: JWTPayload,
-        activityId?: string,
     ) {
         const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(id, activityId);
+            await this.getDocumentWithProjectAssignees(refId);
         if (!documentEntity) {
             throw new HttpException(
                 'Invalid document id',
@@ -1296,7 +1482,7 @@ export class DocumentService {
                         );
                     }
                     break;
-                case DocumentEnum.VALIDATION_REPORT:
+                case DocumentEnum.VALIDATION:
                     {
                         await this.performVRAction(
                             documentEntity,
@@ -1475,6 +1661,28 @@ export class DocumentService {
                 break;
             case DocumentEnum.PDD:
                 {
+                    const lastINF = await this.documentRepository.findOne({
+                        where: {
+                            documentType: DocumentEnum.INF,
+                            project: {
+                                id: project.id,
+                            },
+                        },
+                        order: {
+                            version: 'DESC',
+                        },
+                    });
+
+                    if (
+                        !lastINF ||
+                        lastINF.state !== DocumentStateEnum.DNA_APPROVED
+                    ) {
+                        throw new HttpException(
+                            'INF needs to be approved',
+                            HttpStatus.BAD_REQUEST,
+                        );
+                    }
+
                     // PDD has to be an Admin of the same organization of the project the document is being submitted to
                     if (
                         jwtData.organizationRole ===
@@ -1489,6 +1697,30 @@ export class DocumentService {
                         );
                     }
 
+                    await this.updateProjectStage(
+                        queryRunner,
+                        project?.refId,
+                        ProjectProposalStage.PDD_SUBMITTED,
+                    );
+                    const projectDoc =
+                        await this.guardianService.getGridDocumentUsingRefId(
+                            GridTypeEnum.PROJECT_GRID,
+                            project?.refId,
+                            jwtData.email,
+                        );
+
+                    await this.guardianService.buttonActionRequest(
+                        ButtonNameEnum.PROJECT_PDD_SUBMIT,
+                        ButtonActionEnum.SUBMIT,
+                        projectDoc,
+                        jwtData.email,
+                    );
+
+                    await this.logProjectStage(
+                        project.refId,
+                        ProjectAuditLogType.PDD_SUBMITTED,
+                        jwtData.userId,
+                    );
                     // get assigned ICs
                     const orgEmails: string[] = project.assignees.map(
                         (org) => org.email,
@@ -1512,15 +1744,9 @@ export class DocumentService {
                         countryName: countryName,
                         programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${project.refId}`,
                     };
-
-                    await this.logProjectStage(
-                        project.refId,
-                        ProjectAuditLogType.PDD_SUBMITTED,
-                        jwtData.userId,
-                    );
                 }
                 break;
-            case DocumentEnum.VALIDATION_REPORT:
+            case DocumentEnum.VALIDATION:
                 {
                     // PDD has to be submitted and in approved state before VR submission
                     const lastPdd = await this.documentRepository.findOne({
@@ -1557,6 +1783,30 @@ export class DocumentService {
                         jwtData.userRole === RoleEnum.Admin &&
                         assigneeOrgIds.includes(jwtData.organizationId)
                     ) {
+                        await this.updateProjectStage(
+                            queryRunner,
+                            project?.refId,
+                            ProjectProposalStage.VALIDATION_REPORT_SUBMITTED,
+                        );
+                        const projectDoc =
+                            await this.guardianService.getGridDocumentUsingRefId(
+                                GridTypeEnum.PROJECT_GRID,
+                                project?.refId,
+                                jwtData.email,
+                            );
+
+                        await this.guardianService.buttonActionRequest(
+                            ButtonNameEnum.PROJECT_VALIDATION_REPORT_SUBMIT,
+                            ButtonActionEnum.SUBMIT,
+                            projectDoc,
+                            jwtData.email,
+                        );
+
+                        await this.logProjectStage(
+                            project.refId,
+                            ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
+                            jwtData.userId,
+                        );
                         // send emails to PD admins (project organization admins)
                         const orgAdminUsers = await queryRunner.manager
                             .getRepository(UsersEntity)
@@ -1614,11 +1864,6 @@ export class DocumentService {
                         };
 
                         await this.mailService.sendMail(dnaMailDTO);
-                        await this.logProjectStage(
-                            project.refId,
-                            ProjectAuditLogType.VERIFICATION_CREATE,
-                            jwtData.userId,
-                        );
                     } else {
                         throw new HttpException(
                             'Unauthorized',
@@ -1880,7 +2125,6 @@ export class DocumentService {
                 documentEntity,
             );
 
-            console.log(submittedUser);
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
                 documentType: dto.documentType,
@@ -1931,7 +2175,7 @@ export class DocumentService {
                 return GUARDIAN_API.BLOCKS.CREATE_INF;
             case DocumentEnum.PDD:
                 return GUARDIAN_API.BLOCKS.CREATE_PDD;
-            case DocumentEnum.VALIDATION_REPORT:
+            case DocumentEnum.VALIDATION:
                 return GUARDIAN_API.BLOCKS.CREATE_VALIDATION;
             case DocumentEnum.MONITORING:
                 return GUARDIAN_API.BLOCKS.CREATE_MONITORING_REPORT;
@@ -1981,12 +2225,12 @@ export class DocumentService {
         await this.auditService.save(log);
     }
 
-    public async getLastDoc(documentType: DocumentEnum, projectId: number) {
+    public async getLastDoc(documentType: DocumentEnum, projectRefId: string) {
         return await this.documentRepository.findOne({
             where: {
                 documentType: documentType,
                 project: {
-                    id: projectId,
+                    refId: projectRefId,
                 },
             },
             order: {

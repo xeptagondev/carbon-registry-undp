@@ -18,26 +18,26 @@ export class DocumentController {
     @UseGuards(AuthGuardService)
     @Post('add')
     async add(@Body() documentDTO: BaseDocumentDTO, @Request() req) {
-        return await this.documentService.save(documentDTO, req);
+        return await this.documentService.save(documentDTO, req.user);
     }
 
     @UseGuards(AuthGuardService)
     @Post('approve')
     async approve(
-        @Query('id') id: string,
+        @Query('refId') refId: string,
         @Body() dto: DocumentActionDTO,
         @Request() req,
     ) {
-        return await this.documentService.approve(id, dto, req.user);
+        return await this.documentService.approve(refId, dto, req.user);
     }
 
     @UseGuards(AuthGuardService)
     @Post('reject')
     async reject(
-        @Query('id') id: string,
+        @Query('refId') refId: string,
         @Body() dto: DocumentActionDTO,
         @Request() req,
     ) {
-        return await this.documentService.reject(id, dto, req.user);
+        return await this.documentService.reject(refId, dto, req.user);
     }
 }
