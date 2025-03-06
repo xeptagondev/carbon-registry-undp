@@ -91,7 +91,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 guardian_role_id \
             ) \
             VALUES ( \
-                'amilareg', \
+                'standard_registry', \
                 '0000000', \
                 'Registry user', \
                 '123456', \

@@ -19,7 +19,6 @@ export class UsersDTO extends SuperDTO<UsersEntity> {
     @Unwrap()
     phoneNo?: string;
     @Unwrap()
-    @IsNotEmpty()
     hederaAccount: string;
     hederaKey: string;
     password: string;

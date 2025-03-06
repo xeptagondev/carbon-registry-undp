@@ -285,21 +285,21 @@ export const AddNewUserComponent = (props: any) => {
                   initialValue={state?.record?.hederaAccount}
                   rules={[
                     {
-                      required: true,
+                      required: false,
                       message: '',
                     },
-                    {
-                      validator: async (rule, value) => {
-                        if (
-                          String(value).trim() === '' ||
-                          String(value).trim() === undefined ||
-                          value === null ||
-                          value === undefined
-                        ) {
-                          throw new Error(`${t('addUser:hederaAccount')} ${t('isRequired')}`);
-                        }
-                      },
-                    },
+                    // {
+                    //   validator: async (rule, value) => {
+                    //     if (
+                    //       String(value).trim() === '' ||
+                    //       String(value).trim() === undefined ||
+                    //       value === null ||
+                    //       value === undefined
+                    //     ) {
+                    //       throw new Error(`${t('addUser:hederaAccount')} ${t('isRequired')}`);
+                    //     }
+                    //   },
+                    // },
                   ]}
                 >
                   <Input disabled={isUpdate} size="large" />
@@ -318,21 +318,21 @@ export const AddNewUserComponent = (props: any) => {
                   }
                   rules={[
                     {
-                      required: true,
+                      required: false,
                       message: '',
                     },
-                    {
-                      validator: async (rule, value) => {
-                        if (
-                          String(value).trim() === '' ||
-                          String(value).trim() === undefined ||
-                          value === null ||
-                          value === undefined
-                        ) {
-                          throw new Error(`${t('addUser:hederaKey')} ${t('isRequired')}`);
-                        }
-                      },
-                    },
+                    // {
+                    //   validator: async (rule, value) => {
+                    //     if (
+                    //       String(value).trim() === '' ||
+                    //       String(value).trim() === undefined ||
+                    //       value === null ||
+                    //       value === undefined
+                    //     ) {
+                    //       throw new Error(`${t('addUser:hederaKey')} ${t('isRequired')}`);
+                    //     }
+                    //   },
+                    // },
                   ]}
                 >
                   <Input disabled={isUpdate} size="large" />
