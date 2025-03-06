@@ -26,7 +26,7 @@ const ProgrammeManagement = () => {
   ];
 
   const onNavigateToProgrammeView = (record: any) => {
-    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(record.infRefId), { state: { record } });
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(record.refId), { state: { record } });
   };
 
   const onClickAddProgramme = () => {
