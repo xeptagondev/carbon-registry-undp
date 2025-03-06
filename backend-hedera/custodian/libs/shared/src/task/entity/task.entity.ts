@@ -25,6 +25,12 @@ export class TaskEntity {
     @Column({ type: 'enum', enum: TaskEnum })
     state: TaskEnum;
 
+    @Column({ default: 2 })
+    retryAttemps?: number = 2;
+
+    @Column({ default: 0 })
+    attemptedCount?: number = 0;
+
     @ManyToOne(() => UsersEntity, (usersEntity) => usersEntity.submittedTasks, {
         nullable: true,
     })
