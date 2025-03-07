@@ -1333,7 +1333,6 @@ export class DocumentService {
                 jwtData.email,
             );
             // send email to assigned IC admins
-            const assigneeOrgEmails = [];
             const assignedICAdmins = await this.getOrgAdminEmails(
                 assigneeOrgEmails,
                 queryRunner,
