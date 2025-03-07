@@ -58,24 +58,19 @@ export const AnnexureStep = (props: any) => {
               disabled={FormMode.VIEW === formMode}
               onFinish={handleFormSubmit}
             >
+              <h4 className="appendix-title">
+                <i>{`${t('monitoringReport:a_appendix')}`}</i>
+              </h4>
               <Row className="row" gutter={[40, 16]}>
                 <Col xl={24} md={24}>
                   <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:additionalComments')}
-                      name="additionalComments"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:additionalComments')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                    <Form.Item>
+                      <TextArea rows={8} disabled={FormMode.VIEW === formMode} />
                     </Form.Item>
+
                     <Form.Item
-                      label={t('monitoringReport:q_documentUpload')}
-                      name="optionalDocuments"
+                      label={t('monitoringReport:a_uploadDoc')}
+                      name="a_uploadDoc"
                       valuePropName="fileList"
                       getValueFromEvent={normFile}
                       required={false}
@@ -111,21 +106,30 @@ export const AnnexureStep = (props: any) => {
                   </div>
                 </Col>
               </Row>
-              <Row justify={'end'} className="step-actions-end">
-                <Button onClick={prev} disabled={false}>
-                  {t('monitoringReport:back')}
-                </Button>
-                <Button onClick={cancel} disabled={false}>
-                  {t('monitoringReport:cancel')}
-                </Button>
-                {userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
+              <Row className="step-actions-end">
+                <Col>
+                  <Button onClick={prev} disabled={false}>
+                    {t('monitoringReport:back')}
+                  </Button>
+                </Col>
+                <Col offset={20}>
+                  <Button danger onClick={cancel} disabled={false}>
+                    {t('monitoringReport:cancel')}
+                  </Button>
+                </Col>
+                <Col>
+                  <Button type="primary" htmlType="submit" disabled={loading}>
+                    <span>{t('monitoringReport:submit')}</span>
+                  </Button>
+                </Col>
+                {/* {userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
                   FormMode.VIEW !== formMode && (
                     <Button type="primary" htmlType="submit" disabled={loading}>
                       <span>{t('monitoringReport:submit')}</span>
                     </Button>
-                  )}
+                  )} */}
 
-                {userInfoState?.companyRole === CompanyRole.CLIMATE_FUND &&
+                {/* {userInfoState?.companyRole === CompanyRole.CLIMATE_FUND &&
                   status === DocumentStatus.PENDING && (
                     <Button danger onClick={reject} disabled={false}>
                       <span>{t('monitoringReport:reject')}</span>
@@ -136,7 +140,7 @@ export const AnnexureStep = (props: any) => {
                     <Button type="primary" onClick={approve} disabled={false}>
                       <span>{t('monitoringReport:approve')}</span>
                     </Button>
-                  )}
+                  )} */}
               </Row>
             </Form>
           </div>
