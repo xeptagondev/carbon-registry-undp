@@ -61,7 +61,7 @@ export const GUARDIAN_API = {
             FILTER_PROJECT_ID: 'pdd_project_id_filter',
             FILTER_ACTIVITY_ID: '',
             FILTER_STATUS: 'pdd_status_filter',
-            FILTER_NOT_STATUS: 'pdd_not_status_filter',
+            FILTER_NOT_STATUS: '',
         },
         VALIDATION_QUERY: {
             GRID: 'validation_report_grid',
