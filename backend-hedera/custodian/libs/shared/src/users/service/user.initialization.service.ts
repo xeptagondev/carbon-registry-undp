@@ -45,6 +45,7 @@ export class UserInitializationService implements OnModuleInit {
                 await this.organizationTypeRepository.find({
                     where: { multiple: false },
                 });
+
             for (const orgType of singleOrgTypes) {
                 const org: OrganizationEntity =
                     await this.organizationRepository.findOne({
