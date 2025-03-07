@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class MonitoringReportDto {
@@ -7,8 +7,8 @@ export class MonitoringReportDto {
     @ApiProperty()
     programmeId: string;
 
-    @IsNotEmpty()
-    @IsString()
-    @ApiProperty()
-    content: string;
+    @ApiProperty({
+        type: Object,
+    })
+    content: any;
 }
