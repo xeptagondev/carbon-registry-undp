@@ -138,7 +138,6 @@
     color: $steps-title;
   }
 }
-
 .projectParticipantsTable {
   margin: 20px 0px;
 
@@ -215,6 +214,20 @@
   }
 }
 
+.appendix-title {
+  font-size: 18px;
+  margin-top: 36px;
+  color: rgba(58, 53, 65, 0.58);
+  i {
+    color: rgba(58, 53, 65, 0.5);
+  }
+}
+
+// .step-actions {
+//   &-end {
+//     margin: 10px;
+//   }
+// }
 // .ant-tooltip {
 //   // width: 900px !important;
 //   .ant-tooltip-content {

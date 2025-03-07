@@ -6,8 +6,8 @@ import { ProjectActivityStep } from './ProjectActivityStep';
 import { ImplementationOfProjectActivityStep } from './ImplementationOfProjectActivity';
 import { DescriptionOfMSStep } from './DescriptionOfMonitoringSystemStep';
 import { DataAndParametersStep } from './DataAndParametersStep';
-import { QualificationStep } from './QuantificationStep';
-import { AnnexureStep } from './AnnexureStep';
+import { CalcEmissionReductionStep } from './CalcOfEmissionReductionStep';
+import { AnnexureStep } from './AppendixStep';
 import { useForm } from 'antd/lib/form/Form';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -20,6 +20,7 @@ import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions'
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
+
 const StepperComponent = (props: any) => {
   const navigate = useNavigate();
   const { useLocation, translator, countries, selectedVersion, handleDocumentStatus } = props;
@@ -519,7 +520,7 @@ const StepperComponent = (props: any) => {
         </div>
       ),
       description: (
-        <QualificationStep
+        <CalcEmissionReductionStep
           useLocation={useLocation}
           translator={translator}
           current={current}
