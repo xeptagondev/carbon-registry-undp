@@ -15,6 +15,7 @@ import { MailModule } from '../mail/mail.module';
 import { UtilModule } from '../util/util.module';
 import { GuardianModule } from '../guardian/guardian.module';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
+import { DocumentModule } from '../document/document.module';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { FileHandlerModule } from '../file-handler/file-handler.module';
         UtilModule,
         GuardianModule,
         FileHandlerModule,
+        DocumentModule,
         TypeOrmModule.forFeature([
             ProjectEntity,
             UsersEntity,

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
@@ -20,6 +20,10 @@ import {
 } from '../enum/button-type.enum';
 import { ButtonPayloadInterface } from '../interface/guardian-button-payload.interface';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
+import {
+    TaskSetInterface,
+    TaskResponseInterface,
+} from '../interface/guardian-async-task.interface';
 
 @Injectable()
 export class GuardianService {
@@ -31,6 +35,45 @@ export class GuardianService {
         protected readonly usersRepository: Repository<UsersEntity>,
         private readonly logger: InstantLogger,
     ) {}
+
+    public async guardianHttpGet(
+        url: string,
+        token: string,
+    ): Promise<AxiosResponse> {
+        try {
+            return await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+        } catch (ex: any) {
+            this.logger.error(
+                `Exception in GET Request: ${ex.response?.data?.message || ex.message}`,
+                this.loggerContext,
+            );
+        }
+    }
+
+    public async guardianHttpPost(
+        url: string,
+        payload: any,
+        token: string,
+    ): Promise<AxiosResponse> {
+        try {
+            return await axios.post(url, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+        } catch (ex: any) {
+            this.logger.error(
+                `Exception in POST Request: ${ex.response?.data?.message || ex.message}`,
+                this.loggerContext,
+            );
+        }
+    }
 
     async getGuardianError(error: any, calledMainFunction: string) {
         this.logger.error(
@@ -84,10 +127,56 @@ export class GuardianService {
         }
     }
 
-    public async registerUser(email: string, password: string): Promise<any> {
+    public async fetchAsyncTaskResponse(
+        taskId: string,
+        email: string,
+    ): Promise<any> {
         try {
-            const url = this.buildGuardianUrl(GUARDIAN_API.REGISTER);
-            await axios.post(url, {
+            const retryCount = this.configService.get<number>(
+                'guardian.task.retrycount',
+            );
+            let taskResponse: TaskResponseInterface;
+
+            for (let i = 0; i < retryCount; i++) {
+                const url = this.buildGuardianUrl(
+                    `${GUARDIAN_API.FETCH_TASK_BY_ID}${taskId}`,
+                );
+                const user = await this.usersRepository.findOneBy({
+                    email: email,
+                });
+
+                const token = await this.getAccessToken(user.refreshToken);
+
+                try {
+                    const response = await this.guardianHttpGet(url, token);
+
+                    if (response.status === HttpStatus.OK) {
+                        taskResponse = response.data;
+                        if (taskResponse?.result) {
+                            return taskResponse.result;
+                        }
+                    }
+                } catch (error) {
+                    this.logger.warn(
+                        `Attempt ${i + 1} failed: ${error.message}`,
+                    );
+                }
+
+                // eslint-disable-next-line no-magic-numbers
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        } catch (error) {
+            await this.getGuardianError(error, 'fetchAsyncTaskResponse');
+        }
+    }
+
+    public async registerUser(
+        email: string,
+        password: string,
+    ): Promise<AxiosResponse> {
+        try {
+            const signUpUrl = this.buildGuardianUrl(GUARDIAN_API.REGISTER);
+            return await axios.post(signUpUrl, {
                 username: email,
                 password,
                 // eslint-disable-next-line camelcase
@@ -96,25 +185,53 @@ export class GuardianService {
             });
         } catch (e) {
             await this.getGuardianError(e, 'registerUser');
+            throw new HttpException(
+                'User Sign-Up Failed',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    public async generateHederaAccount(
+        email: string,
+    ): Promise<TaskSetInterface> {
+        try {
+            const url = this.buildGuardianUrl(
+                GUARDIAN_API.GENERATE_HEDERA_ACCOUNT,
+            );
+            const user = await this.usersRepository.findOneBy({ email: email });
+            const token = await this.getAccessToken(user.refreshToken);
+
+            const response = await this.guardianHttpGet(url, token);
+
+            if (response.status !== HttpStatus.ACCEPTED) {
+                throw new Error(
+                    `Failed to generate Hedera account for user: ${email}`,
+                );
+            }
+
+            this.logger.log(
+                `Successfully added Task to generate Hedera account for user: ${email}`,
+                this.loggerContext,
+            );
+            return response.data;
+        } catch (error) {
+            await this.getGuardianError(error, 'generateHederaAccount');
         }
     }
 
     public async updateUserProfile(
         email: string,
-        hashedPass: string,
         parentDid: string,
         hederaAccount: string,
         hederaKey: string,
-    ): Promise<any> {
+    ): Promise<TaskSetInterface> {
         try {
-            const userLoginResponse = await this.login({
-                username: email,
-                password: hashedPass,
+            const user = await this.usersRepository.findOneBy({
+                email: email,
             });
             const url = `${this.buildGuardianUrl(GUARDIAN_API.PROFILE_UPDATE)}/${email}`;
-            const token = await this.getAccessToken(
-                userLoginResponse.refreshToken,
-            );
+            const token = await this.getAccessToken(user.refreshToken);
             const response = await axios.put(
                 url,
                 {
@@ -159,18 +276,13 @@ export class GuardianService {
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
             );
-            const response = await axios.post(
+            const response = await this.guardianHttpPost(
                 url,
                 {
                     policyIds: [this.configService.get('policy.id')],
                     assign: assign,
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                },
+                token,
             );
             return response.data;
         } catch (e) {
@@ -195,49 +307,21 @@ export class GuardianService {
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
             );
-            const response = await axios.post(url, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            return response.data;
+            const response = await this.guardianHttpPost(url, payload, token);
+
+            if (response.status == HttpStatus.OK) {
+                return response.data;
+            }
+            throw new HttpException(
+                'Create Group Failed',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         } catch (error) {
             await this.getGuardianError(error, 'createGroupType');
         }
     }
 
-    public async createOrganization(
-        email: string,
-        hashedPass: string,
-        blockId: string,
-        payload: any,
-    ): Promise<any> {
-        try {
-            const url = this.buildGuardianUrl(
-                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
-            );
-            const userLoginResponse = await this.login({
-                username: email,
-                password: hashedPass,
-            });
-            const token = await this.getAccessToken(
-                userLoginResponse.refreshToken,
-            );
-
-            const response = await axios.post(url, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            return response.data;
-        } catch (error) {
-            await this.getGuardianError(error, 'createOrganization');
-        }
-    }
-
-    public async updateDocument(
+    public async saveDocument(
         email: string,
         blockName: string,
         payload: any,
@@ -254,16 +338,45 @@ export class GuardianService {
 
             const token = await this.getAccessToken(user.refreshToken);
 
-            const response = await axios.post(url, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await this.guardianHttpPost(url, payload, token);
+            await new Promise((resolve) => setTimeout(resolve, 10000));
             return response.data;
         } catch (error) {
-            await this.getGuardianError(error, 'updateOrganization');
+            await this.getGuardianError(error, 'saveDocument');
             return;
+        }
+    }
+
+    private async verifySavedDocument(
+        refId: string,
+        email: string,
+        girdType: GridTypeEnum,
+    ) {
+        try {
+            const retryCount = this.configService.get<number>(
+                'guardian.task.retrycount',
+            );
+            for (let i = 0; i < retryCount; i++) {
+                try {
+                    const document = await this.getGridDocumentUsingRefId(
+                        girdType,
+                        refId,
+                        email,
+                    );
+                    if (document) {
+                        return document;
+                    }
+                } catch (error) {
+                    this.logger.warn(
+                        `Attempt ${i + 1} failed to verify document: ${error.message}`,
+                    );
+                }
+
+                // eslint-disable-next-line no-magic-numbers
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        } catch (error) {
+            await this.getGuardianError(error, 'fetchAsyncTaskResponse');
         }
     }
 
@@ -354,18 +467,21 @@ export class GuardianService {
         grid: GridTypeEnum,
         refId: string,
         email: string,
+        isRevokedEnable: boolean = false,
     ): Promise<any> {
         const gridApis = this.getGridApi(grid);
         const token = await this.getAuthenticatedUserToken(email);
         const policyId = this.configService.get('policy.id');
-
-        // await this.applyFilters(
-        //     policyId,
-        //     token,
-        //     gridApis.FILTER_NOT_STATUS,
-        //     'REVOKED',
-        // );
         await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
+
+        if (isRevokedEnable) {
+            await this.applyFilters(
+                policyId,
+                token,
+                gridApis.FILTER_NOT_STATUS,
+                'REVOKED',
+            );
+        }
 
         try {
             const gridData = await this.fetchGridData(
@@ -376,7 +492,7 @@ export class GuardianService {
 
             const fullVCDocument = gridData.find(
                 (response: any) =>
-                    response?.document?.credentialSubject[0]?.refId === refId,
+                    response?.document?.credentialSubject[0]?.refId == refId,
             );
             if (!fullVCDocument) {
                 throw new Error('No document found for the given refId');
@@ -390,6 +506,14 @@ export class GuardianService {
                 gridApis.FILTER_REF_ID,
                 null,
             );
+            if (isRevokedEnable) {
+                await this.applyFilters(
+                    policyId,
+                    token,
+                    gridApis.FILTER_NOT_STATUS,
+                    null,
+                );
+            }
         }
     }
 
@@ -493,24 +617,20 @@ export class GuardianService {
         const token = await this.getAuthenticatedUserToken(email);
         const policyId = this.configService.get('policy.id');
 
+        await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
+
         await this.applyFilters(
             policyId,
             token,
             gridApis.FILTER_NOT_STATUS,
             'REVOKED',
         );
-
-        // const gridDataOne = await this.fetchGridData(gridApis, policyId, token);
-        // console.log('---------------One----------', gridDataOne);
-
-        await this.applyFilters(policyId, token, gridApis.FILTER_REF_ID, refId);
         try {
             const gridData = await this.fetchGridData(
                 gridApis,
                 policyId,
                 token,
             );
-            // console.log('---------------Two----------', gridData);
             const fullVCDocument = gridData.find(
                 (response: any) =>
                     response?.document?.credentialSubject[0]?.refId === refId,
@@ -593,7 +713,6 @@ export class GuardianService {
             });
             return response.data;
         } catch (error) {
-            console.log(error);
             await this.getGuardianError(error, 'createEntity');
         }
     }
@@ -617,36 +736,6 @@ export class GuardianService {
             return response.data;
         } catch (error) {
             await this.getGuardianError(error, 'getProjects');
-        }
-    }
-
-    public async createUser(
-        email: string,
-        hashedPass: string,
-        blockId: string,
-        payload: any,
-    ): Promise<any> {
-        try {
-            const url = this.buildGuardianUrl(
-                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
-            );
-            const userLoginResponse = await this.login({
-                username: email,
-                password: hashedPass,
-            });
-            const token = await this.getAccessToken(
-                userLoginResponse.refreshToken,
-            );
-
-            const response = await axios.post(url, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            return response.data;
-        } catch (error) {
-            await this.getGuardianError(error, 'createUser');
         }
     }
 
@@ -783,7 +872,7 @@ export class GuardianService {
                 loginDto,
             );
 
-            if (response?.status === 200) {
+            if (response?.status == HttpStatus.OK) {
                 const message: string = `User: ${loginDto.username} has logged into the system.`;
 
                 try {
