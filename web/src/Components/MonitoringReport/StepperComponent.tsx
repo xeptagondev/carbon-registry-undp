@@ -13,6 +13,7 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import { useNavigate, useParams } from 'react-router-dom';
 import moment from 'moment';
 import { DocumentTypeEnum } from '../../Definitions/Enums/document.type.enum';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { extractFilePropertiesFromLink, fileUploadValueExtract } from '../../Utils/utilityHelper';
 import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
@@ -24,7 +25,7 @@ import { ROUTES } from '../../Config/uiRoutingConfig';
 const StepperComponent = (props: any) => {
   const navigate = useNavigate();
   const { useLocation, translator, countries, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(1);
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
   const [formValues, setFormValues] = useState({});
@@ -37,11 +38,34 @@ const StepperComponent = (props: any) => {
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
 
+  const { state } = useLocation();
+  const isView = !!state?.isView;
+  const isEdit = !!state?.isEdit;
+  const [loading, setLoading] = useState<boolean>(isView || isEdit);
+
   const onValueChange = (newValues: any) => {
     setFormValues((prevValues) => ({
       ...prevValues,
       ...newValues,
     }));
+  };
+  const [values, setValues] = useState({
+    projectId: Number(id),
+    name: 'MonitoringReport',
+    companyId: undefined,
+    documentType: DocumentEnum.MONITORING,
+    data: {},
+  });
+
+  const handleValuesUpdate = (val: any) => {
+    console.log('----------temp vals-------------', val);
+    setValues((prevVal: any) => {
+      const tempContent = {
+        ...prevVal.data,
+        ...val,
+      };
+      return { ...prevVal, data: tempContent };
+    });
   };
 
   const scrollSection = useRef({} as any);
@@ -101,15 +125,16 @@ const StepperComponent = (props: any) => {
 
   const getProgrammeDetailsById = async () => {
     try {
-      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-        programmeId: id,
-      });
+      setLoading(true);
+      // const { data } = await post(API_PATHS.PROJECT_BY_ID, {
+      //   programmeId: id,
+      // });
 
-      const {
-        data: { user },
-      } = await get(API_PATHS.USER_PROFILE);
+      // const {
+      //   data: { user },
+      // } = await get(API_PATHS.USER_PROFILE);
 
-      setProjectCategory(data?.projectCategory);
+      // setProjectCategory(data?.projectCategory);
     } catch (error) {
       console.log('error');
     }
@@ -440,15 +465,14 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <ProjectActivityStep
-          useLocation={useLocation}
-          translator={translator}
+          t={t}
           current={current}
           form={projectActivityForm}
           formMode={mode}
           next={next}
           prev={prev}
           countries={countries}
-          onValueChange={onValueChange}
+          handleValuesUpdate={handleValuesUpdate}
         />
       ),
     },
