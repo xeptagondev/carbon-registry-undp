@@ -1078,8 +1078,6 @@ export class DocumentService {
         // set user who approved the current state change
         document.approvedUser = user;
 
-        // TODO: Guardian call
-
         // save document
         await queryRunner.manager.save(DocumentEntity, document);
 
@@ -2136,6 +2134,7 @@ export class DocumentService {
                 activity: dto.activityRefId,
             };
 
+            console.log(documentSchema);
             await this.guardianService.createEntity(
                 jwtData.email,
                 this.utilService.getBlock(

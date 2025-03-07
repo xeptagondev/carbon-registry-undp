@@ -12,7 +12,7 @@
         "start": "nest start",
         "start:task-monitor": "nest start task-monitor",
         "start:custodian": "nest start custodian --watch",
-        "start:dev": "concurrently \"nest start --watch custodian\" \"nest start --watch task-monitor\"",
+        "start:dev": "concurrently \"nest start --watch custodian\" \"nest start task-monitor\"",
         "start:debug": "nest start --debug --watch",
         "start:prod": "node dist/apps/custodian/main",
         "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",

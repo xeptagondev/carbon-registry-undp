@@ -116,7 +116,7 @@ export class VerificationService {
             );
         }
 
-        const docContent = JSON.parse(monitoringReportDto.content);
+        const docContent = monitoringReportDto.content;
 
         if (
             docContent?.annexures?.optionalDocuments &&
@@ -333,7 +333,7 @@ export class VerificationService {
             );
         }
 
-        const docContent = JSON.parse(verificationReportDto.content);
+        const docContent = verificationReportDto.content;
 
         // Handle document uploads
         await this.uploadOptionalDocuments(
