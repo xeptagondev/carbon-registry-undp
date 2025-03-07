@@ -1,9 +1,9 @@
-import { UploadOutlined } from '@ant-design/icons';
+//import { UploadOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, Row, Upload, DatePicker } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
-// import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
+import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import NetEmissionReduction from '../Common/NetEmissonReduction';
 import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
 import moment from 'moment';
@@ -39,91 +39,6 @@ export const CalcEmissionReductionStep = (props: any) => {
     return e?.fileList;
   };
   const t = translator.t;
-
-  // const calculateAnnualAverage = () => {
-  //   const years = form.getFieldValue('yearsTotal');
-
-  //   const beTotal = form.getFieldValue('baselineEmissionsTotal') || 0;
-  //   const beAvg = Number(beTotal) / Number(years);
-  //   form.setFieldValue('baselineEmissionsAverage', beAvg.toFixed(2));
-
-  //   const peTotal = form.getFieldValue('projectEmissionsTotal') || 0;
-  //   const peAvg = Number(peTotal) / Number(years);
-  //   form.setFieldValue('projectEmissionsAverage', peAvg.toFixed(2));
-
-  //   const leTotal = form.getFieldValue('leakageEmissionsTotal') || 0;
-  //   const leAvg = Number(leTotal) / Number(years);
-  //   form.setFieldValue('leakageEmissionsAverage', leAvg.toFixed(2));
-
-  //   const ghgTotal = form.getFieldValue('ghgEmissionsTotal') || 0;
-  //   const ghgAvg = Number(ghgTotal) / Number(years);
-  //   form.setFieldValue('ghgEmissionsAverage', ghgAvg.toFixed(2));
-  // };
-
-  // const onEmissionsYearChange = () => {
-  //   const listVals = form.getFieldValue('emissionReductionsRemovalsList');
-  //   form.setFieldValue('yearsTotal', listVals.length);
-  //   calculateAnnualAverage();
-  // };
-
-  // const onBaselineEmissionsChange = () => {
-  //   const listVals = form.getFieldValue('emissionReductionsRemovalsList');
-  //   let tempTotal = 0;
-  //   if (listVals?.length) {
-  //     listVals.forEach((item: any) => {
-  //       tempTotal =
-  //         typeof item?.baselineEmissions !== 'undefined'
-  //           ? Number(item?.baselineEmissions) + tempTotal
-  //           : tempTotal;
-  //     });
-  //   }
-  //   form.setFieldValue('baselineEmissionsTotal', String(tempTotal));
-  //   calculateAnnualAverage();
-  // };
-
-  // const onProjectEmissionsChange = () => {
-  //   const listVals = form.getFieldValue('emissionReductionsRemovalsList');
-  //   let tempTotal = 0;
-  //   if (listVals?.length) {
-  //     listVals.forEach((item: any) => {
-  //       tempTotal =
-  //         typeof item?.projectEmissions !== 'undefined'
-  //           ? Number(item?.projectEmissions) + tempTotal
-  //           : tempTotal;
-  //     });
-  //   }
-  //   form.setFieldValue('projectEmissionsTotal', String(tempTotal));
-  //   calculateAnnualAverage();
-  // };
-
-  // const onLeakageEmissionsChange = () => {
-  //   const listVals = form.getFieldValue('emissionReductionsRemovalsList');
-  //   let tempTotal = 0;
-  //   if (listVals?.length) {
-  //     listVals.forEach((item: any) => {
-  //       tempTotal =
-  //         typeof item?.leakageEmissions !== 'undefined'
-  //           ? Number(item?.leakageEmissions) + tempTotal
-  //           : tempTotal;
-  //     });
-  //   }
-  //   form.setFieldValue('leakageEmissionsTotal', String(tempTotal));
-  //   calculateAnnualAverage();
-  // };
-  // const onGhgEmissionsChange = () => {
-  //   const listVals = form.getFieldValue('emissionReductionsRemovalsList');
-  //   let tempTotal = 0;
-  //   if (listVals?.length) {
-  //     listVals.forEach((item: any) => {
-  //       tempTotal =
-  //         typeof item?.ghgEmissions !== 'undefined'
-  //           ? Number(item?.ghgEmissions) + tempTotal
-  //           : tempTotal;
-  //     });
-  //   }
-  //   form.setFieldValue('ghgEmissionsTotal', String(tempTotal));
-  //   calculateAnnualAverage();
-  // };
 
   const calculateNetGHGEmissions = (value?: any, index?: number) => {
     let baselineEmissionReductionsVal = 0;
@@ -511,6 +426,993 @@ export const CalcEmissionReductionStep = (props: any) => {
                       <h3 className="form-section-title">
                         {`${t('monitoringReport:ce_estimatedEmissionReduction')}`}
                       </h3>
+
+                      {/* need to update this */}
+                      <>
+                        <LabelWithTooltip
+                          label={t('PDD:netEmmissionsTitle')}
+                          required={false}
+                          labelStyles={{
+                            fontSize: '16px',
+                            fontWeight: '500',
+                          }}
+                        />
+                        <>
+                          <div className="estimated-emmissions-table-form">
+                            <Row className="header" justify={'space-between'}>
+                              <Col md={6} xl={6}>
+                                Year
+                              </Col>
+                              <Col md={3} xl={3}>
+                                Estimated Baseline Emissions Or Removals (tCO₂e)
+                              </Col>
+                              <Col md={3} xl={3}>
+                                Estimated Project Emissions Or Removals (tCO₂e)
+                              </Col>
+                              <Col md={3} xl={3}>
+                                Estimated Leakage Emissions (tCO₂e)
+                              </Col>
+                              <Col md={3} xl={3}>
+                                Estimated Net GHG Emission Reductions Or Removals (tCO₂e)
+                              </Col>
+                              <Col md={2} xl={2}>
+                                {' '}
+                              </Col>
+                            </Row>
+
+                            <Row justify={'space-between'} align={'middle'}>
+                              <Col md={6} xl={6} className="col1">
+                                <Form.Item
+                                  label={``}
+                                  name="emissionsPeriodStart"
+                                  className="datepicker"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: '',
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <DatePicker
+                                    size="large"
+                                    placeholder="Start Date"
+                                    picker="month"
+                                    format="YYYY MMM"
+                                    disabled={disableFields}
+                                    // disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                                  />
+                                </Form.Item>
+                                <p>to</p>
+                                <Form.Item
+                                  label={``}
+                                  name="emissionsPeriodEnd"
+                                  className="datepicker"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: '',
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        const startDate = moment(
+                                          form.getFieldValue('emissionsPeriodStart')
+                                        ).startOf('month');
+                                        const selectedDate = moment(value).endOf('month');
+                                        const duration = moment.duration(
+                                          selectedDate.diff(startDate)
+                                        );
+
+                                        const isOneYear = Math.round(duration.asMonths()) === 12;
+
+                                        if (!isOneYear) {
+                                          throw new Error('Duration should be a year');
+                                        }
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <DatePicker
+                                    size="large"
+                                    placeholder="End Date"
+                                    picker="month"
+                                    format="YYYY MMM"
+                                    onChange={(value) => onPeriodEndChange(value, 1)}
+                                    disabled={disableFields}
+                                    disabledDate={(currentDate: any) =>
+                                      currentDate <
+                                      moment(form.getFieldValue('emissionsPeriodStart')).startOf(
+                                        'month'
+                                      )
+                                    }
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3}>
+                                <Form.Item
+                                  name="baselineEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        } else if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        } else if (Number(value) < 0) {
+                                          return Promise.reject(
+                                            new Error(`${t('PDD:shouldHavePositive')}`)
+                                          );
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input
+                                    type="number"
+                                    disabled={disableFields}
+                                    onChange={(value) => {
+                                      calculateNetGHGEmissions(value);
+                                      calculateTotalEmissions(
+                                        value,
+                                        'baselineEmissionReductions',
+                                        'totalBaselineEmissionReductions'
+                                      );
+                                    }}
+                                    step="1"
+                                    onKeyDown={(e) =>
+                                      (e.key === '.' || e.key === ',') && e.preventDefault()
+                                    }
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3}>
+                                <Form.Item
+                                  name="projectEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        } else if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        } else if (Number(value) < 0) {
+                                          return Promise.reject(
+                                            new Error(`${t('PDD:shouldHavePositive')}`)
+                                          );
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input
+                                    type="number"
+                                    disabled={disableFields}
+                                    onChange={(value) => {
+                                      calculateNetGHGEmissions(value);
+                                      calculateTotalEmissions(
+                                        value,
+                                        'projectEmissionReductions',
+                                        'totalProjectEmissionReductions'
+                                      );
+                                    }}
+                                    step="1"
+                                    onKeyDown={(e) =>
+                                      (e.key === '.' || e.key === ',') && e.preventDefault()
+                                    }
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3}>
+                                <Form.Item
+                                  name="leakageEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        } else if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        } else if (Number(value) < 0) {
+                                          return Promise.reject(
+                                            new Error(`${t('PDD:shouldHavePositive')}`)
+                                          );
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input
+                                    type="number"
+                                    disabled={disableFields}
+                                    onChange={(value) => {
+                                      calculateNetGHGEmissions(value);
+                                      calculateTotalEmissions(
+                                        value,
+                                        'leakageEmissionReductions',
+                                        'totalLeakageEmissionReductions'
+                                      );
+                                    }}
+                                    step="1"
+                                    onKeyDown={(e) =>
+                                      (e.key === '.' || e.key === ',') && e.preventDefault()
+                                    }
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3}>
+                                <Form.Item
+                                  name="netEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        } else if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        } else if (Number(value) < 0) {
+                                          return Promise.reject(
+                                            new Error(`${t('PDD:shouldHavePositive')}`)
+                                          );
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input
+                                    type="number"
+                                    onChange={(value) => calculateNetGHGEmissions(value)}
+                                    disabled
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col md={2} xl={2}>
+                                {' '}
+                              </Col>
+                            </Row>
+
+                            <Form.List name="extraEmissionReductions">
+                              {(fields, { add, remove }) => (
+                                <>
+                                  {fields.map(({ key, name, ...restField }) => (
+                                    <>
+                                      <Row justify={'space-between'} align={'middle'}>
+                                        <Col md={6} xl={6} className="col1">
+                                          <Form.Item
+                                            label={``}
+                                            name={[name, 'emissionsPeriodStart']}
+                                            className="datepicker"
+                                            rules={[
+                                              {
+                                                required: true,
+                                                message: '',
+                                              },
+                                              {
+                                                validator: async (rule, value) => {
+                                                  if (
+                                                    String(value).trim() === '' ||
+                                                    String(value).trim() === undefined ||
+                                                    value === null ||
+                                                    value === undefined
+                                                  ) {
+                                                    throw new Error(`${t('PDD:required')}`);
+                                                  }
+                                                },
+                                              },
+                                            ]}
+                                          >
+                                            <DatePicker
+                                              size="large"
+                                              disabled={disableFields}
+                                              placeholder="Start Date"
+                                              picker="month"
+                                              format="YYYY MMM"
+                                              // disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                                            />
+                                          </Form.Item>
+                                          <p>to</p>
+                                          <Form.Item
+                                            label={``}
+                                            name={[name, 'emissionsPeriodEnd']}
+                                            className="datepicker"
+                                            rules={[
+                                              {
+                                                required: true,
+                                                message: '',
+                                              },
+                                              {
+                                                validator: async (rule, value) => {
+                                                  if (
+                                                    String(value).trim() === '' ||
+                                                    String(value).trim() === undefined ||
+                                                    value === null ||
+                                                    value === undefined
+                                                  ) {
+                                                    throw new Error(`${t('PDD:required')}`);
+                                                  }
+
+                                                  const startDate = moment(
+                                                    form.getFieldValue('extraEmissionReductions')[
+                                                      name
+                                                    ].emissionsPeriodStart
+                                                  ).startOf('month');
+                                                  const selectedDate = moment(value).endOf('month');
+                                                  const duration = moment.duration(
+                                                    selectedDate.diff(startDate)
+                                                  );
+
+                                                  const isOneYear =
+                                                    Math.round(duration.asMonths()) === 12;
+
+                                                  if (!isOneYear) {
+                                                    throw new Error('Duration should be a year');
+                                                  }
+                                                },
+                                              },
+                                            ]}
+                                          >
+                                            <DatePicker
+                                              size="large"
+                                              disabled={disableFields}
+                                              placeholder="End Date"
+                                              picker="month"
+                                              format="YYYY MMM"
+                                              onChange={(value) =>
+                                                onPeriodEndChange(value, fields.length + 1)
+                                              }
+                                              disabledDate={(currentDate: any) =>
+                                                currentDate <
+                                                moment(
+                                                  form.getFieldValue('extraEmissionReductions')[
+                                                    name
+                                                  ].emissionsPeriodStart
+                                                ).startOf('month')
+                                              }
+                                            />
+                                          </Form.Item>
+                                        </Col>
+                                        <Col md={3} xl={3}>
+                                          <Form.Item
+                                            name={[name, 'baselineEmissionReductions']}
+                                            rules={[
+                                              {
+                                                required: true,
+                                                message: ``,
+                                              },
+                                              {
+                                                validator: async (rule, value) => {
+                                                  if (
+                                                    String(value).trim() === '' ||
+                                                    String(value).trim() === undefined ||
+                                                    value === null ||
+                                                    value === undefined
+                                                  ) {
+                                                    throw new Error(`${t('PDD:required')}`);
+                                                  } else if (isNaN(value)) {
+                                                    return Promise.reject(
+                                                      new Error('Should be a number')
+                                                    );
+                                                  } else if (Number(value) < 0) {
+                                                    return Promise.reject(
+                                                      new Error(`${t('PDD:shouldHavePositive')}`)
+                                                    );
+                                                  }
+
+                                                  return Promise.resolve();
+                                                },
+                                              },
+                                            ]}
+                                          >
+                                            <Input
+                                              type="number"
+                                              disabled={disableFields}
+                                              onChange={(value) => {
+                                                calculateNetGHGEmissions(value, name);
+                                                calculateTotalEmissions(
+                                                  value,
+                                                  'baselineEmissionReductions',
+                                                  'totalBaselineEmissionReductions'
+                                                );
+                                              }}
+                                              step="1"
+                                              onKeyDown={(e) =>
+                                                (e.key === '.' || e.key === ',') &&
+                                                e.preventDefault()
+                                              }
+                                            />
+                                          </Form.Item>
+                                        </Col>
+                                        <Col md={3} xl={3}>
+                                          <Form.Item
+                                            name={[name, 'projectEmissionReductions']}
+                                            rules={[
+                                              {
+                                                required: true,
+                                                message: ``,
+                                              },
+                                              {
+                                                validator: async (rule, value) => {
+                                                  if (
+                                                    String(value).trim() === '' ||
+                                                    String(value).trim() === undefined ||
+                                                    value === null ||
+                                                    value === undefined
+                                                  ) {
+                                                    throw new Error(`${t('PDD:required')}`);
+                                                  } else if (isNaN(value)) {
+                                                    return Promise.reject(
+                                                      new Error('Should be a number')
+                                                    );
+                                                  } else if (Number(value) < 0) {
+                                                    return Promise.reject(
+                                                      new Error(`${t('PDD:shouldHavePositive')}`)
+                                                    );
+                                                  }
+
+                                                  return Promise.resolve();
+                                                },
+                                              },
+                                            ]}
+                                          >
+                                            <Input
+                                              type="number"
+                                              disabled={disableFields}
+                                              onChange={(value) => {
+                                                calculateNetGHGEmissions(value, name);
+                                                calculateTotalEmissions(
+                                                  value,
+                                                  'projectEmissionReductions',
+                                                  'totalProjectEmissionReductions'
+                                                );
+                                              }}
+                                              step="1"
+                                              onKeyDown={(e) =>
+                                                (e.key === '.' || e.key === ',') &&
+                                                e.preventDefault()
+                                              }
+                                            />
+                                          </Form.Item>
+                                        </Col>
+                                        <Col md={3} xl={3}>
+                                          <Form.Item
+                                            name={[name, 'leakageEmissionReductions']}
+                                            rules={[
+                                              {
+                                                required: true,
+                                                message: ``,
+                                              },
+                                              {
+                                                validator: async (rule, value) => {
+                                                  if (
+                                                    String(value).trim() === '' ||
+                                                    String(value).trim() === undefined ||
+                                                    value === null ||
+                                                    value === undefined
+                                                  ) {
+                                                    throw new Error(`${t('PDD:required')}`);
+                                                  } else if (isNaN(value)) {
+                                                    return Promise.reject(
+                                                      new Error('Should be a number')
+                                                    );
+                                                  } else if (Number(value) < 0) {
+                                                    return Promise.reject(
+                                                      new Error(`${t('PDD:shouldHavePositive')}`)
+                                                    );
+                                                  }
+
+                                                  return Promise.resolve();
+                                                },
+                                              },
+                                            ]}
+                                          >
+                                            <Input
+                                              type="number"
+                                              disabled={disableFields}
+                                              onChange={(value) => {
+                                                calculateNetGHGEmissions(value, name);
+                                                calculateTotalEmissions(
+                                                  value,
+                                                  'leakageEmissionReductions',
+                                                  'totalLeakageEmissionReductions'
+                                                );
+                                              }}
+                                              step="1"
+                                              onKeyDown={(e) =>
+                                                (e.key === '.' || e.key === ',') &&
+                                                e.preventDefault()
+                                              }
+                                            />
+                                          </Form.Item>
+                                        </Col>
+                                        <Col md={3} xl={3}>
+                                          <Form.Item
+                                            name={[name, 'netEmissionReductions']}
+                                            rules={[
+                                              {
+                                                required: true,
+                                                message: ``,
+                                              },
+                                              {
+                                                validator: async (rule, value) => {
+                                                  if (
+                                                    String(value).trim() === '' ||
+                                                    String(value).trim() === undefined ||
+                                                    value === null ||
+                                                    value === undefined
+                                                  ) {
+                                                    throw new Error(`${t('PDD:required')}`);
+                                                  } else if (isNaN(value)) {
+                                                    return Promise.reject(
+                                                      new Error('Should be a number')
+                                                    );
+                                                  } else if (Number(value) < 0) {
+                                                    return Promise.reject(
+                                                      new Error(`${t('PDD:shouldHavePositive')}`)
+                                                    );
+                                                  }
+
+                                                  return Promise.resolve();
+                                                },
+                                              },
+                                            ]}
+                                          >
+                                            <Input disabled />
+                                          </Form.Item>
+                                        </Col>
+                                        <Col md={2} xl={2}>
+                                          <Form.Item>
+                                            <Button
+                                              // type="dashed"
+                                              onClick={() => {
+                                                // reduceTotalCreditingYears()
+                                                remove(name);
+                                                onPeriodEndChange(null, fields.length + 1);
+                                                calculateTotalEmissions(
+                                                  null,
+                                                  'projectEmissionReductions',
+                                                  'totalProjectEmissionReductions'
+                                                );
+                                                calculateTotalEmissions(
+                                                  null,
+                                                  'baselineEmissionReductions',
+                                                  'totalBaselineEmissionReductions'
+                                                );
+                                                calculateTotalEmissions(
+                                                  null,
+                                                  'leakageEmissionReductions',
+                                                  'totalLeakageEmissionReductions'
+                                                );
+                                              }}
+                                              size="small"
+                                              className="addMinusBtn"
+                                              icon={<MinusOutlined />}
+                                              disabled={disableFields}
+                                            >
+                                              {/* Add Entity */}
+                                            </Button>
+                                          </Form.Item>
+                                        </Col>
+                                      </Row>
+                                    </>
+                                  ))}
+
+                                  <Form.Item>
+                                    <Button
+                                      // type="dashed"
+                                      onClick={() => {
+                                        // reduceTotalCreditingYears()
+                                        add();
+                                      }}
+                                      size="middle"
+                                      className="addMinusBtn"
+                                      // block
+                                      icon={<PlusOutlined />}
+                                      disabled={disableFields}
+                                    >
+                                      {/* Add Entity */}
+                                    </Button>
+                                  </Form.Item>
+                                </>
+                              )}
+                            </Form.List>
+
+                            {/* Emmissions calculations */}
+                            {/* calc Row 1 start */}
+                            <Row justify={'space-between'} align={'top'}>
+                              <Col md={6} xl={6}>
+                                Total
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="totalBaselineEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="totalProjectEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="totalLeakageEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="totalNetEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={2} xl={2}>
+                                {' '}
+                              </Col>
+                            </Row>
+                            {/* calc Row 1 end */}
+
+                            {/* calc row 2 start */}
+                            <Row justify={'space-between'} align={'top'}>
+                              <Col md={6} xl={6}>
+                                Total number of crediting years
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="totalCreditingYears"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3}>
+                                {' '}
+                              </Col>
+                              <Col md={3} xl={3}>
+                                {' '}
+                              </Col>
+                              <Col md={3} xl={3}>
+                                {' '}
+                              </Col>
+                              <Col md={2} xl={2}>
+                                {' '}
+                              </Col>
+                            </Row>
+                            {/* calc row 2 end */}
+
+                            {/* calc row 3 start */}
+                            <Row justify={'space-between'} align={'top'}>
+                              <Col md={6} xl={6}>
+                                Annual average over the crediting period
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="avgBaselineEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="avgProjectEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="avgLeakageEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={3} xl={3} className="total-cols">
+                                <Form.Item
+                                  name="avgNetEmissionReductions"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(`${t('PDD:required')}`);
+                                        }
+
+                                        // eslint-disable-next-line no-restricted-globals
+                                        if (isNaN(value)) {
+                                          return Promise.reject(new Error('Should be a number'));
+                                        }
+
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
+                                >
+                                  <Input disabled />
+                                </Form.Item>
+                              </Col>
+                              <Col md={2} xl={2} className="total-cols">
+                                {' '}
+                              </Col>
+                            </Row>
+                            {/* calc row 3 end */}
+                          </div>
+                        </>
+                      </>
+                      {/* need to update this */}
 
                       {/* <Row justify={'space-between'} gutter={[40, 16]}>
                         <Col xl={24} md={24}>

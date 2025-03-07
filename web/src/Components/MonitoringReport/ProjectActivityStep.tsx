@@ -6,7 +6,6 @@ import PhoneInput, {
   formatPhoneNumberIntl,
   isPossiblePhoneNumber,
 } from 'react-phone-number-input';
-
 import moment from 'moment';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import TextArea from 'antd/lib/input/TextArea';
@@ -15,24 +14,14 @@ import GetLocationMapComponent from '../Maps/GetLocationMapComponent';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
 import { API_PATHS } from '../../Config/apiConfig';
+import { CustomStepsProps } from '../MonitoringReport/StepProps';
 
-export const ProjectActivityStep = (props: any) => {
-  const {
-    useLocation,
-    translator,
-    current,
-    form,
-    formMode,
-    next,
-    countries,
-    prev,
-    onValueChange,
-    disableFields,
-  } = props;
+export const ProjectActivityStep = (props: CustomStepsProps) => {
+  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields } =
+    props;
 
   const { post } = useConnection();
-  const [contactNoInput] = useState<any>();
-
+  // const [contactNoInput] = useState<any>();
   const [provinces, setProvinces] = useState<string[]>([]);
   const [districts, setDistricts] = useState<{ [key: number]: string[] }>({});
   // const [dsDivisions, setDsDivisions] = useState<{ [key: number]: string[] }>({});
@@ -46,15 +35,6 @@ export const ProjectActivityStep = (props: any) => {
       return e;
     }
     return e?.fileList;
-  };
-
-  const getExistingCordinate = (locationIndex: number) => {
-    const locationList = form.getFieldValue('projectActivityLocationsList');
-    console.log(locationList);
-    if (locationList[locationIndex] && locationList[locationIndex].location)
-      return locationList[locationIndex].location;
-
-    return null;
   };
 
   const getProvinces = async () => {
@@ -104,14 +84,14 @@ export const ProjectActivityStep = (props: any) => {
   //   }
   // };
 
-  const getCities = async (division: string, index: number) => {
+  const getCities = async (districtName: string, index: number) => {
     try {
       const { data } = await post(API_PATHS.CITIES, {
         filterAnd: [
           {
-            key: 'divisionName',
+            key: 'districtName',
             operation: '=',
-            value: division,
+            value: districtName,
           },
         ],
       });
@@ -140,8 +120,6 @@ export const ProjectActivityStep = (props: any) => {
   //   getCities(value, index);
   // };
 
-  const t = translator.t;
-
   return (
     <>
       {current === 1 && (
@@ -157,8 +135,7 @@ export const ProjectActivityStep = (props: any) => {
               disabled={FormMode.VIEW === formMode}
               initialValues={{}}
               onFinish={async (values: any) => {
-                onValueChange({ projectActivity: values });
-                next();
+                handleValuesUpdate({ projectActivity: values });
               }}
             >
               <Row className="row" gutter={[40, 16]}>
@@ -759,24 +736,23 @@ export const ProjectActivityStep = (props: any) => {
                                 )}
                               </Form.List>
                             </div>
-                            {/* <div className="col-3">hello</div> */}
                           </div>
                         ))}
 
                         <div>
                           <Form.Item>
                             <Button
-                              onClick={() => {
-                                // add();
-                                const temp = form.getFieldValue('projectParticipants');
-                                console.log('---------temp--------', temp);
-                                temp[fields.length] = {
-                                  partiesInvolved: '',
-                                  projectParticipants: [{ participant: '' }],
-                                };
-                                console.log('---------temp after--------', temp);
-                                form.setFieldValue('projectParticipants', temp);
-                              }}
+                            // onClick={() => {
+                            //   // add();
+                            //   const temp = form.getFieldsValue('projectParticipants');
+                            //   console.log('---------temp--------', temp);
+                            //   temp[fields.length] = {
+                            //     partiesInvolved: '',
+                            //     projectParticipants: [{ participant: '' }],
+                            //   };
+                            //   console.log('---------temp after--------', temp);
+                            //   form.setFieldValue('projectParticipants', temp);
+                            // }}
                             >
                               {t('monitoringReport:pa_addProjectParticipant')}
                             </Button>
