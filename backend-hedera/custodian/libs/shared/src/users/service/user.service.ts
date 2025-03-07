@@ -982,10 +982,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 },
             );
 
-            const userData = await this.findUser(userDto.email);
-
             await this.guardianService.saveDocument(
-                userDto.email,
+                reqUser.email,
                 GUARDIAN_API.BLOCKS.CREATE_USER,
                 {
                     document: {
@@ -993,7 +991,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         role: userDto.role,
                         email: userDto.email,
                         phoneNumber: userDto.phoneNo,
-                        hederaAccount: userData.hederaAccount,
+                        hederaAccount: user.hederaAccount,
                         refId: user.refId,
                         createdTime: Number(user.createdTime),
                         updatedTime: Number(new Date().getTime()),
