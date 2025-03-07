@@ -1,4 +1,5 @@
 import { DocumentService } from '@app/shared/document/service/document.service';
+import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationService } from '@app/shared/organization/service/organization.service';
 import { ProjectService } from '@app/shared/project/service/project.service';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
@@ -20,12 +21,14 @@ export class TaskMonitorService implements OnModuleInit {
         private readonly documentService: DocumentService,
         private readonly organizationService: OrganizationService,
         private readonly projectService: ProjectService,
+        private readonly guardianService: GuardianService,
     ) {
         this.serviceMap = {
             UserService: this.userService,
             DocumentService: this.documentService,
             OrganizationService: this.organizationService,
             ProjectService: this.projectService,
+            GuardianService: this.guardianService,
         };
     }
 
@@ -61,15 +64,25 @@ export class TaskMonitorService implements OnModuleInit {
                         this.logger.error(
                             `Failed to complete task! ID: ${task.id}.\nError: ${err}`,
                         );
-                        // 4. Update the state to failed
-                        // await this.taskRepository.update(
-                        //     {
-                        //         id: task.id,
-                        //     },
-                        //     {
-                        //         state: TaskEnum.FAILED,
-                        //     },
-                        // );
+                        // 4. Update the state to FAILED if all attempts failed
+                        if (task.attemptedCount >= task.retryAttemps - 1) {
+                            await this.taskRepository.update(
+                                {
+                                    id: task.id,
+                                },
+                                {
+                                    state: TaskEnum.FAILED,
+                                },
+                            );
+                        }
+                    } finally {
+                        await this.taskRepository.increment(
+                            {
+                                id: task.id,
+                            },
+                            'attemptedCount',
+                            1,
+                        );
                     }
                 }
 
@@ -77,7 +90,7 @@ export class TaskMonitorService implements OnModuleInit {
                     'Pending task evaluation finished. Sleeping for 3mins',
                 );
                 // time out of 3 mins (1000 * 60 * 3)
-                const timeOutMins = 180000;
+                const timeOutMins = 20000;
                 await new Promise((r) => setTimeout(r, timeOutMins));
             } catch (err) {
                 this.logger.error(err);

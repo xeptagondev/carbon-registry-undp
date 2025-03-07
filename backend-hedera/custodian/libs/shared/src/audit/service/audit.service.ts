@@ -20,7 +20,7 @@ export class AuditService {
       SELECT 
         projectLogs.*, 
         "user".name, 
-        "guardianRole".name AS "userRole",
+        "role".name AS "userRole", 
         "organization".name AS "userCompanyName",
         "toOrganization".name AS "toCompanyName"
       FROM 
@@ -29,6 +29,8 @@ export class AuditService {
         "users_entity" AS "user" ON projectLogs."userId" = "user".id
       LEFT JOIN 
         "guardian_role_entity" AS "guardianRole" ON "user"."guardian_role_id" = "guardianRole".id
+      LEFT JOIN 
+        "role_entity" AS "role" ON "guardianRole"."role_id" = "role".id
       LEFT JOIN 
         "organization_entity" AS "organization" ON "user"."organization_id" = "organization".id
       LEFT JOIN 

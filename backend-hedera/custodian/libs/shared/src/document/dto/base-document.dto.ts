@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { DocumentEnum } from '../enum/document.enum';
 
 export class BaseDocumentDTO {
@@ -8,9 +8,9 @@ export class BaseDocumentDTO {
     @IsNumber()
     id?: number;
 
-    @ApiProperty({ type: Number })
-    @IsNumber()
-    projectId: number;
+    @ApiProperty()
+    @IsString()
+    projectRefId: string;
 
     @ApiProperty({
         type: 'string',
@@ -30,12 +30,9 @@ export class BaseDocumentDTO {
     })
     documentType: DocumentEnum;
 
-    @ApiProperty({
-        type: Number,
-    })
     @IsOptional()
-    @IsNumber()
-    activityId?: number;
+    @IsString()
+    activityRefId?: string;
 
     @ApiProperty({
         type: Object,

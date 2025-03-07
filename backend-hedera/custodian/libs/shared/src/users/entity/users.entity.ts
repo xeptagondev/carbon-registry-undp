@@ -4,6 +4,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import {
+    BeforeInsert,
     Column,
     Entity,
     JoinColumn,
@@ -17,7 +18,7 @@ export class UsersEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
-    @Column({ name: 'ref_id', nullable: false })
+    @Column({ name: 'ref_id', nullable: true })
     refId?: string;
 
     @Column({ unique: true })
@@ -98,4 +99,9 @@ export class UsersEntity {
         nullable: true,
     })
     submittedTasks?: TaskEntity[];
+
+    @BeforeInsert()
+    generateRefId() {
+        this.refId = `U-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
 }
