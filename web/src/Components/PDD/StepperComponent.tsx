@@ -68,7 +68,7 @@ const StepperComponent = (props: any) => {
   };
 
   const [values, setValues] = useState({
-    projectId: id,
+    projectRefId: id,
     name: 'PDD',
     companyId: undefined,
     documentType: DocumentEnum.PDD,
