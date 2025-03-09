@@ -46,7 +46,7 @@ const ExecutiveSummary = (props: ValidationStepsProps) => {
     <>
       {current === 2 && (
         <div>
-          <div className="step-form-container">
+          <div className="val-report-step-form-container">
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
