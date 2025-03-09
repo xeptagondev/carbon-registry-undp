@@ -39,7 +39,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
 
   return (
     <>
-      {current === 8 && (
+      {current === 9 && (
         <div>
           <div className="val-report-step-form-container">
             <Form

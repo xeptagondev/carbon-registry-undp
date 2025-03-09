@@ -98,58 +98,56 @@ const ValidationFindings = (props: ValidationStepsProps) => {
                   {t('validationReport:identificationOfProjectType')}
                 </h4>
                 <section className="validation-findings-section">
-                  <section className="validation-findings-section">
-                    <Form.Item
-                      className="full-width-form-item"
-                      label={`${t('validationReport:meansOfValidation')}`}
-                      name="projectType_meansOfValidation"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('validationReport:meansOfValidation')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input
-                        size="large"
-                        // disabled={FormMode.VIEW === formMode}
-                      />
-                    </Form.Item>
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('validationReport:meansOfValidation')}`}
+                    name="projectType_meansOfValidation"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('validationReport:meansOfValidation')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
 
-                    <Form.Item
-                      className="full-width-form-item"
-                      label={`${t('validationReport:findings')}`}
-                      name="projectType_findings"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('validationReport:findings')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input
-                        size="large"
-                        // disabled={FormMode.VIEW === formMode}
-                      />
-                    </Form.Item>
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('validationReport:findings')}`}
+                    name="projectType_findings"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('validationReport:findings')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
 
-                    <Form.Item
-                      className="full-width-form-item"
-                      label={`${t('validationReport:conclusions')}`}
-                      name="projectType_conclusions"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('validationReport:conclusions')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input
-                        size="large"
-                        // disabled={FormMode.VIEW === formMode}
-                      />
-                    </Form.Item>
-                  </section>
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('validationReport:conclusions')}`}
+                    name="projectType_conclusions"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('validationReport:conclusions')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
                 </section>
               </>
               {/* Identification of project type end */}

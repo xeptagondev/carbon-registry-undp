@@ -339,7 +339,7 @@ const StepperComponent = (props: any) => {
       return { ...prevVal, data: tempContent };
     });
 
-    if (current === 8) {
+    if (current === 9) {
       const formValues = {
         ...existingFormValues,
         data: { ...existingFormValues.data, appendix: val },
