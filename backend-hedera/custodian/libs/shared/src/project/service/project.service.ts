@@ -265,7 +265,6 @@ export class ProjectService {
         const mappedProject = {
             ...lastInf?.data,
             refId: project.refId,
-            infRefId: lastInf?.refId,
         };
 
         mappedProject.projectProposalStage = project.projectProposalStage;
