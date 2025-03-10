@@ -80,7 +80,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
 
         // Add gov root user
         await queryRunner.query(
-            "INSERT INTO users_entity ( \
+            `INSERT INTO users_entity ( \
                 email, \
                 ref_id, \
                 name, \
@@ -91,15 +91,15 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 guardian_role_id \
             ) \
             VALUES ( \
-                'amilareg', \
+                '${process.env.STANDARD_REGISTRY_USERNAME}', \
                 '0000000', \
                 'Registry user', \
-                '123456', \
+                '${process.env.STANDARD_REGISTRY_PASSWORD}', \
                 '0.0.5143903', \
                 '0112456789', \
                 NULL, \
                 NULL \
-            );",
+            );`,
         );
 
         //will be removed later

@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { OrganizationStateEnum } from '../enum/organization.state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { CreditEventsEntity } from '@app/shared/carbon-credit-token/entity/credit-events.entity';
 
 @Entity()
 export class OrganizationEntity {
@@ -51,9 +52,8 @@ export class OrganizationEntity {
         type: 'enum',
         enum: OrganizationStateEnum,
         nullable: false,
-        default: OrganizationStateEnum.PENDING,
     })
-    state?: OrganizationStateEnum;
+    state?: OrganizationStateEnum = OrganizationStateEnum.PENDING;
 
     @Column({ unique: true, nullable: true })
     email: string;
@@ -102,6 +102,20 @@ export class OrganizationEntity {
         { nullable: true },
     )
     assignedProjects?: ProjectEntity[];
+
+    @OneToMany(
+        () => CreditEventsEntity,
+        (creditEvents) => creditEvents.sender,
+        { nullable: true },
+    )
+    senderCreditEvents?: CreditEventsEntity[];
+
+    @OneToMany(
+        () => CreditEventsEntity,
+        (creditEvents) => creditEvents.receiver,
+        { nullable: true },
+    )
+    receiverCreditEvents?: CreditEventsEntity[];
 
     @BeforeInsert()
     generateRefId() {

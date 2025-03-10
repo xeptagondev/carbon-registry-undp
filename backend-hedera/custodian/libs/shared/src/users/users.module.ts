@@ -15,6 +15,8 @@ import { OrganizationModule } from '../organization/organization.module';
 import { TokenModule } from '../token/token.module';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
 import { UserInitializationService } from './service/user.initialization.service';
+import { TaskEntity } from '../task/entity/task.entity';
+import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.entity';
 
 @Module({
     imports: [
@@ -24,6 +26,8 @@ import { UserInitializationService } from './service/user.initialization.service
             RoleEntity,
             OrganizationEntity,
             OrganizationTypeEntity,
+            CreditEventsEntity,
+            TaskEntity,
         ]),
         AuditModule,
         GuardianModule,
