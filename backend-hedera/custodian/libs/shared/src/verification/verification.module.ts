@@ -11,6 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProjectEntity } from '../project/entity/project.entity';
 import { ActivityEntity } from '../activity/entity/activity.entity';
 import { DocumentEntity } from '../document/entity/document.entity';
+import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.entity';
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { DocumentEntity } from '../document/entity/document.entity';
             ProjectEntity,
             ActivityEntity,
             DocumentEntity,
+            CreditEventsEntity,
         ]),
         DocumentModule,
         UtilModule,
