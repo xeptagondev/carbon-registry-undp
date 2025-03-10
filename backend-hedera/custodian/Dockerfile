@@ -15,4 +15,4 @@ RUN yarn install --frozen-lockfile
 COPY ./backend-hedera/custodian ./
 
 # Build the application
-RUN yarn build
+RUN yarn build:all
