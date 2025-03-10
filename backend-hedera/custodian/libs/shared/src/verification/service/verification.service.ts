@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { HelperService } from '@app/shared/util/service/helper.service';
@@ -8,16 +7,13 @@ import { AdditionalDocType } from '@app/shared/document/enum/additional.document
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { UtilService } from '@app/shared/util/service/util.service';
-import { MailService } from '@app/shared/mail/service/mail.service';
 import { ActivityStateEnum } from '../../activity/enum/activity.state.enum';
 import { DocumentEnum } from '@app/shared/document/enum/document.enum';
-import { UserService } from '@app/shared/users/service/user.service';
 
 import { VerifyReportDto } from '../dto/verify.report.dto';
 import { VerificationReportDto } from '../dto/verification.report.dto';
 import { CreditIssueCertificateGenerator } from '@app/shared/util/service/credit.issue.certificate.gen';
 import { DateUtilService } from '@app/shared/util/service/date.util.service';
-import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
@@ -48,9 +44,6 @@ export class VerificationService {
         private readonly helperService: HelperService,
         private readonly dateUtilService: DateUtilService,
         private readonly documentService: DocumentService,
-        private readonly mailService: MailService,
-        private readonly configService: ConfigService,
-        private readonly userService: UserService,
         private readonly guardianService: GuardianService,
         private readonly utilService: UtilService,
         private readonly fileHelperService: FileHelperService,
@@ -102,9 +95,10 @@ export class VerificationService {
         });
 
         if (
-            (project &&
-                project.projectProposalStage ===
-                    ProjectProposalStage.AUTHORISED) ||
+            !(
+                project &&
+                project.projectProposalStage === ProjectProposalStage.AUTHORISED
+            ) ||
             (lastActivity &&
                 lastActivity.state ===
                     ActivityStateEnum.MONITORING_REPORT_REJECTED)
@@ -115,7 +109,7 @@ export class VerificationService {
             );
         }
 
-        const docContent = JSON.parse(monitoringReportDto.content);
+        const docContent = monitoringReportDto.content;
 
         if (
             docContent?.annexures?.optionalDocuments &&
@@ -160,10 +154,16 @@ export class VerificationService {
             docContent.quantifications.optionalDocuments = docUrls;
         }
 
-        if (lastActivity) {
+        if (
+            lastActivity &&
+            lastActivity.state !==
+                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
+        ) {
             if (
-                lastActivity.state !==
-                ActivityStateEnum.MONITORING_REPORT_REJECTED
+                lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_UPLOADED ||
+                lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_VERIFIED
             ) {
                 throw new HttpException(
                     'Monitoring report already exists',
@@ -176,7 +176,7 @@ export class VerificationService {
 
         await this.documentService.save(
             {
-                projectId: project.id,
+                projectRefId: project.refId,
                 name: 'MONITORING',
                 documentType: DocumentEnum.MONITORING,
                 activityRefId: lastActivity.refId,
@@ -286,23 +286,21 @@ export class VerificationService {
 
         if (verifyReportDto.verify) {
             await this.documentService.approve(
-                monitoringReport?.project?.refId,
+                monitoringReport?.refId,
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.IC_APPROVED,
                 },
                 requestUser,
-                monitoringReport?.activity?.refId,
             );
         } else {
             await this.documentService.reject(
-                monitoringReport?.project?.refId,
+                monitoringReport?.refId,
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.IC_REJECTED,
                 },
                 requestUser,
-                monitoringReport?.activity?.refId,
             );
         }
         return new DataResponseDto(
@@ -334,7 +332,7 @@ export class VerificationService {
             );
         }
 
-        const docContent = JSON.parse(verificationReportDto.content);
+        const docContent = verificationReportDto.content;
 
         // Handle document uploads
         await this.uploadOptionalDocuments(
@@ -423,7 +421,7 @@ export class VerificationService {
 
         await this.documentService.save(
             {
-                projectId: project.id,
+                projectRefId: project.refId,
                 name: 'VERIFICATION',
                 documentType: DocumentEnum.VERIFICATION,
                 activityRefId: lastActivity.refId,
@@ -518,23 +516,21 @@ export class VerificationService {
 
         if (verifyReportDto.verify) {
             await this.documentService.approve(
-                verificationReport?.project?.refId,
+                verificationReport?.refId,
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.DNA_APPROVED,
                 },
                 requestUser,
-                verificationReport?.activity?.refId,
             );
         } else {
             await this.documentService.reject(
-                verificationReport?.project?.refId,
+                verificationReport?.refId,
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.DNA_REJECTED,
                 },
                 requestUser,
-                verificationReport?.activity?.refId,
             );
         }
 

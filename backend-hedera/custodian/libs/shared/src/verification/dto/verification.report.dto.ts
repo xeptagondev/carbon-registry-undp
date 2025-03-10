@@ -7,8 +7,8 @@ export class VerificationReportDto {
     @ApiProperty()
     programmeId: string;
 
-    @IsNotEmpty()
-    @IsString()
-    @ApiProperty()
-    content: string;
+    @ApiProperty({
+        type: Object,
+    })
+    content: any;
 }

@@ -704,7 +704,7 @@ export class OrganizationService extends SuperService<
             );
         }
 
-        await this.guardianService.updateDocument(user.email, blockName, {
+        await this.guardianService.saveDocument(user.email, blockName, {
             document: { ...organizationData },
             ref: null,
         });
