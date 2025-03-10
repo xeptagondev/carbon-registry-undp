@@ -90,8 +90,6 @@ export class AnalyticsService {
                 ProjectProposalStage.APPROVED,
                 ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER,
                 ProjectProposalStage.VALIDATION_REPORT_SUBMITTED,
-                // ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
-                // ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
             ];
 
             const results = await this.projectRepository.find({
@@ -100,7 +98,22 @@ export class AnalyticsService {
                 },
             });
 
-            return results;
+            // get projects with activity states
+            const activityStatesList = [
+                ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
+                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
+            ];
+
+            const activityResults = await this.projectRepository.find({
+                where: {
+                    projectProposalStage: ProjectProposalStage.AUTHORISED,
+                    activities: {
+                        state: In(activityStatesList),
+                    },
+                },
+            });
+
+            return results.concat(activityResults);
         } else if (
             jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER
         ) {
@@ -109,7 +122,6 @@ export class AnalyticsService {
                 ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER,
                 ProjectProposalStage.PDD_REJECTED_BY_DNA,
                 ProjectProposalStage.AUTHORISED,
-                // ActivityStateEnum.MONITORING_REPORT_REJECTED,
             ];
 
             const results = await this.projectRepository.find({
@@ -118,10 +130,28 @@ export class AnalyticsService {
                     organization: {
                         id: jwtData.organizationId,
                     },
+                    activities: null,
                 },
             });
 
-            return results;
+            // get projects with activity states
+            const activityStatesList = [
+                ActivityStateEnum.MONITORING_REPORT_REJECTED,
+            ];
+
+            const activityResults = await this.projectRepository.find({
+                where: {
+                    projectProposalStage: ProjectProposalStage.AUTHORISED,
+                    organization: {
+                        id: jwtData.organizationId,
+                    },
+                    activities: {
+                        state: In(activityStatesList),
+                    },
+                },
+            });
+
+            return results.concat(activityResults);
         } else if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.INDEPENDENT_CERTIFIER
@@ -130,9 +160,6 @@ export class AnalyticsService {
                 ProjectProposalStage.PDD_SUBMITTED,
                 ProjectProposalStage.PDD_APPROVED_BY_DNA,
                 ProjectProposalStage.VALIDATION_REPORT_REJECTED,
-                // ActivityStateEnum.MONITORING_REPORT_UPLOADED,
-                // ActivityStateEnum.MONITORING_REPORT_VERIFIED,
-                // ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
             ];
 
             const results = await this.projectRepository.find({
@@ -144,7 +171,26 @@ export class AnalyticsService {
                 },
             });
 
-            return results;
+            // get projects with activity states
+            const activityStatesList = [
+                ActivityStateEnum.MONITORING_REPORT_UPLOADED,
+                ActivityStateEnum.MONITORING_REPORT_VERIFIED,
+                ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
+            ];
+
+            const activityResults = await this.projectRepository.find({
+                where: {
+                    projectProposalStage: ProjectProposalStage.AUTHORISED,
+                    activities: {
+                        state: In(activityStatesList),
+                    },
+                    assignees: {
+                        id: jwtData.organizationId,
+                    },
+                },
+            });
+
+            return results.concat(activityResults);
         }
     }
 }
