@@ -31,12 +31,8 @@ services:
       context: .
       dockerfile: ./backend-hedera/custodian/Dockerfile
     command: ["yarn", "start:custodian-prod"]
-    environment:
-      DB_HOST: hedera_db
-      DB_PORT: 5433
-      DB_USERNAME: root
-      DB_PASSWORD: "123"
-      DB_NAME: hedera_db
+    env_file:
+      - backend-hedera/custodian/.env
     ports:
       - "3000:3000"
     depends_on:
@@ -44,25 +40,19 @@ services:
         condition: service_healthy
     volumes:
       - filestore:/usr/src/app/public
-      - ./backend-hedera/custodian/.env:/.env
 
   task-monitor:
     build:
       context: .
       dockerfile: ./backend-hedera/custodian/Dockerfile
     command: ["yarn", "start:task-monitor-prod"]
-    environment:
-      DB_HOST: hedera_db
-      DB_PORT: 5433
-      DB_USERNAME: root
-      DB_PASSWORD: "123"
-      DB_NAME: hedera_db
+    env_file:
+      - backend-hedera/custodian/.env
     depends_on:
       hedera_db:
         condition: service_healthy
     volumes:
       - filestore:/usr/src/app/public
-      - ./backend-hedera/custodian/.env:/.env
     deploy:
       replicas: 1
 
