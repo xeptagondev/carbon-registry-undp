@@ -128,6 +128,12 @@ export class ProjectEntity {
     @Column('real', { nullable: true })
     creditTransferred?: number;
 
+    @Column({ nullable: true })
+    noObjectionLetterUrl?: string;
+
+    @Column({ nullable: true })
+    creditCertificateUrl?: string;
+
     @BeforeInsert()
     generateRefId() {
         this.refId = `P-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

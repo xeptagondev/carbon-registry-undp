@@ -1,4 +1,6 @@
 export default () => ({
+    APP_ENV: process.env.APP_ENV || 'dev',
+    qaToken: process.env.qaToken || 'qaToken',
     country: process.env.COUNTRY,
     countryCode: process.env.COUNTRY_CODE || 'NG',
     url: process.env.URL,
