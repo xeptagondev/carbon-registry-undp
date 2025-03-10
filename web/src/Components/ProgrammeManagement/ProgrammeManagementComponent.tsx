@@ -212,7 +212,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     // },
     {
       title: t('projectList:sectoralScope'),
-      dataIndex: 'SectoralScope',
+      dataIndex: 'sectoralScope',
       key: ProgrammeManagementSlColumns.sectoralScope,
       sorter: true,
       align: 'center' as const,

@@ -25,14 +25,14 @@ export interface UserSchema {
     updatedTime?: number;
     refId: string;
     hederaAccount: string;
-    organization: OrganizationSchema;
+    organization: string;
 }
 
 export interface ProjectSchema {
     refId: string;
     name: string;
-    createdBy: UserSchema;
-    assignee: OrganizationSchema[];
+    createdBy: string;
+    assignee: string[];
     creditBalance?: number;
     creditFrozen?: number;
     creditRetired?: number;
@@ -42,14 +42,14 @@ export interface ProjectSchema {
 
 export interface ActivitySchema {
     refId: string;
-    project: ProjectSchema;
+    project: string;
 }
 export interface DocumentSchema {
     refId: string;
     documentType: string;
-    createdBy: UserSchema;
-    project: ProjectSchema;
-    activity?: ActivitySchema;
+    createdBy: string;
+    project: string;
+    activity?: string;
     name: string;
     version: number;
     data: string;

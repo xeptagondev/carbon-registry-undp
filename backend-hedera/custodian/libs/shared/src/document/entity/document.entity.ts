@@ -1,5 +1,6 @@
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import {
+    BeforeInsert,
     Column,
     Entity,
     JoinColumn,
@@ -17,6 +18,9 @@ import { UsersEntity } from '@app/shared/users/entity/users.entity';
 export class DocumentEntity {
     @PrimaryGeneratedColumn()
     id?: number;
+
+    @Column({ nullable: true })
+    refId?: string;
 
     @Column({ type: String })
     title: string;
@@ -59,4 +63,9 @@ export class DocumentEntity {
     @ManyToOne(() => ProjectEntity, (projectEntity) => projectEntity.documents)
     @JoinColumn([{ name: 'project_id', referencedColumnName: 'id' }])
     project?: ProjectEntity;
+
+    @BeforeInsert()
+    generateRefId() {
+        this.refId = `D-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
 }

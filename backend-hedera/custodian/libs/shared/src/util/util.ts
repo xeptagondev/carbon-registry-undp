@@ -6,6 +6,7 @@ import {
     PASSWORD_SPECIAL_CHARS,
     SALT_LEN,
 } from './constants/util.constants';
+import * as crypto from 'crypto';
 
 /*
 Generate a password of given length including at least:
@@ -68,22 +69,32 @@ export function hashPassword(
 
 // Verify the given password
 // password should be in 'salt:hash:iterations' format
-export function verifyPassword(
-    password: string,
-    storedHash: string,
-    keyLen: number = 32,
-    hashAlgo: string = HASH_ALGO,
-): boolean {
-    const [salt, originalHash, itr] = storedHash.split(':');
-    const hash = pbkdf2Sync(
-        password,
-        salt,
-        parseInt(itr),
-        keyLen,
-        hashAlgo,
-    ).toString('hex');
+// export function verifyPassword(
+//     password: string,
+//     storedHash: string,
+//     keyLen: number = 32,
+//     hashAlgo: string = HASH_ALGO,
+// ): boolean {
+//     const [salt, originalHash, itr] = storedHash.split(':');
+//     const hash = pbkdf2Sync(
+//         password,
+//         salt,
+//         parseInt(itr),
+//         keyLen,
+//         hashAlgo,
+//     ).toString('hex');
 
-    return hash === originalHash;
+//     return hash === originalHash;
+// }
+
+// Decrypt the password and verify it
+export function verifyPassword(
+    storedEncryptPassword: string,
+    providedPassword: string,
+    pwdSecret: string,
+): string {
+    const { password } = decryptPayload(storedEncryptPassword, pwdSecret);
+    return providedPassword === password ? providedPassword : undefined;
 }
 
 export function formatRemainingTime(ms: number): string {
@@ -110,4 +121,29 @@ export function getEnumKeyByValue<T>(
     return Object.keys(enumObj).find(
         (key) => enumObj[key as keyof T] === value,
     ) as keyof T | undefined;
+}
+
+export function encryptPayload(payload: any, secretKey: string): string {
+    const key = crypto.createHash('sha256').update(secretKey, 'utf8').digest();
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    const data = JSON.stringify(payload);
+    let encrypted = cipher.update(data, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+
+    return iv.toString('hex') + ':' + encrypted;
+}
+
+export function decryptPayload(encryptedData: string, secretKey: string): any {
+    const key = crypto.createHash('sha256').update(secretKey, 'utf8').digest();
+    const [ivHex, encryptedText] = encryptedData.split(':');
+    if (!ivHex || !encryptedText) {
+        throw new Error('Invalid encrypted data');
+    }
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return JSON.parse(decrypted);
 }

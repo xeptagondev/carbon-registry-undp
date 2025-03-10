@@ -12,8 +12,9 @@ import { Repository } from 'typeorm';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
+    decryptPayload,
+    encryptPayload,
     formatRemainingTime,
-    hashPassword,
     verifyPassword,
 } from '@app/shared/util/util';
 import { TokenService } from '@app/shared/token/service/token.service';
@@ -137,6 +138,27 @@ export class AuthService {
         }
     }
 
+    async findPassword(email: string) {
+        const user = await this.usersRepository.findOne({
+            where: {
+                email: email.trim().toLowerCase(),
+            },
+        });
+        if (!user) {
+            if (!user) {
+                throw new HttpException(
+                    'User not found',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+        }
+        const { password } = decryptPayload(
+            user?.password,
+            this.configService.get<string>('security.pwdSecret'),
+        );
+
+        return password;
+    }
     async login(loginDto: LoginDto): Promise<HTTPResponseDto> {
         const response = new HTTPResponseDto();
         const user = await this.usersRepository.findOne({
@@ -166,9 +188,13 @@ export class AuthService {
             );
         }
 
-        const isCorrectPass = verifyPassword(loginDto.password, user.password);
+        const decryptedPassword = verifyPassword(
+            user.password,
+            loginDto.password,
+            this.configService.get<string>('security.pwdSecret'),
+        );
 
-        if (!isCorrectPass) {
+        if (!decryptedPassword) {
             throw new HttpException(
                 'Email or Password is Incorrect',
                 HttpStatus.UNAUTHORIZED,
@@ -177,7 +203,7 @@ export class AuthService {
         let guardianResponse: any;
         try {
             // add SALT to password for login
-            loginDto.password = user?.password;
+            loginDto.password = decryptedPassword;
             guardianResponse = await this.guardianService.login(loginDto);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
@@ -326,11 +352,27 @@ export class AuthService {
                     HttpStatus.NOT_FOUND,
                 );
             }
-            const hashedPass = hashPassword(passwordResetDto.newPassword);
+            const { password } = decryptPayload(
+                userDetails.password,
+                this.configService.get<string>('security.pwdSecret'),
+            );
+
+            if (!password) {
+                throw new HttpException(
+                    'Email or Password is Incorrect',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+            const encryptedPassword = encryptPayload(
+                {
+                    password: passwordResetDto.newPassword,
+                },
+                this.configService.get<string>('security.pwdSecret'),
+            );
             // const serverSalt = this.configService.get('security.salt');
             const guardianResponse = await this.guardianService.passwordChange({
-                newPassword: hashedPass,
-                oldPassword: userDetails.password,
+                newPassword: passwordResetDto.newPassword,
+                oldPassword: password,
                 username: userDetails.email,
             });
 
@@ -342,7 +384,7 @@ export class AuthService {
                             email: userDetails.email,
                         },
                         {
-                            password: hashedPass,
+                            password: encryptedPassword,
                         },
                     )
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars

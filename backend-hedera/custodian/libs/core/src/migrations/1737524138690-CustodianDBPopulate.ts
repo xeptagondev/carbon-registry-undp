@@ -91,11 +91,11 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 guardian_role_id \
             ) \
             VALUES ( \
-                'ravinduReg2', \
+                'amilareg', \
                 '0000000', \
                 'Registry user', \
                 '123456', \
-                '0.0.5449556', \
+                '0.0.5143903', \
                 '0112456789', \
                 NULL, \
                 NULL \
