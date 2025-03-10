@@ -140,7 +140,7 @@ export class ProjectService {
 
             return new DataResponseDto(
                 HttpStatus.OK,
-                'Initial Notification was submitted successfully',
+                `Initial Notification was submitted successfully with refId : ${savedProject.refId}`,
             );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
