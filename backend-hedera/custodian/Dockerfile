@@ -1,16 +1,19 @@
-# Base image
 FROM node:20-alpine
-ARG SERVICE
 
-# Create app directory
+# Set the working directory
 WORKDIR /usr/src/app
 
-COPY ./backend-hedera/custodian/package.json .
-COPY ./backend-hedera/custodian/yarn.lock .
+# Copy only package.json and yarn.lock first to leverage Docker's layer caching
+COPY ./backend-hedera/custodian/package.json ./backend-hedera/custodian/yarn.lock ./
 
-# Install app dependencies
-RUN yarn install
-# Bundle app source 
-COPY ./backend-hedera/custodian .
+# Install dependencies
+RUN yarn install --frozen-lockfile
 
+# Ensure concurrently is installed
+# RUN yarn add concurrently@8.2.2
+
+# Copy the application source code
+COPY ./backend-hedera/custodian ./
+
+# Build the application
 RUN yarn build
