@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { DocumentService } from '@app/shared/document/service/document.service';
 import { DocumentActionDTO } from '@app/shared/document/dto/document-action-request.dto';
+import { DocumentQueryDTO } from '@app/shared/document/dto/document.query.dto';
 
 @Controller('document')
 export class DocumentController {
@@ -39,5 +40,11 @@ export class DocumentController {
         @Request() req,
     ) {
         return await this.documentService.reject(refId, dto, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Post('query')
+    async query(@Body() query: DocumentQueryDTO, @Request() req) {
+        return await this.documentService.query(query);
     }
 }

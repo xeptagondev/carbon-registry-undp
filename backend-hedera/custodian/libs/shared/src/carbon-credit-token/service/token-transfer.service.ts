@@ -42,13 +42,12 @@ export class TokenTransferService implements OnModuleDestroy {
 
             this.client = Client.forTestnet();
             this.client.setOperator(this.accountId, this.privateKey);
-            const transferTx = await new TransferTransaction()
-                .addTokenTransfer(tokenId, this.accountId, -1) // Sender
-                .addTokenTransfer(tokenId, receiverAccount, 1) // Receiver
-                .freezeWith(this.client);
 
+            const txTransfer = await new TransferTransaction()
+                .addNftTransfer('0.0.5676061', 3, this.accountId, '0.0.5143902')
+                .freezeWith(this.client);
             // Sign with sender's private key
-            const signedTx = await transferTx.sign(this.privateKey);
+            const signedTx = await txTransfer.sign(this.privateKey);
 
             // Execute transaction
             const txResponse = await signedTx.execute(this.client);
