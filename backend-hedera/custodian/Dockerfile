@@ -3,7 +3,6 @@ FROM node:20-alpine
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy only package.json and yarn.lock first to leverage Docker's layer caching
 COPY ./backend-hedera/custodian/package.json ./backend-hedera/custodian/yarn.lock ./
 
 # Install dependencies
