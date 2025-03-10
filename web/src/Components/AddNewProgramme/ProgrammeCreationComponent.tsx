@@ -293,7 +293,7 @@ export const ProgrammeCreationComponent = (props: any) => {
       title: values?.title,
       // projectCategory: values?.projectCategory,
       sector: values?.sector,
-      SectoralScope: values?.sectoralScope,
+      sectoralScope: values?.sectoralScope,
       province: values?.province || 'test',
       district: values?.district || 'test',
       city: values?.city || 'test',

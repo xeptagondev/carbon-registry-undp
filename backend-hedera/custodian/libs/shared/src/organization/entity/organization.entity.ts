@@ -1,6 +1,7 @@
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import {
+    BeforeInsert,
     Column,
     Entity,
     JoinColumn,
@@ -50,9 +51,8 @@ export class OrganizationEntity {
         type: 'enum',
         enum: OrganizationStateEnum,
         nullable: false,
-        default: OrganizationStateEnum.PENDING,
     })
-    state?: OrganizationStateEnum;
+    state?: OrganizationStateEnum = OrganizationStateEnum.PENDING;
 
     @Column({ unique: true, nullable: true })
     email: string;
@@ -101,4 +101,9 @@ export class OrganizationEntity {
         { nullable: true },
     )
     assignedProjects?: ProjectEntity[];
+
+    @BeforeInsert()
+    generateRefId() {
+        this.refId = `O-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
 }

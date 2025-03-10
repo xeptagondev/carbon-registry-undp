@@ -6,7 +6,6 @@ import { PolicyBlocksEntity } from '../policy-block/entity/policy-blocks.entity'
 import { DataExportService } from './service/data-export.service';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
 import { ObjectionLetterGenerateService } from './service/objection.letter.gen';
-import { CounterService } from './service/counter.service';
 import { Counter } from './entity/counter.entity';
 import { CreditIssueCertificateGenerator } from './service/credit.issue.certificate.gen';
 import { DateUtilService } from './service/date.util.service';
@@ -46,7 +45,6 @@ import { FileHelperService } from './service/file-helper.service';
         DataExportService,
         ObjectionLetterGenerateService,
         CreditIssueCertificateGenerator,
-        CounterService,
         DateUtilService,
         InstantLogger,
         FileHelperService,
@@ -57,7 +55,6 @@ import { FileHelperService } from './service/file-helper.service';
         DataExportService,
         ObjectionLetterGenerateService,
         CreditIssueCertificateGenerator,
-        CounterService,
         DateUtilService,
         InstantLogger,
         FileHelperService,
