@@ -12,6 +12,7 @@ import { TaskEntity } from '../task/entity/task.entity';
 import { AuditModule } from '../audit/audit.module';
 import { GuardianModule } from '../guardian/guardian.module';
 import { UtilModule } from '../util/util.module';
+import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.entity';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { UtilModule } from '../util/util.module';
             ActivityEntity,
             UsersEntity,
             OrganizationEntity,
+            CreditEventsEntity,
             TaskEntity,
         ]),
         MailModule,
