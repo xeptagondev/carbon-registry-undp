@@ -8,6 +8,10 @@ on:
       - web/**
       - .github/workflows/test-web*
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-web
+  cancel-in-progress: true
+
 jobs:
   Test_web_build:
     runs-on: ubuntu-latest
