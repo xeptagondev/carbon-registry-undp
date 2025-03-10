@@ -53,6 +53,7 @@ import { ObjectionLetterGenerateService } from '@app/shared/util/service/objecti
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { CreditIssueCertificateGenerator } from '@app/shared/util/service/credit.issue.certificate.gen';
+import { DocumentQueryDTO } from '../dto/document.query.dto';
 
 @Injectable()
 export class DocumentService {
@@ -2221,5 +2222,21 @@ export class DocumentService {
                 jwtData.userId,
             );
         }
+    }
+
+    async query(query: DocumentQueryDTO) {
+        const lastDoc = await this.documentRepository.findOne({
+            where: {
+                documentType: query.documentType,
+                project: {
+                    refId: query.projectRefId,
+                },
+            },
+            order: {
+                version: 'DESC',
+            },
+        });
+
+        return lastDoc;
     }
 }
