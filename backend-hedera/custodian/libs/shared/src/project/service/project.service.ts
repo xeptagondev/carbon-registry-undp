@@ -275,6 +275,7 @@ export class ProjectService {
                   companyRole: project?.organization?.organizationType?.name,
                   logo: project?.organization?.logo,
                   email: project?.organization?.email,
+                  state: project?.organization?.state,
               }
             : null;
 
