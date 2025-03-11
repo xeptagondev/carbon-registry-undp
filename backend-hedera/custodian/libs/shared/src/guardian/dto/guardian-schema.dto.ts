@@ -14,6 +14,7 @@ export class OrganizationSchemaDtos {
     email: string;
     taxId: string;
     phoneNumber: string;
+    hederaAccount: string;
     address: string;
     logo: string;
     createdTime: number;
@@ -31,6 +32,7 @@ export class OrganizationSchemaDtos {
         this.email = data.email;
         this.taxId = data.taxId;
         this.phoneNumber = data.phoneNumber;
+        this.hederaAccount = data.hederaAccount;
         this.address = data.address;
         this.logo = data.logo;
         this.createdTime = data.createdTime;
@@ -103,6 +105,7 @@ export class DocumentSchemaDtos {
     documentType: string;
     createdBy: string;
     project: string;
+    creditAmount?: number;
     activity?: string;
     name: string;
     version: number;
@@ -115,6 +118,9 @@ export class DocumentSchemaDtos {
         this.project = data.project;
         if (data.activity) {
             this.activity = data.activity;
+        }
+        if (data.creditAmount) {
+            this.creditAmount = data.creditAmount;
         }
         this.name = data.name;
         this.version = data.version;

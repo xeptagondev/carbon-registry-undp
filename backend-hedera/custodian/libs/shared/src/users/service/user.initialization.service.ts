@@ -78,6 +78,14 @@ export class UserInitializationService implements OnModuleInit {
                     orgDto.logo = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgLogo`,
                     );
+                    orgDto.hederaAccountId =
+                        this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgHederaAccount`,
+                        ) || undefined;
+                    orgDto.hederaAccountKey =
+                        this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgHederaKey`,
+                        ) || undefined;
                     const user = new UsersDTO();
                     user.email = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
