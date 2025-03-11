@@ -364,6 +364,7 @@
   "technicalReview": "Technical Review",
   "documentReviewOption": "Document Review",
   "clarificationRequestsTableTitle": "Clarification requests (CLs), corrective action requests (CARs) and forward action requests (FARs) raised",
-  "siteVisit": "Site Visit"
-
+  "siteVisit": "Site Visit",
+  "confirmModalMessage": "Are you sure you want to submit ?",
+  "confirmModalSubMessage": "You can't undo this action"
 }
