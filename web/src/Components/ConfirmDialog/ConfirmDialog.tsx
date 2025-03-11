@@ -35,7 +35,13 @@ const ConfirmDialog = (props: IConfirmDialog) => {
   const [allowOk, setAllowOk] = useState<boolean>();
 
   return (
-    <Modal open={showDialog} title={null} footer={null} className="dialog-box" onCancel={closeDialog}>
+    <Modal
+      open={showDialog}
+      title={null}
+      footer={null}
+      className="dialog-box"
+      onCancel={closeDialog}
+    >
       <div>
         <Icon className="icon" />
       </div>
