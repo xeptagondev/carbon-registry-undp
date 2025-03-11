@@ -137,7 +137,7 @@ export class ProjectEntity {
     @Column({ nullable: true })
     creditCertificateUrl?: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, type: 'bigint' })
     createdDate?: number;
 
     @BeforeInsert()
