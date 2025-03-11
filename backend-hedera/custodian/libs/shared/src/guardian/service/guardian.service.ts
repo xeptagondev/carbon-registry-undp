@@ -759,9 +759,13 @@ export class GuardianService {
         remarks?: string,
     ): Promise<void> {
         try {
+            const block = await this.utilService.getBlocksByBlockName(
+                buttonBlockName,
+                this.configService.get('policy.id'),
+            );
             const buttonUrl = this.buildGuardianUrl(
                 // eslint-disable-next-line max-len
-                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(buttonBlockName)}`,
+                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${block?.blockId}`,
             );
             const refreshToken = await this.getRefreshToken(requestUserEmail);
             let buttonType: ButtonTypeEnum = ButtonTypeEnum.SELECTOR;
