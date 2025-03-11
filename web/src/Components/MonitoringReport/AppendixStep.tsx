@@ -9,22 +9,20 @@ import { DocumentStatus } from '../../Definitions/Enums/document.status';
 import { useState } from 'react';
 import { CustomStepsProps } from './StepProps';
 
-export const AnnexureStep = (props: any) => {
+export const AnnexureStep = (props: CustomStepsProps) => {
   const {
-    useLocation,
-    translator,
+    t,
     current,
     form,
     formMode,
     next,
     prev,
-    onValueChange,
-    projectCategory,
-    disableFields,
+    countries,
     handleValuesUpdate,
+    disableFields,
+    submitForm,
   } = props;
 
-  const t = translator.t;
   const [loading, setLoading] = useState(false);
   const { userInfoState } = useUserContext();
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
@@ -39,11 +37,13 @@ export const AnnexureStep = (props: any) => {
 
   const onFinish = (values: any) => {
     const tempValues: any = {
-      a_appendix: values?.a_appendix,
-      a_uploadDoc: values?.a_uploadDoc,
+      appendixDetails: { a_appendix: values?.a_appendix, a_uploadDoc: values?.a_uploadDoc },
     };
     console.log('---temp vals---');
-    handleValuesUpdate(tempValues);
+    if (submitForm) {
+      submitForm(tempValues);
+    }
+    // handleValuesUpdate(tempValues);
   };
 
   // const handleFormSubmit = async (values: any) => {
@@ -123,31 +123,26 @@ export const AnnexureStep = (props: any) => {
                   </div>
                 </Col>
               </Row>
-              <Row className="step-actions-end">
-                <Col>
+              {/* <Row className="step-actions-end"> */}
+              {/* <Col>
                   <Button onClick={prev} disabled={false}>
                     {t('monitoringReport:back')}
                   </Button>
-                </Col>
-                <Col offset={20}>
-                  <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
-                    {t('monitoringReport:back')}
+                </Col> */}
+              <Row justify={'end'} className="step-actions-end">
+                <Button danger size={'large'} onClick={prev}>
+                  {t('monitoringReport:prev')}
+                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:goBackProjectDetails')}
                   </Button>
-                  {disableFields ? (
-                    <Button type="primary" onClick={next}>
-                      {t('monitoringReport:next')}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="primary"
-                      size={'large'}
-                      htmlType={'submit'}
-                      // onClick={next}
-                    >
-                      {t('monitoringReport:next')}
-                    </Button>
-                  )}
-                </Col>
+                ) : (
+                  <Button type="primary" size={'large'} htmlType={'submit'}>
+                    {t('monitoringReport:submit')}
+                  </Button>
+                )}
+                {/* </Row> */}
                 {/* {userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
                   FormMode.VIEW !== formMode && (
                     <Button type="primary" htmlType="submit" disabled={loading}>

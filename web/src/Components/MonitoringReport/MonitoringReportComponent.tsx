@@ -9,7 +9,7 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { getDocumentStatusColor } from '../../Definitions/Definitions/programme.definitions';
 import { API_PATHS } from '../../Config/apiConfig';
 
-export const SLCFMonitoringReportComponent = (props: any) => {
+export const MonitoringReportComponent = (props: any) => {
   const [countries, setCountries] = useState<[]>([]);
   const { put, get, post } = useConnection();
 

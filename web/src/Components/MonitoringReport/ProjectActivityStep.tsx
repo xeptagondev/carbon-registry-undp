@@ -45,12 +45,12 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
     //test with hardcoded values
     return [
       {
-        locationOfProjectActivity: 'Solar Power Plant',
-        pa_siteNo: 'SPP-001',
-        province: 'Western Province',
-        district: 'Colombo',
-        pa_city: 'Colombo',
-        community: 'Downtown',
+        // locationOfProjectActivity: 'Solar Power Plant',
+        // pa_siteNo: 'SPP-001',
+        // province: 'Western Province',
+        // district: 'Colombo',
+        // pa_city: 'Colombo',
+        // community: 'Downtown',
         // geographicalLocationCoordinates: { lat: 6.9271, lng: 79.8612 },
         // uploadImages: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
       },
@@ -117,6 +117,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
   useEffect(() => {
     getProvinces();
 
+    //populate the fields with PDD location data
     const loadData = async () => {
       const data = await fetchLocationData();
       setLocationData(data);
@@ -124,12 +125,12 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
       if (data.length > 0) {
         form.setFieldsValue({
           locationsDetails: data.map((item) => ({
-            locationOfProjectActivity: item.locationOfProjectActivity,
-            pa_siteNo: item.pa_siteNo,
-            province: item.province,
-            district: item.district,
-            pa_city: item.pa_city,
-            community: item.community,
+            // locationOfProjectActivity: item.locationOfProjectActivity,
+            // pa_siteNo: item.pa_siteNo,
+            // province: item.province,
+            // district: item.district,
+            // pa_city: item.pa_city,
+            // community: item.community,
             // location: item.geographicalLocationCoordinates,
           })),
         });
@@ -147,8 +148,8 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
   };
 
   const onFinish = async (values: any) => {
-    console.log('onFinish triggered');
-    console.log('-----------temp Values before-------');
+    // console.log('onFinish triggered');
+    // console.log('-----------temp Values before-------');
 
     // const firstObj = {
     //   locationOfProjectActivity: values?.locationOfProjectActivity,
@@ -211,20 +212,22 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
           tempList.push(tempObj);
         }
       }
-      console.log('Final tempList:', tempList);
+      // console.log('Final tempList:', tempList);
       return tempList;
     })();
 
     const tempValues: any = {
-      monitoringPurpose: values?.pa_monitoringPurpose,
-      locationOfProjectActivity: locationDetailsOfProjectActivity,
-      projectParticipants: values?.projectParticipants,
-      methodologyAndStandardizedBaseline: values?.pa_methodology,
-      projectCreditingPeriodType: values?.pa_creditingPeriodType,
-      creditingPeriodStartDate: moment(values?.pa_projectCreditingPeriod).startOf('day').unix(),
-      creditingPeriodEndDate: moment(values?.pa_projectCreditingPeriodEndDate)
-        .startOf('day')
-        .unix(),
+      projectActivityDetails: {
+        monitoringPurpose: values?.pa_monitoringPurpose,
+        locationOfProjectActivity: locationDetailsOfProjectActivity,
+        projectParticipants: values?.projectParticipants,
+        methodologyAndStandardizedBaseline: values?.pa_methodology,
+        projectCreditingPeriodType: values?.pa_creditingPeriodType,
+        creditingPeriodStartDate: moment(values?.pa_projectCreditingPeriod).startOf('day').unix(),
+        creditingPeriodEndDate: moment(values?.pa_projectCreditingPeriodEndDate)
+          .startOf('day')
+          .unix(),
+      },
     };
     console.log(tempValues);
     handleValuesUpdate(tempValues);

@@ -15,8 +15,8 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
     props;
 
   const onFinish = (values: any) => {
-    console.log('onFinish triggered');
-    console.log('-----------temp Values before-------');
+    // console.log('onFinish triggered');
+    // console.log('-----------temp Values before-------');
     const tempValues: any = {
       projectDetails: {
         bi_projectTitle: values?.bi_projectTitle,
@@ -35,7 +35,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
         bi_projectedGHGReductions: values?.bi_projectedGHGReductions,
       },
     };
-    console.log('----------tempValues-------------', tempValues);
+    // console.log('----------tempValues-------------', tempValues);
     handleValuesUpdate(tempValues);
   };
 
