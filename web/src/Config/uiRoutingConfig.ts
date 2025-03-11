@@ -22,6 +22,8 @@ export const ROUTES = {
     `/programmeManagement/projectProposal/${programmeId}`,
   //CMA
   CMA_FORM: (programmeId: any) => `/programmeManagement/pdd/${programmeId}`,
+  // PDD
+  PDD_FORM: (refId: any) => `/programmeManagement/pdd/${refId}`,
   //VALIDATION
   VALIDATION_AGREEMENT: (programmeId: any) =>
     `/programmeManagement/validationAgreement/${programmeId}`,

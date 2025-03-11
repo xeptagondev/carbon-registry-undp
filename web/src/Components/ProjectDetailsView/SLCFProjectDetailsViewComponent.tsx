@@ -132,6 +132,7 @@ import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
+import ProjectDocuments from './projectForms/ProjectDocuments';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -2470,7 +2471,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             )}
             <Card className="card-container">
               <div>
-                <ProjectForms
+                {/* <ProjectForms
                   data={documentsData}
                   projectFormsTitle={t('projectDetailsView:projectProposalFormsTitle')}
                   validationFormsTitle={t('projectDetailsView:validationFormsTitle')}
@@ -2491,7 +2492,8 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                   translator={i18n}
                   projectProposalStage={data?.projectProposalStage}
                   programmeDetails={data}
-                />
+                /> */}
+                <ProjectDocuments projectProposalStage={data?.projectProposalStage} />
               </div>
             </Card>
             {verificationHistoryData && verificationHistoryData.length > 0 && (
