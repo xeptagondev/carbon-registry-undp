@@ -14,6 +14,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { ProjectProposalStage } from '../enum/project.proposal.stage.enum';
 import { DocumentEntity } from '@app/shared/document/entity/document.entity';
+import { CreditEventsEntity } from '@app/shared/carbon-credit-token/entity/credit-events.entity';
 
 @Entity()
 export class ProjectEntity {
@@ -42,6 +43,13 @@ export class ProjectEntity {
         { nullable: true },
     )
     activities?: ActivityEntity[];
+
+    @OneToMany(
+        () => CreditEventsEntity,
+        (creditEvents) => creditEvents.project,
+        { nullable: true },
+    )
+    creditEvents?: CreditEventsEntity[];
 
     @ManyToOne(
         () => OrganizationEntity,
