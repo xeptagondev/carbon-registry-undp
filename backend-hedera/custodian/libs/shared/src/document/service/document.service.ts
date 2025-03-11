@@ -755,12 +755,12 @@ export class DocumentService {
                 documentEntity,
             );
 
-            const organizationDoc =
-                await this.guardianService.getGridDocumentUsingRefId(
-                    GridTypeEnum.ORGANIZATION_GRID,
-                    project?.organization?.refId,
-                    jwtData.email,
-                );
+            // const organizationDoc =
+            //     await this.guardianService.getGridDocumentUsingRefId(
+            //         GridTypeEnum.ORGANIZATION_GRID,
+            //         project?.organization?.refId,
+            //         jwtData.email,
+            //     );
 
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
