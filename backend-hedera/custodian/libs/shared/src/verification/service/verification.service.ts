@@ -33,6 +33,7 @@ import { DocumentService } from '@app/shared/document/service/document.service';
 import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 import { DocumentStateEnum } from '@app/shared/document/enum/document-state.enum';
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
+import { RoleEnum } from '@app/shared/role/enum/role.enum';
 
 @Injectable()
 export class VerificationService {
@@ -66,7 +67,8 @@ export class VerificationService {
 
         if (
             requestUser.organizationRole !==
-            OrganizationTypeEnum.PROJECT_DEVELOPER
+                OrganizationTypeEnum.PROJECT_DEVELOPER &&
+            requestUser.userRole !== RoleEnum.Admin
         ) {
             throw new HttpException(
                 this.helperService.formatReqMessagesString(
@@ -172,6 +174,20 @@ export class VerificationService {
             lastActivity = await this.createNewActivity(requestUser, project);
         }
 
+        if (!lastActivity) {
+            lastActivity = await this.createNewActivity(requestUser, project);
+        } else if (
+            lastActivity.state !==
+                ActivityStateEnum.MONITORING_REPORT_REJECTED &&
+            lastActivity.state !==
+                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
+        ) {
+            throw new HttpException(
+                'Monitoring report already exists',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
         await this.documentService.save(
             {
                 projectRefId: project.refId,
@@ -256,7 +272,8 @@ export class VerificationService {
         // Validate user role
         if (
             requestUser.organizationRole !==
-            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+            requestUser.userRole !== RoleEnum.Admin
         ) {
             throw new HttpException(
                 this.helperService.formatReqMessagesString(
@@ -319,7 +336,8 @@ export class VerificationService {
         );
         if (
             requestUser.organizationRole !==
-            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+            requestUser.userRole !== RoleEnum.Admin
         ) {
             throw new HttpException(
                 this.helperService.formatReqMessagesString(
@@ -485,7 +503,8 @@ export class VerificationService {
         // Validate user role
         if (
             requestUser.organizationRole !==
-            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+            requestUser.userRole !== RoleEnum.Admin
         ) {
             throw new HttpException(
                 this.helperService.formatReqMessagesString(
