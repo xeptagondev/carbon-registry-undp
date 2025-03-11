@@ -468,12 +468,15 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                                 userDto.company.taxId,
                                 userDto.company.paymentId,
                             );
+                            const groupTypeBlock =
+                                await this.utilService.getBlocksByBlockName(
+                                    GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
+                                    this.configService.get('policy.id'),
+                                );
                             await this.guardianService.createGroupType(
                                 userDto.email,
                                 decryptedPassword,
-                                this.utilService.getBlock(
-                                    GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
-                                ),
+                                groupTypeBlock?.blockId,
                                 {
                                     group: userDto.company.companyRole,
                                     label: userDto.company.name,
