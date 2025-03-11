@@ -846,7 +846,7 @@ export class OrganizationService extends SuperService<
                 if (dto.state === OrganizationStateEnum.ACTIVE) {
                     header = ORG_REACTIVATE_HEADER;
                     template = MailTemplateEnum.ORG_REACTIVATE;
-                } else if (dto.state !== OrganizationStateEnum.SUSPENDED) {
+                } else if (dto.state === OrganizationStateEnum.SUSPENDED) {
                     header = ORG_DEACTIVATE_HEADER;
                     template = MailTemplateEnum.ORG_DEACTIVATE;
                 }
