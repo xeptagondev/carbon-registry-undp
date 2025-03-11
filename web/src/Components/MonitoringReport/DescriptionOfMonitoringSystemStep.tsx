@@ -5,9 +5,29 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
 
 export const DescriptionOfMSStep = (props: any) => {
-  const { useLocation, translator, current, form, formMode, next, prev, onValueChange } = props;
+  const {
+    useLocation,
+    translator,
+    current,
+    form,
+    formMode,
+    next,
+    prev,
+    handleValuesUpdate,
+    disableFields,
+  } = props;
 
   const t = translator.t;
+
+  const onFinish = (values: any) => {
+    console.log('onFinish triggered');
+    console.log('-----------temp Values before-------');
+    const tempValues: any = {
+      do_descriptionOfMonitoringSystem: values?.do_descriptionOfMonitoringSystem,
+    };
+    console.log('----------tempValues-------------', tempValues);
+    handleValuesUpdate(tempValues);
+  };
   return (
     <>
       {current === 3 && (
@@ -22,8 +42,10 @@ export const DescriptionOfMSStep = (props: any) => {
               form={form}
               disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
-                onValueChange({ safeguards: values });
-                next();
+                onFinish(values);
+                if (next) {
+                  next();
+                }
               }}
             >
               <Row className="row" gutter={[40, 16]}>
@@ -50,9 +72,20 @@ export const DescriptionOfMSStep = (props: any) => {
                 <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
                   {t('monitoringReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('monitoringReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

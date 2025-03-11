@@ -4,10 +4,38 @@ import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 
 export const DataAndParametersStep = (props: any) => {
-  const { useLocation, translator, current, form, formMode, next, countries, prev, onValueChange } =
-    props;
+  const {
+    useLocation,
+    translator,
+    current,
+    form,
+    formMode,
+    next,
+    countries,
+    prev,
+    handleValuesUpdate,
+    disableFields,
+  } = props;
 
   const t = translator.t;
+
+  const onFinish = (values: any) => {
+    console.log('onFinish triggered');
+    console.log('-----------temp Values before-------');
+    const tempValues: any = {
+      dp_dataParameter: values?.dp_dataParameter,
+      dp_dataUnit: values?.dp_dataUnit,
+      dp_description: values?.dp_description,
+      dp_sourceOfData: values?.dp_sourceOfData,
+      dp_valueApplied: values?.dp_valueApplied,
+      dp_choiceOfDataOrMeasurement: values?.dp_choiceOfDataOrMeasurement,
+      dp_purposeOfData: values?.dp_purposeOfData,
+      dp_comments: values?.dp_comments,
+      dp_implementationOfSamplingPlan: values?.dp_implementationOfSamplingPlan,
+    };
+    console.log('----------tempValues-------------', tempValues);
+    handleValuesUpdate(tempValues);
+  };
   return (
     <>
       {current === 4 && (
@@ -22,8 +50,10 @@ export const DataAndParametersStep = (props: any) => {
               form={form}
               disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
-                onValueChange({ dataAndParameters: values });
-                next();
+                onFinish(values);
+                if (next) {
+                  next();
+                }
               }}
             >
               <h3 className="form-section-title">{`${t('monitoringReport:dp_title')}`}</h3>
@@ -284,9 +314,20 @@ export const DataAndParametersStep = (props: any) => {
                 <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
                   {t('monitoringReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('monitoringReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

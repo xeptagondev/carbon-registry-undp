@@ -8,23 +8,39 @@ import PhoneInput, {
 
 import moment from 'moment';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { CustomStepsProps } from './StepProps';
 
-export const BasicInformationStep = (props: any) => {
-  const {
-    useLocation,
-    translator,
-    current,
-    form,
-    formMode,
-    next,
-    cancel,
-    countries,
-    onValueChange,
-  } = props;
+export const BasicInformationStep = (props: CustomStepsProps) => {
+  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
+    props;
 
-  const [contactNoInput] = useState<any>();
+  const onFinish = (values: any) => {
+    console.log('onFinish triggered');
+    console.log('-----------temp Values before-------');
+    const tempValues: any = {
+      projectDetails: {
+        bi_projectTitle: values?.bi_projectTitle,
+        bi_applicablePDDVersionNo: values?.bi_applicablePDDVersionNo,
+        completionDate: moment(values?.completionDate).startOf('day').unix(),
+        bi_duration: values?.bi_duration,
+        bi_projectParticipants: values?.bi_projectParticipants,
+        bi_appliedMethodologies: values?.bi_appliedMethodologies,
+        bi_achievedGHGReductions: values?.bi_achievedGHGReductions,
+        bi_unfccRefNo: values?.bi_unfccRefNo,
+        bi_versionNoOfMR: values?.bi_versionNoOfMR,
+        bi_monitoringPeriodNo: values?.bi_monitoringPeriodNo,
+        bi_monitoringNoForMonitoringPeriod: values?.bi_monitoringNoForMonitoringPeriod,
+        bi_hostParty: values?.bi_hostParty,
+        bi_sectoralScope: values?.bi_sectoralScope,
+        bi_projectedGHGReductions: values?.bi_projectedGHGReductions,
+      },
+    };
+    console.log('----------tempValues-------------', tempValues);
+    handleValuesUpdate(tempValues);
+  };
 
-  const t = translator.t;
+  // const [contactNoInput] = useState<any>();
+
   return (
     <>
       {current === 0 && (
@@ -39,8 +55,10 @@ export const BasicInformationStep = (props: any) => {
               form={form}
               disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
-                onValueChange({ projectDetails: values });
-                next();
+                onFinish(values);
+                if (next) {
+                  next();
+                }
               }}
             >
               <Row className="row" gutter={[40, 16]}>
@@ -534,12 +552,23 @@ export const BasicInformationStep = (props: any) => {
                 </Col>
               </Row>
               <Row justify={'end'} className="step-actions-end">
-                <Button danger size={'large'} onClick={cancel} disabled={false}>
-                  {t('monitoringReport:cancel')}
+                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                  {t('monitoringReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('monitoringReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

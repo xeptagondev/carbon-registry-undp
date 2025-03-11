@@ -4,9 +4,28 @@ import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 
 export const ImplementationOfProjectActivityStep = (props: any) => {
-  const { useLocation, translator, current, form, formMode, next, prev, onValueChange } = props;
+  const { useLocation, translator, current, form, formMode, next, prev, handleValuesUpdate } =
+    props;
 
   const t = translator.t;
+
+  const onFinish = (values: any) => {
+    console.log('onFinish triggered');
+    console.log('-----------temp Values before-------');
+    const tempValues: any = {
+      io_descriptionOfPA: values?.io_descriptionOfPA,
+      io_postRegistrationChanges: values?.io_postRegistrationChanges,
+      io_tempDeviations: values?.io_tempDeviations,
+      io_corrections: values?.io_corrections,
+      io_changesToTheStartDate: values?.io_changesToTheStartDate,
+      io_inclusionOfMP: values?.io_inclusionOfMP,
+      io_changesToProjectDesign: values?.io_changesToProjectDesign,
+      io_changesSpecificToAfforestrationOrReforestration:
+        values?.io_changesSpecificToAfforestrationOrReforestration,
+    };
+    console.log('----------tempValues-------------', tempValues);
+    handleValuesUpdate(tempValues);
+  };
   return (
     <>
       {current === 2 && (
@@ -21,8 +40,10 @@ export const ImplementationOfProjectActivityStep = (props: any) => {
               form={form}
               disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
-                onValueChange({ implementationStatus: values });
-                next();
+                onFinish(values);
+                if (next) {
+                  next();
+                }
               }}
             >
               <Row className="row" gutter={[40, 16]}>

@@ -7,6 +7,8 @@ import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import NetEmissionReduction from '../Common/NetEmissonReduction';
 import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
 import moment from 'moment';
+import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
+import { RcFile } from 'antd/lib/upload';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   baselineEmissionReductions: 'avgBaselineEmissionReductions',
@@ -156,163 +158,235 @@ export const CalcEmissionReductionStep = (props: any) => {
     calculateTotalEmissions(value, 'leakageEmissionReductions', 'totalLeakageEmissionReductions');
   };
 
-  // const onFinish = (values: any) => {
-  //   const tempValues: any = {
-  //     titleAndReference: values?.titleAndReferenceOfMethodology,
-  //     applicability: values?.applicabilityOfMethodology,
-  //     // baselineScenario: values?.baselineScenario,
-  //     // additionality: values?.additionality,
-  //     descriptionOfBaselineScenario: values?.descriptionOfBaselineScenario,
-  //     demonstrationOfAdditionality: values?.demonstrationOfAdditionality,
-  //     exAnteCalculationOfEmissionReduction: values?.exAnteCalculationOfEmissionReduction,
-  //     emissionReductionEstimation: values?.emissionReductionEstimation,
-  //     monitoringPlan: values?.monitoringPlan,
-  //     dataAndParametersExAnte: {
-  //       parameter: values?.parameter,
-  //       unit: values?.unit,
-  //       description: values?.description,
-  //       dataSource: values?.dataSource,
-  //       descriptionOfMeasurementMethods: values?.descriptionOfMeasurementMethods,
-  //       purpose: values?.purpose,
-  //       comments: values?.comments,
-  //     },
-  //     dataAndParametersMonitored: {
-  //       monitoringParameter: values?.monitoringParameter,
-  //       monitoringUnit: values?.monitoringUnit,
-  //       unit: values?.unit,
-  //       monitoringDescription: values?.monitoringDescription,
-  //       data_parameterDescription: values?.data_parameterDescription,
-  //       monitoringSource: values?.monitoringSource,
-  //       monitoringMeasurementMethods: values?.monitoringMeasurementMethods,
-  //       monitoringFrequency: values?.monitoringFrequency,
-  //       monitoringValueApplied: values?.monitoringValueApplied,
-  //       monitoringEquipment: values?.monitoringEquipment,
-  //       monitoringQAProcedures: values?.monitoringQAProcedures,
-  //       monitoringPurpose: values?.monitoringPurpose,
-  //       monitoringCalculation: values?.monitoringCalculation,
-  //       monitoringComments: values?.monitoringComments,
-  //     },
-  //     samplingPlan: values?.samplingPlan,
-  //     otherElementsOfMonitoringPlan: values?.otherElementsOfMonitoringPlan,
-  //     methodologyDeviations: values?.methodologyDeviations,
-  //     projectBoundary: (function () {
-  //       const tempVal: any = {};
+  const onFinish = async (values: any) => {
+    const tempValues: any = {
+      ce_baselineEmission: values?.ce_baselineEmission,
+      ce_documentUpload: await (async function () {
+        const base64Docs: string[] = [];
+        if (values?.ce_documentUpload && values?.ce_documentUpload.length > 0) {
+          const docs = values.ce_documentUpload;
+          for (let i = 0; i < docs.length; i++) {
+            if (docs[i]?.originFileObj === undefined) {
+              base64Docs.push(docs[i]?.url);
+            } else {
+              const temp = await getBase64(docs[i]?.originFileObj as RcFile);
+              base64Docs.push(temp); // No need for Promise.resolve
+            }
+          }
+        }
+        return base64Docs;
+      })(),
+      ce_projectEmissions: values?.ce_projectEmissions,
+      ce_leakage: values?.ce_leakage,
 
-  //       const tempbaseline = [];
-  //       const firstBaseline = {
-  //         source: values?.baselineSource,
-  //         isCO2Included: values?.baselineIsCO2Included,
-  //         co2Justification: values?.baselineco2Justification,
-  //         isCH4Included: values?.baselineIsCH4Included,
-  //         ch4Justification: values?.baselinech4Justification,
-  //         isN2OIncluded: values?.baselineIsN2OIncluded,
-  //         n2oJustification: values?.baselinen2oJustification,
-  //         isOtherIncluded: values?.baselineIsOtherIncluded,
-  //         otherJustification: values?.baselineotherJustification,
-  //       };
+      netGHGEmissionReductions: (function () {
+        const tempGHG: any = {
+          description: values?.netGHGEmissionReductionsAndRemovals,
+        };
 
-  //       tempbaseline.push(firstBaseline);
+        const tempYearlyReductions: any = [];
 
-  //       if (values?.extraBaseline) {
-  //         values.extraBaseline.forEach((item: any) => {
-  //           const tempObj: any = {
-  //             source: item?.source,
-  //             isCO2Included: item?.isCO2Included,
-  //             co2Justification: item?.co2Justification,
-  //             isCH4Included: item?.isCH4Included,
-  //             ch4Justification: item?.ch4Justification,
-  //             isN2OIncluded: item?.isN2OIncluded,
-  //             n2oJustification: item?.n2oJustification,
-  //             isOtherIncluded: item?.isOtherIncluded,
-  //             otherJustification: item?.otherJustification,
-  //           };
-  //           tempbaseline.push(tempObj);
-  //         });
-  //       }
+        const firstReduction = {
+          startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
+          endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
+          baselineEmissionReductions: Number(values?.baselineEmissionReductions),
+          projectEmissionReductions: Number(values?.projectEmissionReductions),
+          leakageEmissionReductions: Number(values?.leakageEmissionReductions),
+          netEmissionReductions: Number(values?.netEmissionReductions),
+        };
 
-  //       const tempProject: any = [];
-  //       const firstProject = {
-  //         source: values?.projectSource,
-  //         isCO2Included: values?.projectIsCO2Included,
-  //         co2Justification: values?.projectco2Justification,
-  //         isCH4Included: values?.projectIsCH4Included,
-  //         ch4Justification: values?.projectch4Justification,
-  //         isN2OIncluded: values?.projectIsN2OIncluded,
-  //         n2oJustification: values?.projectn2oJustification,
-  //         isOtherIncluded: values?.projectIsOtherIncluded,
-  //         otherJustification: values?.projectotherJustification,
-  //       };
-  //       tempProject.push(firstProject);
-  //       if (values.extraProject) {
-  //         values.extraProject.forEach((item: any) => {
-  //           const tempObj: any = {
-  //             source: item?.source,
-  //             isCO2Included: item?.isCO2Included,
-  //             co2Justification: item?.co2Justification,
-  //             isCH4Included: item?.isCH4Included,
-  //             ch4Justification: item?.ch4Justification,
-  //             isN2OIncluded: item?.isN2OIncluded,
-  //             n2oJustification: item?.n2oJustification,
-  //             isOtherIncluded: item?.isOtherIncluded,
-  //             otherJustification: item?.otherJustification,
-  //           };
-  //           tempProject.push(tempObj);
-  //         });
-  //       }
+        tempYearlyReductions.push(firstReduction);
 
-  //       tempVal.baseline = tempbaseline;
-  //       tempVal.project = tempProject;
+        if (values?.extraEmissionReductions) {
+          values.extraEmissionReductions.forEach((item: any) => {
+            const tempObj = {
+              startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
+              endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
+              baselineEmissionReductions: Number(item?.baselineEmissionReductions),
+              projectEmissionReductions: Number(item?.projectEmissionReductions),
+              leakageEmissionReductions: Number(item?.leakageEmissionReductions),
+              netEmissionReductions: Number(item?.netEmissionReductions),
+            };
 
-  //       return tempVal;
-  //     })(),
-  //     netGHGEmissionReductions: (function () {
-  //       const tempGHG: any = {
-  //         description: values?.netGHGEmissionReductionsAndRemovals,
-  //       };
+            tempYearlyReductions.push(tempObj);
+          });
+        }
+        tempGHG.yearlyGHGEmissionReductions = tempYearlyReductions;
+        tempGHG.totalBaselineEmissionReductions = Number(values?.totalBaselineEmissionReductions);
+        tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
+        tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
+        tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
+        tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
+        tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
+        tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
+        tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);
+        tempGHG.avgNetEmissionReductions = Number(values?.avgNetEmissionReductions);
 
-  //       const tempYearlyReductions: any = [];
+        return tempGHG;
+      })(),
 
-  //       const firstReduction = {
-  //         startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
-  //         endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
-  //         baselineEmissionReductions: Number(values?.baselineEmissionReductions),
-  //         projectEmissionReductions: Number(values?.projectEmissionReductions),
-  //         leakageEmissionReductions: Number(values?.leakageEmissionReductions),
-  //         netEmissionReductions: Number(values?.netEmissionReductions),
-  //       };
+      item: values?.item,
+      valueApplied: values?.valueApplied,
+      actualValues: values?.actualValues,
+      ce_remarks: values?.ce_remarks,
+    };
+    handleValuesUpdate({ calculateTotalEmissionReductions: tempValues });
+    console.log('------temp vals ------', tempValues);
+    //     titleAndReference: values?.titleAndReferenceOfMethodology,
+    //     applicability: values?.applicabilityOfMethodology,
+    //     // baselineScenario: values?.baselineScenario,
+    //     // additionality: values?.additionality,
+    //     descriptionOfBaselineScenario: values?.descriptionOfBaselineScenario,
+    //     demonstrationOfAdditionality: values?.demonstrationOfAdditionality,
+    //     exAnteCalculationOfEmissionReduction: values?.exAnteCalculationOfEmissionReduction,
+    //     emissionReductionEstimation: values?.emissionReductionEstimation,
+    //     monitoringPlan: values?.monitoringPlan,
+    //     dataAndParametersExAnte: {
+    //       parameter: values?.parameter,
+    //       unit: values?.unit,
+    //       description: values?.description,
+    //       dataSource: values?.dataSource,
+    //       descriptionOfMeasurementMethods: values?.descriptionOfMeasurementMethods,
+    //       purpose: values?.purpose,
+    //       comments: values?.comments,
+    //     },
+    //     dataAndParametersMonitored: {
+    //       monitoringParameter: values?.monitoringParameter,
+    //       monitoringUnit: values?.monitoringUnit,
+    //       unit: values?.unit,
+    //       monitoringDescription: values?.monitoringDescription,
+    //       data_parameterDescription: values?.data_parameterDescription,
+    //       monitoringSource: values?.monitoringSource,
+    //       monitoringMeasurementMethods: values?.monitoringMeasurementMethods,
+    //       monitoringFrequency: values?.monitoringFrequency,
+    //       monitoringValueApplied: values?.monitoringValueApplied,
+    //       monitoringEquipment: values?.monitoringEquipment,
+    //       monitoringQAProcedures: values?.monitoringQAProcedures,
+    //       monitoringPurpose: values?.monitoringPurpose,
+    //       monitoringCalculation: values?.monitoringCalculation,
+    //       monitoringComments: values?.monitoringComments,
+    //     },
+    //     samplingPlan: values?.samplingPlan,
+    //     otherElementsOfMonitoringPlan: values?.otherElementsOfMonitoringPlan,
+    //     methodologyDeviations: values?.methodologyDeviations,
+    //     projectBoundary: (function () {
+    //       const tempVal: any = {};
 
-  //       tempYearlyReductions.push(firstReduction);
+    //       const tempbaseline = [];
+    //       const firstBaseline = {
+    //         source: values?.baselineSource,
+    //         isCO2Included: values?.baselineIsCO2Included,
+    //         co2Justification: values?.baselineco2Justification,
+    //         isCH4Included: values?.baselineIsCH4Included,
+    //         ch4Justification: values?.baselinech4Justification,
+    //         isN2OIncluded: values?.baselineIsN2OIncluded,
+    //         n2oJustification: values?.baselinen2oJustification,
+    //         isOtherIncluded: values?.baselineIsOtherIncluded,
+    //         otherJustification: values?.baselineotherJustification,
+    //       };
 
-  //       if (values?.extraEmissionReductions) {
-  //         values.extraEmissionReductions.forEach((item: any) => {
-  //           const tempObj = {
-  //             startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
-  //             endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
-  //             baselineEmissionReductions: Number(item?.baselineEmissionReductions),
-  //             projectEmissionReductions: Number(item?.projectEmissionReductions),
-  //             leakageEmissionReductions: Number(item?.leakageEmissionReductions),
-  //             netEmissionReductions: Number(item?.netEmissionReductions),
-  //           };
+    //       tempbaseline.push(firstBaseline);
 
-  //           tempYearlyReductions.push(tempObj);
-  //         });
-  //       }
-  //       tempGHG.yearlyGHGEmissionReductions = tempYearlyReductions;
-  //       tempGHG.totalBaselineEmissionReductions = Number(values?.totalBaselineEmissionReductions);
-  //       tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
-  //       tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
-  //       tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
-  //       tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
-  //       tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
-  //       tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
-  //       tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);
-  //       tempGHG.avgNetEmissionReductions = Number(values?.avgNetEmissionReductions);
+    //       if (values?.extraBaseline) {
+    //         values.extraBaseline.forEach((item: any) => {
+    //           const tempObj: any = {
+    //             source: item?.source,
+    //             isCO2Included: item?.isCO2Included,
+    //             co2Justification: item?.co2Justification,
+    //             isCH4Included: item?.isCH4Included,
+    //             ch4Justification: item?.ch4Justification,
+    //             isN2OIncluded: item?.isN2OIncluded,
+    //             n2oJustification: item?.n2oJustification,
+    //             isOtherIncluded: item?.isOtherIncluded,
+    //             otherJustification: item?.otherJustification,
+    //           };
+    //           tempbaseline.push(tempObj);
+    //         });
+    //       }
 
-  //       return tempGHG;
-  //     })(),
-  //   };
+    //       const tempProject: any = [];
+    //       const firstProject = {
+    //         source: values?.projectSource,
+    //         isCO2Included: values?.projectIsCO2Included,
+    //         co2Justification: values?.projectco2Justification,
+    //         isCH4Included: values?.projectIsCH4Included,
+    //         ch4Justification: values?.projectch4Justification,
+    //         isN2OIncluded: values?.projectIsN2OIncluded,
+    //         n2oJustification: values?.projectn2oJustification,
+    //         isOtherIncluded: values?.projectIsOtherIncluded,
+    //         otherJustification: values?.projectotherJustification,
+    //       };
+    //       tempProject.push(firstProject);
+    //       if (values.extraProject) {
+    //         values.extraProject.forEach((item: any) => {
+    //           const tempObj: any = {
+    //             source: item?.source,
+    //             isCO2Included: item?.isCO2Included,
+    //             co2Justification: item?.co2Justification,
+    //             isCH4Included: item?.isCH4Included,
+    //             ch4Justification: item?.ch4Justification,
+    //             isN2OIncluded: item?.isN2OIncluded,
+    //             n2oJustification: item?.n2oJustification,
+    //             isOtherIncluded: item?.isOtherIncluded,
+    //             otherJustification: item?.otherJustification,
+    //           };
+    //           tempProject.push(tempObj);
+    //         });
+    //       }
 
-  //   handleValuesUpdate({ applicationOfMethodology: tempValues });
+    //       tempVal.baseline = tempbaseline;
+    //       tempVal.project = tempProject;
+
+    //       return tempVal;
+    //     })(),
+    //     netGHGEmissionReductions: (function () {
+    //       const tempGHG: any = {
+    //         description: values?.netGHGEmissionReductionsAndRemovals,
+    //       };
+
+    //       const tempYearlyReductions: any = [];
+
+    //       const firstReduction = {
+    //         startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
+    //         endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
+    //         baselineEmissionReductions: Number(values?.baselineEmissionReductions),
+    //         projectEmissionReductions: Number(values?.projectEmissionReductions),
+    //         leakageEmissionReductions: Number(values?.leakageEmissionReductions),
+    //         netEmissionReductions: Number(values?.netEmissionReductions),
+    //       };
+
+    //       tempYearlyReductions.push(firstReduction);
+
+    //       if (values?.extraEmissionReductions) {
+    //         values.extraEmissionReductions.forEach((item: any) => {
+    //           const tempObj = {
+    //             startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
+    //             endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
+    //             baselineEmissionReductions: Number(item?.baselineEmissionReductions),
+    //             projectEmissionReductions: Number(item?.projectEmissionReductions),
+    //             leakageEmissionReductions: Number(item?.leakageEmissionReductions),
+    //             netEmissionReductions: Number(item?.netEmissionReductions),
+    //           };
+
+    //           tempYearlyReductions.push(tempObj);
+    //         });
+    //       }
+    //       tempGHG.yearlyGHGEmissionReductions = tempYearlyReductions;
+    //       tempGHG.totalBaselineEmissionReductions = Number(values?.totalBaselineEmissionReductions);
+    //       tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
+    //       tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
+    //       tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
+    //       tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
+    //       tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
+    //       tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
+    //       tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);
+    //       tempGHG.avgNetEmissionReductions = Number(values?.avgNetEmissionReductions);
+
+    //       return tempGHG;
+    //     })(),
+    //   handleValuesUpdate({ applicationOfMethodology: tempValues });
+  };
+
   return (
     <>
       {current === 5 && (
@@ -330,9 +404,11 @@ export const CalcEmissionReductionStep = (props: any) => {
                 q_baselineEmission2:
                   'B𝑬𝒚 = 𝑬𝑮𝒚×𝑬F𝒚\nWhere,\nB𝑬𝒚= Baseline Emissions in year y (tCO₂ₑ)\n𝑬𝑮𝒚 = Quantity of net electricity supplied to the grid as a result of the implementation of the Clean Development Mechanism (CDM) project activity in year y (MWh).\n𝑬F𝒚 = CO₂ Emission factor of the grid in the year 2020 (tCO₂/ MWh)',
               }}
-              onFinish={async (values: any) => {
-                onValueChange({ quantifications: values });
-                next();
+              onFinish={(values: any) => {
+                onFinish(values);
+                if (next) {
+                  next();
+                }
               }}
             >
               <Row className="row" gutter={[40, 16]}>
@@ -429,14 +505,6 @@ export const CalcEmissionReductionStep = (props: any) => {
 
                       {/* need to update this */}
                       <>
-                        <LabelWithTooltip
-                          label={t('PDD:netEmmissionsTitle')}
-                          required={false}
-                          labelStyles={{
-                            fontSize: '16px',
-                            fontWeight: '500',
-                          }}
-                        />
                         <>
                           <div className="estimated-emmissions-table-form">
                             <Row className="header" justify={'space-between'}>
@@ -479,7 +547,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
                                       },
                                     },
@@ -512,7 +580,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         const startDate = moment(
@@ -564,7 +632,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         } else if (isNaN(value)) {
                                           return Promise.reject(new Error('Should be a number'));
                                         } else if (Number(value) < 0) {
@@ -612,7 +680,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         } else if (isNaN(value)) {
                                           return Promise.reject(new Error('Should be a number'));
                                         } else if (Number(value) < 0) {
@@ -660,7 +728,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         } else if (isNaN(value)) {
                                           return Promise.reject(new Error('Should be a number'));
                                         } else if (Number(value) < 0) {
@@ -708,7 +776,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         } else if (isNaN(value)) {
                                           return Promise.reject(new Error('Should be a number'));
                                         } else if (Number(value) < 0) {
@@ -758,7 +826,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     value === null ||
                                                     value === undefined
                                                   ) {
-                                                    throw new Error(`${t('PDD:required')}`);
+                                                    throw new Error(
+                                                      `${t('monitoringReport:required')}`
+                                                    );
                                                   }
                                                 },
                                               },
@@ -791,7 +861,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     value === null ||
                                                     value === undefined
                                                   ) {
-                                                    throw new Error(`${t('PDD:required')}`);
+                                                    throw new Error(
+                                                      `${t('monitoringReport:required')}`
+                                                    );
                                                   }
 
                                                   const startDate = moment(
@@ -850,7 +922,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     value === null ||
                                                     value === undefined
                                                   ) {
-                                                    throw new Error(`${t('PDD:required')}`);
+                                                    throw new Error(
+                                                      `${t('monitoringReport:required')}`
+                                                    );
                                                   } else if (isNaN(value)) {
                                                     return Promise.reject(
                                                       new Error('Should be a number')
@@ -901,7 +975,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     value === null ||
                                                     value === undefined
                                                   ) {
-                                                    throw new Error(`${t('PDD:required')}`);
+                                                    throw new Error(
+                                                      `${t('monitoringReport:required')}`
+                                                    );
                                                   } else if (isNaN(value)) {
                                                     return Promise.reject(
                                                       new Error('Should be a number')
@@ -952,7 +1028,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     value === null ||
                                                     value === undefined
                                                   ) {
-                                                    throw new Error(`${t('PDD:required')}`);
+                                                    throw new Error(
+                                                      `${t('monitoringReport:required')}`
+                                                    );
                                                   } else if (isNaN(value)) {
                                                     return Promise.reject(
                                                       new Error('Should be a number')
@@ -1003,7 +1081,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     value === null ||
                                                     value === undefined
                                                   ) {
-                                                    throw new Error(`${t('PDD:required')}`);
+                                                    throw new Error(
+                                                      `${t('monitoringReport:required')}`
+                                                    );
                                                   } else if (isNaN(value)) {
                                                     return Promise.reject(
                                                       new Error('Should be a number')
@@ -1101,7 +1181,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
@@ -1133,7 +1213,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
@@ -1165,7 +1245,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
@@ -1197,7 +1277,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
@@ -1240,7 +1320,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
@@ -1292,7 +1372,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
@@ -1324,7 +1404,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
@@ -1356,7 +1436,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
@@ -1388,7 +1468,7 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(`${t('PDD:required')}`);
+                                          throw new Error(`${t('monitoringReport:required')}`);
                                         }
 
                                         // eslint-disable-next-line no-restricted-globals
