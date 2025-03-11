@@ -4,9 +4,14 @@ import { TokenRetirementService } from './service/token-retirement.service';
 import { UtilModule } from '../util/util.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CreditEventsEntity } from './entity/credit-events.entity';
+import { CarbonCreditService } from './service/carbon-credit.service';
 
 @Module({
     imports: [UtilModule, TypeOrmModule.forFeature([CreditEventsEntity])],
-    providers: [TokenRetirementService, TokenTransferService],
+    providers: [
+        TokenRetirementService,
+        TokenTransferService,
+        CarbonCreditService,
+    ],
 })
 export class CarbonCreditTokenModule {}
