@@ -2250,6 +2250,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     };
   };
 
+  // MARK: MAIN JSX START
   return loadingAll ? (
     <Loading />
   ) : (
