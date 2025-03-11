@@ -137,8 +137,12 @@ export class ProjectEntity {
     @Column({ nullable: true })
     creditCertificateUrl?: string;
 
+    @Column({ nullable: true, type: 'bigint' })
+    createdDate?: number;
+
     @BeforeInsert()
     generateRefId() {
         this.refId = `P-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        this.createdDate = Date.now();
     }
 }
