@@ -27,7 +27,7 @@ import ProjectDetails from '../PDD/BasicInformation';
 const StepperComponent = (props: any) => {
   const navigate = useNavigate();
   const { useLocation, translator, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(5);
+  const [current, setCurrent] = useState(0);
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
   const [formValues, setFormValues] = useState({});
@@ -64,7 +64,7 @@ const StepperComponent = (props: any) => {
   };
 
   const [values, setValues] = useState({
-    projectId: Number(id),
+    projectRefId: Number(id),
     name: 'MonitoringReport',
     companyId: undefined,
     documentType: DocumentEnum.MONITORING,
@@ -72,12 +72,13 @@ const StepperComponent = (props: any) => {
   });
 
   const handleValuesUpdate = (val: any) => {
-    console.log('----------temp vals stepper-------------', val);
+    // console.log('----------temp vals stepper-------------', val);
     setValues((prevVal: any) => {
       const tempContent = {
         ...prevVal.data,
         ...val,
       };
+      console.log(tempContent);
       return { ...prevVal, data: tempContent };
     });
   };
@@ -515,7 +516,8 @@ const StepperComponent = (props: any) => {
 
     try {
       setLoading(true);
-      const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
+      // console.log(tempValues);
+      const res = await post(API_PATHS.CREATE_MONITORING_REPORT, tempValues);
       if (res?.response?.data?.statusCode === 200) {
         message.open({
           type: 'success',
@@ -589,8 +591,8 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <ImplementationOfProjectActivityStep
-          useLocation={useLocation}
-          translator={translator}
+          // useLocation={useLocation}
+          t={t}
           current={current}
           form={implementationStatusForm}
           formMode={mode}
@@ -609,8 +611,8 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <DescriptionOfMSStep
-          useLocation={useLocation}
-          translator={translator}
+          // useLocation={useLocation}
+          t={t}
           current={current}
           form={safeguardsForm}
           formMode={mode}
@@ -629,8 +631,8 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <DataAndParametersStep
-          useLocation={useLocation}
-          translator={translator}
+          // useLocation={useLocation}
+          t={t}
           current={current}
           form={dataAndParametersForm}
           formMode={mode}
@@ -649,8 +651,8 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <CalcEmissionReductionStep
-          useLocation={useLocation}
-          translator={translator}
+          // useLocation={useLocation}
+          t={t}
           current={current}
           form={qualificationForm}
           formMode={mode}
@@ -670,13 +672,14 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <AnnexureStep
-          translator={translator}
+          t={t}
           current={current}
-          status={status}
+          // status={status}
           form={annexuresForm}
           formMode={mode}
           prev={prev}
-          cancel={navigateToDetailsPage}
+          next={navigateToDetailsPage}
+          handleValuesUpdate={handleValuesUpdate}
           // approve={() => {
           //   showModalOnAction({
           //     actionBtnText: t('monitoringReport:btnApprove'),
@@ -719,7 +722,7 @@ const StepperComponent = (props: any) => {
           description: step.description,
         }))}
       />
-      {popupInfo && (
+      {/* {popupInfo && (
         <SlcfFormActionModel
           onCancel={() => {
             setSlcfActioModalVisible(false);
@@ -734,7 +737,7 @@ const StepperComponent = (props: any) => {
           remarkRequired={popupInfo!.remarkRequired}
           t={t}
         />
-      )}
+      )} */}
     </>
   );
 };

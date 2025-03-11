@@ -4,6 +4,7 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 export interface CustomStepsProps {
   next?: () => void;
   prev?: () => void;
+  cancel?: () => void;
   form: FormInstance;
   current: number;
   countries?: string[];

@@ -2,28 +2,31 @@ import { Button, Col, Form, Row } from 'antd';
 
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { CustomStepsProps } from './StepProps';
 
-export const ImplementationOfProjectActivityStep = (props: any) => {
-  const { useLocation, translator, current, form, formMode, next, prev, handleValuesUpdate } =
+export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => {
+  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
     props;
 
-  const t = translator.t;
+  // const t = translator.t;
 
   const onFinish = (values: any) => {
-    console.log('onFinish triggered');
-    console.log('-----------temp Values before-------');
+    // console.log('onFinish triggered');
+    // console.log('-----------temp Values before-------');
     const tempValues: any = {
-      io_descriptionOfPA: values?.io_descriptionOfPA,
-      io_postRegistrationChanges: values?.io_postRegistrationChanges,
-      io_tempDeviations: values?.io_tempDeviations,
-      io_corrections: values?.io_corrections,
-      io_changesToTheStartDate: values?.io_changesToTheStartDate,
-      io_inclusionOfMP: values?.io_inclusionOfMP,
-      io_changesToProjectDesign: values?.io_changesToProjectDesign,
-      io_changesSpecificToAfforestrationOrReforestration:
-        values?.io_changesSpecificToAfforestrationOrReforestration,
+      implementationOfProjectActivityDetails: {
+        io_descriptionOfPA: values?.io_descriptionOfPA,
+        io_postRegistrationChanges: values?.io_postRegistrationChanges,
+        io_tempDeviations: values?.io_tempDeviations,
+        io_corrections: values?.io_corrections,
+        io_changesToTheStartDate: values?.io_changesToTheStartDate,
+        io_inclusionOfMP: values?.io_inclusionOfMP,
+        io_changesToProjectDesign: values?.io_changesToProjectDesign,
+        io_changesSpecificToAfforestrationOrReforestration:
+          values?.io_changesSpecificToAfforestrationOrReforestration,
+      },
     };
-    console.log('----------tempValues-------------', tempValues);
+    // console.log('----------tempValues-------------', tempValues);
     handleValuesUpdate(tempValues);
   };
   return (

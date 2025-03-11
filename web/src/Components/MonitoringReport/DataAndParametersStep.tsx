@@ -2,38 +2,31 @@ import { Button, Col, Form, Input, Row } from 'antd';
 
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { CustomStepsProps } from './StepProps';
 
-export const DataAndParametersStep = (props: any) => {
-  const {
-    useLocation,
-    translator,
-    current,
-    form,
-    formMode,
-    next,
-    countries,
-    prev,
-    handleValuesUpdate,
-    disableFields,
-  } = props;
+export const DataAndParametersStep = (props: CustomStepsProps) => {
+  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
+    props;
 
-  const t = translator.t;
+  // const t = translator.t;
 
   const onFinish = (values: any) => {
-    console.log('onFinish triggered');
-    console.log('-----------temp Values before-------');
+    // console.log('onFinish triggered');
+    // console.log('-----------temp Values before-------');
     const tempValues: any = {
-      dp_dataParameter: values?.dp_dataParameter,
-      dp_dataUnit: values?.dp_dataUnit,
-      dp_description: values?.dp_description,
-      dp_sourceOfData: values?.dp_sourceOfData,
-      dp_valueApplied: values?.dp_valueApplied,
-      dp_choiceOfDataOrMeasurement: values?.dp_choiceOfDataOrMeasurement,
-      dp_purposeOfData: values?.dp_purposeOfData,
-      dp_comments: values?.dp_comments,
-      dp_implementationOfSamplingPlan: values?.dp_implementationOfSamplingPlan,
+      dataAndParameterDetails: {
+        dp_dataParameter: values?.dp_dataParameter,
+        dp_dataUnit: values?.dp_dataUnit,
+        dp_description: values?.dp_description,
+        dp_sourceOfData: values?.dp_sourceOfData,
+        dp_valueApplied: values?.dp_valueApplied,
+        dp_choiceOfDataOrMeasurement: values?.dp_choiceOfDataOrMeasurement,
+        dp_purposeOfData: values?.dp_purposeOfData,
+        dp_comments: values?.dp_comments,
+        dp_implementationOfSamplingPlan: values?.dp_implementationOfSamplingPlan,
+      },
     };
-    console.log('----------tempValues-------------', tempValues);
+    // console.log('----------tempValues-------------', tempValues);
     handleValuesUpdate(tempValues);
   };
   return (

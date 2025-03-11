@@ -9,6 +9,7 @@ import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
 import moment from 'moment';
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
+import { CustomStepsProps } from './StepProps';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   baselineEmissionReductions: 'avgBaselineEmissionReductions',
@@ -17,20 +18,9 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   netEmissionReductions: 'avgNetEmissionReductions',
 };
 
-export const CalcEmissionReductionStep = (props: any) => {
-  const {
-    useLocation,
-    translator,
-    current,
-    form,
-    formMode,
-    next,
-    prev,
-    onValueChange,
-    projectCategory,
-    disableFields,
-    handleValuesUpdate,
-  } = props;
+export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
+  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
+    props;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -40,7 +30,7 @@ export const CalcEmissionReductionStep = (props: any) => {
     }
     return e?.fileList;
   };
-  const t = translator.t;
+  // const t = translator.t;
 
   const calculateNetGHGEmissions = (value?: any, index?: number) => {
     let baselineEmissionReductionsVal = 0;
@@ -58,7 +48,7 @@ export const CalcEmissionReductionStep = (props: any) => {
         form.setFields([
           {
             name: 'netEmissionReductions',
-            errors: [`${t('PDD:shouldHavePositive')}`],
+            errors: [`${t('monitoringReport:ce_shouldHavePositive')}`],
           },
         ]);
       } else {
@@ -89,7 +79,7 @@ export const CalcEmissionReductionStep = (props: any) => {
           form.setFields([
             {
               name: ['extraEmissionReductions', index, 'netEmissionReductions'],
-              errors: [`${t('PDD:shouldHavePositive')}`],
+              errors: [`${t('monitoringReport:ce_shouldHavePositive')}`],
             },
           ]);
         } else {
@@ -160,78 +150,79 @@ export const CalcEmissionReductionStep = (props: any) => {
 
   const onFinish = async (values: any) => {
     const tempValues: any = {
-      ce_baselineEmission: values?.ce_baselineEmission,
-      ce_documentUpload: await (async function () {
-        const base64Docs: string[] = [];
-        if (values?.ce_documentUpload && values?.ce_documentUpload.length > 0) {
-          const docs = values.ce_documentUpload;
-          for (let i = 0; i < docs.length; i++) {
-            if (docs[i]?.originFileObj === undefined) {
-              base64Docs.push(docs[i]?.url);
-            } else {
-              const temp = await getBase64(docs[i]?.originFileObj as RcFile);
-              base64Docs.push(temp); // No need for Promise.resolve
+      calcEmissionReductions: {
+        ce_baselineEmission: values?.ce_baselineEmission,
+        ce_documentUpload: await (async function () {
+          const base64Docs: string[] = [];
+          if (values?.ce_documentUpload && values?.ce_documentUpload.length > 0) {
+            const docs = values.ce_documentUpload;
+            for (let i = 0; i < docs.length; i++) {
+              if (docs[i]?.originFileObj === undefined) {
+                base64Docs.push(docs[i]?.url);
+              } else {
+                const temp = await getBase64(docs[i]?.originFileObj as RcFile);
+                base64Docs.push(temp); // No need for Promise.resolve
+              }
             }
           }
-        }
-        return base64Docs;
-      })(),
-      ce_projectEmissions: values?.ce_projectEmissions,
-      ce_leakage: values?.ce_leakage,
+          return base64Docs;
+        })(),
+        ce_projectEmissions: values?.ce_projectEmissions,
+        ce_leakage: values?.ce_leakage,
 
-      netGHGEmissionReductions: (function () {
-        const tempGHG: any = {
-          description: values?.netGHGEmissionReductionsAndRemovals,
-        };
+        netGHGEmissionReductions: (function () {
+          const tempGHG: any = {
+            description: values?.netGHGEmissionReductionsAndRemovals,
+          };
 
-        const tempYearlyReductions: any = [];
+          const tempYearlyReductions: any = [];
 
-        const firstReduction = {
-          startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
-          endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
-          baselineEmissionReductions: Number(values?.baselineEmissionReductions),
-          projectEmissionReductions: Number(values?.projectEmissionReductions),
-          leakageEmissionReductions: Number(values?.leakageEmissionReductions),
-          netEmissionReductions: Number(values?.netEmissionReductions),
-        };
+          const firstReduction = {
+            startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
+            endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
+            baselineEmissionReductions: Number(values?.baselineEmissionReductions),
+            projectEmissionReductions: Number(values?.projectEmissionReductions),
+            leakageEmissionReductions: Number(values?.leakageEmissionReductions),
+            netEmissionReductions: Number(values?.netEmissionReductions),
+          };
 
-        tempYearlyReductions.push(firstReduction);
+          tempYearlyReductions.push(firstReduction);
 
-        if (values?.extraEmissionReductions) {
-          values.extraEmissionReductions.forEach((item: any) => {
-            const tempObj = {
-              startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
-              endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
-              baselineEmissionReductions: Number(item?.baselineEmissionReductions),
-              projectEmissionReductions: Number(item?.projectEmissionReductions),
-              leakageEmissionReductions: Number(item?.leakageEmissionReductions),
-              netEmissionReductions: Number(item?.netEmissionReductions),
-            };
+          if (values?.extraEmissionReductions) {
+            values.extraEmissionReductions.forEach((item: any) => {
+              const tempObj = {
+                startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
+                endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
+                baselineEmissionReductions: Number(item?.baselineEmissionReductions),
+                projectEmissionReductions: Number(item?.projectEmissionReductions),
+                leakageEmissionReductions: Number(item?.leakageEmissionReductions),
+                netEmissionReductions: Number(item?.netEmissionReductions),
+              };
 
-            tempYearlyReductions.push(tempObj);
-          });
-        }
-        tempGHG.yearlyGHGEmissionReductions = tempYearlyReductions;
-        tempGHG.totalBaselineEmissionReductions = Number(values?.totalBaselineEmissionReductions);
-        tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
-        tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
-        tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
-        tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
-        tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
-        tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
-        tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);
-        tempGHG.avgNetEmissionReductions = Number(values?.avgNetEmissionReductions);
+              tempYearlyReductions.push(tempObj);
+            });
+          }
+          tempGHG.yearlyGHGEmissionReductions = tempYearlyReductions;
+          tempGHG.totalBaselineEmissionReductions = Number(values?.totalBaselineEmissionReductions);
+          tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
+          tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
+          tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
+          tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
+          tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
+          tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
+          tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);
+          tempGHG.avgNetEmissionReductions = Number(values?.avgNetEmissionReductions);
 
-        return tempGHG;
-      })(),
+          return tempGHG;
+        })(),
 
-      item: values?.item,
-      valueApplied: values?.valueApplied,
-      actualValues: values?.actualValues,
-      ce_remarks: values?.ce_remarks,
+        item: values?.item,
+        valueApplied: values?.valueApplied,
+        actualValues: values?.actualValues,
+        ce_remarks: values?.ce_remarks,
+      },
     };
     handleValuesUpdate({ calculateTotalEmissionReductions: tempValues });
-    console.log('------temp vals ------', tempValues);
     //     titleAndReference: values?.titleAndReferenceOfMethodology,
     //     applicability: values?.applicabilityOfMethodology,
     //     // baselineScenario: values?.baselineScenario,
@@ -637,7 +628,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           return Promise.reject(new Error('Should be a number'));
                                         } else if (Number(value) < 0) {
                                           return Promise.reject(
-                                            new Error(`${t('PDD:shouldHavePositive')}`)
+                                            new Error(
+                                              `${t('monitoringReport:ce_shouldHavePositive')}`
+                                            )
                                           );
                                         }
 
@@ -685,7 +678,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           return Promise.reject(new Error('Should be a number'));
                                         } else if (Number(value) < 0) {
                                           return Promise.reject(
-                                            new Error(`${t('PDD:shouldHavePositive')}`)
+                                            new Error(
+                                              `${t('monitoringReport:ce_shouldHavePositive')}`
+                                            )
                                           );
                                         }
 
@@ -733,7 +728,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           return Promise.reject(new Error('Should be a number'));
                                         } else if (Number(value) < 0) {
                                           return Promise.reject(
-                                            new Error(`${t('PDD:shouldHavePositive')}`)
+                                            new Error(
+                                              `${t('monitoringReport:ce_shouldHavePositive')}`
+                                            )
                                           );
                                         }
 
@@ -781,7 +778,9 @@ export const CalcEmissionReductionStep = (props: any) => {
                                           return Promise.reject(new Error('Should be a number'));
                                         } else if (Number(value) < 0) {
                                           return Promise.reject(
-                                            new Error(`${t('PDD:shouldHavePositive')}`)
+                                            new Error(
+                                              `${t('monitoringReport:ce_shouldHavePositive')}`
+                                            )
                                           );
                                         }
 
@@ -931,7 +930,11 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     );
                                                   } else if (Number(value) < 0) {
                                                     return Promise.reject(
-                                                      new Error(`${t('PDD:shouldHavePositive')}`)
+                                                      new Error(
+                                                        `${t(
+                                                          'monitoringReport:ce_shouldHavePositive'
+                                                        )}`
+                                                      )
                                                     );
                                                   }
 
@@ -984,7 +987,11 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     );
                                                   } else if (Number(value) < 0) {
                                                     return Promise.reject(
-                                                      new Error(`${t('PDD:shouldHavePositive')}`)
+                                                      new Error(
+                                                        `${t(
+                                                          'monitoringReport:ce_shouldHavePositive'
+                                                        )}`
+                                                      )
                                                     );
                                                   }
 
@@ -1037,7 +1044,11 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     );
                                                   } else if (Number(value) < 0) {
                                                     return Promise.reject(
-                                                      new Error(`${t('PDD:shouldHavePositive')}`)
+                                                      new Error(
+                                                        `${t(
+                                                          'monitoringReport:ce_shouldHavePositive'
+                                                        )}`
+                                                      )
                                                     );
                                                   }
 
@@ -1090,7 +1101,11 @@ export const CalcEmissionReductionStep = (props: any) => {
                                                     );
                                                   } else if (Number(value) < 0) {
                                                     return Promise.reject(
-                                                      new Error(`${t('PDD:shouldHavePositive')}`)
+                                                      new Error(
+                                                        `${t(
+                                                          'monitoringReport:ce_shouldHavePositive'
+                                                        )}`
+                                                      )
                                                     );
                                                   }
 
