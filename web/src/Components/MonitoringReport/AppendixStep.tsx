@@ -7,6 +7,8 @@ import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import { DocumentStatus } from '../../Definitions/Enums/document.status';
 import { useState } from 'react';
+import { CustomStepsProps } from './StepProps';
+
 export const AnnexureStep = (props: any) => {
   const {
     useLocation,
@@ -14,13 +16,15 @@ export const AnnexureStep = (props: any) => {
     current,
     form,
     formMode,
+    next,
     prev,
-    cancel,
-    approve,
-    reject,
-    onFinish,
-    status,
+    onValueChange,
+    projectCategory,
+    disableFields,
+    handleValuesUpdate,
   } = props;
+
+  const t = translator.t;
   const [loading, setLoading] = useState(false);
   const { userInfoState } = useUserContext();
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
@@ -32,16 +36,24 @@ export const AnnexureStep = (props: any) => {
     }
     return e?.fileList;
   };
-  const t = translator.t;
 
-  const handleFormSubmit = async (values: any) => {
-    setLoading(true);
-    try {
-      await onFinish({ annexures: values });
-    } finally {
-      setLoading(false);
-    }
+  const onFinish = (values: any) => {
+    const tempValues: any = {
+      a_appendix: values?.a_appendix,
+      a_uploadDoc: values?.a_uploadDoc,
+    };
+    console.log('---temp vals---');
+    handleValuesUpdate(tempValues);
   };
+
+  // const handleFormSubmit = async (values: any) => {
+  //   setLoading(true);
+  //   try {
+  //     await onFinish({ annexures: values });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <>
@@ -56,7 +68,12 @@ export const AnnexureStep = (props: any) => {
               requiredMark={true}
               form={form}
               disabled={FormMode.VIEW === formMode}
-              onFinish={handleFormSubmit}
+              onFinish={(values: any) => {
+                onFinish(values);
+                if (next) {
+                  next();
+                }
+              }}
             >
               <h4 className="appendix-title">
                 <i>{`${t('monitoringReport:a_appendix')}`}</i>
@@ -64,7 +81,7 @@ export const AnnexureStep = (props: any) => {
               <Row className="row" gutter={[40, 16]}>
                 <Col xl={24} md={24}>
                   <div className="step-form-left-col">
-                    <Form.Item>
+                    <Form.Item name="a_appendix">
                       <TextArea rows={8} disabled={FormMode.VIEW === formMode} />
                     </Form.Item>
 
@@ -113,14 +130,23 @@ export const AnnexureStep = (props: any) => {
                   </Button>
                 </Col>
                 <Col offset={20}>
-                  <Button danger onClick={cancel} disabled={false}>
-                    {t('monitoringReport:cancel')}
+                  <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                    {t('monitoringReport:back')}
                   </Button>
-                </Col>
-                <Col>
-                  <Button type="primary" htmlType="submit" disabled={loading}>
-                    <span>{t('monitoringReport:submit')}</span>
-                  </Button>
+                  {disableFields ? (
+                    <Button type="primary" onClick={next}>
+                      {t('monitoringReport:next')}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="primary"
+                      size={'large'}
+                      htmlType={'submit'}
+                      // onClick={next}
+                    >
+                      {t('monitoringReport:next')}
+                    </Button>
+                  )}
                 </Col>
                 {/* {userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
                   FormMode.VIEW !== formMode && (
