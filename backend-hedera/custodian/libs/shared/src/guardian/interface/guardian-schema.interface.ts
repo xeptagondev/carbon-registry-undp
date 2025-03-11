@@ -7,6 +7,7 @@ export interface OrganizationSchema {
     taxId: string;
     phoneNumber: string;
     address: string;
+    hederaAccount: string;
     logo: string;
     createdTime: number;
     updatedTime?: number;
@@ -49,6 +50,7 @@ export interface DocumentSchema {
     documentType: string;
     createdBy: string;
     project: string;
+    creditAmount?: number;
     activity?: string;
     name: string;
     version: number;
