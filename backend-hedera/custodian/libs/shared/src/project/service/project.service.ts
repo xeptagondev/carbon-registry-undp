@@ -263,6 +263,8 @@ export class ProjectService {
         };
 
         mappedProject.projectProposalStage = project.projectProposalStage;
+        mappedProject.creditCertificateUrl = project.creditCertificateUrl;
+        mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
         mappedProject.sectoralScope = project.sectoralScope;
         mappedProject.title = project.title;
 
