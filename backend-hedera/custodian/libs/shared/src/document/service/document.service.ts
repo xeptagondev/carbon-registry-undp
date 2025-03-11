@@ -43,7 +43,6 @@ import { AuditService } from '@app/shared/audit/service/audit.service';
 import { DocumentSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
-import { UtilService } from '@app/shared/util/service/util.service';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 import {
     ButtonActionEnum,
@@ -53,6 +52,7 @@ import { ObjectionLetterGenerateService } from '@app/shared/util/service/objecti
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { CreditIssueCertificateGenerator } from '@app/shared/util/service/credit.issue.certificate.gen';
+import { DocumentQueryDTO } from '../dto/document.query.dto';
 
 @Injectable()
 export class DocumentService {
@@ -64,7 +64,6 @@ export class DocumentService {
         private readonly dataSource: DataSource,
         private readonly auditService: AuditService,
         private readonly guardianService: GuardianService,
-        private readonly utilService: UtilService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
     ) {}
@@ -756,6 +755,13 @@ export class DocumentService {
                 documentEntity,
             );
 
+            const organizationDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    project?.organization?.refId,
+                    jwtData.email,
+                );
+
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
                 documentType: dto.documentType,
@@ -767,11 +773,9 @@ export class DocumentService {
                 activity: dto.activityRefId,
             };
 
-            await this.guardianService.createEntity(
+            await this.guardianService.saveDocument(
                 jwtData.email,
-                this.utilService.getBlock(
-                    this.getBlockNameByDocType(dto.documentType),
-                ),
+                this.getBlockNameByDocType(dto.documentType),
                 {
                     document: documentSchema,
                     ref: null,
@@ -2221,5 +2225,21 @@ export class DocumentService {
                 jwtData.userId,
             );
         }
+    }
+
+    async query(query: DocumentQueryDTO) {
+        const lastDoc = await this.documentRepository.findOne({
+            where: {
+                documentType: query.documentType,
+                project: {
+                    refId: query.projectRefId,
+                },
+            },
+            order: {
+                version: 'DESC',
+            },
+        });
+
+        return lastDoc;
     }
 }

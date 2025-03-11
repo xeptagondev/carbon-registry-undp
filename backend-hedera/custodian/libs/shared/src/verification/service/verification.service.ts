@@ -6,7 +6,6 @@ import { MonitoringReportDto } from '../dto/monitoring.report.dto';
 import { AdditionalDocType } from '@app/shared/document/enum/additional.document.type';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { UtilService } from '@app/shared/util/service/util.service';
 import { ActivityStateEnum } from '../../activity/enum/activity.state.enum';
 import { DocumentEnum } from '@app/shared/document/enum/document.enum';
 
@@ -45,7 +44,6 @@ export class VerificationService {
         private readonly dateUtilService: DateUtilService,
         private readonly documentService: DocumentService,
         private readonly guardianService: GuardianService,
-        private readonly utilService: UtilService,
         private readonly fileHelperService: FileHelperService,
         private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
         @InjectRepository(ProjectEntity)
@@ -233,9 +231,9 @@ export class VerificationService {
             project: project.refId,
         };
 
-        this.guardianService.createEntity(
+        this.guardianService.saveDocument(
             requestUser.email,
-            this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_ACTIVITY),
+            GUARDIAN_API.BLOCKS.CREATE_ACTIVITY,
             {
                 document: activitySchema,
                 ref: null,
