@@ -10,6 +10,7 @@ import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
 import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
 import { ProjectProposalStage } from '../../../Definitions/Enums/programmeStage.enum';
 import { DocType } from '../../../Definitions/Enums/document.type';
+import { saveAs } from 'file-saver';
 
 interface IPermissionsState {
   mode: FormMode;
@@ -18,10 +19,11 @@ interface IPermissionsState {
 
 interface IProjectDetails {
   projectProposalStage: any;
+  noObjectLetterUrl: string | undefined;
 }
 
 const ProjectDocuments = (props: IProjectDetails) => {
-  const { projectProposalStage } = props;
+  const { projectProposalStage, noObjectLetterUrl } = props;
 
   const { id } = useParams();
 
@@ -61,6 +63,12 @@ const ProjectDocuments = (props: IProjectDetails) => {
     );
   }, []);
 
+  const downloadNoObjectionLetter = () => {
+    if (noObjectLetterUrl) {
+      saveAs(noObjectLetterUrl, `No_Objection_Letter_${id}.pdf`);
+    }
+  };
+
   return (
     <div className="projectDocuments">
       <div className="info-view">
@@ -86,7 +94,13 @@ const ProjectDocuments = (props: IProjectDetails) => {
           No Objection Letter
         </Col>
         <Col md={6} className="documentAction-col">
-          <Button className="document-action-btn">Download</Button>
+          <Button
+            className="document-action-btn"
+            disabled={noObjectLetterUrl === undefined}
+            onClick={downloadNoObjectionLetter}
+          >
+            Download
+          </Button>
         </Col>
       </Row>
 
