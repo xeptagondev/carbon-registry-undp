@@ -2493,7 +2493,10 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                   projectProposalStage={data?.projectProposalStage}
                   programmeDetails={data}
                 /> */}
-                <ProjectDocuments projectProposalStage={data?.projectProposalStage} />
+                <ProjectDocuments
+                  projectProposalStage={data?.projectProposalStage}
+                  noObjectLetterUrl={data?.noObjectionLetterUrl}
+                />
               </div>
             </Card>
             {verificationHistoryData && verificationHistoryData.length > 0 && (

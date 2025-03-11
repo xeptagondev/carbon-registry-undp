@@ -362,6 +362,7 @@ export interface ProgrammeSlU extends ProgrammeSl {
   geographicalLocationCoordinates: any[];
   documents: any;
   contactPerson: string;
+  noObjectionLetterUrl: string;
 }
 
 export interface ProgrammeU extends Programme {
