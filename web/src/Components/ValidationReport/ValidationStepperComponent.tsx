@@ -42,7 +42,7 @@ export enum ProcessSteps {
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
 
-  const [current, setCurrent] = useState(8);
+  const [current, setCurrent] = useState(0);
 
   const navigate = useNavigate();
   const { id: programId } = useParams();
@@ -56,7 +56,7 @@ const StepperComponent = (props: any) => {
 
   const [existingFormValues, setExistingFormValues] = useState({
     projectRefId: programId,
-    documentType: DocumentEnum.VALIDATION_REPORT,
+    documentType: DocumentEnum.VALIDATION,
     name: 'Validation',
     data: {},
   });
