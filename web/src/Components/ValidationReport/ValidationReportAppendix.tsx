@@ -7,7 +7,9 @@ import { ProcessSteps } from './ValidationStepperComponent';
 import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import moment from 'moment';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 
 const ValidationReportAppendix = (props: CustomStepsProps) => {
   const { next, prev, form, current, handleValuesUpdate, submitForm, t, formMode } = props;
@@ -37,11 +39,32 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
     handleValuesUpdate({ appendix: appendixFormValues });
   };
 
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+
+  const [formValues, setFormValues] = useState<any>();
+
+  const closeDialog = () => {
+    setShowDialog(false);
+  };
   return (
     <>
       {current === 9 && (
         <div>
           <div className="val-report-step-form-container">
+            <ConfirmDialog
+              showDialog={showDialog}
+              Icon={ConfirmSubmitSVG}
+              message={t('validationReport:confirmModalMessage')}
+              subMessage={`${t('validationReport:confirmModalSubMessage')}`}
+              okText={t('common:yes')}
+              cancelText={t('common:no')}
+              okAction={() => {
+                closeDialog();
+                onFinish(formValues);
+              }}
+              closeDialog={closeDialog}
+              isReject={false}
+            />
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -50,8 +73,8 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
               requiredMark={true}
               form={form}
               onFinish={(values: any) => {
-                console.log('-------onFInish', values);
-                onFinish(values);
+                setShowDialog(true);
+                setFormValues(values);
               }}
               // disabled={FormMode.VIEW === formMode}
             >

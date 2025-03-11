@@ -2195,7 +2195,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             <span>{v as string}</span>
           </span>
         );
-      } else if (k === 'projectDescription') {
+      } else if (k === 'projectDescription' && v) {
         const isShowTooltip = (v as string).length > 40;
         generalInfo[text] = isShowTooltip ? (
           <span>
