@@ -22,7 +22,22 @@ export const formPermissions = (
   docType: DocType,
   projectProposalStage: ProjectProposalStage
 ) => {
-  //PDD: Permissions on PDD pending and rejected stage for all users
+  console.log(
+    '--------Permissions form func----------',
+    userInfoState,
+    docType,
+    projectProposalStage,
+    docType === DocType.VALIDATION_REPORT &&
+      (projectProposalStage === ProjectProposalStage.PENDING ||
+        projectProposalStage === ProjectProposalStage.REJECTED ||
+        projectProposalStage === ProjectProposalStage.APPROVED ||
+        projectProposalStage === ProjectProposalStage.PDD_SUBMITTED ||
+        projectProposalStage === ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER ||
+        projectProposalStage === ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER ||
+        projectProposalStage === ProjectProposalStage.PDD_REJECTED_BY_DNA)
+  );
+
+  //PDD: Permissions pending and rejected stage for all users
   if (
     docType === DocType.PDD &&
     (projectProposalStage === ProjectProposalStage.PENDING ||
@@ -30,7 +45,7 @@ export const formPermissions = (
   ) {
     return { mode: FormMode.DISABLED, userCompanyRole: userInfoState?.companyRole };
   }
-  //PDD: Permissions on PDD for PD Admin users at APPROVED stage
+  //PDD: Permissions for PD Admin users at APPROVED stage
   else if (
     docType === DocType.PDD &&
     projectProposalStage === ProjectProposalStage.APPROVED &&
@@ -40,7 +55,7 @@ export const formPermissions = (
     return { mode: FormMode.CREATE, userCompanyRole: userInfoState?.companyRole };
   }
 
-  //PDD: Permissions on PDD for PD Admin users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
+  //PDD: Permissions for PD Admin users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
   else if (
     docType === DocType.PDD &&
     (projectProposalStage === ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER ||
@@ -50,7 +65,7 @@ export const formPermissions = (
   ) {
     return { mode: FormMode.EDIT, userCompanyRole: userInfoState?.companyRole };
   }
-  //PDD: Permissions on PDD for PD Other users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
+  //PDD: Permissions for PD Other users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
   else if (
     docType === DocType.PDD &&
     (projectProposalStage === ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER ||
@@ -60,7 +75,7 @@ export const formPermissions = (
   ) {
     return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
   }
-  //PDD: Permissions on PDD Other users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
+  //PDD: Permissions Other users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
   else if (
     docType === DocType.PDD &&
     (projectProposalStage === ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER ||
@@ -99,8 +114,7 @@ export const formPermissions = (
   else if (
     docType === DocType.PDD &&
     projectProposalStage === ProjectProposalStage.PDD_SUBMITTED &&
-    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER &&
-    userInfoState?.userRole !== Role.Admin
+    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
   ) {
     return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
   }
@@ -152,6 +166,7 @@ export const formPermissions = (
       projectProposalStage === ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER ||
       projectProposalStage === ProjectProposalStage.PDD_REJECTED_BY_DNA)
   ) {
+    console.log('-1-');
     return { mode: FormMode.DISABLED, userCompanyRole: userInfoState?.companyRole };
   }
   // VALIDATION_REPORT: for IC admin user at PDD_APPROVED_BY_DNA
@@ -162,6 +177,7 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
     userInfoState?.userRole === Role.Admin
   ) {
+    console.log('-1-');
     return { mode: FormMode.CREATE, userCompanyRole: userInfoState?.companyRole };
   }
   // VALIDATION_REPORT: for IC admin user at VALIDATION_REPORT_REJECTED

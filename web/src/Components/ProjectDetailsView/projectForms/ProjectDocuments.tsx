@@ -118,7 +118,7 @@ const ProjectDocuments = (props: IProjectDetails) => {
           <Button
             className="document-action-btn"
             onClick={() => navigateToValidationReport(validationReportPermissions)}
-            disabled={pddPermissions.mode === FormMode.DISABLED}
+            disabled={validationReportPermissions.mode === FormMode.DISABLED}
           >
             {validationReportPermissions.mode === FormMode.CREATE
               ? 'CREATE'

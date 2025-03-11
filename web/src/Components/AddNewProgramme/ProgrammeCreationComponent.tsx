@@ -292,7 +292,7 @@ export const ProgrammeCreationComponent = (props: any) => {
     const body: any = {
       title: values?.title,
       // projectCategory: values?.projectCategory,
-      sector: values?.sector,
+      // sector: values?.sector,
       sectoralScope: values?.sectoralScope,
       province: values?.province || 'test',
       district: values?.district || 'test',
@@ -452,7 +452,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Input size="large" />
                               </Form.Item>
 
-                              <Form.Item
+                              {/* <Form.Item
                                 label={t('addProgramme:sector')}
                                 name="sector"
                                 rules={[
@@ -484,7 +484,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     <Select.Option value={key}>{INF_SECTOR[key]}</Select.Option>
                                   ))}
                                 </Select>
-                              </Form.Item>
+                              </Form.Item> */}
 
                               <Form.Item
                                 label={t('addProgramme:sectoralScope')}
@@ -1290,7 +1290,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                             </Form.Item>
                           </Col>
                         </Row>
-                        <InfDocumentInformation t={t}></InfDocumentInformation>
+                        {/* <InfDocumentInformation t={t}></InfDocumentInformation> */}
 
                         <div className="steps-actions">
                           <Button type="primary" htmlType="submit">
