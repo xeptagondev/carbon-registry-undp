@@ -28,11 +28,6 @@ export class ProjectEntity {
     title: string;
 
     @Column({
-        nullable: false,
-    })
-    sector: string;
-
-    @Column({
         nullable: true,
     })
     sectoralScope: string;

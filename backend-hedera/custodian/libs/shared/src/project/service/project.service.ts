@@ -83,7 +83,6 @@ export class ProjectService {
             const projectEntity = new ProjectEntity();
             projectEntity.title = projectDto.title;
             projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
-            projectEntity.sector = projectDto.sector;
             projectEntity.sectoralScope = projectDto.sectoralScope;
             projectEntity.createdBy = createdBy;
             projectEntity.organization = org;
