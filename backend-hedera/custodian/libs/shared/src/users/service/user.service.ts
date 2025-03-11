@@ -955,11 +955,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 org?.organizationType?.id,
                 userDto.role,
             );
+            const inviteBlock = await this.utilService.getBlocksByBlockName(
+                GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
+                this.configService.get('policy.id'),
+            );
             const inviteResponse = await this.guardianService.createInvitation(
                 reqUser?.email,
-                this.utilService.getBlock(
-                    GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
-                ),
+                inviteBlock?.blockId,
                 {
                     action: 'invite',
                     group: org.group,
@@ -968,15 +970,17 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             // 2. Submit the generated invitation for user creation
+            const groupTypeBlock = await this.utilService.getBlocksByBlockName(
+                GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
+                this.configService.get('policy.id'),
+            );
             await this.guardianService.createGroupType(
                 userDto.email,
                 decryptPayload(
                     user.password,
                     this.configService.get<string>('security.pwdSecret'),
                 )?.password,
-                this.utilService.getBlock(
-                    GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
-                ),
+                groupTypeBlock?.blockId,
                 {
                     invitation: inviteResponse.invitation,
                 },
