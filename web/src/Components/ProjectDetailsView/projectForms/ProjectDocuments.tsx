@@ -1,10 +1,137 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import './projectForms.scss';
+import { FileDoneOutlined } from '@ant-design/icons';
+import { Row, Col, Button } from 'antd';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ROUTES } from '../../../Config/uiRoutingConfig';
+import { formPermissions } from '../../../Utils/documentsPermissionSl';
+import { FormMode } from '../../../Definitions/Enums/formMode.enum';
+import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
+import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
+import { ProjectProposalStage } from '../../../Definitions/Enums/programmeStage.enum';
+import { DocType } from '../../../Definitions/Enums/document.type';
 
-
-const ProjectDocuments = () => {
-  return (
-    <div>ProjectDocuments</div>
-  )
+interface IPermissionsState {
+  mode: FormMode;
+  userCompanyRole?: CompanyRole;
 }
 
-export default ProjectDocuments
+interface IProjectDetails {
+  projectProposalStage: any;
+}
+
+const ProjectDocuments = (props: IProjectDetails) => {
+  const { projectProposalStage } = props;
+
+  const { id } = useParams();
+
+  const [pddPermissions, setPDDPermissions] = useState<IPermissionsState>({
+    mode: FormMode.DISABLED,
+  });
+  const [validationReportPermissions, setValidationReportPermissions] = useState<IPermissionsState>(
+    { mode: FormMode.DISABLED }
+  );
+
+  const navigate = useNavigate();
+
+  const { userInfoState } = useUserContext();
+
+  const navigateToPDD = (permissionsState: IPermissionsState) => {
+    navigate(ROUTES.PDD_FORM(id), { state: permissionsState });
+  };
+
+  const navigateToValidationReport = (permissionsState: IPermissionsState) => {
+    navigate(ROUTES.VALIDATION_REPORT(id), { state: permissionsState });
+  };
+
+  useEffect(() => {
+    const tempPddPermissions = formPermissions(userInfoState, DocType.PDD, projectProposalStage);
+    setPDDPermissions(tempPddPermissions);
+    const tempValidationReportPermissions = formPermissions(
+      userInfoState,
+      DocType.VALIDATION_REPORT,
+      projectProposalStage
+    );
+    setValidationReportPermissions(tempValidationReportPermissions);
+
+    console.log(
+      '---------permissions----------',
+      tempPddPermissions,
+      tempValidationReportPermissions
+    );
+  }, []);
+
+  return (
+    <div className="projectDocuments">
+      <div className="info-view">
+        <div className="title">
+          <span className="title-icon">
+            <FileDoneOutlined />
+          </span>
+          <span className="title-text">Project Documents</span>
+        </div>
+      </div>
+
+      {/* <Row className="document-info-row-first">
+        <Col md={18} className="documentTitle-col">
+          Initial Notification Form
+        </Col>
+        <Col md={4} className="documentAction-col">
+          <Button className="document-action-btn">View</Button>
+        </Col>
+      </Row> */}
+
+      <Row className="document-info-row-first">
+        <Col md={18} className="documentTitle-col">
+          No Objection Letter
+        </Col>
+        <Col md={6} className="documentAction-col">
+          <Button className="document-action-btn">Download</Button>
+        </Col>
+      </Row>
+
+      <Row className="document-info-row">
+        <Col md={18} className="documentTitle-col">
+          Project Design Document
+        </Col>
+        <Col md={6} className="documentAction-col">
+          <Button
+            className="document-action-btn"
+            onClick={() => navigateToPDD(pddPermissions)}
+            disabled={pddPermissions.mode === FormMode.DISABLED}
+          >
+            {pddPermissions.mode === FormMode.CREATE
+              ? 'CREATE'
+              : pddPermissions.mode === FormMode.VERIFY
+              ? 'VERIFY'
+              : pddPermissions.mode === FormMode.EDIT
+              ? 'EDIT'
+              : 'VIEW'}
+          </Button>
+        </Col>
+      </Row>
+      <Row className="document-info-row">
+        <Col md={18} className="documentTitle-col">
+          Validation Report
+        </Col>
+        <Col md={6} className="documentAction-col">
+          <Button
+            className="document-action-btn"
+            onClick={() => navigateToValidationReport(validationReportPermissions)}
+            disabled={pddPermissions.mode === FormMode.DISABLED}
+          >
+            {validationReportPermissions.mode === FormMode.CREATE
+              ? 'CREATE'
+              : validationReportPermissions.mode === FormMode.VERIFY
+              ? 'VERIFY'
+              : validationReportPermissions.mode === FormMode.EDIT
+              ? 'EDIT'
+              : 'VIEW'}
+          </Button>
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
+export default ProjectDocuments;
