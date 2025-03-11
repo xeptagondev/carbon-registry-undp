@@ -8,6 +8,7 @@ import {
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CreditEventTypeEnum } from '../enum/credit.event.type.enum';
+import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
 
 @Entity()
 export class CreditEventsEntity {
@@ -46,8 +47,8 @@ export class CreditEventsEntity {
     @Column({ type: 'enum', enum: CreditEventTypeEnum, nullable: false })
     type: CreditEventTypeEnum;
 
-    @Column({ type: 'enum', enum: CreditEventTypeEnum, nullable: false })
-    status: CreditEventTypeEnum;
+    @Column({ type: 'enum', enum: CreditEventStatusEnum, nullable: false })
+    status: CreditEventStatusEnum;
 
     @BeforeInsert()
     generateRefId() {

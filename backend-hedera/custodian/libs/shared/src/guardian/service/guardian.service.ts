@@ -327,9 +327,13 @@ export class GuardianService {
         payload: any,
     ): Promise<any> {
         try {
+            const block = await this.utilService.getBlocksByBlockName(
+                blockName,
+                this.configService.get('policy.id'),
+            );
             const url = this.buildGuardianUrl(
                 // eslint-disable-next-line max-len
-                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(blockName)}`,
+                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${block?.blockId}`,
             );
 
             const user = await this.usersRepository.findOne({
@@ -342,6 +346,7 @@ export class GuardianService {
             await new Promise((resolve) => setTimeout(resolve, 10000));
             return response.data;
         } catch (error) {
+            console.log(error);
             await this.getGuardianError(error, 'saveDocument');
             return;
         }
@@ -689,31 +694,6 @@ export class GuardianService {
                 gridApis.FILTER_REF_ID,
                 null,
             );
-        }
-    }
-    public async createEntity(
-        email: string,
-        blockId: string,
-        payload: any,
-    ): Promise<any> {
-        try {
-            const url = this.buildGuardianUrl(
-                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
-            );
-            const user = await this.usersRepository.findOne({
-                where: { email: email },
-            });
-            const token = await this.getAccessToken(user.refreshToken);
-
-            const response = await axios.post(url, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            return response.data;
-        } catch (error) {
-            await this.getGuardianError(error, 'createEntity');
         }
     }
 

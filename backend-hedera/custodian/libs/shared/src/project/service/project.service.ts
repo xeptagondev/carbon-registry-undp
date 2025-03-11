@@ -22,10 +22,7 @@ import { UserService } from '@app/shared/users/service/user.service';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
-import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { HelperService } from '@app/shared/util/service/helper.service';
-import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
-import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -53,7 +50,6 @@ export class ProjectService {
         private readonly userService: UserService,
         private readonly guardianService: GuardianService,
         private readonly configService: ConfigService,
-        private readonly utilService: UtilService,
         private readonly mailService: MailService,
         private readonly logger: InstantLogger,
         private readonly fileHelperService: FileHelperService,
@@ -101,9 +97,9 @@ export class ProjectService {
                 createdBy: createdBy.refId,
                 assignee: projectDto.independentCertifiers,
             };
-            await this.guardianService.createEntity(
+            await this.guardianService.saveDocument(
                 requestUser.email,
-                this.utilService.getBlock(GUARDIAN_API.BLOCKS.CREATE_PROJECT),
+                GUARDIAN_API.BLOCKS.CREATE_PROJECT,
                 {
                     document: projectSchema,
                     ref: null,
