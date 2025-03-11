@@ -418,15 +418,18 @@ export class GuardianService {
         filterType: string,
         filterValue: string,
     ) {
-        const filterBlock = this.utilService.getBlock(filterType);
+        const block = await this.utilService.getBlocksByBlockName(
+            filterType,
+            this.configService.get('policy.id'),
+        );
 
-        if (!filterBlock) {
+        if (!block) {
             this.logger.warn(`Filter not found, skipping the ${filterType}`);
             return;
         }
 
         const filterUrl = this.buildGuardianUrl(
-            `/api/v1/policies/${policyId}/blocks/${filterBlock}`,
+            `/api/v1/policies/${policyId}/blocks/${block.blockId}`,
         );
 
         const filterResponse = await axios.post(
@@ -450,8 +453,12 @@ export class GuardianService {
         policyId: string,
         token: string,
     ) {
+        const block = await this.utilService.getBlocksByBlockName(
+            gridApis.GRID,
+            this.configService.get('policy.id'),
+        );
         const gridUrl = this.buildGuardianUrl(
-            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.GRID)}`,
+            `/api/v1/policies/${policyId}/blocks/${block?.blockId}`,
         );
 
         const gridResponse = await axios.get(gridUrl, {
