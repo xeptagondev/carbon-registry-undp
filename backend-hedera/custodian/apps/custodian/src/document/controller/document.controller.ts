@@ -3,6 +3,7 @@ import { BaseDocumentDTO } from '@app/shared/document/dto/base-document.dto';
 import {
     Body,
     Controller,
+    HttpStatus,
     Post,
     Query,
     Request,
@@ -19,7 +20,11 @@ export class DocumentController {
     @UseGuards(AuthGuardService)
     @Post('add')
     async add(@Body() documentDTO: BaseDocumentDTO, @Request() req) {
-        return await this.documentService.save(documentDTO, req.user);
+        await this.documentService.save(documentDTO, req.user);
+        return {
+            status: HttpStatus.OK,
+            statusText: 'SUCCESS',
+        };
     }
 
     @UseGuards(AuthGuardService)
@@ -29,7 +34,11 @@ export class DocumentController {
         @Body() dto: DocumentActionDTO,
         @Request() req,
     ) {
-        return await this.documentService.approve(refId, dto, req.user);
+        await this.documentService.approve(refId, dto, req.user);
+        return {
+            status: HttpStatus.OK,
+            statusText: 'SUCCESS',
+        };
     }
 
     @UseGuards(AuthGuardService)
@@ -39,7 +48,11 @@ export class DocumentController {
         @Body() dto: DocumentActionDTO,
         @Request() req,
     ) {
-        return await this.documentService.reject(refId, dto, req.user);
+        await this.documentService.reject(refId, dto, req.user);
+        return {
+            status: HttpStatus.OK,
+            statusText: 'SUCCESS',
+        };
     }
 
     @UseGuards(AuthGuardService)
