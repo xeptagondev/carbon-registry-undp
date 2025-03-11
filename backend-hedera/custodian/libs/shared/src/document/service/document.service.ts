@@ -68,10 +68,11 @@ export class DocumentService {
         private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
     ) {}
 
-    async getDocumentWithProjectAssignees(refId: string) {
+    async getDocumentWithProjectAssignees(refId: string, type?: DocumentEnum) {
         return await this.documentRepository.findOne({
             where: {
                 refId: refId,
+                documentType: type,
             },
             relations: {
                 project: {
@@ -755,12 +756,12 @@ export class DocumentService {
                 documentEntity,
             );
 
-            // const organizationDoc =
-            //     await this.guardianService.getGridDocumentUsingRefId(
-            //         GridTypeEnum.ORGANIZATION_GRID,
-            //         project?.organization?.refId,
-            //         jwtData.email,
-            //     );
+            const organizationDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    project?.organization?.refId,
+                    jwtData.email,
+                );
 
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
@@ -771,6 +772,7 @@ export class DocumentService {
                 version: lastDoc ? lastDoc.version + 1 : 1,
                 data: JSON.stringify(dto.data),
                 activity: dto.activityRefId,
+                creditAmount: 10,
             };
 
             await this.guardianService.saveDocument(
@@ -778,7 +780,7 @@ export class DocumentService {
                 this.getBlockNameByDocType(dto.documentType),
                 {
                     document: documentSchema,
-                    ref: null,
+                    ref: { document: organizationDoc },
                 },
             );
 
@@ -811,14 +813,13 @@ export class DocumentService {
         jwtData: JWTPayload,
     ) {
         const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(refId);
+            await this.getDocumentWithProjectAssignees(refId, requestData.type);
         if (!documentEntity) {
             throw new HttpException(
                 'Invalid document id',
                 HttpStatus.BAD_REQUEST,
             );
         }
-
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
@@ -888,7 +889,7 @@ export class DocumentService {
         jwtData: JWTPayload,
     ) {
         const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(refId);
+            await this.getDocumentWithProjectAssignees(refId, requestData.type);
         if (!documentEntity) {
             throw new HttpException(
                 'Invalid document id',
@@ -1659,6 +1660,33 @@ export class DocumentService {
                 projectDoc,
                 jwtData.email,
             );
+
+            await this.guardianService.saveDocument(
+                jwtData.email,
+                GUARDIAN_API.BLOCKS.CREATE_TOKEN,
+                {
+                    tokenName: 'ZCAR',
+                    tokenSymbol: 'ZCAR',
+                    tokenType: 'non-fungible',
+                    decimals: '0',
+                    initialSupply: '100',
+                    enableAdmin: true,
+                    changeSupply: true,
+                    enableFreeze: false,
+                    enableKYC: true,
+                    enableWipe: false,
+                    wipeContractId: null,
+                },
+            );
+            await this.guardianService.saveDocument(
+                jwtData.email,
+                GUARDIAN_API.BLOCKS.ASSOCIATE_TOKEN,
+                {
+                    hederaAccountKey:
+                        document?.project?.organization?.hederaAccountKey,
+                    action: 'confirm',
+                },
+            );
             const ctx = {
                 icOrganizationName: document.submittedUser.organization.name,
                 pdOrganizationName: document.project.organization.name,
@@ -2032,29 +2060,29 @@ export class DocumentService {
                 ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
             );
 
-            const creditCertificateUrl =
-                await this.creditIssueCertificateGenerator.generateCreditIssueCertificate(
-                    {
-                        projectName: lastVerification?.project?.title,
-                        companyName:
-                            lastVerification?.project?.organization?.name,
-                        creditType: 'creditType',
-                        certificateNo: 'certificateNo',
-                        issueDate: 'issueDate',
-                        monitoringStartDate: 'monitoringStartDate',
-                        monitoringEndDate: 'monitoringEndDate',
-                        issuedCredits: 100,
-                    },
-                );
+            // const creditCertificateUrl =
+            //     await this.creditIssueCertificateGenerator.generateCreditIssueCertificate(
+            //         {
+            //             projectName: lastVerification?.project?.title,
+            //             companyName:
+            //                 lastVerification?.project?.organization?.name,
+            //             creditType: 'creditType',
+            //             certificateNo: 'certificateNo',
+            //             issueDate: 'issueDate',
+            //             monitoringStartDate: 'monitoringStartDate',
+            //             monitoringEndDate: 'monitoringEndDate',
+            //             issuedCredits: 100,
+            //         },
+            //     );
 
-            const refId = lastVerification?.project?.refId;
-            await queryRunner.manager
-                .getRepository(ProjectEntity)
-                .createQueryBuilder()
-                .update(ProjectEntity)
-                .set({ creditCertificateUrl: creditCertificateUrl })
-                .where('refId = :refId', { refId })
-                .execute();
+            // const refId = lastVerification?.project?.refId;
+            // await queryRunner.manager
+            //     .getRepository(ProjectEntity)
+            //     .createQueryBuilder()
+            //     .update(ProjectEntity)
+            //     .set({ creditCertificateUrl: creditCertificateUrl })
+            //     .where('refId = :refId', { refId })
+            //     .execute();
             const activityDoc =
                 await this.guardianService.getGridDocumentUsingRefId(
                     GridTypeEnum.ACTIVITY_GRID,
