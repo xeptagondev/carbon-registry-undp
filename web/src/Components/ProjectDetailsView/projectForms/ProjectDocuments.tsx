@@ -96,7 +96,10 @@ const ProjectDocuments = (props: IProjectDetails) => {
         <Col md={6} className="documentAction-col">
           <Button
             className="document-action-btn"
-            disabled={noObjectLetterUrl === undefined}
+            disabled={
+              projectProposalStage === ProjectProposalStage.PENDING ||
+              projectProposalStage === ProjectProposalStage.REJECTED
+            }
             onClick={downloadNoObjectionLetter}
           >
             Download
