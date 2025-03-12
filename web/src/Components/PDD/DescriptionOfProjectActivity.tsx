@@ -1438,11 +1438,12 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                   },
                 ]}
               >
-                <Input size="large" />
+                <Input size="large" disabled={disableFields} />
               </Form.Item>
 
               {/* project participant table start */}
               {/* need to check again */}
+              <h4 className="form-section-title">{t('PDD:projectParticipantTable')}</h4>
               <div className="projectParticipantsTable">
                 <div className="header">
                   <div className="col-1">{t('PDD:partiesInvolved')}</div>
@@ -1479,7 +1480,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input />
+                                <Input disabled={disableFields} />
                               </Form.Item>
                             </div>
                             <div className="col-2">
@@ -1517,7 +1518,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                             },
                                           ]}
                                         >
-                                          <Input />
+                                          <Input disabled={disableFields} />
                                         </Form.Item>
 
                                         <Form.Item>
@@ -1563,7 +1564,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                           </div>
                         ))}
 
-                        <div>
+                        <div className="mg-top-1" style={{ marginTop: '15px' }}>
                           <Form.Item>
                             <Button
                               onClick={() => {
@@ -1577,6 +1578,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                 console.log('---------temp after--------', temp);
                                 form.setFieldValue('projectParticipants', temp);
                               }}
+                              disabled={disableFields}
                             >
                               {t('PDD:addProjectParticipant')}
                             </Button>

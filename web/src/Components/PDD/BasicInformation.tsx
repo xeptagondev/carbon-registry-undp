@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CustomStepsProps } from './StepProps';
 import { Button, Col, DatePicker, Form, Input, Row, Select } from 'antd';
 import moment from 'moment';
@@ -17,6 +17,10 @@ const ProjectDetails = (props: CustomStepsProps) => {
     props;
 
   const [contactNoInput] = useState<any>();
+
+  useEffect(() => {
+    console.log('---------form_values----------', form.getFieldsValue(), disableFields);
+  }, []);
 
   const onFinish = (values: any) => {
     console.log('-----------temp Values before-------');
@@ -51,6 +55,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
+              // disabled={disableFields}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -71,10 +76,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -87,10 +89,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -103,10 +102,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -121,108 +117,8 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
-
-                    {/* <Form.Item
-                      label={t('PDD:dateOfIssue')}
-                      name="dateOfIssue"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(`${t('PDD:dateOfIssue')} ${t('isRequired')}`);
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <DatePicker
-                        size="large"
-                        // disabled
-                        disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
-                      />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('PDD:preparedBy')}
-                      name="preparedBy"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('PDD:preparedBy')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('PDD:physicalAddress')}
-                      name="physicalAddress"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('PDD:physicalAddress')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('PDD:email')}
-                      name="email"
-                      rules={[
-                        {
-                          required: true,
-                          message: ``,
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(`${t('PDD:email')} ${t('isRequired')}`);
-                            } else {
-                              const val = value.trim();
-                              const reg =
-                                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                              const matches = val.match(reg) ? val.match(reg) : [];
-                              if (matches.length === 0) {
-                                throw new Error(`${t('PDD:email')} ${t('isInvalid')}`);
-                              }
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
-                    </Form.Item> */}
                   </div>
                 </Col>
 
@@ -268,7 +164,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                     >
                       <DatePicker
                         size="large"
-                        // disabled
+                        disabled={disableFields}
                         disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                       />
                     </Form.Item>
@@ -283,10 +179,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -309,85 +202,6 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         )}
                       </Select>
                     </Form.Item>
-
-                    {/* <Form.Item
-                      label={t('PDD:telephone')}
-                      name="telephone"
-                      rules={[
-                        {
-                          required: true,
-                          message: ``,
-                        },
-                        {
-                          validator: async (rule: any, value: any) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                            } else {
-                              const phoneNo = formatPhoneNumber(String(value));
-                              if (String(value).trim() !== '') {
-                                if (phoneNo === null || phoneNo === '' || phoneNo === undefined) {
-                                  throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                } else {
-                                  if (!isPossiblePhoneNumber(String(value))) {
-                                    throw new Error(`${t('PDD:telephone')} ${t('isInvalid')}`);
-                                  }
-                                }
-                              }
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <PhoneInput
-                        international
-                        value={formatPhoneNumberIntl(contactNoInput)}
-                        defaultCountry="LK"
-                        countryCallingCodeEditable={false}
-                        onChange={(v) => {}}
-                        countries={countries as Country[]}
-                        disabled
-                      />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('PDD:website')}
-                      name="website"
-                      className="website-input"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('PDD:website')} ${t('isRequired')}`,
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() !== '' ||
-                              String(value).trim() !== undefined ||
-                              value !== null ||
-                              value !== undefined
-                            ) {
-                              if (value && !validator.isURL(value))
-                                throw new Error(`${t('PDD:website')} ${t('isInvalid')}`);
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
-                    </Form.Item> */}
-
-                    {formMode === FormMode.VIEW ? (
-                      <Form.Item label={t('PDD:reportID')} name="reportID">
-                        <Input size={'large'} disabled />
-                      </Form.Item>
-                    ) : (
-                      ''
-                    )}
                   </div>
                 </Col>
               </Row>

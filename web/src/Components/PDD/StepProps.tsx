@@ -14,4 +14,5 @@ export interface CustomStepsProps {
   existingFormValues?: any;
   disableFields?: boolean;
   formMode?: FormMode;
+  documentId?: string; 
 }

@@ -213,5 +213,15 @@
   "addProjectParticipant": "Add Project Participant",
   "descriptionOfMeasurementMethods": "Description of Measurement Methods and Procedures to be Applied",
   "confirmModalMessage": "Are you sure you want to submit ?",
-  "confirmModalSubMessage": "You can't undo this action"
+  "confirmModalSubMessage": "You can't undo this action",
+  "projectParticipantTable": "Parties and project participants",
+  "certify": "CERTIFY",
+  "decline": "DECLINE",
+  "declineMessage": "Are you sure you want to decline this Project Design Document?",
+  "rejectMessage": "Are you sure you want to reject this Project Design Document?",
+  "checkboxMessage": "I understand that this aciton cannot be undone",
+  "reject": "REJECT",
+  "certifyMessage": "Are you sure you want to certify this Project Design Document?",
+  "approveMessage": "Are you sure you want to approve this Project Design Documentt?",
+  "approve": "approve"
 }
