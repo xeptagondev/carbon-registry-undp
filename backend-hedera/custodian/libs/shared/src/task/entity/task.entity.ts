@@ -6,6 +6,7 @@ import {
     Entity,
     JoinColumn,
     ManyToOne,
+    OneToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { TaskEnum } from '../enum/task.enum';
@@ -44,6 +45,10 @@ export class TaskEntity {
     })
     @JoinColumn([{ name: 'submitted_user_id', referencedColumnName: 'id' }])
     submittedUser?: UsersEntity;
+
+    @OneToOne(() => TaskEntity, { nullable: true, onDelete: 'SET NULL' })
+    @JoinColumn({ name: 'previous_task_id' })
+    previousTask?: TaskEntity = null;
 
     @BeforeInsert()
     setInitialLastUpdateTime() {

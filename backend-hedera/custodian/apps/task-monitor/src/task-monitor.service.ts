@@ -38,22 +38,55 @@ export class TaskMonitorService implements OnModuleInit {
             try {
                 this.logger.log('Pending task evaluation started');
                 // 1. Query for any pending submitted tasks
-                const pendingWork: TaskEntity[] =
-                    await this.taskRepository.find({
-                        where: {
-                            state: TaskEnum.PENDING,
-                            lastUpdateTime: Raw(
-                                (alias) =>
-                                    `(${alias} + "millisBetweenAttempts") < ${Date.now()}`,
-                            ),
+                const pendingWork: TaskEntity[] = await this.taskRepository
+                    .createQueryBuilder('task')
+                    .leftJoinAndSelect('task.previousTask', 'previousTask')
+                    .where('task.state = :state', { state: TaskEnum.PENDING })
+                    .andWhere(
+                        'task.lastUpdateTime + task.millisBetweenAttempts < :currentTime',
+                        {
+                            currentTime: Date.now(),
                         },
-                    });
+                    )
+                    .getMany();
                 // 2. Evaluate tasks
                 for (let i = 0; i < pendingWork.length; i++) {
                     const task: TaskEntity = pendingWork[i];
                     const clsName: string = task.className;
                     const fnName: string = task.functionName;
                     const args: any[] = task.args;
+                    const previousTask: TaskEntity = task.previousTask;
+
+                    // check whether the previous task is completed if not null
+                    if (
+                        previousTask &&
+                        previousTask.state === TaskEnum.PENDING
+                    ) {
+                        // if previous task still pending, skip
+                        this.logger.log(
+                            `Cannot execute task ${task.id} because task ${previousTask.id} is not completed`,
+                        );
+                        continue;
+                    } else if (
+                        previousTask &&
+                        previousTask.state === TaskEnum.FAILED
+                    ) {
+                        // if previous task has failed, mark the current task as failed and skip
+                        this.logger.log(
+                            `Marking task ${task.id} as failed because task ${previousTask.id} has failed`,
+                        );
+                        await this.taskRepository.update(
+                            {
+                                id: task.id,
+                            },
+                            {
+                                state: TaskEnum.FAILED,
+                                lastUpdateTime: Date.now(),
+                            },
+                        );
+                        continue;
+                    }
+
                     try {
                         // 3. Execute the task function
                         await this.executeFunction(clsName, fnName, args);
