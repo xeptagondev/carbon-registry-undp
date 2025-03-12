@@ -53,6 +53,8 @@ import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { CreditIssueCertificateGenerator } from '@app/shared/util/service/credit.issue.certificate.gen';
 import { DocumentQueryDTO } from '../dto/document.query.dto';
+import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
+import doc from 'pdfkit';
 
 @Injectable()
 export class DocumentService {
@@ -66,6 +68,7 @@ export class DocumentService {
         private readonly guardianService: GuardianService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         private readonly creditIssueCertificateGenerator: CreditIssueCertificateGenerator,
+        private readonly carbonCreditGuardianService: CarbonCreditGuardianService,
     ) {}
 
     async getDocumentWithProjectAssignees(refId: string, type?: DocumentEnum) {
@@ -1661,33 +1664,27 @@ export class DocumentService {
                 jwtData.email,
             );
 
-            const tokenResponse = await this.guardianService.saveDocument(
-                jwtData.email,
-                GUARDIAN_API.BLOCKS.CREATE_TOKEN,
-                {
-                    tokenName: 'ZCAR',
-                    tokenSymbol: 'ZCAR',
-                    tokenType: 'non-fungible',
-                    decimals: '0',
-                    initialSupply: '100',
-                    enableAdmin: true,
-                    changeSupply: true,
-                    enableFreeze: false,
-                    enableKYC: true,
-                    enableWipe: false,
-                    wipeContractId: null,
-                },
-            );
-            console.log(tokenResponse);
-            await this.guardianService.saveDocument(
-                jwtData.email,
-                GUARDIAN_API.BLOCKS.ASSOCIATE_TOKEN,
-                {
-                    hederaAccountKey:
-                        document?.project?.organization?.hederaAccountKey,
-                    action: 'confirm',
-                },
-            );
+            const tokenId =
+                await this.carbonCreditGuardianService.createProjectNFT(
+                    document?.project?.organization?.hederaAccountId,
+                    document?.project?.organization?.hederaAccountKey,
+                    1000, // TODO update the max supply
+                );
+
+            const refId = document?.project?.refId;
+            await queryRunner.manager
+                .getRepository(ProjectEntity)
+                .createQueryBuilder()
+                .update(ProjectEntity)
+                .set({ tokenId: tokenId })
+                .where('refId = :refId', { refId })
+                .execute();
+
+            // await this.carbonCreditGuardianService.associateNFTToUser(
+            //     tokenId,
+            //     document?.project?.organization?.hederaAccountId,
+            //     document?.project?.organization?.hederaAccountKey,
+            // );
             const ctx = {
                 icOrganizationName: document.submittedUser.organization.name,
                 pdOrganizationName: document.project.organization.name,
@@ -2038,6 +2035,7 @@ export class DocumentService {
         // set state change and remarks
         document = await queryRunner.manager.findOne(DocumentEntity, {
             where: { id: document.id },
+            relations: { project: { organization: true } },
         });
         document.state = requestData.action;
         document.remarks = requestData.remarks;
@@ -2108,6 +2106,17 @@ export class DocumentService {
                 ButtonActionEnum.APPROVE,
                 verificationDoc,
                 jwtData.email,
+            );
+
+            const metadata = Uint8Array.from(
+                Buffer.from(document?.project?.refId, 'utf8'),
+            );
+            await this.carbonCreditGuardianService.mintProjectNFT(
+                document?.project?.tokenId,
+                metadata,
+                10, //TODO update the credit count
+                document?.project?.organization?.hederaAccountId,
+                document?.project?.organization?.hederaAccountKey,
             );
 
             const countryName = this.configService.get('country');
