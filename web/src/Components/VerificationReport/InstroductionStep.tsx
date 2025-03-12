@@ -4,11 +4,12 @@ import moment from 'moment';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import i18n from '../Internationalization/i18n';
 export const IntroductionStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, countries, prev, onValueChange } =
     props;
 
-  const t = translator.t;
+  const t = i18n.t;
   return (
     <>
       {current === 1 && (

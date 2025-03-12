@@ -6,6 +6,7 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import TextArea from 'antd/lib/input/TextArea';
 import { UploadOutlined } from '@ant-design/icons';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import i18n from '../Internationalization/i18n';
 
 export const VerificationOpinionStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, countries, prev, onValueChange } =
@@ -20,7 +21,7 @@ export const VerificationOpinionStep = (props: any) => {
     return e?.fileList;
   };
 
-  const t = translator.t;
+  const t = i18n.t;
   return (
     <>
       {current === 4 && (

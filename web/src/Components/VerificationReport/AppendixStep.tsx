@@ -6,20 +6,10 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { DocumentStatus } from '../../Definitions/Enums/document.status';
+import i18n from '../Internationalization/i18n';
 export const AppendixStep = (props: any) => {
-  const {
-    useLocation,
-    translator,
-    current,
-    form,
-    formMode,
-    prev,
-    cancel,
-    approve,
-    reject,
-    onFinish,
-    status,
-  } = props;
+  const { useLocation, current, form, formMode, prev, cancel, approve, reject, onFinish, status } =
+    props;
   const { userInfoState } = useUserContext();
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -30,7 +20,7 @@ export const AppendixStep = (props: any) => {
     }
     return e?.fileList;
   };
-  const t = translator.t;
+  const t = i18n.t;
   return (
     <>
       {current === 6 && (

@@ -4,6 +4,7 @@ import { Button, Checkbox, Col, DatePicker, Form, Input, Row, Select, Upload } f
 import TextArea from 'antd/lib/input/TextArea';
 import moment from 'moment';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import i18n from '../Internationalization/i18n';
 
 export const VerificationFindingStep = (props: any) => {
   const { useLocation, translator, current, form, formMode, next, prev, onValueChange } = props;
@@ -16,7 +17,8 @@ export const VerificationFindingStep = (props: any) => {
     }
     return e?.fileList;
   };
-  const t = translator.t;
+  const t = i18n.t;
+
   return (
     <>
       {current === 3 && (
