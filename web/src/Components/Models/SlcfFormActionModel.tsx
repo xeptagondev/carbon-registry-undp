@@ -41,6 +41,7 @@ export const SlcfFormActionModel: FC<SlcfFormActionModelProps> = (
     }
   }, [openModal]);
 
+  console.log('---------title-----------', title);
   return (
     <Modal
       title={

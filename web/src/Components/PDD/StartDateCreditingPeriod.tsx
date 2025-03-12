@@ -88,6 +88,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                     <DatePicker
                       size="large"
                       disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                      disabled={disableFields}
                     />
                   </Form.Item>
 
@@ -120,6 +121,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                           size="large"
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                           onChange={() => updateCreditingPeriodDuration()}
+                          disabled={disableFields}
                         />
                       </Form.Item>
                     </Col>
@@ -155,6 +157,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                           size="large"
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                           onChange={() => updateCreditingPeriodDuration()}
+                          disabled={disableFields}
                         />
                       </Form.Item>
                     </Col>
@@ -185,6 +188,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                     <DatePicker
                       size="large"
                       disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                      disabled={disableFields}
                     />
                   </Form.Item>
                 </Col>
@@ -212,7 +216,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                       },
                     ]}
                   >
-                    <Input size="large" />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -237,7 +241,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                       },
                     ]}
                   >
-                    <Select size="large">
+                    <Select size="large" disabled={disableFields}>
                       <Select.Option value="Fixed">{t('PDD:creditingPeriodOption1')}</Select.Option>
                       <Select.Option value="Renewable">
                         {t('PDD:creditingPeriodOption2')}
@@ -269,7 +273,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                       },
                     ]}
                   >
-                    <Input size="large" />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </Col>
               </Row>
