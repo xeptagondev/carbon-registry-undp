@@ -149,7 +149,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         parameter: values?.parameter,
         unit: values?.unit,
         description: values?.description,
-        dataSource: values?.dataSource,
+        source: values?.source,
         descriptionOfMeasurementMethods: values?.descriptionOfMeasurementMethods,
         purpose: values?.purpose,
         comments: values?.comments,
@@ -157,7 +157,6 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
       dataAndParametersMonitored: {
         monitoringParameter: values?.monitoringParameter,
         monitoringUnit: values?.monitoringUnit,
-        unit: values?.unit,
         monitoringDescription: values?.monitoringDescription,
         data_parameterDescription: values?.data_parameterDescription,
         monitoringSource: values?.monitoringSource,
@@ -173,6 +172,8 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
       samplingPlan: values?.samplingPlan,
       otherElementsOfMonitoringPlan: values?.otherElementsOfMonitoringPlan,
       methodologyDeviations: values?.methodologyDeviations,
+      explanationOfEmissionMethodologicalChoices:
+        values?.explanationOfEmissionMethodologicalChoices,
       projectBoundary: (function () {
         const tempVal: any = {};
 
@@ -1542,7 +1543,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                     <Col md={24} xl={24}>
                       <Form.Item
                         label={t('PDD:descriptionOfMeasurementMethods')}
-                        name="justification"
+                        name="descriptionOfMeasurementMethods"
                         rules={[
                           {
                             required: true,
@@ -1597,7 +1598,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             },
                           ]}
                         >
-                          <Input size="large" />
+                          <Input size="large" disabled={disableFields} />
                         </Form.Item>
                       </div>
                     </Col>
