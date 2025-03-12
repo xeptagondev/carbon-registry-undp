@@ -31,9 +31,9 @@ export class UserInitializationService implements OnModuleInit {
     ) {}
 
     async onModuleInit() {
-        if (this.configService.get('system.initPolicy') === 'true') {
-            await this.utilService.fetchPolicyBlocks();
-        }
+        // if (this.configService.get('system.initPolicy') === 'true') {
+        //     await this.utilService.fetchPolicyBlocks();
+        // }
         if (this.configService.get('system.initOrgs') === 'true') {
             await this.createInitialOrganizations();
         }
