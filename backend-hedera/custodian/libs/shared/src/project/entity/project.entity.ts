@@ -137,6 +137,9 @@ export class ProjectEntity {
     @Column({ nullable: true })
     creditCertificateUrl?: string;
 
+    @Column({ nullable: true })
+    tokenId?: string;
+
     @Column({ nullable: true, type: 'bigint' })
     createdDate?: number;
 

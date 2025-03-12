@@ -5,6 +5,10 @@ export default () => ({
     countryCode: process.env.COUNTRY_CODE || 'NG',
     url: process.env.URL,
     backendHost: process.env.BACKEND_HOST || 'http://localhost:3000',
+    carbonCredit: {
+        tokenName: 'CRU',
+        tokenSymbol: 'CRU',
+    },
     docGenerate: {
         ministerName: process.env.MINISTER_NAME || 'Minister X',
         ministerNameAndDesignation:

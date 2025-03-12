@@ -68,6 +68,7 @@ export class GuardianService {
                 },
             });
         } catch (ex: any) {
+            console.log(ex);
             this.logger.error(
                 `Exception in POST Request: ${ex.response?.data?.message || ex.message}`,
                 this.loggerContext,
@@ -344,7 +345,6 @@ export class GuardianService {
 
             const response = await this.guardianHttpPost(url, payload, token);
             await new Promise((resolve) => setTimeout(resolve, 10000));
-            console.log(response);
             return response.data;
         } catch (error) {
             await this.getGuardianError(error, 'saveDocument');

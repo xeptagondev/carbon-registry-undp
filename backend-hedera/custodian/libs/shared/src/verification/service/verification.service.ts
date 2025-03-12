@@ -174,20 +174,6 @@ export class VerificationService {
             lastActivity = await this.createNewActivity(requestUser, project);
         }
 
-        if (!lastActivity) {
-            lastActivity = await this.createNewActivity(requestUser, project);
-        } else if (
-            lastActivity.state !==
-                ActivityStateEnum.MONITORING_REPORT_REJECTED &&
-            lastActivity.state !==
-                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
-        ) {
-            throw new HttpException(
-                'Monitoring report already exists',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-
         await this.documentService.save(
             {
                 projectRefId: project.refId,
@@ -305,6 +291,7 @@ export class VerificationService {
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.IC_APPROVED,
+                    type: DocumentEnum.MONITORING,
                 },
                 requestUser,
             );
@@ -314,6 +301,7 @@ export class VerificationService {
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.IC_REJECTED,
+                    type: DocumentEnum.MONITORING,
                 },
                 requestUser,
             );
@@ -537,6 +525,7 @@ export class VerificationService {
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.DNA_APPROVED,
+                    type: DocumentEnum.VERIFICATION,
                 },
                 requestUser,
             );
@@ -546,6 +535,7 @@ export class VerificationService {
                 {
                     remarks: verifyReportDto.remark,
                     action: DocumentStateEnum.DNA_REJECTED,
+                    type: DocumentEnum.VERIFICATION,
                 },
                 requestUser,
             );

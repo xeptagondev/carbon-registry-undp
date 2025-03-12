@@ -13,6 +13,7 @@ import { AuditModule } from '../audit/audit.module';
 import { GuardianModule } from '../guardian/guardian.module';
 import { UtilModule } from '../util/util.module';
 import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.entity';
+import { CarbonCreditTokenModule } from '../carbon-credit-token/carbon-credit-token.module';
 
 @Module({
     imports: [
@@ -30,6 +31,7 @@ import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.
         AuditModule,
         GuardianModule,
         UtilModule,
+        CarbonCreditTokenModule,
     ],
     providers: [DocumentService],
     exports: [DocumentService],

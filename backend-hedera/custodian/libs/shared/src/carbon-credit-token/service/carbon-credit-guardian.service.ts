@@ -1,0 +1,107 @@
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import {
+    Client,
+    AccountId,
+    PrivateKey,
+    TokenCreateTransaction,
+    TokenType,
+    TokenSupplyType,
+    TokenAssociateTransaction,
+    TokenMintTransaction,
+    TransactionReceipt,
+} from '@hashgraph/sdk';
+import { ConfigService } from '@nestjs/config';
+import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
+
+@Injectable()
+export class CarbonCreditGuardianService implements OnModuleDestroy {
+    private client: Client;
+
+    constructor(
+        private readonly configService: ConfigService,
+        private readonly instantLogger: InstantLogger,
+    ) {}
+
+    async createProjectNFT(
+        accountId: string,
+        privateKey: string,
+        maxSupply: number,
+    ): Promise<string> {
+        const client = Client.forTestnet();
+        const treasuryAccountId = AccountId.fromString(accountId);
+        const treasuryPrivateKey = PrivateKey.fromStringED25519(privateKey);
+        client.setOperator(treasuryAccountId, treasuryPrivateKey);
+
+        const tokenCreateTx = await new TokenCreateTransaction()
+            // .setTokenName(this.configService.get('carbonCredit.tokenName'))
+            // .setTokenSymbol(this.configService.get('carbonCredit.tokenSymbol'))
+            .setTokenName('CRU')
+            .setTokenSymbol('CRU')
+            .setTokenType(TokenType.NonFungibleUnique)
+            .setDecimals(0)
+            .setInitialSupply(0)
+            .setTreasuryAccountId(treasuryAccountId)
+            .setSupplyType(TokenSupplyType.Finite)
+            .setMaxSupply(maxSupply)
+            .setSupplyKey(treasuryPrivateKey)
+            .freezeWith(client);
+
+        const tokenCreateSign = await tokenCreateTx.sign(treasuryPrivateKey);
+        const tokenCreateSubmit = await tokenCreateSign.execute(client);
+        const receipt: TransactionReceipt =
+            await tokenCreateSubmit.getReceipt(client);
+        const newTokenId = receipt.tokenId!.toString();
+        return newTokenId;
+    }
+
+    async associateNFTToUser(
+        tokenId: string,
+        accountId: string,
+        privateKey: string,
+    ): Promise<void> {
+        const client = Client.forTestnet();
+        const treasuryAccountId = AccountId.fromString(accountId);
+        const treasuryPrivateKey = PrivateKey.fromStringED25519(privateKey);
+        client.setOperator(treasuryAccountId, treasuryPrivateKey);
+        const associateTx = await new TokenAssociateTransaction()
+            .setAccountId(AccountId.fromString(accountId))
+            .setTokenIds([tokenId])
+            .freezeWith(client);
+
+        const associateSign = await associateTx.sign(treasuryPrivateKey);
+        const associateSubmit = await associateSign.execute(client);
+        await associateSubmit.getReceipt(client);
+    }
+
+    async mintProjectNFT(
+        tokenId: string,
+        metadata: Uint8Array,
+        amount: number,
+        accountId: string,
+        privateKey: string,
+    ): Promise<any> {
+        const client = Client.forTestnet();
+        const treasuryAccountId = AccountId.fromString(accountId);
+        const treasuryPrivateKey = PrivateKey.fromStringED25519(privateKey);
+        client.setOperator(treasuryAccountId, treasuryPrivateKey);
+
+        const metadataArray: Uint8Array[] = Array(amount).fill(metadata);
+
+        const mintTx = await new TokenMintTransaction()
+            .setTokenId(tokenId)
+            .setMetadata(metadataArray)
+            .freezeWith(client);
+
+        const mintSign = await mintTx.sign(treasuryPrivateKey);
+        const mintSubmit = await mintSign.execute(client);
+        const receipt: TransactionReceipt = await mintSubmit.getReceipt(client);
+        return receipt;
+    }
+
+    onModuleDestroy() {
+        if (this.client) {
+            this.client.close();
+            this.instantLogger.log('Hedera client closed.');
+        }
+    }
+}
