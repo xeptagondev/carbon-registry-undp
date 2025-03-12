@@ -1661,7 +1661,7 @@ export class DocumentService {
                 jwtData.email,
             );
 
-            await this.guardianService.saveDocument(
+            const tokenResponse = await this.guardianService.saveDocument(
                 jwtData.email,
                 GUARDIAN_API.BLOCKS.CREATE_TOKEN,
                 {
@@ -1678,6 +1678,7 @@ export class DocumentService {
                     wipeContractId: null,
                 },
             );
+            console.log(tokenResponse);
             await this.guardianService.saveDocument(
                 jwtData.email,
                 GUARDIAN_API.BLOCKS.ASSOCIATE_TOKEN,

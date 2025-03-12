@@ -286,7 +286,11 @@ export class ProjectService {
             }
             await this.documentService.approve(
                 inf.refId,
-                { remarks: null, action: DocumentStateEnum.DNA_APPROVED },
+                {
+                    remarks: null,
+                    action: DocumentStateEnum.DNA_APPROVED,
+                    type: DocumentEnum.INF,
+                },
                 requestUser,
             );
 
@@ -325,7 +329,11 @@ export class ProjectService {
             }
             await this.documentService.reject(
                 inf.refId,
-                { remarks: remark, action: DocumentStateEnum.DNA_REJECTED },
+                {
+                    remarks: remark,
+                    action: DocumentStateEnum.DNA_REJECTED,
+                    type: DocumentEnum.INF,
+                },
                 requestUser,
             );
 

@@ -344,9 +344,9 @@ export class GuardianService {
 
             const response = await this.guardianHttpPost(url, payload, token);
             await new Promise((resolve) => setTimeout(resolve, 10000));
+            console.log(response);
             return response.data;
         } catch (error) {
-            console.log(error);
             await this.getGuardianError(error, 'saveDocument');
             return;
         }
