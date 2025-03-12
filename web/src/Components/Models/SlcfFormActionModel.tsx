@@ -40,8 +40,7 @@ export const SlcfFormActionModel: FC<SlcfFormActionModelProps> = (
       setChecked(false);
     }
   }, [openModal]);
-
-  console.log('---------title-----------', title);
+  
   return (
     <Modal
       title={

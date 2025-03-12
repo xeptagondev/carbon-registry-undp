@@ -38,7 +38,6 @@ const ConfirmDialog = (props: IConfirmDialog) => {
 
   const [isChecked, setIsChecked] = useState<boolean>(showCheckbox || false);
 
-  console.log('--------texts-----------', okText, cancelText, checkboxText, message);
   return (
     <>
       <Modal

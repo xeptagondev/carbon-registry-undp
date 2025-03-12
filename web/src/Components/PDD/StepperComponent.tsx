@@ -182,7 +182,6 @@ const StepperComponent = (props: any) => {
             documentEnum: DocumentEnum.PDD,
           });
 
-          console.log('---------res---------------', res);
           if (res?.statusText === 'SUCCESS') {
             const data = res?.data;
             setDocumentId(data?.refId);
@@ -190,7 +189,6 @@ const StepperComponent = (props: any) => {
             const projectDetails = BasicInformationDataMapToFields(data.data?.projectDetails);
             form1.setFieldsValue(projectDetails);
 
-            console.log('---------projectDetails------------', projectDetails);
             const descripitonOfProjectActivity = descriptionOfProjectActivityDataMapToFields(
               data.data?.projectActivity
             );
@@ -205,22 +203,12 @@ const StepperComponent = (props: any) => {
               data?.data?.startDateCreditingPeriod
             );
 
-            console.log(
-              '---------startDateCreditingPeriod------------',
-              startDateCreditingPeriod,
-              data.data.startDateCreditingPeriod
-            );
             form4.setFieldsValue(startDateCreditingPeriod);
 
             const environmentImpacts = environmentImpactsDataMaptoFields(
               data?.data?.environmentImpacts
             );
 
-            console.log(
-              '---------environmentImpacts------------',
-              environmentImpacts,
-              data.data.environmentImpacts
-            );
             form5.setFieldsValue(environmentImpacts);
 
             const localStakeholderConsultation = localStakeholderConsultationDataMaptoFields(

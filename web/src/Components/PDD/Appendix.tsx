@@ -182,8 +182,6 @@ const Step08 = (props: CustomStepsProps) => {
 
   const [contactNoInput] = useState<any>();
 
-  console.log('---countries---', countries);
-
   const [showVerifyDialog, setShowVerifyDialog] = useState<boolean>(false);
   const [showDeclineDialog, setShowDeclineDialog] = useState<boolean>(false);
 
@@ -254,7 +252,6 @@ const Step08 = (props: CustomStepsProps) => {
       }
 
       if (state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-        console.log('-----2------');
         const res = await post(API_PATHS.REJECT_DOCUMENT(documentId), {
           remarks,
           action: DocumentStateEnum.DNA_REJECTED,
