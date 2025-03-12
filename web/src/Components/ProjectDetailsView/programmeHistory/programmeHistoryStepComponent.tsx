@@ -7,6 +7,7 @@ import * as Icon from 'react-bootstrap-icons';
 import './programmeHistoryStepComponent.scss';
 import { DateTime } from 'luxon';
 import { dateTimeFormat } from '../../../Definitions/Definitions/common.definitions';
+import { ProjectActivityStage } from '../../../Definitions/Enums/programmeStage.enum';
 
 interface ProgrammeLog {
   id: number;
@@ -21,37 +22,57 @@ interface ProgrammeLog {
 }
 
 const logTypeIcons: Record<string, React.ReactNode> = {
-  CREATE: <Icon.CaretRight />,
-  INF_APPROVED: <Icon.FileEarmarkCheck />,
-  INF_REJECTED: <Icon.FileEarmarkX />,
-  CREATE_COST_QUOTATION: <Icon.FileText />,
-  CREATE_PROJECT_PROPOSAL: <Icon.FileText />,
-  CREATE_VALIDATION_AGREEMENT: <Icon.FileText />,
-  PROJECT_PROPOSAL_ACCEPTED: <Icon.Check2Circle />,
-  PROJECT_PROPOSAL_REJECTED: <Icon.FileX />,
-  CMA_CREATE: <Icon.FileEarmark />,
-  CMA_APPROVED: <Icon.FileEarmarkCheck />,
-  CMA_REJECTED: <Icon.FileEarmarkX />,
-  VALIDATION_REPORT_CREATED: <Icon.FileEarmarkBarGraph />,
-  VALIDATION_REPORT_APPROVED: <Icon.FileEarmarkCheck />,
-  VALIDATION_REPORT_REJECTED: <Icon.FileEarmarkX />,
-  AUTHORISED: <Icon.Clipboard2Check />,
-  MONITORING_CREATE: <Icon.ListUl />,
-  MONITORING_APPROVED: <Icon.ListCheck />,
-  MONITORING_REJECTED: <Icon.BookmarkX />,
-  VERIFICATION_CREATE: <Icon.CardList />,
-  VERIFICATION_APPROVED: <Icon.CardChecklist />,
-  VERIFICATION_REJECTED: <Icon.BookmarkX />,
-  CREDIT_ISSUED: <Icon.CurrencyExchange />,
-  TRANSFER_REQUESTED: <Icon.ClockHistory />,
-  TRANSFER_APPROVED: <Icon.BoxArrowRight />,
-  TRANSFER_REJECTED: <Icon.XOctagon />,
-  TRANSFER_CANCELLED: <Icon.ExclamationOctagon />,
-  RETIRE_REQUESTED: <Icon.ClockHistory />,
-  RETIRE_APPROVED: <Icon.Save />,
-  RETIRE_REJECTED: <Icon.XOctagon />,
-  RETIRE_CANCELLED: <Icon.ExclamationOctagon />,
+  PENDING: <Icon.CaretRight />,
+  REJECTED: <Icon.XCircle />,
+  APPROVED: <Icon.Check2Circle />,
+  PDD_SUBMITTED: <Icon.FileText />,
+  NO_OBJECTION_LETTER_GENERATED: <Icon.FileText />,
+  PDD_REJECTED_BY_CERTIFIER: <Icon.XCircle />,
+  PDD_APPROVED_BY_CERTIFIER: <Icon.Check2Circle />,
+  PDD_REJECTED_BY_DNA: <Icon.XCircle />,
+  PDD_APPROVED_BY_DNA: <Icon.Check2Circle />,
+  VALIDATION_REPORT_SUBMITTED: <Icon.FileText />,
+  VALIDATION_REPORT_REJECTED: <Icon.XCircle />,
+  AUTHORISED: <Icon.ClipboardCheck />,
+  MONITORING_REPORT_SUBMITTED: <Icon.ListCheck />,
+  MONITORING_REPORT_REJECTED: <Icon.XCircle />,
+  MONITORING_REPORT_APPROVED: <Icon.Check2Circle />,
+  VERIFICATION_REPORT_SUBMITTED: <Icon.FileEarmarkBarGraph />,
+  VERIFICATION_REPORT_REJECTED: <Icon.XCircle />,
+  VERIFICATION_REPORT_APPROVED: <Icon.XCircle />,
+  CREDITS_ISSUED: <Icon.CurrencyExchange />,
   DEFAULT: <FileOutlined />, // Default icon for unspecified log types
+
+  // CREATE: <Icon.CaretRight />,
+  // INF_APPROVED: <Icon.FileEarmarkCheck />,
+  // INF_REJECTED: <Icon.FileEarmarkX />,
+  // CREATE_COST_QUOTATION: <Icon.FileText />,
+  // CREATE_PROJECT_PROPOSAL: <Icon.FileText />,
+  // CREATE_VALIDATION_AGREEMENT: <Icon.FileText />,
+  // PROJECT_PROPOSAL_ACCEPTED: <Icon.Check2Circle />,
+  // PROJECT_PROPOSAL_REJECTED: <Icon.FileX />,
+  // CMA_CREATE: <Icon.FileEarmark />,
+  // CMA_APPROVED: <Icon.FileEarmarkCheck />,
+  // CMA_REJECTED: <Icon.FileEarmarkX />,
+  // VALIDATION_REPORT_CREATED: <Icon.FileEarmarkBarGraph />,
+  // VALIDATION_REPORT_APPROVED: <Icon.FileEarmarkCheck />,
+  // VALIDATION_REPORT_REJECTED: <Icon.FileEarmarkX />,
+  // AUTHORISED: <Icon.Clipboard2Check />,
+  // MONITORING_CREATE: <Icon.ListUl />,
+  // MONITORING_APPROVED: <Icon.ListCheck />,
+  // MONITORING_REJECTED: <Icon.BookmarkX />,
+  // VERIFICATION_CREATE: <Icon.CardList />,
+  // VERIFICATION_APPROVED: <Icon.CardChecklist />,
+  // VERIFICATION_REJECTED: <Icon.BookmarkX />,
+  // CREDIT_ISSUED: <Icon.CurrencyExchange />,
+  // TRANSFER_REQUESTED: <Icon.ClockHistory />,
+  // TRANSFER_APPROVED: <Icon.BoxArrowRight />,
+  // TRANSFER_REJECTED: <Icon.XOctagon />,
+  // TRANSFER_CANCELLED: <Icon.ExclamationOctagon />,
+  // RETIRE_REQUESTED: <Icon.ClockHistory />,
+  // RETIRE_APPROVED: <Icon.Save />,
+  // RETIRE_REJECTED: <Icon.XOctagon />,
+  // RETIRE_CANCELLED: <Icon.ExclamationOctagon />,
 };
 
 interface ProgrammeHistoryStepsProps {
@@ -73,58 +94,50 @@ const formatString = (langTag: string, vargs: any[], t: any) => {
 const getLogDescription = (log: any, t: any) => {
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
   switch (log.logType) {
-    case 'CREATE':
+    case ProjectActivityStage.PENDING:
       return formatString('slcfProgrammeTimeline:programmeCreatedDescription', [log.name], t);
       break;
-    case 'INF_APPROVED':
-      return formatString(
-        'slcfProgrammeTimeline:infApprovedDescription',
-        [log.name, countryName],
-        t
-      );
+    case ProjectActivityStage.APPROVED:
+      return formatString('slcfProgrammeTimeline:infApprovedDescription', [log.name], t);
       break;
-    case 'INF_REJECTED':
-      return formatString(
-        'slcfProgrammeTimeline:infRejectedDescription',
-        [log.name, countryName],
-        t
-      );
+    case ProjectActivityStage.REJECTED:
+      return formatString('slcfProgrammeTimeline:infRejectedDescription', [log.name], t);
       break;
-    case 'CREATE_COST_QUOTATION':
-      return formatString(
-        'slcfProgrammeTimeline:costQuoteCreatedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'CREATE_PROJECT_PROPOSAL':
-      return formatString(
-        'slcfProgrammeTimeline:proposalCreatedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'CREATE_VALIDATION_AGREEMENT':
-      return formatString(
-        'slcfProgrammeTimeline:validationAgreementCreatedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'PROJECT_PROPOSAL_ACCEPTED':
-      return formatString(
-        'slcfProgrammeTimeline:projectProposalAcceptedDescription',
-        [log.name],
-        t
-      );
-      break;
-    case 'PROJECT_PROPOSAL_REJECTED':
-      return formatString(
-        'slcfProgrammeTimeline:projectProposalRejectedDescription',
-        [log.name],
-        t
-      );
-      break;
+    // case 'CREATE_COST_QUOTATION':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:costQuoteCreatedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'CREATE_PROJECT_PROPOSAL':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:proposalCreatedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'CREATE_VALIDATION_AGREEMENT':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:validationAgreementCreatedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'PROJECT_PROPOSAL_ACCEPTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:projectProposalAcceptedDescription',
+    //     [log.name],
+    //     t
+    //   );
+    //   break;
+    // case 'PROJECT_PROPOSAL_REJECTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:projectProposalRejectedDescription',
+    //     [log.name],
+    //     t
+    //   );
+    //   break;
     case 'CMA_CREATE':
       return formatString('slcfProgrammeTimeline:cmaCreatedDescription', [log.name], t);
       break;
@@ -279,95 +292,59 @@ const getLogDescription = (log: any, t: any) => {
 
 const getLogTitle = (logType: any) => {
   switch (logType) {
-    case 'CREATE':
+    case ProjectActivityStage.PENDING:
       return 'slcfProgrammeTimeline:programmeCreatedTitle';
       break;
-    case 'INF_APPROVED':
+    case ProjectActivityStage.APPROVED:
       return 'slcfProgrammeTimeline:infApprovedTitle';
       break;
-    case 'INF_REJECTED':
+    case ProjectActivityStage.REJECTED:
       return 'slcfProgrammeTimeline:infRejectedTitle';
       break;
-    case 'CREATE_COST_QUOTATION':
-      return 'slcfProgrammeTimeline:costQuoteCreatedTitle';
+    case ProjectActivityStage.PDD_SUBMITTED:
+      return 'slcfProgrammeTimeline:pddSubmttedTitle';
       break;
-    case 'CREATE_PROJECT_PROPOSAL':
-      return 'slcfProgrammeTimeline:proposalCreatedTitle';
+    case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:
+      return 'slcfProgrammeTimeline:pddRejectedTitle';
       break;
-    case 'CREATE_VALIDATION_AGREEMENT':
-      return 'slcfProgrammeTimeline:validationAgreementCreatedTitle';
+    case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
+      return 'slcfProgrammeTimeline:pddRejectedTitle';
       break;
-    case 'PROJECT_PROPOSAL_ACCEPTED':
-      return 'slcfProgrammeTimeline:projectProposalAcceptedTitle';
+    case ProjectActivityStage.PDD_APPROVED_BY_DNA:
+      return 'slcfProgrammeTimeline:pddApprovedTitle';
       break;
-    case 'PROJECT_PROPOSAL_REJECTED':
-      return 'slcfProgrammeTimeline:projectProposalRejectedTitle';
+    case ProjectActivityStage.PDD_REJECTED_BY_DNA:
+      return 'slcfProgrammeTimeline:pddRejectedTitle';
       break;
-    case 'CMA_CREATE':
-      return 'slcfProgrammeTimeline:cmaCreatedTitle';
-      break;
-    case 'CMA_APPROVED':
-      return 'slcfProgrammeTimeline:cmaApprovedTitle';
-      break;
-    case 'CMA_REJECTED':
-      return 'slcfProgrammeTimeline:cmaRejectedTitle';
-      break;
-    case 'VALIDATION_REPORT_CREATED':
+    case ProjectActivityStage.VALIDATION_REPORT_SUBMITTED:
       return 'slcfProgrammeTimeline:validationReportCreatedTitle';
       break;
-    case 'VALIDATION_REPORT_APPROVED':
-      return 'slcfProgrammeTimeline:validationReportApprovedTitle';
-      break;
-    case 'AUTHORISED':
-      return 'slcfProgrammeTimeline:authorisedTitle';
-      break;
-    case 'VALIDATION_REPORT_REJECTED':
+    case ProjectActivityStage.VALIDATION_REPORT_REJECTED:
       return 'slcfProgrammeTimeline:validationReportRejectedTitle';
       break;
-    case 'MONITORING_CREATE':
+    case ProjectActivityStage.AUTHORISED:
+      return 'slcfProgrammeTimeline:authorisedTitle';
+      break;
+    case ProjectActivityStage.MONITORING_REPORT_SUBMITTED:
       return 'slcfProgrammeTimeline:monitoringReportCreatedTitle';
       break;
-    case 'MONITORING_REJECTED':
-      return 'slcfProgrammeTimeline:monitoringReportRejectedTitle';
-      break;
-    case 'MONITORING_APPROVED':
+    case ProjectActivityStage.MONITORING_REPORT_APPROVED:
       return 'slcfProgrammeTimeline:monitoringReportApprovedTitle';
       break;
-    case 'VERIFICATION_CREATE':
+    case ProjectActivityStage.MONITORING_REPORT_REJECTED:
+      return 'slcfProgrammeTimeline:monitoringReportRejectedTitle';
+      break;
+    case ProjectActivityStage.VERIFICATION_REPORT_SUBMITTED:
       return 'slcfProgrammeTimeline:verificationReportCreatedTitle';
       break;
-    case 'VERIFICATION_APPROVED':
-      return 'slcfProgrammeTimeline:verificationReportApprovedTitle';
-      break;
-    case 'VERIFICATION_REJECTED':
+    case ProjectActivityStage.VERIFICATION_REPORT_REJECTED:
       return 'slcfProgrammeTimeline:verificationReportRejectedTitle';
       break;
-    case 'CREDIT_ISSUED':
+    case ProjectActivityStage.VERIFICATION_REPORT_APPROVED:
+      return 'slcfProgrammeTimeline:verificationReportApprovedTitle';
+      break;
+    case ProjectActivityStage.CREDITS_ISSUED:
       return 'slcfProgrammeTimeline:creditIssuedTitle';
-      break;
-    case 'TRANSFER_REQUESTED':
-      return 'slcfProgrammeTimeline:transferRequestedTitle';
-      break;
-    case 'TRANSFER_APPROVED':
-      return 'slcfProgrammeTimeline:transferApprovedTitle';
-      break;
-    case 'TRANSFER_CANCELLED':
-      return 'slcfProgrammeTimeline:transferCancelledTitle';
-      break;
-    case 'TRANSFER_REJECTED':
-      return 'slcfProgrammeTimeline:transferRejectedTitle';
-      break;
-    case 'RETIRE_REQUESTED':
-      return 'slcfProgrammeTimeline:retireRequestedTitle';
-      break;
-    case 'RETIRE_APPROVED':
-      return 'slcfProgrammeTimeline:retireApprovedTitle';
-      break;
-    case 'RETIRE_CANCELLED':
-      return 'slcfProgrammeTimeline:retireCancelledTitle';
-      break;
-    case 'RETIRE_REJECTED':
-      return 'slcfProgrammeTimeline:retireRejectedTitle';
       break;
 
     default:
@@ -380,6 +357,8 @@ const ProgrammeHistoryStepsComponent: React.FC<ProgrammeHistoryStepsProps> = ({
   translator,
 }) => {
   const t = translator;
+
+  console.log('---------history--------------', historyData);
   const items = historyData.map((log) => ({
     title: t(getLogTitle(log.logType)),
     subTitle: DateTime.fromMillis(Number(log.createdTime)).toFormat(dateTimeFormat),

@@ -18,13 +18,15 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   appendixDataMapToFields,
   applicationOfMethodologyDataMapToFields,
+  approvalAndAuthorizationDataMapToFields,
+  BasicInformationDataMapToFields,
   descriptionOfProjectActivityDataMapToFields,
   eligibilityCriteriaDataMapToFields,
   environmentImpactsDataMaptoFields,
   localStakeholderConsultationDataMaptoFields,
   monitoringDataMapToFields,
-  projectDetailsDataMapToFields,
   quantificationOfGHGDataMapToFields,
+  startDateCreditingPeriodDataMapToFields,
 } from './viewDataMap';
 import { Loading } from '../Loading/loading';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
@@ -40,14 +42,20 @@ const CMA_STEPS = {};
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
   const [current, setCurrent] = useState(0);
+  const [documentId, setDocumentId] = useState<string>();
 
   const navigate = useNavigate();
 
   const { state } = useLocation();
-  const isView = !!state?.isView;
-  const isEdit = !!state?.isEdit;
+  console.log('-----------state---------', state);
+  // const isView = !!state?.isView;
+  // const isEdit = !!state?.isEdit;
 
-  const [loading, setLoading] = useState<boolean>(isView || isEdit);
+  const [loading, setLoading] = useState<boolean>(
+    state?.mode === FormMode.VIEW ||
+      state?.mode === FormMode.EDIT ||
+      state?.mode === FormMode?.VERIFY
+  );
   const { id } = useParams();
 
   const scrollSection = useRef({} as any);
@@ -121,7 +129,7 @@ const StepperComponent = (props: any) => {
       //   data: { user },
       // } = await get(API_PATHS.USER_PROFILE);
 
-      if (!(isView || isEdit)) {
+      if (state?.mode === FormMode?.CREATE) {
         form1.setFieldsValue({
           // title: data?.title,
           // dateOfIssue: moment(),
@@ -160,45 +168,61 @@ const StepperComponent = (props: any) => {
 
   useEffect(() => {
     const getViewData = async () => {
-      if (isView || isEdit) {
+      if (
+        state?.mode === FormMode.EDIT ||
+        state?.mode === FormMode.VERIFY ||
+        state?.mode === FormMode?.VIEW
+      ) {
         setLoading(true);
+        console.log('----------getViewData---------', state);
         let res;
         try {
-          if (isView && selectedVersion) {
-            res = await post(API_PATHS.DOC_BY_VERSION, {
-              programmeId: id,
-              docType: 'cma',
-              version: selectedVersion,
-            });
-          } else {
-            res = await post(API_PATHS.LAST_DOC_VERSION, {
-              programmeId: id,
-              docType: 'cma',
-            });
-          }
-          if (isView) {
-            handleDocumentStatus(res.data.status);
-          }
+          res = await post(API_PATHS.QUERY_DOCUMENT, {
+            projectRefId: id,
+            documentEnum: DocumentEnum.PDD,
+          });
 
           if (res?.statusText === 'SUCCESS') {
-            const content = JSON.parse(res?.data.content);
+            const data = res?.data;
+            setDocumentId(data?.refId);
 
-            // const projectDetails = projectDetailsDataMapToFields(content?.projectDetails);
-            // form1.setFieldsValue(projectDetails);
-            // const descripitonOfProjectActivity = descriptionOfProjectActivityDataMapToFields(
-            //   content?.projectActivity
-            // );
-            // form2.setFieldsValue(descripitonOfProjectActivity);
+            const projectDetails = BasicInformationDataMapToFields(data.data?.projectDetails);
+            form1.setFieldsValue(projectDetails);
 
-            // const environmentImpacts = environmentImpactsDataMaptoFields(
-            //   content?.environmentImpacts
-            // );
-            // form3.setFieldsValue(environmentImpacts);
+            const descripitonOfProjectActivity = descriptionOfProjectActivityDataMapToFields(
+              data.data?.projectActivity
+            );
+            form2.setFieldsValue(descripitonOfProjectActivity);
 
-            // const localStakeholderConsultation = localStakeholderConsultationDataMaptoFields(
-            //   content?.localStakeholderConsultation
-            // );
-            // form4.setFieldsValue(localStakeholderConsultation);
+            const applicationOfMethodology = applicationOfMethodologyDataMapToFields(
+              data?.data?.applicationOfMethodology
+            );
+            form3.setFieldsValue(applicationOfMethodology);
+
+            const startDateCreditingPeriod = startDateCreditingPeriodDataMapToFields(
+              data?.data?.startDateCreditingPeriod
+            );
+
+            form4.setFieldsValue(startDateCreditingPeriod);
+
+            const environmentImpacts = environmentImpactsDataMaptoFields(
+              data?.data?.environmentImpacts
+            );
+
+            form5.setFieldsValue(environmentImpacts);
+
+            const localStakeholderConsultation = localStakeholderConsultationDataMaptoFields(
+              data?.data.localStakeholderConsultation
+            );
+            form6.setFieldsValue(localStakeholderConsultation);
+
+            const approvalAndAuthorization = approvalAndAuthorizationDataMapToFields(
+              data?.data.approvalAndAuthorization
+            );
+            form7.setFieldsValue(approvalAndAuthorization);
+
+            const appendix = appendixDataMapToFields(data?.data.appendix);
+            form8.setFieldsValue(appendix);
 
             // const eligibilityCriteria = eligibilityCriteriaDataMapToFields(
             //   content?.eligibilityCriteria
@@ -231,7 +255,7 @@ const StepperComponent = (props: any) => {
 
     getViewData();
 
-    if (isView) {
+    if (FormMode.VERIFY || FormMode.VIEW) {
       setDisableFields(true);
     }
   }, [selectedVersion]);
@@ -251,9 +275,10 @@ const StepperComponent = (props: any) => {
       if (res?.response?.data?.statusCode === 200) {
         message.open({
           type: 'success',
-          content: isEdit
-            ? 'Project Design Document has been edited successfully'
-            : 'Project Design Document has been submitted successfully',
+          content:
+            state?.mode === FormMode.EDIT
+              ? 'Project Design Document has been edited successfully'
+              : 'Project Design Document has been submitted successfully',
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
@@ -311,7 +336,7 @@ const StepperComponent = (props: any) => {
           countries={countries}
           handleValuesUpdate={handleValuesUpdate}
           disableFields={disableFields}
-          formMode={isView ? FormMode.VIEW : isEdit ? FormMode.EDIT : FormMode.CREATE}
+          // formMode={isView ? FormMode.VIEW : isEdit ? FormMode.EDIT : FormMode.CREATE}
         />
       ),
     },
@@ -474,6 +499,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           submitForm={submitForm}
           disableFields={disableFields}
+          documentId={documentId}
         />
       ),
     },

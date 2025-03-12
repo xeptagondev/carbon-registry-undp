@@ -87,6 +87,7 @@ export const API_PATHS = {
   CMA_CREATION: 'programmeSl/createCMA',
   //DOCUMENT
   ADD_DOCUMENT: 'document/add',
+  QUERY_DOCUMENT: 'document/query',
   APPROVE_DOCUMENT: (id: string) => `document/approve?id=${id}`,
   REJECT_DOCUMENT: (id: string) => `document/reject?id=${id}`,
   //TRANSFER
