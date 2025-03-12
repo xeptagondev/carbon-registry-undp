@@ -44,7 +44,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
   const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
 
-  const onValueChange = (newValues: any) => {
+  const handleValuesUpdate = (newValues: any) => {
     setFormValues((prevValues) => ({
       ...prevValues,
       ...newValues,
@@ -476,7 +476,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           prev={navigateToDetailsPage}
           // countries={countries}
           // verifiedScer={verifiedScer}
-          handleValuesUpdate={() => {}}
+          handleValuesUpdate={handleValuesUpdate}
         />
       ),
     },
@@ -497,7 +497,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           next={next}
           prev={prev}
           // countries={countries}
-          onValueChange={onValueChange}
+          onValueChange={handleValuesUpdate}
         />
       ),
     },
@@ -517,7 +517,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
-          onValueChange={onValueChange}
+          onValueChange={handleValuesUpdate}
         />
       ),
     },
@@ -537,7 +537,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
-          onValueChange={onValueChange}
+          onValueChange={handleValuesUpdate}
         />
       ),
     },
@@ -557,7 +557,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
-          onValueChange={onValueChange}
+          onValueChange={handleValuesUpdate}
         />
       ),
     },
@@ -577,7 +577,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
-          onValueChange={onValueChange}
+          onValueChange={handleValuesUpdate}
         />
       ),
     },

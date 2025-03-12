@@ -53,9 +53,28 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
   const onFinish = (values: any) => {
     const tempValues: any = {
       basicInfoDetails: {
-        //get vals
+        projectTitle: values?.b_projectTitle,
+        scaleOfProject: values?.b_scaleOfProject,
+        completionDate: values?.b_completionDate,
+        versionNoOfMonitoringReport: values?.b_versionNoOfMonitoringReport,
+        projectParticipants: values?.b_projectParticipants,
+        appliedMethodologies: values?.b_appliedMethodologies,
+        conditionalSectoralScopes: values?.b_conditionalSectoralScopes,
+        certfiedGHGReductions: values?.b_certfiedGHGReductions,
+        unfccRefNo: values?.b_unfccRefNo,
+        versionNoOfVerificationReport: values?.b_versionNoOfVerificationReport,
+        monitoringPeriodNoAndDuration: values?.b_monitoringPeriodNoAndDuration,
+        creditingPeriod: values?.b_creditingPeriod,
+        hostParty: values?.b_hostParty,
+        mandatorySectoralScopes: values?.b_mandatorySectoralScopes,
+        estimatedGHGEmissionReduction: values?.b_estimatedGHGEmissionReduction,
+        name: values?.b_name,
+        position: values?.b_position,
+        signature: values?.b_signature,
       },
     };
+    console.log('------------temp vals ------------', tempValues);
+    handleValuesUpdate(tempValues);
   };
 
   return (
