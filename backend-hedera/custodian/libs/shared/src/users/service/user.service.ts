@@ -352,19 +352,21 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
                             // If no immediate result, add task and return
                             if (!hederaAccResult) {
-                                const asyncTask: TaskEntity = {
-                                    className: 'UserService',
-                                    functionName: 'updateGuardianUserConfig',
-                                    args: [
-                                        userDto,
-                                        requestUser,
-                                        isUserActive,
-                                        accGenTaskId.taskId,
-                                        undefined,
-                                    ],
-                                    retryAttemps: 2,
-                                    state: TaskEnum.PENDING,
-                                };
+                                const asyncTask: TaskEntity =
+                                    this.taskRepository.create({
+                                        className: 'UserService',
+                                        functionName:
+                                            'updateGuardianUserConfig',
+                                        args: [
+                                            userDto,
+                                            requestUser,
+                                            isUserActive,
+                                            accGenTaskId.taskId,
+                                            undefined,
+                                        ],
+                                        retryAttemps: 2,
+                                        state: TaskEnum.PENDING,
+                                    });
                                 await this.taskRepository.save(asyncTask);
                                 return {
                                     statusCode: HttpStatus.OK,
@@ -882,13 +884,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 userDto.email,
             );
         if (!isAccountUpdated) {
-            const asyncTask: TaskEntity = {
+            const asyncTask: TaskEntity = this.taskRepository.create({
                 className: 'UserService',
                 functionName: 'checkGuardianUserUpdate',
                 args: [userDto, isUserActive, requestUser, updateTaskId.taskId],
                 retryAttemps: 3,
                 state: TaskEnum.PENDING,
-            };
+            });
             await this.taskRepository.save(asyncTask);
             return UserStageEnum.ASSIGN_REGISTRY;
         }

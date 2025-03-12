@@ -8,7 +8,7 @@ import { UserService } from '@app/shared/users/service/user.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 
 @Injectable()
 export class TaskMonitorService implements OnModuleInit {
@@ -40,7 +40,13 @@ export class TaskMonitorService implements OnModuleInit {
                 // 1. Query for any pending submitted tasks
                 const pendingWork: TaskEntity[] =
                     await this.taskRepository.find({
-                        where: { state: TaskEnum.PENDING },
+                        where: {
+                            state: TaskEnum.PENDING,
+                            lastUpdateTime: Raw(
+                                (alias) =>
+                                    `(${alias} + "millisBetweenAttempts") < ${Date.now()}`,
+                            ),
+                        },
                     });
                 // 2. Evaluate tasks
                 for (let i = 0; i < pendingWork.length; i++) {
@@ -76,12 +82,12 @@ export class TaskMonitorService implements OnModuleInit {
                             );
                         }
                     } finally {
-                        await this.taskRepository.increment(
+                        await this.taskRepository.update(
+                            { id: task.id },
                             {
-                                id: task.id,
+                                attemptedCount: () => 'attemptedCount + 1', // Increment attemptedCount by 1
+                                lastUpdateTime: Date.now(), // Update lastUpdateTime
                             },
-                            'attemptedCount',
-                            1,
                         );
                     }
                 }
