@@ -2240,6 +2240,6 @@ export class DocumentService {
             },
         });
 
-        return lastDoc;
+        return { data: lastDoc };
     }
 }
