@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Steps, message } from 'antd';
-import { ProjectDetailsStep } from './ProjectDetailsStep';
+import { BasicInformationStep } from './BasicInformationStep';
 import './VerificationReport.scss';
 import { IntroductionStep } from './InstroductionStep';
 import { MethodologyStep } from './MethodologyStep';
@@ -10,7 +10,7 @@ import { ReferenceStep } from './ReferenceStep';
 import { AppendixStep } from './AppendixStep';
 import { useForm } from 'antd/lib/form/Form';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import moment from 'moment';
 import { DocumentTypeEnum } from '../../Definitions/Enums/document.type.enum';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
@@ -20,8 +20,12 @@ import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
-const StepperComponent = (props: any) => {
-  const { useLocation, translator, countries, selectedVersion, handleDocumentStatus } = props;
+import { VerificationStepProps } from './StepProps';
+import { NULL } from 'sass';
+
+const StepperComponent = (props: VerificationStepProps) => {
+  console.log('Props received in StepperComponent:', props);
+  const { translator, t } = props;
   const navigationLocation = useLocation();
   const { mode, docId } = navigationLocation.state || {};
   const navigate = useNavigate();
@@ -33,7 +37,6 @@ const StepperComponent = (props: any) => {
   const [formValues, setFormValues] = useState({});
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
-  const t = translator.t;
 
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
@@ -58,49 +61,49 @@ const StepperComponent = (props: any) => {
     navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
-  const approveOrReject = async (verify: boolean, remark?: string) => {
-    const body = {
-      verify: verify,
-      verificationRequestId: Number(verificationRequestId),
-      reportId: reportId,
-      remark,
-    };
-    try {
-      const res = await post(API_PATHS.VERIFY_VERIFICATION_REPORT, body);
-      if (res?.statusText === 'SUCCESS') {
-        message.open({
-          type: 'success',
-          content: verify
-            ? t('verificationReport:verificationReportApproveSuccess')
-            : t('verificationReport:verificationReportRejectSuccess'),
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
-        navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
-      }
-    } catch (error: any) {
-      if (error && error.errors && error.errors.length > 0) {
-        error.errors.forEach((err: any) => {
-          Object.keys(err).forEach((field) => {
-            console.log(`Error in ${field}: ${err[field].join(', ')}`);
-            message.open({
-              type: 'error',
-              content: err[field].join(', '),
-              duration: 4,
-              style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-            });
-          });
-        });
-      } else {
-        message.open({
-          type: 'error',
-          content: error?.message,
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
-      }
-    }
-  };
+  // const approveOrReject = async (verify: boolean, remark?: string) => {
+  //   const body = {
+  //     verify: verify,
+  //     verificationRequestId: Number(verificationRequestId),
+  //     reportId: reportId,
+  //     remark,
+  //   };
+  //   try {
+  //     const res = await post(API_PATHS.VERIFY_VERIFICATION_REPORT, body);
+  //     if (res?.statusText === 'SUCCESS') {
+  //       message.open({
+  //         type: 'success',
+  //         content: verify
+  //           ? t('verificationReport:verificationReportApproveSuccess')
+  //           : t('verificationReport:verificationReportRejectSuccess'),
+  //         duration: 4,
+  //         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //       });
+  //       navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
+  //     }
+  //   } catch (error: any) {
+  //     if (error && error.errors && error.errors.length > 0) {
+  //       error.errors.forEach((err: any) => {
+  //         Object.keys(err).forEach((field) => {
+  //           console.log(`Error in ${field}: ${err[field].join(', ')}`);
+  //           message.open({
+  //             type: 'error',
+  //             content: err[field].join(', '),
+  //             duration: 4,
+  //             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //           });
+  //         });
+  //       });
+  //     } else {
+  //       message.open({
+  //         type: 'error',
+  //         content: error?.message,
+  //         duration: 4,
+  //         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //       });
+  //     }
+  //   }
+  // };
 
   const onFinish = async (newValues: any) => {
     setFormValues((prevValues) => ({
@@ -212,7 +215,7 @@ const StepperComponent = (props: any) => {
       }
     }
   };
-  const [projectDetailsForm] = useForm();
+  const [basicInformationForm] = useForm();
   const [introductionForm] = useForm();
   const [methodologyForm] = useForm();
   const [verificationFindingForm] = useForm();
@@ -241,7 +244,7 @@ const StepperComponent = (props: any) => {
         safeNumber(data.creditTransferred);
       const creditEst = safeNumber(data.creditEst);
       setVerifiedScer(creditEst - creditReceived);
-      projectDetailsForm.setFieldsValue({
+      basicInformationForm.setFieldsValue({
         projectTitle: data?.title,
       });
     } catch (error) {
@@ -249,211 +252,211 @@ const StepperComponent = (props: any) => {
     }
   };
 
-  const getLatestReports = async (programId: any) => {
-    try {
-      if (mode === FormMode.VIEW || mode === FormMode.EDIT) {
-        const { data } =
-          mode === FormMode.VIEW && selectedVersion
-            ? await post(API_PATHS.VERIFICATION_DOC_BY_VERSION, {
-                programmeId: id,
-                docType: DocumentTypeEnum.VERIFICATION_REPORT,
-                version: selectedVersion,
-                verificationRequestId: Number(verificationRequestId),
-              })
-            : await post(API_PATHS.VERIFICATION_DOC_LAST_VERSION, {
-                programmeId: id,
-                docType: DocumentTypeEnum.VERIFICATION_REPORT,
-                verificationRequestId: Number(verificationRequestId),
-              });
+  // const getLatestReports = async (programId: any) => {
+  //   try {
+  //     if (mode === FormMode.VIEW || mode === FormMode.EDIT) {
+  //       const { data } =
+  //         mode === FormMode.VIEW && selectedVersion
+  //           ? await post(API_PATHS.VERIFICATION_DOC_BY_VERSION, {
+  //               programmeId: id,
+  //               docType: DocumentTypeEnum.VERIFICATION_REPORT,
+  //               version: selectedVersion,
+  //               verificationRequestId: Number(verificationRequestId),
+  //             })
+  //           : await post(API_PATHS.VERIFICATION_DOC_LAST_VERSION, {
+  //               programmeId: id,
+  //               docType: DocumentTypeEnum.VERIFICATION_REPORT,
+  //               verificationRequestId: Number(verificationRequestId),
+  //             });
 
-        if (mode === FormMode.VIEW) {
-          handleDocumentStatus(data.status);
-        }
+  //       if (mode === FormMode.VIEW) {
+  //         handleDocumentStatus(data.status);
+  //       }
 
-        if (data && data?.content) {
-          setReportId(data?.id);
-          setStatus(data?.status);
-          const content = data?.content;
-          projectDetailsForm.setFieldsValue({
-            ...content?.projectDetails,
-            completionDate: moment(content?.projectDetails?.completionDate),
-            versionDate: moment(content?.projectDetails?.versionDate),
-            monitoringPeriodStart: moment(content?.projectDetails?.monitoringPeriodStart),
-            monitoringPeriodEnd: moment(content?.projectDetails?.monitoringPeriodEnd),
-            reportID: data?.content?.projectDetails?.reportID
-              ? data?.content?.projectDetails?.reportID
-              : data?.content?.projectDetails?.reportNo,
-          });
-          introductionForm.setFieldsValue({
-            ...content?.introduction,
-            creditionPeriodStart: moment(content?.introduction?.creditionPeriodStart),
-            creditionPeriodEnd: moment(content?.introduction?.creditionPeriodEnd),
-            periodVerifiedStart: moment(content?.introduction?.periodVerifiedStart),
-            periodVerifiedEnd: moment(content?.introduction?.periodVerifiedEnd),
-          });
-          methodologyForm.setFieldsValue({
-            ...content?.methodology,
-          });
-          verificationFindingForm.setFieldsValue({
-            ...content?.verificationFinding,
-            optionalDocuments: data?.content?.verificationFinding?.optionalDocuments?.map(
-              (document: string, index: number) => {
-                return {
-                  uid: index,
-                  name: extractFilePropertiesFromLink(document).fileName,
-                  status: 'done',
-                  url: document,
-                };
-              }
-            ),
-            siteLocations: content?.verificationFinding?.siteLocations?.map((val: any) => {
-              return {
-                ...val,
-                commissioningDate: moment(val?.commissioningDate),
-              };
-            }),
-          });
+  //       if (data && data?.content) {
+  //         setReportId(data?.id);
+  //         setStatus(data?.status);
+  //         const content = data?.content;
+  //         basicInformationForm.setFieldsValue({
+  //           ...content?.projectDetails,
+  //           completionDate: moment(content?.projectDetails?.completionDate),
+  //           versionDate: moment(content?.projectDetails?.versionDate),
+  //           monitoringPeriodStart: moment(content?.projectDetails?.monitoringPeriodStart),
+  //           monitoringPeriodEnd: moment(content?.projectDetails?.monitoringPeriodEnd),
+  //           reportID: data?.content?.projectDetails?.reportID
+  //             ? data?.content?.projectDetails?.reportID
+  //             : data?.content?.projectDetails?.reportNo,
+  //         });
+  //         introductionForm.setFieldsValue({
+  //           ...content?.introduction,
+  //           creditionPeriodStart: moment(content?.introduction?.creditionPeriodStart),
+  //           creditionPeriodEnd: moment(content?.introduction?.creditionPeriodEnd),
+  //           periodVerifiedStart: moment(content?.introduction?.periodVerifiedStart),
+  //           periodVerifiedEnd: moment(content?.introduction?.periodVerifiedEnd),
+  //         });
+  //         methodologyForm.setFieldsValue({
+  //           ...content?.methodology,
+  //         });
+  //         verificationFindingForm.setFieldsValue({
+  //           ...content?.verificationFinding,
+  //           optionalDocuments: data?.content?.verificationFinding?.optionalDocuments?.map(
+  //             (document: string, index: number) => {
+  //               return {
+  //                 uid: index,
+  //                 name: extractFilePropertiesFromLink(document).fileName,
+  //                 status: 'done',
+  //                 url: document,
+  //               };
+  //             }
+  //           ),
+  //           siteLocations: content?.verificationFinding?.siteLocations?.map((val: any) => {
+  //             return {
+  //               ...val,
+  //               commissioningDate: moment(val?.commissioningDate),
+  //             };
+  //           }),
+  //         });
 
-          verificationOpinionForm.setFieldsValue({
-            ...content?.verificationOpinion,
-            dateOfSignature1: moment(content?.verificationOpinion?.dateOfSignature1),
-            dateOfSignature2: moment(content?.verificationOpinion?.dateOfSignature2),
-            signature1: data?.content?.verificationOpinion?.signature1?.map(
-              (document: string, index: number) => {
-                return {
-                  uid: index,
-                  name: extractFilePropertiesFromLink(document).fileName,
-                  status: 'done',
-                  url: document,
-                };
-              }
-            ),
-            signature2: data?.content?.verificationOpinion?.signature2?.map(
-              (document: string, index: number) => {
-                return {
-                  uid: index,
-                  name: extractFilePropertiesFromLink(document).fileName,
-                  status: 'done',
-                  url: document,
-                };
-              }
-            ),
-          });
+  //         verificationOpinionForm.setFieldsValue({
+  //           ...content?.verificationOpinion,
+  //           dateOfSignature1: moment(content?.verificationOpinion?.dateOfSignature1),
+  //           dateOfSignature2: moment(content?.verificationOpinion?.dateOfSignature2),
+  //           signature1: data?.content?.verificationOpinion?.signature1?.map(
+  //             (document: string, index: number) => {
+  //               return {
+  //                 uid: index,
+  //                 name: extractFilePropertiesFromLink(document).fileName,
+  //                 status: 'done',
+  //                 url: document,
+  //               };
+  //             }
+  //           ),
+  //           signature2: data?.content?.verificationOpinion?.signature2?.map(
+  //             (document: string, index: number) => {
+  //               return {
+  //                 uid: index,
+  //                 name: extractFilePropertiesFromLink(document).fileName,
+  //                 status: 'done',
+  //                 url: document,
+  //               };
+  //             }
+  //           ),
+  //         });
 
-          referenceForm.setFieldsValue({
-            ...content?.reference,
-          });
+  //         referenceForm.setFieldsValue({
+  //           ...content?.reference,
+  //         });
 
-          appendixForm.setFieldsValue({
-            ...content?.annexures,
-            optionalDocuments: data?.content?.annexures?.optionalDocuments?.map(
-              (document: string, index: number) => {
-                return {
-                  uid: index,
-                  name: extractFilePropertiesFromLink(document).fileName,
-                  status: 'done',
-                  url: document,
-                };
-              }
-            ),
-          });
-        }
-      } else {
-        const { data } = await post(API_PATHS.LAST_DOC_VERSION, {
-          programmeId: programId,
-          docType: DocumentTypeEnum.CMA,
-        });
+  //         appendixForm.setFieldsValue({
+  //           ...content?.annexures,
+  //           optionalDocuments: data?.content?.annexures?.optionalDocuments?.map(
+  //             (document: string, index: number) => {
+  //               return {
+  //                 uid: index,
+  //                 name: extractFilePropertiesFromLink(document).fileName,
+  //                 status: 'done',
+  //                 url: document,
+  //               };
+  //             }
+  //           ),
+  //         });
+  //       }
+  //     } else {
+  //       const { data } = await post(API_PATHS.LAST_DOC_VERSION, {
+  //         programmeId: programId,
+  //         docType: DocumentTypeEnum.CMA,
+  //       });
 
-        const { data: monitoringData } = await post(API_PATHS.VERIFICATION_DOC_LAST_VERSION, {
-          programmeId: programId,
-          docType: DocumentTypeEnum.MONITORING_REPORT,
-          verificationRequestId: verificationRequestId,
-        });
+  //       const { data: monitoringData } = await post(API_PATHS.VERIFICATION_DOC_LAST_VERSION, {
+  //         programmeId: programId,
+  //         docType: DocumentTypeEnum.MONITORING_REPORT,
+  //         verificationRequestId: verificationRequestId,
+  //       });
 
-        const cmaData = JSON.parse(data?.content);
+  //       const cmaData = JSON.parse(data?.content);
 
-        projectDetailsForm.setFieldsValue({
-          projectTitle: cmaData?.projectDetails?.title,
-          client: cmaData?.projectDetails?.projectProponent,
-          address: cmaData?.projectDetails?.physicalAddress,
-          email: cmaData?.projectDetails?.email,
-          telephone: cmaData?.projectDetails?.telephone,
-          contactPerson: cmaData?.projectActivity?.projectProponent?.contactPerson,
-          estimatedScer: monitoringData?.content?.quantifications?.totalNetEmissionReductions,
-          workCarriedOutBy: `Validation & Verification Division ${registryName}`,
-        });
+  //       basicInformationForm.setFieldsValue({
+  //         projectTitle: cmaData?.projectDetails?.title,
+  //         client: cmaData?.projectDetails?.projectProponent,
+  //         address: cmaData?.projectDetails?.physicalAddress,
+  //         email: cmaData?.projectDetails?.email,
+  //         telephone: cmaData?.projectDetails?.telephone,
+  //         contactPerson: cmaData?.projectActivity?.projectProponent?.contactPerson,
+  //         estimatedScer: monitoringData?.content?.quantifications?.totalNetEmissionReductions,
+  //         workCarriedOutBy: `Validation & Verification Division ${registryName}`,
+  //       });
 
-        introductionForm.setFieldsValue({
-          title: cmaData?.projectDetails?.title,
-          hostParty: `${countryName}`,
-          tiprojectParticipantstle: cmaData?.projectActivity?.projectProponent?.organizationName,
-          monitoringMethodology: monitoringData?.content?.projectActivity?.methodology,
-          creditionPeriodStart: moment(
-            monitoringData?.content?.projectActivity?.creditingPeriodFromDate
-          ),
-          creditionPeriodEnd: moment(
-            monitoringData?.content?.projectActivity?.creditingPeriodToDate
-          ),
-        });
+  //       introductionForm.setFieldsValue({
+  //         title: cmaData?.projectDetails?.title,
+  //         hostParty: `${countryName}`,
+  //         tiprojectParticipantstle: cmaData?.projectActivity?.projectProponent?.organizationName,
+  //         monitoringMethodology: monitoringData?.content?.projectActivity?.methodology,
+  //         creditionPeriodStart: moment(
+  //           monitoringData?.content?.projectActivity?.creditingPeriodFromDate
+  //         ),
+  //         creditionPeriodEnd: moment(
+  //           monitoringData?.content?.projectActivity?.creditingPeriodToDate
+  //         ),
+  //       });
 
-        methodologyForm.setFieldsValue({
-          verificationTeamList: [
-            {
-              name: '',
-              company: `${countryName} Climate Fund`,
-              function: [],
-              taskPerformed: [],
-            },
-          ],
-          inspectionsList: [
-            {
-              name: '',
-              designation: '',
-              organizationEntity: '',
-              method: '',
-              mainTopics: '',
-            },
-          ],
-        });
-        verificationFindingForm.setFieldsValue({
-          siteLocations: cmaData?.projectActivity.locationsOfProjectActivity.map(
-            (location: any) => {
-              console.log('location', location.locationOfProjectActivity);
-              return {
-                siteLocation: location?.locationOfProjectActivity,
-                commissioningDate: moment(location?.commissioningDate * 1000),
-              };
-            }
-          ),
-          complianceList: [
-            {
-              dataParameter: '',
-              sourceOfData: '',
-              reportedValue: '',
-            },
-          ],
-          resolutionOfFindings: [
-            {
-              type: [],
-              findingNo: '',
-              refToMR: '',
-              description: '',
-              summary: '',
-              assesment: '',
-              conclusion: [],
-            },
-          ],
-        });
-      }
-    } catch (error) {
-      console.log('error');
-    }
-  };
+  //       methodologyForm.setFieldsValue({
+  //         verificationTeamList: [
+  //           {
+  //             name: '',
+  //             company: `${countryName} Climate Fund`,
+  //             function: [],
+  //             taskPerformed: [],
+  //           },
+  //         ],
+  //         inspectionsList: [
+  //           {
+  //             name: '',
+  //             designation: '',
+  //             organizationEntity: '',
+  //             method: '',
+  //             mainTopics: '',
+  //           },
+  //         ],
+  //       });
+  //       verificationFindingForm.setFieldsValue({
+  //         siteLocations: cmaData?.projectActivity.locationsOfProjectActivity.map(
+  //           (location: any) => {
+  //             console.log('location', location.locationOfProjectActivity);
+  //             return {
+  //               siteLocation: location?.locationOfProjectActivity,
+  //               commissioningDate: moment(location?.commissioningDate * 1000),
+  //             };
+  //           }
+  //         ),
+  //         complianceList: [
+  //           {
+  //             dataParameter: '',
+  //             sourceOfData: '',
+  //             reportedValue: '',
+  //           },
+  //         ],
+  //         resolutionOfFindings: [
+  //           {
+  //             type: [],
+  //             findingNo: '',
+  //             refToMR: '',
+  //             description: '',
+  //             summary: '',
+  //             assesment: '',
+  //             conclusion: [],
+  //           },
+  //         ],
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.log('error');
+  //   }
+  // };
 
-  useEffect(() => {
-    getLatestReports(id);
-    getProjectById(id);
-  }, [selectedVersion]);
+  // useEffect(() => {
+  //   getLatestReports(id);
+  //   getProjectById(id);
+  // }, [selectedVersion]);
 
   const steps = [
     {
@@ -463,17 +466,17 @@ const StepperComponent = (props: any) => {
         </div>
       ),
       description: (
-        <ProjectDetailsStep
-          useLocation={useLocation}
+        <BasicInformationStep
           translator={translator}
+          t={t}
           current={current}
-          form={projectDetailsForm}
+          form={basicInformationForm}
           formMode={mode}
           next={next}
-          cancel={navigateToDetailsPage}
-          countries={countries}
-          verifiedScer={verifiedScer}
-          onValueChange={onValueChange}
+          prev={navigateToDetailsPage}
+          // countries={countries}
+          // verifiedScer={verifiedScer}
+          handleValuesUpdate={() => {}}
         />
       ),
     },
@@ -487,13 +490,13 @@ const StepperComponent = (props: any) => {
       description: (
         <IntroductionStep
           useLocation={useLocation}
-          translator={translator}
+          t={t}
           current={current}
           form={introductionForm}
           formMode={mode}
           next={next}
           prev={prev}
-          countries={countries}
+          // countries={countries}
           onValueChange={onValueChange}
         />
       ),
@@ -508,7 +511,7 @@ const StepperComponent = (props: any) => {
       description: (
         <MethodologyStep
           useLocation={useLocation}
-          translator={translator}
+          t={t}
           current={current}
           form={methodologyForm}
           formMode={mode}
@@ -528,7 +531,7 @@ const StepperComponent = (props: any) => {
       description: (
         <VerificationFindingStep
           useLocation={useLocation}
-          translator={translator}
+          t={t}
           current={current}
           form={verificationFindingForm}
           formMode={mode}
@@ -548,7 +551,7 @@ const StepperComponent = (props: any) => {
       description: (
         <VerificationOpinionStep
           useLocation={useLocation}
-          translator={translator}
+          t={t}
           current={current}
           form={verificationOpinionForm}
           formMode={mode}
@@ -568,7 +571,7 @@ const StepperComponent = (props: any) => {
       description: (
         <ReferenceStep
           useLocation={useLocation}
-          translator={translator}
+          t={t}
           current={current}
           form={referenceForm}
           formMode={mode}
@@ -588,37 +591,37 @@ const StepperComponent = (props: any) => {
       description: (
         <AppendixStep
           useLocation={useLocation}
-          translator={translator}
+          t={t}
           current={current}
           status={status}
           form={appendixForm}
           formMode={mode}
           prev={prev}
           cancel={navigateToDetailsPage}
-          approve={() => {
-            showModalOnAction({
-              actionBtnText: t('verificationReport:btnApprove'),
-              icon: <CheckCircleOutlined />,
-              title: t('verificationReport:approveVerificationModalTitle'),
-              okAction: () => {
-                approveOrReject(true);
-              },
-              remarkRequired: false,
-              type: 'primary',
-            });
-          }}
-          reject={() => {
-            showModalOnAction({
-              actionBtnText: t('verificationReport:btnReject'),
-              icon: <CloseCircleOutlined />,
-              title: t('verificationReport:rejectVerificationModalTitle'),
-              okAction: (remark: string) => {
-                approveOrReject(false, remark);
-              },
-              remarkRequired: true,
-              type: 'danger',
-            });
-          }}
+          // approve={() => {
+          //   showModalOnAction({
+          //     actionBtnText: t('verificationReport:btnApprove'),
+          //     icon: <CheckCircleOutlined />,
+          //     title: t('verificationReport:approveVerificationModalTitle'),
+          //     okAction: () => {
+          //       approveOrReject(true);
+          //     },
+          //     remarkRequired: false,
+          //     type: 'primary',
+          //   });
+          // }}
+          // reject={() => {
+          //   showModalOnAction({
+          //     actionBtnText: t('verificationReport:btnReject'),
+          //     icon: <CloseCircleOutlined />,
+          //     title: t('verificationReport:rejectVerificationModalTitle'),
+          //     okAction: (remark: string) => {
+          //       approveOrReject(false, remark);
+          //     },
+          //     remarkRequired: true,
+          //     type: 'danger',
+          //   });
+          // }}
           onFinish={onFinish}
         />
       ),

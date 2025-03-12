@@ -3,11 +3,12 @@ import { Button, Checkbox, Col, Form, Input, Row } from 'antd';
 
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import i18n from '../Internationalization/i18n';
 
 export const MethodologyStep = (props: any) => {
-  const { useLocation, translator, current, form, formMode, next, prev, onValueChange } = props;
+  const { useLocation, current, form, formMode, next, prev, onValueChange } = props;
 
-  const t = translator.t;
+  const t = i18n.t;
   return (
     <>
       {current === 2 && (
