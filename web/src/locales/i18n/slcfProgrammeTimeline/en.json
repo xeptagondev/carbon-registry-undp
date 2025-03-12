@@ -6,43 +6,24 @@
   "programmeCreatedDescription": "The project was created by {}",
 
   "infApprovedTitle": "Initial Notification Approved",
-  "infApprovedDescription": "The Initial Notification was approved by {} of {{countryName}} Climate Fund",
+  "infApprovedDescription": "The Initial Notification was approved by {} ",
 
   "infRejectedTitle": "Initial Notification Rejected",
-  "infRejectedDescription": "The Initial Notification was rejected by {} of {{countryName}} Climate Fund",
+  "infRejectedDescription": "The Initial Notification was rejected by {}",
 
-  "costQuoteCreatedTitle": "Cost Quotation Created",
-  "costQuoteCreatedDescription": "The Cost Quotation was created by {} of {{countryName}} Climate Fund",
+  "noObjectionLetterGeneratedTitle": "Letter of No Objection Issued",
 
-  "proposalCreatedTitle": "Project Proposal Created",
-  "proposalCreatedDescription": "The Project Proposal was created by {} of {{countryName}} Climate Fund",
+  "pddSubmttedTitle": "Project Design Document Created",
 
-  "validationAgreementCreatedTitle": "Validation Agreement Created",
-  "validationAgreementCreatedDescription": "The Validation Agreement was created by {} of {{countryName}} Climate Fund",
+  "pddRejectedTitle": "Project Design Document Rejected",
 
-  "projectProposalAcceptedTitle": "Project Proposal Accepted",
-  "projectProposalAcceptedDescription": "The Project Proposal was accepted by {}",
-
-  "projectProposalRejectedTitle": "Project Proposal Rejected",
-  "projectProposalRejectedDescription": "The Project Proposal was rejected by {}",
-
-  "cmaCreatedTitle": "Carbon Management Assessment Created",
-  "cmaCreatedDescription": "The Carbon Management Assessment was created by {}",
-
-  "cmaApprovedTitle": "Carbon Management Assessment Approved",
-  "cmaApprovedDescription": "The Carbon Management Assessment was approved by {} of {{countryName}} Climate Fund",
-
-  "cmaRejectedTitle": "Carbon Management Assessment Rejected",
-  "cmaRejectedDescription": "The Carbon Management Assessment was rejected by {} of {{countryName}} Climate Fund",
+  "pddApprovedTitle": "Project Design Document Accepted",
 
   "validationReportCreatedTitle": "Validation Report Created",
-  "validationReportCreatedDescription": "The Validation Report was created by {} of {{countryName}} Climate Fund",
-
-  "validationReportApprovedTitle": "Validation Report Approved",
-  "validationReportApprovedDescription": "The Validation Report was approved by {} of Executive Committee",
+  "validationReportCreatedDescription": "The Validation Report was created by {}",
 
   "validationReportRejectedTitle": "Validation Report Rejected",
-  "validationReportRejectedDescription": "The Validation Report was rejected by {} of Executive Committee",
+  "validationReportRejectedDescription": "The Validation Report was rejected by {}",
 
   "authorisedTitle": "Project Authorised",
   "authorisedDescription": "The project was authorised and the Project Registration Certificate was generated",
@@ -51,22 +32,22 @@
   "monitoringReportCreatedDescription": "The Monitoring Report was created by {}",
 
   "monitoringReportApprovedTitle": "Monitoring Report Approved",
-  "monitoringReportApprovedDescription": "The Monitoring Report was approved by {} of {{countryName}} Climate Fund",
+  "monitoringReportApprovedDescription": "The Monitoring Report was approved by {}",
 
   "monitoringReportRejectedTitle": "Monitoring Report Rejected",
-  "monitoringReportRejectedDescription": "The Monitoring Report was rejected by {} of {{countryName}} Climate Fund",
+  "monitoringReportRejectedDescription": "The Monitoring Report was rejected by {}",
 
   "verificationReportCreatedTitle": "Verification Report Created",
-  "verificationReportCreatedDescription": "The Verification Report was created by {} of {{countryName}} Climate Fund",
+  "verificationReportCreatedDescription": "The Verification Report was created by {}",
 
   "verificationReportApprovedTitle": "Verification Report Approved",
-  "verificationReportApprovedDescription": "The Verification Report was approved by {} of Executive Committee",
+  "verificationReportApprovedDescription": "The Verification Report was approved by {}",
 
   "verificationReportRejectedTitle": "Verification Report Rejected",
-  "verificationReportRejectedDescription": "The Verification Report was rejected by {} of Executive Committee",
+  "verificationReportRejectedDescription": "The Verification Report was rejected by {}",
 
   "creditIssuedTitle": "Credit Issued",
-  "creditIssuedDescription": "{} credit(s) were issued for the project and the Credit Issuance Certificate was generated",
+  "creditIssuedDescription": "{} credit(s) were issued for the project",
 
   "transferRequestedTitle": "Credit Transfer Requested",
   "transferRequestedDescription": "{} has requested to transfer {} credit(s) to {} organisation",
