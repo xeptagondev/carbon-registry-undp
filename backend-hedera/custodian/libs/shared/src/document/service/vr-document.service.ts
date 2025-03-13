@@ -414,7 +414,7 @@ export class VrDocumentService extends DocumentService {
                     .where('refId = :refId', { refId })
                     .execute();
 
-                const noObjectionLetterUrl =
+                const authoroiseLetterUrl =
                     await this.authorisationLetterGenerateService.generateLetter(
                         documentEntity?.project?.refId,
                         documentEntity?.project?.title,
@@ -426,7 +426,7 @@ export class VrDocumentService extends DocumentService {
                     .getRepository(ProjectEntity)
                     .createQueryBuilder()
                     .update(ProjectEntity)
-                    .set({ noObjectionLetterUrl: noObjectionLetterUrl })
+                    .set({ authoroiseLetterUrl: authoroiseLetterUrl })
                     .where('refId = :refId', { refId })
                     .execute();
 
