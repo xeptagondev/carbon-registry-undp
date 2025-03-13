@@ -41,7 +41,7 @@ describe('CarbonCreditGuardianService', () => {
 
     it('should run project NFT flow', async () => {
         const accountId = '0.0.5143903';
-        const privateKey = '###';
+        const privateKey = '##';
         const operatorId = AccountId.fromString(accountId);
         const operatorKey = PrivateKey.fromStringED25519(privateKey);
         const client = Client.forTestnet();
@@ -67,8 +67,9 @@ describe('CarbonCreditGuardianService', () => {
             privateKey,
         );
         expect(mintedSerials).toBeDefined();
-        const txTokenMintId = mintedSerials?.transactionId?.toString();
-        console.log('id', txTokenMintId);
-        console.log('Minted NFT serials:', mintedSerials);
+        console.log(
+            'Minted NFT serials:',
+            mintedSerials.map((serial) => serial.toNumber()),
+        );
     }, 30000);
 });
