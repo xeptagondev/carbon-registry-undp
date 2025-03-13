@@ -143,42 +143,76 @@ export class ProjectService {
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
         this.logger.log(
-            `Project query request with ${query}`,
+            `Project query request with ${JSON.stringify(query)}`,
             this.loggerContext,
         );
 
         this.helperService.validateRequestUser(requestUser);
         if (!query.filterAnd) {
-            const filterAnd: FilterEntry[] = [];
-            query.filterAnd = filterAnd;
+            query.filterAnd = [];
         }
 
-        const [entities, total] = await this.projectRepository
+        if (
+            requestUser.organizationRole ===
+            OrganizationTypeEnum.PROJECT_DEVELOPER
+        ) {
+            query.filterAnd.push({
+                key: 'organizationId',
+                operation: '=',
+                value: requestUser.organizationId,
+            });
+        }
+
+        const qb = this.projectRepository
             .createQueryBuilder('project')
-            .leftJoin('project.organization', 'organization')
-            .addSelect(['organization'])
-            .where(this.helperService.generateWhereSQL(query))
+            .leftJoinAndSelect('project.organization', 'organization')
+            .leftJoinAndSelect('project.assignees', 'assignees');
+
+        if (
+            requestUser.organizationRole ===
+            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+        ) {
+            qb.leftJoin(
+                'project_assignees',
+                'pa',
+                'pa.project_id = project.id',
+            ).andWhere('pa.organization_id = :orgId', {
+                orgId: requestUser.organizationId,
+            });
+        }
+
+        let sortKey: string;
+        if (!query.sort || !query.sort.key) {
+            sortKey = 'project.createdDate';
+        } else {
+            sortKey =
+                query.sort.key.toLowerCase() === 'createdtime'
+                    ? 'project.createdDate'
+                    : query.sort.key.includes('.')
+                      ? query.sort.key
+                      : `project.${query.sort.key}`;
+        }
+
+        qb.where(this.helperService.generateWhereSQL(query))
             .orderBy(
-                query?.sort?.key && `"${query?.sort?.key}"`,
-                query?.sort?.order,
+                sortKey,
+                query?.sort?.order ? query.sort.order : 'DESC',
                 query?.sort?.nullFirst !== undefined
-                    ? query?.sort?.nullFirst === true
+                    ? query.sort.nullFirst === true
                         ? 'NULLS FIRST'
                         : 'NULLS LAST'
                     : undefined,
             )
             .offset(query.size * query.page - query.size)
-            .limit(query.size)
-            .getManyAndCount();
+            .limit(query.size);
+
+        const [entities, total] = await qb.getManyAndCount();
 
         const oldFormatData = [];
         for (const project of entities) {
             oldFormatData.push(await this.mapNewQueryToOldQuery(project));
         }
-        return new DataListResponseDto(
-            entities ? oldFormatData : undefined,
-            total ? total : undefined,
-        );
+        return new DataListResponseDto(oldFormatData, total);
     }
 
     async mapNewQueryToOldQuery(project: ProjectEntity) {
@@ -193,7 +227,7 @@ export class ProjectService {
         };
 
         mappedProject.projectProposalStage = project.projectProposalStage;
-        mappedProject.creditCertificateUrl = project.creditCertificateUrl;
+        mappedProject.authoroiseLetterUrl = project.authoroiseLetterUrl;
         mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
         mappedProject.sectoralScope = project.sectoralScope;
         mappedProject.title = project.title;
