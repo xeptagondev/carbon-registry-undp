@@ -90,6 +90,7 @@ export const API_PATHS = {
   QUERY_DOCUMENT: 'document/query',
   APPROVE_DOCUMENT: (id: string) => `document/approve?id=${id}`,
   REJECT_DOCUMENT: (id: string) => `document/reject?id=${id}`,
+  VERIFY_DOCUMENT: `document/verify`,
   //TRANSFER
   TRANSFER_ACTION: 'programme/',
   TRANSFER_ON_FREEZE: 'Settings/update',
