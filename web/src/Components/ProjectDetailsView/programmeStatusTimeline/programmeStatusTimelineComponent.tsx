@@ -280,8 +280,18 @@ const ProgrammeStatusTimelineComponent: React.FC<ProgrammeStatusTimelineComponen
                 )}
                 {infContent.statusKey === StatusKeys.REJECTED && (
                   <>
-                    <li className="list-style-circle">{t('slcfRoadmapTimeline:infSubTask1')}</li>
-                    <li className="list-style-circle">{t('slcfRoadmapTimeline:infSubTask2')}</li>
+                    <li className="list-style-none">
+                      <span className="timeline-description-item-complete">
+                        <CheckOutlined />
+                      </span>
+                      {t('slcfRoadmapTimeline:infSubTask1')}
+                    </li>
+                    <li className="list-style-none">
+                      <span className="timeline-description-item-rejected">
+                        <CloseOutlined />
+                      </span>
+                      {t('slcfRoadmapTimeline:infSubTask2')}
+                    </li>
                   </>
                 )}
                 {infContent.statusKey === StatusKeys.APPROVED && (
