@@ -2268,14 +2268,16 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       </div>
       <div className="content-body">
         <Row className="programme-status-timeline">
-          <Card className="card-container">
-            <div className="info-view">
-              <ProgrammeStatusTimelineComponent
-                programmeDetails={data}
-                translator={t}
-              ></ProgrammeStatusTimelineComponent>
-            </div>
-          </Card>
+          <Col xl={24}>
+            <Card className="card-container">
+              <div className="info-view">
+                <ProgrammeStatusTimelineComponent
+                  programmeDetails={data}
+                  translator={t}
+                ></ProgrammeStatusTimelineComponent>
+              </div>
+            </Card>
+          </Col>
         </Row>
         <Row gutter={16}>
           <Col md={24} lg={10}>
