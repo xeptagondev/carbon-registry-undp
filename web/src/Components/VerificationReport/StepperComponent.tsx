@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Steps, message } from 'antd';
 import { BasicInformationStep } from './BasicInformationStep';
 import './VerificationReport.scss';
-import { IntroductionStep } from './InstroductionStep';
+import { GHGProjectDescriptionStep } from './GHGProjectDescription';
 import { MethodologyStep } from './MethodologyStep';
 import { VerificationFindingStep } from './VerificationFindingStep';
 import { VerificationOpinionStep } from './VerificationOpinionStep';
@@ -22,16 +22,16 @@ import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 import { VerificationStepProps } from './StepProps';
 import { NULL } from 'sass';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 
 const StepperComponent = (props: VerificationStepProps) => {
-  console.log('Props received in StepperComponent:', props);
   const { translator, t } = props;
   const navigationLocation = useLocation();
   const { mode, docId } = navigationLocation.state || {};
   const navigate = useNavigate();
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(6);
   const [verifiedScer, setVerifiedScer] = useState(0);
 
   const [formValues, setFormValues] = useState({});
@@ -44,12 +44,23 @@ const StepperComponent = (props: VerificationStepProps) => {
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
   const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
 
-  const handleValuesUpdate = (newValues: any) => {
-    setFormValues((prevValues) => ({
-      ...prevValues,
-      ...newValues,
-    }));
-    console.log(JSON.stringify(formValues));
+  const [values, setValues] = useState({
+    projectRefId: id,
+    name: 'PDD',
+    companyId: undefined,
+    documentType: DocumentEnum.VERIFICATION,
+    data: {},
+  });
+
+  const handleValuesUpdate = (val: any) => {
+    console.log('----------temp vals-------------', val);
+    setValues((prevVal: any) => {
+      const tempContent = {
+        ...prevVal.data,
+        ...val,
+      };
+      return { ...prevVal, data: tempContent };
+    });
   };
 
   const showModalOnAction = (info: PopupInfo) => {
@@ -216,7 +227,7 @@ const StepperComponent = (props: VerificationStepProps) => {
     }
   };
   const [basicInformationForm] = useForm();
-  const [introductionForm] = useForm();
+  const [GHGProjectDescriptionForm] = useForm();
   const [methodologyForm] = useForm();
   const [verificationFindingForm] = useForm();
   const [verificationOpinionForm] = useForm();
@@ -483,24 +494,42 @@ const StepperComponent = (props: VerificationStepProps) => {
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">01</div>
           <div className="title">{t('verificationReport:title02')}</div>
         </div>
       ),
       description: (
-        <IntroductionStep
-          useLocation={useLocation}
+        <GHGProjectDescriptionStep
           t={t}
           current={current}
-          form={introductionForm}
+          form={GHGProjectDescriptionForm}
           formMode={mode}
           next={next}
           prev={prev}
           // countries={countries}
-          onValueChange={handleValuesUpdate}
+          handleValuesUpdate={handleValuesUpdate}
         />
       ),
     },
+    //-------------------update this for executiveSummary step-----------------
+    // {
+    //   title: (
+    //     <div className="stepper-title-container">
+    //       <div className="title">{t('verificationReport:title03')}</div>
+    //     </div>
+    //   ),
+    //   description: (
+    //     <GHGProjectDescriptionStep
+    //       t={t}
+    //       current={current}
+    //       form={GHGProjectDescriptionForm}
+    //       formMode={mode}
+    //       next={next}
+    //       prev={prev}
+    //       // countries={countries}
+    //       handleValuesUpdate={handleValuesUpdate}
+    //     />
+    //   ),
+    // },
     {
       title: (
         <div className="stepper-title-container">

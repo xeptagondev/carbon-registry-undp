@@ -1,6 +1,6 @@
 {
-  "title01": "Project Details",
-  "title02": "Introduction",
+  "title01": "Basic Information",
+  "title02": "GHG Project Description",
   "title03": "Methodology",
   "title04": "Verification Finding",
   "title05": "Verification Opinion",
@@ -27,6 +27,11 @@
   "b_name": "Name",
   "b_position": "Position",
   "b_signature": "Signature",
+
+  "g_projectEmissions": "Project Emission",
+  "g_leakageEmission": "Leakage Emission",
+  "g_netEmmissionsTitle": "Estimated net emission reduction ",
+  "shouldHavePositive": "Should have a positive value",
 
   "publication": "Publication of the Monitoring Report for Public Review",
   "deskReview": "Desk Review of Monitoring Report and Supporting Documents",
