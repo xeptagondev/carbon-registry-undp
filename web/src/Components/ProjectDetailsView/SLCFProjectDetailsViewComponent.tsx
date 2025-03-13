@@ -2178,15 +2178,13 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             {t(`projectDetailsView:${getProjectProposalStageEnumVal(v as string)}`)}
           </Tag>
         );
+      } else if (k === 'sectoralScope') {
+        generalInfo[text] = t(`projectDetailsView:${v}`);
       } else if (k === 'purposeOfCreditDevelopment') {
         generalInfo[text] = (
           <Tag color={getCreditTypeTagType(v as CreditTypeSl)}>
             {addSpaces(getCreditTypeName(v as string))}
           </Tag>
-        );
-      } else if (k === 'sector') {
-        generalInfo[text] = (
-          <Tag color={v === 'Agriculture' ? 'success' : 'processing'}>{v as string}</Tag>
         );
       } else if (k === 'applicationType') {
         generalInfo[text] = (
