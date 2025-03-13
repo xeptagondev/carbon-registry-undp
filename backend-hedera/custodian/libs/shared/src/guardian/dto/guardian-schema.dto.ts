@@ -105,7 +105,6 @@ export class DocumentSchemaDtos {
     documentType: string;
     createdBy: string;
     project: string;
-    creditAmount?: number;
     activity?: string;
     name: string;
     version: number;
@@ -118,9 +117,6 @@ export class DocumentSchemaDtos {
         this.project = data.project;
         if (data.activity) {
             this.activity = data.activity;
-        }
-        if (data.creditAmount) {
-            this.creditAmount = data.creditAmount;
         }
         this.name = data.name;
         this.version = data.version;

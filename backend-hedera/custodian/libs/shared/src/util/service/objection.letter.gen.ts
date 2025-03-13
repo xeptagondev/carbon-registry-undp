@@ -37,7 +37,7 @@ export class ObjectionLetterGenerateService {
         doc.fontSize(8).text(`${capital}, ${date}`, { align: 'right' });
         doc.fontSize(9)
             .font('Helvetica-Bold')
-            .text(`\n\nRe: Programme Design Document by ${orgName}`);
+            .text(`\n\nRe: Initial Notification Form by ${orgName}`);
         doc.text('\n\nNo Objection Letter', { align: 'center' });
         doc.fontSize(9)
             .font('Helvetica')

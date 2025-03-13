@@ -50,7 +50,6 @@ export interface DocumentSchema {
     documentType: string;
     createdBy: string;
     project: string;
-    creditAmount?: number;
     activity?: string;
     name: string;
     version: number;
