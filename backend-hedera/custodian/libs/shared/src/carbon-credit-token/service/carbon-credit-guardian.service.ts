@@ -95,7 +95,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
         const mintSign = await mintTx.sign(treasuryPrivateKey);
         const mintSubmit = await mintSign.execute(client);
         const receipt: TransactionReceipt = await mintSubmit.getReceipt(client);
-        return receipt;
+        return receipt.serials;
     }
 
     onModuleDestroy() {
