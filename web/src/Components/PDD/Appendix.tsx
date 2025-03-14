@@ -215,7 +215,9 @@ const Step08 = (props: CustomStepsProps) => {
       }
 
       if (state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-        const res = await post(API_PATHS.APPROVE_DOCUMENT(documentId), {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
           remarks: 'approved',
           action: DocumentStateEnum.DNA_APPROVED,
         });
@@ -239,7 +241,9 @@ const Step08 = (props: CustomStepsProps) => {
   const rejectPDD = async (remarks?: string) => {
     if (documentId) {
       if (state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER) {
-        const res = await post(API_PATHS.REJECT_DOCUMENT(documentId), {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
           remarks,
           action: DocumentStateEnum.IC_REJECTED,
         });
@@ -255,7 +259,9 @@ const Step08 = (props: CustomStepsProps) => {
       }
 
       if (state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-        const res = await post(API_PATHS.REJECT_DOCUMENT(documentId), {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
           remarks,
           action: DocumentStateEnum.DNA_REJECTED,
         });
