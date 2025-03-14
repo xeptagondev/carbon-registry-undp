@@ -46,6 +46,7 @@ import { CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
 import { Role } from '../../Definitions/Enums/role.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { APPLICATION_STAGE } from '../../Definitions/Constants/ApplicationStage';
+import { downloadCSV } from '../../Utils/downloadCSV';
 
 const { Search } = Input;
 
@@ -479,7 +480,48 @@ export const ProgrammeManagementComponent = (props: any) => {
     // setCurrentPage(1);
   };
 
+  const mapBase64ToFields = (fileUrls: string[]) => {
+    let fileObjs: any[] = [];
+
+    if (fileUrls !== undefined && fileUrls.length > 0) {
+      fileObjs = fileUrls.map((item: any, index) => {
+        const nameParts = item.split('/');
+        const name = nameParts[nameParts.length - 1];
+        const tempObj = {
+          uid: name,
+          name: name,
+          status: 'done',
+          url: item,
+        };
+        return tempObj;
+      });
+    }
+
+    return fileObjs;
+  };
+
+  const downloadData = async () => {
+    try {
+      const res = await post(API_PATHS.GET_PROJECT, {
+        page: 1,
+        size: totalProgramme,
+      });
+
+      if (res?.data) {
+        console.log('--------res--------', res);
+        delete res.data.additionalDocuments;
+        res.data = {
+          ...res.data,
+          ...res.data.company
+        }
+        downloadCSV(res.data, 'projectList.csv', ['additionalDocuments', ]);
+      }
+    } catch (error) {
+      console.log('------error--------', error);
+    }
+  };
   // MARK: Main JSX START
+
   return (
     <div className="content-container programme-management">
       <div className="programme-title-bar">
@@ -549,7 +591,7 @@ export const ProgrammeManagementComponent = (props: any) => {
                   style={{ width: 265 }}
                 />
               </div>
-              <div>
+              <div className="download-icon" onClick={downloadData}>
                 <DownloadOutlined />
               </div>
             </div>

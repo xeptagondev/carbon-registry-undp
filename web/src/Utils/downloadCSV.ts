@@ -1,6 +1,12 @@
-export function downloadCSV(data: any, filename = 'data.csv') {
-  // Convert array of data to CSV format
-  const csvContent = data.map((row: any[]) => row.map(String).join(',')).join('\n');
+export function downloadCSV(data: any, filename = 'data.csv', filterCols: string[] = []) {
+  // Extract headers from object keys
+  const headers = Object.keys(data[0]).filter((key: string) => !filterCols.includes(key));
+
+  // Map objects to CSV rows
+  const csvContent = [
+    headers.join(','), // Header row
+    ...data.map((row: any) => headers.map((field) => JSON.stringify(row[field] ?? '')).join(',')), // Data rows
+  ].join('\n');
 
   // Create a Blob and a temporary anchor element
   const blob = new Blob([csvContent], { type: 'text/csv' });
