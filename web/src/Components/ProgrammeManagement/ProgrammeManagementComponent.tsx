@@ -31,7 +31,7 @@ import {
 } from '../../Definitions/Definitions/programme.definitions';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { ProgrammeManagementSlColumns } from '../../Definitions/Enums/programme.management.sl.columns.enum';
-import { PlusOutlined, EllipsisOutlined } from '@ant-design/icons';
+import { PlusOutlined, EllipsisOutlined, DownloadOutlined } from '@ant-design/icons';
 import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import * as Icon from 'react-bootstrap-icons';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
@@ -347,7 +347,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     } else {
       sort = {
         key: 'createdTime',
-        order: 'DESC',
+        order: 'ASC',
       };
     }
 
@@ -443,7 +443,9 @@ export const ProgrammeManagementComponent = (props: any) => {
   // };
 
   const onSearch = async () => {
-    setSearch(searchText);
+    if (searchText) {
+      setSearch(searchText?.toLowerCase());
+    }
   };
 
   useEffect(() => {
@@ -477,6 +479,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     // setCurrentPage(1);
   };
 
+  // MARK: Main JSX START
   return (
     <div className="content-container programme-management">
       <div className="programme-title-bar">
@@ -538,14 +541,16 @@ export const ProgrammeManagementComponent = (props: any) => {
                   onPressEnter={onSearch}
                   placeholder={`${t('projectList:searchByName')}`}
                   allowClear
-                  onChange={(e) =>
-                    e.target.value === ''
-                      ? setSearch(e.target.value)
-                      : setSearchText(e.target.value)
-                  }
-                  onSearch={setSearch}
+                  onChange={(e) => {}}
+                  onSearch={(value: string) => {
+                    console.log('----------value-----------', value);
+                    setSearch(value.toLowerCase());
+                  }}
                   style={{ width: 265 }}
                 />
+              </div>
+              <div>
+                <DownloadOutlined />
               </div>
             </div>
           </Col>

@@ -93,6 +93,28 @@ export const getProgrammeStatus = (stage: ProgrammeStatus) => {
 
 export const getProjectProposalStage = (stage: ProjectProposalStage) => {
   switch (getProjectProposalStageEnumVal(stage)) {
+    case ProjectProposalStage.PENDING:
+      return 'warning';
+    case ProjectProposalStage.REJECTED:
+      return 'error';
+    case ProjectProposalStage.APPROVED:
+      return 'success';
+    case ProjectProposalStage.PDD_SUBMITTED:
+      return 'processing';
+    case ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER:
+      return 'orange';
+    case ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER:
+      return 'success';
+    case ProjectProposalStage.PDD_APPROVED_BY_DNA:
+      return 'success';
+    case ProjectProposalStage.PDD_REJECTED_BY_DNA:
+      return 'error';
+    case ProjectProposalStage.VALIDATION_REPORT_SUBMITTED:
+      return 'default';
+    case ProjectProposalStage.VALIDATION_REPORT_REJECTED:
+      return 'orange';
+    case ProjectProposalStage.AUTHORISED:
+      return 'success';
     // case ProjectProposalStage.SUBMITTED_INF:
     //   return 'processing';
     // case ProjectProposalStage.APPROVED_INF:
