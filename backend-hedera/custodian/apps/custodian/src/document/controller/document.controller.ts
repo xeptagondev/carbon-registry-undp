@@ -16,6 +16,7 @@ import { PddDocumentService } from '@app/shared/document/service/pdd-document.se
 import { VrDocumentService } from '@app/shared/document/service/vr-document.service';
 import { MonitoringDocumentService } from '@app/shared/document/service/monitoring-document.service';
 import { VerificationDocumentService } from '@app/shared/document/service/verification-document.service';
+import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 
 @Controller('document')
 export class DocumentController {
@@ -31,35 +32,15 @@ export class DocumentController {
     @Post('add')
     async add(@Body() documentDTO: BaseDocumentDTO, @Request() req) {
         if (documentDTO.documentType === DocumentEnum.INF) {
-            await this.infDocumentService.save(documentDTO, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return this.infDocumentService.save(documentDTO, req.user);
         } else if (documentDTO.documentType === DocumentEnum.PDD) {
-            await this.pddDocumentService.save(documentDTO, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return this.pddDocumentService.save(documentDTO, req.user);
         } else if (documentDTO.documentType === DocumentEnum.VALIDATION) {
-            await this.vrDocumentService.save(documentDTO, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return this.vrDocumentService.save(documentDTO, req.user);
         } else if (documentDTO.documentType === DocumentEnum.MONITORING) {
-            await this.monitoringDocumentService.save(documentDTO, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return this.monitoringDocumentService.save(documentDTO, req.user);
         } else if (documentDTO.documentType === DocumentEnum.VERIFICATION) {
-            await this.verificationDocumentService.save(documentDTO, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return this.verificationDocumentService.save(documentDTO, req.user);
         }
     }
 
@@ -68,34 +49,19 @@ export class DocumentController {
     async approve(@Body() actionDto: DocumentActionDTO, @Request() req) {
         if (actionDto.documentType === DocumentEnum.INF) {
             await this.infDocumentService.verify(actionDto, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return new DataResponseDto(HttpStatus.OK, 'SUCCESS');
         } else if (actionDto.documentType === DocumentEnum.PDD) {
             await this.pddDocumentService.verify(actionDto, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return new DataResponseDto(HttpStatus.OK, 'SUCCESS');
         } else if (actionDto.documentType === DocumentEnum.VALIDATION) {
             await this.vrDocumentService.verify(actionDto, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return new DataResponseDto(HttpStatus.OK, 'SUCCESS');
         } else if (actionDto.documentType === DocumentEnum.MONITORING) {
             await this.monitoringDocumentService.verify(actionDto, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return new DataResponseDto(HttpStatus.OK, 'SUCCESS');
         } else if (actionDto.documentType === DocumentEnum.VERIFICATION) {
             await this.verificationDocumentService.verify(actionDto, req.user);
-            return {
-                status: HttpStatus.OK,
-                statusText: 'SUCCESS',
-            };
+            return new DataResponseDto(HttpStatus.OK, 'SUCCESS');
         }
     }
 
