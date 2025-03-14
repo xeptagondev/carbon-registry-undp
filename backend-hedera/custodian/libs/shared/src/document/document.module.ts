@@ -13,6 +13,12 @@ import { AuditModule } from '../audit/audit.module';
 import { GuardianModule } from '../guardian/guardian.module';
 import { UtilModule } from '../util/util.module';
 import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.entity';
+import { CarbonCreditTokenModule } from '../carbon-credit-token/carbon-credit-token.module';
+import { InfDocumentService } from './service/inf-document.service';
+import { PddDocumentService } from './service/pdd-document.service';
+import { VrDocumentService } from './service/vr-document.service';
+import { MonitoringDocumentService } from './service/monitoring-document.service';
+import { VerificationDocumentService } from './service/verification-document.service';
 
 @Module({
     imports: [
@@ -30,8 +36,21 @@ import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.
         AuditModule,
         GuardianModule,
         UtilModule,
+        CarbonCreditTokenModule,
     ],
-    providers: [DocumentService],
-    exports: [DocumentService],
+    providers: [
+        InfDocumentService,
+        PddDocumentService,
+        VrDocumentService,
+        MonitoringDocumentService,
+        VerificationDocumentService,
+    ],
+    exports: [
+        InfDocumentService,
+        PddDocumentService,
+        VrDocumentService,
+        MonitoringDocumentService,
+        VerificationDocumentService,
+    ],
 })
 export class DocumentModule {}

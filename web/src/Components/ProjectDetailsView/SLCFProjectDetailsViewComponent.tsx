@@ -133,6 +133,8 @@ import { PopupInfo } from '../../Definitions/Definitions/ndcDetails.definitions'
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 import ProjectDocuments from './projectForms/ProjectDocuments';
+import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -563,8 +565,11 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const approveNotificationForm = async () => {
     try {
-      const response: any = await post('project/inf/approve', {
-        programmeId: id,
+      const response: any = await post(API_PATHS.VERIFY_DOCUMENT, {
+        refId: data?.infRefId,
+        documentType: DocumentEnum.INF,
+        remarks: 'approved',
+        action: DocumentStateEnum.DNA_APPROVED,
       });
 
       if (response?.response?.data?.statusCode === HttpStatusCode.Ok) {

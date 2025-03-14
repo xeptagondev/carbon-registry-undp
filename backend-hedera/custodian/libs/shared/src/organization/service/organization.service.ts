@@ -115,6 +115,7 @@ export class OrganizationService extends SuperService<
             website: organization?.website,
             address: organization?.address,
             logo: organization?.logo,
+            hederaAccount: organization.hederaAccountId,
             country: null,
             companyRole: organization?.organizationType.name,
             state: organization?.state,

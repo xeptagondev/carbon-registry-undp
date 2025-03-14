@@ -19,7 +19,6 @@ import { GuardianModule } from './guardian/guardian.module';
 import { TokenModule } from './token/token.module';
 import { FileHandlerModule } from './file-handler/file-handler.module';
 import { LocationModule } from './location/location.module';
-import { VerificationModule } from './verification/verification.module';
 import { CarbonCreditTokenModule } from './carbon-credit-token/carbon-credit-token.module';
 import { TaskModule } from './task/task.module';
 
@@ -46,7 +45,6 @@ import { TaskModule } from './task/task.module';
         TokenModule,
         FileHandlerModule,
         LocationModule,
-        VerificationModule,
         CarbonCreditTokenModule,
         TaskModule,
     ],

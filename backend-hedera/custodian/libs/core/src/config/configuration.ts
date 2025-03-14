@@ -5,6 +5,10 @@ export default () => ({
     countryCode: process.env.COUNTRY_CODE || 'NG',
     url: process.env.URL,
     backendHost: process.env.BACKEND_HOST || 'http://localhost:3000',
+    carbonCredit: {
+        tokenName: 'CRU',
+        tokenSymbol: 'CRU',
+    },
     docGenerate: {
         ministerName: process.env.MINISTER_NAME || 'Minister X',
         ministerNameAndDesignation:
@@ -91,6 +95,8 @@ export default () => ({
             orgPhoneNo: process.env.DNA_ROOT_ORGANIZATION_PHONE_NO,
             orgAddress: process.env.DNA_ROOT_ORGANIZATION_ADDRESS,
             orgLogo: process.env.DNA_ROOT_ORGANIZATION_LOGO,
+            orgHederaAccount: process.env.DNA_ORGANIZATION_HEDERA_ACCOUNT_ID,
+            orgHederaKey: process.env.DNA_ORGANIZATION_HEDERA_ACCOUNT_KEY,
         },
     },
     security: {
