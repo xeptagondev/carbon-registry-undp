@@ -480,9 +480,11 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
 
   const rejectNotificationForm = async (remark: string) => {
     try {
-      const response: any = await post(API_PATHS.REJECT_NOTIFICATION_FORM, {
-        programmeId: id,
-        remark,
+      const response: any = await post(API_PATHS.VERIFY_DOCUMENT, {
+        refId: data?.infRefId,
+        documentType: DocumentEnum.INF,
+        remarks: remark,
+        action: DocumentStateEnum.DNA_REJECTED,
       });
 
       if (response?.response?.data?.statusCode === HttpStatusCode.Ok) {

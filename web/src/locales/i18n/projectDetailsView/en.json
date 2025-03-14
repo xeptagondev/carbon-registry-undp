@@ -19,6 +19,7 @@
   "currentStatus": "Current Status",
   "applicationType": "Applicant Type",
   "sector": "Sector",
+  "tokenId": "Token ID",
   "sectoralScope": "Sectoral Scope",
   "startDate": "Project Start Date",
   "endDate": "Project End Date",
@@ -273,8 +274,7 @@
   "MINING_MINERAL_PRODUCTION": "Mining/Mineral Production",
   "METAL_PRODUCTION": "Metal Production",
   "FUGITIVE_EMISSIONS_FUELS": "Fugitive Emissions from fuels",
-  "FUGITIVE_EMISSIONS_PRODUCTION":
-    "Fugitive Emissions from Production and Consumption of Halocarbons and Sulphur Hexafluoride",
+  "FUGITIVE_EMISSIONS_PRODUCTION": "Fugitive Emissions from Production and Consumption of Halocarbons and Sulphur Hexafluoride",
   "SOLVENT_USE": "Solvent Use",
   "WASTE_HANDLING_AND_DISPOSAL": "Waste Handling and Disposal",
   "AFFORESTATION_AND_REFORESTATION": "Afforestation and Reforestation",
