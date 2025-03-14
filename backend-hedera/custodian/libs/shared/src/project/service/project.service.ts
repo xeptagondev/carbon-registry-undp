@@ -222,7 +222,7 @@ export class ProjectService {
         );
         const mappedProject = {
             ...lastInf?.data,
-            infRefId: lastInf.refId,
+            infRefId: lastInf?.refId,
             refId: project.refId,
         };
 
