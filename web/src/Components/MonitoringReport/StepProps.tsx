@@ -1,5 +1,7 @@
 import { FormInstance } from 'antd';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { TFunction } from 'i18next';
+import { i18n } from 'i18next';
 
 export interface CustomStepsProps {
   next?: () => void;
@@ -8,11 +10,12 @@ export interface CustomStepsProps {
   form: FormInstance;
   current: number;
   countries?: string[];
-  t: any;
+  translator: i18n;
+  t: TFunction<string[], undefined, string[]>;
   handleValuesUpdate: (val: any) => void;
   submitForm?: (appendixVals: any) => void;
-  projectCategory?: string;
-  existingFormValues?: any;
+  // projectCategory?: string;
+  // existingFormValues?: any;
   disableFields?: boolean;
   formMode?: FormMode;
 }
