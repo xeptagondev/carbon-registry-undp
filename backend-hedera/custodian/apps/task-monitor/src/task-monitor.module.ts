@@ -15,7 +15,6 @@ import { ProjectModule } from '@app/shared/project/project.module';
 import { TokenModule } from '@app/shared/token/token.module';
 import { UsersModule } from '@app/shared/users/users.module';
 import { UtilModule } from '@app/shared/util/util.module';
-import { VerificationModule } from '@app/shared/verification/verification.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from '@app/core/config/configuration';
@@ -48,7 +47,6 @@ import ormConfig from '@app/core/config/orm-config';
         TokenModule,
         UsersModule,
         UtilModule,
-        VerificationModule,
         JwtModule,
     ],
     providers: [TaskMonitorService],

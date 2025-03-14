@@ -1,39 +1,26 @@
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { DocumentEnum } from '@app/shared/document/enum/document.enum';
-import { ProjectSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
-import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import {
-    INF_ASSIGN_HEADER,
-    INF_CREATE_HEADER,
-} from '@app/shared/mail/constant/mail-header.constant';
-import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
-import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
 
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
-import { ProjectDto } from '@app/shared/project/dto/project.dto';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
-import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UserService } from '@app/shared/users/service/user.service';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
-import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
-import { AdditionalDocType } from '@app/shared/document/enum/additional.document.type';
-import { DocumentService } from '@app/shared/document/service/document.service';
 import { FilterEntry } from '@app/shared/util/dto/filter.entry';
-import { DocumentStateEnum } from '@app/shared/document/enum/document-state.enum';
+import { InfDocumentService } from '@app/shared/document/service/inf-document.service';
 
 @Injectable()
 export class ProjectService {
@@ -43,109 +30,100 @@ export class ProjectService {
         private readonly auditService: AuditService,
         @InjectRepository(ProjectEntity)
         private readonly projectRepository: Repository<ProjectEntity>,
-        @InjectRepository(UsersEntity)
-        private readonly userRepository: Repository<UsersEntity>,
-        @InjectRepository(OrganizationEntity)
-        private readonly organizationRepository: Repository<OrganizationEntity>,
-        private readonly userService: UserService,
-        private readonly guardianService: GuardianService,
-        private readonly configService: ConfigService,
-        private readonly mailService: MailService,
         private readonly logger: InstantLogger,
-        private readonly fileHelperService: FileHelperService,
-        private readonly documentService: DocumentService,
+        private readonly infDocumentService: InfDocumentService,
     ) {}
 
-    async createProject(projectData: ProjectDto, requestUser: JWTPayload) {
-        this.logger.log(
-            `Request received to create project from user ${requestUser.userName}`,
-            this.loggerContext,
-        );
+    // async createProject(projectData: ProjectDto, requestUser: JWTPayload) {
+    //     this.logger.log(
+    //         `Request received to create project from user ${requestUser.userName}`,
+    //         this.loggerContext,
+    //     );
 
-        try {
-            this.validateProjectParticipant(requestUser);
-            const projectDto = JSON.parse(projectData.data);
-            const createdBy: UsersEntity = await this.userRepository.findOne({
-                where: { id: requestUser.userId },
-            });
+    //     try {
+    //         this.validateProjectParticipant(requestUser);
+    //         const projectDto = JSON.parse(projectData.data);
+    //         const createdBy: UsersEntity = await this.userRepository.findOne({
+    //             where: { id: requestUser.userId },
+    //         });
 
-            const org: OrganizationEntity =
-                await this.organizationRepository.findOne({
-                    where: { id: requestUser.organizationId },
-                });
-            const assignees: OrganizationEntity[] =
-                await this.organizationRepository.find({
-                    where: {
-                        refId: In(projectDto.independentCertifiers),
-                    },
-                });
+    //         const org: OrganizationEntity =
+    //             await this.organizationRepository.findOne({
+    //                 where: { id: requestUser.organizationId },
+    //             });
+    //         const assignees: OrganizationEntity[] =
+    //             await this.organizationRepository.find({
+    //                 where: {
+    //                     refId: In(projectDto.independentCertifiers),
+    //                 },
+    //             });
 
-            const projectEntity = new ProjectEntity();
-            projectEntity.title = projectDto.title;
-            projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
-            projectEntity.sectoralScope = projectDto.sectoralScope;
-            projectEntity.createdBy = createdBy;
-            projectEntity.organization = org;
-            projectEntity.assignees = assignees;
-            const savedProject: ProjectEntity =
-                await this.projectRepository.save(projectEntity);
+    //         const projectEntity = new ProjectEntity();
+    //         projectEntity.title = projectDto.title;
+    //         projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
+    //         projectEntity.sectoralScope = projectDto.sectoralScope;
+    //         projectEntity.createdBy = createdBy;
+    //         projectEntity.organization = org;
+    //         projectEntity.assignees = assignees;
+    //         const savedProject: ProjectEntity =
+    //             await this.projectRepository.save(projectEntity);
 
-            const projectSchema: ProjectSchema = {
-                refId: savedProject.refId,
-                name: projectDto.title,
-                createdBy: createdBy.refId,
-                assignee: projectDto.independentCertifiers,
-            };
-            await this.guardianService.saveDocument(
-                requestUser.email,
-                GUARDIAN_API.BLOCKS.CREATE_PROJECT,
-                {
-                    document: projectSchema,
-                    ref: null,
-                },
-            );
+    //         const projectSchema: ProjectSchema = {
+    //             refId: savedProject.refId,
+    //             name: projectDto.title,
+    //             createdBy: createdBy.refId,
+    //             assignee: projectDto.independentCertifiers,
+    //         };
+    //         await this.guardianService.saveDocument(
+    //             requestUser.email,
+    //             GUARDIAN_API.BLOCKS.CREATE_PROJECT,
+    //             {
+    //                 document: projectSchema,
+    //                 ref: null,
+    //             },
+    //         );
 
-            const docUrls = [];
-            for (const doc of projectDto.additionalDocuments) {
-                let docUrl;
+    //         const docUrls = [];
+    //         for (const doc of projectDto.additionalDocuments) {
+    //             let docUrl;
 
-                if (this.fileHelperService.isValidHttpUrl(doc)) {
-                    docUrl = doc;
-                } else {
-                    docUrl = await this.fileHelperService.uploadDocument(
-                        AdditionalDocType.INF_ADDITIONAL_DOCUMENT,
-                        savedProject.refId,
-                        doc,
-                    );
-                }
-                docUrls.push(docUrl);
-            }
+    //             if (this.fileHelperService.isValidHttpUrl(doc)) {
+    //                 docUrl = doc;
+    //             } else {
+    //                 docUrl = await this.fileHelperService.uploadDocument(
+    //                     AdditionalDocType.INF_ADDITIONAL_DOCUMENT,
+    //                     savedProject.refId,
+    //                     doc,
+    //                 );
+    //             }
+    //             docUrls.push(docUrl);
+    //         }
 
-            projectDto.additionalDocuments = docUrls;
+    //         projectDto.additionalDocuments = docUrls;
 
-            this.documentService.save(
-                {
-                    projectRefId: savedProject.refId,
-                    name: 'INF',
-                    documentType: DocumentEnum.INF,
-                    data: projectDto,
-                },
-                requestUser,
-            );
+    //         this.documentService.save(
+    //             {
+    //                 projectRefId: savedProject.refId,
+    //                 name: 'INF',
+    //                 documentType: DocumentEnum.INF,
+    //                 data: projectDto,
+    //             },
+    //             requestUser,
+    //         );
 
-            return new DataResponseDto(
-                HttpStatus.OK,
-                `Initial Notification was submitted successfully with refId : ${savedProject.refId}`,
-            );
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
-            this.logger.error(error);
-            throw new HttpException(
-                error ? error : 'An error occurred while creating the project',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
+    //         return new DataResponseDto(
+    //             HttpStatus.OK,
+    //             `Initial Notification was submitted successfully with refId : ${savedProject.refId}`,
+    //         );
+    //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    //     } catch (error) {
+    //         this.logger.error(error);
+    //         throw new HttpException(
+    //             error ? error : 'An error occurred while creating the project',
+    //             HttpStatus.INTERNAL_SERVER_ERROR,
+    //         );
+    //     }
+    // }
 
     private validateProjectParticipant(requestUser: JWTPayload) {
         if (
@@ -165,59 +143,95 @@ export class ProjectService {
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
         this.logger.log(
-            `Project query request with ${query}`,
+            `Project query request with ${JSON.stringify(query)}`,
             this.loggerContext,
         );
 
         this.helperService.validateRequestUser(requestUser);
         if (!query.filterAnd) {
-            const filterAnd: FilterEntry[] = [];
-            query.filterAnd = filterAnd;
+            query.filterAnd = [];
         }
 
-        const [entities, total] = await this.projectRepository
+        if (
+            requestUser.organizationRole ===
+            OrganizationTypeEnum.PROJECT_DEVELOPER
+        ) {
+            query.filterAnd.push({
+                key: 'organizationId',
+                operation: '=',
+                value: requestUser.organizationId,
+            });
+        }
+
+        const qb = this.projectRepository
             .createQueryBuilder('project')
-            .leftJoin('project.organization', 'organization')
-            .addSelect(['organization'])
-            .where(this.helperService.generateWhereSQL(query))
+            .leftJoinAndSelect('project.organization', 'organization')
+            .leftJoinAndSelect('project.assignees', 'assignees');
+
+        if (
+            requestUser.organizationRole ===
+            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+        ) {
+            qb.leftJoin(
+                'project_assignees',
+                'pa',
+                'pa.project_id = project.id',
+            ).andWhere('pa.organization_id = :orgId', {
+                orgId: requestUser.organizationId,
+            });
+        }
+
+        let sortKey: string;
+        if (!query.sort || !query.sort.key) {
+            sortKey = 'project.createdDate';
+        } else {
+            sortKey =
+                query.sort.key.toLowerCase() === 'createdtime'
+                    ? 'project.createdDate'
+                    : query.sort.key.includes('.')
+                      ? query.sort.key
+                      : `project.${query.sort.key}`;
+        }
+
+        qb.where(this.helperService.generateWhereSQL(query))
             .orderBy(
-                query?.sort?.key && `"${query?.sort?.key}"`,
-                query?.sort?.order,
+                sortKey,
+                query?.sort?.order ? query.sort.order : 'DESC',
                 query?.sort?.nullFirst !== undefined
-                    ? query?.sort?.nullFirst === true
+                    ? query.sort.nullFirst === true
                         ? 'NULLS FIRST'
                         : 'NULLS LAST'
                     : undefined,
             )
             .offset(query.size * query.page - query.size)
-            .limit(query.size)
-            .getManyAndCount();
+            .limit(query.size);
+
+        const [entities, total] = await qb.getManyAndCount();
 
         const oldFormatData = [];
         for (const project of entities) {
             oldFormatData.push(await this.mapNewQueryToOldQuery(project));
         }
-        return new DataListResponseDto(
-            entities ? oldFormatData : undefined,
-            total ? total : undefined,
-        );
+        return new DataListResponseDto(oldFormatData, total);
     }
 
     async mapNewQueryToOldQuery(project: ProjectEntity) {
-        const lastInf = await this.documentService.getLastDoc(
+        const lastInf = await this.infDocumentService.getLastDoc(
             DocumentEnum.INF,
             project.refId,
         );
         const mappedProject = {
             ...lastInf?.data,
+            infRefId: lastInf.refId,
             refId: project.refId,
         };
 
         mappedProject.projectProposalStage = project.projectProposalStage;
-        mappedProject.creditCertificateUrl = project.creditCertificateUrl;
+        mappedProject.authoroiseLetterUrl = project.authoroiseLetterUrl;
         mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
         mappedProject.sectoralScope = project.sectoralScope;
         mappedProject.title = project.title;
+        mappedProject.tokenId = project.tokenId;
 
         mappedProject.company = project?.organization
             ? {
@@ -237,7 +251,11 @@ export class ProjectService {
         return await this.auditService.getLogs(refId);
     }
 
-    async getProjectById(id: string, requestUser: JWTPayload) {
+    async getProjectById(id: string) {
+        this.logger.log(
+            `Request received to find project by id ${id}`,
+            this.loggerContext,
+        );
         const project = await this.projectRepository.findOne({
             where: { refId: id },
             relations: { organization: true },
@@ -263,81 +281,89 @@ export class ProjectService {
         }
     }
 
-    async approveINF(
-        projectRefId: string,
-        requestUser: JWTPayload,
-    ): Promise<DataResponseDto> {
-        this.logger.log(
-            `Request received to approve project with id ${projectRefId} from user ${requestUser.userName}`,
-            this.loggerContext,
-        );
-        try {
-            this.validateUserAuthorization(requestUser);
+    // async approveINF(
+    //     projectRefId: string,
+    //     requestUser: JWTPayload,
+    // ): Promise<DataResponseDto> {
+    //     this.logger.log(
+    //         `Request received to approve project with id ${projectRefId} from user ${requestUser.userName}`,
+    //         this.loggerContext,
+    //     );
+    //     try {
+    //         this.validateUserAuthorization(requestUser);
 
-            const inf = await this.documentService.getLastDoc(
-                DocumentEnum.INF,
-                projectRefId,
-            );
-            if (!inf) {
-                throw new HttpException(
-                    'INF did not found for given project id',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            await this.documentService.approve(
-                inf.refId,
-                { remarks: null, action: DocumentStateEnum.DNA_APPROVED },
-                requestUser,
-            );
+    //         const inf = await this.documentService.getLastDoc(
+    //             DocumentEnum.INF,
+    //             projectRefId,
+    //         );
+    //         if (!inf) {
+    //             throw new HttpException(
+    //                 'INF did not found for given project id',
+    //                 HttpStatus.BAD_REQUEST,
+    //             );
+    //         }
+    //         await this.documentService.approve(
+    //             inf.refId,
+    //             {
+    //                 remarks: null,
+    //                 action: DocumentStateEnum.DNA_APPROVED,
+    //                 documentType: DocumentEnum.INF,
+    //             },
+    //             requestUser,
+    //         );
 
-            return new DataResponseDto(
-                HttpStatus.OK,
-                'Initial Notification was approved successfully',
-            );
-        } catch (error) {
-            throw new HttpException(
-                error ? error : 'An error occurred while approving the project',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
+    //         return new DataResponseDto(
+    //             HttpStatus.OK,
+    //             'Initial Notification was approved successfully',
+    //         );
+    //     } catch (error) {
+    //         throw new HttpException(
+    //             error ? error : 'An error occurred while approving the project',
+    //             HttpStatus.INTERNAL_SERVER_ERROR,
+    //         );
+    //     }
+    // }
 
-    async rejectINF(
-        projectRefId: string,
-        remark: string,
-        requestUser: JWTPayload,
-    ): Promise<DataResponseDto> {
-        this.logger.log(
-            `Request received to reject project with id ${projectRefId} from user ${requestUser.userName}`,
-            this.loggerContext,
-        );
-        try {
-            this.validateUserAuthorization(requestUser);
-            const inf = await this.documentService.getLastDoc(
-                DocumentEnum.INF,
-                projectRefId,
-            );
-            if (!inf) {
-                throw new HttpException(
-                    'INF did not found for given project id',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            await this.documentService.reject(
-                inf.refId,
-                { remarks: remark, action: DocumentStateEnum.DNA_REJECTED },
-                requestUser,
-            );
+    // async rejectINF(
+    //     projectRefId: string,
+    //     remark: string,
+    //     requestUser: JWTPayload,
+    // ): Promise<DataResponseDto> {
+    //     this.logger.log(
+    //         `Request received to reject project with id ${projectRefId} from user ${requestUser.userName}`,
+    //         this.loggerContext,
+    //     );
+    //     try {
+    //         this.validateUserAuthorization(requestUser);
+    //         const inf = await this.documentService.getLastDoc(
+    //             DocumentEnum.INF,
+    //             projectRefId,
+    //         );
+    //         if (!inf) {
+    //             throw new HttpException(
+    //                 'INF did not found for given project id',
+    //                 HttpStatus.BAD_REQUEST,
+    //             );
+    //         }
+    //         await this.documentService.reject(
+    //             inf.refId,
+    //             {
+    //                 remarks: remark,
+    //                 action: DocumentStateEnum.DNA_REJECTED,
+    //                 documentType: DocumentEnum.INF,
+    //             },
+    //             requestUser,
+    //         );
 
-            return new DataResponseDto(
-                HttpStatus.OK,
-                'Initial Notification was rejected.',
-            );
-        } catch (error) {
-            throw new HttpException(
-                error ? error : 'An error occurred while approving the project',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
+    //         return new DataResponseDto(
+    //             HttpStatus.OK,
+    //             'Initial Notification was rejected.',
+    //         );
+    //     } catch (error) {
+    //         throw new HttpException(
+    //             error ? error : 'An error occurred while approving the project',
+    //             HttpStatus.INTERNAL_SERVER_ERROR,
+    //         );
+    //     }
+    // }
 }

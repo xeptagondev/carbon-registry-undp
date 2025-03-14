@@ -14,6 +14,7 @@ export class OrganizationSchemaDtos {
     email: string;
     taxId: string;
     phoneNumber: string;
+    hederaAccount: string;
     address: string;
     logo: string;
     createdTime: number;

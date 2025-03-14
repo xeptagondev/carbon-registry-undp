@@ -16,7 +16,6 @@ import { DocumentAppModule } from './document/document.module';
 import { OrganizationAppModule } from './organization/organization.module';
 import { ProjectAppModule } from './project/project.module';
 import { UserAppModule } from './user/user.module';
-import { VerificationAppModule } from './verification/verification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
@@ -41,7 +40,6 @@ import { AnalyticsModule } from './analytics/analytics.module';
         ProjectAppModule,
         LocationAppModule,
         DocumentAppModule,
-        VerificationAppModule,
         AnalyticsModule,
     ],
     controllers: [AppController],
