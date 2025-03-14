@@ -137,6 +137,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                       <Input
                         size="large"
                         // disabled
+                        disabled={disableFields}
                       />
                     </Form.Item>
 

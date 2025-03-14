@@ -43,7 +43,7 @@ const ValidationOpinion = (props: ValidationStepsProps) => {
 
   return (
     <>
-      {current === 8 && (
+      {current === 7 && (
         <div>
           <div className="val-report-step-form-container">
             <Form

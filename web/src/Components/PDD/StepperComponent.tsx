@@ -255,7 +255,7 @@ const StepperComponent = (props: any) => {
 
     getViewData();
 
-    if (FormMode.VERIFY || FormMode.VIEW) {
+    if (state?.mode === FormMode.VERIFY || state?.mode === FormMode.VIEW) {
       setDisableFields(true);
     }
   }, [selectedVersion]);
@@ -318,6 +318,7 @@ const StepperComponent = (props: any) => {
     ]);
   }, []);
 
+  console.log('----------disableFields----------', disableFields);
   const steps = [
     {
       title: (
