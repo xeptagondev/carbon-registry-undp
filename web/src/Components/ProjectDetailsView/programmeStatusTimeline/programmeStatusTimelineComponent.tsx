@@ -253,7 +253,7 @@ const ProgrammeStatusTimelineComponent: React.FC<ProgrammeStatusTimelineComponen
   translator,
 }) => {
   const t = translator;
-  programmeDetails.projectProposalStage = ProjectProposalStage.VALIDATION_REPORT_REJECTED;
+  // programmeDetails.projectProposalStage = ProjectProposalStage.VALIDATION_REPORT_REJECTED;
   const currentStep = getCurrentStep(programmeDetails.projectProposalStage);
   const infContent = getINFContent(programmeDetails.projectProposalStage, t);
   const noObjectionLetterContent = getNoObjectionLetterContent(
