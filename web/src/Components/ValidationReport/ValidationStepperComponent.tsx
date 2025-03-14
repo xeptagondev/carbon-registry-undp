@@ -27,6 +27,7 @@ import GHGProjectDescription from './GHGProjectDescription';
 import MeansOfValidation from './MeansOfValidation';
 import ValidationFindings from './ValidationFindings';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import { Loading } from '../Loading/loading';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -49,10 +50,13 @@ const StepperComponent = (props: any) => {
   const { get, post } = useConnection();
   const navigationLocation = useLocation();
   const scrollSection = useRef({} as any);
-  const { mode } = navigationLocation.state || {};
+  const { state } = navigationLocation || { state: { mode: FormMode?.VIEW } };
+  console.log('----------state-------------', state);
   const isEdit = true;
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
   const registryName = process.env.REACT_APP_COUNTRY_NAME || 'RegistryX';
+
+  const [loading, setLoading] = useState<boolean>(false);
 
   const [existingFormValues, setExistingFormValues] = useState({
     projectRefId: programId,
@@ -75,6 +79,7 @@ const StepperComponent = (props: any) => {
   };
 
   const submitForm = async (formValues: any) => {
+    setLoading(true);
     try {
       const res = await post(API_PATHS.ADD_DOCUMENT, formValues);
       console.log(res);
@@ -94,11 +99,13 @@ const StepperComponent = (props: any) => {
         duration: 4,
         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const next = () => {
-    if (current === 7 && mode === FormMode.VIEW) {
+    if (current === 7 && state?.mode === FormMode.VIEW) {
       navigateToDetailsPage();
       return;
     }
@@ -339,7 +346,7 @@ const StepperComponent = (props: any) => {
       return { ...prevVal, data: tempContent };
     });
 
-    if (current === 9) {
+    if (current === 8) {
       const formValues = {
         ...existingFormValues,
         data: { ...existingFormValues.data, appendix: val },
@@ -561,7 +568,7 @@ const StepperComponent = (props: any) => {
           countries={countries}
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_PROJECT_DETAILS]}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
@@ -582,7 +589,7 @@ const StepperComponent = (props: any) => {
           countries={countries}
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_INTRODUCTION]}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
@@ -602,7 +609,7 @@ const StepperComponent = (props: any) => {
           t={t}
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_GHG_PROJECT_DESCRIPTION]}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
@@ -622,7 +629,7 @@ const StepperComponent = (props: any) => {
           t={t}
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_METHODOLOGY]}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
@@ -643,7 +650,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
           projectCategory={projectCategory}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
@@ -664,7 +671,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
           projectCategory={projectCategory}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
@@ -684,7 +691,7 @@ const StepperComponent = (props: any) => {
           t={t}
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_REFERENCE]}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
@@ -704,7 +711,7 @@ const StepperComponent = (props: any) => {
           t={t}
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_OPINION]}
-          formMode={mode}
+          formMode={state?.mode}
         />
         // <ValidationReportAppendix
         //   next={next}
@@ -714,7 +721,7 @@ const StepperComponent = (props: any) => {
         //   t={t}
         //   handleValuesUpdate={handleValuesUpdate}
         //   existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
-        //   formMode={mode}
+        //   formMode={state?.mode}
         // />
       ),
     },
@@ -734,12 +741,15 @@ const StepperComponent = (props: any) => {
           t={t}
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
   ];
 
+  if (loading) {
+    return <Loading />;
+  }
   return (
     <>
       <Steps

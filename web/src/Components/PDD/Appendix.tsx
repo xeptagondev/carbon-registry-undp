@@ -330,23 +330,24 @@ const Step08 = (props: CustomStepsProps) => {
                 />
               </>
             )}
-            {state?.mode === FormMode.CREATE && (
-              <SlcfFormActionModel
-                actionBtnText={t('common:yes')}
-                onCancel={closeDialog}
-                title={t('pdd:confirmModalMessage')}
-                onFinish={() => {
-                  closeDialog();
-                  onFinish(formValues);
-                }}
-                type="primary"
-                subText=""
-                openModal={showDialog}
-                t={t}
-                icon={<ConfirmSubmitSVG />}
-                remarkRequired={false}
-              />
-            )}
+            {state?.mode === FormMode.CREATE ||
+              (state?.mode === FormMode.EDIT && (
+                <SlcfFormActionModel
+                  actionBtnText={t('common:yes')}
+                  onCancel={closeDialog}
+                  title={t('pdd:confirmModalMessage')}
+                  onFinish={() => {
+                    closeDialog();
+                    onFinish(formValues);
+                  }}
+                  type="primary"
+                  subText=""
+                  openModal={showDialog}
+                  t={t}
+                  icon={<ConfirmSubmitSVG />}
+                  remarkRequired={false}
+                />
+              ))}
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -355,6 +356,7 @@ const Step08 = (props: CustomStepsProps) => {
               requiredMark={true}
               form={form}
               onFinish={(values: any) => {
+                console.log('-------values------------- finish', values);
                 setShowDialog(true);
                 setFormValues(values);
                 // if (submitForm) {
@@ -1096,16 +1098,17 @@ const Step08 = (props: CustomStepsProps) => {
               {/* appendix 7 end */}
 
               <Row justify={'end'} className="step-actions-end">
-                {state?.mode === FormMode.CREATE && (
-                  <>
-                    <Button danger size={'large'} onClick={prev}>
-                      {t('pdd:prev')}
-                    </Button>
-                    <Button type="primary" htmlType="submit">
-                      {t('pdd:submit')}
-                    </Button>
-                  </>
-                )}
+                {state?.mode === FormMode.CREATE ||
+                  (state?.mode === FormMode.EDIT && (
+                    <>
+                      <Button danger size={'large'} onClick={prev}>
+                        {t('pdd:prev')}
+                      </Button>
+                      <Button type="primary" htmlType="submit" onClick={() => form.submit()}>
+                        {t('pdd:submit')}
+                      </Button>
+                    </>
+                  ))}
                 {state?.mode === FormMode.VIEW && (
                   <>
                     <Button danger size={'large'} onClick={prev}>

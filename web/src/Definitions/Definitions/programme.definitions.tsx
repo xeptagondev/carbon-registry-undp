@@ -415,7 +415,8 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     registrationSerialNo: programme.serialNo,
     projectProposalStage: programme.projectProposalStage,
     projectStatus: programme.projectStatus,
-    projectCategory: getProjectCategory[programme.projectCategory],
+    // projectCategory: getProjectCategory[programme.projectCategory],
+    sectoralScope: programme.sectoralScope,
     startDate: DateTime.fromSeconds(Number(programme.startDate)),
     // purposeOfCreditDevelopment: programme.purposeOfCreditDevelopment,
     creditReceived:
