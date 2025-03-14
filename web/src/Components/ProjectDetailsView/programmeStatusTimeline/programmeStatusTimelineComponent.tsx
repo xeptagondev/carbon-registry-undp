@@ -52,8 +52,6 @@ const getCurrentStep = (stage: ProjectProposalStage) => {
       return 3;
     case ProjectProposalStage.VALIDATION_REPORT_REJECTED:
       return 3;
-    case ProjectProposalStage.VALIDATION_REPORT_APPROVED:
-      return 3;
     case ProjectProposalStage.AUTHORISED:
       return 4;
     default:
@@ -203,7 +201,7 @@ const getValidationContent = (stage: ProjectProposalStage, t: any) => {
     case ProjectProposalStage.PENDING:
     case ProjectProposalStage.APPROVED:
     case ProjectProposalStage.REJECTED:
-    case ProjectProposalStage.PDD_APPROVED:
+    case ProjectProposalStage.PDD_SUBMITTED:
     case ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER:
     case ProjectProposalStage.PDD_APPROVED_BY_DNA:
     case ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER:
@@ -228,6 +226,16 @@ const getValidationContent = (stage: ProjectProposalStage, t: any) => {
         subTaskTwo: false,
         subTaskThree: false,
       };
+    case ProjectProposalStage.VALIDATION_REPORT_REJECTED:
+      return {
+        subTitle: t('slcfRoadmapTimeline:rejected'),
+        statusKey: StatusKeys.REJECTED,
+        icon: <CloseCircleFilled />,
+        className: 'validation-rejected',
+        subTaskOne: true,
+        subTaskTwo: false,
+        subTaskThree: false,
+      };
     default:
       return {
         subTitle: t('slcfRoadmapTimeline:approved'),
@@ -245,7 +253,7 @@ const ProgrammeStatusTimelineComponent: React.FC<ProgrammeStatusTimelineComponen
   translator,
 }) => {
   const t = translator;
-
+  programmeDetails.projectProposalStage = ProjectProposalStage.VALIDATION_REPORT_REJECTED;
   const currentStep = getCurrentStep(programmeDetails.projectProposalStage);
   const infContent = getINFContent(programmeDetails.projectProposalStage, t);
   const noObjectionLetterContent = getNoObjectionLetterContent(

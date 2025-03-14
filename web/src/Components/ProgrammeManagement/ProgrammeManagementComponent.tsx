@@ -45,6 +45,7 @@ import { ProfileIcon } from '../IconComponents/ProfileIcon/profile.icon';
 import { CreditTypeSl } from '../../Definitions/Enums/creditTypeSl.enum';
 import { Role } from '../../Definitions/Enums/role.enum';
 import { API_PATHS } from '../../Config/apiConfig';
+import { APPLICATION_STAGE } from '../../Definitions/Constants/ApplicationStage';
 
 const { Search } = Input;
 
@@ -97,8 +98,8 @@ export const ProgrammeManagementComponent = (props: any) => {
     value: k,
   }));
 
-  const applicationStageOptions = Object.keys(ProjectProposalStage).map((k, index) => ({
-    label: t(`projectList:${Object.values(ProjectProposalStage)[index]}`),
+  const applicationStageOptions = Object.keys(APPLICATION_STAGE).map((k, index) => ({
+    label: t(`projectList:${Object.values(APPLICATION_STAGE)[index]}`),
     value: k,
   }));
 
