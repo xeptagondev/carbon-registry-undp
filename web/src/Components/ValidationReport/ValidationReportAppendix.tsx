@@ -10,6 +10,7 @@ import moment from 'moment';
 import { useEffect, useState } from 'react';
 import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
+import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 
 const ValidationReportAppendix = (props: CustomStepsProps) => {
   const { next, prev, form, current, handleValuesUpdate, submitForm, t, formMode } = props;
@@ -48,7 +49,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
   };
   return (
     <>
-      {current === 9 && (
+      {current === 8 && (
         <div>
           <div className="val-report-step-form-container">
             <ConfirmDialog
@@ -65,6 +66,21 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
               closeDialog={closeDialog}
               isReject={false}
             />
+            {/* <SlcfFormActionModel 
+              actionBtnText={t('common:yes')}
+              onCancel={closeDialog}
+              icon={ConfirmSubmitSVG}
+              title={t('validationReport:confirmModalMessage')} 
+              remarkRequired={false}
+              type="primary"
+              subText=""
+              onFinish={() => {
+                closeDialog();
+                onFinish(formValues);
+              }}
+              openModal={showDialog}
+              t={t}
+            /> */}
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}

@@ -76,7 +76,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
@@ -136,7 +136,8 @@ const ProjectDetails = (props: CustomStepsProps) => {
                     >
                       <Input
                         size="large"
-                        // disabled
+                        disabled
+                        // disabled={disableFields}
                       />
                     </Form.Item>
 
