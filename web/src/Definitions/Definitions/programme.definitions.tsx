@@ -306,6 +306,7 @@ export interface Programme {
 }
 export interface ProgrammeSl {
   programmeId: string;
+  tokenId: string;
   externalId: string;
   serialNo: string;
   title: string;
@@ -435,6 +436,7 @@ const safeNumber = (value: any) => {
 export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystemType) => {
   let res: Record<string, any> = {
     title: programme.title,
+    tokenId: programme.tokenId,
     registrationSerialNo: programme.serialNo,
     projectProposalStage: programme.projectProposalStage,
     projectStatus: programme.projectStatus,

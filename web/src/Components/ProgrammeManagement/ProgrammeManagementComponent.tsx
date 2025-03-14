@@ -91,6 +91,8 @@ export const ProgrammeManagementComponent = (props: any) => {
         operation: '=',
         value: value,
       });
+    } else {
+      setApplicationStageFilter(undefined);
     }
   };
 
@@ -512,9 +514,9 @@ export const ProgrammeManagementComponent = (props: any) => {
         delete res.data.additionalDocuments;
         res.data = {
           ...res.data,
-          ...res.data.company
-        }
-        downloadCSV(res.data, 'projectList.csv', ['additionalDocuments', ]);
+          ...res.data.company,
+        };
+        downloadCSV(res.data, 'projectList.csv', ['additionalDocuments']);
       }
     } catch (error) {
       console.log('------error--------', error);
