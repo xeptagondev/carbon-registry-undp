@@ -231,6 +231,7 @@ export class ProjectService {
         mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
         mappedProject.sectoralScope = project.sectoralScope;
         mappedProject.title = project.title;
+        mappedProject.tokenId = project.tokenId;
 
         mappedProject.company = project?.organization
             ? {

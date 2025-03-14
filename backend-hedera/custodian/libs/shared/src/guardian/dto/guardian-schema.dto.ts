@@ -32,7 +32,6 @@ export class OrganizationSchemaDtos {
         this.email = data.email;
         this.taxId = data.taxId;
         this.phoneNumber = data.phoneNumber;
-        this.hederaAccount = data.hederaAccount;
         this.address = data.address;
         this.logo = data.logo;
         this.createdTime = data.createdTime;

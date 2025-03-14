@@ -806,9 +806,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     phoneNumber: userDto.company.phoneNo,
                     paymentId: userDto.company.paymentId,
                     faxNumber: userDto.company.faxNo,
-                    hederaAccount:
-                        userDto?.company?.hederaAccountId ||
-                        hederaAccResult?.id,
                     provinces: userDto.company.provinces,
                     website: userDto.company.website,
                     address: userDto.company.address,

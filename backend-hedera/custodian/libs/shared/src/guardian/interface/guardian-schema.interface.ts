@@ -7,7 +7,6 @@ export interface OrganizationSchema {
     taxId: string;
     phoneNumber: string;
     address: string;
-    hederaAccount: string;
     logo: string;
     createdTime: number;
     updatedTime?: number;
