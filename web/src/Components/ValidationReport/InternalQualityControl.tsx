@@ -44,7 +44,7 @@ const ExecutiveSummary = (props: ValidationStepsProps) => {
 
   return (
     <>
-      {current === 7 && (
+      {current === 6 && (
         <div>
           <div className="val-report-step-form-container">
             <Form
