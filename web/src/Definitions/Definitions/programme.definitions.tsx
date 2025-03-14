@@ -385,6 +385,7 @@ export interface ProgrammeSlU extends ProgrammeSl {
   documents: any;
   contactPerson: string;
   noObjectionLetterUrl: string;
+  infRefId: string;
 }
 
 export interface ProgrammeU extends Programme {

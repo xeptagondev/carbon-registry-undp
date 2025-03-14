@@ -11,10 +11,6 @@ export class AuditService {
         private readonly auditRepository: Repository<AuditEntity>,
     ) {}
 
-    async save(entity: AuditEntity) {
-        await this.auditRepository.save(entity);
-    }
-
     async getLogs(id: string) {
         const query = `
       SELECT 
