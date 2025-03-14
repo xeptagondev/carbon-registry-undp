@@ -47,7 +47,7 @@ export enum ProjectProposalStage {
   VALIDATION_REPORT_REJECTED = 'VALIDATION_REPORT_REJECTED',
   AUTHORISED = 'AUTHORISED',
 
-  //all the follwing stages need to be removed
+  // all the follwing stages need to be removed
   APPROVED_INF = 'APPROVED_INF',
   REJECTED_INF = 'REJECTED_INF',
   NO_OBJECTION_LETTER_PENDING = 'NO_OBJECTION_LETTER_PENDING',
