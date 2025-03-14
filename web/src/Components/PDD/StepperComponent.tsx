@@ -121,17 +121,19 @@ const StepperComponent = (props: any) => {
   const getProgrammeDetailsById = async (programId: any) => {
     try {
       setLoading(true);
-      // const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-      //   programmeId: programId,
-      // });
+      const { data } = await post(API_PATHS.PROGRAMME_BY_ID, {
+        programmeId: programId,
+      });
 
+      console.log('-------project data---------', data);
       // const {
       //   data: { user },
       // } = await get(API_PATHS.USER_PROFILE);
 
       if (state?.mode === FormMode?.CREATE) {
         form1.setFieldsValue({
-          // title: data?.title,
+          projectTitle: data?.title,
+          projectProponent: data?.company?.name,
           // dateOfIssue: moment(),
           // preparedBy: data?.company?.name,
           // physicalAddress: data?.company?.address,
@@ -139,18 +141,6 @@ const StepperComponent = (props: any) => {
           // projectProponent: data?.company?.name, // changed to project participants in the UI but key is kept the same
           // telephone: data?.company?.phoneNo,
           // website: data?.company?.website,
-        });
-
-        // setProjectCategory(data?.projectCategory);
-        form2.setFieldsValue({
-          // projectTrack: data?.purposeOfCreditDevelopment,
-          // organizationName: data?.company?.name,
-          // email: data?.company?.email,
-          // telephone: data?.company?.phoneNo,
-          // address: data?.company?.address,
-          // fax: data?.company?.faxNo,
-          // contactPerson: data?.contactName,
-          // projectParticipants: [{ partiesInvolved: '', projectParticipant: '' }],
         });
       }
 
