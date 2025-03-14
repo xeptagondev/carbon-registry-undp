@@ -14,8 +14,8 @@ const MonitoringReport = () => {
   return (
     <MonitoringReportComponent
       translator={i18n}
-      useLocation={useLocation}
-      onNavigateToProgrammeView={onNavigateToProgrammeManagementView}
+      // useLocation={useLocation}
+      // onNavigateToProgrammeView={onNavigateToProgrammeManagementView}
     ></MonitoringReportComponent>
   );
 };

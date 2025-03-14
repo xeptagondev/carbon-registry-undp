@@ -10,7 +10,7 @@ import { CalcEmissionReductionStep } from './CalcOfEmissionReductionStep';
 import { AnnexureStep } from './AppendixStep';
 import { useForm } from 'antd/lib/form/Form';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import moment from 'moment';
 import { DocumentTypeEnum } from '../../Definitions/Enums/document.type.enum';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
@@ -23,10 +23,11 @@ import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 import { DocType } from '../../Definitions/Enums/document.type';
 import ProjectDetails from '../PDD/BasicInformation';
+import { CustomStepsProps } from './StepProps';
 
-const StepperComponent = (props: any) => {
+const StepperComponent = (props: CustomStepsProps) => {
   const navigate = useNavigate();
-  const { useLocation, translator, selectedVersion, handleDocumentStatus } = props;
+  const { translator } = props;
   const [current, setCurrent] = useState(0);
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
@@ -39,6 +40,9 @@ const StepperComponent = (props: any) => {
   const t = translator.t;
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
+  const [versions, setVersions] = useState<number[]>([]);
+  const [selectedVersion, setSelectedVersion] = useState<number>();
+  const [documentStatus, setDocumentStatus] = useState('');
 
   const { state } = useLocation();
   const isView = !!state?.isView;
@@ -475,7 +479,7 @@ const StepperComponent = (props: any) => {
             });
           }
           if (isView) {
-            handleDocumentStatus(res.data.status);
+            //handleDocumentStatus(res.data.status);
           }
           if (res?.statusText === 'SUCCESS') {
             const content = JSON.parse(res?.data.content);
@@ -550,8 +554,8 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <BasicInformationStep
-          // useLocation={useLocation}
-          // countries={countries}
+          countries={countries}
+          translator={translator}
           t={t}
           current={current}
           form={projectDetailsForm}
@@ -571,6 +575,7 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <ProjectActivityStep
+          translator={translator}
           t={t}
           current={current}
           form={projectActivityForm}
@@ -591,7 +596,7 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <ImplementationOfProjectActivityStep
-          // useLocation={useLocation}
+          translator={translator}
           t={t}
           current={current}
           form={implementationStatusForm}
@@ -611,7 +616,7 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <DescriptionOfMSStep
-          // useLocation={useLocation}
+          translator={translator}
           t={t}
           current={current}
           form={safeguardsForm}
@@ -631,7 +636,7 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <DataAndParametersStep
-          // useLocation={useLocation}
+          translator={translator}
           t={t}
           current={current}
           form={dataAndParametersForm}
@@ -651,14 +656,14 @@ const StepperComponent = (props: any) => {
       ),
       description: (
         <CalcEmissionReductionStep
-          // useLocation={useLocation}
+          translator={translator}
           t={t}
           current={current}
           form={qualificationForm}
           formMode={mode}
           next={next}
           prev={prev}
-          projectCategory={projectCategory}
+          // projectCategory={projectCategory}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
@@ -674,7 +679,7 @@ const StepperComponent = (props: any) => {
         <AnnexureStep
           t={t}
           current={current}
-          // status={status}
+          translator={translator}
           form={annexuresForm}
           formMode={mode}
           prev={prev}
