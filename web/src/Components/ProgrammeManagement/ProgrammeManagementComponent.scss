@@ -57,6 +57,17 @@
       font-family: $primary-font-family;
       font-size: 0.8rem;
     }
+
+    .filter-section {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+
+      .download-icon {
+        color: #3a354180;
+        cursor: pointer;
+      }
+    }
   }
 
   .all-check {

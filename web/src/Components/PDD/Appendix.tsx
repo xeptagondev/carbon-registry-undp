@@ -24,6 +24,7 @@ import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 
 // import { countries } from 'react-circle-flags';
 
@@ -192,7 +193,9 @@ const Step08 = (props: CustomStepsProps) => {
   const approvePDD = async () => {
     if (documentId) {
       if (state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER) {
-        const res = await post(API_PATHS.APPROVE_DOCUMENT(documentId), {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
           remarks: 'approved',
           action: DocumentStateEnum.IC_APPROVED,
         });
@@ -212,7 +215,9 @@ const Step08 = (props: CustomStepsProps) => {
       }
 
       if (state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-        const res = await post(API_PATHS.APPROVE_DOCUMENT(documentId), {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
           remarks: 'approved',
           action: DocumentStateEnum.DNA_APPROVED,
         });
@@ -236,7 +241,9 @@ const Step08 = (props: CustomStepsProps) => {
   const rejectPDD = async (remarks?: string) => {
     if (documentId) {
       if (state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER) {
-        const res = await post(API_PATHS.REJECT_DOCUMENT(documentId), {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
           remarks,
           action: DocumentStateEnum.IC_REJECTED,
         });
@@ -252,7 +259,9 @@ const Step08 = (props: CustomStepsProps) => {
       }
 
       if (state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-        const res = await post(API_PATHS.REJECT_DOCUMENT(documentId), {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
           remarks,
           action: DocumentStateEnum.DNA_REJECTED,
         });
@@ -1098,17 +1107,16 @@ const Step08 = (props: CustomStepsProps) => {
               {/* appendix 7 end */}
 
               <Row justify={'end'} className="step-actions-end">
-                {state?.mode === FormMode.CREATE ||
-                  (state?.mode === FormMode.EDIT && (
-                    <>
-                      <Button danger size={'large'} onClick={prev}>
-                        {t('pdd:prev')}
-                      </Button>
-                      <Button type="primary" htmlType="submit" onClick={() => form.submit()}>
-                        {t('pdd:submit')}
-                      </Button>
-                    </>
-                  ))}
+                {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
+                  <>
+                    <Button danger size={'large'} onClick={prev}>
+                      {t('pdd:prev')}
+                    </Button>
+                    <Button type="primary" htmlType="submit" onClick={() => form.submit()}>
+                      {t('pdd:submit')}
+                    </Button>
+                  </>
+                )}
                 {state?.mode === FormMode.VIEW && (
                   <>
                     <Button danger size={'large'} onClick={prev}>
