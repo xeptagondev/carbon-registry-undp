@@ -40,6 +40,7 @@ import {
     ButtonActionEnum,
     ButtonNameEnum,
 } from '@app/shared/guardian/enum/button-type.enum';
+import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 
 @Injectable()
 export class InfDocumentService extends DocumentService {
@@ -233,6 +234,9 @@ export class InfDocumentService extends DocumentService {
             );
 
             await queryRunner.commitTransaction();
+            return new DataResponseDto(HttpStatus.OK, {
+                refId: savedDoc.refId,
+            });
         } catch (err) {
             console.log(err);
             await queryRunner.rollbackTransaction();

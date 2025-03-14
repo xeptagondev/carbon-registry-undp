@@ -36,6 +36,7 @@ import {
 } from '@app/shared/guardian/enum/button-type.enum';
 import { DocumentEnum } from '../enum/document.enum';
 import { AuthorisationLetterGenerateService } from '@app/shared/util/service/authorisation.letter.gen';
+import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
@@ -238,6 +239,9 @@ export class VrDocumentService extends DocumentService {
                         ),
                     },
                 );
+                return new DataResponseDto(HttpStatus.OK, {
+                    refId: savedDoc.refId,
+                });
             } else {
                 throw new HttpException(
                     'Unauthorized',

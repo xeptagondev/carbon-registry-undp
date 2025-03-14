@@ -36,6 +36,7 @@ import { DocumentEnum } from '../enum/document.enum';
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { AdditionalDocType } from '../enum/additional.document.type';
+import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -328,6 +329,9 @@ export class VerificationDocumentService extends DocumentService {
             );
 
             await queryRunner.commitTransaction();
+            return new DataResponseDto(HttpStatus.OK, {
+                refId: savedDoc.refId,
+            });
         } catch (err) {
             console.log(err);
             await queryRunner.rollbackTransaction();
