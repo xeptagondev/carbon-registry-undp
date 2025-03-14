@@ -258,12 +258,26 @@ export class ProjectService {
         );
         const project = await this.projectRepository.findOne({
             where: { refId: id },
-            relations: { organization: true },
+            relations: { organization: true, documents: true },
         });
+
+        const lastDocuments = project?.documents.reduce((acc, document) => {
+            if (
+                !acc[document.documentType] ||
+                acc[document.documentType].version < document.version
+            ) {
+                acc[document.documentType] = {
+                    documentType: document.documentType,
+                    refId: document.refId,
+                    version: document.version,
+                };
+            }
+            return acc;
+        }, {});
 
         const updatedProject = {
             ...(await this.mapNewQueryToOldQuery(project)),
-            documents: [],
+            documents: lastDocuments,
         };
         return updatedProject;
     }
