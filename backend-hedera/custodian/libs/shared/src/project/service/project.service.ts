@@ -62,9 +62,9 @@ export class ProjectService {
             this.loggerContext,
         );
 
-        this.validateProjectParticipant(requestUser);
-        const projectDto = JSON.parse(projectData.data);
         try {
+            this.validateProjectParticipant(requestUser);
+            const projectDto = JSON.parse(projectData.data);
             const createdBy: UsersEntity = await this.userRepository.findOne({
                 where: { id: requestUser.userId },
             });
@@ -141,7 +141,7 @@ export class ProjectService {
         } catch (error) {
             this.logger.error(error);
             throw new HttpException(
-                'An error occurred while creating the project',
+                error ? error : 'An error occurred while creating the project',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
@@ -158,55 +158,6 @@ export class ProjectService {
                 HttpStatus.BAD_REQUEST,
             );
         }
-    }
-
-    private async notifyAdmins(refId: string, requestUser: JWTPayload) {
-        this.logger.log(
-            `Request received to notify admins for project ${refId}`,
-            this.loggerContext,
-        );
-        const admins = await this.userService.getAdminsByType(
-            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
-        );
-        const countryName = this.configService.get('country');
-
-        const mailDTO: MailTemplateDTO = {
-            subject: INF_CREATE_HEADER.replace('{{countryName}}', countryName),
-            template: MailTemplateEnum.INF_CREATE,
-            to: admins.map((admin) => admin.email),
-            context: {
-                organizationName: requestUser.organizationName,
-                countryName: countryName,
-                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
-            },
-        };
-
-        await this.mailService.sendMail(mailDTO);
-    }
-    private async notifyCertifiers(
-        refId: string,
-        ids: string[],
-        requestUser: JWTPayload,
-    ) {
-        this.logger.log(
-            `Request received to notify certifiers for project ${refId}`,
-            this.loggerContext,
-        );
-        const admins = await this.userService.getAdminsByIds(ids);
-        const countryName = this.configService.get('country');
-
-        const mailDTO: MailTemplateDTO = {
-            subject: INF_ASSIGN_HEADER,
-            template: MailTemplateEnum.INF_ASSIGN,
-            to: admins.map((admin) => admin.email),
-            context: {
-                organizationName: requestUser.organizationName,
-                countryName: countryName,
-                programmePageLink: `${this.configService.get('url')}/programmeManagement/view/${refId}`,
-            },
-        };
-
-        await this.mailService.sendMail(mailDTO);
     }
 
     public async query(
@@ -302,7 +253,8 @@ export class ProjectService {
     private validateUserAuthorization(requestUser: JWTPayload): void {
         if (
             requestUser.organizationRole !==
-            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+            requestUser.userRole !== RoleEnum.Admin
         ) {
             throw new HttpException(
                 'User not authorized',
@@ -319,28 +271,35 @@ export class ProjectService {
             `Request received to approve project with id ${projectRefId} from user ${requestUser.userName}`,
             this.loggerContext,
         );
-        this.validateUserAuthorization(requestUser);
+        try {
+            this.validateUserAuthorization(requestUser);
 
-        const inf = await this.documentService.getLastDoc(
-            DocumentEnum.INF,
-            projectRefId,
-        );
-        if (!inf) {
+            const inf = await this.documentService.getLastDoc(
+                DocumentEnum.INF,
+                projectRefId,
+            );
+            if (!inf) {
+                throw new HttpException(
+                    'INF did not found for given project id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+            await this.documentService.approve(
+                inf.refId,
+                { remarks: null, action: DocumentStateEnum.DNA_APPROVED },
+                requestUser,
+            );
+
+            return new DataResponseDto(
+                HttpStatus.OK,
+                'Initial Notification was approved successfully',
+            );
+        } catch (error) {
             throw new HttpException(
-                'INF did not found for given project id',
-                HttpStatus.BAD_REQUEST,
+                error ? error : 'An error occurred while approving the project',
+                HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
-        await this.documentService.approve(
-            inf.refId,
-            { remarks: null, action: DocumentStateEnum.DNA_APPROVED },
-            requestUser,
-        );
-
-        return new DataResponseDto(
-            HttpStatus.OK,
-            'Initial Notification was approved successfully',
-        );
     }
 
     async rejectINF(
@@ -352,26 +311,33 @@ export class ProjectService {
             `Request received to reject project with id ${projectRefId} from user ${requestUser.userName}`,
             this.loggerContext,
         );
-        this.validateUserAuthorization(requestUser);
-        const inf = await this.documentService.getLastDoc(
-            DocumentEnum.INF,
-            projectRefId,
-        );
-        if (!inf) {
+        try {
+            this.validateUserAuthorization(requestUser);
+            const inf = await this.documentService.getLastDoc(
+                DocumentEnum.INF,
+                projectRefId,
+            );
+            if (!inf) {
+                throw new HttpException(
+                    'INF did not found for given project id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+            await this.documentService.reject(
+                inf.refId,
+                { remarks: remark, action: DocumentStateEnum.DNA_REJECTED },
+                requestUser,
+            );
+
+            return new DataResponseDto(
+                HttpStatus.OK,
+                'Initial Notification was rejected.',
+            );
+        } catch (error) {
             throw new HttpException(
-                'INF did not found for given project id',
-                HttpStatus.BAD_REQUEST,
+                error ? error : 'An error occurred while approving the project',
+                HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
-        await this.documentService.reject(
-            inf.refId,
-            { remarks: remark, action: DocumentStateEnum.DNA_REJECTED },
-            requestUser,
-        );
-
-        return new DataResponseDto(
-            HttpStatus.OK,
-            'Initial Notification was rejected.',
-        );
     }
 }
