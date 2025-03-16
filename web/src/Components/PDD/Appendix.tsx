@@ -222,6 +222,10 @@ const Step08 = (props: CustomStepsProps) => {
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
+        } finally {
+          if (handleLoading) {
+            handleLoading(false);
+          }
         }
       }
 
@@ -253,6 +257,10 @@ const Step08 = (props: CustomStepsProps) => {
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
+        } finally {
+          if (handleLoading) {
+            handleLoading(false);
+          }
         }
       }
     }
@@ -260,6 +268,9 @@ const Step08 = (props: CustomStepsProps) => {
 
   const rejectPDD = async (remarks?: string) => {
     if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
       if (state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER) {
         try {
           const res = await post(API_PATHS.VERIFY_DOCUMENT, {
@@ -276,6 +287,10 @@ const Step08 = (props: CustomStepsProps) => {
               duration: 4,
               style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
             });
+
+            if (next) {
+              next();
+            }
           }
         } catch (error) {
           message.open({
@@ -284,24 +299,45 @@ const Step08 = (props: CustomStepsProps) => {
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
+        } finally {
+          if (handleLoading) {
+            handleLoading(false);
+          }
         }
       }
 
       if (state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
-          refId: documentId,
-          documentType: DocumentEnum.PDD,
-          remarks,
-          action: DocumentStateEnum.DNA_REJECTED,
-        });
+        try {
+          const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+            refId: documentId,
+            documentType: DocumentEnum.PDD,
+            remarks,
+            action: DocumentStateEnum.DNA_REJECTED,
+          });
 
-        if (res?.statusText === 'SUCCESS') {
+          if (res?.statusText === 'SUCCESS') {
+            message.open({
+              type: 'success',
+              content: 'Project Design Document was Rejected',
+              duration: 4,
+              style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+            });
+
+            if (next) {
+              next();
+            }
+          }
+        } catch (error) {
           message.open({
-            type: 'success',
-            content: 'Project Design Document was Rejected',
+            type: 'error',
+            content: t('common:somethingWentWrong'),
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
+        } finally {
+          if (handleLoading) {
+            handleLoading(false);
+          }
         }
       }
     }

@@ -2342,6 +2342,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                 <ProjectDocuments
                   projectProposalStage={data?.projectProposalStage}
                   noObjectLetterUrl={data?.noObjectionLetterUrl}
+                  documents={data?.documents}
                 />
               </div>
             </Card>

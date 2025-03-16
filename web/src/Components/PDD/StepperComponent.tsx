@@ -245,7 +245,8 @@ const StepperComponent = (props: any) => {
     try {
       setLoading(true);
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
-      if (res?.status === 200) {
+      console.log('------res------------', res);
+      if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
           content:
