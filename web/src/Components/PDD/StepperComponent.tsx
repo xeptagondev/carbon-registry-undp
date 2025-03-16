@@ -41,7 +41,7 @@ const CMA_STEPS = {};
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(7);
   const [documentId, setDocumentId] = useState<string>();
 
   const navigate = useNavigate();
@@ -57,6 +57,10 @@ const StepperComponent = (props: any) => {
       state?.mode === FormMode?.VERIFY
   );
   const { id } = useParams();
+
+  const handleLoading = (val: boolean) => {
+    setLoading(val);
+  };
 
   const scrollSection = useRef({} as any);
 
@@ -125,12 +129,12 @@ const StepperComponent = (props: any) => {
         programmeId: programId,
       });
 
-      console.log('-------project data---------', data);
       // const {
       //   data: { user },
       // } = await get(API_PATHS.USER_PROFILE);
 
       if (state?.mode === FormMode?.CREATE) {
+        console.log('-------project data---------', data);
         form1.setFieldsValue({
           projectTitle: data?.title,
           projectProponent: data?.company?.name,
@@ -213,27 +217,6 @@ const StepperComponent = (props: any) => {
 
             const appendix = appendixDataMapToFields(data?.data.appendix);
             form8.setFieldsValue(appendix);
-
-            // const eligibilityCriteria = eligibilityCriteriaDataMapToFields(
-            //   content?.eligibilityCriteria
-            // );
-            // form5.setFieldsValue(eligibilityCriteria);
-
-            // const applicationOfMethodology = applicationOfMethodologyDataMapToFields(
-            //   content?.applicationOfMethodology
-            // );
-            // form6.setFieldsValue(applicationOfMethodology);
-
-            // const quantificationOfGHG = quantificationOfGHGDataMapToFields(
-            //   content?.quantificationOfGHG
-            // );
-            // form7.setFieldsValue(quantificationOfGHG);
-
-            // const monitoring = monitoringDataMapToFields(content?.monitoring);
-            // form8.setFieldsValue(monitoring);
-
-            // const appendix = appendixDataMapToFields(content?.appendix);
-            // form9.setFieldsValue(appendix);
           }
         } catch (error) {
           console.log('error', error);
@@ -262,7 +245,7 @@ const StepperComponent = (props: any) => {
     try {
       setLoading(true);
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
-      if (res?.response?.data?.statusCode === 200) {
+      if (res?.status === 200) {
         message.open({
           type: 'success',
           content:
@@ -491,6 +474,7 @@ const StepperComponent = (props: any) => {
           submitForm={submitForm}
           disableFields={disableFields}
           documentId={documentId}
+          handleLoading={handleLoading}
         />
       ),
     },

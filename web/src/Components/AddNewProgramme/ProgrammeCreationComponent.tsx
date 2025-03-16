@@ -988,7 +988,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   },
                                 ]}
                               >
-                                <Input />
+                                <Input size={'large'} />
                               </Form.Item>
                               {/* {projectCategory === 'RENEWABLE_ENERGY' && (
                                 <Form.Item

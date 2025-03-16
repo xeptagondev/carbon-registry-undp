@@ -305,64 +305,64 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const getInvestmentHistory = async (programmeId: string) => {
-    setLoadingHistory(true);
-    setLoadingInvestment(true);
-    try {
-      const response: any = await post(API_PATHS.INVESTMENT_LIST, {
-        page: 1,
-        size: 100,
-        filterAnd: [
-          {
-            key: 'programmeId',
-            operation: '=',
-            value: programmeId,
-          },
-        ],
-        extendedProperties: {
-          isGetInvestmentHistory: true,
-        },
-      });
-      const investmentHisData = response?.data?.map((item: any) => {
-        const investmentData: any = {
-          invester: item?.receiver[0]?.name,
-          amount: item?.amount,
-          createdAt: item?.createdTime,
-          type: item?.type,
-          level: item?.level,
-          stream: item?.stream,
-          status: item?.status,
-          requestId: item?.requestId,
-          sender: item?.sender,
-        };
-        return investmentData;
-      });
-      const elArr = investmentHisData?.map((investmentData: any, index: any) => {
-        const element = {
-          status: 'process',
-          title: t('projectDetailsView:investment') + ' - ' + String(investmentData?.requestId), // Extracting the last 3 characters from actionNo
-          subTitle: '',
-          description: <InvestmentBody data={investmentData} translator={i18n} />,
-          icon: (
-            <span className="step-icon freeze-step">
-              <Icon.Circle />
-            </span>
-          ),
-        };
-        return element;
-      });
-      setInvestmentHistory(elArr);
-    } catch (error: any) {
-      console.log('Error in getting programme', error);
-      message.open({
-        type: 'error',
-        content: error.message,
-        duration: 3,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
-    } finally {
-      setLoadingHistory(false);
-      setLoadingInvestment(false);
-    }
+    // setLoadingHistory(true);
+    // setLoadingInvestment(true);
+    // try {
+    //   const response: any = await post(API_PATHS.INVESTMENT_LIST, {
+    //     page: 1,
+    //     size: 100,
+    //     filterAnd: [
+    //       {
+    //         key: 'programmeId',
+    //         operation: '=',
+    //         value: programmeId,
+    //       },
+    //     ],
+    //     extendedProperties: {
+    //       isGetInvestmentHistory: true,
+    //     },
+    //   });
+    //   const investmentHisData = response?.data?.map((item: any) => {
+    //     const investmentData: any = {
+    //       invester: item?.receiver[0]?.name,
+    //       amount: item?.amount,
+    //       createdAt: item?.createdTime,
+    //       type: item?.type,
+    //       level: item?.level,
+    //       stream: item?.stream,
+    //       status: item?.status,
+    //       requestId: item?.requestId,
+    //       sender: item?.sender,
+    //     };
+    //     return investmentData;
+    //   });
+    //   const elArr = investmentHisData?.map((investmentData: any, index: any) => {
+    //     const element = {
+    //       status: 'process',
+    //       title: t('projectDetailsView:investment') + ' - ' + String(investmentData?.requestId), // Extracting the last 3 characters from actionNo
+    //       subTitle: '',
+    //       description: <InvestmentBody data={investmentData} translator={i18n} />,
+    //       icon: (
+    //         <span className="step-icon freeze-step">
+    //           <Icon.Circle />
+    //         </span>
+    //       ),
+    //     };
+    //     return element;
+    //   });
+    //   setInvestmentHistory(elArr);
+    // } catch (error: any) {
+    //   console.log('Error in getting programme', error);
+    //   message.open({
+    //     type: 'error',
+    //     content: error.message,
+    //     duration: 3,
+    //     style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+    //   });
+    // } finally {
+    //   setLoadingHistory(false);
+    //   setLoadingInvestment(false);
+    // }
   };
 
   const drawMap = () => {
@@ -479,6 +479,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const rejectNotificationForm = async (remark: string) => {
+    setLoadingAll(true);
     try {
       const response: any = await post(API_PATHS.VERIFY_DOCUMENT, {
         refId: data?.infRefId,
@@ -487,7 +488,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         action: DocumentStateEnum.DNA_REJECTED,
       });
 
-      if (response?.response?.data?.statusCode === HttpStatusCode.Ok) {
+      if (response?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
           content: t('projectDetailsView:infRejected'),
@@ -509,52 +510,51 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const getCarbonNeutralCertificates = async (companyId: number) => {
-    try {
-      const response: any = await post(API_PATHS.CARBON_NEUTRAL_CERTIFICATES, {
-        companyId: companyId,
-      });
-      if (response.status === 200 || response.status === 201) {
-        console.log(response);
-        setCarbonNeutralCertificateData(response?.data);
-      }
-    } catch (err: any) {
-      console.log('Error in getting carbon neutral certificate data - ', err);
-      message.open({
-        type: 'error',
-        content: err.message,
-        duration: 4,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
-    }
+    // try {
+    //   const response: any = await post(API_PATHS.CARBON_NEUTRAL_CERTIFICATES, {
+    //     companyId: companyId,
+    //   });
+    //   if (response.status === 200 || response.status === 201) {
+    //     console.log(response);
+    //     setCarbonNeutralCertificateData(response?.data);
+    //   }
+    // } catch (err: any) {
+    //   console.log('Error in getting carbon neutral certificate data - ', err);
+    //   message.open({
+    //     type: 'error',
+    //     content: err.message,
+    //     duration: 4,
+    //     style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+    //   });
+    // }
   };
 
   const requestCarbonNeutralCertificate = async () => {
-    try {
-      const response: any = await post(API_PATHS.REQUEST_CARBON_NEUTRAL_CERTIFICATE, {
-        companyId: data?.companyId,
-        programmeId: data?.programmeId,
-      });
-      if (response.status === 200 || response.status === 201) {
-        message.open({
-          type: 'success',
-          content: `${t('projectDetailsView:requestCarbonNeutralCertificateSuccess')}`,
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
-
-        if (data) getCarbonNeutralCertificates(data.companyId);
-      }
-    } catch (err: any) {
-      console.log('Error in getting documents - ', err);
-      message.open({
-        type: 'error',
-        content: err.message,
-        duration: 4,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
-    } finally {
-      setSlcfActionModalVisible(false);
-    }
+    // try {
+    //   const response: any = await post(API_PATHS.REQUEST_CARBON_NEUTRAL_CERTIFICATE, {
+    //     companyId: data?.companyId,
+    //     programmeId: data?.programmeId,
+    //   });
+    //   if (response.status === 200 || response.status === 201) {
+    //     message.open({
+    //       type: 'success',
+    //       content: `${t('projectDetailsView:requestCarbonNeutralCertificateSuccess')}`,
+    //       duration: 4,
+    //       style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+    //     });
+    //     if (data) getCarbonNeutralCertificates(data.companyId);
+    //   }
+    // } catch (err: any) {
+    //   console.log('Error in getting documents - ', err);
+    //   message.open({
+    //     type: 'error',
+    //     content: err.message,
+    //     duration: 4,
+    //     style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+    //   });
+    // } finally {
+    //   setSlcfActionModalVisible(false);
+    // }
   };
 
   function hasNoPendingStatus(): boolean {
@@ -566,6 +566,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   }
 
   const approveNotificationForm = async () => {
+    setLoadingAll(true);
     try {
       const response: any = await post(API_PATHS.VERIFY_DOCUMENT, {
         refId: data?.infRefId,
@@ -574,7 +575,8 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         action: DocumentStateEnum.DNA_APPROVED,
       });
 
-      if (response?.response?.data?.statusCode === HttpStatusCode.Ok) {
+      console.log('-------res-----------', response);
+      if (response?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
           content: t('projectDetailsView:infApproved'),
@@ -592,6 +594,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       });
     } finally {
       setSlcfActionModalVisible(false);
+      setLoadingAll(false);
     }
   };
 
@@ -1801,27 +1804,27 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   // };
 
   const getVerificationHistory = async (programmeId: string) => {
-    setLoadingHistory(true);
-    setLoadingNDC(true);
-    try {
-      const response: any = await get(API_PATHS.VERIFICATION_HISTORY_BY_ID(programmeId));
-      if (response) {
-        setVerificationHistoryData(response.data);
-        setVerificationHistoryDataLoaded(true);
-        console.log(response);
-      }
-    } catch (error: any) {
-      console.log('Error in getting programme', error);
-      message.open({
-        type: 'error',
-        content: error.message,
-        duration: 3,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
-    } finally {
-      setLoadingHistory(false);
-      setLoadingNDC(false);
-    }
+    // setLoadingHistory(true);
+    // setLoadingNDC(true);
+    // try {
+    //   const response: any = await get(API_PATHS.VERIFICATION_HISTORY_BY_ID(programmeId));
+    //   if (response) {
+    //     setVerificationHistoryData(response.data);
+    //     setVerificationHistoryDataLoaded(true);
+    //     console.log(response);
+    //   }
+    // } catch (error: any) {
+    //   console.log('Error in getting programme', error);
+    //   message.open({
+    //     type: 'error',
+    //     content: error.message,
+    //     duration: 3,
+    //     style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+    //   });
+    // } finally {
+    //   setLoadingHistory(false);
+    //   setLoadingNDC(false);
+    // }
   };
 
   //MARK: getProgrammeHistory
@@ -1937,6 +1940,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                 title: t('projectDetailsView:rejectInfModalTitle'),
                 okAction: (remark: string) => {
                   rejectNotificationForm(remark);
+                  setSlcfActionModalVisible(false);
                 },
                 remarkRequired: true,
                 type: 'danger',
@@ -1955,9 +1959,12 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                 actionBtnText: t('projectDetailsView:btnApprove'),
                 icon: <CheckCircleOutlined />,
                 title: t('projectDetailsView:approveInfModalTitle'),
+                subText: t('projectDetailsView:infConfirmSubMessage'),
+                checkMessage: t('projectDetailsView:checkboxConfirmMessage'),
                 okAction: () => {
                   console.log('Approved');
                   approveNotificationForm();
+                  setSlcfActionModalVisible(false);
                 },
                 remarkRequired: false,
                 type: 'primary',
@@ -1965,175 +1972,6 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             }}
           >
             {t('projectDetailsView:approve')}
-          </Button>
-        );
-      }
-    } else if (
-      userInfoState &&
-      data.projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_SUBMITTED
-    ) {
-      if (userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER) {
-        actionBtns.push(
-          <Button
-            danger
-            onClick={() => {
-              showModalOnAction({
-                actionBtnText: t('projectDetailsView:btnReject'),
-                icon: <CloseCircleOutlined />,
-                title: t('projectDetailsView:rejectProposalTitle'),
-                okAction: (remark: string) => {
-                  console.log('rejected', remark);
-                  rejectProposal(remark);
-                },
-                remarkRequired: true,
-                type: 'danger',
-              });
-            }}
-          >
-            {t('projectDetailsView:reject')}
-          </Button>
-        );
-        actionBtns.push(
-          <Button
-            type="primary"
-            onClick={() => {
-              showModalOnAction({
-                actionBtnText: t('projectDetailsView:btnApprove'),
-                icon: <CheckCircleOutlined />,
-                title: t('projectDetailsView:approveProposalTitle'),
-                okAction: () => {
-                  console.log('Approved');
-                  approveProposal();
-                },
-                remarkRequired: false,
-                type: 'primary',
-              });
-            }}
-          >
-            {t('projectDetailsView:accept')}
-          </Button>
-        );
-      }
-    } else if (
-      userInfoState &&
-      data.projectProposalStage === ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER
-    ) {
-      if (userInfoState?.companyRole === CompanyRole.CLIMATE_FUND) {
-        actionBtns.push(
-          <Button
-            danger
-            onClick={() => {
-              showModalOnAction({
-                actionBtnText: t('projectDetailsView:btnReject'),
-                icon: <CloseCircleOutlined />,
-                title: t('projectDetailsView:rejectCMATitle'),
-                okAction: (remark: string) => {
-                  console.log('rejected', remark);
-                  rejectCMA(remark);
-                },
-                remarkRequired: true,
-                type: 'danger',
-              });
-            }}
-          >
-            {t('projectDetailsView:reject')}
-          </Button>
-        );
-        actionBtns.push(
-          <Button
-            type="primary"
-            onClick={() => {
-              showModalOnAction({
-                actionBtnText: t('projectDetailsView:btnApprove'),
-                icon: <CheckCircleOutlined />,
-                title: t('projectDetailsView:approveCMATitle'),
-                okAction: () => {
-                  console.log('Approved');
-                  approveCMA();
-                },
-                remarkRequired: false,
-                type: 'primary',
-              });
-            }}
-          >
-            {t('projectDetailsView:accept')}
-          </Button>
-        );
-      }
-    } else if (
-      userInfoState &&
-      data.projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_REJECTED
-    ) {
-      if (userInfoState?.companyRole === CompanyRole.EXECUTIVE_COMMITTEE) {
-        actionBtns.push(
-          <Button
-            danger
-            onClick={() => {
-              showModalOnAction({
-                actionBtnText: t('projectDetailsView:btnReject'),
-                icon: <CloseCircleOutlined />,
-                title: t('projectDetailsView:rejectValidationTitle'),
-                okAction: (remark: string) => {
-                  console.log('rejected', remark);
-                  rejectValidation(remark);
-                },
-                remarkRequired: true,
-                type: 'danger',
-              });
-            }}
-          >
-            {t('projectDetailsView:reject')}
-          </Button>
-        );
-        actionBtns.push(
-          <Button
-            type="primary"
-            onClick={() => {
-              showModalOnAction({
-                actionBtnText: t('projectDetailsView:btnApprove'),
-                icon: <CheckCircleOutlined />,
-                title: t('projectDetailsView:approveValidationTitle'),
-                okAction: () => {
-                  console.log('Approved');
-                  approveValidation();
-                },
-                remarkRequired: false,
-                type: 'primary',
-              });
-            }}
-          >
-            {t('projectDetailsView:approve')}
-          </Button>
-        );
-      }
-    } else if (userInfoState && data.projectProposalStage === ProjectProposalStage.AUTHORISED) {
-      const totalCreditsToIssue = data.creditEst ? data.creditEst : 0;
-      const creditBalance = data.creditBalance ? data.creditBalance : 0;
-      const creditTransferred = data.creditTransferred ? data.creditTransferred : 0;
-      const creditRetired = data.creditRetired ? data.creditRetired : 0;
-      const creditFrozen = data.creditFrozen ? data.creditFrozen : 0;
-      const availableCreditsToIssue =
-        totalCreditsToIssue - (creditBalance + creditTransferred + creditRetired + creditFrozen);
-
-      if (
-        userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
-        ((verificationHistoryData &&
-          verificationHistoryData.length > 0 &&
-          (verificationHistoryData[verificationHistoryData.length - 1].status ===
-            VerificationRequestStatusEnum.VERIFICATION_REPORT_VERIFIED ||
-            verificationHistoryData[verificationHistoryData.length - 1].status ===
-              VerificationRequestStatusEnum.VERIFICATION_REPORT_REJECTED)) ||
-          (!verificationHistoryData.length && verificationHistoryDataLoaded)) &&
-        availableCreditsToIssue > 0
-      ) {
-        actionBtns.push(
-          <Button
-            type="primary"
-            onClick={() => {
-              navigateToMonitoringReportCreate();
-            }}
-          >
-            {t('projectDetailsView:verificationRequest')}
           </Button>
         );
       }
@@ -2715,7 +2553,8 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
           }}
           actionBtnText={popupInfo!.actionBtnText}
           onFinish={popupInfo!.okAction}
-          subText={''}
+          checkMessage={popupInfo.checkMessage}
+          subText={popupInfo.subText}
           openModal={slcfActionModalVisible}
           icon={popupInfo!.icon}
           title={popupInfo!.title}
