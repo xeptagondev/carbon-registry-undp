@@ -20,10 +20,11 @@ interface IPermissionsState {
 interface IProjectDetails {
   projectProposalStage: any;
   noObjectLetterUrl: string | undefined;
+  documents?: any;
 }
 
 const ProjectDocuments = (props: IProjectDetails) => {
-  const { projectProposalStage, noObjectLetterUrl } = props;
+  const { projectProposalStage, noObjectLetterUrl, documents } = props;
 
   const { id } = useParams();
 
@@ -47,12 +48,18 @@ const ProjectDocuments = (props: IProjectDetails) => {
   };
 
   useEffect(() => {
-    const tempPddPermissions = formPermissions(userInfoState, DocType.PDD, projectProposalStage);
+    const tempPddPermissions = formPermissions(
+      userInfoState,
+      DocType.PDD,
+      projectProposalStage,
+      documents
+    );
     setPDDPermissions(tempPddPermissions);
     const tempValidationReportPermissions = formPermissions(
       userInfoState,
       DocType.VALIDATION_REPORT,
-      projectProposalStage
+      projectProposalStage,
+      documents
     );
     setValidationReportPermissions(tempValidationReportPermissions);
 
