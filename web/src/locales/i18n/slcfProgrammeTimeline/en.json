@@ -14,19 +14,25 @@
   "noObjectionLetterGeneratedTitle": "Letter of No Objection Issued",
 
   "pddSubmttedTitle": "Project Design Document Created",
+  "pddSubmittedDescription": "Project Design Document was created by {}",
 
   "pddRejectedTitle": "Project Design Document Rejected",
+  "pddRejectedDescription": "Project Design Document was rejected by {}",
 
   "pddApprovedTitle": "Project Design Document Accepted",
+  "pddApprovedDescription": "Project Designed Document was approved by {}",
 
   "validationReportCreatedTitle": "Validation Report Created",
   "validationReportCreatedDescription": "The Validation Report was created by {}",
 
   "validationReportRejectedTitle": "Validation Report Rejected",
   "validationReportRejectedDescription": "The Validation Report was rejected by {}",
+  
+  "validationReportApprovedTitle": "Validation Report Rejected",
+  "validationReportApprovedDescription": "The Validation Report was rejected by {}",
 
-  "authorisedTitle": "Project Authorised",
-  "authorisedDescription": "The project was authorised and the Project Registration Certificate was generated",
+  "authorisedTitle": "Project Registered",
+  "authorisedDescription": "The project was registered under UNDP",
 
   "monitoringReportCreatedTitle": "Monitoring Report Created",
   "monitoringReportCreatedDescription": "The Monitoring Report was created by {}",
