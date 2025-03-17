@@ -346,9 +346,7 @@ export abstract class DocumentService {
         const lastDoc = await this.documentRepository.findOne({
             where: {
                 documentType: query.documentType,
-                project: {
-                    refId: query.projectRefId,
-                },
+                refId: query.refId,
             },
             order: {
                 version: 'DESC',
