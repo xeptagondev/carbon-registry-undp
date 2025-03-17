@@ -118,7 +118,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
   };
 
   const onFinish = async (values: any) => {
-    const approverSignature = (await fileUploadValueExtract(values, 'approveSignature'))[0];
+    const approverSignature = (await fileUploadValueExtract(values, 'approverSignature'))[0];
     const projectDetailsFormValues = {
       titleOfTheProjectActivity: values?.titleOfTheProjectActivity,
       versionNumberValidationReport: values?.versionNumberValidationReport,
@@ -127,8 +127,12 @@ const BasicInformation = (props: ValidationStepsProps) => {
       projectScale: values?.projectScale,
       appliedMethodologies: values?.appliedMethodologies,
       titleOfSpecificCase: values?.titleOfSpecificCase,
-      completionDate: values?.completionDate,
-      pddUploadedGlobalStakeholderConsultation: values?.pddUploadedGlobalStakeholderConsultation,
+      completionDate: moment(values?.completionDate).startOf('day').unix(),
+      pddUploadedGlobalStakeholderConsultation: moment(
+        values?.pddUploadedGlobalStakeholderConsultation
+      )
+        .startOf('day')
+        .unix(),
       hostParty: values?.hostParty,
       mandatarySectoralScopes: values?.mandatarySectoralScopes,
       annualAverageGHGReduction: values?.annualAverageGHGReduction,
@@ -161,9 +165,6 @@ const BasicInformation = (props: ValidationStepsProps) => {
 
             return base64Docs;
           })(),
-          projectFundings: values?.projectFundings,
-          startDate: moment(values?.projectStartDate).startOf('day').unix(),
-          commissioningDate: moment(values?.projectCommisionDate).startOf('day').unix(),
         };
         tempList.push(firstObj);
         if (values?.extraLocations) {
@@ -194,9 +195,6 @@ const BasicInformation = (props: ValidationStepsProps) => {
 
                 return base64Docs;
               })(),
-              projectFundings: item?.projectFundings,
-              startDate: moment(item?.projectStartDate).startOf('day').unix(),
-              commissioningDate: moment(item?.projectCommisionDate).startOf('day').unix(),
             };
 
             tempList.push(tempObj);

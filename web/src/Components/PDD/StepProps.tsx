@@ -15,4 +15,5 @@ export interface CustomStepsProps {
   disableFields?: boolean;
   formMode?: FormMode;
   documentId?: string; 
+  handleLoading?: (val: boolean) => void;
 }

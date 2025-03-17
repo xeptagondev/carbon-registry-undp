@@ -20,7 +20,8 @@ export const linkDocVisible = (docStatus: DocumentStatus) => {
 export const formPermissions = (
   userInfoState: any,
   docType: DocType,
-  projectProposalStage: ProjectProposalStage
+  projectProposalStage: ProjectProposalStage,
+  documents: any
 ) => {
   console.log(
     '--------Permissions form func----------',
@@ -56,7 +57,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
     userInfoState?.userRole === Role.Admin
   ) {
-    return { mode: FormMode.EDIT, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.EDIT,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   //PDD: Permissions for PD Other users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
   else if (
@@ -66,7 +71,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
     userInfoState?.userRole !== Role.Admin
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   //PDD: Permissions Other users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
   else if (
@@ -92,7 +101,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
     userInfoState?.userRole === Role.Admin
   ) {
-    return { mode: FormMode.VERIFY, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VERIFY,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   //PDD: Permissions for IC other users at PDD_SUBMITTED stage
   else if (
@@ -101,7 +114,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
     userInfoState?.userRole !== Role.Admin
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   //PDD:  Permissions for other users at PDD_SUMITTESD stage
   else if (
@@ -109,7 +126,11 @@ export const formPermissions = (
     projectProposalStage === ProjectProposalStage.PDD_SUBMITTED &&
     userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   //PDD:  Permissions for DNA root and DNA Admin users at PDD_APPROVED_BY_CERTIFIER stage
   else if (
@@ -118,7 +139,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
     (userInfoState?.userRole !== Role.ViewOnly || userInfoState?.userRole !== Role.Manager)
   ) {
-    return { mode: FormMode.VERIFY, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VERIFY,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   // PDD: Permissions for other DNA users at PDD_APPROVED_BY_CERTIFIER stage
   else if (
@@ -127,7 +152,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
     (userInfoState?.userRole === Role.ViewOnly || userInfoState?.userRole === Role.Manager)
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   // PDD: Permissions for other users at PDD_APPROVED_BY_CERTIFIER
   else if (
@@ -135,7 +164,11 @@ export const formPermissions = (
     projectProposalStage === ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER &&
     userInfoState?.companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   // PDD: Permissions for all users at and after PDD_APPROVED_BY_DNA
   else if (
@@ -145,7 +178,11 @@ export const formPermissions = (
       projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_REJECTED ||
       projectProposalStage === ProjectProposalStage.AUTHORISED)
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
 
   // VALIDATION_REPORT: for all users at stages before PDD_APPROVED_BY_DNA
@@ -177,7 +214,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
     userInfoState?.userRole === Role.Admin
   ) {
-    return { mode: FormMode.EDIT, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.EDIT,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   }
   // VALIDATION_REPORT: for IC other users at VALIDATION_REPORT_REJECTED
   else if (
@@ -186,7 +227,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
     userInfoState?.userRole !== Role.Admin
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   }
   // VALIDATION_REPORT: for other IC users at PDD_APPROVED_BY_DNA
   else if (
@@ -211,7 +256,11 @@ export const formPermissions = (
     projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_SUBMITTED &&
     userInfoState?.companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   }
   // VALIDATION_REPORT: for DNA Root and Admin at VALIDATION_REPORT_SUBMITTED
   else if (
@@ -221,7 +270,11 @@ export const formPermissions = (
       userInfoState?.userRole === Role.Admin) ||
     userInfoState?.userRole === Role.Root
   ) {
-    return { mode: FormMode.VERIFY, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VERIFY,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   }
   // VALIDATION_REPORT: for DNA other users at VALIDATION_REPORT_SUBMITTED
   else if (
@@ -231,7 +284,11 @@ export const formPermissions = (
     userInfoState?.userRole !== Role.Admin &&
     userInfoState?.userRole !== Role.Root
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   }
 
   // VALIDATION_REPORT: for other users at VALIDATION_REPORT_SUBMITTED
@@ -240,7 +297,11 @@ export const formPermissions = (
     projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_SUBMITTED &&
     userInfoState?.companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   }
 
   // VALIDATION_REPORT: for IC other users at VALIDATION_REPORT_REJECTED
@@ -250,7 +311,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
     userInfoState?.userRole !== Role.Admin
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   }
 
   // VALIDATION_REPORT: for other users at VALIDATION_REPORT_REJECTED
@@ -259,7 +324,11 @@ export const formPermissions = (
     projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_REJECTED &&
     userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   }
 
   // VALIDATION_REPORT: for all users at AUTHORIZED
@@ -267,7 +336,11 @@ export const formPermissions = (
     docType === DocType.VALIDATION_REPORT &&
     projectProposalStage === ProjectProposalStage.AUTHORISED
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.VALIDATION?.refId,
+    };
   } else {
     return { mode: FormMode.DISABLED };
   }
