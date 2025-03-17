@@ -381,7 +381,7 @@ const Step08 = (props: CustomStepsProps) => {
                 <SlcfFormActionModel
                   actionBtnText={
                     state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER
-                      ? t('pdd:certify')
+                      ? t('PDD:certify')
                       : t('pdd:approve')
                   }
                   onCancel={closeVerifyDialogBox}
@@ -408,7 +408,7 @@ const Step08 = (props: CustomStepsProps) => {
               <SlcfFormActionModel
                 actionBtnText={t('common:yes')}
                 onCancel={closeDialog}
-                title={t('pdd:confirmModalMessage')}
+                title={t('PDD:confirmModalMessage')}
                 onFinish={() => {
                   closeDialog();
                   onFinish(formValues);

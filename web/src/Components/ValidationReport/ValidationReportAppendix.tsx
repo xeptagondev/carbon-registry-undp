@@ -55,7 +55,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
   }, []);
 
   const onFinish = async (values: any) => {
-    const appendixFormValues: any = {
+    const tempVals: any = {
       ...values,
       appendix1Documents: (await fileUploadValueExtract(values, 'appendix1Documents'))[0],
       cl_date: moment(values?.cl_date).startOf('day').unix(),
@@ -75,7 +75,8 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
       far_doeAssesmentDate: moment(values?.far_doeAssesmentDate).startOf('day').unix(),
     };
 
-    handleValuesUpdate({ appendix: appendixFormValues });
+    console.log('---------temVals-------------', tempVals);
+    handleValuesUpdate(tempVals);
   };
 
   const [showDialog, setShowDialog] = useState<boolean>(false);
@@ -266,8 +267,8 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
               requiredMark={true}
               form={form}
               onFinish={(values: any) => {
-                setShowDialog(true);
                 setFormValues(values);
+                setShowDialog(true);
               }}
               // disabled={FormMode.VIEW === formMode}
             >
