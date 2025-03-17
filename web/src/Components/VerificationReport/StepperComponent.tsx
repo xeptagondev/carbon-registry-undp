@@ -3,10 +3,14 @@ import { Steps, message } from 'antd';
 import { BasicInformationStep } from './BasicInformationStep';
 import './VerificationReport.scss';
 import { GHGProjectDescriptionStep } from './GHGProjectDescription';
-import { MethodologyStep } from './MethodologyStep';
+import { ExecutiveSummaryStep } from './ExecutiveSummaryStep';
+import { VerificationTeamStep } from './VerificationTeamStep';
+import { ApplicationOfMaterialityStep } from './ApplicationOfMaterialityStep';
+import { MeansOfVerificationStep } from './MeansOfVerificationStep';
 import { VerificationFindingStep } from './VerificationFindingStep';
+import { InternalQualityControlStep } from './InternalQualityControlStep';
 import { VerificationOpinionStep } from './VerificationOpinionStep';
-import { ReferenceStep } from './ReferenceStep';
+import { CertificationStep } from './CertificationStatementStep';
 import { AppendixStep } from './AppendixStep';
 import { useForm } from 'antd/lib/form/Form';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
@@ -31,10 +35,8 @@ const StepperComponent = (props: VerificationStepProps) => {
   const navigate = useNavigate();
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
-  const [current, setCurrent] = useState(6);
+  const [current, setCurrent] = useState(0);
   const [verifiedScer, setVerifiedScer] = useState(0);
-
-  const [formValues, setFormValues] = useState({});
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
 
@@ -44,33 +46,73 @@ const StepperComponent = (props: VerificationStepProps) => {
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
   const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
 
-  const [values, setValues] = useState({
+  const [existingFormValues, setExistingFormValues] = useState({
     projectRefId: id,
-    name: 'PDD',
+    name: 'Verification',
     companyId: undefined,
     documentType: DocumentEnum.VERIFICATION,
     data: {},
   });
 
+  const navigateToDetailsPage = () => {
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
+  };
+
+  const submitForm = async (formValues: any) => {
+    try {
+      const res = await post(API_PATHS.ADD_DOCUMENT, formValues);
+      console.log(res);
+      if (res?.response?.data?.statusCode === 200) {
+        message.open({
+          type: 'success',
+          content: 'Validation report has been submitted successfully',
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+        navigateToDetailsPage();
+      }
+    } catch (error: any) {
+      message.open({
+        type: 'error',
+        content: 'Something went wrong',
+        duration: 4,
+        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+      });
+    }
+  };
+
+  const next = () => {
+    setCurrent(current + 1);
+  };
+
+  const prev = () => {
+    setCurrent(current - 1);
+  };
+
   const handleValuesUpdate = (val: any) => {
-    console.log('----------temp vals-------------', val);
-    setValues((prevVal: any) => {
+    // console.log('----------temp vals-------------', val);
+    setExistingFormValues((prevVal: any) => {
       const tempContent = {
         ...prevVal.data,
         ...val,
       };
+      console.log(tempContent);
       return { ...prevVal, data: tempContent };
     });
+
+    if (current === 10) {
+      const formValues = {
+        ...existingFormValues,
+        data: { ...existingFormValues.data, appendixForm: val },
+      };
+      submitForm(formValues);
+    }
   };
 
-  const showModalOnAction = (info: PopupInfo) => {
-    setSlcfActioModalVisible(true);
-    setPopupInfo(info);
-  };
-
-  const navigateToDetailsPage = () => {
-    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
-  };
+  // const showModalOnAction = (info: PopupInfo) => {
+  //   setSlcfActioModalVisible(true);
+  //   setPopupInfo(info);
+  // };
 
   // const approveOrReject = async (verify: boolean, remark?: string) => {
   //   const body = {
@@ -116,131 +158,128 @@ const StepperComponent = (props: VerificationStepProps) => {
   //   }
   // };
 
-  const onFinish = async (newValues: any) => {
-    setFormValues((prevValues) => ({
-      ...prevValues,
-      ...newValues,
-    }));
-    if (FormMode.VIEW === mode) {
-      navigateToDetailsPage();
-    } else {
-      const content = { ...formValues, ...newValues };
+  // const onFinish = async (newValues: any) => {
+  //   setFormValues((prevValues) => ({
+  //     ...prevValues,
+  //     ...newValues,
+  //   }));
+  //   if (FormMode.VIEW === mode) {
+  //     navigateToDetailsPage();
+  //   } else {
+  //     const content = { ...formValues, ...newValues };
 
-      content.projectDetails.completionDate = moment(content?.projectDetails?.completionDate)
-        .startOf('day')
-        .valueOf();
-      content.projectDetails.versionDate = moment(content?.projectDetails?.versionDate)
-        .startOf('day')
-        .valueOf();
-      content.projectDetails.monitoringPeriodStart = moment(
-        content?.projectDetails?.monitoringPeriodStart
-      )
-        .startOf('day')
-        .valueOf();
-      content.projectDetails.monitoringPeriodEnd = moment(
-        content?.projectDetails?.monitoringPeriodEnd
-      )
-        .startOf('day')
-        .valueOf();
+  //     // content.projectDetails.completionDate = moment(content?.projectDetails?.completionDate)
+  //     //   .startOf('day')
+  //     //   .valueOf();
+  //     // content.projectDetails.versionDate = moment(content?.projectDetails?.versionDate)
+  //     //   .startOf('day')
+  //     //   .valueOf();
+  //     // content.projectDetails.monitoringPeriodStart = moment(
+  //     //   content?.projectDetails?.monitoringPeriodStart
+  //     // )
+  //     //   .startOf('day')
+  //     //   .valueOf();
+  //     // content.projectDetails.monitoringPeriodEnd = moment(
+  //     //   content?.projectDetails?.monitoringPeriodEnd
+  //     // )
+  //     //   .startOf('day')
+  //     //   .valueOf();
 
-      content.introduction.creditionPeriodStart = moment(
-        content?.introduction?.creditionPeriodStart
-      )
-        .startOf('day')
-        .valueOf();
-      content.introduction.creditionPeriodEnd = moment(content?.introduction?.creditionPeriodEnd)
-        .startOf('day')
-        .valueOf();
-      content.introduction.periodVerifiedStart = moment(content?.introduction?.periodVerifiedStart)
-        .startOf('day')
-        .valueOf();
-      content.introduction.periodVerifiedEnd = moment(content?.introduction?.periodVerifiedEnd)
-        .startOf('day')
-        .valueOf();
+  //     // content.introduction.creditionPeriodStart = moment(
+  //     //   content?.introduction?.creditionPeriodStart
+  //     // )
+  //     //   .startOf('day')
+  //     //   .valueOf();
+  //     // content.introduction.creditionPeriodEnd = moment(content?.introduction?.creditionPeriodEnd)
+  //     //   .startOf('day')
+  //     //   .valueOf();
+  //     // content.introduction.periodVerifiedStart = moment(content?.introduction?.periodVerifiedStart)
+  //     //   .startOf('day')
+  //     //   .valueOf();
+  //     // content.introduction.periodVerifiedEnd = moment(content?.introduction?.periodVerifiedEnd)
+  //     //   .startOf('day')
+  //     //   .valueOf();
 
-      content.annexures.optionalDocuments = await fileUploadValueExtract(
-        content?.annexures,
-        'optionalDocuments'
-      );
+  //     // content.annexures.optionalDocuments = await fileUploadValueExtract(
+  //     //   content?.annexures,
+  //     //   'optionalDocuments'
+  //     // );
 
-      content.verificationFinding.optionalDocuments = await fileUploadValueExtract(
-        content?.verificationFinding,
-        'optionalDocuments'
-      );
+  //     // content.verificationFinding.optionalDocuments = await fileUploadValueExtract(
+  //     //   content?.verificationFinding,
+  //     //   'optionalDocuments'
+  //     // );
 
-      content?.verificationFinding?.siteLocations?.forEach(async (val: any) => {
-        val.commissioningDate = moment(val?.commissioningDate).startOf('day').valueOf();
-      });
+  //     // content?.verificationFinding?.siteLocations?.forEach(async (val: any) => {
+  //     //   val.commissioningDate = moment(val?.commissioningDate).startOf('day').valueOf();
+  //     // });
 
-      content.verificationOpinion.signature1 = await fileUploadValueExtract(
-        content?.verificationOpinion,
-        'signature1'
-      );
-      content.verificationOpinion.signature2 = await fileUploadValueExtract(
-        content?.verificationOpinion,
-        'signature2'
-      );
-      content.verificationOpinion.dateOfSignature1 = moment(
-        content?.verificationOpinion?.dateOfSignature1
-      )
-        .startOf('day')
-        .valueOf();
-      content.verificationOpinion.dateOfSignature2 = moment(
-        content?.verificationOpinion?.dateOfSignature2
-      )
-        .startOf('day')
-        .valueOf();
-      const body = { content: JSON.stringify(content), programmeId: id };
-      try {
-        const res = await post(API_PATHS.CREATE_VERIFICATION_REPORT, body);
-        if (res?.statusText === 'SUCCESS') {
-          message.open({
-            type: 'success',
-            content: t('verificationReport:createVerificationReportSuccess'),
-            duration: 4,
-            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-          });
-          navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
-        }
-      } catch (error: any) {
-        if (error && error.errors && error.errors.length > 0) {
-          error.errors.forEach((err: any) => {
-            Object.keys(err).forEach((field) => {
-              console.log(`Error in ${field}: ${err[field].join(', ')}`);
-              message.open({
-                type: 'error',
-                content: err[field].join(', '),
-                duration: 4,
-                style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-              });
-            });
-          });
-        } else {
-          message.open({
-            type: 'error',
-            content: error?.message,
-            duration: 4,
-            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-          });
-        }
-      }
-    }
-  };
+  //     // content.verificationOpinion.signature1 = await fileUploadValueExtract(
+  //     //   content?.verificationOpinion,
+  //     //   'signature1'
+  //     // );
+  //     // content.verificationOpinion.signature2 = await fileUploadValueExtract(
+  //     //   content?.verificationOpinion,
+  //     //   'signature2'
+  //     // );
+  //     // content.verificationOpinion.dateOfSignature1 = moment(
+  //     //   content?.verificationOpinion?.dateOfSignature1
+  //     // )
+  //     //   .startOf('day')
+  //     //   .valueOf();
+  //     // content.verificationOpinion.dateOfSignature2 = moment(
+  //     //   content?.verificationOpinion?.dateOfSignature2
+  //     // )
+  //     //   .startOf('day')
+  //     //   .valueOf();
+  //     const body = { content: JSON.stringify(content), programmeId: id };
+  //     try {
+  //       const res = await post(API_PATHS.CREATE_VERIFICATION_REPORT, body);
+  //       if (res?.statusText === 'SUCCESS') {
+  //         message.open({
+  //           type: 'success',
+  //           content: t('verificationReport:createVerificationReportSuccess'),
+  //           duration: 4,
+  //           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //         });
+  //         navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
+  //       }
+  //     } catch (error: any) {
+  //       if (error && error.errors && error.errors.length > 0) {
+  //         error.errors.forEach((err: any) => {
+  //           Object.keys(err).forEach((field) => {
+  //             console.log(`Error in ${field}: ${err[field].join(', ')}`);
+  //             message.open({
+  //               type: 'error',
+  //               content: err[field].join(', '),
+  //               duration: 4,
+  //               style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //             });
+  //           });
+  //         });
+  //       } else {
+  //         message.open({
+  //           type: 'error',
+  //           content: error?.message,
+  //           duration: 4,
+  //           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //         });
+  //       }
+  //     }
+  //   }
+  // };
   const [basicInformationForm] = useForm();
   const [GHGProjectDescriptionForm] = useForm();
-  const [methodologyForm] = useForm();
+  const [executiveSummaryForm] = useForm();
+  const [verficationTeamForm] = useForm();
+  const [applicationOfMeterialityForm] = useForm();
+  const [meansOfVerificationForm] = useForm();
   const [verificationFindingForm] = useForm();
+  const [internalQualityControlForm] = useForm();
   const [verificationOpinionForm] = useForm();
-  const [referenceForm] = useForm();
+  const [certificationStatementForm] = useForm();
   const [appendixForm] = useForm();
 
-  const next = () => {
-    setCurrent(current + 1);
-  };
-
-  const prev = () => {
-    setCurrent(current - 1);
-  };
   const safeNumber = (value: any) => Number(value) || 0;
 
   const getProjectById = async (programId: any) => {
@@ -510,43 +549,44 @@ const StepperComponent = (props: VerificationStepProps) => {
         />
       ),
     },
-    //-------------------update this for executiveSummary step-----------------
-    // {
-    //   title: (
-    //     <div className="stepper-title-container">
-    //       <div className="title">{t('verificationReport:title03')}</div>
-    //     </div>
-    //   ),
-    //   description: (
-    //     <GHGProjectDescriptionStep
-    //       t={t}
-    //       current={current}
-    //       form={GHGProjectDescriptionForm}
-    //       formMode={mode}
-    //       next={next}
-    //       prev={prev}
-    //       // countries={countries}
-    //       handleValuesUpdate={handleValuesUpdate}
-    //     />
-    //   ),
-    // },
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">02</div>
+          <div className="step-count">01</div>
           <div className="title">{t('verificationReport:title03')}</div>
         </div>
       ),
       description: (
-        <MethodologyStep
-          useLocation={useLocation}
+        <ExecutiveSummaryStep
           t={t}
+          translator={translator}
           current={current}
-          form={methodologyForm}
+          form={executiveSummaryForm}
           formMode={mode}
           next={next}
           prev={prev}
-          onValueChange={handleValuesUpdate}
+          // countries={countries}
+          handleValuesUpdate={handleValuesUpdate}
+        />
+      ),
+    },
+    {
+      title: (
+        <div className="stepper-title-container">
+          <div className="step-count">02</div>
+          <div className="title">{t('verificationReport:title04')}</div>
+        </div>
+      ),
+      description: (
+        <VerificationTeamStep
+          translator={translator}
+          t={t}
+          current={current}
+          form={verficationTeamForm}
+          formMode={mode}
+          next={next}
+          prev={prev}
+          handleValuesUpdate={handleValuesUpdate}
         />
       ),
     },
@@ -554,19 +594,19 @@ const StepperComponent = (props: VerificationStepProps) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">03</div>
-          <div className="title">{t('verificationReport:title04')}</div>
+          <div className="title">{t('verificationReport:title05')}</div>
         </div>
       ),
       description: (
-        <VerificationFindingStep
-          useLocation={useLocation}
+        <ApplicationOfMaterialityStep
+          translator={translator}
           t={t}
           current={current}
-          form={verificationFindingForm}
+          form={applicationOfMeterialityForm}
           formMode={mode}
           next={next}
           prev={prev}
-          onValueChange={handleValuesUpdate}
+          handleValuesUpdate={handleValuesUpdate}
         />
       ),
     },
@@ -574,19 +614,19 @@ const StepperComponent = (props: VerificationStepProps) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">04</div>
-          <div className="title">{t('verificationReport:title05')}</div>
+          <div className="title">{t('verificationReport:title06')}</div>
         </div>
       ),
       description: (
-        <VerificationOpinionStep
-          useLocation={useLocation}
+        <MeansOfVerificationStep
+          translator={translator}
           t={t}
           current={current}
-          form={verificationOpinionForm}
+          form={meansOfVerificationForm}
           formMode={mode}
           next={next}
           prev={prev}
-          onValueChange={handleValuesUpdate}
+          handleValuesUpdate={handleValuesUpdate}
         />
       ),
     },
@@ -594,19 +634,19 @@ const StepperComponent = (props: VerificationStepProps) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">05</div>
-          <div className="title">{t('verificationReport:title06')}</div>
+          <div className="title">{t('verificationReport:title07')}</div>
         </div>
       ),
       description: (
-        <ReferenceStep
-          useLocation={useLocation}
+        <VerificationFindingStep
           t={t}
+          translator={translator}
           current={current}
-          form={referenceForm}
+          form={verificationFindingForm}
           formMode={mode}
           next={next}
           prev={prev}
-          onValueChange={handleValuesUpdate}
+          handleValuesUpdate={handleValuesUpdate}
         />
       ),
     },
@@ -614,19 +654,78 @@ const StepperComponent = (props: VerificationStepProps) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">06</div>
-          <div className="title">{t('verificationReport:title07')}</div>
+          <div className="title">{t('verificationReport:title08')}</div>
+        </div>
+      ),
+      description: (
+        <InternalQualityControlStep
+          t={t}
+          translator={translator}
+          current={current}
+          form={internalQualityControlForm}
+          formMode={mode}
+          next={next}
+          prev={prev}
+          handleValuesUpdate={handleValuesUpdate}
+        />
+      ),
+    },
+    {
+      title: (
+        <div className="stepper-title-container">
+          <div className="step-count">07</div>
+          <div className="title">{t('verificationReport:title09')}</div>
+        </div>
+      ),
+      description: (
+        <VerificationOpinionStep
+          t={t}
+          translator={translator}
+          current={current}
+          form={verificationOpinionForm}
+          formMode={mode}
+          next={next}
+          prev={prev}
+          handleValuesUpdate={handleValuesUpdate}
+        />
+      ),
+    },
+    {
+      title: (
+        <div className="stepper-title-container">
+          <div className="step-count">08</div>
+          <div className="title">{t('verificationReport:title10')}</div>
+        </div>
+      ),
+      description: (
+        <CertificationStep
+          translator={translator}
+          t={t}
+          current={current}
+          form={certificationStatementForm}
+          formMode={mode}
+          next={next}
+          prev={prev}
+          handleValuesUpdate={handleValuesUpdate}
+        />
+      ),
+    },
+    {
+      title: (
+        <div className="stepper-title-container">
+          <div className="step-count">09</div>
+          <div className="title">{t('verificationReport:title11')}</div>
         </div>
       ),
       description: (
         <AppendixStep
-          useLocation={useLocation}
+          translator={translator}
           t={t}
           current={current}
-          status={status}
           form={appendixForm}
           formMode={mode}
           prev={prev}
-          cancel={navigateToDetailsPage}
+          handleValuesUpdate={handleValuesUpdate}
           // approve={() => {
           //   showModalOnAction({
           //     actionBtnText: t('verificationReport:btnApprove'),
@@ -651,7 +750,6 @@ const StepperComponent = (props: VerificationStepProps) => {
           //     type: 'danger',
           //   });
           // }}
-          onFinish={onFinish}
         />
       ),
     },
@@ -668,7 +766,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           description: step.description,
         }))}
       />
-      {popupInfo && (
+      {/* {popupInfo && (
         <SlcfFormActionModel
           onCancel={() => {
             setSlcfActioModalVisible(false);
@@ -683,7 +781,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           remarkRequired={popupInfo!.remarkRequired}
           t={t}
         />
-      )}
+      )} */}
     </>
   );
 };

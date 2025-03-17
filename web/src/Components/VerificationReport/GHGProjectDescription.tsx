@@ -6,7 +6,6 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import { useLocation } from 'react-router-dom';
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
-import i18n from '../Internationalization/i18n';
 import { CustomStepsProps } from '../PDD/StepProps';
 import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
 import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
@@ -19,10 +18,9 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
 };
 
 export const GHGProjectDescriptionStep = (props: CustomStepsProps) => {
-  const { current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields } =
+  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields } =
     props;
 
-  const t = i18n.t;
   const calculateNetGHGEmissions = (value?: any, index?: number) => {
     let baselineEmissionReductionsVal = 0;
     let projectEmissionReductionsVal = 0;
@@ -140,7 +138,7 @@ export const GHGProjectDescriptionStep = (props: CustomStepsProps) => {
 
   const onFinish = (values: any) => {
     const tempValues = {
-      projectDetails: {
+      ghgProjectFormDetails: {
         g_projectEmissions: values?.g_projectEmissions,
         g_leakageEmission: values?.g_leakageEmission,
         netGHGEmissionReductions: (function () {
