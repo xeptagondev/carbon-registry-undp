@@ -1,11 +1,10 @@
 import { Button, Col, Form, Input, message, Row, StepProps, Upload } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CustomStepsProps } from './StepProps';
 import TextArea from 'antd/lib/input/TextArea';
 import { t } from 'i18next';
 import { CheckCircleOutlined, CloseCircleOutlined, UploadOutlined } from '@ant-design/icons';
-import { DocType } from '../../Definitions/Enums/document.type';
-import { isValidateFileType } from '../../Utils/DocumentValidator';
+
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
 import PhoneInput, {
@@ -34,11 +33,11 @@ const Step08 = (props: CustomStepsProps) => {
     prev,
     form,
     current,
-    handleValuesUpdate,
     submitForm,
     countries,
     disableFields,
     documentId,
+    handleLoading,
   } = props;
 
   const { get, post } = useConnection();
@@ -192,46 +191,75 @@ const Step08 = (props: CustomStepsProps) => {
 
   const approvePDD = async () => {
     if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
       if (state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER) {
-        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
-          refId: documentId,
-          documentType: DocumentEnum.PDD,
-          remarks: 'approved',
-          action: DocumentStateEnum.IC_APPROVED,
-        });
+        try {
+          const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+            refId: documentId,
+            documentType: DocumentEnum.PDD,
+            remarks: 'approved',
+            action: DocumentStateEnum.IC_APPROVED,
+          });
 
-        if (res?.statusText === 'SUCCESS') {
+          if (res?.statusText === 'SUCCESS') {
+            message.open({
+              type: 'success',
+              content: 'Project Design Document was certified successfully',
+              duration: 4,
+              style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+            });
+
+            if (next) {
+              next();
+            }
+          }
+        } catch (error) {
           message.open({
-            type: 'success',
-            content: 'Project Design Document was certified successfully',
+            type: 'error',
+            content: t('common:somethingWentWrong'),
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
-
-          if (next) {
-            next();
+        } finally {
+          if (handleLoading) {
+            handleLoading(false);
           }
         }
       }
 
       if (state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
-          refId: documentId,
-          documentType: DocumentEnum.PDD,
-          remarks: 'approved',
-          action: DocumentStateEnum.DNA_APPROVED,
-        });
+        try {
+          const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+            refId: documentId,
+            documentType: DocumentEnum.PDD,
+            remarks: 'approved',
+            action: DocumentStateEnum.DNA_APPROVED,
+          });
 
-        if (res?.statusText === 'SUCCESS') {
+          if (res?.statusText === 'SUCCESS') {
+            message.open({
+              type: 'success',
+              content: 'Project Design Document was certified successfully',
+              duration: 4,
+              style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+            });
+
+            if (next) {
+              next();
+            }
+          }
+        } catch (error) {
           message.open({
-            type: 'success',
-            content: 'Project Design Document was certified successfully',
+            type: 'error',
+            content: t('common:somethingWentWrong'),
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
-
-          if (next) {
-            next();
+        } finally {
+          if (handleLoading) {
+            handleLoading(false);
           }
         }
       }
@@ -240,39 +268,76 @@ const Step08 = (props: CustomStepsProps) => {
 
   const rejectPDD = async (remarks?: string) => {
     if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
       if (state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER) {
-        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
-          refId: documentId,
-          documentType: DocumentEnum.PDD,
-          remarks,
-          action: DocumentStateEnum.IC_REJECTED,
-        });
+        try {
+          const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+            refId: documentId,
+            documentType: DocumentEnum.PDD,
+            remarks,
+            action: DocumentStateEnum.IC_REJECTED,
+          });
 
-        if (res?.statusText === 'SUCCESS') {
+          if (res?.statusText === 'SUCCESS') {
+            message.open({
+              type: 'success',
+              content: 'Project Design Document was Declined',
+              duration: 4,
+              style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+            });
+
+            if (next) {
+              next();
+            }
+          }
+        } catch (error) {
           message.open({
-            type: 'success',
-            content: 'Project Design Document was Declined',
+            type: 'error',
+            content: t('common:somethingWentWrong'),
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
+        } finally {
+          if (handleLoading) {
+            handleLoading(false);
+          }
         }
       }
 
       if (state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
-          refId: documentId,
-          documentType: DocumentEnum.PDD,
-          remarks,
-          action: DocumentStateEnum.DNA_REJECTED,
-        });
+        try {
+          const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+            refId: documentId,
+            documentType: DocumentEnum.PDD,
+            remarks,
+            action: DocumentStateEnum.DNA_REJECTED,
+          });
 
-        if (res?.statusText === 'SUCCESS') {
+          if (res?.statusText === 'SUCCESS') {
+            message.open({
+              type: 'success',
+              content: 'Project Design Document was Rejected',
+              duration: 4,
+              style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+            });
+
+            if (next) {
+              next();
+            }
+          }
+        } catch (error) {
           message.open({
-            type: 'success',
-            content: 'Project Design Document was Rejected',
+            type: 'error',
+            content: t('common:somethingWentWrong'),
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
+        } finally {
+          if (handleLoading) {
+            handleLoading(false);
+          }
         }
       }
     }
@@ -339,24 +404,23 @@ const Step08 = (props: CustomStepsProps) => {
                 />
               </>
             )}
-            {state?.mode === FormMode.CREATE ||
-              (state?.mode === FormMode.EDIT && (
-                <SlcfFormActionModel
-                  actionBtnText={t('common:yes')}
-                  onCancel={closeDialog}
-                  title={t('pdd:confirmModalMessage')}
-                  onFinish={() => {
-                    closeDialog();
-                    onFinish(formValues);
-                  }}
-                  type="primary"
-                  subText=""
-                  openModal={showDialog}
-                  t={t}
-                  icon={<ConfirmSubmitSVG />}
-                  remarkRequired={false}
-                />
-              ))}
+            {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
+              <SlcfFormActionModel
+                actionBtnText={t('common:yes')}
+                onCancel={closeDialog}
+                title={t('pdd:confirmModalMessage')}
+                onFinish={() => {
+                  closeDialog();
+                  onFinish(formValues);
+                }}
+                type="primary"
+                subText=""
+                openModal={showDialog}
+                t={t}
+                icon={<ConfirmSubmitSVG />}
+                remarkRequired={false}
+              />
+            )}
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -1112,7 +1176,7 @@ const Step08 = (props: CustomStepsProps) => {
                     <Button danger size={'large'} onClick={prev}>
                       {t('pdd:prev')}
                     </Button>
-                    <Button type="primary" htmlType="submit" onClick={() => form.submit()}>
+                    <Button type="primary" htmlType="submit">
                       {t('pdd:submit')}
                     </Button>
                   </>
