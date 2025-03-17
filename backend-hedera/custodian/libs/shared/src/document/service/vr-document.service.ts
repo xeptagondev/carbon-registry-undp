@@ -239,6 +239,8 @@ export class VrDocumentService extends DocumentService {
                         ),
                     },
                 );
+                await queryRunner.commitTransaction();
+
                 return new DataResponseDto(HttpStatus.OK, {
                     refId: savedDoc.refId,
                 });
@@ -248,8 +250,6 @@ export class VrDocumentService extends DocumentService {
                     HttpStatus.UNAUTHORIZED,
                 );
             }
-
-            await queryRunner.commitTransaction();
         } catch (err) {
             console.log(err);
             await queryRunner.rollbackTransaction();
