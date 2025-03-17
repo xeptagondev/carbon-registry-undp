@@ -40,41 +40,47 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
-  const getCountryList = async () => {
-    const response = await get(API_PATHS.COUNTRY_LIST);
-    if (response.data) {
-      setCountryList(response.data);
-    }
-  };
-  useEffect(() => {
-    getCountryList();
-  }, []);
+
+  //get validation report details
+  // const fetchValidationData = async () => {
+  //   const response = await get (API_PATHS.VERIFICATION_DOC_LAST_VERSION);
+  //   if (response.data){
+
+  //   }
+  // };
+
+  // useEffect (()=>{
+  //   fetchValidationData();
+  // },[])
 
   const onFinish = (values: any) => {
-    const tempValues: any = {
-      basicInfoDetails: {
-        projectTitle: values?.b_projectTitle,
-        scaleOfProject: values?.b_scaleOfProject,
-        completionDate: values?.b_completionDate,
-        versionNoOfMonitoringReport: values?.b_versionNoOfMonitoringReport,
-        projectParticipants: values?.b_projectParticipants,
-        appliedMethodologies: values?.b_appliedMethodologies,
-        conditionalSectoralScopes: values?.b_conditionalSectoralScopes,
-        certfiedGHGReductions: values?.b_certfiedGHGReductions,
-        unfccRefNo: values?.b_unfccRefNo,
-        versionNoOfVerificationReport: values?.b_versionNoOfVerificationReport,
-        monitoringPeriodNoAndDuration: values?.b_monitoringPeriodNoAndDuration,
-        creditingPeriod: values?.b_creditingPeriod,
-        hostParty: values?.b_hostParty,
-        mandatorySectoralScopes: values?.b_mandatorySectoralScopes,
-        estimatedGHGEmissionReduction: values?.b_estimatedGHGEmissionReduction,
-        name: values?.b_name,
-        position: values?.b_position,
-        signature: values?.b_signature,
-      },
-    };
-    console.log('------------temp vals ------------', tempValues);
-    handleValuesUpdate(tempValues);
+    // const tempValues: any = {
+    //   basicInfoDetails: {
+    //     projectTitle: values?.b_projectTitle,
+    //     scaleOfProject: values?.b_scaleOfProject,
+    //     completionDate: values?.b_completionDate,
+    //     versionNoOfMonitoringReport: values?.b_versionNoOfMonitoringReport,
+    //     projectParticipants: values?.b_projectParticipants,
+    //     appliedMethodologies: values?.b_appliedMethodologies,
+    //     conditionalSectoralScopes: values?.b_conditionalSectoralScopes,
+    //     certfiedGHGReductions: values?.b_certfiedGHGReductions,
+    //     unfccRefNo: values?.b_unfccRefNo,
+    //     versionNoOfVerificationReport: values?.b_versionNoOfVerificationReport,
+    //     monitoringPeriodNoAndDuration: values?.b_monitoringPeriodNoAndDuration,
+    //     creditingPeriod: values?.b_creditingPeriod,
+    //     hostParty: values?.b_hostParty,
+    //     mandatorySectoralScopes: values?.b_mandatorySectoralScopes,
+    //     estimatedGHGEmissionReduction: values?.b_estimatedGHGEmissionReduction,
+    //     name: values?.b_name,
+    //     position: values?.b_position,
+    //     signature: values?.b_signature,
+    //   },
+    // };
+    console.log('--------values-----------', values);
+    const body = { ...values };
+    handleValuesUpdate({
+      basicDetailsFormValues: body,
+    });
   };
 
   return (

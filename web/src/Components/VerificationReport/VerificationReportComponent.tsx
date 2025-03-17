@@ -70,7 +70,7 @@ export const VerificationReportComponent = (props: { translator: i18n }) => {
   };
 
   useEffect(() => {
-    getCountryList();
+    // getCountryList();
   }, []);
 
   return (

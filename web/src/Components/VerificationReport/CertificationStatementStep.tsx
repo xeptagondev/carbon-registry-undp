@@ -1,10 +1,10 @@
 import { Button, Col, Form, Row } from 'antd';
-
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
-import i18n from '../Internationalization/i18n';
-export const ReferenceStep = (props: any) => {
-  const { useLocation, translator, current, form, formMode, next, prev, onValueChange } = props;
+import { VerificationStepProps } from './StepProps';
+
+export const CertificationStep = (props: VerificationStepProps) => {
+  const { t, current, form, formMode, next, prev, handleValuesUpdate } = props;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -14,11 +14,18 @@ export const ReferenceStep = (props: any) => {
     }
     return e?.fileList;
   };
-  const t = i18n.t;
+
+  const onFinish = (values: any) => {
+    // console.log('--------values-----------', values);
+    const body = { ...values };
+    handleValuesUpdate({
+      certificationStatement: body,
+    });
+  };
 
   return (
     <>
-      {current === 5 && (
+      {current === 9 && (
         <div>
           <div className="step-form-container">
             <Form
@@ -29,21 +36,25 @@ export const ReferenceStep = (props: any) => {
               requiredMark={true}
               form={form}
               disabled={FormMode.VIEW === formMode}
-              onFinish={async (values: any) => {
-                onValueChange({ reference: values });
-                next();
+              onFinish={(values: any) => {
+                onFinish(values);
+                if (next) {
+                  next();
+                }
               }}
             >
               <Row className="row" gutter={[40, 16]}>
                 <Col xl={24} md={24}>
                   <div className="step-form-left-col">
                     <Form.Item
-                      label={`${t('verificationReport:references')}`}
-                      name="references"
+                      label={`${t('verificationReport:cs_certificationStatement')}`}
+                      name="cs_certificationStatement"
                       rules={[
                         {
                           required: true,
-                          message: `${t('verificationReport:references')} ${t('isRequired')}`,
+                          message: `${t('verificationReport:cs_certificationStatement')} ${t(
+                            'isRequired'
+                          )}`,
                         },
                       ]}
                     >
