@@ -34,110 +34,6 @@ export class ProjectService {
         private readonly infDocumentService: InfDocumentService,
     ) {}
 
-    // async createProject(projectData: ProjectDto, requestUser: JWTPayload) {
-    //     this.logger.log(
-    //         `Request received to create project from user ${requestUser.userName}`,
-    //         this.loggerContext,
-    //     );
-
-    //     try {
-    //         this.validateProjectParticipant(requestUser);
-    //         const projectDto = JSON.parse(projectData.data);
-    //         const createdBy: UsersEntity = await this.userRepository.findOne({
-    //             where: { id: requestUser.userId },
-    //         });
-
-    //         const org: OrganizationEntity =
-    //             await this.organizationRepository.findOne({
-    //                 where: { id: requestUser.organizationId },
-    //             });
-    //         const assignees: OrganizationEntity[] =
-    //             await this.organizationRepository.find({
-    //                 where: {
-    //                     refId: In(projectDto.independentCertifiers),
-    //                 },
-    //             });
-
-    //         const projectEntity = new ProjectEntity();
-    //         projectEntity.title = projectDto.title;
-    //         projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
-    //         projectEntity.sectoralScope = projectDto.sectoralScope;
-    //         projectEntity.createdBy = createdBy;
-    //         projectEntity.organization = org;
-    //         projectEntity.assignees = assignees;
-    //         const savedProject: ProjectEntity =
-    //             await this.projectRepository.save(projectEntity);
-
-    //         const projectSchema: ProjectSchema = {
-    //             refId: savedProject.refId,
-    //             name: projectDto.title,
-    //             createdBy: createdBy.refId,
-    //             assignee: projectDto.independentCertifiers,
-    //         };
-    //         await this.guardianService.saveDocument(
-    //             requestUser.email,
-    //             GUARDIAN_API.BLOCKS.CREATE_PROJECT,
-    //             {
-    //                 document: projectSchema,
-    //                 ref: null,
-    //             },
-    //         );
-
-    //         const docUrls = [];
-    //         for (const doc of projectDto.additionalDocuments) {
-    //             let docUrl;
-
-    //             if (this.fileHelperService.isValidHttpUrl(doc)) {
-    //                 docUrl = doc;
-    //             } else {
-    //                 docUrl = await this.fileHelperService.uploadDocument(
-    //                     AdditionalDocType.INF_ADDITIONAL_DOCUMENT,
-    //                     savedProject.refId,
-    //                     doc,
-    //                 );
-    //             }
-    //             docUrls.push(docUrl);
-    //         }
-
-    //         projectDto.additionalDocuments = docUrls;
-
-    //         this.documentService.save(
-    //             {
-    //                 projectRefId: savedProject.refId,
-    //                 name: 'INF',
-    //                 documentType: DocumentEnum.INF,
-    //                 data: projectDto,
-    //             },
-    //             requestUser,
-    //         );
-
-    //         return new DataResponseDto(
-    //             HttpStatus.OK,
-    //             `Initial Notification was submitted successfully with refId : ${savedProject.refId}`,
-    //         );
-    //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    //     } catch (error) {
-    //         this.logger.error(error);
-    //         throw new HttpException(
-    //             error ? error : 'An error occurred while creating the project',
-    //             HttpStatus.INTERNAL_SERVER_ERROR,
-    //         );
-    //     }
-    // }
-
-    private validateProjectParticipant(requestUser: JWTPayload) {
-        if (
-            requestUser.organizationRole !==
-                OrganizationTypeEnum.PROJECT_DEVELOPER &&
-            requestUser.userRole !== RoleEnum.Admin
-        ) {
-            throw new HttpException(
-                'Unauthorized user request',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-    }
-
     public async query(
         query: QueryDto,
         requestUser: JWTPayload,
@@ -206,7 +102,6 @@ export class ProjectService {
             .offset(query.size * query.page - query.size)
             .limit(query.size);
 
-        console.log(qb.getQuery());
         const [entities, total] = await qb.getManyAndCount();
 
         const oldFormatData = [];
