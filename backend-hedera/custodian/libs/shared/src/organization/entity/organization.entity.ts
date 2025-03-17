@@ -67,6 +67,12 @@ export class OrganizationEntity {
     @Column({ nullable: true })
     paymentId?: string;
 
+    @Column({ name: 'hedera_account_id', nullable: true })
+    hederaAccountId?: string;
+
+    @Column({ name: 'hedera_account_key', nullable: true })
+    hederaAccountKey?: string;
+
     @Column({ nullable: true })
     faxNumber?: string;
 

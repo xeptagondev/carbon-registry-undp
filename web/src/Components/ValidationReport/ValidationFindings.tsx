@@ -15,7 +15,7 @@ const ValidationFindings = (props: ValidationStepsProps) => {
 
   return (
     <>
-      {current === 6 && (
+      {current === 5 && (
         <div>
           <div className="val-report-step-form-container">
             <Form
