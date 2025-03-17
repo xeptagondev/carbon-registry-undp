@@ -9,8 +9,9 @@ export class BaseDocumentDTO {
     id?: number;
 
     @ApiProperty()
+    @IsOptional()
     @IsString()
-    projectRefId: string;
+    projectRefId?: string;
 
     @ApiProperty({
         type: 'string',

@@ -38,6 +38,14 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
     @IsOptional()
     paymentId: string;
 
+    @Unwrap()
+    @IsOptional()
+    hederaAccountId?: string;
+
+    @Unwrap()
+    @IsOptional()
+    hederaAccountKey?: string;
+
     faxNo?: string;
 
     @Unwrap()

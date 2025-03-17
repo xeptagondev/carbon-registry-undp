@@ -99,6 +99,10 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
   const onFinish = async (values: any) => {
     const body: any = {
       ...values,
+      siteInspectionDurationStart: moment(values?.siteInspectionDurationStart)
+        .startOf('day')
+        .unix(),
+      siteInspectionDurationEnd: moment(values?.siteInspectionDurationEnd).startOf('day').unix(),
     };
 
     console.log(ProcessSteps.VR_VALIDATION_OPINION, body);

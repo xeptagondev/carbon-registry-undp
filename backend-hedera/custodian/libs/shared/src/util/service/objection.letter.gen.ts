@@ -23,69 +23,50 @@ export class ObjectionLetterGenerateService {
         const ministry = this.configService.get('docGenerate.ministryName');
         const country = this.configService.get('country');
         const capital = this.configService.get('docGenerate.countryCapital');
-
         const fileName = `NO_OBJECTION_LETTER_${projectId}.pdf`;
         const filePath = path.join(process.cwd(), 'public/documents', fileName);
-
-        // Ensure directory exists
         const folderPath = path.dirname(filePath);
         if (!fs.existsSync(folderPath)) {
             fs.mkdirSync(folderPath, { recursive: true });
         }
-
         const date = new Date().toDateString();
-
-        // Create a new PDF document
         const doc = new PDFDocument();
         const stream = fs.createWriteStream(filePath);
         doc.pipe(stream);
 
         doc.fontSize(8).text(`${capital}, ${date}`, { align: 'right' });
         doc.fontSize(9)
-            .font('fonts/Inter-Bold.ttf')
-            .text(`\n\nRe: Programme Design Document by ${orgName}`);
-
+            .font('Helvetica-Bold')
+            .text(`\n\nRe: Initial Notification Form by ${orgName}`);
         doc.text('\n\nNo Objection Letter', { align: 'center' });
-
         doc.fontSize(9)
-            .font('fonts/Inter-Regular.ttf')
+            .font('Helvetica')
             .text(
                 `\nTo Whom It May Concern,\n\nWe refer to the programme titled ${projectName} in ${country} as included in the funding proposal submitted by ${orgName} to us on ${date}.\n\nThe undersigned is the duly authorized representative of the ${ministry} of the Government of ${country}.\n\nPursuant to the regulations for Article 6.2 of the Paris Agreement in ${country}, the content of which we acknowledge to have reviewed, we hereby confirm no conflict with these regulations and communicate our no-objection to the programme as included in the funding proposal.`,
             );
-
         doc.text(
             `\n\nBy communicating our no-objection, it is implied that:\n\n`,
         );
-
         doc.text(
             `(a) The government of ${country} has no objection to the programme as included in the carbon credit proposal;\n\n(b) The programme as described in the proposal is in conformity with the national priorities, strategies, and plans for internationally transferable mitigation outcomes of ${country};\n\n(c) In accordance with ${country}'s environmental and social safeguards, the programme as included in the funding proposal is in conformity with relevant national laws and regulations.\n\n(d) This letter does not prejudicate later authorization for transfer.`,
         );
-
         doc.text(
             `\n\nWe confirm that our national process for ascertaining no-objection to the programme as included in the proposal has been duly followed.\n\nWe confirm that our no-objection applies to all projects or activities to be implemented within the scope of the programme.\n\nWe acknowledge that this letter will be made publicly available on the Carbon Transparency website, registered under ${projectId}.`,
         );
-
         doc.text(
             `\n\nSincerely,\n${ministerWithDesignation}\nGovernment of ${country}`,
         );
-
-        // Finalize PDF file
         doc.end();
 
-        // Wait for stream to finish writing
         await new Promise<void>((resolve) => {
             stream.on('finish', resolve);
         });
 
-        // Read file and convert to Base64
         const content = fs.readFileSync(filePath, { encoding: 'base64' });
-
-        // Upload to file storage (public/documents/)
         const url = await this.fileHandler.uploadFile(
             `documents/${fileName}`,
             content,
         );
-
         return url;
     }
 }
