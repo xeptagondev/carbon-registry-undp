@@ -16,23 +16,19 @@ export class AnalyticsService {
     ) {}
 
     async getProjectsData(filters: ProjectDataRequestDTO, jwtData: JWTPayload) {
-        // const where = {};
-        const where2: FindOptionsWhere<ProjectEntity> = {};
+        const where: FindOptionsWhere<ProjectEntity> = {};
         if (filters) {
             // add date range filters individually
             if (filters.startDate) {
-                // where['createdDate'] = LessThan(filters.startDate);
-                where2.createdDate = LessThan(filters.startDate);
+                where.createdDate = LessThan(filters.startDate);
             }
             if (filters.endDate) {
-                // where['createdDate'] = MoreThan(filters.endDate);
-                where2.createdDate = MoreThan(filters.endDate);
+                where.createdDate = MoreThan(filters.endDate);
             }
 
             // add sector filter
             if (filters.sector) {
-                // where['sector'] = filters.sector;
-                where2.sectoralScope = filters.sector;
+                where.sectoralScope = filters.sector;
             }
 
             // add isMine filter
@@ -41,27 +37,21 @@ export class AnalyticsService {
                     jwtData.organizationRole ===
                     OrganizationTypeEnum.PROJECT_DEVELOPER
                 ) {
-                    // where['organization'] = {
-                    //     id: jwtData.organizationId,
-                    // };
-                    where2.organization = {
+                    where.organization = {
                         id: jwtData.organizationId,
                     };
                 } else if (
                     jwtData.organizationRole ===
                     OrganizationTypeEnum.INDEPENDENT_CERTIFIER
                 ) {
-                    // where['assignees'] = {
-                    //     id: jwtData.organizationId,
-                    // };
-                    where2.assignees = {
+                    where.assignees = {
                         id: jwtData.organizationId,
                     };
                 }
             }
         }
 
-        const result = await this.projectRepository.find({ where: where2 });
+        const result = await this.projectRepository.find({ where: where });
 
         return result;
     }
