@@ -58,29 +58,6 @@ const StepperComponent = (props: VerificationStepProps) => {
     navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
-  const submitForm = async (formValues: any) => {
-    try {
-      const res = await post(API_PATHS.ADD_DOCUMENT, formValues);
-      console.log(res);
-      if (res?.response?.data?.statusCode === 200) {
-        message.open({
-          type: 'success',
-          content: 'Validation report has been submitted successfully',
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
-        navigateToDetailsPage();
-      }
-    } catch (error: any) {
-      message.open({
-        type: 'error',
-        content: 'Something went wrong',
-        duration: 4,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
-    }
-  };
-
   const next = () => {
     setCurrent(current + 1);
   };
@@ -99,6 +76,29 @@ const StepperComponent = (props: VerificationStepProps) => {
       console.log(tempContent);
       return { ...prevVal, data: tempContent };
     });
+
+    const submitForm = async (formValues: any) => {
+      try {
+        const res = await post(API_PATHS.CREATE_VERIFICATION_REPORT, formValues);
+        console.log(res);
+        if (res?.response?.data?.statusCode === 200) {
+          message.open({
+            type: 'success',
+            content: 'Validation report has been submitted successfully',
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+          navigateToDetailsPage();
+        }
+      } catch (error: any) {
+        message.open({
+          type: 'error',
+          content: 'Something went wrong',
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      }
+    };
 
     if (current === 10) {
       const formValues = {
