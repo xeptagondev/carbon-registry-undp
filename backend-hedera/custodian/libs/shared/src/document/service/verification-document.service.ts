@@ -9,7 +9,6 @@ import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -37,6 +36,9 @@ import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { AdditionalDocType } from '../enum/additional.document.type';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { InjectQueue } from '@nestjs/bull';
+import { MintNFTJobPayload } from '@app/shared/carbon-credit-token/constant/min-nft-payload';
+import { Queue } from 'bull';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -49,9 +51,10 @@ export class VerificationDocumentService extends DocumentService {
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
-        carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectQueue('nft-mint')
+        private readonly nftMintQueue: Queue<MintNFTJobPayload>,
     ) {
         super(
             documentRepository,
@@ -60,7 +63,6 @@ export class VerificationDocumentService extends DocumentService {
             dataSource,
             auditService,
             guardianService,
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
@@ -444,17 +446,33 @@ export class VerificationDocumentService extends DocumentService {
                     jwtData.email,
                 );
 
+                // const metadata = Uint8Array.from(
+                //     Buffer.from(documentEntity?.project?.refId, 'utf8'),
+                // );
+                // await this.carbonCreditGuardianService.mintProjectNFT(
+                //     documentEntity?.project?.tokenId,
+                //     metadata,
+                //     10, //TODO update the credit count
+                //     documentEntity?.project?.organization?.hederaAccountId,
+                //     documentEntity?.project?.organization?.hederaAccountKey,
+                // );
+
                 const metadata = Uint8Array.from(
                     Buffer.from(documentEntity?.project?.refId, 'utf8'),
                 );
-                await this.carbonCreditGuardianService.mintProjectNFT(
-                    documentEntity?.project?.tokenId,
+                const payload: MintNFTJobPayload = {
+                    tokenId: documentEntity?.project?.tokenId,
                     metadata,
-                    10, //TODO update the credit count
-                    documentEntity?.project?.organization?.hederaAccountId,
-                    documentEntity?.project?.organization?.hederaAccountKey,
-                );
+                    amount: 10, // TODO: update the credit count as needed
+                    accountId:
+                        documentEntity?.project?.organization?.hederaAccountId,
+                    privateKey:
+                        documentEntity?.project?.organization?.hederaAccountKey,
+                    projectRefId: documentEntity?.project?.refId,
+                    receiverRefId: documentEntity?.project?.organization?.refId,
+                };
 
+                await this.nftMintQueue.add(payload);
                 const countryName = this.configService.get('country');
                 const subject = VERIFICATION_APPROVE_HEADER.replace(
                     '{{countryName}}',

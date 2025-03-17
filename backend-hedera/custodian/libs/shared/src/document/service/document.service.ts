@@ -24,7 +24,6 @@ import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { DocumentQueryDTO } from '../dto/document.query.dto';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '../enum/additional.document.type';
@@ -39,7 +38,6 @@ export abstract class DocumentService {
         protected readonly dataSource: DataSource,
         protected readonly auditService: AuditService,
         protected readonly guardianService: GuardianService,
-        protected readonly carbonCreditGuardianService: CarbonCreditGuardianService,
         protected readonly fileHelperService: FileHelperService,
         protected readonly logger: InstantLogger,
     ) {}

@@ -19,9 +19,13 @@ import { PddDocumentService } from './service/pdd-document.service';
 import { VrDocumentService } from './service/vr-document.service';
 import { MonitoringDocumentService } from './service/monitoring-document.service';
 import { VerificationDocumentService } from './service/verification-document.service';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
     imports: [
+        BullModule.registerQueue({
+            name: 'nft-mint',
+        }),
         TypeOrmModule.forFeature([
             DocumentEntity,
             ProjectEntity,
