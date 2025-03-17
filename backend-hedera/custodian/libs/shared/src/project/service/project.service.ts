@@ -206,6 +206,7 @@ export class ProjectService {
             .offset(query.size * query.page - query.size)
             .limit(query.size);
 
+        console.log(qb.getQuery());
         const [entities, total] = await qb.getManyAndCount();
 
         const oldFormatData = [];
