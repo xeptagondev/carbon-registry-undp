@@ -7,7 +7,6 @@ import { DataExportService } from './service/data-export.service';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
 import { ObjectionLetterGenerateService } from './service/objection.letter.gen';
 import { Counter } from './entity/counter.entity';
-import { CreditIssueCertificateGenerator } from './service/credit.issue.certificate.gen';
 import { DateUtilService } from './service/date.util.service';
 import {
     AcceptLanguageResolver,
@@ -20,6 +19,7 @@ import * as path from 'path';
 import { UsersEntity } from '../users/entity/users.entity';
 import { InstantLogger } from './service/instant.logger.service';
 import { FileHelperService } from './service/file-helper.service';
+import { AuthorisationLetterGenerateService } from './service/authorisation.letter.gen';
 
 @Module({
     imports: [
@@ -44,7 +44,7 @@ import { FileHelperService } from './service/file-helper.service';
         UtilService,
         DataExportService,
         ObjectionLetterGenerateService,
-        CreditIssueCertificateGenerator,
+        AuthorisationLetterGenerateService,
         DateUtilService,
         InstantLogger,
         FileHelperService,
@@ -54,7 +54,7 @@ import { FileHelperService } from './service/file-helper.service';
         UtilService,
         DataExportService,
         ObjectionLetterGenerateService,
-        CreditIssueCertificateGenerator,
+        AuthorisationLetterGenerateService,
         DateUtilService,
         InstantLogger,
         FileHelperService,
