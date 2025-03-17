@@ -25,6 +25,7 @@ export class AnalyticsController {
         return await this.analyticsService.getPendingActions(req.user);
     }
 
+    @UseGuards(AuthGuardService)
     @Post('getProjectsData')
     async getProjectsData(
         @Body() filters: ProjectDataRequestDTO,

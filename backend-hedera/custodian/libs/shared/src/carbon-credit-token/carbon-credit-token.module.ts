@@ -5,6 +5,7 @@ import { UtilModule } from '../util/util.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CreditEventsEntity } from './entity/credit-events.entity';
 import { CarbonCreditService } from './service/carbon-credit.service';
+import { CarbonCreditGuardianService } from './service/carbon-credit-guardian.service';
 
 @Module({
     imports: [UtilModule, TypeOrmModule.forFeature([CreditEventsEntity])],
@@ -12,6 +13,8 @@ import { CarbonCreditService } from './service/carbon-credit.service';
         TokenRetirementService,
         TokenTransferService,
         CarbonCreditService,
+        CarbonCreditGuardianService,
     ],
+    exports: [CarbonCreditGuardianService],
 })
 export class CarbonCreditTokenModule {}

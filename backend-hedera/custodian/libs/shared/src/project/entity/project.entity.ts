@@ -135,7 +135,10 @@ export class ProjectEntity {
     noObjectionLetterUrl?: string;
 
     @Column({ nullable: true })
-    creditCertificateUrl?: string;
+    authoroiseLetterUrl?: string;
+
+    @Column({ nullable: true })
+    tokenId?: string;
 
     @Column({ nullable: true, type: 'bigint' })
     createdDate?: number;

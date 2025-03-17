@@ -1,0 +1,603 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { DocumentService } from './document.service';
+import { BaseDocumentDTO } from '../dto/base-document.dto';
+import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
+import { DocumentEntity } from '../entity/document.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { MailService } from '@app/shared/mail/service/mail.service';
+import { AuditService } from '@app/shared/audit/service/audit.service';
+import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
+import { DocumentStateEnum } from '../enum/document-state.enum';
+import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
+import { DocumentSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
+import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import { RoleEnum } from '@app/shared/role/enum/role.enum';
+import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
+import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
+import {
+    VERIFICATION_APPROVE_HEADER,
+    VERIFICATION_CREATE_HEADER,
+    VERIFICATION_REJECT_HEADER,
+} from '@app/shared/mail/constant/mail-header.constant';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
+import { FileHelperService } from '@app/shared/util/service/file-helper.service';
+import { DocumentActionDTO } from '../dto/document-action-request.dto';
+import {
+    ButtonActionEnum,
+    ButtonNameEnum,
+} from '@app/shared/guardian/enum/button-type.enum';
+import { DocumentEnum } from '../enum/document.enum';
+import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
+import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
+import { AdditionalDocType } from '../enum/additional.document.type';
+import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+
+@Injectable()
+export class VerificationDocumentService extends DocumentService {
+    private readonly loggerContext = 'MonitoringDocumentService';
+    constructor(
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
+        configService: ConfigService,
+        mailService: MailService,
+        dataSource: DataSource,
+        auditService: AuditService,
+        guardianService: GuardianService,
+        carbonCreditGuardianService: CarbonCreditGuardianService,
+        fileHelperService: FileHelperService,
+        logger: InstantLogger,
+    ) {
+        super(
+            documentRepository,
+            configService,
+            mailService,
+            dataSource,
+            auditService,
+            guardianService,
+            carbonCreditGuardianService,
+            fileHelperService,
+            logger,
+        );
+    }
+
+    async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
+        this.logger.log(
+            `Request received to create verification report from ${jwtData.userName}`,
+            this.loggerContext,
+        );
+        if (
+            !(
+                jwtData.organizationRole ===
+                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+                jwtData.userRole === RoleEnum.Admin
+            )
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
+
+        const lastMonitoring: DocumentEntity =
+            await this.findLastDocumentByType(
+                DocumentEnum.MONITORING,
+                dto.projectRefId,
+                dto.activityRefId,
+            );
+        const lastVerification: DocumentEntity =
+            await this.findLastDocumentByType(
+                DocumentEnum.VERIFICATION,
+                dto.projectRefId,
+                dto.activityRefId,
+            );
+
+        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+        if (
+            lastMonitoring &&
+            !(lastMonitoring.state === DocumentStateEnum.IC_APPROVED)
+        ) {
+            throw new HttpException(
+                'Action not allowed. Conflicting documents',
+                HttpStatus.CONFLICT,
+            );
+        }
+        if (
+            lastVerification &&
+            !(lastVerification.state === DocumentStateEnum.DNA_REJECTED)
+        ) {
+            throw new HttpException(
+                'Action not allowed. Conflicting documents',
+                HttpStatus.CONFLICT,
+            );
+        }
+
+        // start transaction and save document
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            await queryRunner.startTransaction();
+            const project: ProjectEntity = await queryRunner.manager.findOne(
+                ProjectEntity,
+                {
+                    where: { refId: dto.projectRefId },
+                    relations: {
+                        organization: true,
+                        assignees: true,
+                        createdBy: true,
+                    },
+                },
+            );
+
+            const lastActivity = await queryRunner.manager.findOne(
+                ActivityEntity,
+                {
+                    where: {
+                        project: {
+                            refId: dto.projectRefId,
+                        },
+                    },
+                    order: {
+                        version: 'DESC',
+                    },
+                },
+            );
+
+            if (!project) {
+                throw new HttpException(
+                    'Project not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            } else if (
+                project &&
+                project.projectProposalStage !== ProjectProposalStage.AUTHORISED
+            ) {
+                throw new HttpException(
+                    `Project should be in ${ProjectProposalStage.AUTHORISED} stage`,
+                    HttpStatus.BAD_REQUEST,
+                );
+            } else if (
+                lastActivity &&
+                !(
+                    lastActivity.state ===
+                        ActivityStateEnum.MONITORING_REPORT_VERIFIED ||
+                    lastActivity.state ===
+                        ActivityStateEnum.VERIFICATION_REPORT_REJECTED
+                )
+            ) {
+                throw new HttpException(
+                    // eslint-disable-next-line max-len
+                    `Activity should be in ${ActivityStateEnum.MONITORING_REPORT_VERIFIED} or ${ActivityStateEnum.VERIFICATION_REPORT_REJECTED} state`,
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const assigneeOrgEmails: string[] = project.assignees.map(
+                (user) => user.email,
+            );
+
+            const assigneeAdminEmails = await this.getOrgAdminEmails(
+                assigneeOrgEmails,
+                queryRunner,
+            );
+
+            if (!assigneeAdminEmails.includes(jwtData.email)) {
+                throw new HttpException(
+                    'Unauthorised',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+            const verificationData = dto.data;
+
+            if (
+                verificationData?.verificationFinding?.optionalDocuments &&
+                verificationData?.verificationFinding?.optionalDocuments
+                    .length > 0
+            ) {
+                await this.uploadDocuments(
+                    verificationData?.verificationFinding?.optionalDocuments,
+                    AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_FINDING_OPTIONAL_DOCUMENT,
+                    project.refId,
+                );
+            }
+            if (
+                verificationData?.verificationOpinion?.signature1 &&
+                verificationData?.verificationOpinion?.signature1.length > 0
+            ) {
+                await this.uploadDocuments(
+                    verificationData?.verificationOpinion?.signature1,
+                    AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
+                    project.refId,
+                );
+            }
+            if (
+                verificationData?.verificationOpinion?.signature2 &&
+                verificationData?.verificationOpinion?.signature2.length > 0
+            ) {
+                await this.uploadDocuments(
+                    verificationData?.verificationOpinion?.signature2,
+                    AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
+                    project.refId,
+                );
+            }
+
+            const submittedUser: UsersEntity =
+                await queryRunner.manager.findOne(UsersEntity, {
+                    where: { id: jwtData.userId },
+                    relations: { organization: true },
+                });
+            const countryName = this.configService.get('country');
+            const programmePageLink = this.getProgrammePageLink(project.refId);
+
+            const documentEntity = new DocumentEntity();
+            documentEntity.title = dto.name;
+            documentEntity.project = project;
+            documentEntity.documentType = dto.documentType;
+            documentEntity.state = DocumentStateEnum.PENDING;
+            documentEntity.activity = lastActivity;
+            documentEntity.data = dto.data;
+            documentEntity.submittedUser = submittedUser;
+
+            // save document
+            const savedDoc = await queryRunner.manager.save(
+                DocumentEntity,
+                documentEntity,
+            );
+
+            const organizationDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    project?.organization?.refId,
+                    jwtData.email,
+                );
+
+            const documentSchema: DocumentSchema = {
+                refId: savedDoc.refId,
+                documentType: dto.documentType,
+                createdBy: submittedUser.refId,
+                project: project.refId,
+                name: dto.documentType,
+                version: lastVerification ? lastVerification.version + 1 : 1,
+                data: JSON.stringify(dto.data),
+                activity: dto.activityRefId,
+            };
+
+            await this.guardianService.saveDocument(
+                jwtData.email,
+                this.getBlockNameByDocType(dto.documentType),
+                {
+                    document: documentSchema,
+                    ref: { document: organizationDoc },
+                },
+            );
+
+            await this.updateaActivityStage(
+                queryRunner,
+                documentEntity?.activity?.refId,
+                ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
+            );
+
+            await this.logProjectStage(
+                queryRunner,
+                project.refId,
+                ProjectAuditLogType.VERIFICATION_REPORT_SUBMITTED,
+                jwtData.userId,
+            );
+
+            const lastActivityDoc =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ACTIVITY_GRID,
+                    lastActivity.refId,
+                    jwtData.email,
+                );
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.ACTIVITY_VERIFICATION_REPORT_SUBMIT,
+                ButtonActionEnum.SUBMIT,
+                lastActivityDoc,
+                jwtData.email,
+            );
+
+            await this.sendEmailToProjectOrganizationAdmins(
+                project,
+                queryRunner,
+                VERIFICATION_CREATE_HEADER,
+                MailTemplateEnum.VERIFICATION_CREATE_PD,
+                {
+                    organizationNameIC: jwtData.organizationName,
+                    organizationNamePD: project.organization.name,
+                    countryName,
+                    projectName: project.title,
+                    programmePageLink,
+                },
+            );
+
+            await this.sendEmailToDNAAdmins(
+                queryRunner,
+                VERIFICATION_CREATE_HEADER,
+                MailTemplateEnum.VERIFICATION_CREATE_DNA,
+                {
+                    organizationNameIC: jwtData.organizationName,
+                    organizationNamePD: project.organization.name,
+                    countryName,
+                    projectName: project.title,
+                    programmePageLink,
+                },
+            );
+
+            await queryRunner.commitTransaction();
+            return new DataResponseDto(HttpStatus.OK, {
+                refId: savedDoc.refId,
+            });
+        } catch (err) {
+            console.log(err);
+            await queryRunner.rollbackTransaction();
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                'Failed to submit document',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async verify(requestData: DocumentActionDTO, jwtData: JWTPayload) {
+        this.logger.log(
+            `Request received to verify verification report from ${jwtData.userName}`,
+            this.loggerContext,
+        );
+        if (
+            !(
+                jwtData.organizationRole ==
+                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                (jwtData.userRole == RoleEnum.Admin ||
+                    jwtData.userRole == RoleEnum.Root)
+            )
+        ) {
+            throw new HttpException('Unauthroized', HttpStatus.BAD_REQUEST);
+        }
+
+        const documentEntity: DocumentEntity =
+            await this.getDocumentWithProjectAssignees(requestData);
+        if (!documentEntity) {
+            throw new HttpException(
+                'Invalid document id',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+        const queryRunner = this.dataSource.createQueryRunner();
+        queryRunner.connect();
+        try {
+            queryRunner.startTransaction();
+
+            // Previous state has to be pending
+            if (documentEntity.state !== DocumentStateEnum.PENDING) {
+                throw new HttpException(
+                    `Document not in ${DocumentStateEnum.PENDING} state`,
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            // can only be made by DNA admin(s)
+
+            documentEntity.state = requestData.action;
+            documentEntity.remarks = requestData.remarks;
+
+            // get approving user
+            const user: UsersEntity = await queryRunner.manager.findOneBy(
+                UsersEntity,
+                {
+                    email: jwtData.email,
+                },
+            );
+
+            // const prevApproveUser = document.approvedUser;
+
+            // set user who approved the current state change
+            documentEntity.approvedUser = user;
+
+            // save document
+
+            await queryRunner.manager.save(DocumentEntity, documentEntity);
+
+            if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
+                await this.updateaActivityStage(
+                    queryRunner,
+                    documentEntity?.activity?.refId,
+                    ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
+                );
+
+                await this.logProjectStage(
+                    queryRunner,
+                    documentEntity?.project?.refId,
+                    ProjectAuditLogType.VERIFICATION_REPORT_APPROVED,
+                    jwtData.userId,
+                );
+
+                const activityDoc =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.ACTIVITY_GRID,
+                        documentEntity?.activity?.refId,
+                        jwtData.email,
+                    );
+
+                await this.guardianService.buttonActionRequest(
+                    ButtonNameEnum.ACTIVITY_VERIFICATION_REPORT_APPROVE_REJECT,
+                    ButtonActionEnum.APPROVE,
+                    activityDoc,
+                    jwtData.email,
+                );
+                const verificationDoc =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.VERIFICATION_GRID,
+                        documentEntity?.refId,
+                        jwtData.email,
+                    );
+                await this.guardianService.buttonActionRequest(
+                    ButtonNameEnum.VERIFICATION_REPORT_APPROVE_REJECT,
+                    ButtonActionEnum.APPROVE,
+                    verificationDoc,
+                    jwtData.email,
+                );
+
+                const metadata = Uint8Array.from(
+                    Buffer.from(documentEntity?.project?.refId, 'utf8'),
+                );
+                await this.carbonCreditGuardianService.mintProjectNFT(
+                    documentEntity?.project?.tokenId,
+                    metadata,
+                    10, //TODO update the credit count
+                    documentEntity?.project?.organization?.hederaAccountId,
+                    documentEntity?.project?.organization?.hederaAccountKey,
+                );
+
+                const countryName = this.configService.get('country');
+                const subject = VERIFICATION_APPROVE_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                );
+
+                const contextPD = {
+                    organisationNameIC:
+                        documentEntity?.submittedUser?.organization?.name,
+                    organisationNamePD:
+                        documentEntity?.project?.organization?.name,
+                    countryName: countryName,
+                    projectName: documentEntity?.project?.title,
+                    userName: documentEntity?.project?.createdBy?.name,
+                    remarks: requestData.remarks,
+                    programmePageLink: this.getProgrammePageLink(
+                        documentEntity.project.refId,
+                    ),
+                };
+
+                const contextIC = {
+                    organisationNameIC:
+                        documentEntity?.submittedUser?.organization?.name,
+                    organisationNamePD:
+                        documentEntity?.project?.organization?.name,
+                    countryName: countryName,
+                    projectName: documentEntity?.project?.title,
+                    userName: documentEntity?.project?.createdBy?.name,
+                    remarks: requestData.remarks,
+                    programmePageLink: this.getProgrammePageLink(
+                        documentEntity.project.refId,
+                    ),
+                };
+
+                await this.sendEmailToProjectOrganizationAdmins(
+                    documentEntity.project,
+                    queryRunner,
+                    subject,
+                    MailTemplateEnum.VERIFICATION_APPROVE_PD,
+                    contextPD,
+                );
+
+                await this.sendEmailToProjectAssignees(
+                    documentEntity.project,
+                    queryRunner,
+                    subject,
+                    MailTemplateEnum.VERIFICATION_APPROVE_IC,
+                    contextIC,
+                );
+            } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
+                await this.updateaActivityStage(
+                    queryRunner,
+                    documentEntity?.activity?.refId,
+                    ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
+                );
+                await this.logProjectStage(
+                    queryRunner,
+                    documentEntity?.project?.refId,
+                    ProjectAuditLogType.VERIFICATION_REPORT_REJECTED,
+                    jwtData.userId,
+                );
+                const activityDoc =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.ACTIVITY_GRID,
+                        documentEntity?.activity?.refId,
+                        jwtData.email,
+                    );
+
+                await this.guardianService.buttonActionRequest(
+                    ButtonNameEnum.ACTIVITY_VERIFICATION_REPORT_APPROVE_REJECT,
+                    ButtonActionEnum.REJECT,
+                    activityDoc,
+                    jwtData.email,
+                );
+
+                const verificationDoc =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.VERIFICATION_GRID,
+                        documentEntity?.refId,
+                        jwtData.email,
+                    );
+
+                await this.guardianService.buttonActionRequest(
+                    ButtonNameEnum.VERIFICATION_REPORT_APPROVE_REJECT,
+                    ButtonActionEnum.REJECT,
+                    verificationDoc,
+                    jwtData.email,
+                );
+
+                const countryName = this.configService.get('country');
+                const subject = VERIFICATION_REJECT_HEADER.replace(
+                    '{{countryName}}',
+                    countryName,
+                );
+
+                const contextPD = {
+                    organisationNameIC:
+                        documentEntity?.submittedUser?.organization?.name,
+                    organisationNamePD:
+                        documentEntity?.project?.organization?.name,
+                    countryName,
+                    projectName: documentEntity?.project?.title,
+                    userName: documentEntity?.project?.createdBy?.name,
+                    remarks: requestData.remarks,
+                    programmePageLink: this.getProgrammePageLink(
+                        documentEntity.project.refId,
+                    ),
+                };
+
+                const contextIC = {
+                    organisationNameIC:
+                        documentEntity?.submittedUser?.organization?.name,
+                    organisationNamePD:
+                        documentEntity?.project?.organization?.name,
+                    countryName,
+                    projectName: documentEntity?.project?.title,
+                    userName: documentEntity?.project?.createdBy?.name,
+                    remarks: requestData.remarks,
+                    programmePageLink: this.getProgrammePageLink(
+                        documentEntity.project.refId,
+                    ),
+                };
+
+                await this.sendEmailToProjectOrganizationAdmins(
+                    documentEntity.project,
+                    queryRunner,
+                    subject,
+                    MailTemplateEnum.VERIFICATION_REJECT_PD,
+                    contextPD,
+                );
+
+                await this.sendEmailToProjectAssignees(
+                    documentEntity.project,
+                    queryRunner,
+                    subject,
+                    MailTemplateEnum.VERIFICATION_REJECT_IC,
+                    contextIC,
+                );
+            }
+            queryRunner.commitTransaction();
+        } catch (err) {
+            queryRunner.rollbackTransaction();
+            throw err;
+        }
+    }
+}
