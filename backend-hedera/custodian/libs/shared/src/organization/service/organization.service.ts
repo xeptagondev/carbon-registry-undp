@@ -299,26 +299,9 @@ export class OrganizationService extends SuperService<
         dto: Partial<OrganizationDto>,
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
-        let filterWithCompanyStatesIn: OrganizationStateEnum[];
-
-        if (
-            !(
-                requestUser.organizationRole ===
-                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
-            )
-        ) {
-            filterWithCompanyStatesIn = [
-                OrganizationStateEnum.SUSPENDED,
-                OrganizationStateEnum.ACTIVE,
-            ];
-        } else {
-            filterWithCompanyStatesIn = [
-                OrganizationStateEnum.SUSPENDED,
-                OrganizationStateEnum.ACTIVE,
-                OrganizationStateEnum.REJECTED,
-                OrganizationStateEnum.PENDING,
-            ];
-        }
+        const filterWithCompanyStatesIn: OrganizationStateEnum[] = [
+            OrganizationStateEnum.ACTIVE,
+        ];
 
         const [entities, total] = await this.organizationRepository
             .createQueryBuilder('organization')
