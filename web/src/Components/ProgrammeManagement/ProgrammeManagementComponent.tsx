@@ -350,7 +350,7 @@ export const ProgrammeManagementComponent = (props: any) => {
     } else {
       sort = {
         key: 'createdTime',
-        order: 'ASC',
+        order: 'DESC',
       };
     }
 
