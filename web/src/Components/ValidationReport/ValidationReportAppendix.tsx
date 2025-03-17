@@ -187,7 +187,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                   icon={<CloseCircleOutlined />}
                   title={t('validationReport:approveMessage')}
                   onFinish={() => {
-                    approveValidationReport()
+                    approveValidationReport();
                   }}
                   remarkRequired
                   type="danger"
