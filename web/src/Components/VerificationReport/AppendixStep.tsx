@@ -39,6 +39,9 @@ export const AppendixStep = (props: VerificationStepProps) => {
     const appendixFormValues: any = {
       ...values,
       appendix1Documents: (await fileUploadValueExtract(values, 'appendix1Documents'))[0],
+      farIdDate: moment(values?.farIdDate).startOf('day').unix(),
+      responseDate: moment(values?.responseDate).startOf('day').unix(),
+      doeDate: moment(values?.doeDate).startOf('day').unix(),
     };
 
     handleValuesUpdate({ appendix: appendixFormValues });
