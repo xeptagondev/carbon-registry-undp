@@ -385,7 +385,7 @@ const StepperComponent = (props: any) => {
         let res;
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
-            projectRefId: id,
+            projectRefId: state?.documentRefId,
             DocumentEnum: DocumentEnum.VALIDATION,
           });
 
