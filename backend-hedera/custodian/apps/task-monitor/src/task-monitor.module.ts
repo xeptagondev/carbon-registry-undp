@@ -48,6 +48,7 @@ import ormConfig from '@app/core/config/orm-config';
         UsersModule,
         UtilModule,
         JwtModule,
+        CarbonCreditTokenModule,
     ],
     providers: [TaskMonitorService],
 })

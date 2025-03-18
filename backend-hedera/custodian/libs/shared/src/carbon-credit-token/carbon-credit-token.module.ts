@@ -7,6 +7,7 @@ import { CreditEventsEntity } from './entity/credit-events.entity';
 import { CarbonCreditService } from './service/carbon-credit.service';
 import { CarbonCreditGuardianService } from './service/carbon-credit-guardian.service';
 
+import { NftMintProcessor } from './service/nft-mint-processer';
 @Module({
     imports: [UtilModule, TypeOrmModule.forFeature([CreditEventsEntity])],
     providers: [
@@ -14,7 +15,8 @@ import { CarbonCreditGuardianService } from './service/carbon-credit-guardian.se
         TokenTransferService,
         CarbonCreditService,
         CarbonCreditGuardianService,
+        NftMintProcessor,
     ],
-    exports: [CarbonCreditGuardianService],
+    exports: [CarbonCreditGuardianService, NftMintProcessor],
 })
 export class CarbonCreditTokenModule {}

@@ -10,7 +10,6 @@ import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -54,7 +53,6 @@ export class InfDocumentService extends DocumentService {
         auditService: AuditService,
         guardianService: GuardianService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
-        carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
@@ -65,7 +63,6 @@ export class InfDocumentService extends DocumentService {
             dataSource,
             auditService,
             guardianService,
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
@@ -114,6 +111,12 @@ export class InfDocumentService extends DocumentService {
                     },
                 });
 
+            if (!(assignees && assignees.length)) {
+                throw new HttpException(
+                    'Did not find assignees',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const projectEntity = new ProjectEntity();
             projectEntity.title = infData.title;
             projectEntity.projectProposalStage = ProjectProposalStage.PENDING;

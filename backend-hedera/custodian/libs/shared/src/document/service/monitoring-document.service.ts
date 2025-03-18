@@ -10,7 +10,6 @@ import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -49,13 +48,14 @@ export class MonitoringDocumentService extends DocumentService {
     constructor(
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
+        @InjectRepository(ActivityEntity)
+        private readonly activityRepository: Repository<ActivityEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
 
-        carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
@@ -66,13 +66,23 @@ export class MonitoringDocumentService extends DocumentService {
             dataSource,
             auditService,
             guardianService,
-
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
     }
 
+    private async findLastActivity(project: string) {
+        return await this.activityRepository.findOne({
+            where: {
+                project: {
+                    refId: project,
+                },
+            },
+            order: {
+                version: 'DESC',
+            },
+        });
+    }
     async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
         this.logger.log(
             `Request received to create monitoring report from ${jwtData.userName}`,
@@ -100,6 +110,10 @@ export class MonitoringDocumentService extends DocumentService {
                 dto.activityRefId,
             );
 
+        const lastActivity: ActivityEntity = await this.findLastActivity(
+            dto.projectRefId,
+        );
+
         // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
         if (lastVR && !(lastVR.state === DocumentStateEnum.DNA_APPROVED)) {
             throw new HttpException(
@@ -108,8 +122,13 @@ export class MonitoringDocumentService extends DocumentService {
             );
         }
         if (
-            lastMonitoring &&
-            !(lastMonitoring.state === DocumentStateEnum.IC_REJECTED)
+            lastActivity &&
+            !(
+                lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_REJECTED ||
+                lastActivity.state ===
+                    ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
+            )
         ) {
             throw new HttpException(
                 'Action not allowed. Conflicting documents',
@@ -367,22 +386,37 @@ export class MonitoringDocumentService extends DocumentService {
             throw new HttpException('Unauthroized', HttpStatus.BAD_REQUEST);
         }
 
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
 
-            /*
-                        1. Authorize the call
-                    */
+            const documentEntity = await queryRunner.manager.findOne(
+                DocumentEntity,
+                {
+                    where: { refId: requestData.refId },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                },
+            );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const assigneeOrgEmails: string[] =
                 documentEntity.project.assignees.map((user) => user.email);
 
