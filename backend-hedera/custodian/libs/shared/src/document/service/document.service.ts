@@ -353,12 +353,12 @@ export abstract class DocumentService {
             },
         });
 
-            return { data: lastDoc };
-        } catch (err) {
-            throw new HttpException(
-                'Error occurred in query document',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
+        return { data: lastDoc };
+    }
+    catch(err) {
+        throw new HttpException(
+            'Error occurred in query document',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+        );
     }
 }
