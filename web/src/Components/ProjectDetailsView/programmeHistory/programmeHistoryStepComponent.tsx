@@ -103,6 +103,71 @@ const getLogDescription = (log: any, t: any) => {
     case ProjectActivityStage.REJECTED:
       return formatString('slcfProgrammeTimeline:infRejectedDescription', [log.name], t);
       break;
+    case ProjectActivityStage.PDD_SUBMITTED:
+      return formatString('slcfProgrammeTimeline:pddSubmttedTitle', [log.name], t);
+    case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
+      return formatString('slcfProgrammeTimeline:pddRejectedDescription', [log.name], t);
+    case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:
+      return formatString('slcfProgrammeTimeline:pddApprovedDescription', [log.name], t);
+    case ProjectActivityStage.PDD_REJECTED_BY_DNA:
+      return formatString('slcfProgrammeTimeline:pddRejectedTitle', [log.name], t);
+    case ProjectActivityStage.PDD_APPROVED_BY_DNA:
+      return formatString('slcfProgrammeTimeline:pddApprovedDescription', [log.name], t);
+    case ProjectActivityStage.VALIDATION_REPORT_SUBMITTED:
+      return formatString('slcfProgrammeTimeline:validationReportCreatedTitle', [log.name], t);
+    case ProjectActivityStage.VALIDATION_REPORT_REJECTED:
+      return formatString(
+        'slcfProgrammeTimeline:validationReportRejectedDescription',
+        [log.name],
+        t
+      );
+    case ProjectActivityStage.AUTHORISED:
+      return formatString('slcfProgrammeTimeline:authorisedDescription', [], t);
+    case ProjectActivityStage.MONITORING_REPORT_SUBMITTED:
+      return formatString(
+        'slcfProgrammeTimeline:monitoringReportCreatedDescription',
+        [log.name],
+        t
+      );
+    case ProjectActivityStage.MONITORING_REPORT_REJECTED:
+      return formatString(
+        'slcfProgrammeTimeline:monitoringReportRejectedDescription',
+        [log.name],
+        t
+      );
+    case ProjectActivityStage.MONITORING_REPORT_APPROVED:
+      return formatString(
+        'slcfProgrammeTimeline:monitoringReportApprovedDescription',
+        [log.name],
+        t
+      );
+    case ProjectActivityStage.VERIFICATION_REPORT_SUBMITTED:
+      return formatString(
+        'slcfProgrammeTimeline:verificationReportCreatedDescription',
+        [log.name],
+        t
+      );
+    case ProjectActivityStage.VERIFICATION_REPORT_REJECTED:
+      return formatString(
+        'slcfProgrammeTimeline:verificationReportRejectedDescription',
+        [log.name],
+        t
+      );
+    case ProjectActivityStage.VERIFICATION_REPORT_APPROVED:
+      return formatString(
+        'slcfProgrammeTimeline:verificationReportApprovedDescription',
+        [log.name],
+        t
+      );
+    case ProjectActivityStage.CREDITS_ISSUED:
+      return formatString(
+        'slcfProgrammeTimeline:creditIssuedDescription',
+        [log.data.creditIssued],
+        t
+      );
+
+    default:
+      break;
     // case 'CREATE_COST_QUOTATION':
     //   return formatString(
     //     'slcfProgrammeTimeline:costQuoteCreatedDescription',
@@ -138,155 +203,152 @@ const getLogDescription = (log: any, t: any) => {
     //     t
     //   );
     //   break;
-    case 'CMA_CREATE':
-      return formatString('slcfProgrammeTimeline:cmaCreatedDescription', [log.name], t);
-      break;
-    case 'CMA_APPROVED':
-      return formatString(
-        'slcfProgrammeTimeline:cmaApprovedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'CMA_REJECTED':
-      return formatString(
-        'slcfProgrammeTimeline:cmaRejectedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'VALIDATION_REPORT_CREATED':
-      return formatString(
-        'slcfProgrammeTimeline:validationReportCreatedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'VALIDATION_REPORT_APPROVED':
-      return formatString(
-        'slcfProgrammeTimeline:validationReportApprovedDescription',
-        [log.name],
-        t
-      );
-      break;
-    case 'AUTHORISED':
-      return formatString('slcfProgrammeTimeline:authorisedDescription', [], t);
-      break;
-    case 'VALIDATION_REPORT_REJECTED':
-      return formatString(
-        'slcfProgrammeTimeline:validationReportRejectedDescription',
-        [log.name],
-        t
-      );
-      break;
-    case 'MONITORING_CREATE':
-      return formatString(
-        'slcfProgrammeTimeline:monitoringReportCreatedDescription',
-        [log.name],
-        t
-      );
-      break;
-    case 'MONITORING_REJECTED':
-      return formatString(
-        'slcfProgrammeTimeline:monitoringReportRejectedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'MONITORING_APPROVED':
-      return formatString(
-        'slcfProgrammeTimeline:monitoringReportApprovedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'VERIFICATION_CREATE':
-      return formatString(
-        'slcfProgrammeTimeline:verificationReportCreatedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'VERIFICATION_APPROVED':
-      return formatString(
-        'slcfProgrammeTimeline:verificationReportApprovedDescription',
-        [log.name],
-        t
-      );
-      break;
-    case 'VERIFICATION_REJECTED':
-      return formatString(
-        'slcfProgrammeTimeline:verificationReportRejectedDescription',
-        [log.name],
-        t
-      );
-      break;
-    case 'CREDIT_ISSUED':
-      return formatString(
-        'slcfProgrammeTimeline:creditIssuedDescription',
-        [log.data.creditIssued],
-        t
-      );
-      break;
-    case 'TRANSFER_REQUESTED':
-      return formatString(
-        'slcfProgrammeTimeline:transferRequestedDescription',
-        [log.name, log.data.creditAmount, log.toCompanyName],
-        t
-      );
-      break;
-    case 'TRANSFER_APPROVED':
-      return formatString(
-        'slcfProgrammeTimeline:transferApprovedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'TRANSFER_CANCELLED':
-      return formatString(
-        'slcfProgrammeTimeline:transferCancelledDescription',
-        [log.name, log.data.creditAmount],
-        t
-      );
-      break;
-    case 'TRANSFER_REJECTED':
-      return formatString(
-        'slcfProgrammeTimeline:transferRejectedDescription',
-        [log.name, countryName, log.data.creditAmount, log.toCompanyName],
-        t
-      );
-      break;
-    case 'RETIRE_REQUESTED':
-      return formatString(
-        'slcfProgrammeTimeline:retireRequestedDescription',
-        [log.name, log.data.creditAmount],
-        t
-      );
-      break;
-    case 'RETIRE_APPROVED':
-      return formatString(
-        'slcfProgrammeTimeline:retireApprovedDescription',
-        [log.name, countryName],
-        t
-      );
-      break;
-    case 'RETIRE_CANCELLED':
-      return formatString(
-        'slcfProgrammeTimeline:retireCancelledDescription',
-        [log.name, log.data.creditAmount],
-        t
-      );
-      break;
-    case 'RETIRE_REJECTED':
-      return formatString(
-        'slcfProgrammeTimeline:retireRejectedDescription',
-        [log.name, countryName, log.data.creditAmount],
-        t
-      );
-      break;
-
-    default:
-      break;
+    // case 'CMA_CREATE':
+    //   return formatString('slcfProgrammeTimeline:cmaCreatedDescription', [log.name], t);
+    //   break;
+    // case 'CMA_APPROVED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:cmaApprovedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'CMA_REJECTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:cmaRejectedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'VALIDATION_REPORT_CREATED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:validationReportCreatedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'VALIDATION_REPORT_APPROVED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:validationReportApprovedDescription',
+    //     [log.name],
+    //     t
+    //   );
+    //   break;
+    // case 'AUTHORISED':
+    //   return formatString('slcfProgrammeTimeline:authorisedDescription', [], t);
+    //   break;
+    // case 'VALIDATION_REPORT_REJECTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:validationReportRejectedDescription',
+    //     [log.name],
+    //     t
+    //   );
+    //   break;
+    // case 'MONITORING_CREATE':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:monitoringReportCreatedDescription',
+    //     [log.name],
+    //     t
+    //   );
+    //   break;
+    // case 'MONITORING_REJECTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:monitoringReportRejectedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'MONITORING_APPROVED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:monitoringReportApprovedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'VERIFICATION_CREATE':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:verificationReportCreatedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'VERIFICATION_APPROVED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:verificationReportApprovedDescription',
+    //     [log.name],
+    //     t
+    //   );
+    //   break;
+    // case 'VERIFICATION_REJECTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:verificationReportRejectedDescription',
+    //     [log.name],
+    //     t
+    //   );
+    //   break;
+    // case 'CREDIT_ISSUED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:creditIssuedDescription',
+    //     [log.data.creditIssued],
+    //     t
+    //   );
+    //   break;
+    // case 'TRANSFER_REQUESTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:transferRequestedDescription',
+    //     [log.name, log.data.creditAmount, log.toCompanyName],
+    //     t
+    //   );
+    //   break;
+    // case 'TRANSFER_APPROVED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:transferApprovedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'TRANSFER_CANCELLED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:transferCancelledDescription',
+    //     [log.name, log.data.creditAmount],
+    //     t
+    //   );
+    //   break;
+    // case 'TRANSFER_REJECTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:transferRejectedDescription',
+    //     [log.name, countryName, log.data.creditAmount, log.toCompanyName],
+    //     t
+    //   );
+    //   break;
+    // case 'RETIRE_REQUESTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:retireRequestedDescription',
+    //     [log.name, log.data.creditAmount],
+    //     t
+    //   );
+    //   break;
+    // case 'RETIRE_APPROVED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:retireApprovedDescription',
+    //     [log.name, countryName],
+    //     t
+    //   );
+    //   break;
+    // case 'RETIRE_CANCELLED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:retireCancelledDescription',
+    //     [log.name, log.data.creditAmount],
+    //     t
+    //   );
+    //   break;
+    // case 'RETIRE_REJECTED':
+    //   return formatString(
+    //     'slcfProgrammeTimeline:retireRejectedDescription',
+    //     [log.name, countryName, log.data.creditAmount],
+    //     t
+    //   );
+    //   break;
   }
 };
 
@@ -305,7 +367,7 @@ const getLogTitle = (logType: any) => {
       return 'slcfProgrammeTimeline:pddSubmttedTitle';
       break;
     case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:
-      return 'slcfProgrammeTimeline:pddRejectedTitle';
+      return 'slcfProgrammeTimeline:pddApprovedTitle';
       break;
     case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
       return 'slcfProgrammeTimeline:pddRejectedTitle';

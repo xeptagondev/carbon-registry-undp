@@ -341,18 +341,15 @@ export abstract class DocumentService {
     abstract verify(requestData: DocumentActionDTO, jwtData: JWTPayload);
 
     async query(query: DocumentQueryDTO) {
-        try {
-            const lastDoc = await this.documentRepository.findOne({
-                where: {
-                    documentType: query.documentType,
-                    project: {
-                        refId: query.projectRefId,
-                    },
-                },
-                order: {
-                    version: 'DESC',
-                },
-            });
+        const lastDoc = await this.documentRepository.findOne({
+            where: {
+                documentType: query.documentType,
+                refId: query.refId,
+            },
+            order: {
+                version: 'DESC',
+            },
+        });
 
             return { data: lastDoc };
         } catch (err) {
