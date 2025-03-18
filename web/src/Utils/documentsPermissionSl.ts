@@ -264,11 +264,10 @@ export const formPermissions = (
   }
   // VALIDATION_REPORT: for DNA Root and Admin at VALIDATION_REPORT_SUBMITTED
   else if (
-    (docType === DocType.VALIDATION_REPORT &&
-      projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_SUBMITTED &&
-      userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
-      userInfoState?.userRole === Role.Admin) ||
-    userInfoState?.userRole === Role.Root
+    docType === DocType.VALIDATION_REPORT &&
+    projectProposalStage === ProjectProposalStage.VALIDATION_REPORT_SUBMITTED &&
+    userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+    (userInfoState?.userRole === Role.Admin || userInfoState?.userRole === Role.Root)
   ) {
     return {
       mode: FormMode.VERIFY,

@@ -5,7 +5,13 @@ import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, LessThan, MoreThan, Repository } from 'typeorm';
+import {
+    FindOptionsWhere,
+    In,
+    LessThanOrEqual,
+    MoreThanOrEqual,
+    Repository,
+} from 'typeorm';
 import { ProjectDataRequestDTO } from '../dto/project-data-request.dto';
 
 @Injectable()
@@ -20,10 +26,10 @@ export class AnalyticsService {
         if (filters) {
             // add date range filters individually
             if (filters.startDate) {
-                where.createdDate = LessThan(filters.startDate);
+                where.createdDate = MoreThanOrEqual(filters.startDate);
             }
             if (filters.endDate) {
-                where.createdDate = MoreThan(filters.endDate);
+                where.createdDate = LessThanOrEqual(filters.endDate);
             }
 
             // add sector filter
