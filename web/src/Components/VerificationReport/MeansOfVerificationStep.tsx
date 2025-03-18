@@ -127,7 +127,14 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
 
   const onFinish = (values: any) => {
     console.log('--------values-----------', values);
-    const body = { ...values };
+    const body = {
+      ...values,
+      siteInspectionDurationStart: moment(values?.siteInspectionDurationStart)
+        .startOf('day')
+        .unix(),
+      siteInspectionDurationEnd: moment(values?.siteInspectionDurationEnd).startOf('day').unix(),
+      activityPerformedDate: moment(values?.activityPerformedDate).startOf('day').unix(),
+    };
     handleValuesUpdate({
       meansOfVerificationFormDetails: body,
     });
@@ -326,7 +333,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                     </Col>
                                     <Col xl={5} className="other-cols col">
                                       <Form.Item
-                                        name={[name, 'date']}
+                                        name={[name, 'activityPerformedDate']}
                                         rules={[
                                           {
                                             required: true,
