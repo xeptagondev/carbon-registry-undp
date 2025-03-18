@@ -36,6 +36,7 @@ import { ROUTES } from '../../Config/uiRoutingConfig';
 import { SectoralScope } from '../../Definitions/Enums/sectoralScope.enum';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -291,8 +292,6 @@ export const ProgrammeCreationComponent = (props: any) => {
 
     const body: any = {
       title: values?.title,
-      // projectCategory: values?.projectCategory,
-      sector: values?.sector,
       sectoralScope: values?.sectoralScope,
       province: values?.province || 'test',
       district: values?.district || 'test',
@@ -301,19 +300,6 @@ export const ProgrammeCreationComponent = (props: any) => {
       street: values?.street,
       geographicalLocationCoordinates: values?.projectLocation,
       projectGeography: values?.projectGeography,
-      // otherProjectCategory: values?.otherCategory,
-      // landExtent: (function () {
-      //   if (values?.landExtent) {
-      //     const lands = [Number(Number(values?.landExtent).toFixed(2))];
-      //     if (values?.landList) {
-      //       values?.landList.forEach((item: any) =>
-      //         lands.push(Number(Number(item.land).toFixed(2)))
-      //       );
-      //     }
-      //     return lands;
-      //   }
-      //   return undefined;
-      // })(),
       estimatedProjectCost: values?.estimatedProjectCost,
       proposedProjectCapacity: values?.projectCapacity,
       projectStatusDescription: values?.projectStatusDescription,
@@ -334,7 +320,16 @@ export const ProgrammeCreationComponent = (props: any) => {
 
     setLoading(true);
     try {
-      const res = await post(API_PATHS.PROJECT_CREATE, { data: JSON.stringify(body) });
+      const tempValues = {
+        ...{
+          name: 'INF',
+          documentType: DocumentEnum.INF,
+        },
+        data: {
+          ...body,
+        },
+      };
+      const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
@@ -452,7 +447,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Input size="large" />
                               </Form.Item>
 
-                              <Form.Item
+                              {/* <Form.Item
                                 label={t('addProgramme:sector')}
                                 name="sector"
                                 rules={[
@@ -484,7 +479,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     <Select.Option value={key}>{INF_SECTOR[key]}</Select.Option>
                                   ))}
                                 </Select>
-                              </Form.Item>
+                              </Form.Item> */}
 
                               <Form.Item
                                 label={t('addProgramme:sectoralScope')}
@@ -993,7 +988,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   },
                                 ]}
                               >
-                                <Input />
+                                <Input size={'large'} />
                               </Form.Item>
                               {/* {projectCategory === 'RENEWABLE_ENERGY' && (
                                 <Form.Item
@@ -1290,7 +1285,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                             </Form.Item>
                           </Col>
                         </Row>
-                        <InfDocumentInformation t={t}></InfDocumentInformation>
+                        {/* <InfDocumentInformation t={t}></InfDocumentInformation> */}
 
                         <div className="steps-actions">
                           <Button type="primary" htmlType="submit">

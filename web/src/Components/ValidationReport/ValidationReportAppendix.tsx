@@ -1,16 +1,43 @@
-import { Row, Button, Form, Upload, Col, Input, DatePicker } from 'antd';
+import { Row, Button, Form, Upload, Col, Input, DatePicker, message } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import { CustomStepsProps } from '../PDD/StepProps';
 import { RcFile } from 'antd/lib/upload';
-import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  CloseCircleOutlined,
+  MinusOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import { ProcessSteps } from './ValidationStepperComponent';
 import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import moment from 'moment';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
+import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
+import { useLocation } from 'react-router-dom';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import { API_PATHS } from '../../Config/apiConfig';
+import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 
 const ValidationReportAppendix = (props: CustomStepsProps) => {
-  const { next, prev, form, current, handleValuesUpdate, submitForm, t, formMode } = props;
+  const {
+    next,
+    prev,
+    form,
+    current,
+    handleValuesUpdate,
+    submitForm,
+    t,
+    handleLoading,
+    documentId,
+  } = props;
+
+  const { state } = useLocation();
+
+  const { get, post } = useConnection();
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -28,20 +55,210 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
   }, []);
 
   const onFinish = async (values: any) => {
-    const appendixFormValues: any = {
+    const tempVals: any = {
       ...values,
       appendix1Documents: (await fileUploadValueExtract(values, 'appendix1Documents'))[0],
+      cl_date: moment(values?.cl_date).startOf('day').unix(),
+      cl_projectParticipantResponseDate: moment(values?.cl_projectParticipantResponseDate)
+        .startOf('day')
+        .unix(),
+      cl_doeAssesmentDate: moment(values?.cl_doeAssesmentDate).startOf('day').unix(),
+      car_date: moment(values?.car_date).startOf('day').unix(),
+      car_projectParticipantResponseDate: moment(values?.car_projectParticipantResponseDate)
+        .startOf('day')
+        .unix(),
+      car_doeAssesmentDate: moment(values?.car_doeAssesmentDate).startOf('day').unix(),
+      far_date: moment(values?.far_date).startOf('day').unix(),
+      far_projectParticipantResponseDate: moment(values?.far_projectParticipantResponseDate)
+        .startOf('day')
+        .unix(),
+      far_doeAssesmentDate: moment(values?.far_doeAssesmentDate).startOf('day').unix(),
     };
 
-    console.log(ProcessSteps.VR_APPENDIX, appendixFormValues);
-    handleValuesUpdate({ appendix: appendixFormValues });
+    console.log('---------temVals-------------', tempVals);
+    handleValuesUpdate(tempVals);
+  };
+
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+
+  const [formValues, setFormValues] = useState<any>();
+
+  const closeDialog = () => {
+    setShowDialog(false);
+  };
+
+  const [showVerifyDialog, setShowVerifyDialog] = useState<boolean>(false);
+  const [showDeclineDialog, setShowDeclineDialog] = useState<boolean>(false);
+
+  const closeVerifyDialogBox = () => {
+    setShowVerifyDialog(false);
+  };
+  const closeDeclineDialogBox = () => setShowDeclineDialog(false);
+
+  const approveValidationReport = async () => {
+    if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
+      try {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
+          remarks: 'approved',
+          action: DocumentStateEnum.DNA_APPROVED,
+        });
+
+        if (res?.statusText === 'SUCCESS') {
+          message.open({
+            type: 'success',
+            content: 'Validation report was approved successfully',
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+
+          if (next) {
+            next();
+          }
+        }
+      } catch (error) {
+        message.open({
+          type: 'error',
+          content: t('common:somethingWentWrong'),
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } finally {
+        if (handleLoading) {
+          handleLoading(false);
+        }
+      }
+    }
+  };
+
+  const rejectValidationReport = async (remarks?: string) => {
+    if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
+      try {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.PDD,
+          remarks: remarks,
+          action: DocumentStateEnum.DNA_APPROVED,
+        });
+
+        if (res?.statusText === 'SUCCESS') {
+          message.open({
+            type: 'success',
+            content: 'Validation report rejected',
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+
+          if (next) {
+            next();
+          }
+        }
+      } catch (error) {
+        message.open({
+          type: 'error',
+          content: t('common:somethingWentWrong'),
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } finally {
+        if (handleLoading) {
+          handleLoading(false);
+        }
+      }
+    }
   };
 
   return (
     <>
-      {current === 9 && (
+      {current === 8 && (
         <div>
           <div className="val-report-step-form-container">
+            {state?.mode === FormMode.VERIFY && (
+              <>
+                <SlcfFormActionModel
+                  actionBtnText={t('validationReport:approve')}
+                  onCancel={closeVerifyDialogBox}
+                  icon={<CloseCircleOutlined />}
+                  title={t('validationReport:approveMessage')}
+                  onFinish={() => {
+                    approveValidationReport();
+                  }}
+                  remarkRequired
+                  type="danger"
+                  subText=""
+                  openModal={showVerifyDialog}
+                  t={t}
+                />
+
+                <SlcfFormActionModel
+                  actionBtnText={t('validationReport:approve')}
+                  onCancel={closeDeclineDialogBox}
+                  icon={<CloseCircleOutlined />}
+                  title={t('validationReport:declineMessage')}
+                  onFinish={(remarks: string) => {
+                    rejectValidationReport(remarks);
+                  }}
+                  remarkRequired
+                  type="danger"
+                  subText=""
+                  openModal={showDeclineDialog}
+                  t={t}
+                />
+              </>
+            )}
+
+            {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
+              <SlcfFormActionModel
+                icon={<ConfirmSubmitSVG />}
+                title={t('validationReport:confirmModalMessage')}
+                onCancel={closeDialog}
+                actionBtnText={t('common:yes')}
+                onFinish={() => {
+                  closeDialog();
+                  onFinish(formValues);
+                }}
+                openModal={showDialog}
+                type={'primary'}
+                remarkRequired={false}
+                t={t}
+              />
+            )}
+            {/* <ConfirmDialog
+              showDialog={showDialog}
+              Icon={ConfirmSubmitSVG}
+              message={t('validationReport:confirmModalMessage')}
+              subMessage={`${t('validationReport:confirmModalSubMessage')}`}
+              okText={t('common:yes')}
+              cancelText={t('common:no')}
+              okAction={() => {
+                closeDialog();
+                onFinish(formValues);
+              }}
+              closeDialog={closeDialog}
+              isReject={false}
+            /> */}
+            {/* <SlcfFormActionModel 
+              actionBtnText={t('common:yes')}
+              onCancel={closeDialog}
+              icon={ConfirmSubmitSVG}
+              title={t('validationReport:confirmModalMessage')} 
+              remarkRequired={false}
+              type="primary"
+              subText=""
+              onFinish={() => {
+                closeDialog();
+                onFinish(formValues);
+              }}
+              openModal={showDialog}
+              t={t}
+            /> */}
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -50,8 +267,8 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
               requiredMark={true}
               form={form}
               onFinish={(values: any) => {
-                console.log('-------onFInish', values);
-                onFinish(values);
+                setFormValues(values);
+                setShowDialog(true);
               }}
               // disabled={FormMode.VIEW === formMode}
             >
@@ -188,9 +405,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(
-                                            `${t('validationReport:author')} ${t('isRequired')}`
-                                          );
+                                          throw new Error(`${t('validationReport:required')}`);
                                         }
                                       },
                                     },
@@ -215,9 +430,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(
-                                            `${t('validationReport:title')} ${t('isRequired')}`
-                                          );
+                                          throw new Error(`${t('validationReport:required')}`);
                                         }
                                       },
                                     },
@@ -242,11 +455,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(
-                                            `${t('validationReport:referencesToDocument')} ${t(
-                                              'isRequired'
-                                            )}`
-                                          );
+                                          throw new Error(`${t('validationReport:required')}`);
                                         }
                                       },
                                     },
@@ -271,9 +480,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(
-                                            `${t('validationReport:provider')} ${t('isRequired')}`
-                                          );
+                                          throw new Error(`${t('validationReport:required')}`);
                                         }
                                       },
                                     },
@@ -1142,7 +1349,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
               {/* appendix 3 end */}
 
               <Row justify={'end'} className="step-actions-end mg-top-2">
-                <Button danger size={'large'} onClick={prev} disabled={false}>
+                {/* <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('validationReport:prev')}
                 </Button>
                 {FormMode.VIEW !== formMode && (
@@ -1154,6 +1361,37 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                   <Button type="primary" size={'large'} disabled={false} onClick={next}>
                     {t('validationReport:backtoProjectDetails')}
                   </Button>
+                )} */}
+
+                {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
+                  <>
+                    <Button danger size={'large'} onClick={prev}>
+                      {t('validationReport:prev')}
+                    </Button>
+                    <Button type="primary" htmlType="submit">
+                      {t('validationReport:submit')}
+                    </Button>
+                  </>
+                )}
+                {state?.mode === FormMode.VIEW && (
+                  <>
+                    <Button danger size={'large'} onClick={prev}>
+                      {t('validationReport:prev')}
+                    </Button>
+                    <Button type="primary" onClick={next}>
+                      {t('validationReport:backtoProjectDetails')}
+                    </Button>
+                  </>
+                )}
+                {state?.mode === FormMode.VERIFY && (
+                  <>
+                    <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
+                      {t('validationReport:reject')}
+                    </Button>
+                    <Button size={'large'} onClick={() => setShowVerifyDialog(true)} type="primary">
+                      {t('validationReport:approve')}
+                    </Button>
+                  </>
                 )}
               </Row>
             </Form>
