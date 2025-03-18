@@ -9,13 +9,13 @@ export interface CustomStepsProps {
   cancel?: () => void;
   form: FormInstance;
   current: number;
-  countries?: string[];
   translator: i18n;
   t: TFunction<string[], undefined, string[]>;
   handleValuesUpdate: (val: any) => void;
   submitForm?: (appendixVals: any) => void;
-  // projectCategory?: string;
-  // existingFormValues?: any;
   disableFields?: boolean;
   formMode?: FormMode;
+  // countries?: string[];
+  // projectCategory?: string;
+  // existingFormValues?: any;
 }

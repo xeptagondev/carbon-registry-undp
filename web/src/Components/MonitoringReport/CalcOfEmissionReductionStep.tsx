@@ -5,7 +5,7 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
 import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import NetEmissionReduction from '../Common/NetEmissonReduction';
-import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
+import { fileUploadValueExtract, formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
 import moment from 'moment';
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
@@ -19,8 +19,7 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
 };
 
 export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
-    props;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -152,21 +151,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
     const tempValues: any = {
       calcEmissionReductions: {
         ce_baselineEmission: values?.ce_baselineEmission,
-        ce_documentUpload: await (async function () {
-          const base64Docs: string[] = [];
-          if (values?.ce_documentUpload && values?.ce_documentUpload.length > 0) {
-            const docs = values.ce_documentUpload;
-            for (let i = 0; i < docs.length; i++) {
-              if (docs[i]?.originFileObj === undefined) {
-                base64Docs.push(docs[i]?.url);
-              } else {
-                const temp = await getBase64(docs[i]?.originFileObj as RcFile);
-                base64Docs.push(temp); // No need for Promise.resolve
-              }
-            }
-          }
-          return base64Docs;
-        })(),
+        ce_documentUpload: (await fileUploadValueExtract(values, 'ce_documentUpload'))[0],
         ce_projectEmissions: values?.ce_projectEmissions,
         ce_leakage: values?.ce_leakage,
 

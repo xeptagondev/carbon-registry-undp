@@ -5,15 +5,12 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { CustomStepsProps } from './StepProps';
 
 export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
-    props;
-
-  // const t = translator.t;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
 
   const onFinish = (values: any) => {
     // console.log('onFinish triggered');
     // console.log('-----------temp Values before-------');
-    const tempValues: any = {
+    const implementationOfProjectActivityDetails: any = {
       implementationOfProjectActivityDetails: {
         io_descriptionOfPA: values?.io_descriptionOfPA,
         io_postRegistrationChanges: values?.io_postRegistrationChanges,
@@ -27,7 +24,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
       },
     };
     // console.log('----------tempValues-------------', tempValues);
-    handleValuesUpdate(tempValues);
+    handleValuesUpdate(implementationOfProjectActivityDetails);
   };
   return (
     <>

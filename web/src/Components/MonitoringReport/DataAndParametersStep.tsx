@@ -5,8 +5,7 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { CustomStepsProps } from './StepProps';
 
 export const DataAndParametersStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
-    props;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
 
   // const t = translator.t;
 

@@ -27,28 +27,28 @@ export const MonitoringReportComponent = (props: { translator: i18n }) => {
     setSelectedVersion(value);
   };
 
-  const getDocVersions = async () => {
-    try {
-      const { data } = await post(API_PATHS.VERIFICATION_DOC_VERSIONS, {
-        programmeId: id,
-        verificationRequestId: Number(verificationRequestId),
-        docType: DocumentTypeEnum.MONITORING_REPORT,
-      });
-      setVersions(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const getDocVersions = async () => {
+  //   try {
+  //     const { data } = await post(API_PATHS.VERIFICATION_DOC_VERSIONS, {
+  //       programmeId: id,
+  //       verificationRequestId: Number(verificationRequestId),
+  //       docType: DocumentTypeEnum.MONITORING_REPORT,
+  //     });
+  //     setVersions(data);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   const handleDocumentStatus = (value: string) => {
     setDocumentStatus(value);
   };
 
-  useEffect(() => {
-    if (mode === FormMode.VIEW || mode === FormMode.EDIT) {
-      getDocVersions();
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (mode === FormMode.VIEW || mode === FormMode.EDIT) {
+  //     getDocVersions();
+  //   }
+  // }, []);
 
   useEffect(() => {
     if (versions.length > 0) {
@@ -56,18 +56,18 @@ export const MonitoringReportComponent = (props: { translator: i18n }) => {
     }
   }, [versions]);
 
-  const getCountryList = async () => {
-    const response = await get(API_PATHS.COUNTRY_LIST);
-    if (response.data) {
-      const alpha2Names = response.data.map((item: any) => {
-        return item.alpha2;
-      });
-      setCountries(alpha2Names);
-    }
-  };
-  useEffect(() => {
-    getCountryList();
-  }, []);
+  // const getCountryList = async () => {
+  //   const response = await get(API_PATHS.COUNTRY_LIST);
+  //   if (response.data) {
+  //     const alpha2Names = response.data.map((item: any) => {
+  //       return item.alpha2;
+  //     });
+  //     setCountries(alpha2Names);
+  //   }
+  // };
+  // useEffect(() => {
+  //   getCountryList();
+  // }, []);
   return (
     <div className="add-programme-main-container">
       <div className="title-container">
@@ -116,7 +116,6 @@ export const MonitoringReportComponent = (props: { translator: i18n }) => {
           <StepperComponent
             translator={translator}
             t={t}
-            countries={countries}
             current={0}
             handleValuesUpdate={() => {}}
             form={form}

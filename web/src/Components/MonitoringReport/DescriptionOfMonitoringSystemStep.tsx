@@ -6,21 +6,18 @@ import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithT
 import { CustomStepsProps } from './StepProps';
 
 export const DescriptionOfMSStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
-    props;
-
-  // const t = translator.t;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
 
   const onFinish = (values: any) => {
     // console.log('onFinish triggered');
     // console.log('-----------temp Values before-------');
-    const tempValues: any = {
+    const descriptionOfMonitoringReport: any = {
       descriptionOfMonitoringReport: {
         do_descriptionOfMonitoringSystem: values?.do_descriptionOfMonitoringSystem,
       },
     };
     // console.log('----------tempValues-------------', tempValues);
-    handleValuesUpdate(tempValues);
+    handleValuesUpdate(descriptionOfMonitoringReport);
   };
   return (
     <>

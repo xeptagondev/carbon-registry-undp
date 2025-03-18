@@ -37,6 +37,7 @@ import { getBase64 } from '../../../Definitions/Definitions/programme.definition
 import { CarbonSystemType } from '../../../Definitions/Enums/carbonSystemType.enum';
 import { GovDepartment } from '../../../Definitions/Enums/govDep.enum';
 import { formatBytes } from '../../../Utils/utilityHelper';
+import { API_PATHS } from '../../../Config/apiConfig';
 
 const provinces: any = [
   'Harare',
