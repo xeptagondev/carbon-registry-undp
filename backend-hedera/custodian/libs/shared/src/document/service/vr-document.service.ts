@@ -40,8 +40,6 @@ import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/ser
 export class VrDocumentService extends DocumentService {
     private readonly loggerContext = 'VrDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
@@ -53,7 +51,6 @@ export class VrDocumentService extends DocumentService {
         logger: InstantLogger,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
@@ -69,18 +66,6 @@ export class VrDocumentService extends DocumentService {
             `Request received to create Validation report from ${jwtData.userName}`,
             this.loggerContext,
         );
-        const lastDoc: DocumentEntity = await this.findLastDocumentByType(
-            DocumentEnum.VALIDATION,
-            dto.projectRefId,
-        );
-
-        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
-        if (lastDoc && !(lastDoc.state === DocumentStateEnum.DNA_REJECTED)) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
 
         // start transaction and save document
         const queryRunner = this.dataSource.createQueryRunner();
@@ -88,6 +73,22 @@ export class VrDocumentService extends DocumentService {
 
         try {
             await queryRunner.startTransaction();
+            const lastDoc: DocumentEntity = await this.findLastDocumentByType(
+                queryRunner,
+                DocumentEnum.VALIDATION,
+                dto.projectRefId,
+            );
+
+            // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+            if (
+                lastDoc &&
+                !(lastDoc.state === DocumentStateEnum.DNA_REJECTED)
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
@@ -114,6 +115,7 @@ export class VrDocumentService extends DocumentService {
                 });
 
             const lastPDD = await this.findLastDocumentByType(
+                queryRunner,
                 DocumentEnum.PDD,
                 dto.projectRefId,
             );

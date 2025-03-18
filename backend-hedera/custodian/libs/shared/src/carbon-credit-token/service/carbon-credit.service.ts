@@ -6,10 +6,42 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { CreditEventsEntity } from '../entity/credit-events.entity';
 import { CredtRetireActionsEnum } from '../enum/credit.retire.actions.enum';
+import { QueryDto } from '@app/shared/util/dto/query.dto';
+import { CreditBalanceView } from '../entity/credit.balance.view.entity';
+import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
+import { HelperService } from '@app/shared/util/service/helper.service';
+import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 
 @Injectable()
 export class CarbonCreditService {
-    constructor(private readonly dataSource: DataSource) {}
+    constructor(
+        private readonly dataSource: DataSource,
+        private readonly helperService: HelperService,
+    ) {}
+
+    async queryBalance(query: QueryDto, user: JWTPayload) {
+        const [entities, total] = await this.dataSource
+            .getRepository(CreditBalanceView)
+            .createQueryBuilder('user')
+            .where(this.helperService.generateWhereSQL(query))
+            .orderBy(
+                query?.sort?.key && `"${query?.sort?.key}"`,
+                query?.sort?.order,
+                query?.sort?.nullFirst !== undefined
+                    ? query?.sort?.nullFirst === true
+                        ? 'NULLS FIRST'
+                        : 'NULLS LAST'
+                    : undefined,
+            )
+            .offset(query.size * query.page - query.size)
+            .limit(query.size)
+            .getManyAndCount();
+        return new DataListResponseDto(
+            entities ? entities : undefined,
+            total ? total : undefined,
+        );
+    }
+
     async issueCredit(
         tokenId: string,
         serialNumber: string,
