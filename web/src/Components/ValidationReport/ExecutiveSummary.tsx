@@ -6,9 +6,20 @@ import { ProcessSteps } from './ValidationStepperComponent';
 import moment from 'moment';
 import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const ExecutiveSummary = (props: ValidationStepsProps) => {
   const { prev, next, form, current, t, countries, handleValuesUpdate, formMode } = props;
+
+  const { state } = useLocation();
+  const [disableFields, setDisableFields] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
+      setDisableFields(true);
+    }
+  }, []);
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -60,7 +71,7 @@ const ExecutiveSummary = (props: ValidationStepsProps) => {
                   next();
                 }
               }}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={FormMode.VIEW === formMode}
             >
               <Form.Item
                 className="full-width-form-item"
@@ -73,7 +84,7 @@ const ExecutiveSummary = (props: ValidationStepsProps) => {
                   },
                 ]}
               >
-                <TextArea disabled={FormMode.VIEW === formMode} rows={4} />
+                <TextArea disabled={disableFields} rows={4} />
               </Form.Item>
 
               <Row justify={'end'} className="step-actions-end">
