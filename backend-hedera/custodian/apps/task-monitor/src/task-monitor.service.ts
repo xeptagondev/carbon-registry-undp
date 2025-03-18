@@ -8,7 +8,7 @@ import { UserService } from '@app/shared/users/service/user.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Raw, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class TaskMonitorService implements OnModuleInit {

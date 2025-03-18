@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+/* eslint-disable no-constant-condition */
+import { Injectable, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
-export class ReplicatorService {
-  getHello(): string {
-    return 'Hello World!';
-  }
+export class ReplicatorService implements OnModuleInit {
+    onModuleInit() {
+        while (true) {
+            return;
+        }
+    }
 }
