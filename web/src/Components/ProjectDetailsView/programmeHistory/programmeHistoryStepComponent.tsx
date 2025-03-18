@@ -108,11 +108,11 @@ const getLogDescription = (log: any, t: any) => {
     case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
       return formatString('slcfProgrammeTimeline:pddRejectedDescription', [log.name], t);
     case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:
-      return formatString('slcfProgrammeTimeline:pddApprovedTitle', [log.name], t);
+      return formatString('slcfProgrammeTimeline:pddApprovedDescription', [log.name], t);
     case ProjectActivityStage.PDD_REJECTED_BY_DNA:
       return formatString('slcfProgrammeTimeline:pddRejectedTitle', [log.name], t);
     case ProjectActivityStage.PDD_APPROVED_BY_DNA:
-      return formatString('slcfProgrammeTimeline:pddApprovedTitle', [log.name], t);
+      return formatString('slcfProgrammeTimeline:pddApprovedDescription', [log.name], t);
     case ProjectActivityStage.VALIDATION_REPORT_SUBMITTED:
       return formatString('slcfProgrammeTimeline:validationReportCreatedTitle', [log.name], t);
     case ProjectActivityStage.VALIDATION_REPORT_REJECTED:
@@ -367,7 +367,7 @@ const getLogTitle = (logType: any) => {
       return 'slcfProgrammeTimeline:pddSubmttedTitle';
       break;
     case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:
-      return 'slcfProgrammeTimeline:pddRejectedTitle';
+      return 'slcfProgrammeTimeline:pddApprovedTitle';
       break;
     case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
       return 'slcfProgrammeTimeline:pddRejectedTitle';
