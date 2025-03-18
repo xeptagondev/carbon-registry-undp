@@ -154,7 +154,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
           refId: documentId,
           documentType: DocumentEnum.VALIDATION,
           remarks: remarks,
-          action: DocumentStateEnum.DNA_APPROVED,
+          action: DocumentStateEnum.DNA_REJECTED,
         });
 
         if (res?.statusText === 'SUCCESS') {
@@ -207,7 +207,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                 />
 
                 <SlcfFormActionModel
-                  actionBtnText={t('validationReport:approve')}
+                  actionBtnText={t('validationReport:reject')}
                   onCancel={closeDeclineDialogBox}
                   icon={<CloseCircleOutlined />}
                   title={t('validationReport:declineMessage')}
