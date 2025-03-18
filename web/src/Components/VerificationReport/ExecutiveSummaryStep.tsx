@@ -1,16 +1,18 @@
-import { useState } from 'react';
-import { Button, Col, DatePicker, Form, Input, Row, Upload } from 'antd';
-import { useLocation } from 'react-router-dom';
-import moment from 'moment';
-import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { Button, Col, Form, Row, Upload } from 'antd';
+
 import TextArea from 'antd/lib/input/TextArea';
 import { UploadOutlined } from '@ant-design/icons';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { useLocation } from 'react-router-dom';
+import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
+import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
+import { DocumentStatus } from '../../Definitions/Enums/document.status';
 import i18n from '../Internationalization/i18n';
 import { VerificationStepProps } from './StepProps';
 
-export const VerificationOpinionStep = (props: VerificationStepProps) => {
-  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate } = props;
+export const ExecutiveSummaryStep = (props: VerificationStepProps) => {
+  const { current, form, formMode, prev, next, handleValuesUpdate } = props;
+  const { userInfoState } = useUserContext();
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -20,18 +22,22 @@ export const VerificationOpinionStep = (props: VerificationStepProps) => {
     }
     return e?.fileList;
   };
+  const t = i18n.t;
 
   const onFinish = (values: any) => {
-    // console.log('--------values-----------', values);
+    // const tempValues: any = {
+    //   executiveSummary: values?.e_executiveSummary,
+    // };
+    console.log('--------values-----------', values);
     const body = { ...values };
     handleValuesUpdate({
-      verificationOpinionFormDetails: body,
+      executiveSummaryFormDetails: body,
     });
   };
 
   return (
     <>
-      {current === 8 && (
+      {current === 2 && (
         <div>
           <div className="step-form-container">
             <Form
@@ -53,12 +59,12 @@ export const VerificationOpinionStep = (props: VerificationStepProps) => {
                 <Col xl={24} md={24}>
                   <div className="step-form-left-col">
                     <Form.Item
-                      label={`${t('verificationReport:verificationOpinion')}`}
-                      name="verificationOpinion"
+                      label={t('verificationReport:e_executiveSummary')}
+                      name="e_executiveSummary"
                       rules={[
                         {
                           required: true,
-                          message: `${t('verificationReport:verificationOpinion')} ${t(
+                          message: `${t('verificationReport:e_executiveSummary')} ${t(
                             'isRequired'
                           )}`,
                         },
@@ -69,9 +75,8 @@ export const VerificationOpinionStep = (props: VerificationStepProps) => {
                   </div>
                 </Col>
               </Row>
-
               <Row justify={'end'} className="step-actions-end">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
                 <Button type="primary" htmlType="submit" disabled={false}>
