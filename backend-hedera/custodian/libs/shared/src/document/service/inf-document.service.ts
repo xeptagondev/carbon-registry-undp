@@ -111,6 +111,12 @@ export class InfDocumentService extends DocumentService {
                     },
                 });
 
+            if (!(assignees && assignees.length)) {
+                throw new HttpException(
+                    'Did not find assignees',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const projectEntity = new ProjectEntity();
             projectEntity.title = infData.title;
             projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
