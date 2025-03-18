@@ -6,9 +6,20 @@ import { ProcessSteps } from './ValidationStepperComponent';
 import moment from 'moment';
 import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const ValidationOpinion = (props: ValidationStepsProps) => {
   const { prev, next, form, current, t, countries, handleValuesUpdate, formMode } = props;
+
+  const { state } = useLocation();
+  const [disableFields, setDisableFields] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
+      setDisableFields(true);
+    }
+  }, []);
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -27,25 +38,24 @@ const ValidationOpinion = (props: ValidationStepsProps) => {
 
     const validationOpinionFormValues: any = {
       opinion: values?.opinion,
-      validator1Signature: sig1,
-      validator1Designation: values?.validator1Designation,
-      validator1Name: values?.validator1Name,
-      validator1DateOfSign: moment(values?.validator1DateOfSign).valueOf(),
-      validator2Designation: values?.validator2Designation,
-      validator2Name: values?.validator2Name,
-      validator2Signature: sig2,
-      validator2DateOfSign: moment(values?.validator2DateOfSign).valueOf(),
+      // validator1Signature: sig1,
+      // validator1Designation: values?.validator1Designation,
+      // validator1Name: values?.validator1Name,
+      // validator1DateOfSign: moment(values?.validator1DateOfSign).valueOf(),
+      // validator2Designation: values?.validator2Designation,
+      // validator2Name: values?.validator2Name,
+      // validator2Signature: sig2,
+      // validator2DateOfSign: moment(values?.validator2DateOfSign).valueOf(),
     };
 
-    console.log(ProcessSteps.VR_VALIDATION_OPINION, validationOpinionFormValues);
-    handleValuesUpdate({ [ProcessSteps.VR_VALIDATION_OPINION]: validationOpinionFormValues });
+    handleValuesUpdate({ validationOpinion: validationOpinionFormValues });
   };
 
   return (
     <>
-      {current === 5 && (
+      {current === 7 && (
         <div>
-          <div className="step-form-container">
+          <div className="val-report-step-form-container">
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -59,7 +69,7 @@ const ValidationOpinion = (props: ValidationStepsProps) => {
                   next();
                 }
               }}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={FormMode.VIEW === formMode}
             >
               <Form.Item
                 className="full-width-form-item"
@@ -72,179 +82,8 @@ const ValidationOpinion = (props: ValidationStepsProps) => {
                   },
                 ]}
               >
-                <TextArea disabled={FormMode.VIEW === formMode} rows={4} />
+                <TextArea disabled={disableFields} rows={4} />
               </Form.Item>
-
-              <Row justify={'space-between'} gutter={40} className="mg-top-1">
-                <Col md={24} xl={10}>
-                  <div className="signature-upload">
-                    <Form.Item
-                      name="validator1Signature"
-                      label={t('validationReport:signature')}
-                      valuePropName="fileList"
-                      getValueFromEvent={normFile}
-                      // required={true}
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('validationReport:signature')}  ${t('isRequired')}`,
-                        },
-                        {
-                          validator: async (rule, file) => {
-                            if (file?.length > 0) {
-                              if (file[0]?.size > maximumImageSize) {
-                                // default size format of files would be in bytes -> 1MB = 1000000bytes
-                                throw new Error(`${t('common:maxSizeVal')}`);
-                              }
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Upload
-                        accept=".doc, .docx, .pdf, .png, .jpg"
-                        beforeUpload={(file: any) => {
-                          return false;
-                        }}
-                        className="design-upload-section"
-                        name="design"
-                        action="/upload.do"
-                        listType="picture"
-                        multiple={false}
-                        maxCount={1}
-                      >
-                        <Button className="upload-doc" size="large" icon={<UploadOutlined />}>
-                          {t('validationReport:upload')}
-                        </Button>
-                      </Upload>
-                    </Form.Item>
-                  </div>
-                  <Form.Item
-                    name="validator1Name"
-                    label={t('validationReport:name')}
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('validationReport:name')}  ${t('isRequired')}`,
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="validator1Designation"
-                    label={t('validationReport:designation')}
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('validationReport:designation')}  ${t('isRequired')}`,
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="validator1DateOfSign"
-                    label={t('validationReport:dateOfSignature')}
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('validationReport:dateOfSignature')}  ${t('isRequired')}`,
-                      },
-                    ]}
-                  >
-                    <DatePicker
-                      size="large"
-                      disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col md={24} xl={10}>
-                  {/* <p className="no-margin-p">{t('validationReport:witness')}</p> */}
-
-                  <div className="signature-upload">
-                    <Form.Item
-                      name="validator2Signature"
-                      label={t('validationReport:signature')}
-                      valuePropName="fileList"
-                      getValueFromEvent={normFile}
-                      // required={true}
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('validationReport:signature')}  ${t('isRequired')}`,
-                        },
-                        {
-                          validator: async (rule, file) => {
-                            if (file?.length > 0) {
-                              if (file[0]?.size > maximumImageSize) {
-                                // default size format of files would be in bytes -> 1MB = 1000000bytes
-                                throw new Error(`${t('common:maxSizeVal')}`);
-                              }
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Upload
-                        accept=".doc, .docx, .pdf, .png, .jpg"
-                        beforeUpload={(file: any) => {
-                          return false;
-                        }}
-                        className="design-upload-section"
-                        name="design"
-                        action="/upload.do"
-                        listType="picture"
-                        multiple={false}
-                        maxCount={1}
-                      >
-                        <Button className="upload-doc" size="large" icon={<UploadOutlined />}>
-                          {t('validationReport:upload')}
-                        </Button>
-                      </Upload>
-                    </Form.Item>
-                  </div>
-                  <Form.Item
-                    name="validator2Name"
-                    label={t('validationReport:name')}
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('validationReport:name')}  ${t('isRequired')}`,
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="validator2Designation"
-                    label={t('validationReport:designation')}
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('validationReport:designation')}  ${t('isRequired')}`,
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="validator2DateOfSign"
-                    label={t('validationReport:dateOfSignature')}
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('validationReport:dateOfSignature')}  ${t('isRequired')}`,
-                      },
-                    ]}
-                  >
-                    <DatePicker
-                      size="large"
-                      disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
 
               <Row justify={'end'} className="step-actions-end">
                 <Button danger size={'large'} onClick={prev} disabled={false}>

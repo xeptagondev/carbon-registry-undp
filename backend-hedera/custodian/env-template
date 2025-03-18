@@ -2,11 +2,12 @@
 GUARDIAN_URL=http://localhost:3000
  
 # Database Configurations
-DB_HOST=localhost
+DB_HOST=localhost // use "hedera_db" if you use the docker configuration
 DB_PORT=5432
 DB_USERNAME=root
 DB_PASSWORD=123
 DB_NAME=hedera_db
+DB_LOG_ENABLE=false
  
 # JWT Configurations
 API_JWT_SECRET=api_jwt_secret
@@ -34,6 +35,8 @@ DNA_ROOT_EMAIL=<DNA_ROOT_USER_EMAIL>
 DNA_ROOT_NAME='DNA Root User'
 
 # If Custom Hedera Account Needed for DNA Org Provide Those from here
+# DNA_ORGANIZATION_HEDERA_ACCOUNT_ID=<ORG_HEDERA_ACCOUNT_ID>
+# DNA_ORGANIZATION_HEDERA_ACCOUNT_KEY=<ORG_HEDERA_ACCOUNT_KEY>
 # DNA_ROOT_HEDERA_ACCOUNT_ID=<HEDERA_ACCOUNT_ID>
 # DNA_ROOT_HEDERA_ACCOUNT_KEY=<HEDERA_ACCOUNT_KEY>
 
@@ -49,6 +52,7 @@ DNA_ROOT_ORGANIZATION_LOGO='https://carbon-common-uni.s3.amazonaws.com/profile_i
 GUARDIAN_TASK_RETRY_COUNT=3
  
 # Other Configurations
+BACKEND_HOST=http://192.168.1.1:3000
 APP_ENV=dev
 PORT=3000
 PASSWORD_SALT=secretSALT

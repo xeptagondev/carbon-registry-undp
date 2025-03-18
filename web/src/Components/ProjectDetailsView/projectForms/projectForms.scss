@@ -1,5 +1,32 @@
 @import '../../../Styles/variables.scss';
 
+.projectDocuments {
+  .title-icon {
+    padding-right: 10px;
+  }
+
+  .title-text {
+    color: $title-text-color;
+    font-weight: 600;
+  }
+
+  .title {
+    margin-bottom: 5px;
+  }
+
+  .document-info-row {
+
+    &-first {
+      margin-top:16px;
+    }
+    margin-top: 6px;
+  }
+
+  .document-action-btn {
+    width: 100%;
+  }
+}
+
 .info-view {
   .title-icon {
     padding-right: 10px;
@@ -114,7 +141,10 @@
       left: 10px;
     }
 
-    .ant-steps-vertical > .ant-steps-item > .ant-steps-item-container > .ant-steps-item-tail::after {
+    .ant-steps-vertical
+      > .ant-steps-item
+      > .ant-steps-item-container
+      > .ant-steps-item-tail::after {
       background-color: #ffff !important;
       border-left: 1px solid #d9d9d9;
       border-style: solid;

@@ -28,11 +28,6 @@ export class ProjectEntity {
     title: string;
 
     @Column({
-        nullable: false,
-    })
-    sector: string;
-
-    @Column({
         nullable: true,
     })
     sectoralScope: string;
@@ -140,10 +135,17 @@ export class ProjectEntity {
     noObjectionLetterUrl?: string;
 
     @Column({ nullable: true })
-    creditCertificateUrl?: string;
+    authoroiseLetterUrl?: string;
+
+    @Column({ nullable: true })
+    tokenId?: string;
+
+    @Column({ nullable: true, type: 'bigint' })
+    createdDate?: number;
 
     @BeforeInsert()
     generateRefId() {
         this.refId = `P-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        this.createdDate = Date.now();
     }
 }
