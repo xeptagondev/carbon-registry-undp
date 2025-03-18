@@ -17,6 +17,10 @@ import { NftMintProcessor } from './service/nft-mint-processer';
         CarbonCreditGuardianService,
         NftMintProcessor,
     ],
-    exports: [CarbonCreditGuardianService, NftMintProcessor],
+    exports: [
+        CarbonCreditGuardianService,
+        NftMintProcessor,
+        CarbonCreditService,
+    ],
 })
 export class CarbonCreditTokenModule {}

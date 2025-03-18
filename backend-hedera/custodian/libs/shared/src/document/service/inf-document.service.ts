@@ -45,8 +45,6 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 export class InfDocumentService extends DocumentService {
     private readonly loggerContext = 'InfDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
@@ -57,7 +55,6 @@ export class InfDocumentService extends DocumentService {
         logger: InstantLogger,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
@@ -269,18 +266,23 @@ export class InfDocumentService extends DocumentService {
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
+
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
+            const documentEntity: DocumentEntity =
+                await this.getDocumentWithProjectAssignees(
+                    queryRunner,
+                    requestData.refId,
+                    requestData.documentType,
+                );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const dnaAdminEmails = (await this.getDNAAdmins(queryRunner)).map(
                 (user) => user.email,
             );
