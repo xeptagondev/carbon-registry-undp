@@ -69,11 +69,7 @@ export class ProjectService {
                 requestUser.organizationRole ===
                 OrganizationTypeEnum.INDEPENDENT_CERTIFIER
             ) {
-                qb.leftJoin(
-                    'project_assignees',
-                    'pa',
-                    'pa.project_id = project.id',
-                ).andWhere('pa.organization_id = :orgId', {
+                qb.andWhere('assignees.id = :orgId', {
                     orgId: requestUser.organizationId,
                 });
             }
@@ -111,6 +107,7 @@ export class ProjectService {
             }
             return new DataListResponseDto(oldFormatData, total);
         } catch (err) {
+            console.log(err);
             throw new HttpException(
                 'Error occurred in query projects',
                 HttpStatus.INTERNAL_SERVER_ERROR,
