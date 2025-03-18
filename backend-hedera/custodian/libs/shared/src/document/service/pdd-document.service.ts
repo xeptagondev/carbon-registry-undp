@@ -9,7 +9,6 @@ import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -48,7 +47,6 @@ export class PddDocumentService extends DocumentService {
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
-        carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
@@ -59,8 +57,6 @@ export class PddDocumentService extends DocumentService {
             dataSource,
             auditService,
             guardianService,
-
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
@@ -252,19 +248,36 @@ export class PddDocumentService extends DocumentService {
             this.loggerContext,
         );
 
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
-
+            const documentEntity = await queryRunner.manager.findOne(
+                DocumentEntity,
+                {
+                    where: { refId: requestData.refId },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                },
+            );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const assigneeOrgEmails: string[] =
                 documentEntity?.project?.assignees.map((user) => user.email);
 
