@@ -20,10 +20,6 @@ export class UtilService {
     ) {}
     private tagToIdMap: Record<string, string> = {};
 
-    getBlock(blockName: string) {
-        return this.tagToIdMap[blockName];
-    }
-
     public async getBlocksByPolicy(
         policyId: string,
     ): Promise<PolicyBlocksEntity[]> {

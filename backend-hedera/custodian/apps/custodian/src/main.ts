@@ -5,6 +5,7 @@ import { join } from 'path';
 import * as express from 'express';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -14,6 +15,8 @@ async function bootstrap() {
         }),
     );
     app.use('/uploads', express.static(join(process.cwd(), 'public/uploads')));
+    app.use(express.json({ limit: '50mb' }));
+    app.use(express.urlencoded({ extended: true, limit: '50mb' }));
     const config = new DocumentBuilder()
         .setTitle('Custodian API')
         .setDescription('Custodian API description')
@@ -24,6 +27,8 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);
     app.enableCors();
+    const utilService = app.get(UtilService);
+    utilService.fetchPolicyBlocks();
     await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

@@ -1,0 +1,72 @@
+volumes:
+  data:
+    driver: local
+  filestore:
+    driver: local
+
+services:
+  hedera_db:
+    container_name: hedera_db
+    image: postgres:latest
+    restart: always
+    environment:
+      PGPORT: 5433
+      POSTGRES_PASSWORD: "123"
+      POSTGRES_USER: root
+      PSQL_USERNAME: root
+      PGDATA: /data/postgres
+    ports:
+      - "5433:5433"
+    volumes:
+      - ./backend-hedera/custodian/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - data:/data/postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d hedera_db"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  custodian:
+    image: 992382718274.dkr.ecr.us-east-1.amazonaws.com/carbon-services-hedera:guardian-dev
+    command: ["yarn", "start:custodian-prod"]
+    env_file:
+      - backend-hedera/custodian/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      hedera_db:
+        condition: service_healthy
+    volumes:
+      - filestore:/usr/src/app/public
+
+  task-monitor:
+    image: 992382718274.dkr.ecr.us-east-1.amazonaws.com/carbon-services-hedera:guardian-dev
+    command: ["yarn", "start:task-monitor-prod"]
+    env_file:
+      - backend-hedera/custodian/.env
+    depends_on:
+      hedera_db:
+        condition: service_healthy
+    volumes:
+      - filestore:/usr/src/app/public
+    deploy:
+      replicas: 1
+
+  web:
+    image: 992382718274.dkr.ecr.us-east-1.amazonaws.com/carbon-web-hedera:guardian-dev
+    environment:
+        PORT: 3030
+        REACT_APP_BACKEND: "http://localhost:3000"
+        REACT_APP_STAT_URL: "http://localhost:3100"
+        REACT_APP_MAP_TYPE: "Mapbox"
+        REACT_APP_COUNTRY_NAME: "United Nations"
+        REACT_APP_REGISTRY_NAME: "UNDP Demo Carbon Registry"
+        REACT_APP_GOVERNMENT_MINISTRY: "Ministry Of Environment"
+        REACT_APP_MAPBOXGL_ACCESS_TOKEN: ""
+        REACT_APP_MAXIMUM_FILE_SIZE: 1048576  
+    ports:
+      - "3030:3030"
+    depends_on:
+      - hedera_db
+      - custodian
+      - task-monitor

@@ -138,6 +138,27 @@ export class AuthService {
         }
     }
 
+    async findPassword(email: string) {
+        const user = await this.usersRepository.findOne({
+            where: {
+                email: email.trim().toLowerCase(),
+            },
+        });
+        if (!user) {
+            if (!user) {
+                throw new HttpException(
+                    'User not found',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+        }
+        const { password } = decryptPayload(
+            user?.password,
+            this.configService.get<string>('security.pwdSecret'),
+        );
+
+        return password;
+    }
     async login(loginDto: LoginDto): Promise<HTTPResponseDto> {
         const response = new HTTPResponseDto();
         const user = await this.usersRepository.findOne({
