@@ -4,7 +4,7 @@ import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organiz
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -353,6 +353,12 @@ export abstract class DocumentService {
             },
         });
 
-        return { data: lastDoc };
+            return { data: lastDoc };
+        } catch (err) {
+            throw new HttpException(
+                'Error occurred in query document',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
     }
 }

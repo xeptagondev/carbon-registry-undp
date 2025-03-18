@@ -43,72 +43,79 @@ export class ProjectService {
             this.loggerContext,
         );
 
-        this.helperService.validateRequestUser(requestUser);
-        if (!query.filterAnd) {
-            query.filterAnd = [];
+        try {
+            this.helperService.validateRequestUser(requestUser);
+            if (!query.filterAnd) {
+                query.filterAnd = [];
+            }
+
+            if (
+                requestUser.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                query.filterAnd.push({
+                    key: 'organizationId',
+                    operation: '=',
+                    value: requestUser.organizationId,
+                });
+            }
+
+            const qb = this.projectRepository
+                .createQueryBuilder('project')
+                .leftJoinAndSelect('project.organization', 'organization')
+                .leftJoinAndSelect('project.assignees', 'assignees');
+
+            if (
+                requestUser.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                qb.leftJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id',
+                ).andWhere('pa.organization_id = :orgId', {
+                    orgId: requestUser.organizationId,
+                });
+            }
+
+            let sortKey: string;
+            if (!query.sort || !query.sort.key) {
+                sortKey = 'project.createdDate';
+            } else {
+                sortKey =
+                    query.sort.key.toLowerCase() === 'createdtime'
+                        ? 'project.createdDate'
+                        : query.sort.key.includes('.')
+                          ? query.sort.key
+                          : `project.${query.sort.key}`;
+            }
+
+            qb.where(this.helperService.generateWhereSQL(query))
+                .orderBy(
+                    sortKey,
+                    query?.sort?.order ? query.sort.order : 'DESC',
+                    query?.sort?.nullFirst !== undefined
+                        ? query.sort.nullFirst === true
+                            ? 'NULLS FIRST'
+                            : 'NULLS LAST'
+                        : undefined,
+                )
+                .offset(query.size * query.page - query.size)
+                .limit(query.size);
+
+            const [entities, total] = await qb.getManyAndCount();
+
+            const oldFormatData = [];
+            for (const project of entities) {
+                oldFormatData.push(await this.mapNewQueryToOldQuery(project));
+            }
+            return new DataListResponseDto(oldFormatData, total);
+        } catch (err) {
+            throw new HttpException(
+                'Error occurred in query projects',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
-
-        if (
-            requestUser.organizationRole ===
-            OrganizationTypeEnum.PROJECT_DEVELOPER
-        ) {
-            query.filterAnd.push({
-                key: 'organizationId',
-                operation: '=',
-                value: requestUser.organizationId,
-            });
-        }
-
-        const qb = this.projectRepository
-            .createQueryBuilder('project')
-            .leftJoinAndSelect('project.organization', 'organization')
-            .leftJoinAndSelect('project.assignees', 'assignees');
-
-        if (
-            requestUser.organizationRole ===
-            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-        ) {
-            qb.leftJoin(
-                'project_assignees',
-                'pa',
-                'pa.project_id = project.id',
-            ).andWhere('pa.organization_id = :orgId', {
-                orgId: requestUser.organizationId,
-            });
-        }
-
-        let sortKey: string;
-        if (!query.sort || !query.sort.key) {
-            sortKey = 'project.createdDate';
-        } else {
-            sortKey =
-                query.sort.key.toLowerCase() === 'createdtime'
-                    ? 'project.createdDate'
-                    : query.sort.key.includes('.')
-                      ? query.sort.key
-                      : `project.${query.sort.key}`;
-        }
-
-        qb.where(this.helperService.generateWhereSQL(query))
-            .orderBy(
-                sortKey,
-                query?.sort?.order ? query.sort.order : 'DESC',
-                query?.sort?.nullFirst !== undefined
-                    ? query.sort.nullFirst === true
-                        ? 'NULLS FIRST'
-                        : 'NULLS LAST'
-                    : undefined,
-            )
-            .offset(query.size * query.page - query.size)
-            .limit(query.size);
-
-        const [entities, total] = await qb.getManyAndCount();
-
-        const oldFormatData = [];
-        for (const project of entities) {
-            oldFormatData.push(await this.mapNewQueryToOldQuery(project));
-        }
-        return new DataListResponseDto(oldFormatData, total);
     }
 
     async mapNewQueryToOldQuery(project: ProjectEntity) {
@@ -152,30 +159,37 @@ export class ProjectService {
             `Request received to find project by id ${id}`,
             this.loggerContext,
         );
-        const project = await this.projectRepository.findOne({
-            where: { refId: id },
-            relations: { organization: true, documents: true },
-        });
+        try {
+            const project = await this.projectRepository.findOne({
+                where: { refId: id },
+                relations: { organization: true, documents: true },
+            });
 
-        const lastDocuments = project?.documents.reduce((acc, document) => {
-            if (
-                !acc[document.documentType] ||
-                acc[document.documentType].version < document.version
-            ) {
-                acc[document.documentType] = {
-                    documentType: document.documentType,
-                    refId: document.refId,
-                    version: document.version,
-                };
-            }
-            return acc;
-        }, {});
+            const lastDocuments = project?.documents.reduce((acc, document) => {
+                if (
+                    !acc[document.documentType] ||
+                    acc[document.documentType].version < document.version
+                ) {
+                    acc[document.documentType] = {
+                        documentType: document.documentType,
+                        refId: document.refId,
+                        version: document.version,
+                    };
+                }
+                return acc;
+            }, {});
 
-        const updatedProject = {
-            ...(await this.mapNewQueryToOldQuery(project)),
-            documents: lastDocuments,
-        };
-        return updatedProject;
+            const updatedProject = {
+                ...(await this.mapNewQueryToOldQuery(project)),
+                documents: lastDocuments,
+            };
+            return updatedProject;
+        } catch (err) {
+            throw new HttpException(
+                'Error occurred in query project by id',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
     }
 
     private validateUserAuthorization(requestUser: JWTPayload): void {

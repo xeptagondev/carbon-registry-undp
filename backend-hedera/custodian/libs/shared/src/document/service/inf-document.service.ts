@@ -236,6 +236,7 @@ export class InfDocumentService extends DocumentService {
             await queryRunner.commitTransaction();
             return new DataResponseDto(HttpStatus.OK, {
                 refId: savedDoc.refId,
+                projectRefId: savedProject.refId,
             });
         } catch (err) {
             console.log(err);
