@@ -5,7 +5,13 @@ import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThan, MoreThan, Repository } from 'typeorm';
+import {
+    FindOptionsWhere,
+    In,
+    LessThanOrEqual,
+    MoreThanOrEqual,
+    Repository,
+} from 'typeorm';
 import { ProjectDataRequestDTO } from '../dto/project-data-request.dto';
 
 @Injectable()
@@ -16,19 +22,19 @@ export class AnalyticsService {
     ) {}
 
     async getProjectsData(filters: ProjectDataRequestDTO, jwtData: JWTPayload) {
-        const where = {};
+        const where: FindOptionsWhere<ProjectEntity> = {};
         if (filters) {
             // add date range filters individually
             if (filters.startDate) {
-                where['createdDate'] = LessThan(filters.startDate);
+                where.createdDate = MoreThanOrEqual(filters.startDate);
             }
             if (filters.endDate) {
-                where['createdDate'] = MoreThan(filters.endDate);
+                where.createdDate = LessThanOrEqual(filters.endDate);
             }
 
             // add sector filter
             if (filters.sector) {
-                where['sector'] = filters.sector;
+                where.sectoralScope = filters.sector;
             }
 
             // add isMine filter
@@ -37,21 +43,21 @@ export class AnalyticsService {
                     jwtData.organizationRole ===
                     OrganizationTypeEnum.PROJECT_DEVELOPER
                 ) {
-                    where['organization'] = {
+                    where.organization = {
                         id: jwtData.organizationId,
                     };
                 } else if (
                     jwtData.organizationRole ===
                     OrganizationTypeEnum.INDEPENDENT_CERTIFIER
                 ) {
-                    where['assignees'] = {
+                    where.assignees = {
                         id: jwtData.organizationId,
                     };
                 }
             }
         }
 
-        const result = await this.projectRepository.find(where);
+        const result = await this.projectRepository.find({ where: where });
 
         return result;
     }
