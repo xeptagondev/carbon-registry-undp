@@ -37,6 +37,7 @@ import {
   validationFindingsMapDataToFields,
   validationMethodologyMapDataToFields,
   validationOpinionMapDataToFields,
+  validationReportAppendixMapDataToFields,
 } from './viewDataMap';
 
 export enum ProcessSteps {
@@ -93,11 +94,20 @@ const StepperComponent = (props: any) => {
     }
   };
 
-  const submitForm = async (formValues: any) => {
-    console.log('--------adding form-values------', formValues);
+  const submitForm = async (appendixVals: any) => {
     setLoading(true);
+
+    const tempValues = {
+      ...existingFormValues,
+      data: {
+        ...existingFormValues.data,
+        appendix: appendixVals,
+      },
+    };
+    console.log('--------adding form-values------', tempValues);
+
     try {
-      const res = await post(API_PATHS.ADD_DOCUMENT, formValues);
+      const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
       console.log('res', res);
       if (res?.statusText === 'SUCCESS') {
         message.open({
@@ -122,7 +132,7 @@ const StepperComponent = (props: any) => {
   };
 
   const next = () => {
-    if (current === 8 && state?.mode === FormMode.VIEW) {
+    if (current === 8 && (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY)) {
       navigateToDetailsPage();
       return;
     }
@@ -362,20 +372,6 @@ const StepperComponent = (props: any) => {
       };
       return { ...prevVal, data: tempContent };
     });
-
-    if (current === 8) {
-      console.log('----------test------------', val);
-      const tempData = {
-        ...existingFormValues,
-        data: {
-          ...existingFormValues.data,
-          appendix: val,
-        },
-      };
-      submitForm(tempData);
-    }
-
-    const isFinal = val[ProcessSteps.VR_APPENDIX];
   };
 
   useEffect(() => {
@@ -437,7 +433,8 @@ const StepperComponent = (props: any) => {
             );
             form8.setFieldsValue(validationOpinion);
 
-            const appendix = basicInformationMapDataToFields(data.data?.appendix);
+            const appendix = validationReportAppendixMapDataToFields(data.data?.appendix);
+            console.log('---------appendix-----------', appendix);
             form9.setFieldsValue(appendix);
           }
         } catch (error) {
@@ -640,7 +637,7 @@ const StepperComponent = (props: any) => {
           current={current}
           documentId={documentId}
           t={t}
-          handleValuesUpdate={handleValuesUpdate}
+          handleValuesUpdate={submitForm}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
           formMode={state?.mode}
           handleLoading={handleLoading}
