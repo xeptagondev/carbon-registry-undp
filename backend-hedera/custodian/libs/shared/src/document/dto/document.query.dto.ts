@@ -3,7 +3,7 @@ import { DocumentEnum } from '../enum/document.enum';
 
 export class DocumentQueryDTO {
     @ApiProperty({ type: 'string' })
-    projectRefId: string;
+    refId: string;
 
     @ApiProperty({
         enum: DocumentEnum,
