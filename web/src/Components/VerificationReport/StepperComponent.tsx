@@ -43,16 +43,10 @@ const StepperComponent = (props: VerificationStepProps) => {
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
 
-  const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
-  const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
+  // const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
+  // const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
 
-  const [existingFormValues, setExistingFormValues] = useState({
-    projectRefId: id,
-    name: 'Verification',
-    companyId: undefined,
-    documentType: DocumentEnum.VERIFICATION,
-    data: {},
-  });
+  const [data, setData] = useState({});
 
   const navigateToDetailsPage = () => {
     navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
@@ -68,23 +62,34 @@ const StepperComponent = (props: VerificationStepProps) => {
 
   const handleValuesUpdate = (val: any) => {
     // console.log('----------temp vals-------------', val);
-    setExistingFormValues((prevVal: any) => {
+    setData((prevVal: any) => {
       const tempContent = {
-        ...prevVal.data,
+        ...prevVal,
         ...val,
       };
-      console.log(tempContent);
       return { ...prevVal, data: tempContent };
     });
 
     const submitForm = async (formValues: any) => {
+      console.log(formValues);
       try {
-        const res = await post(API_PATHS.CREATE_VERIFICATION_REPORT, formValues);
+        const tempValues = {
+          ...{
+            name: 'VERIFICATION',
+            documentType: DocumentEnum.VERIFICATION,
+            projectRefId: id,
+          },
+
+          data: {
+            ...formValues,
+          },
+        };
+        const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
         console.log(res);
         if (res?.response?.data?.statusCode === 200) {
           message.open({
             type: 'success',
-            content: 'Validation report has been submitted successfully',
+            content: 'Verification report has been submitted successfully',
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
@@ -102,8 +107,8 @@ const StepperComponent = (props: VerificationStepProps) => {
 
     if (current === 10) {
       const formValues = {
-        ...existingFormValues,
-        data: { ...existingFormValues.data, appendixForm: val },
+        ...data,
+        appendixForm: val,
       };
       submitForm(formValues);
     }
@@ -282,25 +287,25 @@ const StepperComponent = (props: VerificationStepProps) => {
 
   const safeNumber = (value: any) => Number(value) || 0;
 
-  const getProjectById = async (programId: any) => {
-    try {
-      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-        programmeId: programId,
-      });
-      const creditReceived =
-        safeNumber(data.creditBalance) +
-        safeNumber(data.creditFrozen) +
-        safeNumber(data.creditRetired) +
-        safeNumber(data.creditTransferred);
-      const creditEst = safeNumber(data.creditEst);
-      setVerifiedScer(creditEst - creditReceived);
-      basicInformationForm.setFieldsValue({
-        projectTitle: data?.title,
-      });
-    } catch (error) {
-      console.log('error');
-    }
-  };
+  // const getProjectById = async (programId: any) => {
+  //   try {
+  //     const { data } = await post(API_PATHS.PROJECT_BY_ID, {
+  //       programmeId: programId,
+  //     });
+  //     const creditReceived =
+  //       safeNumber(data.creditBalance) +
+  //       safeNumber(data.creditFrozen) +
+  //       safeNumber(data.creditRetired) +
+  //       safeNumber(data.creditTransferred);
+  //     const creditEst = safeNumber(data.creditEst);
+  //     setVerifiedScer(creditEst - creditReceived);
+  //     basicInformationForm.setFieldsValue({
+  //       projectTitle: data?.title,
+  //     });
+  //   } catch (error) {
+  //     console.log('error');
+  //   }
+  // };
 
   // const getLatestReports = async (programId: any) => {
   //   try {
@@ -766,22 +771,6 @@ const StepperComponent = (props: VerificationStepProps) => {
           description: step.description,
         }))}
       />
-      {/* {popupInfo && (
-        <SlcfFormActionModel
-          onCancel={() => {
-            setSlcfActioModalVisible(false);
-          }}
-          actionBtnText={popupInfo!.actionBtnText}
-          onFinish={popupInfo!.okAction}
-          subText={''}
-          openModal={slcfActionModalVisible}
-          icon={popupInfo!.icon}
-          title={popupInfo!.title}
-          type={popupInfo!.type}
-          remarkRequired={popupInfo!.remarkRequired}
-          t={t}
-        />
-      )} */}
     </>
   );
 };
