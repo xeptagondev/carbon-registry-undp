@@ -37,6 +37,7 @@ import { getBase64 } from '../../../Definitions/Definitions/programme.definition
 import { CarbonSystemType } from '../../../Definitions/Enums/carbonSystemType.enum';
 import { GovDepartment } from '../../../Definitions/Enums/govDep.enum';
 import { formatBytes } from '../../../Utils/utilityHelper';
+import { API_PATHS } from '../../../Config/apiConfig';
 
 const provinces: any = [
   'Harare',
@@ -302,7 +303,7 @@ export const AddNewCompanyComponent = (props: any) => {
         requestData.company.name = 'Ministry of ' + requestData.company.ministry;
       }
       if (isGuest) {
-        const response = await post('user/register', requestData);
+        const response = await post(API_PATHS.REGISTER_USER, requestData);
         if (response.status === 200 || response.status === 201) {
           message.open({
             type: 'success',
@@ -422,7 +423,7 @@ export const AddNewCompanyComponent = (props: any) => {
         }
       }
 
-      const response = await post('organisation/update', values);
+      const response = await post(API_PATHS.UPDATE_ORGANIZATION, values);
       if (response.status === 200 || response.status === 201) {
         setUserInfo({
           companyLogo: response.data.logo,
