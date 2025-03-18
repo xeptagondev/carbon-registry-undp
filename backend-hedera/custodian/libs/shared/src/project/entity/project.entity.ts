@@ -14,6 +14,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { ProjectProposalStage } from '../enum/project.proposal.stage.enum';
 import { DocumentEntity } from '@app/shared/document/entity/document.entity';
+import { CreditEventsEntity } from '@app/shared/carbon-credit-token/entity/credit-events.entity';
 
 @Entity()
 export class ProjectEntity {
@@ -27,11 +28,6 @@ export class ProjectEntity {
     title: string;
 
     @Column({
-        nullable: false,
-    })
-    sector: string;
-
-    @Column({
         nullable: true,
     })
     sectoralScope: string;
@@ -42,6 +38,13 @@ export class ProjectEntity {
         { nullable: true },
     )
     activities?: ActivityEntity[];
+
+    @OneToMany(
+        () => CreditEventsEntity,
+        (creditEvents) => creditEvents.project,
+        { nullable: true },
+    )
+    creditEvents?: CreditEventsEntity[];
 
     @ManyToOne(
         () => OrganizationEntity,
@@ -128,8 +131,21 @@ export class ProjectEntity {
     @Column('real', { nullable: true })
     creditTransferred?: number;
 
+    @Column({ nullable: true })
+    noObjectionLetterUrl?: string;
+
+    @Column({ nullable: true })
+    authoroiseLetterUrl?: string;
+
+    @Column({ nullable: true })
+    tokenId?: string;
+
+    @Column({ nullable: true, type: 'bigint' })
+    createdDate?: number;
+
     @BeforeInsert()
     generateRefId() {
         this.refId = `P-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        this.createdDate = Date.now();
     }
 }

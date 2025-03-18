@@ -1,7 +1,8 @@
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { Injectable } from '@nestjs/common';
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
+import * as PDFDocument from 'pdfkit';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface CreditIssueCertificateData {
     projectName: string;
@@ -21,166 +22,100 @@ export class CreditIssueCertificateGenerator {
     async generateCreditIssueCertificate(
         data: CreditIssueCertificateData,
         isPreview?: boolean,
-    ) {
-        const doc = new PDFDocument({
-            margin: 50,
-        });
-
+    ): Promise<string> {
         const refFileName = data.certificateNo.replace(/\//g, '_');
         const fileName = `CREDIT_ISSUANCE_CERTIFICATE_${refFileName}.pdf`;
+        const filePath = path.join(process.cwd(), 'public/documents', fileName);
 
-        const tmpDir = './';
-        const filepath = `${tmpDir}/${fileName}`;
-        // Define the output file path
-        const stream = fs.createWriteStream(filepath);
+        // Ensure directory exists
+        const folderPath = path.dirname(filePath);
+        if (!fs.existsSync(folderPath)) {
+            fs.mkdirSync(folderPath, { recursive: true });
+        }
+
+        const doc = new PDFDocument({ margin: 50 });
+        const stream = fs.createWriteStream(filePath);
         doc.pipe(stream);
 
         const track = 'Track I';
-
-        // Add logo
-        const image1Width = 45;
-        // const image2Width = 60;
-        const image2Width = 130;
-
-        const imageHeight = 60;
-        const image2Height = 65;
-
-        const spaceBetweenImages = 15;
-
-        const totalImageWidth =
-            image1Width + image2Width + 2 * spaceBetweenImages;
-
-        // Start position for the first image (centering all images on the page)
-        const startImageX = (doc.page.width - totalImageWidth) / 2;
-        const startImageY = 50; // vertical position where images will be placed
+        const startImageX = (doc.page.width - (45 + 130 + 30)) / 2;
+        const startImageY = 50;
 
         doc.registerFont('Inter', 'fonts/Inter-Regular.ttf');
         doc.registerFont('Inter-Bold', 'fonts/Inter-Bold.ttf');
 
-        // Draw each image
-        doc.image('images/sri-lanka-emblem.png', startImageX, startImageY, {
-            width: image1Width,
-            height: imageHeight,
-        });
-        doc.image(
-            'images/SLCCS_logo.png',
-            startImageX + image1Width + spaceBetweenImages,
-            startImageY,
-            {
-                width: image2Width,
-                height: image2Height,
-            },
-        );
-        doc.moveDown(2);
+        // doc.image('images/sri-lanka-emblem.png', startImageX, startImageY, {
+        //     width: 45,
+        //     height: 60,
+        // });
 
-        // Title
+        // doc.image('images/SLCCS_logo.png', startImageX + 45 + 15, startImageY, {
+        //     width: 130,
+        //     height: 65,
+        // });
+
+        doc.moveDown(2);
         doc.fontSize(30)
             .font('Inter-Bold')
             .fillColor('#1f4e79')
             .text('Credit Issuance Certificate', { align: 'center' });
 
-        if (isPreview) {
-            this.addPreviewWatermark(doc);
-        }
+        if (isPreview) this.addPreviewWatermark(doc);
 
         doc.moveDown(2).fontSize(16).fillColor('black');
 
         doc.font('Inter-Bold')
             .fontSize(14)
-            .text('Sri Lanka Climate Fund (Pvt) Ltd', 70, 180, {
-                align: 'center',
-            });
+            .text('Sri Lanka Climate Fund (Pvt) Ltd', { align: 'center' });
 
-        doc.moveDown(0.5);
+        doc.moveDown(0.5)
+            .font('Inter')
+            .fontSize(12)
+            .text('Issues', { align: 'center' });
 
-        doc.font('Inter').fontSize(12).text('Issues', { align: 'center' });
-
-        doc.moveDown(0.5);
-
-        doc.font('Inter')
+        doc.moveDown(0.5)
+            .font('Inter')
             .fontSize(12)
             .text('Zimbabwen Certified Emission Reductions (SCER)', {
                 align: 'center',
             });
 
-        doc.moveDown(0.5);
+        doc.moveDown(0.5).text('for', { align: 'center' });
 
-        doc.font('Inter').fontSize(12).text('for', { align: 'center' });
-
-        doc.moveDown(0.5);
-
-        doc.font('Inter-Bold')
+        doc.moveDown(0.5)
+            .font('Inter-Bold')
             .fontSize(14)
             .text(`${data.projectName}`, { align: 'center' });
 
-        doc.moveDown(0.5);
+        doc.moveDown(0.5).text('of', { align: 'center' });
 
-        doc.font('Inter').fontSize(12).text('of', { align: 'center' });
-
-        doc.moveDown(0.5);
-
-        doc.font('Inter')
+        doc.moveDown(0.5)
+            .font('Inter')
             .fontSize(14)
             .text(`${data.companyName}`, { align: 'center' });
 
-        doc.moveDown(0.5);
-
-        doc.font('Inter')
+        doc.moveDown(0.5)
+            .font('Inter')
             .fontSize(12)
             .text('registered under', { align: 'center' });
 
-        doc.moveDown(0.5);
-
-        doc.font('Inter-Bold')
+        doc.moveDown(0.5)
+            .font('Inter-Bold')
             .fontSize(14)
             .text(`${track} of Sri Lanka Carbon Crediting Scheme`, {
                 align: 'center',
             });
 
-        doc.moveDown(0.5);
-
-        doc.font('Inter')
-            .fontSize(12)
-            .text('In accordance with the SLCCS eligibility criteria and', {
-                align: 'center',
-            });
-
-        doc.moveDown(0.4);
-
-        doc.font('Inter')
-            .fontSize(12)
-            .text('Approved CDM methodology (AMS I.D Version 18.0)', {
-                align: 'center',
-            });
-
-        doc.moveDown(1);
-
-        doc.fontSize(11)
+        doc.moveDown(1)
+            .fontSize(11)
             .font('Inter-Bold')
-            .text('Certificate No ', 180, 440, {
-                continued: true,
-            })
-            .text(`: ${data.certificateNo}`, 229, 440, {
-                continued: false,
-            })
+            .text(`Certificate No: ${data.certificateNo}`, { align: 'left' })
             .moveDown(0.4)
-            .text('Date of issuance ', 180, doc.y, {
-                continued: true,
-            })
-            .text(`: ${data.issueDate}`, 214, doc.y, {
-                continued: false,
-            })
+            .text(`Date of issuance: ${data.issueDate}`, { align: 'left' })
             .moveDown(0.4)
-            .text('Monitoring Period ', 180, doc.y, {
-                continued: true,
-            })
             .text(
-                `: ${data.monitoringStartDate} - ${data.monitoringEndDate}`,
-                207.5,
-                doc.y,
-                {
-                    continued: false,
-                },
+                `Monitoring Period: ${data.monitoringStartDate} - ${data.monitoringEndDate}`,
+                { align: 'left' },
             )
             .moveDown(1);
 
@@ -188,88 +123,59 @@ export class CreditIssueCertificateGenerator {
             .fontSize(16)
             .text(
                 `Sri Lankan Credit Emission Reductions: ${data.issuedCredits} (tCO₂eq)`,
-                100,
-                doc.y,
+                { align: 'center' },
             )
             .moveDown(1.5);
 
-        doc.fontSize(11)
-            .font('Inter')
-            .text('Serial Range ', 180, doc.y, {
-                continued: true,
-            })
-            .text(': Block start ', 185, doc.y, {
-                continued: true,
-            })
-            .moveDown(0.4)
-            .text(': Block end ', 252.5, doc.y, {
-                continued: true,
-            })
-            .moveDown(1);
+        this.addSignatures(doc);
 
-        // Chairman Signature
-        const chairmanSignatureImagePath = 'public/signatures/chairman.jpg';
+        doc.end();
 
-        if (fs.existsSync(chairmanSignatureImagePath)) {
-            doc.image(chairmanSignatureImagePath, 110, 579, {
-                width: 120,
-                height: 100,
-            });
-        } else {
-            console.log(
-                'Chairmans Signature does not exist in:',
-                chairmanSignatureImagePath,
-            );
+        await new Promise<void>((resolve) => {
+            stream.on('finish', resolve);
+        });
+
+        const content = fs.readFileSync(filePath, { encoding: 'base64' });
+
+        return await this.fileHandler.uploadFile(
+            `documents/${fileName}`,
+            content,
+        );
+    }
+
+    private addSignatures(doc: PDFKit.PDFDocument) {
+        const chairmanSignature = 'public/signatures/chairman.jpg';
+        const ceoSignature = 'public/signatures/ceo.jpg';
+
+        if (fs.existsSync(chairmanSignature)) {
+            doc.image(chairmanSignature, 110, 579, { width: 120, height: 100 });
         }
 
         doc.font('Inter')
             .fontSize(10)
             .text('...............................', 135, 660, {
                 align: 'left',
-            });
-
-        doc.font('Inter').fontSize(10).text('Chairman', 154, 675);
-
-        doc.font('Inter')
-            .fontSize(10)
+            })
+            .text('Chairman', 154, 675)
             .text('Zimbabwe Climate Fund (Pvt) Ltd.', 100, 690, {
                 align: 'left',
             });
 
-        doc.image('images/SLCF_logo.jpg', 260, 600, {
-            width: 110,
-            height: 100,
-        });
+        // doc.image('images/SLCF_logo.jpg', 260, 600, {
+        //     width: 110,
+        //     height: 100,
+        // });
 
-        // CEO Signature
-
-        // Define image paths
-        const ceoSignatureImagePath = 'public/signatures/ceo.jpg';
-
-        if (fs.existsSync(ceoSignatureImagePath)) {
-            doc.image(ceoSignatureImagePath, 410, 579, {
-                width: 120,
-                height: 100,
-            });
-        } else {
-            console.log(
-                'CEO Signature does not exist in:',
-                ceoSignatureImagePath,
-            );
+        if (fs.existsSync(ceoSignature)) {
+            doc.image(ceoSignature, 410, 579, { width: 120, height: 100 });
         }
 
         doc.font('Inter')
             .fontSize(10)
             .text('...............................', 415, 660, {
                 align: 'left',
-            });
-
-        doc.font('Inter')
-            .fontSize(11)
-            .text('Chief Executive Officer', 400, 675);
-
-        doc.font('Inter')
-            .fontSize(10)
+            })
+            .text('Chief Executive Officer', 400, 675)
             .text('Zimbabwe Climate Fund (Pvt) Ltd.', 378, 690, {
                 align: 'left',
             });
@@ -281,46 +187,23 @@ export class CreditIssueCertificateGenerator {
                 70,
                 720,
                 { align: 'center' },
-            );
-
-        doc.font('Inter')
-            .fontSize(9)
+            )
             .text('Phone: 011 2053065  E-mail: info@climatefund.lk', 70, 730, {
                 align: 'center',
             });
-
-        // End and save the document
-        doc.end();
-
-        const content = await new Promise<string>((resolve) => {
-            stream.on('finish', () => {
-                const contents = fs.readFileSync(filepath, {
-                    encoding: 'base64',
-                });
-                resolve(contents);
-            });
-        });
-
-        const url = await this.fileHandler.uploadFile(
-            'documents/' + fileName,
-            content,
-        );
-
-        return url;
     }
 
-    // Function to add a preview watermark
-    addPreviewWatermark(doc) {
-        doc.save(); // Save the current state
-        doc.fontSize(160) // Set a large font size for visibility
-            .font('Helvetica-Bold') // Use a standard, bold font
-            .opacity(0.1) // Set low opacity for the watermark
-            .fillColor('grey') // Grey color for the watermark text
-            .rotate(35, { origin: [doc.page.width / 2, doc.page.height / 2] }) // Rotate the text by 45 degrees around the center
+    private addPreviewWatermark(doc: PDFKit.PDFDocument) {
+        doc.save()
+            .fontSize(160)
+            .font('Helvetica-Bold')
+            .opacity(0.1)
+            .fillColor('grey')
+            .rotate(35, { origin: [doc.page.width / 2, doc.page.height / 2] })
             .text('Preview', 0, doc.page.height / 2 - 100, {
                 width: doc.page.width,
                 align: 'center',
-            });
-        doc.restore(); // Restore the original state for further additions
+            })
+            .restore();
     }
 }

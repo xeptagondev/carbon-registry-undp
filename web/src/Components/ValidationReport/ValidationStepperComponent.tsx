@@ -10,9 +10,8 @@ import moment from 'moment';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import DataValidationProcess from './DataValidationProcess';
 import ValidationReportIntroduction from './ValidationReportIntroduction';
-import ProjectDetails from './ProjectDetails';
-import Reference from './Reference';
-import ValicationReportGHGDescriptionOfProjectActivity from './ValicationReportGHGDescriptionOfProjectActivity';
+// import Reference from './Reference';
+// import ValicationReportGHGDescriptionOfProjectActivity from './ValicationReportGHGDescriptionOfProjectActivity';
 import ValidationMethodology from './ValidationMethodology';
 import ValidationOpinion from './ValidationOpinion';
 import ValidationReportAppendix from './ValidationReportAppendix';
@@ -21,6 +20,24 @@ import { extractFilePropertiesFromLink } from '../../Utils/utilityHelper';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
+import BasicInformation from './BasicInformation';
+import ExecutiveSummary from './ExecutiveSummary';
+import InternalQualityControl from './InternalQualityControl';
+import GHGProjectDescription from './GHGProjectDescription';
+import MeansOfValidation from './MeansOfValidation';
+import ValidationFindings from './ValidationFindings';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import { Loading } from '../Loading/loading';
+import {
+  basicInformationMapDataToFields,
+  executiveSummaryMapDataToFields,
+  ghgProjectDescriptionMapDataToFields,
+  internalQualityControlMapDataToFields,
+  meansOfValidationMapDataToFields,
+  validationFindingsMapDataToFields,
+  validationMethodologyMapDataToFields,
+  validationOpinionMapDataToFields,
+} from './viewDataMap';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -35,34 +52,36 @@ export enum ProcessSteps {
 
 const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
+
   const [current, setCurrent] = useState(0);
+
   const navigate = useNavigate();
-  const { id: programId } = useParams();
+  const { id } = useParams();
   const { get, post } = useConnection();
   const navigationLocation = useLocation();
   const scrollSection = useRef({} as any);
-  const { mode } = navigationLocation.state || {};
+  const { state } = useLocation();
+  console.log('----------state-------------', state);
   const isEdit = true;
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
   const registryName = process.env.REACT_APP_COUNTRY_NAME || 'RegistryX';
 
+  const [documentId, setDocumentId] = useState<string>();
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleLoading = (val: boolean) => {
+    setLoading(val);
+  };
+
   const [existingFormValues, setExistingFormValues] = useState({
-    programmeId: programId,
-    companyId: undefined,
-    content: {
-      [ProcessSteps.VR_PROJECT_DETAILS]: {},
-      [ProcessSteps.VR_INTRODUCTION]: {},
-      [ProcessSteps.VR_GHG_PROJECT_DESCRIPTION]: {},
-      [ProcessSteps.VR_VALIDATION_METHODOLOGY]: {},
-      [ProcessSteps.VR_VALIDATION_PROCESS]: {},
-      [ProcessSteps.VR_VALIDATION_OPINION]: {},
-      [ProcessSteps.VR_REFERENCE]: {},
-      [ProcessSteps.VR_APPENDIX]: {},
-    },
+    projectRefId: id,
+    documentType: DocumentEnum.VALIDATION,
+    name: 'Validation',
+    data: {},
   });
 
   const navigateToDetailsPage = () => {
-    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(programId)));
+    navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
   const scrollToDiv = () => {
@@ -75,24 +94,12 @@ const StepperComponent = (props: any) => {
   };
 
   const submitForm = async (formValues: any) => {
-    const validationData = {
-      programmeId: programId,
-      content: {
-        projectDetails: formValues.content[ProcessSteps.VR_PROJECT_DETAILS],
-        introduction: formValues.content[ProcessSteps.VR_INTRODUCTION],
-        ghgProjectDescription: formValues.content[ProcessSteps.VR_GHG_PROJECT_DESCRIPTION],
-        validationMethodology: formValues.content[ProcessSteps.VR_VALIDATION_METHODOLOGY],
-        dataForValidationProcess: formValues.content[ProcessSteps.VR_VALIDATION_PROCESS],
-        validationOpinion: formValues.content[ProcessSteps.VR_VALIDATION_OPINION],
-        references: formValues.content[ProcessSteps.VR_REFERENCE],
-        appendix: formValues.content[ProcessSteps.VR_APPENDIX],
-      },
-    };
-
+    console.log('--------adding form-values------', formValues);
+    setLoading(true);
     try {
-      const res = await post(API_PATHS.CREATE_VALIIDATION_REPORT, validationData);
-      console.log(res);
-      if (res?.response?.data?.statusCode === 200) {
+      const res = await post(API_PATHS.ADD_DOCUMENT, formValues);
+      console.log('res', res);
+      if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
           content: 'Validation report has been submitted successfully',
@@ -102,17 +109,20 @@ const StepperComponent = (props: any) => {
         navigateToDetailsPage();
       }
     } catch (error: any) {
+      console.log('----------error----------', error);
       message.open({
         type: 'error',
         content: 'Something went wrong',
         duration: 4,
         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const next = () => {
-    if (current === 7 && mode === FormMode.VIEW) {
+    if (current === 8 && state?.mode === FormMode.VIEW) {
       navigateToDetailsPage();
       return;
     }
@@ -141,418 +151,304 @@ const StepperComponent = (props: any) => {
   const [form6] = useForm();
   const [form7] = useForm();
   const [form8] = useForm();
+  const [form9] = useForm();
 
-  const getProgrammeDetailsById = async (id: string) => {
-    try {
-      const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-        programmeId: id,
-      });
+  // const getProgrammeDetailsById = async (id: string) => {
+  //   try {
+  //     const { data } = await post(API_PATHS.PROJECT_BY_ID, {
+  //       programmeId: id,
+  //     });
 
-      const {
-        data: { user },
-      } = await get(API_PATHS.USER_PROFILE);
+  //     const {
+  //       data: { user },
+  //     } = await get(API_PATHS.USER_PROFILE);
 
-      form1.setFieldsValue({
-        projectTitle: data?.title,
-        dateOfIssue: moment(),
-        client: data.title,
-      });
+  //     form1.setFieldsValue({
+  //       projectTitle: data?.title,
+  //       dateOfIssue: moment(),
+  //       client: data.title,
+  //     });
 
-      setProjectCategory(data?.projectCategory);
+  //     setProjectCategory(data?.projectCategory);
 
-      setExistingFormValues((prevVal) => ({
-        ...prevVal,
-        companyId: data?.company?.companyId,
-      }));
-    } catch (error) {
-      console.log('error');
-    }
-  };
+  //     setExistingFormValues((prevVal) => ({
+  //       ...prevVal,
+  //       companyId: data?.company?.companyId,
+  //     }));
+  //   } catch (error) {
+  //     console.log('error');
+  //   }
+  // };
 
-  const getCountryList = async () => {
-    try {
-      const response = await get(API_PATHS.COUNTRY_LIST);
-      if (response.data) {
-        const alpha2Names = response.data.map((item: any) => {
-          return item.alpha2;
-        });
-        setCountries(alpha2Names);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const getCountryList = async () => {
+  //   try {
+  //     const response = await get(API_PATHS.COUNTRY_LIST);
+  //     if (response.data) {
+  //       const alpha2Names = response.data.map((item: any) => {
+  //         return item.alpha2;
+  //       });
+  //       setCountries(alpha2Names);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
-  const getCMALastVersion = async (id: string) => {
-    try {
-      const {
-        data: { content },
-      } = await post(API_PATHS.LAST_DOC_VERSION, {
-        programmeId: id,
-        docType: 'cma',
-      });
+  // const getCMALastVersion = async (id: string) => {
+  //   try {
+  //     const {
+  //       data: { content },
+  //     } = await post(API_PATHS.LAST_DOC_VERSION, {
+  //       programmeId: id,
+  //       docType: 'cma',
+  //     });
 
-      const projectContent = JSON.parse(content);
+  //     const projectContent = JSON.parse(content);
 
-      form1.setFieldsValue({
-        telephone: projectContent?.projectDetails?.telephone,
-        email: projectContent?.projectDetails?.email,
-        address: projectContent?.projectDetails?.physicalAddress,
-        website: projectContent?.projectDetails?.website,
-        reportNo: `SLCCS/VDR/${new Date().getFullYear()}/${id}`,
-        workCarriedOutBy: `Validation Division - ${registryName}`,
-      });
+  //     form1.setFieldsValue({
+  //       telephone: projectContent?.projectDetails?.telephone,
+  //       email: projectContent?.projectDetails?.email,
+  //       address: projectContent?.projectDetails?.physicalAddress,
+  //       website: projectContent?.projectDetails?.website,
+  //       reportNo: `SLCCS/VDR/${new Date().getFullYear()}/${id}`,
+  //       workCarriedOutBy: `Validation Division - ${registryName}`,
+  //     });
 
-      form2.setFieldsValue({
-        titleOfProjectActivity: projectContent?.projectDetails?.title,
-        projectParticipant: projectContent?.projectActivity?.projectProponent?.organizationName,
-      });
+  //     form2.setFieldsValue({
+  //       titleOfProjectActivity: projectContent?.projectDetails?.title,
+  //       projectParticipant: projectContent?.projectActivity?.projectProponent?.organizationName,
+  //     });
 
-      form3.setFieldsValue({
-        creditingPeriod: Number(projectContent?.projectActivity?.totalCreditingYears),
-        startDateCreditingPeriod: moment(
-          projectContent?.projectActivity?.creditingPeriodStartDate * 1000
-        ),
-        locationsOfProjectActivity: projectContent?.projectActivity.locationsOfProjectActivity.map(
-          (location: any) => {
-            return {
-              ...location,
-              additionalDocuments:
-                location.additionalDocuments && location.additionalDocuments?.length > 0
-                  ? location.additionalDocuments?.map((document: string, index: number) => {
-                      return {
-                        uid: index,
-                        name: extractFilePropertiesFromLink(document).fileName,
-                        status: 'done',
-                        url: document,
-                      };
-                    })
-                  : [],
-              technicalProjectDescriptionItems: [
-                {
-                  item: '',
-                  parameterValue: [
-                    {
-                      parameter: '',
-                      value: '',
-                    },
-                  ],
-                },
-              ],
-            };
-          }
-        ),
-      });
+  //     form3.setFieldsValue({
+  //       creditingPeriod: Number(projectContent?.projectActivity?.totalCreditingYears),
+  //       startDateCreditingPeriod: moment(
+  //         projectContent?.projectActivity?.creditingPeriodStartDate * 1000
+  //       ),
+  //       locationsOfProjectActivity: projectContent?.projectActivity.locationsOfProjectActivity.map(
+  //         (location: any) => {
+  //           return {
+  //             ...location,
+  //             additionalDocuments:
+  //               location.additionalDocuments && location.additionalDocuments?.length > 0
+  //                 ? location.additionalDocuments?.map((document: string, index: number) => {
+  //                     return {
+  //                       uid: index,
+  //                       name: extractFilePropertiesFromLink(document).fileName,
+  //                       status: 'done',
+  //                       url: document,
+  //                     };
+  //                   })
+  //                 : [],
+  //             technicalProjectDescriptionItems: [
+  //               {
+  //                 item: '',
+  //                 parameterValue: [
+  //                   {
+  //                     parameter: '',
+  //                     value: '',
+  //                   },
+  //                 ],
+  //               },
+  //             ],
+  //           };
+  //         }
+  //       ),
+  //     });
 
-      form4.setFieldsValue({
-        validationReportFinding: [
-          {
-            typeOfFinding: '',
-            findingNo: '',
-            rfToCMA: '',
-            actionRequestsByValidationTeam: '',
-            summaryOfProjectOwnerResponse: '',
-            validationTeamAssessment: '',
-            conclusion: [],
-          },
-        ],
-        teamMembers: [
-          {
-            name: '',
-            company: `${t('validationReport:ClimateFund', { countryName: countryName })}`,
-            function: '',
-            taskPerformed: '',
-          },
-        ],
-        followupInterviews: [
-          {
-            name: '',
-            designation: '',
-            organization: '',
-          },
-        ],
-      });
+  //     form4.setFieldsValue({
+  //       validationReportFinding: [
+  //         {
+  //           typeOfFinding: '',
+  //           findingNo: '',
+  //           rfToCMA: '',
+  //           actionRequestsByValidationTeam: '',
+  //           summaryOfProjectOwnerResponse: '',
+  //           validationTeamAssessment: '',
+  //           conclusion: [],
+  //         },
+  //       ],
+  //       teamMembers: [
+  //         {
+  //           name: '',
+  //           company: `${t('validationReport:ClimateFund', { countryName: countryName })}`,
+  //           function: '',
+  //           taskPerformed: '',
+  //         },
+  //       ],
+  //       followupInterviews: [
+  //         {
+  //           name: '',
+  //           designation: '',
+  //           organization: '',
+  //         },
+  //       ],
+  //     });
 
-      form5.setFieldsValue({
-        employedTechnologies: projectContent?.projectActivity.locationsOfProjectActivity.map(
-          (location: any, index: number) => {
-            return {
-              siteNo: index + 1,
-              location: location.locationOfProjectActivity,
-              capacity: '',
-            };
-          }
-        ),
-        gridEmissionFactorUnit: 'tCO2e/MWh',
-        gridEmissionFactorValueGlobal: 0.72222,
-        baselineEmissions: [
-          ...projectContent?.projectActivity.locationsOfProjectActivity.map(
-            (location: any, index: number) => {
-              return {
-                type: 'value',
-                location: location.locationOfProjectActivity,
-                projectCapacityValue: '',
-                plantFactorValue: '',
-                avgEnergyOutputValue: '',
-                gridEmissionFactorValue: '',
-                emissionReductionValue: '',
-              };
-            }
-          ),
-        ],
-        estimatedNetEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.yearlyGHGEmissionReductions.map(
-            (emissionData: any) => {
-              return {
-                startDate: moment(emissionData.startDate * 1000),
-                endDate: moment(emissionData.endDate * 1000),
-                baselineEmissionReductions: emissionData.baselineEmissionReductions,
-                projectEmissionReductions: emissionData.projectEmissionReductions,
-                leakageEmissionReductions: emissionData.leakageEmissionReductions,
-                netEmissionReductions: emissionData.netEmissionReductions,
-              };
-            }
-          ),
-        totalBaselineEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-            ?.totalBaselineEmissionReductions,
-        totalProjectEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-            ?.totalProjectEmissionReductions,
-        totalLeakageEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-            ?.totalLeakageEmissionReductions,
-        totalNetEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.totalNetEmissionReductions,
-        avgBaselineEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-            ?.avgBaselineEmissionReductions,
-        avgProjectEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-            ?.avgProjectEmissionReductions,
-        avgLeakageEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-            ?.avgLeakageEmissionReductions,
-        avgNetEmissionReductions:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.avgNetEmissionReductions,
-        totalNumberOfCredingYears:
-          projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.totalNumberOfCredingYears,
-      });
-    } catch (error) {
-      console.log('error');
-    }
-  };
+  //     form5.setFieldsValue({
+  //       employedTechnologies: projectContent?.projectActivity.locationsOfProjectActivity.map(
+  //         (location: any, index: number) => {
+  //           return {
+  //             siteNo: index + 1,
+  //             location: location.locationOfProjectActivity,
+  //             capacity: '',
+  //           };
+  //         }
+  //       ),
+  //       gridEmissionFactorUnit: 'tCO2e/MWh',
+  //       gridEmissionFactorValueGlobal: 0.72222,
+  //       baselineEmissions: [
+  //         ...projectContent?.projectActivity.locationsOfProjectActivity.map(
+  //           (location: any, index: number) => {
+  //             return {
+  //               type: 'value',
+  //               location: location.locationOfProjectActivity,
+  //               projectCapacityValue: '',
+  //               plantFactorValue: '',
+  //               avgEnergyOutputValue: '',
+  //               gridEmissionFactorValue: '',
+  //               emissionReductionValue: '',
+  //             };
+  //           }
+  //         ),
+  //       ],
+  //       estimatedNetEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.yearlyGHGEmissionReductions.map(
+  //           (emissionData: any) => {
+  //             return {
+  //               startDate: moment(emissionData.startDate * 1000),
+  //               endDate: moment(emissionData.endDate * 1000),
+  //               baselineEmissionReductions: emissionData.baselineEmissionReductions,
+  //               projectEmissionReductions: emissionData.projectEmissionReductions,
+  //               leakageEmissionReductions: emissionData.leakageEmissionReductions,
+  //               netEmissionReductions: emissionData.netEmissionReductions,
+  //             };
+  //           }
+  //         ),
+  //       totalBaselineEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
+  //           ?.totalBaselineEmissionReductions,
+  //       totalProjectEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
+  //           ?.totalProjectEmissionReductions,
+  //       totalLeakageEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
+  //           ?.totalLeakageEmissionReductions,
+  //       totalNetEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.totalNetEmissionReductions,
+  //       avgBaselineEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
+  //           ?.avgBaselineEmissionReductions,
+  //       avgProjectEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
+  //           ?.avgProjectEmissionReductions,
+  //       avgLeakageEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
+  //           ?.avgLeakageEmissionReductions,
+  //       avgNetEmissionReductions:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.avgNetEmissionReductions,
+  //       totalNumberOfCredingYears:
+  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.totalNumberOfCredingYears,
+  //     });
+  //   } catch (error) {
+  //     console.log('error');
+  //   }
+  // };
 
   const handleValuesUpdate = (val: any) => {
     setExistingFormValues((prevVal: any) => {
       const tempContent = {
-        ...prevVal.content,
+        ...prevVal.data,
         ...val,
       };
-      return { ...prevVal, content: tempContent };
+      return { ...prevVal, data: tempContent };
     });
 
-    if (current === 7) {
-      const formValues = { ...existingFormValues };
-      formValues.content[ProcessSteps.VR_APPENDIX] = val[ProcessSteps.VR_APPENDIX];
-      submitForm(formValues);
+    if (current === 8) {
+      console.log('----------test------------', val);
+      const tempData = {
+        ...existingFormValues,
+        data: {
+          ...existingFormValues.data,
+          appendix: val,
+        },
+      };
+      submitForm(tempData);
     }
 
     const isFinal = val[ProcessSteps.VR_APPENDIX];
   };
 
-  const getValidationReportByVersion = async (id: string) => {
-    try {
-      const res =
-        mode === FormMode.VIEW && selectedVersion
-          ? await post(API_PATHS.DOC_BY_VERSION, {
-              programmeId: id,
-              docType: 'validationReport',
-              version: selectedVersion,
-            })
-          : await post(API_PATHS.LAST_DOC_VERSION, {
-              programmeId: id,
-              docType: 'validationReport',
-            });
-
-      if (mode === FormMode.VIEW) {
-        handleDocumentStatus(res.data.status);
-      }
-      const validationReportContent = JSON.parse(res.data.content);
-
-      const projectDetails = validationReportContent.projectDetails;
-      const introductionDetails = validationReportContent.introduction;
-      const ghgProjectDescription = validationReportContent.ghgProjectDescription;
-      const validationMethodology = validationReportContent.validationMethodology;
-      const dataForValidationProcess = validationReportContent.dataForValidationProcess;
-      const validationOpinion = validationReportContent.validationOpinion;
-      const references = validationReportContent.references;
-      const appendix = validationReportContent.appendix;
-
-      form1.setFieldsValue({
-        client: projectDetails?.client,
-        address: projectDetails?.address,
-        dateOfIssue: moment(projectDetails?.dateOfIssue),
-        email: projectDetails?.email,
-        projectTitle: projectDetails?.projectTitle,
-        reportID: projectDetails?.reportID ? projectDetails?.reportID : projectDetails?.reportNo,
-        telephone: projectDetails?.telephone,
-        versionDate: moment(projectDetails?.versionDate),
-        versionNo: projectDetails?.versionNo,
-        website: projectDetails?.website,
-        summary: projectDetails?.summary,
-        workApprovedBy: projectDetails?.workApprovedBy,
-        workCarriedOutBy: projectDetails?.workCarriedOutBy,
-      });
-
-      form2.setFieldsValue({
-        objective: introductionDetails?.objective,
-        scopeAndCriteria: introductionDetails?.scopeAndCriteria,
-        titleOfProjectActivity: introductionDetails?.titleOfProjectActivity,
-        projectParticipant: introductionDetails?.projectParticipant,
-        hostParty: introductionDetails?.hostParty,
-        consultant: introductionDetails?.consultant,
-        summary: introductionDetails?.summary,
-      });
-
-      const projectLocations = ghgProjectDescription.locationsOfProjectActivity.map(
-        (location: any) => {
-          return {
-            technicalProjectDescriptionItems: location.technicalProjectDescription,
-            locationOfProjectActivity: location.locationOfProjectActivity,
-            province: location.province,
-            district: location.district,
-            dsDivision: location.dsDivision,
-            city: location.city,
-            community: location.community,
-            additionalDocuments: location.additionalDocuments?.map(
-              (document: string, index: number) => {
-                return {
-                  uid: index,
-                  name: extractFilePropertiesFromLink(document).fileName,
-                  status: 'done',
-                  url: document,
-                };
-              }
-            ),
-            geographicalLocationCoordinates: location.geographicalLocationCoordinates[0][0],
-          };
-        }
-      );
-
-      form3.setFieldsValue({
-        ...ghgProjectDescription,
-        projectScopeUNFCC: projectScopeList(t)
-          .filter((item: any) => {
-            return ghgProjectDescription[item.id];
-          })
-          .map((pItem: any) => pItem.id),
-        locationsOfProjectActivity: projectLocations,
-        startDateCreditingPeriod: moment(ghgProjectDescription.startDateCreditingPeriod),
-      });
-
-      form4.setFieldsValue({
-        ...validationMethodology,
-      });
-
-      const netEmissionReduction = dataForValidationProcess.estimatedNetEmissionReductions[0];
-      form5.setFieldsValue({
-        ...dataForValidationProcess,
-        gridEmissionFactorUnit: 'tCO2e/MWh',
-        gridEmissionFactorValueGlobal: 0.72222,
-        totalCapacity: `${dataForValidationProcess?.totalCapacity} kWp`,
-        baselineEmissions: [
-          ...dataForValidationProcess?.baselineEmissions?.map((emissions: any) => {
-            return {
-              location: emissions.location,
-              projectCapacityValue: emissions.projectCapacityValue,
-              plantFactorValue: emissions.plantFactorValue,
-              avgEnergyOutputValue: emissions.avgEnergyOutputValue,
-              gridEmissionFactorValue: emissions.gridEmissionFactorValue,
-              emissionReductionValue: emissions.emissionReductionValue,
-            };
-          }),
-        ],
-        estimatedNetEmissionReductions: netEmissionReduction.yearlyGHGEmissionReductions.map(
-          (netEmission: any) => {
-            return {
-              ...netEmission,
-              startDate: moment(netEmission.startDate),
-              endDate: moment(netEmission.endDate),
-            };
-          }
-        ),
-        totalBaselineEmissionReductions: Number(
-          netEmissionReduction.totalBaselineEmissionReductions
-        ),
-        totalProjectEmissionReductions: Number(netEmissionReduction.totalProjectEmissionReductions),
-        totalLeakageEmissionReductions: Number(netEmissionReduction.totalLeakageEmissionReductions),
-        totalNetEmissionReductions: Number(netEmissionReduction.totalNetEmissionReductions),
-        totalBufferPoolAllocations: Number(netEmissionReduction.totalBufferPoolAllocations),
-        totalNumberOfCredingYears: Number(netEmissionReduction.totalNumberOfCredingYears),
-        avgBaselineEmissionReductions: Number(netEmissionReduction.avgBaselineEmissionReductions),
-        avgProjectEmissionReductions: Number(netEmissionReduction.avgProjectEmissionReductions),
-        avgLeakageEmissionReductions: Number(netEmissionReduction.avgLeakageEmissionReductions),
-        avgNetEmissionReductions: Number(netEmissionReduction.avgNetEmissionReductions),
-        avgBufferPoolAllocations: Number(netEmissionReduction.avgBufferPoolAllocations),
-      });
-
-      form6.setFieldsValue({
-        opinion: validationOpinion?.opinion,
-        validator1Signature: [
-          {
-            uid: '1',
-            name: extractFilePropertiesFromLink(validationOpinion.validator1Signature).fileName,
-            status: 'done',
-            url: `${validationOpinion.validator1Signature}`,
-          },
-        ],
-        validator1Designation: validationOpinion?.validator1Designation,
-        validator1Name: validationOpinion?.validator1Name,
-        validator1DateOfSign: moment(validationOpinion?.validator1DateOfSign),
-        validator2Designation: validationOpinion?.validator2Designation,
-        validator2Name: validationOpinion?.validator2Name,
-        validator2Signature: [
-          {
-            uid: '2',
-            name: extractFilePropertiesFromLink(validationOpinion.validator1Signature).fileName,
-            status: 'done',
-            url: validationOpinion.validator2Signature,
-          },
-        ],
-        validator2DateOfSign: moment(validationOpinion?.validator2DateOfSign),
-      });
-
-      form7.setFieldsValue({
-        references: references?.references,
-      });
-
-      form8.setFieldsValue({
-        comments: appendix?.comments,
-        additionalDocuments: appendix.additionalDocuments.map((document: any, index: number) => {
-          return {
-            uid: index,
-            name: extractFilePropertiesFromLink(document).fileName,
-            status: 'done',
-            url: document,
-          };
-        }),
-      });
-    } catch (error) {
-      console.log('error');
-    }
-  };
-
   useEffect(() => {
-    getCountryList();
-    if (programId) {
-      if (mode === FormMode.VIEW || mode === FormMode.EDIT) {
-        getValidationReportByVersion(programId);
-      } else {
-        getProgrammeDetailsById(programId);
-        getCMALastVersion(programId);
+    const getViewData = async () => {
+      if (
+        state?.mode === FormMode?.EDIT ||
+        state?.mode === FormMode?.VERIFY ||
+        state?.mode === FormMode?.VIEW
+      ) {
+        setLoading(true);
+        let res;
+        try {
+          res = await post(API_PATHS.QUERY_DOCUMENT, {
+            projectRefId: id,
+            DocumentEnum: DocumentEnum.VALIDATION,
+          });
+
+          if (res?.statusText === 'SUCCESS') {
+            const data = res?.data;
+            setDocumentId(data?.refId);
+            console.log(
+              '---------validation------------',
+              data?.data,
+              data?.data?.basicInformation
+            );
+            const basicInformation = basicInformationMapDataToFields(data.data?.basicInformation);
+            form1.setFieldsValue(basicInformation);
+
+            const ghgProjectDescription = ghgProjectDescriptionMapDataToFields(
+              data.data?.ghgProjectDescription
+            );
+            form2.setFieldsValue(ghgProjectDescription);
+
+            const executiveSummary = executiveSummaryMapDataToFields(data.data?.executiveSummary);
+            form3.setFieldsValue(executiveSummary);
+
+            const validationMethdology = validationMethodologyMapDataToFields(
+              data.data?.validationMethdology
+            );
+            form4.setFieldsValue(validationMethdology);
+
+            const meansOfValidation = meansOfValidationMapDataToFields(
+              data.data?.meansOfValidation
+            );
+            form5.setFieldsValue(meansOfValidation);
+
+            const validationFindings = validationFindingsMapDataToFields(
+              data.data?.validationFindings
+            );
+            form6.setFieldsValue(validationFindings);
+
+            const internalQualityControl = internalQualityControlMapDataToFields(
+              data.data?.internalQualityControl
+            );
+            form7.setFieldsValue(internalQualityControl);
+
+            const validationOpinion = validationOpinionMapDataToFields(
+              data.data?.validationOpinion
+            );
+            form8.setFieldsValue(validationOpinion);
+
+            const appendix = basicInformationMapDataToFields(data.data?.appendix);
+            form9.setFieldsValue(appendix);
+          }
+        } catch (error) {
+          console.log('error', error);
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    };
+
+    getViewData();
   }, [selectedVersion]);
 
   const steps = [
@@ -563,7 +459,7 @@ const StepperComponent = (props: any) => {
         </div>
       ),
       description: (
-        <ProjectDetails
+        <BasicInformation
           next={next}
           prev={prev}
           form={form1}
@@ -571,20 +467,20 @@ const StepperComponent = (props: any) => {
           t={t}
           countries={countries}
           handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_PROJECT_DETAILS]}
-          formMode={mode}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_PROJECT_DETAILS]}
+          formMode={state?.mode}
         />
       ),
     },
     {
       title: (
         <div className="stepper-title-container">
-          <div className="step-count">01</div>
+          {/* <div className="step-count">01</div> */}
           <div className="title">{t('validationReport:form02Title')}</div>
         </div>
       ),
       description: (
-        <ValidationReportIntroduction
+        <GHGProjectDescription
           next={next}
           prev={prev}
           form={form2}
@@ -592,8 +488,28 @@ const StepperComponent = (props: any) => {
           t={t}
           countries={countries}
           handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_INTRODUCTION]}
-          formMode={mode}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_INTRODUCTION]}
+          formMode={state?.mode}
+        />
+      ),
+    },
+    {
+      title: (
+        <div className="stepper-title-container">
+          <div className="step-count">01</div>
+          <div className="title">{t('validationReport:form03Title')}</div>
+        </div>
+      ),
+      description: (
+        <ExecutiveSummary
+          next={next}
+          prev={prev}
+          form={form3}
+          current={current}
+          t={t}
+          handleValuesUpdate={handleValuesUpdate}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_GHG_PROJECT_DESCRIPTION]}
+          formMode={state?.mode}
         />
       ),
     },
@@ -601,26 +517,6 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">02</div>
-          <div className="title">{t('validationReport:form03Title')}</div>
-        </div>
-      ),
-      description: (
-        <ValicationReportGHGDescriptionOfProjectActivity
-          next={next}
-          prev={prev}
-          form={form3}
-          current={current}
-          t={t}
-          handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_GHG_PROJECT_DESCRIPTION]}
-          formMode={mode}
-        />
-      ),
-    },
-    {
-      title: (
-        <div className="stepper-title-container">
-          <div className="step-count">03</div>
           <div className="title">{t('validationReport:form04Title')}</div>
         </div>
       ),
@@ -632,8 +528,29 @@ const StepperComponent = (props: any) => {
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_METHODOLOGY]}
-          formMode={mode}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_METHODOLOGY]}
+          formMode={state?.mode}
+        />
+      ),
+    },
+    {
+      title: (
+        <div className="stepper-title-container">
+          <div className="step-count">03</div>
+          <div className="title">{t('validationReport:form05Title')}</div>
+        </div>
+      ),
+      description: (
+        <MeansOfValidation
+          next={next}
+          prev={prev}
+          form={form5}
+          current={current}
+          t={t}
+          handleValuesUpdate={handleValuesUpdate}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
+          projectCategory={projectCategory}
+          formMode={state?.mode}
         />
       ),
     },
@@ -641,20 +558,20 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">04</div>
-          <div className="title">{t('validationReport:form05Title')}</div>
+          <div className="title">{t('validationReport:form06Title')}</div>
         </div>
       ),
       description: (
-        <DataValidationProcess
+        <ValidationFindings
           next={next}
           prev={prev}
-          form={form5}
+          form={form6}
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
           projectCategory={projectCategory}
-          formMode={mode}
+          formMode={state?.mode}
         />
       ),
     },
@@ -662,19 +579,19 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">05</div>
-          <div className="title">{t('validationReport:form06Title')}</div>
+          <div className="title">{t('validationReport:form07Title')}</div>
         </div>
       ),
       description: (
-        <ValidationOpinion
+        <InternalQualityControl
           next={next}
           prev={prev}
-          form={form6}
+          form={form7}
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_OPINION]}
-          formMode={mode}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_REFERENCE]}
+          formMode={state?.mode}
         />
       ),
     },
@@ -682,44 +599,59 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">06</div>
-          <div className="title">{t('validationReport:form07Title')}</div>
-        </div>
-      ),
-      description: (
-        <Reference
-          next={next}
-          prev={prev}
-          form={form7}
-          current={current}
-          t={t}
-          handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_REFERENCE]}
-          formMode={mode}
-        />
-      ),
-    },
-    {
-      title: (
-        <div className="stepper-title-container">
-          <div className="step-count">07</div>
           <div className="title">{t('validationReport:form08Title')}</div>
         </div>
       ),
       description: (
-        <ValidationReportAppendix
+        <ValidationOpinion
           next={next}
           prev={prev}
           form={form8}
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
-          existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
-          formMode={mode}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_OPINION]}
+          formMode={state?.mode}
+        />
+        // <ValidationReportAppendix
+        //   next={next}
+        //   prev={prev}
+        //   form={form8}
+        //   current={current}
+        //   t={t}
+        //   handleValuesUpdate={handleValuesUpdate}
+        //   existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
+        //   formMode={state?.mode}
+        // />
+      ),
+    },
+    {
+      title: (
+        <div className="stepper-title-container">
+          <div className="step-count">07</div>
+          <div className="title">{t('validationReport:form09Title')}</div>
+        </div>
+      ),
+      description: (
+        <ValidationReportAppendix
+          next={next}
+          prev={prev}
+          form={form9}
+          current={current}
+          documentId={documentId}
+          t={t}
+          handleValuesUpdate={handleValuesUpdate}
+          // existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
+          formMode={state?.mode}
+          handleLoading={handleLoading}
         />
       ),
     },
   ];
 
+  if (loading) {
+    return <Loading />;
+  }
   return (
     <>
       <Steps

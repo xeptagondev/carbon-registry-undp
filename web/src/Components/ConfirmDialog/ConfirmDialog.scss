@@ -1,7 +1,7 @@
 @import '../../Styles/variables.scss';
 
 .dialog-box {
-  width: 360px !important;
+  // width: 360px !important;
   .icon {
     width: 95px;
   }
@@ -21,7 +21,13 @@
 
     button {
       text-transform: uppercase;
-    
     }
+  }
+
+  .checkbox-row {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    cursor: pointer;
   }
 }

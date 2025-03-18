@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { OrganizationStateEnum } from '../enum/organization.state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { CreditEventsEntity } from '@app/shared/carbon-credit-token/entity/credit-events.entity';
 
 @Entity()
 export class OrganizationEntity {
@@ -66,6 +67,12 @@ export class OrganizationEntity {
     @Column({ nullable: true })
     paymentId?: string;
 
+    @Column({ name: 'hedera_account_id', nullable: true })
+    hederaAccountId?: string;
+
+    @Column({ name: 'hedera_account_key', nullable: true })
+    hederaAccountKey?: string;
+
     @Column({ nullable: true })
     faxNumber?: string;
 
@@ -101,6 +108,20 @@ export class OrganizationEntity {
         { nullable: true },
     )
     assignedProjects?: ProjectEntity[];
+
+    @OneToMany(
+        () => CreditEventsEntity,
+        (creditEvents) => creditEvents.sender,
+        { nullable: true },
+    )
+    senderCreditEvents?: CreditEventsEntity[];
+
+    @OneToMany(
+        () => CreditEventsEntity,
+        (creditEvents) => creditEvents.receiver,
+        { nullable: true },
+    )
+    receiverCreditEvents?: CreditEventsEntity[];
 
     @BeforeInsert()
     generateRefId() {

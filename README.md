@@ -8,15 +8,15 @@
 <a name="about"></a>
 
 # National Carbon Credit Registry
-The National Carbon Registry enables carbon credit trading in order to reduce greenhouse gas emissions.
+The National Carbon Registry enables carbon credit trading to reduce greenhouse gas emissions. 
 
-As an online database, the National Carbon Registry uses national and international standards for quantifying and verifying greenhouse gas emissions reductions by projects, tracking issued carbon credits and enabling credit transfers in an efficient and transparent manner. The Registry functions by receiving, processing, recording and storing data on mitigations projects, the issuance, holding, transfer, acquisition, cancellation, and retirement of emission reduction credits. This information is publicly accessible to increase public confidence in the emissions reduction agenda.
+As an online database, the National Carbon Registry adheres to national and international standards for quantifying and verifying greenhouse gas emission reductions by projects. It tracks the issuance, holding, transfer, acquisition, cancellation, and retirement of carbon credits in an efficient and transparent manner. All data on mitigation projects and credit transactions is recorded and stored, ensuring that information is publicly accessible to boost confidence in the emissions reduction agenda. 
 
-The National Carbon Registry enables carbon credit tracking transactions from mitigation activities, as the digital implementation of the Paris Agreement. Any country can customize and deploy a local version of the registry then connect it to other national & international registries, MRV systems, and more. 
+Now, with our new registry implementation, the familiar front-end and operational flow remain unchanged. However, the backend is being transformed—incorporating Guardian Policy for enhanced security and compliance and utilizing the Hedera blockchain as the ledger. Ultimately, NFTs will be created for each carbon credit to standardize, secure, and streamline cross-border carbon trading. In addition, a custodian wrapper will be introduced on the registry side to manage communication and logic with Guardian, ensuring seamless integration with national and international systems, MRV platforms, and more. 
 
-The system has 3 key features:
+The system continues to offer two key features: 
 * **Analytics Dashboard:** Enabling governments, companies, and certification bodies to operate transparently and function on an immutable blockchain.
-* **Carbon Credit Calculator:** Standardized system According to the UNFCCC - CDM (Clean Development Mechanism) methodologies, across defined sectors. 
+
 * **Serial Number Generator:** Standardizing the technical format to allow for easy cross-border collaboration between carbon trading systems.
 
 ## Index
@@ -45,13 +45,13 @@ https://digitalprinciples.org/
 ## System Architecture
 UNDP Carbon Registry is based on service oriented architecture (SOA). Following diagram visualize the basic components in the system.
 
-![alt text](./documention/imgs/System%20Architecture.svg)
+![alt text](./documention/imgs/HederaNCRArchitecture.png)
 
 <a name="services"></a>
 ### **System Services**
-#### *National Service*
+#### *Custodian*
 
-Authenticate, Validate and Accept user (Government, Project Developer/Certifier) API requests related to the following functionalities,
+Authenticate, Validate and Accept user (Designated National Authority, Project Developer and Independent Certifier) API requests related to the following functionalities,
 - User and company CRUD operations.
 - User authentication.
 - Project life cycle management. 
@@ -60,19 +60,20 @@ Authenticate, Validate and Accept user (Government, Project Developer/Certifier)
 Service is horizontally scalable and state maintained in the following locations,
 - File storage.
 - Operational Database.
-- Ledger Database.
+- Hedera Public Ledger.
 
-Uses the Carbon Credit Calculator and Serial Number Generator node modules to estimate the project carbon credit amount and issue a serial number.
-Uses Ledger interface to persist project and credit life cycles.
+Uses the Serial Number Generator node modules to estimate the project carbon credit amount and issue a serial number.
+Uses Hedera Public Ledger to persist project and credit life cycles.
 
 #### *Analytics Service*
-Serve all the system analytics. Generate all the statistics using the operational database. 
-Horizontally scalable. 
+Serve all the system analytics. Generate all the statistics using the operational database. Horizontally scalable.
 
-#### *Replicator Service*
-Asynchronously replicate ledger database events in to the operational database. During the replication process it injects additional information to the data for query purposes (Eg: Location information). 
-Currently implemented for QLDB and PostgresSQL ledgers. By implementing [replicator interface](./backend/services/src/ledger-replicator/replicator-interface.service.ts) can support more ledger replicators. 
-Replicator select based on the `LEDGER_TYPE` environment variable. Support types `QLDB`, `PGSQL(Default)`.
+#### *Async Task Monitor*
+The task monitor will fetch pending tasks from the database and execute them in order. It will also consider task dependencies. 
+
+#### *Data Replicator*
+Asynchronously verify custodian database data by referring to the Hedera Guardian.
+![alt text](./documention/imgs/HederaNCRDataFlow.png)
 
 ### **Deployment**
 System services can deploy in 2 ways.
@@ -104,44 +105,15 @@ Can add more options by implementing [file handler interface](./backend/services
 Change by environment variable `FILE_SERVICE`. Supported types `S3`, `LOCAL(Default)`
 
 ### **Database Architecture**
-Primary/secondary database architecture used to store carbon project and account balances. 
-Ledger database is the primary database. Add/update projects and update account balances in a single transaction. Currently implemented only for AWS QLDB
+Custodian database design.
 
-Operational Database is the secondary database. Eventually replicated to this from primary database via data stream. Implemented based on PostgresSQL
-
-**Why Two Database Approach?**
-1. Cost and Query capabilities - Ledger database (blockchain) read capabilities can be limited and costly. To support rich statistics and minimize the cost, data is replicated in to a cheap query database.
-2. Disaster recovery
-3. Scalability - Primary/secondary database architecture is scalable since additional secondary databases can be added as needed to handle more read operations.
-
-**Why Ledger Database?**
-1. Immutable and Transparent - Track and maintain a sequenced history of every carbon project and credit change. 
-2. Data Integrity (Cryptographic verification by third party).
-3. Reconcile carbon credits and company account balance.
-
-**Ledger Database Interface**
-
-This enables the capability to add any blockchain or ledger database support to the carbon registry without functionality module changes. Currently implemented for PostgresSQL and AWS QLDB.
-
-**PostgresSQL Ledger Implementation** storage all the carbon project and credit events in a separate event database with the sequence number. Support all the ledger functionalities except immutability.  
-
-
-Single database approach used for user and company management. 
-
-
-### **Ledger Layout**
-Carbon Registry contains 3 ledger tables.
-1. Project ledger - Contains all the project and credit transactions.
-2. Company Account Ledger (Credit) - Contains company accounts credit transactions.
-3. Country Account Ledger (Credit) - Contains country credit transactions.
-
-The below diagram demonstrates the the ledger behavior of project create, authorise, issue and transfer processes. Blue color document icon denotes a single data block in a ledger.
-
-![alt text](./documention/imgs/Ledger.svg)
+![alt text](./documention/imgs/CustodianER.png)
 
 ### **Authentication**
 - JWT Authentication - All endpoints based on role permissions.
 - API Key Authentication - MRV System connectivity.
+
+When signing in to Custodian, the user will also be signed in to Guardian. The refresh token for that session will be cached in Custodian for the duration of the session. 
 
 <a name="structure"></a>
 ## Project Structure
@@ -150,16 +122,16 @@ The below diagram demonstrates the the ledger behavior of project create, author
     ├── .github                         # CI/CD [Github Actions files]
     ├── deployment                      # Declarative configuration files for initial resource creation and setup [AWS Cloudformation]
     ├── backend                         # System service implementation
-        ├── services                    # Services implementation [NestJS application]
-            ├── src
-                ├── national-api        # National API [NestJS module]      
-                ├── stats-api           # Statistics API [NestJS module]
-                ├── ledger-replicator   # Blockchain Database data replicator [QLDB to Postgres]
-                ├── shared              # Shared resources [NestJS module]     
+        ├── custodian                    # Services implementation [NestJS application]
+            ├── apps
+                ├── custodian        # API wrapper [NestJS module]      
+                ├── task-monitor     # Asynchronous task monitor [NestJS module]
+                ├── data-replicator  # Data replicator between guardian and custodian [NestJS module]
+                
             ├── serverless.yml          # Service deployment scripts [Serverless + AWS Lambda]
     ├── libs
-        ├── carbon-credit-calculator    # Implementation for the Carbon credit calculation library [Node module + Typescript]
-        ├── serial-number-gen           # Implementation for the carbon project serial number calculation [Node module + Typescript]
+        ├── core    # Contains auth module and other commond modules [Node module + Typescript]
+        ├── shared           # Contains all the backend modules, dtos and entities [Node module + Typescript]
     ├── web                             # System web frontend implementation [ReactJS]
     ├── .gitignore
     ├── docker-compose.yml              # Docker container definitions
@@ -178,21 +150,16 @@ The below diagram demonstrates the the ledger behavior of project create, author
     - Use `DB_PASSWORD` env variable to change PostgresSQL database password
     - Configure system root account email by updating environment variable `ROOT EMAIL`. If the email service is enabled, on the first docker start, this email address will receive a new email with the root user password.
     - By default frontend does not show map images on dashboard and project view. To enable them please update `REACT_APP_MAP_TYPE` env variable to `Mapbox` and add new env variable `REACT_APP_MAPBOXGL_ACCESS_TOKEN` with [MapBox public access token](https://docs.mapbox.com/help/tutorials/get-started-tokens-api/) in web container. 
-- Add user data
-  - Update [organisations.csv](./organisations.csv) file to add organisations.
-  - Update [users.csv](./users.csv) file to add users.
-  - When updating files keep the header and replace existing dummy data with your data.
-  - These users and companys add to the system each docker restart.
+
 - Run `docker-compose up -d --build`. This will build and start containers for following services,
     - PostgresDB container
-    - National service
-    - Analytics service
-    - Replicator service
+    - Custodian service
+    - Task monitor service
+    - Data Replicator service
     - React web server with Nginx. 
 - Web frontend on http://localhost:3030/
 - API Endpoints,
-  - http://localhost:3000/national#/
-  - http://localhost:3100/stats#/
+  - http://localhost:3000/
 
 <a name="local"></a>
 ## Run Services Locally
@@ -207,7 +174,7 @@ The below diagram demonstrates the the ledger behavior of project create, author
 - Run `yarn run sls:install `
 - Initial user data setup `serverless invoke local --stage=local --function setup --data '{"rootEmail": "<Root user email>","systemCountryCode": "<System country Alpha 2 code>", "name": "<System country name>", "logoBase64": "<System country logo base64>"}'`
 - Start all the services by executing `sls offline --stage=local`
-- Now all the system services are up and running. Swagger documentation will be available on `http://localhost:3000/local/national`
+- Now all the system services are up and running. Swagger documentation will be available on `http://localhost:3000/docs`
 
 <a name="cloud"></a>
 ## Deploy System on the AWS Cloud
@@ -230,114 +197,12 @@ The below diagram demonstrates the the ledger behavior of project create, author
         response.json
     ```
 
-    
-### Carbon Credit Calculator
-Carbon credit calculation implemented in a separate node module. [Please refer this](./libs/carbon-credit-calculator/README.md) for more information.
-
 
 ### Serial Number Generation
 Serial Number generation implemented in a separate node module. [Please refer this](./libs/serial-number-gen/README.md) for more information.
 
 <a name="external"></a>
 ## External Connectivity
-
-### ITMO Platform
-1. Carbon Registry make a daily to the retrieve ITMO platform projects.
-2. Projects create in the Carbon Registry when projects are authorized in the ITMO Platform 
-3. The Carbon Registry update when the projects are Issued with credits in the ITMO Platform 
-
-#### <b>Lifecycle</b>
-![alt text](./documention/imgs/ITMOxCARBON_LifeCycle.svg)
-
-#### <b>Project Creation and Authorisation</b>
-- Authorisation of projects in the ITMO Platform identified by the event name: "ITMO-Design Document (DD) & Validation Report / Upload on National Public Registry". 
-- If the Company Tax Id doesn’t exist in the Carbon Registry, that company created in the Carbon Registry.
-- When creating the project: 
-    - The project created with the state “Pending”  
-    - The credit estimate set to 100 by default
-    - The company percentage set to 100% 
-    - The serial number for the project generated the same as any other project in the Carbon Registry. 
-- Projects retrieved from the ITMO Platform and created in the Carbon Registry can Authorised/Rejected by a Government user the same as any other project in the Carbon Registry
-- When a project is authorised, the authorised credits will be the default credit estimate mentioned above. The project can be issued with credits by a Government user the same as any other project in the Carbon Registry. 
-
-#### <b>Credit Issuance</b>
-- Credits can be issued for projects retrieved from the ITMO Platform and created in the Carbon Registry in two ways; 
-    - By a Government user the same as any other project. 
-    - Credit issuance in the ITMO Platform which should be reflected in the Carbon Registry. 
-- In the case of 2 above, 
-    - Credit issuance identified by the event name: "Upload Final Monitoring Report" in the ITMO Platform. 
-
-
-#### <b>Field Mapping</b>
-
-<b>Company</b>
-| **Name in the Carbon Registry**   | **Mandatory in the Carbon Registry**   | **Name in the ITMO Platform**   |
-| --- | --- | --- |
-| Tax ID (_taxId_)  | Yes  | company  |
-| Name (_name_)  | Yes  | company  |
-| Email (_email_)  | Yes  | Set default : nce.digital+[_organisation_]@undp.org  |
-| Phone Number (_phoneNo_)  | Yes  | Set default : 00  |
-| Website  |   |   |
-| Address  |   | Set default : Country if the Registry  |
-| Logo  |   |   |
-| Country (_country_)  |   | Set default : Country of the Registry  |
-| Role (_companyRole_)  | Yes  | Set default : ProgrammeDeveloper  |
-
-<br><b>User</b>
-| Name in the Carbon Registry | Mandatory in the Carbon Registry | Name in the ITMO Platform |
-| --- | --- | --- |
-| Email (_email_)  | Yes  | Set default : nce.digital+[_organisation_]@undp.org  |
-| Role (_role_)  | Yes  | Set default : Admin  |
-| Phone Number (_phoneNo_)  |   | Set default : 00  |
-
-<br><b>Project</b>
-| **Name in the Carbon Registry**   | **Mandatory in the Carbon Registry**   | **Name in the ITMO Platform**   |
-| --- | --- | --- |
-| Project Name (title)  | Yes  | Name  |
-| External ID (externalId)  | Yes  | id  |
-| Credit Issuance Serial Number   |   |   |
-| Current Status   |   | Set default : Pending  |
-| Applicant Type   |   | Set default : Project Developer  |
-| Sector (_sector_)  | Yes  | [Sector](#itmo-sector-mapping)  |
-| Sectoral Scope (_sectoralScope_)  | Yes  | [Sector](#itmo-sector-mapping)|
-| Project Start Date (_startTime_)  | Yes  | createdAt  |
-| Project End Date  (_endTime_)  | Yes  | createdAt + 10 years  |
-| Geographical Location (Regional) (_geographicalLocation_)  | Yes  | country _(Name not mentioned as ISO3 or actual name)_  |
-| Buyer Country Eligibility   |   |   |
-| Project Cost (USD) (_programmeCostUSD_)  | Yes  | Set default : Null  |
-| Financing Type   |   |   |
-| Grant Equivalent Amount   |   |   |
-| Carbon Price (Dollars per ton)   |   |   |
-| Company   |   | company  |
-| Company Tax ID (_proponentTaxVatId_)  | Yes  | company  |
-| Company Percentage (_proponentPercentage_)  | Yes  | Set default : 100%  |
-| Type of Mitigation Action/Activity (_typeOfMitigation_)  | Yes  | [Sector](#itmo-sector-mapping) |
-| GHGs Covered (_greenHouseGasses_)  | Yes  | Set default :  CO2  |
-| Credits Authorised  |   | Set default : 100  |
-| Credits Issued   |   | Set default : 10   |
-| Credits Transferred   |   |   |
-| Credits Frozen   |   |   |
-| Credits Retired   |   |   |
-| Credits authorised for international transfer and use (Total cumulative maximum amount of Mitigation Outcomes for which international transfer and use is authorized)   |   |   |
-| Crediting Period (years)   |   |   |
-| Project Materials   |   | Files \*   |
-| Project Materials  |   | Files \*  |
-| **Credit Calculation Fields / Mitigation Type Calculation**    |   |   |
-| **Agriculture**   |   |   |
-| Land Area  |   |   |
-| Land Area Unit  |   |   |
-| **Solar**   |   |   |
-| energy generation  |   |   |
-| energy generation unit  |   |   |
-| consumer group  |   |   |
-
-#### <b>ITMO Sector Mapping</b>
-|ITMO Sector Field Value|Sector|Sectoral Scope|Type Of Mitigation|
-| -- | -- | -- | -- |
-|energy-distribution|Energy|Energy Distribution|Energy Distribution
-|agriculture|Agriculture|Agriculture|Agriculture|
-|energy-industries|Energy|Energy Industry|EE Industry
-|Default|Other|Energy Industry|EE Industry
 
 
 #### <b>Assumptions</b>

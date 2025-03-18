@@ -68,6 +68,7 @@ export class GuardianService {
                 },
             });
         } catch (ex: any) {
+            console.log(ex);
             this.logger.error(
                 `Exception in POST Request: ${ex.response?.data?.message || ex.message}`,
                 this.loggerContext,
@@ -327,9 +328,13 @@ export class GuardianService {
         payload: any,
     ): Promise<any> {
         try {
+            const block = await this.utilService.getBlocksByBlockName(
+                blockName,
+                this.configService.get('policy.id'),
+            );
             const url = this.buildGuardianUrl(
                 // eslint-disable-next-line max-len
-                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(blockName)}`,
+                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${block?.blockId}`,
             );
 
             const user = await this.usersRepository.findOne({
@@ -413,15 +418,18 @@ export class GuardianService {
         filterType: string,
         filterValue: string,
     ) {
-        const filterBlock = this.utilService.getBlock(filterType);
+        const block = await this.utilService.getBlocksByBlockName(
+            filterType,
+            this.configService.get('policy.id'),
+        );
 
-        if (!filterBlock) {
+        if (!block) {
             this.logger.warn(`Filter not found, skipping the ${filterType}`);
             return;
         }
 
         const filterUrl = this.buildGuardianUrl(
-            `/api/v1/policies/${policyId}/blocks/${filterBlock}`,
+            `/api/v1/policies/${policyId}/blocks/${block.blockId}`,
         );
 
         const filterResponse = await axios.post(
@@ -445,8 +453,12 @@ export class GuardianService {
         policyId: string,
         token: string,
     ) {
+        const block = await this.utilService.getBlocksByBlockName(
+            gridApis.GRID,
+            this.configService.get('policy.id'),
+        );
         const gridUrl = this.buildGuardianUrl(
-            `/api/v1/policies/${policyId}/blocks/${this.utilService.getBlock(gridApis.GRID)}`,
+            `/api/v1/policies/${policyId}/blocks/${block?.blockId}`,
         );
 
         const gridResponse = await axios.get(gridUrl, {
@@ -691,31 +703,6 @@ export class GuardianService {
             );
         }
     }
-    public async createEntity(
-        email: string,
-        blockId: string,
-        payload: any,
-    ): Promise<any> {
-        try {
-            const url = this.buildGuardianUrl(
-                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
-            );
-            const user = await this.usersRepository.findOne({
-                where: { email: email },
-            });
-            const token = await this.getAccessToken(user.refreshToken);
-
-            const response = await axios.post(url, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            return response.data;
-        } catch (error) {
-            await this.getGuardianError(error, 'createEntity');
-        }
-    }
 
     public async query(email: string, blockId: string): Promise<any> {
         try {
@@ -772,9 +759,13 @@ export class GuardianService {
         remarks?: string,
     ): Promise<void> {
         try {
+            const block = await this.utilService.getBlocksByBlockName(
+                buttonBlockName,
+                this.configService.get('policy.id'),
+            );
             const buttonUrl = this.buildGuardianUrl(
                 // eslint-disable-next-line max-len
-                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${this.utilService.getBlock(buttonBlockName)}`,
+                `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${block?.blockId}`,
             );
             const refreshToken = await this.getRefreshToken(requestUserEmail);
             let buttonType: ButtonTypeEnum = ButtonTypeEnum.SELECTOR;

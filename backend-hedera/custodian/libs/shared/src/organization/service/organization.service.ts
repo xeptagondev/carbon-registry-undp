@@ -115,6 +115,7 @@ export class OrganizationService extends SuperService<
             website: organization?.website,
             address: organization?.address,
             logo: organization?.logo,
+            hederaAccount: organization.hederaAccountId,
             country: null,
             companyRole: organization?.organizationType.name,
             state: organization?.state,
@@ -298,26 +299,9 @@ export class OrganizationService extends SuperService<
         dto: Partial<OrganizationDto>,
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
-        let filterWithCompanyStatesIn: OrganizationStateEnum[];
-
-        if (
-            !(
-                requestUser.organizationRole ===
-                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
-            )
-        ) {
-            filterWithCompanyStatesIn = [
-                OrganizationStateEnum.SUSPENDED,
-                OrganizationStateEnum.ACTIVE,
-            ];
-        } else {
-            filterWithCompanyStatesIn = [
-                OrganizationStateEnum.SUSPENDED,
-                OrganizationStateEnum.ACTIVE,
-                OrganizationStateEnum.REJECTED,
-                OrganizationStateEnum.PENDING,
-            ];
-        }
+        const filterWithCompanyStatesIn: OrganizationStateEnum[] = [
+            OrganizationStateEnum.ACTIVE,
+        ];
 
         const [entities, total] = await this.organizationRepository
             .createQueryBuilder('organization')
@@ -846,7 +830,7 @@ export class OrganizationService extends SuperService<
                 if (dto.state === OrganizationStateEnum.ACTIVE) {
                     header = ORG_REACTIVATE_HEADER;
                     template = MailTemplateEnum.ORG_REACTIVATE;
-                } else if (dto.state !== OrganizationStateEnum.SUSPENDED) {
+                } else if (dto.state === OrganizationStateEnum.SUSPENDED) {
                     header = ORG_DEACTIVATE_HEADER;
                     template = MailTemplateEnum.ORG_DEACTIVATE;
                 }

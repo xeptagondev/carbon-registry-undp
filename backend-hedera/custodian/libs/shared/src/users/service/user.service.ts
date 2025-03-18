@@ -468,12 +468,15 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                                 userDto.company.taxId,
                                 userDto.company.paymentId,
                             );
+                            const groupTypeBlock =
+                                await this.utilService.getBlocksByBlockName(
+                                    GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
+                                    this.configService.get('policy.id'),
+                                );
                             await this.guardianService.createGroupType(
                                 userDto.email,
                                 decryptedPassword,
-                                this.utilService.getBlock(
-                                    GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
-                                ),
+                                groupTypeBlock?.blockId,
                                 {
                                     group: userDto.company.companyRole,
                                     label: userDto.company.name,
@@ -499,15 +502,63 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             this.loggerContext,
                         );
                         if (userDto.company) {
-                            await this.registerOrganizationInGuardian(userDto);
+                            if (
+                                !userDto?.company?.hederaAccountId &&
+                                !userDto?.company?.hederaAccountKey
+                            ) {
+                                const accGenTaskId =
+                                    await this.guardianService.generateHederaAccount(
+                                        userDto.email,
+                                    );
+                                const hederaAccResult =
+                                    await this.guardianService.fetchAsyncTaskResponse(
+                                        accGenTaskId.taskId,
+                                        userDto.email,
+                                    );
+
+                                // If no immediate result, add task and return
+                                if (!hederaAccResult) {
+                                    const asyncTask: TaskEntity = {
+                                        className: 'UserService',
+                                        functionName: 'hederaOrgAccountStatus',
+                                        args: [
+                                            accGenTaskId.taskId,
+                                            userDto,
+                                            isUserActive,
+                                            requestUser,
+                                        ],
+                                        retryAttemps: 2,
+                                        state: TaskEnum.PENDING,
+                                    };
+                                    await this.taskRepository.save(asyncTask);
+                                    return {
+                                        statusCode: HttpStatus.OK,
+                                        message: userDto.company
+                                            ? 'Successfully added task to create organization with admin user'
+                                            : 'Successfully added task to create the user',
+                                    };
+                                } else {
+                                    await this.registerOrganizationInGuardian(
+                                        userDto,
+                                        isUserActive,
+                                        hederaAccResult,
+                                        false,
+                                        requestUser,
+                                    );
+                                }
+                            } else {
+                                await this.registerOrganizationInGuardian(
+                                    userDto,
+                                    isUserActive,
+                                    undefined,
+                                    false,
+                                    requestUser,
+                                );
+                            }
                         }
-                        await this.registerProcessSave(
-                            userDto,
-                            UserStageEnum.CREATE_USER,
-                        );
                         this.logger.log(
                             `Registration step ${UserStageEnum.CREATE_GROUP} completed; 
-                            next step: ${UserStageEnum.CREATE_USER}`,
+                             next step: ${UserStageEnum.CREATE_USER}`,
                             this.loggerContext,
                         );
                         currentStage = UserStageEnum.CREATE_USER;
@@ -664,8 +715,38 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return existing;
     }
 
+    private async hederaOrgAccountStatus(
+        accGenTaskId: string,
+        userDto: UsersDTO,
+        isUserActive: boolean,
+        requestUser: JWTPayload,
+    ) {
+        const hederaAccResult =
+            await this.guardianService.fetchAsyncTaskResponse(
+                accGenTaskId,
+                userDto.email,
+            );
+        if (!hederaAccResult) {
+            throw new HttpException(
+                'Hedera Account Generation Failed',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+        return await this.registerOrganizationInGuardian(
+            userDto,
+            isUserActive,
+            hederaAccResult,
+            true,
+            requestUser,
+        );
+    }
+
     private async registerOrganizationInGuardian(
         userDto: UsersDTO,
+        isUserActive: boolean,
+        hederaAccResult?: any,
+        isTask?: boolean,
+        requestUser?: JWTPayload,
     ): Promise<void> {
         const orgCreateTime = new Date().getTime();
         // Create organization in Guardian
@@ -679,6 +760,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         orgEntity.email = userDto?.company?.email;
         orgEntity.taxId = userDto?.company?.taxId;
         orgEntity.state = OrganizationStateEnum.PENDING;
+        orgEntity.hederaAccountId =
+            userDto?.company?.hederaAccountId || hederaAccResult?.id;
+        orgEntity.hederaAccountKey =
+            userDto?.company?.hederaAccountKey || hederaAccResult?.key;
         orgEntity.phoneNumber = userDto?.company?.phoneNo;
         orgEntity.paymentId = userDto?.company?.paymentId;
         orgEntity.faxNumber = userDto?.company?.faxNo;
@@ -747,6 +832,22 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 updatedTime: new Date().getTime(),
             },
         );
+
+        if (isTask) {
+            const user = await this.findUser(userDto.email);
+            if (user.stage == UserStageEnum.CREATE_GROUP) {
+                this.logger.log(
+                    `Registration step ${UserStageEnum.CREATE_GROUP} completed; 
+                     next step: ${UserStageEnum.CREATE_USER}`,
+                    this.loggerContext,
+                );
+                await this.registerProcessSave(
+                    userDto,
+                    UserStageEnum.CREATE_USER,
+                );
+            }
+            await this.register(userDto, '', isUserActive, requestUser);
+        }
     }
 
     private async finalizeOrganizationUser(userDto: UsersDTO): Promise<void> {
@@ -955,11 +1056,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 org?.organizationType?.id,
                 userDto.role,
             );
+            const inviteBlock = await this.utilService.getBlocksByBlockName(
+                GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
+                this.configService.get('policy.id'),
+            );
             const inviteResponse = await this.guardianService.createInvitation(
                 reqUser?.email,
-                this.utilService.getBlock(
-                    GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
-                ),
+                inviteBlock?.blockId,
                 {
                     action: 'invite',
                     group: org.group,
@@ -968,15 +1071,17 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             // 2. Submit the generated invitation for user creation
+            const groupTypeBlock = await this.utilService.getBlocksByBlockName(
+                GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
+                this.configService.get('policy.id'),
+            );
             await this.guardianService.createGroupType(
                 userDto.email,
                 decryptPayload(
                     user.password,
                     this.configService.get<string>('security.pwdSecret'),
                 )?.password,
-                this.utilService.getBlock(
-                    GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
-                ),
+                groupTypeBlock?.blockId,
                 {
                     invitation: inviteResponse.invitation,
                 },
