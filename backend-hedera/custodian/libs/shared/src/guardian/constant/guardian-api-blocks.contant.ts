@@ -17,6 +17,8 @@ export const GUARDIAN_API = {
         USER_CREATE_INVITE: 'user_create_invite',
         APPROVE_ORGANIZATION: 'organizations_active_reject_buttons',
         CREATE_PROJECT: 'project_creation_form',
+        CREATE_TOKEN: 'create_token',
+        ASSOCIATE_TOKEN: 'associate_token',
         CREATE_ACTIVITY: 'activity_creation_form',
         CREATE_MONITORING_REPORT: 'monitoring_report_creation_form',
         CREATE_VERIFICATION_REPORT: 'verification_report_creation_form',
