@@ -121,7 +121,6 @@
   "ce_shouldHavePositive": "should have positive value",
   "ce_projectEmissions": "Project Emissions",
 
-  "invalidFileFormat": "Unsupported file format",
   "q_baselineEmissionPlaceholder": "Quantify the baseline emissions and/or removals, providing sufficient information to allow  the reader to reproduce the calculation. Attach electronic spreadsheets as an appendix or  separate file to facilitate the verification of the results.",
   "q_remarksPlaceholder": "Please provide an explanation of the cause of any increase in the actual emission  reductions achieved during the current monitoring period (e.g. higher water availability,  higher load plant factor, etc.), including all information (i.e. data and/or parameters) that is  different from that stated in the registered CMA",
   "q_leakagePlaceholder": "Quantify project emissions and/or removals providing sufficient information to allow the  reader to reproduce the calculation. This section shall include all formulae used and  description to calculate the project emissions applying actual values. Attach electronic  spreadsheets as an appendix or separate file to facilitate the verification of the results.",

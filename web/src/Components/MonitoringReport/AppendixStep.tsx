@@ -1,5 +1,4 @@
 import { Button, Col, Form, Row, Upload } from 'antd';
-
 import TextArea from 'antd/lib/input/TextArea';
 import { UploadOutlined } from '@ant-design/icons';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
@@ -8,20 +7,11 @@ import { useUserContext } from '../../Context/UserInformationContext/userInforma
 import { DocumentStatus } from '../../Definitions/Enums/document.status';
 import { useState } from 'react';
 import { CustomStepsProps } from './StepProps';
+import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 
 export const AnnexureStep = (props: CustomStepsProps) => {
-  const {
-    t,
-    current,
-    form,
-    formMode,
-    next,
-    prev,
-    countries,
-    handleValuesUpdate,
-    disableFields,
-    submitForm,
-  } = props;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields, submitForm } =
+    props;
 
   const [loading, setLoading] = useState(false);
   const { userInfoState } = useUserContext();
@@ -35,25 +25,13 @@ export const AnnexureStep = (props: CustomStepsProps) => {
     return e?.fileList;
   };
 
-  const onFinish = (values: any) => {
-    const tempValues: any = {
-      appendixDetails: { a_appendix: values?.a_appendix, a_uploadDoc: values?.a_uploadDoc },
+  const onFinish = async (values: any) => {
+    const appendixFormValues: any = {
+      appendix: values?.a_appendix,
+      a_uploadDoc: (await fileUploadValueExtract(values, 'a_uploadDoc'))[0],
     };
-    console.log('---temp vals---');
-    if (submitForm) {
-      submitForm(tempValues);
-    }
-    // handleValuesUpdate(tempValues);
+    handleValuesUpdate({ appendix: appendixFormValues });
   };
-
-  // const handleFormSubmit = async (values: any) => {
-  //   setLoading(true);
-  //   try {
-  //     await onFinish({ annexures: values });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   return (
     <>

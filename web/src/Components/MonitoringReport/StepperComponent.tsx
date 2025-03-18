@@ -27,17 +27,15 @@ import { CustomStepsProps } from './StepProps';
 
 const StepperComponent = (props: CustomStepsProps) => {
   const navigate = useNavigate();
-  const { translator } = props;
+  const { translator, t } = props;
   const [current, setCurrent] = useState(0);
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
-  const [formValues, setFormValues] = useState({});
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
   const navigationLocation = useLocation();
   const [projectCategory, setProjectCategory] = useState<string>('');
   const { mode, docId } = navigationLocation.state || {};
-  const t = translator.t;
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
   const [versions, setVersions] = useState<number[]>([]);
@@ -48,9 +46,12 @@ const StepperComponent = (props: CustomStepsProps) => {
   const isView = !!state?.isView;
   const isEdit = !!state?.isEdit;
 
-  const [loading, setLoading] = useState<boolean>(isView || isEdit);
+  // const [loading, setLoading] = useState<boolean>(isView || isEdit);
 
   const scrollSection = useRef({} as any);
+
+  const [disableFields, setDisableFields] = useState<boolean>(false);
+  const [data, setData] = useState({});
 
   const scrollToDiv = () => {
     if (scrollSection.current) {
@@ -61,31 +62,17 @@ const StepperComponent = (props: CustomStepsProps) => {
     }
   };
 
-  const [disableFields, setDisableFields] = useState<boolean>(false);
-
   const navigateToDetailsPage = () => {
     navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
-  const [values, setValues] = useState({
-    projectRefId: Number(id),
-    name: 'MonitoringReport',
-    companyId: undefined,
-    documentType: DocumentEnum.MONITORING,
-    data: {},
-  });
-
-  const handleValuesUpdate = (val: any) => {
-    // console.log('----------temp vals stepper-------------', val);
-    setValues((prevVal: any) => {
-      const tempContent = {
-        ...prevVal.data,
-        ...val,
-      };
-      console.log(tempContent);
-      return { ...prevVal, data: tempContent };
-    });
-  };
+  // const [values, setValues] = useState({
+  //   projectRefId: Number(id),
+  //   name: 'MonitoringReport',
+  //   companyId: undefined,
+  //   documentType: DocumentEnum.MONITORING,
+  //   data: {},
+  // });
 
   const next = () => {
     setCurrent(current + 1);
@@ -97,87 +84,145 @@ const StepperComponent = (props: CustomStepsProps) => {
     scrollToDiv();
   };
 
-  const showModalOnAction = (info: PopupInfo) => {
-    setSlcfActioModalVisible(true);
-    setPopupInfo(info);
-  };
+  const handleValuesUpdate = (val: any) => {
+    // console.log('----------temp vals stepper-------------', val);
+    setData((prevVal: any) => {
+      const tempContent = {
+        ...prevVal,
+        ...val,
+      };
+      console.log('appendedVals', tempContent);
+      return { ...prevVal, data: tempContent };
+    });
 
-  const approveOrReject = async (verify: boolean, remark?: string) => {
-    const body = {
-      verify: verify,
-      verificationRequestId: Number(verificationRequestId),
-      reportId: reportId,
-      remark,
-    };
-    try {
-      const res = await post(API_PATHS.VERIFY_MONITORING_REPORT, body);
-      if (res?.statusText === 'SUCCESS') {
-        message.open({
-          type: 'success',
-          content: verify
-            ? t('monitoringReport:monitoringReportApproveSuccess')
-            : t('monitoringReport:monitoringReportRejectSuccess'),
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
-        navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
-      }
-    } catch (error: any) {
-      if (error && error.errors && error.errors.length > 0) {
-        error.errors.forEach((err: any) => {
-          Object.keys(err).forEach((field) => {
-            console.log(`Error in ${field}: ${err[field].join(', ')}`);
-            message.open({
-              type: 'error',
-              content: err[field].join(', '),
-              duration: 4,
-              style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-            });
+    const submitForm = async (formValues: any) => {
+      try {
+        console.log('----form vals-----', formValues);
+        // setLoading(true);
+        const tempValues = {
+          ...{
+            name: 'MONITORING',
+            documentType: DocumentEnum.MONITORING,
+            projectRefId: id,
+          },
+
+          data: {
+            ...formValues,
+          },
+        };
+        const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
+        if (res?.response?.data?.statusCode === 200) {
+          message.open({
+            type: 'success',
+            content: isEdit
+              ? 'Monitoring Report has been edited successfully'
+              : 'Monitoring Report has been submitted successfully',
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
-        });
-      } else {
+          navigateToDetailsPage();
+        }
+      } catch (error: any) {
         message.open({
           type: 'error',
-          content: error?.message,
+          content: 'Something went wrong',
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
+      } finally {
+        // setLoading(false);
       }
+    };
+
+    if (current === 6) {
+      const formValues = {
+        ...data,
+        appendixForm: val,
+      };
+      submitForm(formValues);
     }
   };
+  // const showModalOnAction = (info: PopupInfo) => {
+  //   setSlcfActioModalVisible(true);
+  //   setPopupInfo(info);
+  // };
 
-  const [countries, setCountries] = useState<[]>([]);
+  // const approveOrReject = async (verify: boolean, remark?: string) => {
+  //   const body = {
+  //     verify: verify,
+  //     verificationRequestId: Number(verificationRequestId),
+  //     reportId: reportId,
+  //     remark,
+  //   };
+  //   try {
+  //     const res = await post(API_PATHS.VERIFY_MONITORING_REPORT, body);
+  //     if (res?.statusText === 'SUCCESS') {
+  //       message.open({
+  //         type: 'success',
+  //         content: verify
+  //           ? t('monitoringReport:monitoringReportApproveSuccess')
+  //           : t('monitoringReport:monitoringReportRejectSuccess'),
+  //         duration: 4,
+  //         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //       });
+  //       navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
+  //     }
+  //   } catch (error: any) {
+  //     if (error && error.errors && error.errors.length > 0) {
+  //       error.errors.forEach((err: any) => {
+  //         Object.keys(err).forEach((field) => {
+  //           console.log(`Error in ${field}: ${err[field].join(', ')}`);
+  //           message.open({
+  //             type: 'error',
+  //             content: err[field].join(', '),
+  //             duration: 4,
+  //             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //           });
+  //         });
+  //       });
+  //     } else {
+  //       message.open({
+  //         type: 'error',
+  //         content: error?.message,
+  //         duration: 4,
+  //         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+  //       });
+  //     }
+  //   }
+  // };
 
-  const getCountryList = async () => {
-    try {
-      const response = await get(API_PATHS.COUNTRY_LIST);
-      if (response.data) {
-        const alpha2Names = response.data.map((item: any) => {
-          return item.alpha2;
-        });
-        setCountries(alpha2Names);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const [countries, setCountries] = useState<[]>([]);
 
-  const getProgrammeDetailsById = async () => {
-    try {
-      setLoading(true);
-      // const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-      //   programmeId: id,
-      // });
+  // const getCountryList = async () => {
+  //   try {
+  //     const response = await get(API_PATHS.COUNTRY_LIST);
+  //     if (response.data) {
+  //       const alpha2Names = response.data.map((item: any) => {
+  //         return item.alpha2;
+  //       });
+  //       setCountries(alpha2Names);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
-      // const {
-      //   data: { user },
-      // } = await get(API_PATHS.USER_PROFILE);
+  // const getProgrammeDetailsById = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const { data } = await post(API_PATHS.PROJECT_BY_ID, {
+  //       programmeId: id,
+  //     });
 
-      // setProjectCategory(data?.projectCategory);
-    } catch (error) {
-      console.log('error');
-    }
-  };
+  //     const {
+  //       data: { user },
+  //     } = await get(API_PATHS.USER_PROFILE);
+
+  //     setProjectCategory(data?.projectCategory);
+  //   } catch (error) {
+  //     console.log('error');
+  //   }
+  // };
 
   // const onFinish = async (newValues: any) => {
   //   setFormValues((prevValues) => ({
@@ -459,91 +504,55 @@ const StepperComponent = (props: CustomStepsProps) => {
   //   }
   // };
 
+  // useEffect(() => {
+  //   // getLatestReports(id);
+  //   const getViewData = async () => {
+  //     if (isView || isEdit) {
+  //       setLoading(true);
+  //       let res;
+  //       try {
+  //         if (isView && selectedVersion) {
+  //           res = await post(API_PATHS.DOC_BY_VERSION, {
+  //             programmeId: id,
+  //             docType: 'MonitoringReport',
+  //             version: selectedVersion,
+  //           });
+  //         } else {
+  //           res = await post(API_PATHS.LAST_DOC_VERSION, {
+  //             programmeId: id,
+  //             DocType: 'Monitoring Report',
+  //           });
+  //         }
+  //         if (isView) {
+  //           //handleDocumentStatus(res.data.status);
+  //         }
+  //         if (res?.statusText === 'SUCCESS') {
+  //           const content = JSON.parse(res?.data.content);
+
+  //           // Mapping retrieved data to form fields
+  //         }
+  //       } catch (error) {
+  //         console.log('error', error);
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     }
+  //   };
+  //   getViewData();
+
+  //   if (isView) {
+  //     setDisableFields(true);
+  //   }
+  // }, [selectedVersion]);
+
   useEffect(() => {
     // getLatestReports(id);
-    const getViewData = async () => {
-      if (isView || isEdit) {
-        setLoading(true);
-        let res;
-        try {
-          if (isView && selectedVersion) {
-            res = await post(API_PATHS.DOC_BY_VERSION, {
-              programmeId: id,
-              docType: 'MonitoringReport',
-              version: selectedVersion,
-            });
-          } else {
-            res = await post(API_PATHS.LAST_DOC_VERSION, {
-              programmeId: id,
-              DocType: 'Monitoring Report',
-            });
-          }
-          if (isView) {
-            //handleDocumentStatus(res.data.status);
-          }
-          if (res?.statusText === 'SUCCESS') {
-            const content = JSON.parse(res?.data.content);
-
-            // Mapping retrieved data to form fields
-          }
-        } catch (error) {
-          console.log('error', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-    getViewData();
-
-    if (isView) {
-      setDisableFields(true);
-    }
-  }, [selectedVersion]);
-
-  useEffect(() => {
-    // getLatestReports(id);
-    getCountryList();
-    getProgrammeDetailsById();
+    // getCountryList();
+    // getProgrammeDetailsById();
     projectActivityForm.setFieldValue('projectParticipants', [
       { partiesInvolved: '', projectParticipants: [{ participant: '' }] },
     ]);
   }, []);
-
-  const submitForm = async (appendixVals: any) => {
-    const tempValues = {
-      ...values,
-      data: {
-        ...values.data,
-        appendix: appendixVals,
-      },
-    };
-
-    try {
-      setLoading(true);
-      // console.log(tempValues);
-      const res = await post(API_PATHS.CREATE_MONITORING_REPORT, tempValues);
-      if (res?.response?.data?.statusCode === 200) {
-        message.open({
-          type: 'success',
-          content: isEdit
-            ? 'Monitoring Report has been edited successfully'
-            : 'Monitoring Report has been submitted successfully',
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
-        navigateToDetailsPage();
-      }
-    } catch (error: any) {
-      message.open({
-        type: 'error',
-        content: 'Something went wrong',
-        duration: 4,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const steps = [
     {
@@ -554,7 +563,6 @@ const StepperComponent = (props: CustomStepsProps) => {
       ),
       description: (
         <BasicInformationStep
-          countries={countries}
           translator={translator}
           t={t}
           current={current}
@@ -582,7 +590,6 @@ const StepperComponent = (props: CustomStepsProps) => {
           formMode={mode}
           next={next}
           prev={prev}
-          countries={countries}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
@@ -709,7 +716,7 @@ const StepperComponent = (props: CustomStepsProps) => {
           //     type: 'danger',
           //   });
           // }}
-          submitForm={submitForm}
+          //submitForm={submitForm}
           // onFinish={onFinish}
         />
       ),

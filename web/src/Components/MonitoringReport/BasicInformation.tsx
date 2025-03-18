@@ -1,18 +1,10 @@
-import { useState } from 'react';
 import { Button, Col, DatePicker, Form, Input, Row } from 'antd';
-import PhoneInput, {
-  formatPhoneNumber,
-  formatPhoneNumberIntl,
-  isPossiblePhoneNumber,
-} from 'react-phone-number-input';
-
 import moment from 'moment';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { CustomStepsProps } from './StepProps';
 
 export const BasicInformationStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, prev, countries, handleValuesUpdate, disableFields } =
-    props;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
 
   const onFinish = (values: any) => {
     // console.log('onFinish triggered');
@@ -35,11 +27,9 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
         bi_projectedGHGReductions: values?.bi_projectedGHGReductions,
       },
     };
-    // console.log('----------tempValues-------------', tempValues);
+    console.log('----------tempValues-------------', tempValues);
     handleValuesUpdate(tempValues);
   };
-
-  // const [contactNoInput] = useState<any>();
 
   return (
     <>

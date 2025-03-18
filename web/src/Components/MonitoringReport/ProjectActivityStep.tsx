@@ -19,8 +19,7 @@ import { API_PATHS } from '../../Config/apiConfig';
 import { CustomStepsProps } from '../MonitoringReport/StepProps';
 
 export const ProjectActivityStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields } =
-    props;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
 
   const { post } = useConnection();
   // const [contactNoInput] = useState<any>();
@@ -45,12 +44,12 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
     //test with hardcoded values
     return [
       {
-        // locationOfProjectActivity: 'Solar Power Plant',
-        // pa_siteNo: 'SPP-001',
-        // province: 'Western Province',
-        // district: 'Colombo',
-        // pa_city: 'Colombo',
-        // community: 'Downtown',
+        locationOfProjectActivity: 'Solar Power Plant',
+        pa_siteNo: 'SPP-001',
+        province: 'Western Province',
+        district: 'Colombo',
+        pa_city: 'Colombo',
+        community: 'Downtown',
         // geographicalLocationCoordinates: { lat: 6.9271, lng: 79.8612 },
         // uploadImages: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
       },
@@ -125,12 +124,12 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
       if (data.length > 0) {
         form.setFieldsValue({
           locationsDetails: data.map((item) => ({
-            // locationOfProjectActivity: item.locationOfProjectActivity,
-            // pa_siteNo: item.pa_siteNo,
-            // province: item.province,
-            // district: item.district,
-            // pa_city: item.pa_city,
-            // community: item.community,
+            locationOfProjectActivity: item.locationOfProjectActivity,
+            pa_siteNo: item.pa_siteNo,
+            province: item.province,
+            district: item.district,
+            pa_city: item.pa_city,
+            community: item.community,
             // location: item.geographicalLocationCoordinates,
           })),
         });
@@ -193,21 +192,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
             city: item.pa_city,
             community: item.community,
             geographicalLocationCoordinates: item.geographicalLocationCoordinates, // Use item, not values
-            uploadImages: await (async function () {
-              const base64Docs: string[] = [];
-
-              if (item?.optionalImages && item.optionalImages.length > 0) {
-                for (const doc of item.optionalImages) {
-                  if (doc?.originFileObj === undefined) {
-                    base64Docs.push(doc?.url);
-                  } else {
-                    const temp = await getBase64(doc.originFileObj as RcFile);
-                    base64Docs.push(temp);
-                  }
-                }
-              }
-              return base64Docs;
-            })(),
+            pa_uploadImages: values?.pa_uploadImages,
           };
           tempList.push(tempObj);
         }
@@ -786,7 +771,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                               <Col xl={24} md={24}>
                                 <Form.Item
                                   label={t('monitoringReport:pa_uploadImages')}
-                                  name={[name, 'optionalImages']}
+                                  name={[name, 'pa_uploadImages']}
                                   valuePropName="fileList"
                                   getValueFromEvent={normFile}
                                   required={false}
