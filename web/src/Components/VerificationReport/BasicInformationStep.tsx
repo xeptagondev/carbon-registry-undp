@@ -15,6 +15,7 @@ import { API_PATHS } from '../../Config/apiConfig';
 import i18n from '../Internationalization/i18n';
 import { VerificationStepProps } from './StepProps';
 import { UploadOutlined } from '@ant-design/icons';
+import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 
 export const BasicInformationStep = (props: VerificationStepProps) => {
   const {
@@ -53,7 +54,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
   //   fetchValidationData();
   // },[])
 
-  const onFinish = (values: any) => {
+  const onFinish = async (values: any) => {
     // const tempValues: any = {
     //   basicInfoDetails: {
     //     projectTitle: values?.b_projectTitle,
@@ -77,7 +78,11 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
     //   },
     // };
     console.log('--------values-----------', values);
-    const body = { ...values };
+    const body = {
+      ...values,
+      b_completionDate: moment(values?.b_completionDate).startOf('day').unix(),
+      b_signature: (await fileUploadValueExtract(values, 'b_signature'))[0],
+    };
     handleValuesUpdate({
       basicDetailsFormValues: body,
     });
@@ -309,7 +314,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     >
                       <Input
                         size="large"
-                        placeholder="Add Project Participants"
+                        //placeholder="Add Project Participants"
                         disabled={disableFields}
                       />
                     </Form.Item>
