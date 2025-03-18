@@ -47,7 +47,7 @@ export class TaskEntity {
     submittedUser?: UsersEntity;
 
     @OneToOne(() => TaskEntity, { nullable: true, onDelete: 'SET NULL' })
-    @JoinColumn({ name: 'previous_task_id' })
+    @JoinColumn({ name: 'previous_task_id', referencedColumnName: 'id' })
     previousTask?: TaskEntity = null;
 
     @BeforeInsert()
