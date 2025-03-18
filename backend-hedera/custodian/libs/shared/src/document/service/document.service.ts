@@ -101,6 +101,7 @@ export abstract class DocumentService {
             });
         }
     }
+
     async getDocumentWithProjectAssignees(req: DocumentActionDTO) {
         return await this.documentRepository.findOne({
             where: {
@@ -351,12 +352,12 @@ export abstract class DocumentService {
             },
         });
 
-            return { data: lastDoc };
-        } catch (err) {
-            throw new HttpException(
-                'Error occurred in query document',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
+        return { data: lastDoc };
+    }
+    catch(err) {
+        throw new HttpException(
+            'Error occurred in query document',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+        );
     }
 }

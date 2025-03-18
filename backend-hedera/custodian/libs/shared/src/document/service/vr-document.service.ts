@@ -266,19 +266,37 @@ export class VrDocumentService extends DocumentService {
             this.loggerContext,
         );
 
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
 
+            const documentEntity = await queryRunner.manager.findOne(
+                DocumentEntity,
+                {
+                    where: { refId: requestData.refId },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                },
+            );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const dnaAdminEmails = (await this.getDNAAdmins(queryRunner)).map(
                 (user) => user.email,
             );
