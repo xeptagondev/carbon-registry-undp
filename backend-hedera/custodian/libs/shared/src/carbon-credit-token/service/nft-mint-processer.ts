@@ -2,11 +2,9 @@ import { DataSource } from 'typeorm';
 import { CarbonCreditGuardianService } from './carbon-credit-guardian.service';
 import { MintNFTJobPayload } from '../constant/min-nft-payload';
 import { CarbonCreditService } from './carbon-credit.service';
-import { Process, Processor } from '@nestjs/bull';
-import { Job } from 'bull';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
-@Processor('nft-mint')
+@Injectable()
 export class NftMintProcessor {
     constructor(
         private readonly carbonCreditGuardianService: CarbonCreditGuardianService,
@@ -14,8 +12,7 @@ export class NftMintProcessor {
         private readonly dataSource: DataSource,
     ) {}
 
-    @Process()
-    async handleMintJob(job: Job<MintNFTJobPayload>) {
+    async handleMintJob(job: MintNFTJobPayload) {
         const {
             tokenId,
             metadata,
@@ -24,7 +21,7 @@ export class NftMintProcessor {
             privateKey,
             projectRefId,
             receiverRefId,
-        } = job.data;
+        } = job;
 
         try {
             const mintedSerials =

@@ -1,25 +1,17 @@
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { DocumentEnum } from '@app/shared/document/enum/document.enum';
-import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 
-import { MailService } from '@app/shared/mail/service/mail.service';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
-import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
-import { UsersEntity } from '@app/shared/users/entity/users.entity';
-import { UserService } from '@app/shared/users/service/user.service';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
-import { FileHelperService } from '@app/shared/util/service/file-helper.service';
-import { FilterEntry } from '@app/shared/util/dto/filter.entry';
 import { InfDocumentService } from '@app/shared/document/service/inf-document.service';
 
 @Injectable()

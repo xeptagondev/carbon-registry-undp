@@ -1,3 +1,4 @@
+import { NftMintProcessor } from '@app/shared/carbon-credit-token/service/nft-mint-processer';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { OrganizationService } from '@app/shared/organization/service/organization.service';
 import { ProjectService } from '@app/shared/project/service/project.service';
@@ -17,6 +18,7 @@ export class TaskMonitorService implements OnModuleInit {
         @InjectRepository(TaskEntity)
         private readonly taskRepository: Repository<TaskEntity>,
         private readonly userService: UserService,
+        private readonly nftMintProcessor: NftMintProcessor,
         private readonly organizationService: OrganizationService,
         private readonly projectService: ProjectService,
         private readonly guardianService: GuardianService,
@@ -27,6 +29,7 @@ export class TaskMonitorService implements OnModuleInit {
             OrganizationService: this.organizationService,
             ProjectService: this.projectService,
             GuardianService: this.guardianService,
+            NftMintProcessor: this.nftMintProcessor,
         };
     }
 
