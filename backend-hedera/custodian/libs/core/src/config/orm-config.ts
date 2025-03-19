@@ -12,7 +12,7 @@ const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
     synchronize: false,
     autoLoadEntities: true,
     dropSchema: false,
-    logging: false,
+    logging: true,
     ssl:
         process.env.APP_ENV && process.env.APP_ENV != 'dev'
             ? {
@@ -21,6 +21,10 @@ const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
             : false,
     migrations: [CustodianDBPopulate1737524138690],
     migrationsRun: false,
+    poolSize: 50,
+    extra: {
+        max: 50,
+    },
 });
 
 export default ormConfig;
