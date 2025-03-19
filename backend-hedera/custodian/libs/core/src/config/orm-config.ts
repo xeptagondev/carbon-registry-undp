@@ -21,6 +21,10 @@ const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
             : false,
     migrations: [CustodianDBPopulate1737524138690],
     migrationsRun: false,
+    poolSize: 50,
+    extra: {
+        max: 50,
+    },
 });
 
 export default ormConfig;
