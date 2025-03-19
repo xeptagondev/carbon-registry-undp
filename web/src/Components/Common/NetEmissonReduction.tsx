@@ -256,6 +256,10 @@ const NetEmissionReduction = (props: any) => {
                                 const duration = moment.duration(selectedDate.diff(startDate));
 
                                 const isOneYear = Math.round(duration.asMonths()) === 12;
+
+                                if (!isOneYear) {
+                                  throw new Error('Duration should be a year');
+                                }
                               },
                             },
                           ]}
