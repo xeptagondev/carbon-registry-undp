@@ -35,7 +35,7 @@ import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { AdditionalDocType } from '../enum/additional.document.type';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
-import { MintNFTJobPayload } from '@app/shared/carbon-credit-token/constant/min-nft-payload';
+import { MintNFTJobPayload } from '@app/shared/carbon-credit-token/constant/mint-nft-payload';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 
@@ -344,6 +344,8 @@ export class VerificationDocumentService extends DocumentService {
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -464,17 +466,6 @@ export class VerificationDocumentService extends DocumentService {
                     jwtData.email,
                 );
 
-                // const metadata = Uint8Array.from(
-                //     Buffer.from(documentEntity?.project?.refId, 'utf8'),
-                // );
-                // await this.carbonCreditGuardianService.mintProjectNFT(
-                //     documentEntity?.project?.tokenId,
-                //     metadata,
-                //     10, //TODO update the credit count
-                //     documentEntity?.project?.organization?.hederaAccountId,
-                //     documentEntity?.project?.organization?.hederaAccountKey,
-                // );
-
                 const metadata = Uint8Array.from(
                     Buffer.from(documentEntity?.project?.refId, 'utf8'),
                 );
@@ -491,7 +482,7 @@ export class VerificationDocumentService extends DocumentService {
                 };
 
                 const asyncTask: TaskEntity = {
-                    className: 'NftMintProcessor',
+                    className: 'CarbonCreditService',
                     functionName: 'handleMintJob',
                     args: [payload],
                     retryAttemps: 2,
@@ -638,10 +629,12 @@ export class VerificationDocumentService extends DocumentService {
                     contextIC,
                 );
             }
-            queryRunner.commitTransaction();
+            await queryRunner.commitTransaction();
         } catch (err) {
-            queryRunner.rollbackTransaction();
+            await queryRunner.rollbackTransaction();
             throw err;
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 }

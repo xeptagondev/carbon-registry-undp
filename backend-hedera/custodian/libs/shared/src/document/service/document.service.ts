@@ -349,6 +349,22 @@ export abstract class DocumentService {
                 'Error occurred in query document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async releaseQueryRunner(queryRunner: QueryRunner) {
+        if (!queryRunner.isReleased) {
+            try {
+                console.log(queryRunner.isReleased);
+                await queryRunner.release();
+            } catch (e) {
+                this.logger.error(
+                    'Error occurred while releasing query runner',
+                    e,
+                );
+            }
         }
     }
 }
