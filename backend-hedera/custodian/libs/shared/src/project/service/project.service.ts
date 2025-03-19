@@ -51,20 +51,11 @@ export class ProjectService {
                     value: requestUser.organizationId,
                 });
             }
-
             const qb = this.projectRepository
                 .createQueryBuilder('project')
                 .leftJoinAndSelect('project.organization', 'organization')
+                .leftJoinAndSelect('project.documents', 'documents')
                 .leftJoinAndSelect('project.assignees', 'assignees');
-
-            if (
-                requestUser.organizationRole ===
-                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-            ) {
-                qb.andWhere('assignees.id = :orgId', {
-                    orgId: requestUser.organizationId,
-                });
-            }
 
             let sortKey: string;
             if (!query.sort || !query.sort.key) {
@@ -108,16 +99,28 @@ export class ProjectService {
     }
 
     async mapNewQueryToOldQuery(project: ProjectEntity) {
-        const lastInf = await this.infDocumentService.getLastDoc(
-            DocumentEnum.INF,
-            project.refId,
+        const lastDocuments = project?.documents?.reduce((acc, document) => {
+            if (
+                !acc[document.documentType] ||
+                acc[document.documentType].version < document.version
+            ) {
+                acc[document.documentType] = {
+                    documentType: document.documentType,
+                    refId: document.refId,
+                    version: document.version,
+                };
+            }
+            return acc;
+        }, {});
+        const lastInf = project?.documents?.find(
+            (doc) => doc.documentType === DocumentEnum.INF,
         );
         const mappedProject = {
             ...lastInf?.data,
             infRefId: lastInf?.refId,
             refId: project.refId,
         };
-
+        mappedProject.documents = lastDocuments;
         mappedProject.projectProposalStage = project.projectProposalStage;
         mappedProject.authoroiseLetterUrl = project.authoroiseLetterUrl;
         mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
@@ -135,7 +138,6 @@ export class ProjectService {
                   state: project?.organization?.state,
               }
             : null;
-
         return mappedProject;
     }
 
@@ -154,25 +156,11 @@ export class ProjectService {
                 relations: { organization: true, documents: true },
             });
 
-            const lastDocuments = project?.documents.reduce((acc, document) => {
-                if (
-                    !acc[document.documentType] ||
-                    acc[document.documentType].version < document.version
-                ) {
-                    acc[document.documentType] = {
-                        documentType: document.documentType,
-                        refId: document.refId,
-                        version: document.version,
-                    };
-                }
-                return acc;
-            }, {});
-
             const updatedProject = {
                 ...(await this.mapNewQueryToOldQuery(project)),
-                documents: lastDocuments,
             };
             return updatedProject;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
             throw new HttpException(
                 'Error occurred in query project by id',

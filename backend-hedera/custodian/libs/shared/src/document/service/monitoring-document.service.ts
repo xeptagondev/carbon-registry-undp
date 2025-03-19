@@ -4,7 +4,7 @@ import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -46,21 +46,15 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 export class MonitoringDocumentService extends DocumentService {
     private readonly loggerContext = 'MonitoringDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
-        @InjectRepository(ActivityEntity)
-        private readonly activityRepository: Repository<ActivityEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
-
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
@@ -71,8 +65,8 @@ export class MonitoringDocumentService extends DocumentService {
         );
     }
 
-    private async findLastActivity(project: string) {
-        return await this.activityRepository.findOne({
+    private async findLastActivity(queryRunner: QueryRunner, project: string) {
+        return await queryRunner.manager.findOne(ActivityEntity, {
             where: {
                 project: {
                     refId: project,
@@ -98,50 +92,54 @@ export class MonitoringDocumentService extends DocumentService {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
 
-        const lastVR: DocumentEntity = await this.findLastDocumentByType(
-            DocumentEnum.VALIDATION,
-            dto.projectRefId,
-        );
-
-        const lastMonitoring: DocumentEntity =
-            await this.findLastDocumentByType(
-                DocumentEnum.MONITORING,
-                dto.projectRefId,
-                dto.activityRefId,
-            );
-
-        const lastActivity: ActivityEntity = await this.findLastActivity(
-            dto.projectRefId,
-        );
-
-        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
-        if (lastVR && !(lastVR.state === DocumentStateEnum.DNA_APPROVED)) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
-        if (
-            lastActivity &&
-            !(
-                lastActivity.state ===
-                    ActivityStateEnum.MONITORING_REPORT_REJECTED ||
-                lastActivity.state ===
-                    ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
-            )
-        ) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
-
         // start transaction and save document
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             await queryRunner.startTransaction();
+
+            const lastVR: DocumentEntity = await this.findLastDocumentByType(
+                queryRunner,
+                DocumentEnum.VALIDATION,
+                dto.projectRefId,
+            );
+
+            const lastMonitoring: DocumentEntity =
+                await this.findLastDocumentByType(
+                    queryRunner,
+                    DocumentEnum.MONITORING,
+                    dto.projectRefId,
+                    dto.activityRefId,
+                );
+
+            let lastActivity: ActivityEntity = await this.findLastActivity(
+                queryRunner,
+                dto.projectRefId,
+            );
+
+            // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+            if (lastVR && !(lastVR.state === DocumentStateEnum.DNA_APPROVED)) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
+            if (
+                lastActivity &&
+                !(
+                    lastActivity.state ===
+                        ActivityStateEnum.MONITORING_REPORT_REJECTED ||
+                    lastActivity.state ===
+                        ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
+                )
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
+
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
@@ -150,20 +148,6 @@ export class MonitoringDocumentService extends DocumentService {
                         organization: true,
                         assignees: true,
                         createdBy: true,
-                    },
-                },
-            );
-
-            let lastActivity = await queryRunner.manager.findOne(
-                ActivityEntity,
-                {
-                    where: {
-                        project: {
-                            refId: dto.projectRefId,
-                        },
-                    },
-                    order: {
-                        version: 'DESC',
                     },
                 },
             );
