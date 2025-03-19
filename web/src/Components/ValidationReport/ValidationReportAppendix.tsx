@@ -22,8 +22,9 @@ import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { ValidationStepsProps } from './StepProps';
 
-const ValidationReportAppendix = (props: CustomStepsProps) => {
+const ValidationReportAppendix = (props: ValidationStepsProps) => {
   const {
     next,
     prev,
@@ -34,16 +35,18 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
     t,
     handleLoading,
     documentId,
+    disableFields,
+    formMode,
   } = props;
 
-  const { get, post } = useConnection();
+  const { post } = useConnection();
 
   const { state } = useLocation();
-  const [disableFields, setDisableFields] = useState<boolean>(false);
+  // const [disableFields, setDisableFields] = useState<boolean>(false);
 
   useEffect(() => {
-    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
-      setDisableFields(true);
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('documentsReviewed', [{ author: '' }]);
     }
   }, []);
 
@@ -57,10 +60,6 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
     }
     return e?.fileList;
   };
-
-  useEffect(() => {
-    form.setFieldValue('documentsReviewed', [{ author: '' }]);
-  }, []);
 
   const onFinish = async (values: any) => {
     const tempVals: any = {
