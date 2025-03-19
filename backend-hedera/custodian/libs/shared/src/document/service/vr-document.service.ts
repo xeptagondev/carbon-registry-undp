@@ -259,6 +259,8 @@ export class VrDocumentService extends DocumentService {
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -545,10 +547,12 @@ export class VrDocumentService extends DocumentService {
                     ctx,
                 );
             }
-            queryRunner.commitTransaction();
+            await queryRunner.commitTransaction();
         } catch (err) {
-            queryRunner.rollbackTransaction();
+            await queryRunner.rollbackTransaction();
             throw err;
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 }

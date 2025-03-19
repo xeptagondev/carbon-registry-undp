@@ -60,7 +60,11 @@ export class DocumentEntity {
     @JoinColumn([{ name: 'activity_id', referencedColumnName: 'id' }])
     activity?: ActivityEntity;
 
-    @ManyToOne(() => ProjectEntity, (projectEntity) => projectEntity.documents)
+    @ManyToOne(
+        () => ProjectEntity,
+        (projectEntity) => projectEntity.documents,
+        { eager: false },
+    )
     @JoinColumn([{ name: 'project_id', referencedColumnName: 'id' }])
     project?: ProjectEntity;
 

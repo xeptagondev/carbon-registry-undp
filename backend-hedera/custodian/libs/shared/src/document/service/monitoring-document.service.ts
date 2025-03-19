@@ -3,8 +3,8 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+
+import { DataSource, QueryRunner } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -354,6 +354,8 @@ export class MonitoringDocumentService extends DocumentService {
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -577,10 +579,12 @@ export class MonitoringDocumentService extends DocumentService {
                     },
                 );
             }
-            queryRunner.commitTransaction();
+            await queryRunner.commitTransaction();
         } catch (err) {
-            queryRunner.rollbackTransaction();
+            await queryRunner.rollbackTransaction();
             throw err;
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 }
