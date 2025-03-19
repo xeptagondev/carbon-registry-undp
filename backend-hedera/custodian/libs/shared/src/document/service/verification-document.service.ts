@@ -471,6 +471,7 @@ export class VerificationDocumentService extends DocumentService {
                 );
                 const payload: MintNFTJobPayload = {
                     tokenId: documentEntity?.project?.tokenId,
+                    batchSerialNumber: `BS-${Date.now()}`,
                     metadata,
                     amount: 10, // TODO: update the credit count as needed
                     accountId:

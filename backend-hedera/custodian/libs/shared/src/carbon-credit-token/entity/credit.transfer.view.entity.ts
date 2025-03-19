@@ -4,10 +4,9 @@ import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
 
 @ViewEntity({
     schema: 'public',
-    name: 'credit_transfer_view',
+    name: 'credits_transfer_view',
     expression: `
     SELECT 
-      credit."refId" AS "transferId",
       credit."tokenId" AS "tokenId",
       sender."id" AS "senderId",
       sender.name AS "senderName",
@@ -21,7 +20,7 @@ import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
       AND credit.status = '${CreditEventStatusEnum.COMPLETED}'
   `,
 })
-export class CreditTransferView {
+export class CreditsTransferView {
     @ViewColumn()
     transferId: string;
 

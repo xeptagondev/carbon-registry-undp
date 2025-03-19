@@ -3,6 +3,7 @@ import { DocumentEntity } from '@app/shared/document/entity/document.entity';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import {
     BeforeInsert,
+    BeforeUpdate,
     Column,
     Entity,
     ManyToOne,
@@ -42,8 +43,20 @@ export class ActivityEntity {
     @Column({ type: 'enum', enum: ActivityStateEnum, nullable: false })
     state: ActivityStateEnum;
 
+    @Column({ nullable: true, type: 'bigint' })
+    createdDate?: number;
+
+    @Column({ nullable: true, type: 'bigint' })
+    updatedDate?: number;
+
     @BeforeInsert()
     generateRefId() {
         this.refId = `A-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        this.createdDate = Date.now();
+    }
+
+    @BeforeUpdate()
+    updateDate() {
+        this.updatedDate = Date.now();
     }
 }

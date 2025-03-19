@@ -118,6 +118,7 @@ export class InfDocumentService extends DocumentService {
             projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
             projectEntity.sectoralScope = infData.sectoralScope;
             projectEntity.createdBy = createdBy;
+            projectEntity.serialNumber = 'SN'; //TODO replace with correct one
             projectEntity.organization = org;
             projectEntity.assignees = assignees;
             const savedProject: ProjectEntity = await queryRunner.manager.save(

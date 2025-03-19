@@ -12,7 +12,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
-import { InfDocumentService } from '@app/shared/document/service/inf-document.service';
 
 @Injectable()
 export class ProjectService {
@@ -23,7 +22,6 @@ export class ProjectService {
         @InjectRepository(ProjectEntity)
         private readonly projectRepository: Repository<ProjectEntity>,
         private readonly logger: InstantLogger,
-        private readonly infDocumentService: InfDocumentService,
     ) {}
 
     public async query(
@@ -153,9 +151,14 @@ export class ProjectService {
         try {
             const project = await this.projectRepository.findOne({
                 where: { refId: id },
-                relations: { organization: true, documents: true },
+                relations: {
+                    organization: true,
+                    documents: true,
+                    activities: { documents: true },
+                },
             });
 
+            console.log(project.activities);
             const updatedProject = {
                 ...(await this.mapNewQueryToOldQuery(project)),
             };
