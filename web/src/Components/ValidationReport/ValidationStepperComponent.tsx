@@ -652,6 +652,7 @@ const StepperComponent = (props: any) => {
           t={t}
           handleValuesUpdate={submitForm}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
+          disableFields={disableFields}
           formMode={state?.mode}
           handleLoading={handleLoading}
         />
