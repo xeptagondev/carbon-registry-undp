@@ -3,8 +3,7 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -44,10 +43,6 @@ import { TaskEnum } from '@app/shared/task/enum/task.enum';
 export class VerificationDocumentService extends DocumentService {
     private readonly loggerContext = 'MonitoringDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
-        @InjectRepository(ActivityEntity)
-        private readonly activityRepository: Repository<ActivityEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
@@ -55,11 +50,8 @@ export class VerificationDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
-        @InjectRepository(TaskEntity)
-        private readonly taskRepository: Repository<TaskEntity>,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
@@ -70,8 +62,8 @@ export class VerificationDocumentService extends DocumentService {
         );
     }
 
-    private async findLastActivity(project: string) {
-        return await this.activityRepository.findOne({
+    private async findLastActivity(queryRunner: QueryRunner, project: string) {
+        return await queryRunner.manager.findOne(ActivityEntity, {
             where: {
                 project: {
                     refId: project,
@@ -82,7 +74,6 @@ export class VerificationDocumentService extends DocumentService {
             },
         });
     }
-
     async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
         this.logger.log(
             `Request received to create verification report from ${jwtData.userName}`,
@@ -98,51 +89,53 @@ export class VerificationDocumentService extends DocumentService {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
 
-        const lastMonitoring: DocumentEntity =
-            await this.findLastDocumentByType(
-                DocumentEnum.MONITORING,
-                dto.projectRefId,
-                dto.activityRefId,
-            );
-        const lastVerification: DocumentEntity =
-            await this.findLastDocumentByType(
-                DocumentEnum.VERIFICATION,
-                dto.projectRefId,
-                dto.activityRefId,
-            );
-
-        const lastActivity: ActivityEntity = await this.findLastActivity(
-            dto.projectRefId,
-        );
-        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
-        if (
-            lastMonitoring &&
-            !(lastMonitoring.state === DocumentStateEnum.IC_APPROVED)
-        ) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
-        if (
-            lastActivity &&
-            !(
-                lastActivity.state ===
-                ActivityStateEnum.MONITORING_REPORT_VERIFIED
-            )
-        ) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
-
         // start transaction and save document
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             await queryRunner.startTransaction();
+            const lastMonitoring: DocumentEntity =
+                await this.findLastDocumentByType(
+                    queryRunner,
+                    DocumentEnum.MONITORING,
+                    dto.projectRefId,
+                    dto.activityRefId,
+                );
+            const lastVerification: DocumentEntity =
+                await this.findLastDocumentByType(
+                    queryRunner,
+                    DocumentEnum.VERIFICATION,
+                    dto.projectRefId,
+                    dto.activityRefId,
+                );
+
+            const lastActivity: ActivityEntity = await this.findLastActivity(
+                queryRunner,
+                dto.projectRefId,
+            );
+            // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+            if (
+                lastMonitoring &&
+                !(lastMonitoring.state === DocumentStateEnum.IC_APPROVED)
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
+            if (
+                lastActivity &&
+                !(
+                    lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_VERIFIED
+                )
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
@@ -151,20 +144,6 @@ export class VerificationDocumentService extends DocumentService {
                         organization: true,
                         assignees: true,
                         createdBy: true,
-                    },
-                },
-            );
-
-            const lastActivity = await queryRunner.manager.findOne(
-                ActivityEntity,
-                {
-                    where: {
-                        project: {
-                            refId: dto.projectRefId,
-                        },
-                    },
-                    order: {
-                        version: 'DESC',
                     },
                 },
             );
@@ -518,7 +497,7 @@ export class VerificationDocumentService extends DocumentService {
                     retryAttemps: 2,
                     state: TaskEnum.PENDING,
                 };
-                await this.taskRepository.save(asyncTask);
+                await queryRunner.manager.save(TaskEntity, asyncTask);
 
                 const countryName = this.configService.get('country');
                 const subject = VERIFICATION_APPROVE_HEADER.replace(

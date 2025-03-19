@@ -17,6 +17,7 @@ import { OrganizationAppModule } from './organization/organization.module';
 import { ProjectAppModule } from './project/project.module';
 import { UserAppModule } from './user/user.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { TokensModule } from './tokens/tokens.module';
 
 @Module({
     imports: [
@@ -41,6 +42,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
         LocationAppModule,
         DocumentAppModule,
         AnalyticsModule,
+        TokensModule,
     ],
     controllers: [AppController],
     providers: [AppService],
