@@ -10,16 +10,7 @@ import { useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 const ExecutiveSummary = (props: ValidationStepsProps) => {
-  const { prev, next, form, current, t, countries, handleValuesUpdate, formMode } = props;
-
-  const { state } = useLocation();
-  const [disableFields, setDisableFields] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
-      setDisableFields(true);
-    }
-  }, []);
+  const { prev, next, form, current, t, countries, handleValuesUpdate, disableFields } = props;
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)

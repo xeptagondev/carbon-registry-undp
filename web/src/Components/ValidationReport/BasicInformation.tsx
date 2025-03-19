@@ -34,20 +34,12 @@ const BasicInformation = (props: ValidationStepsProps) => {
     handleValuesUpdate,
     cmaDetails,
     existingFormValues,
-    formMode,
+    // formMode,
+    disableFields,
     prev,
   } = props;
 
   const { post } = useConnection();
-
-  const { state } = useLocation();
-  const [disableFields, setDisableFields] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
-      setDisableFields(true);
-    }
-  }, []);
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
