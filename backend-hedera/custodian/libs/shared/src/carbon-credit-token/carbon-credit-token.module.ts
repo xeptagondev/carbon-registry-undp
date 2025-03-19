@@ -5,15 +5,15 @@ import { CreditEventsEntity } from './entity/credit-events.entity';
 import { CarbonCreditService } from './service/carbon-credit.service';
 import { CarbonCreditGuardianService } from './service/carbon-credit-guardian.service';
 
-import { CreditBalanceView } from './entity/credit.balance.view.entity';
-import { CreditTransferView } from './entity/credit.transfer.view.entity';
+import { CreditsBalanceView } from './entity/credit.balance.view.entity';
+import { CreditsTransferView } from './entity/credit.transfer.view.entity';
 @Module({
     imports: [
         UtilModule,
         TypeOrmModule.forFeature([
             CreditEventsEntity,
-            CreditTransferView,
-            CreditBalanceView,
+            CreditsTransferView,
+            CreditsBalanceView,
         ]),
     ],
     providers: [CarbonCreditService, CarbonCreditGuardianService],

@@ -4,7 +4,7 @@ import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
 
 @ViewEntity({
     schema: 'public',
-    name: 'credit_balance_view',
+    name: 'credits_balance_view',
     expression: `
     SELECT
       unioned."organizationId",
@@ -78,7 +78,7 @@ import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
     GROUP BY unioned."organizationId", unioned."organizationName", unioned."projectId", unioned."projectName"
   `,
 })
-export class CreditBalanceView {
+export class CreditsBalanceView {
     @ViewColumn()
     organizationId: string;
 

@@ -6,11 +6,11 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { CreditEventsEntity } from '../entity/credit-events.entity';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
-import { CreditBalanceView } from '../entity/credit.balance.view.entity';
+import { CreditsBalanceView } from '../entity/credit.balance.view.entity';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
-import { CreditTransferView } from '../entity/credit.transfer.view.entity';
+import { CreditsTransferView } from '../entity/credit.transfer.view.entity';
 import { CreditTransferDto } from '../dto/credit.transfer.dto';
 import { CarbonCreditGuardianService } from './carbon-credit-guardian.service';
 import { MintNFTJobPayload } from '../constant/mint-nft-payload';
@@ -35,6 +35,7 @@ export class CarbonCreditService {
     async handleMintJob(job: MintNFTJobPayload) {
         const {
             tokenId,
+            batchSerialNumber,
             metadata,
             amount,
             accountId,
@@ -60,7 +61,8 @@ export class CarbonCreditService {
                 for (const serial of mintedSerials) {
                     await this.issueCredit(
                         tokenId,
-                        serial,
+                        batchSerialNumber,
+                        serial.toNumber(),
                         projectRefId,
                         receiverRefId,
                         queryRunner,
@@ -75,6 +77,7 @@ export class CarbonCreditService {
             }
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
+            console.log(error);
             throw new HttpException(
                 'Failed to handle mint job',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -253,7 +256,7 @@ export class CarbonCreditService {
             `Request received to query the token balance from ${user.userName}`,
         );
         const [entities, total] = await this.dataSource
-            .getRepository(CreditBalanceView)
+            .getRepository(CreditsBalanceView)
             .createQueryBuilder('user')
             .where(this.helperService.generateWhereSQL(query))
             .orderBy(
@@ -279,7 +282,7 @@ export class CarbonCreditService {
             `Request received to query the token transfers ${user.userName}`,
         );
         const [entities, total] = await this.dataSource
-            .getRepository(CreditTransferView)
+            .getRepository(CreditsTransferView)
             .createQueryBuilder('user')
             .where(this.helperService.generateWhereSQL(query))
             .orderBy(
@@ -416,6 +419,7 @@ export class CarbonCreditService {
 
     async issueCredit(
         tokenId: string,
+        batchSerialNumber: string,
         serialNumber: number,
         projectRefId: string,
         receiverRefId: string,
@@ -435,6 +439,7 @@ export class CarbonCreditService {
         }
         return await queryRunner.manager.save(CreditEventsEntity, {
             tokenId,
+            batchSerialNumnber: batchSerialNumber,
             serialNumnber: serialNumber,
             project,
             receiver: organization,

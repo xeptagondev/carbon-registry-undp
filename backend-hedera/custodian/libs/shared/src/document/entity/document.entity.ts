@@ -1,6 +1,7 @@
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import {
     BeforeInsert,
+    BeforeUpdate,
     Column,
     Entity,
     JoinColumn,
@@ -68,8 +69,20 @@ export class DocumentEntity {
     @JoinColumn([{ name: 'project_id', referencedColumnName: 'id' }])
     project?: ProjectEntity;
 
+    @Column({ nullable: true, type: 'bigint' })
+    createdDate?: number;
+
+    @Column({ nullable: true, type: 'bigint' })
+    updatedDate?: number;
+
     @BeforeInsert()
     generateRefId() {
         this.refId = `D-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        this.createdDate = Date.now();
+    }
+
+    @BeforeUpdate()
+    updateDate() {
+        this.updatedDate = Date.now();
     }
 }

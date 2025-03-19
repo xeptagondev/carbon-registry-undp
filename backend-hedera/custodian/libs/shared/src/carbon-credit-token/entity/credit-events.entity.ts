@@ -2,6 +2,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import {
     BeforeInsert,
+    BeforeUpdate,
     Column,
     Entity,
     ManyToOne,
@@ -51,10 +52,18 @@ export class CreditEventsEntity {
     status: CreditEventStatusEnum;
 
     @Column({ nullable: true, type: 'bigint' })
-    createdTime?: number;
+    createdDate?: number;
+
+    @Column({ nullable: true, type: 'bigint' })
+    updatedDate?: number;
 
     @BeforeInsert()
-    beferInsert() {
-        this.createdTime = Date.now();
+    generateRefId() {
+        this.createdDate = Date.now();
+    }
+
+    @BeforeUpdate()
+    updateDate() {
+        this.updatedDate = Date.now();
     }
 }
