@@ -79,6 +79,7 @@ export class DocumentEntity {
     generateRefId() {
         this.refId = `D-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         this.createdDate = Date.now();
+        this.updatedDate = Date.now();
     }
 
     @BeforeUpdate()

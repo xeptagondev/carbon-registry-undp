@@ -11,7 +11,6 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
-import { RoleEnum } from '@app/shared/role/enum/role.enum';
 
 @Injectable()
 export class ProjectService {
@@ -158,10 +157,32 @@ export class ProjectService {
                 },
             });
 
-            console.log(project.activities);
+            const activities = project?.activities?.map((activity) => {
+                return {
+                    stage: activity.state,
+                    activityLastUpdatedDate: activity.updateDate,
+                    documents: activity?.documents?.reduce((acc, document) => {
+                        if (
+                            !acc[document.documentType] ||
+                            acc[document.documentType].version <
+                                document.version
+                        ) {
+                            acc[document.documentType] = {
+                                documentType: document.documentType,
+                                refId: document.refId,
+                                version: document.version,
+                                createdDate: document.createdDate,
+                            };
+                        }
+                        return acc;
+                    }, {}),
+                };
+            });
             const updatedProject = {
                 ...(await this.mapNewQueryToOldQuery(project)),
+                activities: activities,
             };
+
             return updatedProject;
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
@@ -171,103 +192,4 @@ export class ProjectService {
             );
         }
     }
-
-    private validateUserAuthorization(requestUser: JWTPayload): void {
-        if (
-            requestUser.organizationRole !==
-                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
-            requestUser.userRole !== RoleEnum.Admin
-        ) {
-            throw new HttpException(
-                'User not authorized',
-                HttpStatus.UNAUTHORIZED,
-            );
-        }
-    }
-
-    // async approveINF(
-    //     projectRefId: string,
-    //     requestUser: JWTPayload,
-    // ): Promise<DataResponseDto> {
-    //     this.logger.log(
-    //         `Request received to approve project with id ${projectRefId} from user ${requestUser.userName}`,
-    //         this.loggerContext,
-    //     );
-    //     try {
-    //         this.validateUserAuthorization(requestUser);
-
-    //         const inf = await this.documentService.getLastDoc(
-    //             DocumentEnum.INF,
-    //             projectRefId,
-    //         );
-    //         if (!inf) {
-    //             throw new HttpException(
-    //                 'INF did not found for given project id',
-    //                 HttpStatus.BAD_REQUEST,
-    //             );
-    //         }
-    //         await this.documentService.approve(
-    //             inf.refId,
-    //             {
-    //                 remarks: null,
-    //                 action: DocumentStateEnum.DNA_APPROVED,
-    //                 documentType: DocumentEnum.INF,
-    //             },
-    //             requestUser,
-    //         );
-
-    //         return new DataResponseDto(
-    //             HttpStatus.OK,
-    //             'Initial Notification was approved successfully',
-    //         );
-    //     } catch (error) {
-    //         throw new HttpException(
-    //             error ? error : 'An error occurred while approving the project',
-    //             HttpStatus.INTERNAL_SERVER_ERROR,
-    //         );
-    //     }
-    // }
-
-    // async rejectINF(
-    //     projectRefId: string,
-    //     remark: string,
-    //     requestUser: JWTPayload,
-    // ): Promise<DataResponseDto> {
-    //     this.logger.log(
-    //         `Request received to reject project with id ${projectRefId} from user ${requestUser.userName}`,
-    //         this.loggerContext,
-    //     );
-    //     try {
-    //         this.validateUserAuthorization(requestUser);
-    //         const inf = await this.documentService.getLastDoc(
-    //             DocumentEnum.INF,
-    //             projectRefId,
-    //         );
-    //         if (!inf) {
-    //             throw new HttpException(
-    //                 'INF did not found for given project id',
-    //                 HttpStatus.BAD_REQUEST,
-    //             );
-    //         }
-    //         await this.documentService.reject(
-    //             inf.refId,
-    //             {
-    //                 remarks: remark,
-    //                 action: DocumentStateEnum.DNA_REJECTED,
-    //                 documentType: DocumentEnum.INF,
-    //             },
-    //             requestUser,
-    //         );
-
-    //         return new DataResponseDto(
-    //             HttpStatus.OK,
-    //             'Initial Notification was rejected.',
-    //         );
-    //     } catch (error) {
-    //         throw new HttpException(
-    //             error ? error : 'An error occurred while approving the project',
-    //             HttpStatus.INTERNAL_SERVER_ERROR,
-    //         );
-    //     }
-    // }
 }
