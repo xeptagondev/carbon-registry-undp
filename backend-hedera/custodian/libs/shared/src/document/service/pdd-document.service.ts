@@ -3,13 +3,11 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -41,26 +39,20 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 export class PddDocumentService extends DocumentService {
     private readonly loggerContext = 'PddDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
-        carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
             auditService,
             guardianService,
-
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
@@ -71,24 +63,6 @@ export class PddDocumentService extends DocumentService {
             `Request received to create PDD from ${jwtData.userName}`,
             this.loggerContext,
         );
-        const lastDoc: DocumentEntity = await this.findLastDocumentByType(
-            DocumentEnum.PDD,
-            dto.projectRefId,
-        );
-
-        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
-        if (
-            lastDoc &&
-            !(
-                lastDoc.state === DocumentStateEnum.IC_REJECTED ||
-                lastDoc.state === DocumentStateEnum.DNA_REJECTED
-            )
-        ) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
 
         // start transaction and save document
         const queryRunner = this.dataSource.createQueryRunner();
@@ -96,6 +70,26 @@ export class PddDocumentService extends DocumentService {
 
         try {
             await queryRunner.startTransaction();
+            const lastDoc: DocumentEntity = await this.findLastDocumentByType(
+                queryRunner,
+                DocumentEnum.PDD,
+                dto.projectRefId,
+            );
+
+            // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+            if (
+                lastDoc &&
+                !(
+                    lastDoc.state === DocumentStateEnum.IC_REJECTED ||
+                    lastDoc.state === DocumentStateEnum.DNA_REJECTED
+                )
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
+
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
@@ -122,6 +116,7 @@ export class PddDocumentService extends DocumentService {
                 });
 
             const lastINF = await this.findLastDocumentByType(
+                queryRunner,
                 DocumentEnum.INF,
                 dto.projectRefId,
             );
@@ -135,10 +130,12 @@ export class PddDocumentService extends DocumentService {
 
             // PDD has to be an Admin of the same organization of the project the document is being submitted to
             if (
-                jwtData.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
-                jwtData.userRole === RoleEnum.Admin &&
-                submittedUser.organization.id !== project.organization.id
+                !(
+                    jwtData.organizationRole ===
+                        OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                    jwtData.userRole === RoleEnum.Admin &&
+                    submittedUser.organization.id === project.organization.id
+                )
             ) {
                 throw new HttpException(
                     'Unauthorized',
@@ -243,6 +240,8 @@ export class PddDocumentService extends DocumentService {
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -252,19 +251,36 @@ export class PddDocumentService extends DocumentService {
             this.loggerContext,
         );
 
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
-
+            const documentEntity = await queryRunner.manager.findOne(
+                DocumentEntity,
+                {
+                    where: { refId: requestData.refId },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                },
+            );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const assigneeOrgEmails: string[] =
                 documentEntity?.project?.assignees.map((user) => user.email);
 
@@ -656,10 +672,12 @@ export class PddDocumentService extends DocumentService {
                     toPDCtx,
                 );
             }
-            queryRunner.commitTransaction();
+            await queryRunner.commitTransaction();
         } catch (err) {
-            queryRunner.rollbackTransaction();
+            await queryRunner.rollbackTransaction();
             throw err;
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 }

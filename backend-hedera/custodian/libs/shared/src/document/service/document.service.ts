@@ -5,8 +5,7 @@ import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
@@ -24,7 +23,6 @@ import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.
 import { ProjectProposalStage } from '@app/shared/project/enum/project.proposal.stage.enum';
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { DocumentQueryDTO } from '../dto/document.query.dto';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '../enum/additional.document.type';
@@ -32,14 +30,11 @@ import { AdditionalDocType } from '../enum/additional.document.type';
 @Injectable()
 export abstract class DocumentService {
     constructor(
-        @InjectRepository(DocumentEntity)
-        protected readonly documentRepository: Repository<DocumentEntity>,
         protected readonly configService: ConfigService,
         protected readonly mailService: MailService,
         protected readonly dataSource: DataSource,
         protected readonly auditService: AuditService,
         protected readonly guardianService: GuardianService,
-        protected readonly carbonCreditGuardianService: CarbonCreditGuardianService,
         protected readonly fileHelperService: FileHelperService,
         protected readonly logger: InstantLogger,
     ) {}
@@ -70,12 +65,13 @@ export abstract class DocumentService {
         return docUrls;
     }
     protected async findLastDocumentByType(
+        queryRunner: QueryRunner,
         type: DocumentEnum,
         project: string,
         activity?: string,
     ) {
         if (activity) {
-            return await this.documentRepository.findOne({
+            return await queryRunner.manager.findOne(DocumentEntity, {
                 where: {
                     documentType: type,
                     project: {
@@ -90,7 +86,7 @@ export abstract class DocumentService {
                 },
             });
         } else {
-            return await this.documentRepository.findOne({
+            return await queryRunner.manager.findOne(DocumentEntity, {
                 where: {
                     documentType: type,
                     project: {
@@ -103,11 +99,16 @@ export abstract class DocumentService {
             });
         }
     }
-    async getDocumentWithProjectAssignees(req: DocumentActionDTO) {
-        return await this.documentRepository.findOne({
+
+    async getDocumentWithProjectAssignees(
+        queryRunner: QueryRunner,
+        refId: string,
+        type: DocumentEnum,
+    ) {
+        return await queryRunner.manager.findOne(DocumentEntity, {
             where: {
-                refId: req.refId,
-                documentType: req.documentType,
+                refId: refId,
+                documentType: type,
             },
             relations: {
                 project: {
@@ -325,43 +326,45 @@ export abstract class DocumentService {
         await queryRunner.manager.save(AuditEntity, log);
     }
 
-    public async getLastDoc(documentType: DocumentEnum, projectRefId: string) {
-        return await this.documentRepository.findOne({
-            where: {
-                documentType: documentType,
-                project: {
-                    refId: projectRefId,
-                },
-            },
-            order: {
-                version: 'DESC',
-            },
-        });
-    }
-
     abstract save(dto: BaseDocumentDTO, jwtData: JWTPayload);
     abstract verify(requestData: DocumentActionDTO, jwtData: JWTPayload);
 
     async query(query: DocumentQueryDTO) {
+        const queryRunner = this.dataSource.createQueryRunner();
         try {
-            const lastDoc = await this.documentRepository.findOne({
-                where: {
-                    documentType: query.documentType,
-                    project: {
-                        refId: query.projectRefId,
-                    },
-                },
-                order: {
-                    version: 'DESC',
-                },
-            });
+            queryRunner.connect();
+            queryRunner.startTransaction();
+            const lastDoc = await this.getDocumentWithProjectAssignees(
+                queryRunner,
+                query.refId,
+                query.documentType,
+            );
+            queryRunner.commitTransaction();
 
             return { data: lastDoc };
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
+            queryRunner.rollbackTransaction();
             throw new HttpException(
                 'Error occurred in query document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async releaseQueryRunner(queryRunner: QueryRunner) {
+        if (!queryRunner.isReleased) {
+            try {
+                console.log(queryRunner.isReleased);
+                await queryRunner.release();
+            } catch (e) {
+                this.logger.error(
+                    'Error occurred while releasing query runner',
+                    e,
+                );
+            }
         }
     }
 }

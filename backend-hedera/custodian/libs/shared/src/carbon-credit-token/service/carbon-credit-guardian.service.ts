@@ -9,6 +9,8 @@ import {
     TokenAssociateTransaction,
     TokenMintTransaction,
     TransactionReceipt,
+    TransferTransaction,
+    TokenBurnTransaction,
 } from '@hashgraph/sdk';
 import { ConfigService } from '@nestjs/config';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
@@ -96,6 +98,53 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
         const mintSubmit = await mintSign.execute(client);
         const receipt: TransactionReceipt = await mintSubmit.getReceipt(client);
         return receipt.serials;
+    }
+
+    async transferProjectNFT(
+        tokenId: string,
+        serial: number,
+        senderAccountId: string,
+        senderPrivateKey: string,
+        receiverAccountId: string,
+    ): Promise<any> {
+        const client = Client.forTestnet();
+        const senderId = AccountId.fromString(senderAccountId);
+        const senderKey = PrivateKey.fromStringED25519(senderPrivateKey);
+        client.setOperator(senderId, senderKey);
+
+        const transferTx = await new TransferTransaction()
+            .addNftTransfer(tokenId, serial, senderAccountId, receiverAccountId)
+            .freezeWith(client);
+
+        const transferSign = await transferTx.sign(senderKey);
+        const transferSubmit = await transferSign.execute(client);
+        const receipt: TransactionReceipt =
+            await transferSubmit.getReceipt(client);
+
+        return receipt.status;
+    }
+
+    async retireProjectNFT(
+        tokenId: string,
+        serial: number,
+        accountId: string,
+        privateKey: string,
+    ): Promise<any> {
+        const client = Client.forTestnet();
+        const operatorId = AccountId.fromString(accountId);
+        const operatorKey = PrivateKey.fromStringED25519(privateKey);
+        client.setOperator(operatorId, operatorKey);
+
+        const burnTx = await new TokenBurnTransaction()
+            .setTokenId(tokenId)
+            .setSerials([serial])
+            .freezeWith(client);
+
+        const burnSign = await burnTx.sign(operatorKey);
+        const burnSubmit = await burnSign.execute(client);
+        const receipt: TransactionReceipt = await burnSubmit.getReceipt(client);
+
+        return receipt.status;
     }
 
     onModuleDestroy() {

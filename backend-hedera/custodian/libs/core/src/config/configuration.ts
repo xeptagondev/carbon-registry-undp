@@ -25,6 +25,7 @@ export default () => ({
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
+        logging: process.env.DB_LOG_ENABLE || false,
     },
     apiJwt: {
         secret: process.env.API_JWT_SECRET || 'api_jwt_secret',

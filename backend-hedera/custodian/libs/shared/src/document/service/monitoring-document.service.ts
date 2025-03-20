@@ -3,14 +3,13 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+
+import { DataSource, QueryRunner } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -47,32 +46,37 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 export class MonitoringDocumentService extends DocumentService {
     private readonly loggerContext = 'MonitoringDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
-
-        carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
             auditService,
             guardianService,
-
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
     }
 
+    private async findLastActivity(queryRunner: QueryRunner, project: string) {
+        return await queryRunner.manager.findOne(ActivityEntity, {
+            where: {
+                project: {
+                    refId: project,
+                },
+            },
+            order: {
+                version: 'DESC',
+            },
+        });
+    }
     async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
         this.logger.log(
             `Request received to create monitoring report from ${jwtData.userName}`,
@@ -88,41 +92,54 @@ export class MonitoringDocumentService extends DocumentService {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
 
-        const lastVR: DocumentEntity = await this.findLastDocumentByType(
-            DocumentEnum.VALIDATION,
-            dto.projectRefId,
-        );
-
-        const lastMonitoring: DocumentEntity =
-            await this.findLastDocumentByType(
-                DocumentEnum.MONITORING,
-                dto.projectRefId,
-                dto.activityRefId,
-            );
-
-        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
-        if (lastVR && !(lastVR.state === DocumentStateEnum.DNA_APPROVED)) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
-        if (
-            lastMonitoring &&
-            !(lastMonitoring.state === DocumentStateEnum.IC_REJECTED)
-        ) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
-
         // start transaction and save document
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             await queryRunner.startTransaction();
+
+            const lastVR: DocumentEntity = await this.findLastDocumentByType(
+                queryRunner,
+                DocumentEnum.VALIDATION,
+                dto.projectRefId,
+            );
+
+            const lastMonitoring: DocumentEntity =
+                await this.findLastDocumentByType(
+                    queryRunner,
+                    DocumentEnum.MONITORING,
+                    dto.projectRefId,
+                    dto.activityRefId,
+                );
+
+            let lastActivity: ActivityEntity = await this.findLastActivity(
+                queryRunner,
+                dto.projectRefId,
+            );
+
+            // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+            if (lastVR && !(lastVR.state === DocumentStateEnum.DNA_APPROVED)) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
+            if (
+                lastActivity &&
+                !(
+                    lastActivity.state ===
+                        ActivityStateEnum.MONITORING_REPORT_REJECTED ||
+                    lastActivity.state ===
+                        ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
+                )
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
+
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
@@ -131,20 +148,6 @@ export class MonitoringDocumentService extends DocumentService {
                         organization: true,
                         assignees: true,
                         createdBy: true,
-                    },
-                },
-            );
-
-            let lastActivity = await queryRunner.manager.findOne(
-                ActivityEntity,
-                {
-                    where: {
-                        project: {
-                            refId: dto.projectRefId,
-                        },
-                    },
-                    order: {
-                        version: 'DESC',
                     },
                 },
             );
@@ -351,6 +354,8 @@ export class MonitoringDocumentService extends DocumentService {
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -367,22 +372,37 @@ export class MonitoringDocumentService extends DocumentService {
             throw new HttpException('Unauthroized', HttpStatus.BAD_REQUEST);
         }
 
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
 
-            /*
-                        1. Authorize the call
-                    */
+            const documentEntity = await queryRunner.manager.findOne(
+                DocumentEntity,
+                {
+                    where: { refId: requestData.refId },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                },
+            );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const assigneeOrgEmails: string[] =
                 documentEntity.project.assignees.map((user) => user.email);
 
@@ -559,10 +579,12 @@ export class MonitoringDocumentService extends DocumentService {
                     },
                 );
             }
-            queryRunner.commitTransaction();
+            await queryRunner.commitTransaction();
         } catch (err) {
-            queryRunner.rollbackTransaction();
+            await queryRunner.rollbackTransaction();
             throw err;
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 }

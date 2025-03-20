@@ -37,6 +37,7 @@ import {
   validationFindingsMapDataToFields,
   validationMethodologyMapDataToFields,
   validationOpinionMapDataToFields,
+  validationReportAppendixMapDataToFields,
 } from './viewDataMap';
 
 export enum ProcessSteps {
@@ -68,6 +69,7 @@ const StepperComponent = (props: any) => {
 
   const [documentId, setDocumentId] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
+  const [disableFields, setDisableFields] = useState<boolean>(false);
 
   const handleLoading = (val: boolean) => {
     setLoading(val);
@@ -93,11 +95,20 @@ const StepperComponent = (props: any) => {
     }
   };
 
-  const submitForm = async (formValues: any) => {
-    console.log('--------adding form-values------', formValues);
+  const submitForm = async (appendixVals: any) => {
     setLoading(true);
+
+    const tempValues = {
+      ...existingFormValues,
+      data: {
+        ...existingFormValues.data,
+        appendix: appendixVals,
+      },
+    };
+    console.log('--------adding form-values------', tempValues);
+
     try {
-      const res = await post(API_PATHS.ADD_DOCUMENT, formValues);
+      const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
       console.log('res', res);
       if (res?.statusText === 'SUCCESS') {
         message.open({
@@ -122,7 +133,7 @@ const StepperComponent = (props: any) => {
   };
 
   const next = () => {
-    if (current === 8 && state?.mode === FormMode.VIEW) {
+    if (current === 8 && (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY)) {
       navigateToDetailsPage();
       return;
     }
@@ -362,20 +373,6 @@ const StepperComponent = (props: any) => {
       };
       return { ...prevVal, data: tempContent };
     });
-
-    if (current === 8) {
-      console.log('----------test------------', val);
-      const tempData = {
-        ...existingFormValues,
-        data: {
-          ...existingFormValues.data,
-          appendix: val,
-        },
-      };
-      submitForm(tempData);
-    }
-
-    const isFinal = val[ProcessSteps.VR_APPENDIX];
   };
 
   useEffect(() => {
@@ -389,7 +386,7 @@ const StepperComponent = (props: any) => {
         let res;
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
-            projectRefId: id,
+            projectRefId: state?.documentRefId,
             DocumentEnum: DocumentEnum.VALIDATION,
           });
 
@@ -437,8 +434,13 @@ const StepperComponent = (props: any) => {
             );
             form8.setFieldsValue(validationOpinion);
 
-            const appendix = basicInformationMapDataToFields(data.data?.appendix);
+            const appendix = validationReportAppendixMapDataToFields(data.data?.appendix);
+            console.log('---------appendix-----------', appendix);
             form9.setFieldsValue(appendix);
+          }
+
+          if (state?.mode === FormMode.VERIFY || state?.mode === FormMode.VIEW) {
+            setDisableFields(true);
           }
         } catch (error) {
           console.log('error', error);
@@ -469,6 +471,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_PROJECT_DETAILS]}
           formMode={state?.mode}
+          disableFields={disableFields}
         />
       ),
     },
@@ -490,6 +493,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_INTRODUCTION]}
           formMode={state?.mode}
+          disableFields={disableFields}
         />
       ),
     },
@@ -510,6 +514,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_GHG_PROJECT_DESCRIPTION]}
           formMode={state?.mode}
+          disableFields={disableFields}
         />
       ),
     },
@@ -530,6 +535,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_METHODOLOGY]}
           formMode={state?.mode}
+          disableFields={disableFields}
         />
       ),
     },
@@ -550,6 +556,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
           projectCategory={projectCategory}
+          disableFields={disableFields}
           formMode={state?.mode}
         />
       ),
@@ -571,6 +578,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
           projectCategory={projectCategory}
+          disableFields={disableFields}
           formMode={state?.mode}
         />
       ),
@@ -590,6 +598,7 @@ const StepperComponent = (props: any) => {
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
+          disableFields={disableFields}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_REFERENCE]}
           formMode={state?.mode}
         />
@@ -610,6 +619,7 @@ const StepperComponent = (props: any) => {
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
+          disableFields={disableFields}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_OPINION]}
           formMode={state?.mode}
         />
@@ -640,8 +650,9 @@ const StepperComponent = (props: any) => {
           current={current}
           documentId={documentId}
           t={t}
-          handleValuesUpdate={handleValuesUpdate}
+          handleValuesUpdate={submitForm}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
+          disableFields={disableFields}
           formMode={state?.mode}
           handleLoading={handleLoading}
         />

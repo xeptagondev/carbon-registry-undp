@@ -56,18 +56,18 @@ export class AuthorisationLetterGenerateService {
         doc.pipe(stream);
         doc.fontSize(11);
 
-        // Header: reference number and date
-        // doc.text(refNo, { align: 'left', continued: true });
-        doc.text(date, { align: 'right' });
-
+        // Use built‑in fonts (Helvetica) instead of custom fonts
+        // Header: date and title
+        doc.font('Helvetica-Bold').text(date, { align: 'right' });
         doc.text(`\n\nLetter of Authorisation of ${programmeName}`, {
             align: 'left',
         });
 
-        doc.font('fonts/Inter-Bold.ttf').text('\n\nMandate For Authorisation', {
+        // Use Helvetica-Bold for headings and Helvetica for body text
+        doc.font('Helvetica-Bold').text('\n\nMandate For Authorisation', {
             underline: true,
         });
-        doc.font('fonts/Inter-Regular.ttf');
+        doc.font('Helvetica');
 
         doc.text(
             `\n\n 1. The ${authorisedCompanyName} is the Government’s Ministry responsible for climate change in ${country}.`,
@@ -84,11 +84,11 @@ export class AuthorisationLetterGenerateService {
             { indent: 15 },
         );
 
-        doc.font('fonts/Inter-Bold.ttf').text(
+        doc.font('Helvetica-Bold').text(
             '\n\nPre-conditions for Authorisation ',
             { underline: true },
         );
-        doc.font('fonts/Inter-Regular.ttf');
+        doc.font('Helvetica');
 
         doc.text(
             `\n\n 4. The ${orgName}, as the authorised mitigation activity participant for the “${programmeName}” (hereinafter referred to as the Mitigation Activity as defined in the Cooperation Agreement with ${orgName}):`,
@@ -105,39 +105,28 @@ export class AuthorisationLetterGenerateService {
             { indent: 15 },
         );
 
-        doc.font('fonts/Inter-Bold.ttf').text('\n\nAuthorisation Statement', {
+        doc.font('Helvetica-Bold').text('\n\nAuthorisation Statement', {
             underline: true,
         });
-        doc.font('fonts/Inter-Regular.ttf');
+        doc.font('Helvetica');
 
         doc.text(
             `\n\n 5. The ${authorisedCompanyName} hereby grants formal Authorisation of the Internationally Transferred Mitigation Outcomes (ITMOs) that are generated from implementing the “${programmeName}” based on the information outlined in `,
             { indent: 15, continued: true },
         );
-        // doc.fillColor('blue').text('Annex [x]', {
-        //     link: designDocUrl,
-        //     underline: true,
-        //     continued: true,
-        // });
         doc.fillColor('black').text(`, the methodology in `, {
             indent: 15,
             continued: true,
         });
-        // doc.fillColor('blue').text('Annex [y]', {
-        //     link: methodologyDocUrl,
-        //     underline: true,
-        //     continued: true,
-        // });
         doc.fillColor('black').text(
             `, and per the Article 6.3 of the Paris Agreement and the Cooperation Agreement with ${orgName}.`,
             { indent: 15 },
         );
 
-        doc.font('fonts/Inter-Bold.ttf').text(
-            '\n\nImplications of Authorisation ',
-            { underline: true },
-        );
-        doc.font('fonts/Inter-Regular.ttf');
+        doc.font('Helvetica-Bold').text('\n\nImplications of Authorisation ', {
+            underline: true,
+        });
+        doc.font('Helvetica');
 
         doc.text(`\n\n 6. By this letter, the ${country} confirms that: `, {
             indent: 15,
@@ -177,10 +166,10 @@ export class AuthorisationLetterGenerateService {
         );
 
         doc.moveDown(3);
-        doc.font('fonts/Inter-Bold.ttf').text('\n\nConfirmations', {
+        doc.font('Helvetica-Bold').text('\n\nConfirmations', {
             underline: true,
         });
-        doc.font('fonts/Inter-Regular.ttf');
+        doc.font('Helvetica');
 
         doc.text(
             `\n\n 9. The ${country} commits to transfer the amount of authorised, verified and positively examined ITMOs from this mitigation activity under the Cooperation Agreement with ${orgName}, signed on ${date}.`,
@@ -199,20 +188,8 @@ export class AuthorisationLetterGenerateService {
             `\n\nSincerely,\nHonorable ${minister}\nMinister\n${ministry}\nGovernment of ${country}`,
         );
 
-        doc.font('fonts/Inter-Bold.ttf').text('\n\nAppendices', {
-            underline: true,
-        });
+        doc.font('Helvetica-Bold').text('\n\nAppendices', { underline: true });
         doc.moveDown(2);
-        // doc.fillColor('blue').text('Annex [x]: Design Document', {
-        //     link: designDocUrl,
-        //     underline: true,
-        //     indent: 15,
-        // });
-        // doc.fillColor('blue').text('Annex [y]: Methodology Document', {
-        //     link: methodologyDocUrl,
-        //     underline: true,
-        //     indent: 15,
-        // });
         doc.fillColor('black');
 
         doc.end();

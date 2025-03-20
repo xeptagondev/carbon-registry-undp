@@ -3,13 +3,11 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -37,35 +35,45 @@ import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum';
 import { AdditionalDocType } from '../enum/additional.document.type';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { MintNFTJobPayload } from '@app/shared/carbon-credit-token/constant/mint-nft-payload';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { TaskEnum } from '@app/shared/task/enum/task.enum';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
     private readonly loggerContext = 'MonitoringDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
-        carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
             auditService,
             guardianService,
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
     }
 
+    private async findLastActivity(queryRunner: QueryRunner, project: string) {
+        return await queryRunner.manager.findOne(ActivityEntity, {
+            where: {
+                project: {
+                    refId: project,
+                },
+            },
+            order: {
+                version: 'DESC',
+            },
+        });
+    }
     async save(dto: BaseDocumentDTO, jwtData: JWTPayload) {
         this.logger.log(
             `Request received to create verification report from ${jwtData.userName}`,
@@ -81,45 +89,53 @@ export class VerificationDocumentService extends DocumentService {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
 
-        const lastMonitoring: DocumentEntity =
-            await this.findLastDocumentByType(
-                DocumentEnum.MONITORING,
-                dto.projectRefId,
-                dto.activityRefId,
-            );
-        const lastVerification: DocumentEntity =
-            await this.findLastDocumentByType(
-                DocumentEnum.VERIFICATION,
-                dto.projectRefId,
-                dto.activityRefId,
-            );
-
-        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
-        if (
-            lastMonitoring &&
-            !(lastMonitoring.state === DocumentStateEnum.IC_APPROVED)
-        ) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
-        if (
-            lastVerification &&
-            !(lastVerification.state === DocumentStateEnum.DNA_REJECTED)
-        ) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
-
         // start transaction and save document
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             await queryRunner.startTransaction();
+            const lastMonitoring: DocumentEntity =
+                await this.findLastDocumentByType(
+                    queryRunner,
+                    DocumentEnum.MONITORING,
+                    dto.projectRefId,
+                    dto.activityRefId,
+                );
+            const lastVerification: DocumentEntity =
+                await this.findLastDocumentByType(
+                    queryRunner,
+                    DocumentEnum.VERIFICATION,
+                    dto.projectRefId,
+                    dto.activityRefId,
+                );
+
+            const lastActivity: ActivityEntity = await this.findLastActivity(
+                queryRunner,
+                dto.projectRefId,
+            );
+            // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+            if (
+                lastMonitoring &&
+                !(lastMonitoring.state === DocumentStateEnum.IC_APPROVED)
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
+            if (
+                lastActivity &&
+                !(
+                    lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_VERIFIED
+                )
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
@@ -128,20 +144,6 @@ export class VerificationDocumentService extends DocumentService {
                         organization: true,
                         assignees: true,
                         createdBy: true,
-                    },
-                },
-            );
-
-            const lastActivity = await queryRunner.manager.findOne(
-                ActivityEntity,
-                {
-                    where: {
-                        project: {
-                            refId: dto.projectRefId,
-                        },
-                    },
-                    order: {
-                        version: 'DESC',
                     },
                 },
             );
@@ -342,6 +344,8 @@ export class VerificationDocumentService extends DocumentService {
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -361,19 +365,37 @@ export class VerificationDocumentService extends DocumentService {
             throw new HttpException('Unauthroized', HttpStatus.BAD_REQUEST);
         }
 
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
 
+            const documentEntity = await queryRunner.manager.findOne(
+                DocumentEntity,
+                {
+                    where: { refId: requestData.refId },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                },
+            );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             // Previous state has to be pending
             if (documentEntity.state !== DocumentStateEnum.PENDING) {
                 throw new HttpException(
@@ -447,13 +469,27 @@ export class VerificationDocumentService extends DocumentService {
                 const metadata = Uint8Array.from(
                     Buffer.from(documentEntity?.project?.refId, 'utf8'),
                 );
-                await this.carbonCreditGuardianService.mintProjectNFT(
-                    documentEntity?.project?.tokenId,
+                const payload: MintNFTJobPayload = {
+                    tokenId: documentEntity?.project?.tokenId,
+                    batchSerialNumber: `BS-${Date.now()}`,
                     metadata,
-                    10, //TODO update the credit count
-                    documentEntity?.project?.organization?.hederaAccountId,
-                    documentEntity?.project?.organization?.hederaAccountKey,
-                );
+                    amount: 10, // TODO: update the credit count as needed
+                    accountId:
+                        documentEntity?.project?.organization?.hederaAccountId,
+                    privateKey:
+                        documentEntity?.project?.organization?.hederaAccountKey,
+                    projectRefId: documentEntity?.project?.refId,
+                    receiverRefId: documentEntity?.project?.organization?.refId,
+                };
+
+                const asyncTask: TaskEntity = {
+                    className: 'CarbonCreditService',
+                    functionName: 'handleMintJob',
+                    args: [payload],
+                    retryAttemps: 2,
+                    state: TaskEnum.PENDING,
+                };
+                await queryRunner.manager.save(TaskEntity, asyncTask);
 
                 const countryName = this.configService.get('country');
                 const subject = VERIFICATION_APPROVE_HEADER.replace(
@@ -594,10 +630,12 @@ export class VerificationDocumentService extends DocumentService {
                     contextIC,
                 );
             }
-            queryRunner.commitTransaction();
+            await queryRunner.commitTransaction();
         } catch (err) {
-            queryRunner.rollbackTransaction();
+            await queryRunner.rollbackTransaction();
             throw err;
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 }
