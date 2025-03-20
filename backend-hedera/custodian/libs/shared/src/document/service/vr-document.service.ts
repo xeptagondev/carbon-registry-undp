@@ -161,15 +161,6 @@ export class VrDocumentService extends DocumentService {
                 activity: dto.activityRefId,
             };
 
-            await this.guardianService.saveDocument(
-                jwtData.email,
-                this.getBlockNameByDocType(dto.documentType),
-                {
-                    document: documentSchema,
-                    ref: { document: organizationDoc },
-                },
-            );
-
             const assigneeOrgIds = project.assignees.map((org) => org.id);
 
             if (
@@ -178,6 +169,16 @@ export class VrDocumentService extends DocumentService {
                 jwtData.userRole === RoleEnum.Admin &&
                 assigneeOrgIds.includes(jwtData.organizationId)
             ) {
+
+                await this.guardianService.saveDocument(
+                    jwtData.email,
+                    this.getBlockNameByDocType(dto.documentType),
+                    {
+                        document: documentSchema,
+                        ref: { document: organizationDoc },
+                    },
+                );
+
                 await this.updateProjectStage(
                     queryRunner,
                     project?.refId,
