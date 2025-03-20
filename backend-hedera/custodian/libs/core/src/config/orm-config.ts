@@ -25,7 +25,7 @@ const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
     poolSize: 50,
     extra: {
         max: 10,
-        idleTimeoutMillis: 30000,
+        idleTimeoutMillis: 60000,
     },
 });
 
