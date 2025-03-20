@@ -39,6 +39,7 @@ import {
     ButtonNameEnum,
 } from '@app/shared/guardian/enum/button-type.enum';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 
 @Injectable()
 export class InfDocumentService extends DocumentService {
@@ -104,6 +105,7 @@ export class InfDocumentService extends DocumentService {
                 await queryRunner.manager.find(OrganizationEntity, {
                     where: {
                         refId: In(infData.independentCertifiers),
+                        state: OrganizationStateEnum.ACTIVE,
                     },
                 });
 
