@@ -176,7 +176,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
       annualAverageGHGReduction: values?.annualAverageGHGReduction,
       approverName: values?.approverName,
       creditingPeriodStart: moment(values?.creditingPeriodStart).startOf('day').unix(),
-      creditingPeriodEnd: moment(values?.creditingPeriodEnd).startOf('day').unix()
+      creditingPeriodEnd: moment(values?.creditingPeriodEnd).startOf('day').unix(),
     };
 
     console.log('basicInformation', projectDetailsFormValues);
