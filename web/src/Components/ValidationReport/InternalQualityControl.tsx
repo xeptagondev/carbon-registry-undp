@@ -82,9 +82,15 @@ const ExecutiveSummary = (props: ValidationStepsProps) => {
                 <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('validationReport:prev')}
                 </Button>
-                <Button type="primary" size={'large'} disabled={false} htmlType="submit">
-                  {t('validationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" size={'large'} disabled={false} onClick={next}>
+                    {t('validationReport:next')}
+                  </Button>
+                ) : (
+                  <Button type="primary" size={'large'} disabled={false} htmlType="submit">
+                    {t('validationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

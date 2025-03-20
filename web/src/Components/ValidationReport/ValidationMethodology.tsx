@@ -568,9 +568,15 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                 <Button danger size={'large'} disabled={false} onClick={prev}>
                   {t('validationReport:cancel')}
                 </Button>
-                <Button type="primary" size={'large'} disabled={false} htmlType="submit">
-                  {t('validationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" size={'large'} disabled={false} onClick={next}>
+                    {t('validationReport:next')}
+                  </Button>
+                ) : (
+                  <Button type="primary" size={'large'} disabled={false} htmlType="submit">
+                    {t('validationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>
