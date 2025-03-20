@@ -16,7 +16,6 @@
   "pd_preparedBy": "Prepared By",
   "pd_telephone": "Telephone",
   "pd_website": "Website",
-
   "bi_applicablePDDVersionNo": "Version number of the PDD applicable to this monitoring report",
   "bi_projectTitle": "Title of the Project Activity",
   "bi_completionDate": "Date of Issue",
@@ -31,7 +30,6 @@
   "bi_hostParty": "Host Party",
   "bi_sectoralScope": "Sectoral scopes",
   "bi_projectedGHGReductions": "Projected GHG Reductions",
-
   "io_descriptionOfPA": "Description of implemented project activity",
   "io_postRegistrationChanges": "Post-registration changes",
   "io_tempDeviations": "Temporary deviations from the registered monitoring plan, applied methodologies, standardized baselines or other methodological regulatory documents",
@@ -40,9 +38,7 @@
   "io_inclusionOfMP": "Inclusion of monitoring plan",
   "io_changesToProjectDesign": "Changes to project design",
   "io_changesSpecificToAfforestrationOrReforestration": "Changes specific to afforestation or reforestation project activity",
-
   "do_descriptionOfMonitoringSystem": "Description of monitoring system",
-
   "dp_title": "Data and Parameters fixed ex ante",
   "dp_dataParameter": "Data/ Parameter",
   "dp_description": "Description",
@@ -62,7 +58,6 @@
   "dp_dataUnitPlaceholder": "Indicate the unit of measure",
   "dp_selectionAndMeasurement": "Data Selection and Measurement Methods",
   "dp_selectionAndMeasurementPlaceholder": "Justify the choice of data source, providing references  where applicable. Where values are based on  measurement, include a description of the measurement  methods and procedures applied (e.g., what standards or  protocols have been followed), indicate the responsible  person/entity that undertook the measurement, the date of the measurement and the measurement results. More  detailed information may be provided in an appendix",
-
   "dpm_title": "Data and Parameters Monitored",
   "dpm_dataParameter": "Data/ Parameter",
   "dpm_description": "Description",
@@ -81,7 +76,6 @@
   "dpm_frequencyOfMonitoring": "Frequency of Monitoring/Recording",
   "dpm_calculationData": "Calculation method",
   "dpm_planDescription": "Description of the Monitoring Plan",
-
   "dpm_descriptionPlaceholder": "Provide a brief description of the data/parameter",
   "dpm_mmProceduresPlaceholder": "Specify the measurement methods and procedures, any  standards or protocols to be followed, and the person/entity  responsible for the measurement. Include any relevant  information regarding the accuracy of the measurements  (e.g., accuracy associated with meter equipment or  laboratory tests).",
   "dpm_valueAppliedPlaceholder": "Provide an estimated value for the data/parameter",
@@ -94,7 +88,6 @@
   "dpm_frequencyOfMonitoringPlaceholder": "Specify measurement and recording frequency",
   "dpm_calculationDataPlaceholder": "Where relevant, provide the calculation method, including  any equations, used to establish the data/parameter.",
   "dpm_planDescriptionPlaceholder": "Description of the Monitoring Plan",
-
   "pa_monitoringPurpose": "Purpose and General Description of Project Activity",
   "projectActivityLocation": "Location of Project Activity",
   "locationOfProjectActivity": "Location of project activity",
@@ -110,7 +103,6 @@
   "pa_projectCreditingPeriod": "Crediting period duration",
   "pa_projectCreditingStartDate": "Crediting period start date",
   "pa_projectCreditingPeriodEndDate": "Crediting period end date",
-
   "ce_baselineEmission": "Baseline Emissions",
   "ce_documentUpload": "Upload your Documents Here(Optional)",
   "invalidFileFormat": "Unsupported file format",
@@ -120,15 +112,12 @@
   "ce_estimatedEmissionReduction": "Estimated net emission reductions",
   "ce_shouldHavePositive": "should have positive value",
   "ce_projectEmissions": "Project Emissions",
-
   "q_baselineEmissionPlaceholder": "Quantify the baseline emissions and/or removals, providing sufficient information to allow  the reader to reproduce the calculation. Attach electronic spreadsheets as an appendix or  separate file to facilitate the verification of the results.",
   "q_remarksPlaceholder": "Please provide an explanation of the cause of any increase in the actual emission  reductions achieved during the current monitoring period (e.g. higher water availability,  higher load plant factor, etc.), including all information (i.e. data and/or parameters) that is  different from that stated in the registered CMA",
   "q_leakagePlaceholder": "Quantify project emissions and/or removals providing sufficient information to allow the  reader to reproduce the calculation. This section shall include all formulae used and  description to calculate the project emissions applying actual values. Attach electronic  spreadsheets as an appendix or separate file to facilitate the verification of the results.",
   "q_projectEmissionsPlaceholder": "Quantify project emissions and/or removals providing sufficient information to allow the  reader to reproduce the calculation. This section shall include all formulae used and  description to calculate the project emissions applying actual values. Attach electronic  spreadsheets as an appendix or separate file to facilitate the verification of the results.",
-
   "a_appendix": "Appendix",
   "a_uploadDoc": "Upload your additional documents here",
-
   "contactPerson": "Contact Person",
   "telephone": "Telephone",
   "fax": "Fax",
@@ -153,7 +142,6 @@
   "sustainableDevelopment": "Sustainable Development",
   "sustainableDevelopmentPlaceholder": "Describe how the project contributes to achieving any nationally stated sustainable  development priorities, including any provisions for monitoring and reporting same.",
   "pa_referencePlaceholder": "Reference",
-
   "item": "Item",
   "additionalComments": "Additional Comments",
   "valueApplied": "Values applied in ex-ante  calculation of the registered  CMA",
@@ -207,5 +195,7 @@
   "next": "Next",
   "goBackProjectDetails": "GO BACK TO BASIC INFORMATION PAGE",
   "prev": "Back",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "confirmModalMessage": "Are you sure you want to submit ?",
+  "confirmModalSubMessage": "You can't undo this action"
 }

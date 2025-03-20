@@ -27,7 +27,6 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
         bi_projectedGHGReductions: values?.bi_projectedGHGReductions,
       },
     };
-    console.log('----------tempValues-------------', tempValues);
     handleValuesUpdate(tempValues);
   };
 
