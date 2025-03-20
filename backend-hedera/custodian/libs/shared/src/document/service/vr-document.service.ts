@@ -143,13 +143,6 @@ export class VrDocumentService extends DocumentService {
                 documentEntity,
             );
 
-            const organizationDoc =
-                await this.guardianService.getGridDocumentUsingRefId(
-                    GridTypeEnum.ORGANIZATION_GRID,
-                    project?.organization?.refId,
-                    jwtData.email,
-                );
-
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
                 documentType: dto.documentType,
@@ -169,6 +162,12 @@ export class VrDocumentService extends DocumentService {
                 jwtData.userRole === RoleEnum.Admin &&
                 assigneeOrgIds.includes(jwtData.organizationId)
             ) {
+                const organizationDoc =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.ORGANIZATION_GRID,
+                        project?.organization?.refId,
+                        jwtData.email,
+                    );
 
                 await this.guardianService.saveDocument(
                     jwtData.email,
