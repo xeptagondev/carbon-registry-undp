@@ -543,6 +543,7 @@ const StepperComponent = (props: VerificationStepProps) => {
       ),
       description: (
         <GHGProjectDescriptionStep
+          translator={translator}
           t={t}
           current={current}
           form={GHGProjectDescriptionForm}
