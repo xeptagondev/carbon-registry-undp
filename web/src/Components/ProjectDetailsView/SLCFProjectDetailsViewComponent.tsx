@@ -98,6 +98,7 @@ import {
   CreditType,
   ProgrammeStageUnified,
   ProgrammeStatus,
+  ProjectActivityStage,
   ProjectProposalStage,
 } from '../../Definitions/Enums/programmeStage.enum';
 import { TxType } from '../../Definitions/Enums/TxType.enum';
@@ -1925,6 +1926,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     );
   });
   // genCerts(data);
+
   const actionBtns = [];
   // MARK: Action Buttons
   if (userInfoState?.userRole !== 'ViewOnly') {
@@ -1976,34 +1978,57 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         );
       }
     }
-
+    // MARK: need to update after getting the activities array
+    console.log(
+      '-------------data?.documents?.monitoringReport---------',
+      data?.documents?.monitoringReport
+    );
     if (
-      hasNoPendingStatus() &&
+      userInfoState &&
       data.projectProposalStage === ProjectProposalStage.AUTHORISED &&
-      userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER
+      userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+      data?.documents[DocumentEnum.MONITORING] === undefined
     ) {
       actionBtns.push(
         <Button
           className="mg-left-1"
           type="primary"
           onClick={() => {
-            showModalOnAction({
-              actionBtnText: t('projectDetailsView:btnRequest'),
-              icon: <CheckCircleOutlined />,
-              title: t('projectDetailsView:requestCarbonNeutralCertificateTitle'),
-              okAction: () => {
-                console.log('Approved');
-                requestCarbonNeutralCertificate();
-              },
-              remarkRequired: false,
-              type: 'primary',
-            });
+            navigate(ROUTES.MONITORING_REPORT_CREATE(String(id)));
           }}
         >
-          {t('projectDetailsView:requestCarbonNeutralCert')}
+          Request Credit
         </Button>
       );
     }
+
+    // if (
+    //   hasNoPendingStatus() &&
+    //   data.projectProposalStage === ProjectProposalStage.AUTHORISED &&
+    //   userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER
+    // ) {
+    //   actionBtns.push(
+    //     <Button
+    //       className="mg-left-1"
+    //       type="primary"
+    //       onClick={() => {
+    //         showModalOnAction({
+    //           actionBtnText: t('projectDetailsView:btnRequest'),
+    //           icon: <CheckCircleOutlined />,
+    //           title: t('projectDetailsView:requestCarbonNeutralCertificateTitle'),
+    //           okAction: () => {
+    //             console.log('Approved');
+    //             requestCarbonNeutralCertificate();
+    //           },
+    //           remarkRequired: false,
+    //           type: 'primary',
+    //         });
+    //       }}
+    //     >
+    //       {t('projectDetailsView:requestCarbonNeutralCert')}
+    //     </Button>
+    //   );
+    // }
   }
 
   // }
