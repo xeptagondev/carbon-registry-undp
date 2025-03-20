@@ -8,6 +8,8 @@ import { DocumentStatus } from '../../Definitions/Enums/document.status';
 import { useState } from 'react';
 import { CustomStepsProps } from './StepProps';
 import { fileUploadValueExtract } from '../../Utils/utilityHelper';
+import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
+import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
 
 export const AnnexureStep = (props: CustomStepsProps) => {
   const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields, submitForm } =
@@ -30,14 +32,36 @@ export const AnnexureStep = (props: CustomStepsProps) => {
       appendix: values?.a_appendix,
       a_uploadDoc: (await fileUploadValueExtract(values, 'a_uploadDoc'))[0],
     };
-    handleValuesUpdate({ appendix: appendixFormValues });
+    handleValuesUpdate(appendixFormValues);
   };
+
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+
+  const closeDialog = () => {
+    setShowDialog(false);
+  };
+
+  const [formValues, setFormValues] = useState<any>();
 
   return (
     <>
       {current === 6 && (
         <div>
           <div className="step-form-container">
+            <SlcfFormActionModel
+              icon={<ConfirmSubmitSVG />}
+              title={t('monitoringReport:confirmModalMessage')}
+              onCancel={closeDialog}
+              actionBtnText={t('common:yes')}
+              onFinish={() => {
+                closeDialog();
+                onFinish(formValues);
+              }}
+              openModal={showDialog}
+              type={'primary'}
+              remarkRequired={false}
+              t={t}
+            />
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -47,10 +71,8 @@ export const AnnexureStep = (props: CustomStepsProps) => {
               form={form}
               disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
-                onFinish(values);
-                if (next) {
-                  next();
-                }
+                setShowDialog(true);
+                setFormValues(values);
               }}
             >
               <h4 className="appendix-title">
