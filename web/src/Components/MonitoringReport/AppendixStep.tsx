@@ -1,5 +1,4 @@
 import { Button, Col, Form, Row, Upload } from 'antd';
-
 import TextArea from 'antd/lib/input/TextArea';
 import { UploadOutlined } from '@ant-design/icons';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
@@ -7,20 +6,15 @@ import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import { DocumentStatus } from '../../Definitions/Enums/document.status';
 import { useState } from 'react';
-export const AnnexureStep = (props: any) => {
-  const {
-    useLocation,
-    translator,
-    current,
-    form,
-    formMode,
-    prev,
-    cancel,
-    approve,
-    reject,
-    onFinish,
-    status,
-  } = props;
+import { CustomStepsProps } from './StepProps';
+import { fileUploadValueExtract } from '../../Utils/utilityHelper';
+import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
+import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
+
+export const AnnexureStep = (props: CustomStepsProps) => {
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields, submitForm } =
+    props;
+
   const [loading, setLoading] = useState(false);
   const { userInfoState } = useUserContext();
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
@@ -32,22 +26,42 @@ export const AnnexureStep = (props: any) => {
     }
     return e?.fileList;
   };
-  const t = translator.t;
 
-  const handleFormSubmit = async (values: any) => {
-    setLoading(true);
-    try {
-      await onFinish({ annexures: values });
-    } finally {
-      setLoading(false);
-    }
+  const onFinish = async (values: any) => {
+    const appendixFormValues: any = {
+      appendix: values?.a_appendix,
+      a_uploadDoc: (await fileUploadValueExtract(values, 'a_uploadDoc'))[0],
+    };
+    handleValuesUpdate(appendixFormValues);
   };
+
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+
+  const closeDialog = () => {
+    setShowDialog(false);
+  };
+
+  const [formValues, setFormValues] = useState<any>();
 
   return (
     <>
       {current === 6 && (
         <div>
           <div className="step-form-container">
+            <SlcfFormActionModel
+              icon={<ConfirmSubmitSVG />}
+              title={t('monitoringReport:confirmModalMessage')}
+              onCancel={closeDialog}
+              actionBtnText={t('common:yes')}
+              onFinish={() => {
+                closeDialog();
+                onFinish(formValues);
+              }}
+              openModal={showDialog}
+              type={'primary'}
+              remarkRequired={false}
+              t={t}
+            />
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -56,26 +70,24 @@ export const AnnexureStep = (props: any) => {
               requiredMark={true}
               form={form}
               disabled={FormMode.VIEW === formMode}
-              onFinish={handleFormSubmit}
+              onFinish={(values: any) => {
+                setShowDialog(true);
+                setFormValues(values);
+              }}
             >
+              <h4 className="appendix-title">
+                <i>{`${t('monitoringReport:a_appendix')}`}</i>
+              </h4>
               <Row className="row" gutter={[40, 16]}>
                 <Col xl={24} md={24}>
                   <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('monitoringReport:additionalComments')}
-                      name="additionalComments"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('monitoringReport:additionalComments')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                    <Form.Item name="a_appendix">
+                      <TextArea rows={8} disabled={FormMode.VIEW === formMode} />
                     </Form.Item>
+
                     <Form.Item
-                      label={t('monitoringReport:q_documentUpload')}
-                      name="optionalDocuments"
+                      label={t('monitoringReport:a_uploadDoc')}
+                      name="a_uploadDoc"
                       valuePropName="fileList"
                       getValueFromEvent={normFile}
                       required={false}
@@ -111,21 +123,34 @@ export const AnnexureStep = (props: any) => {
                   </div>
                 </Col>
               </Row>
+              {/* <Row className="step-actions-end"> */}
+              {/* <Col>
+                  <Button onClick={prev} disabled={false}>
+                    {t('monitoringReport:back')}
+                  </Button>
+                </Col> */}
               <Row justify={'end'} className="step-actions-end">
-                <Button onClick={prev} disabled={false}>
-                  {t('monitoringReport:back')}
+                <Button danger size={'large'} onClick={prev}>
+                  {t('monitoringReport:prev')}
                 </Button>
-                <Button onClick={cancel} disabled={false}>
-                  {t('monitoringReport:cancel')}
-                </Button>
-                {userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:goBackProjectDetails')}
+                  </Button>
+                ) : (
+                  <Button type="primary" size={'large'} htmlType={'submit'}>
+                    {t('monitoringReport:submit')}
+                  </Button>
+                )}
+                {/* </Row> */}
+                {/* {userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
                   FormMode.VIEW !== formMode && (
                     <Button type="primary" htmlType="submit" disabled={loading}>
                       <span>{t('monitoringReport:submit')}</span>
                     </Button>
-                  )}
+                  )} */}
 
-                {userInfoState?.companyRole === CompanyRole.CLIMATE_FUND &&
+                {/* {userInfoState?.companyRole === CompanyRole.CLIMATE_FUND &&
                   status === DocumentStatus.PENDING && (
                     <Button danger onClick={reject} disabled={false}>
                       <span>{t('monitoringReport:reject')}</span>
@@ -136,7 +161,7 @@ export const AnnexureStep = (props: any) => {
                     <Button type="primary" onClick={approve} disabled={false}>
                       <span>{t('monitoringReport:approve')}</span>
                     </Button>
-                  )}
+                  )} */}
               </Row>
             </Form>
           </div>

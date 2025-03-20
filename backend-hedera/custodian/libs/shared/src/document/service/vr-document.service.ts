@@ -9,9 +9,6 @@ import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
-import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
-import { CreditIssueCertificateGenerator } from '@app/shared/util/service/credit.issue.certificate.gen';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -37,31 +34,28 @@ import {
 import { DocumentEnum } from '../enum/document.enum';
 import { AuthorisationLetterGenerateService } from '@app/shared/util/service/authorisation.letter.gen';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
     private readonly loggerContext = 'VrDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
         private readonly authorisationLetterGenerateService: AuthorisationLetterGenerateService,
-        carbonCreditGuardianService: CarbonCreditGuardianService,
+        private readonly carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
             auditService,
             guardianService,
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
@@ -72,18 +66,6 @@ export class VrDocumentService extends DocumentService {
             `Request received to create Validation report from ${jwtData.userName}`,
             this.loggerContext,
         );
-        const lastDoc: DocumentEntity = await this.findLastDocumentByType(
-            DocumentEnum.VALIDATION,
-            dto.projectRefId,
-        );
-
-        // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
-        if (lastDoc && !(lastDoc.state === DocumentStateEnum.DNA_REJECTED)) {
-            throw new HttpException(
-                'Action not allowed. Conflicting documents',
-                HttpStatus.CONFLICT,
-            );
-        }
 
         // start transaction and save document
         const queryRunner = this.dataSource.createQueryRunner();
@@ -91,6 +73,22 @@ export class VrDocumentService extends DocumentService {
 
         try {
             await queryRunner.startTransaction();
+            const lastDoc: DocumentEntity = await this.findLastDocumentByType(
+                queryRunner,
+                DocumentEnum.VALIDATION,
+                dto.projectRefId,
+            );
+
+            // only allow to save doc as long as the last doc is in a rejected state or there is no doc of type
+            if (
+                lastDoc &&
+                !(lastDoc.state === DocumentStateEnum.DNA_REJECTED)
+            ) {
+                throw new HttpException(
+                    'Action not allowed. Conflicting documents',
+                    HttpStatus.CONFLICT,
+                );
+            }
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
@@ -117,6 +115,7 @@ export class VrDocumentService extends DocumentService {
                 });
 
             const lastPDD = await this.findLastDocumentByType(
+                queryRunner,
                 DocumentEnum.PDD,
                 dto.projectRefId,
             );
@@ -260,6 +259,8 @@ export class VrDocumentService extends DocumentService {
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -269,19 +270,37 @@ export class VrDocumentService extends DocumentService {
             this.loggerContext,
         );
 
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
 
+            const documentEntity = await queryRunner.manager.findOne(
+                DocumentEntity,
+                {
+                    where: { refId: requestData.refId },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                },
+            );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const dnaAdminEmails = (await this.getDNAAdmins(queryRunner)).map(
                 (user) => user.email,
             );
@@ -528,10 +547,12 @@ export class VrDocumentService extends DocumentService {
                     ctx,
                 );
             }
-            queryRunner.commitTransaction();
+            await queryRunner.commitTransaction();
         } catch (err) {
-            queryRunner.rollbackTransaction();
+            await queryRunner.rollbackTransaction();
             throw err;
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 }

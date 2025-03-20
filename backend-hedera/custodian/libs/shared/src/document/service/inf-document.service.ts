@@ -3,14 +3,12 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { ObjectionLetterGenerateService } from '@app/shared/util/service/objection.letter.gen';
-import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { DocumentStateEnum } from '../enum/document-state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
@@ -46,26 +44,21 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 export class InfDocumentService extends DocumentService {
     private readonly loggerContext = 'InfDocumentService';
     constructor(
-        @InjectRepository(DocumentEntity)
-        documentRepository: Repository<DocumentEntity>,
         configService: ConfigService,
         mailService: MailService,
         dataSource: DataSource,
         auditService: AuditService,
         guardianService: GuardianService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
-        carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
     ) {
         super(
-            documentRepository,
             configService,
             mailService,
             dataSource,
             auditService,
             guardianService,
-            carbonCreditGuardianService,
             fileHelperService,
             logger,
         );
@@ -114,11 +107,18 @@ export class InfDocumentService extends DocumentService {
                     },
                 });
 
+            if (!(assignees && assignees.length)) {
+                throw new HttpException(
+                    'Did not find assignees',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const projectEntity = new ProjectEntity();
             projectEntity.title = infData.title;
             projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
             projectEntity.sectoralScope = infData.sectoralScope;
             projectEntity.createdBy = createdBy;
+            projectEntity.serialNumber = 'SN'; //TODO replace with correct one
             projectEntity.organization = org;
             projectEntity.assignees = assignees;
             const savedProject: ProjectEntity = await queryRunner.manager.save(
@@ -239,7 +239,6 @@ export class InfDocumentService extends DocumentService {
                 projectRefId: savedProject.refId,
             });
         } catch (err) {
-            console.log(err);
             await queryRunner.rollbackTransaction();
             if (err instanceof HttpException) {
                 throw err;
@@ -248,6 +247,8 @@ export class InfDocumentService extends DocumentService {
                 'Failed to submit document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -266,18 +267,23 @@ export class InfDocumentService extends DocumentService {
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
-        const documentEntity: DocumentEntity =
-            await this.getDocumentWithProjectAssignees(requestData);
-        if (!documentEntity) {
-            throw new HttpException(
-                'Invalid document id',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
+
         const queryRunner = this.dataSource.createQueryRunner();
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
+            const documentEntity: DocumentEntity =
+                await this.getDocumentWithProjectAssignees(
+                    queryRunner,
+                    requestData.refId,
+                    requestData.documentType,
+                );
+            if (!documentEntity) {
+                throw new HttpException(
+                    'Invalid document id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
             const dnaAdminEmails = (await this.getDNAAdmins(queryRunner)).map(
                 (user) => user.email,
             );
@@ -440,10 +446,19 @@ export class InfDocumentService extends DocumentService {
                     },
                 );
             }
-            queryRunner.commitTransaction();
+
+            await queryRunner.commitTransaction();
         } catch (err) {
-            queryRunner.rollbackTransaction();
-            throw err;
+            await queryRunner.rollbackTransaction();
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                'Failed to verify document',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 }

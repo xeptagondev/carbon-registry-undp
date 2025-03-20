@@ -3,6 +3,7 @@ import TextArea from 'antd/lib/input/TextArea';
 import { CustomStepsProps } from '../PDD/StepProps';
 import { RcFile } from 'antd/lib/upload';
 import {
+  CheckCircleOutlined,
   CloseCircleOutlined,
   MinusOutlined,
   PlusOutlined,
@@ -21,8 +22,9 @@ import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { ValidationStepsProps } from './StepProps';
 
-const ValidationReportAppendix = (props: CustomStepsProps) => {
+const ValidationReportAppendix = (props: ValidationStepsProps) => {
   const {
     next,
     prev,
@@ -33,11 +35,20 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
     t,
     handleLoading,
     documentId,
+    disableFields,
+    formMode,
   } = props;
 
-  const { state } = useLocation();
+  const { post } = useConnection();
 
-  const { get, post } = useConnection();
+  const { state } = useLocation();
+  // const [disableFields, setDisableFields] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('documentsReviewed', [{ author: '' }]);
+    }
+  }, []);
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -50,13 +61,10 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
     return e?.fileList;
   };
 
-  useEffect(() => {
-    form.setFieldValue('documentsReviewed', [{ author: '' }]);
-  }, []);
-
   const onFinish = async (values: any) => {
     const tempVals: any = {
       ...values,
+      documentsReviewed: values?.documentsReviewed,
       appendix1Documents: (await fileUploadValueExtract(values, 'appendix1Documents'))[0],
       cl_date: moment(values?.cl_date).startOf('day').unix(),
       cl_projectParticipantResponseDate: moment(values?.cl_projectParticipantResponseDate)
@@ -103,7 +111,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
       try {
         const res = await post(API_PATHS.VERIFY_DOCUMENT, {
           refId: documentId,
-          documentType: DocumentEnum.PDD,
+          documentType: DocumentEnum.VALIDATION,
           remarks: 'approved',
           action: DocumentStateEnum.DNA_APPROVED,
         });
@@ -143,9 +151,9 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
       try {
         const res = await post(API_PATHS.VERIFY_DOCUMENT, {
           refId: documentId,
-          documentType: DocumentEnum.PDD,
+          documentType: DocumentEnum.VALIDATION,
           remarks: remarks,
-          action: DocumentStateEnum.DNA_APPROVED,
+          action: DocumentStateEnum.DNA_REJECTED,
         });
 
         if (res?.statusText === 'SUCCESS') {
@@ -185,20 +193,20 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                 <SlcfFormActionModel
                   actionBtnText={t('validationReport:approve')}
                   onCancel={closeVerifyDialogBox}
-                  icon={<CloseCircleOutlined />}
+                  icon={<CheckCircleOutlined />}
                   title={t('validationReport:approveMessage')}
                   onFinish={() => {
                     approveValidationReport();
                   }}
-                  remarkRequired
-                  type="danger"
+                  remarkRequired={false}
+                  type="primary"
                   subText=""
                   openModal={showVerifyDialog}
                   t={t}
                 />
 
                 <SlcfFormActionModel
-                  actionBtnText={t('validationReport:approve')}
+                  actionBtnText={t('validationReport:reject')}
                   onCancel={closeDeclineDialogBox}
                   icon={<CloseCircleOutlined />}
                   title={t('validationReport:declineMessage')}
@@ -266,6 +274,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
+              disabled={disableFields}
               onFinish={(values: any) => {
                 setFormValues(values);
                 setShowDialog(true);
@@ -301,7 +310,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                     },
                   ]}
                 >
-                  <TextArea rows={4} />
+                  <TextArea rows={4} disabled={disableFields} />
                 </Form.Item>
 
                 <Form.Item
@@ -334,14 +343,14 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                     action="/upload.do"
                     listType="picture"
                     multiple={true}
-                    // disabled={disableFields}
+                    disabled={disableFields}
                     // maxCount={1}
                   >
                     <Button
                       className="upload-doc"
                       size="large"
                       icon={<UploadOutlined />}
-                      // disabled={disableFields}
+                      disabled={disableFields}
                     >
                       {t('validationReport:upload')}
                     </Button>
@@ -411,7 +420,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input />
+                                  <Input disabled={disableFields} />
                                 </Form.Item>
                               </Col>
                               <Col xl={5} className="col-3 col">
@@ -436,7 +445,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input />
+                                  <Input disabled={disableFields} />
                                 </Form.Item>
                               </Col>
                               <Col xl={5} className="col-4 col">
@@ -461,7 +470,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input />
+                                  <Input disabled={disableFields} />
                                 </Form.Item>
                               </Col>
                               <Col xl={5} className="col-5 col">
@@ -486,7 +495,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input />
+                                  <Input disabled={disableFields} />
                                 </Form.Item>
                               </Col>
                               <Col xl={3} className="col action-col">
@@ -514,6 +523,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                                     size="small"
                                     className="addMinusBtn"
                                     icon={<PlusOutlined />}
+                                    disabled={disableFields}
                                   ></Button>
                                 </Form.Item>
                               </Col>
@@ -562,7 +572,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input />
+                        <Input disabled={disableFields} />
                       </Form.Item>
 
                       <Form.Item
@@ -589,6 +599,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -618,7 +629,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input />
+                        <Input disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -647,7 +658,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -678,7 +689,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
                     <Col md={24} xl={12}>
@@ -706,6 +717,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -738,7 +750,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -767,7 +779,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -796,6 +808,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -833,7 +846,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input />
+                        <Input disabled={disableFields} />
                       </Form.Item>
 
                       <Form.Item
@@ -860,6 +873,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -889,7 +903,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input />
+                        <Input disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -918,7 +932,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -949,7 +963,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
                     <Col md={24} xl={12}>
@@ -977,6 +991,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -1009,7 +1024,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -1038,7 +1053,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -1067,6 +1082,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -1104,7 +1120,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input />
+                        <Input disabled={disableFields} />
                       </Form.Item>
 
                       <Form.Item
@@ -1131,6 +1147,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -1160,7 +1177,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input />
+                        <Input disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -1189,7 +1206,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -1220,7 +1237,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
                     <Col md={24} xl={12}>
@@ -1248,6 +1265,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -1280,7 +1298,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -1309,7 +1327,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} />
+                        <TextArea rows={4} disabled={disableFields} />
                       </Form.Item>
                     </Col>
 
@@ -1338,6 +1356,7 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
+                          disabled={disableFields}
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                         />
                       </Form.Item>
@@ -1365,30 +1384,40 @@ const ValidationReportAppendix = (props: CustomStepsProps) => {
 
                 {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
                   <>
-                    <Button danger size={'large'} onClick={prev}>
+                    <Button danger size={'large'} onClick={prev} disabled={false}>
                       {t('validationReport:prev')}
                     </Button>
-                    <Button type="primary" htmlType="submit">
+                    <Button type="primary" htmlType="submit" disabled={false}>
                       {t('validationReport:submit')}
                     </Button>
                   </>
                 )}
                 {state?.mode === FormMode.VIEW && (
                   <>
-                    <Button danger size={'large'} onClick={prev}>
+                    <Button danger size={'large'} onClick={prev} disabled={false}>
                       {t('validationReport:prev')}
                     </Button>
-                    <Button type="primary" onClick={next}>
+                    <Button type="primary" onClick={next} disabled={false}>
                       {t('validationReport:backtoProjectDetails')}
                     </Button>
                   </>
                 )}
                 {state?.mode === FormMode.VERIFY && (
                   <>
-                    <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
+                    <Button
+                      danger
+                      size={'large'}
+                      onClick={() => setShowDeclineDialog(true)}
+                      disabled={false}
+                    >
                       {t('validationReport:reject')}
                     </Button>
-                    <Button size={'large'} onClick={() => setShowVerifyDialog(true)} type="primary">
+                    <Button
+                      size={'large'}
+                      onClick={() => setShowVerifyDialog(true)}
+                      type="primary"
+                      disabled={false}
+                    >
                       {t('validationReport:approve')}
                     </Button>
                   </>

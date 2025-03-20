@@ -2,7 +2,7 @@ import moment from 'moment';
 
 const mapBase64ToFields = (fileUrls: string[]) => {
   let fileObjs: any[] = [];
-
+  console.log('--------fileUrls----------', fileUrls, fileUrls?.length);
   if (fileUrls !== undefined && fileUrls.length > 0) {
     fileObjs = fileUrls.map((item: any, index) => {
       const nameParts = item.split('/');
@@ -21,26 +21,27 @@ const mapBase64ToFields = (fileUrls: string[]) => {
 };
 
 export const basicInformationMapDataToFields = (vals: any) => {
-  if (vals === undefined) {
+  console.log('----------vals----------', vals);
+  if (vals === undefined || vals === null) {
     return;
   }
 
-  const firstLocation =
-    vals?.locationsOfProjectActivity && vals?.locationsOfProjectActivity?.length > 0
-      ? vals?.locationsOfProjectActivity.shift()
-      : undefined;
+  // const firstLocation =
+  //   vals?.locationsOfProjectActivity && vals?.locationsOfProjectActivity?.length > 0
+  //     ? vals?.locationsOfProjectActivity.shift()
+  //     : undefined;
 
   const tempVals = {
     ...vals,
-    locationOfProjectActivity: firstLocation?.locationOfProjectActivity,
-    province: firstLocation?.province,
-    siteNo: firstLocation?.siteNo,
-    district: firstLocation?.district,
-    dsDivision: firstLocation?.dsDivision,
-    city: firstLocation?.city,
-    community: firstLocation?.community,
-    location: firstLocation?.geographicalLocationCoordinates,
-    optionalImages: mapBase64ToFields(firstLocation?.additionalDocuments),
+    locationOfProjectActivity: vals?.locationOfProjectActivity,
+    province: vals?.province,
+    siteNo: vals?.siteNo,
+    district: vals?.district,
+    dsDivision: vals?.dsDivision,
+    city: vals?.city,
+    community: vals?.community,
+    location: vals?.location,
+    optionalImages: mapBase64ToFields(vals?.additionalDocuments),
     extraLocations: (function () {
       const locations = vals?.locationsOfProjectActivity;
       let tempExtraLocations: any[] = [];
@@ -53,7 +54,7 @@ export const basicInformationMapDataToFields = (vals: any) => {
             dsDivision: location?.dsDivision,
             city: location?.city,
             community: location?.community,
-            location: location?.geographicalLocationCoordinates,
+            location: location?.location,
             optionalImages: mapBase64ToFields(location?.additionalDocuments),
           };
           return tempObj;
@@ -61,23 +62,40 @@ export const basicInformationMapDataToFields = (vals: any) => {
       }
       return tempExtraLocations;
     })(),
+    // approverSignature: mapBase64ToFields(vals?.approverSignature),
     completionDate: vals?.completionDate ? moment.unix(vals?.completionDate) : undefined,
     pddUploadedGlobalStakeholderConsultation: vals?.pddUploadedGlobalStakeholderConsultation
       ? moment.unix(vals?.pddUploadedGlobalStakeholderConsultation)
       : undefined,
-    approverSignature: mapBase64ToFields(vals?.approverSignature),
+    approverSignature: mapBase64ToFields([vals?.approverSignature]),
+    creditingPeriodStart: vals?.creditingPeriodStart
+      ? moment.unix(vals?.creditingPeriodStart)
+      : undefined,
+    creditingPeriodEnd: vals?.creditingPeriodEnd
+      ? moment.unix(vals?.creditingPeriodEnd)
+      : undefined,
   };
 
+  console.log('----------vals after--------', tempVals);
   return tempVals;
 };
 
 export const ghgProjectDescriptionMapDataToFields = (vals: any) => {
+  console.log('-------ghg vals-------', vals);
   if (vals === undefined) return;
 
   const tempValues = {
     ...vals,
+    estimatedNetEmissionReductions: vals?.estimatedNetEmissionReductions.map((item: any) => {
+      return {
+        ...item,
+        startDate: item?.startDate ? moment.unix(item?.startDate) : undefined,
+        endDate: item?.endDate ? moment.unix(item?.endDate) : undefined,
+      };
+    }),
   };
 
+  console.log('--------ghg vals after---------', tempValues);
   return tempValues;
 };
 
@@ -92,6 +110,7 @@ export const executiveSummaryMapDataToFields = (vals: any) => {
 };
 
 export const validationMethodologyMapDataToFields = (vals: any) => {
+  console.log('---------validation----------', vals);
   if (vals === undefined) return;
 
   const tempValues = {
@@ -112,6 +131,21 @@ export const meansOfValidationMapDataToFields = (vals: any) => {
     siteInspectionDurationEnd: vals?.siteInspectionDurationEnd
       ? moment.unix(vals?.siteInspectionDurationEnd)
       : undefined,
+    onSiteInspection: vals?.onSiteInspection?.map((item: any) => {
+      const temp = {
+        ...item,
+        date: item?.date ? moment.unix(item?.date) : undefined,
+      };
+      return temp;
+    }),
+    interviewees: vals?.interviewees.map((item: any) => {
+      const temp = {
+        ...item,
+        date: item?.date ? moment.unix(item?.date) : undefined,
+      };
+
+      return temp;
+    }),
   };
 
   return tempValues;
@@ -152,7 +186,31 @@ export const validationReportAppendixMapDataToFields = (vals: any) => {
 
   const tempValues = {
     ...vals,
+    appendix1Documents: mapBase64ToFields(vals?.appendix1Documents),
+    cl_date: vals?.cl_date ? moment.unix(vals?.cl_date) : undefined,
+    cl_projectParticipantResponseDate: vals?.cl_projectParticipantResponseDate
+      ? moment.unix(vals?.cl_projectParticipantResponseDate)
+      : undefined,
+    cl_doeAssesmentDate: vals?.cl_doeAssesmentDate
+      ? moment.unix(vals?.cl_doeAssesmentDate)
+      : undefined,
+    car_date: vals?.car_date ? moment.unix(vals?.car_date) : undefined,
+    car_projectParticipantResponseDate: vals?.car_projectParticipantResponseDate
+      ? moment.unix(vals?.car_projectParticipantResponseDate)
+      : undefined,
+    car_doeAssesmentDate: vals?.car_doeAssesmentDate
+      ? moment.unix(vals?.car_doeAssesmentDate)
+      : undefined,
+    far_date: vals?.far_date ? moment.unix(vals?.far_date) : undefined,
+    far_projectParticipantResponseDate: vals?.far_projectParticipantResponseDate
+      ? moment.unix(vals?.far_projectParticipantResponseDate)
+      : undefined,
+    far_doeAssesmentDate: vals?.far_doeAssesmentDate
+      ? moment.unix(vals?.far_doeAssesmentDate)
+      : undefined,
   };
+
+  console.log('----------tempValues-------------', tempValues);
 
   return tempValues;
 };
