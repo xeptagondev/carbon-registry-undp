@@ -163,8 +163,10 @@ export class CarbonCreditService {
                 }
             }
 
-            const ownedSerials: number[] =
-                await this.getNFTSerialsOwnedByAccount(tokenId, senderOrg?.id);
+            const ownedSerials: any[] = await this.getNFTSerialsOwnedByAccount(
+                tokenId,
+                senderOrg?.id,
+            );
 
             if (ownedSerials.length < amount) {
                 throw new HttpException(
@@ -175,32 +177,32 @@ export class CarbonCreditService {
             const serialsToTransfer = ownedSerials.slice(0, amount);
 
             const transferStatuses = [];
-            for (const serial of serialsToTransfer) {
-                const status =
-                    await this.carbonCreditGuardianService.transferProjectNFT(
-                        tokenId,
-                        serial,
-                        senderAccountId,
-                        senderPrivateKey,
-                        receiverAccountId,
-                    );
-                transferStatuses.push(status);
-            }
 
-            // Record each transfer event in the database within a transaction.
             const queryRunner = this.dataSource.createQueryRunner();
             await queryRunner.connect();
             await queryRunner.startTransaction();
+            const transferId = String(Date.now());
             try {
                 for (const serial of serialsToTransfer) {
                     await this.transferCredit(
+                        transferId,
                         tokenId,
-                        serial,
+                        serial.serial,
+                        serial.batch,
                         project.refId,
                         senderOrg.refId,
                         receiverOrg.refId,
                         queryRunner,
                     );
+                    const status =
+                        await this.carbonCreditGuardianService.transferProjectNFT(
+                            tokenId,
+                            serial.serial,
+                            senderAccountId,
+                            senderPrivateKey,
+                            receiverAccountId,
+                        );
+                    transferStatuses.push(status);
                 }
                 await queryRunner.commitTransaction();
             } catch (error) {
@@ -223,7 +225,7 @@ export class CarbonCreditService {
     async getNFTSerialsOwnedByAccount(
         tokenId: string,
         orgId: number,
-    ): Promise<number[]> {
+    ): Promise<any[]> {
         const statuses = [
             CreditEventStatusEnum.COMPLETED,
             CreditEventStatusEnum.PENDING,
@@ -233,6 +235,7 @@ export class CarbonCreditService {
             .getRepository(CreditEventsEntity)
             .createQueryBuilder('ce')
             .select('ce."serialNumnber"', 'serial')
+            .addSelect('ce."batchSerialNumnber"', 'batch')
             .where('ce."tokenId" = :tokenId', { tokenId })
             .andWhere('ce.status IN (:...statuses)', { statuses })
             .andWhere(
@@ -248,7 +251,9 @@ export class CarbonCreditService {
             .andWhere('ce."receiverId" = :orgId', { orgId });
 
         const results = await qb.getRawMany();
-        return results.map((r) => Number(r.serial));
+        return results.map((r) => {
+            return { serial: Number(r.serial), batch: r.batch };
+        });
     }
 
     async queryBalance(query: QueryDto, user: JWTPayload) {
@@ -373,11 +378,10 @@ export class CarbonCreditService {
             if (!project || !project.organization) {
                 throw new Error('Project or Organization not found');
             }
-            const ownedSerials: number[] =
-                await this.getNFTSerialsOwnedByAccount(
-                    project?.tokenId,
-                    project?.organization?.id,
-                );
+            const ownedSerials: any[] = await this.getNFTSerialsOwnedByAccount(
+                project?.tokenId,
+                project?.organization?.id,
+            );
 
             if (ownedSerials.length < retireRequest.amount) {
                 throw new HttpException(
@@ -392,7 +396,8 @@ export class CarbonCreditService {
             for (const serial of serialsToTransfer) {
                 await queryRunner.manager.save(CreditEventsEntity, {
                     tokenId: project?.tokenId,
-                    serialNumnber: serial,
+                    batchSerialNumnber: serial.batch,
+                    serialNumnber: serial.serial,
                     project,
                     sender: project.organization,
                     receiver: dnaOrg,
@@ -449,8 +454,10 @@ export class CarbonCreditService {
     }
 
     async transferCredit(
+        transferId: string,
         tokenId: string,
         serialNumber: number,
+        batch: string,
         projectRefId: string,
         senderRefId: string,
         receiverRefId: string,
@@ -472,6 +479,8 @@ export class CarbonCreditService {
 
         const creditEvent = await queryRunner.manager.save(CreditEventsEntity, {
             tokenId,
+            transferId: transferId,
+            batchSerialNumnber: batch,
             serialNumnber: serialNumber,
             project,
             sender,
