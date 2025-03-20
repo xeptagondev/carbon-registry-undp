@@ -24,6 +24,7 @@ import { ROUTES } from '../../Config/uiRoutingConfig';
 import { DocType } from '../../Definitions/Enums/document.type';
 import ProjectDetails from '../PDD/BasicInformation';
 import { CustomStepsProps } from './StepProps';
+import { Loading } from '../Loading/loading';
 
 const StepperComponent = (props: CustomStepsProps) => {
   const navigate = useNavigate();
@@ -42,6 +43,8 @@ const StepperComponent = (props: CustomStepsProps) => {
   const [selectedVersion, setSelectedVersion] = useState<number>();
   const [documentStatus, setDocumentStatus] = useState('');
 
+  const [loading, setLoading] = useState<boolean>(false);
+
   const { state } = useLocation();
   const isView = !!state?.isView;
   const isEdit = !!state?.isEdit;
@@ -51,7 +54,13 @@ const StepperComponent = (props: CustomStepsProps) => {
   const scrollSection = useRef({} as any);
 
   const [disableFields, setDisableFields] = useState<boolean>(false);
-  const [data, setData] = useState({});
+  const [values, setValues] = useState({
+    projectRefId: id,
+    name: 'monitoringReport',
+    companyId: undefined,
+    documentType: DocumentEnum.MONITORING,
+    data: {},
+  });
 
   const scrollToDiv = () => {
     if (scrollSection.current) {
@@ -84,63 +93,51 @@ const StepperComponent = (props: CustomStepsProps) => {
     scrollToDiv();
   };
 
-  const handleValuesUpdate = (val: any) => {
-    // console.log('----------temp vals stepper-------------', val);
-    setData((prevVal: any) => {
-      const tempContent = {
-        ...prevVal,
-        ...val,
+  const submitForm = async (appendixVals: any) => {
+    try {
+      console.log('----form vals-----', appendixVals);
+      setLoading(true);
+      const tempValues = {
+        ...values,
+        data: {
+          ...values.data,
+          appendix: appendixVals,
+        },
       };
-      console.log('appendedVals', tempContent);
-      return { ...prevVal, data: tempContent };
-    });
 
-    const submitForm = async (formValues: any) => {
-      try {
-        console.log('----form vals-----', formValues);
-        // setLoading(true);
-        const tempValues = {
-          ...{
-            name: 'MONITORING',
-            documentType: DocumentEnum.MONITORING,
-            projectRefId: id,
-          },
-
-          data: {
-            ...formValues,
-          },
-        };
-        const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
-        if (res?.response?.data?.statusCode === 200) {
-          message.open({
-            type: 'success',
-            content: isEdit
-              ? 'Monitoring Report has been edited successfully'
-              : 'Monitoring Report has been submitted successfully',
-            duration: 4,
-            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-          });
-          navigateToDetailsPage();
-        }
-      } catch (error: any) {
+      const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
+      if (res?.statusText === 'SUCCESS') {
         message.open({
-          type: 'error',
-          content: 'Something went wrong',
+          type: 'success',
+          content: isEdit
+            ? 'Monitoring Report has been edited successfully'
+            : 'Monitoring Report has been submitted successfully',
           duration: 4,
           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
-      } finally {
-        // setLoading(false);
+        navigateToDetailsPage();
       }
-    };
-
-    if (current === 6) {
-      const formValues = {
-        ...data,
-        appendixForm: val,
-      };
-      submitForm(formValues);
+    } catch (error: any) {
+      message.open({
+        type: 'error',
+        content: 'Something went wrong',
+        duration: 4,
+        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleValuesUpdate = (val: any) => {
+    // console.log('----------temp vals stepper-------------', val);
+    setValues((prevVal: any) => {
+      const tempContent = {
+        ...prevVal.data,
+        ...val,
+      };
+      return { ...prevVal, data: tempContent };
+    });
   };
   // const showModalOnAction = (info: PopupInfo) => {
   //   setSlcfActioModalVisible(true);
@@ -691,7 +688,7 @@ const StepperComponent = (props: CustomStepsProps) => {
           formMode={mode}
           prev={prev}
           next={navigateToDetailsPage}
-          handleValuesUpdate={handleValuesUpdate}
+          handleValuesUpdate={submitForm}
           // approve={() => {
           //   showModalOnAction({
           //     actionBtnText: t('monitoringReport:btnApprove'),
@@ -725,6 +722,7 @@ const StepperComponent = (props: CustomStepsProps) => {
 
   return (
     <>
+      {loading && <Loading />}
       <Steps
         progressDot
         direction="vertical"
