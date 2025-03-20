@@ -19,8 +19,12 @@ import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { CreditRetireRequestDto } from '../dto/credit.retire.request.dto';
-import { TransferNFTJobPayload } from '../constant/transfer-nft-payload copy';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import { RetireActionDto } from '../dto/retire.action.dto';
+import { RetirementACtionEnum } from '../dto/retirement.action.enum';
+import { RetireNFTJobPayload } from '../constant/retire-nft-payload';
+import { TransferNFTJobPayload } from '../constant/transfer-nft-payload';
+import { CreditsRetireView } from '../entity/credit.retire.view.entity';
 
 @Injectable()
 export class CarbonCreditService {
@@ -222,6 +226,135 @@ export class CarbonCreditService {
         }
     }
 
+    async handleRetirementJob(job: RetireNFTJobPayload): Promise<any> {
+        const { projectId, transferId } = job;
+
+        try {
+            this.logger.log(
+                // eslint-disable-next-line max-len
+                `Processing retirement job for project: ${projectId}, transferId: ${transferId}`,
+            );
+
+            // Retrieve project and its organization
+            const project = await this.dataSource
+                .getRepository(ProjectEntity)
+                .findOne({
+                    where: { id: projectId },
+                    relations: ['organization'],
+                });
+
+            if (!project) {
+                throw new HttpException(
+                    'Project not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+            if (!project.tokenId) {
+                throw new HttpException(
+                    'Project does not have a token ID',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const tokenId = project.tokenId;
+            const senderOrg = project.organization;
+
+            if (
+                !senderOrg ||
+                !senderOrg.hederaAccountId ||
+                !senderOrg.hederaAccountKey
+            ) {
+                throw new HttpException(
+                    'Project organization missing Hedera account details',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const senderAccountId = senderOrg.hederaAccountId;
+            const senderPrivateKey = senderOrg.hederaAccountKey;
+
+            const dnaOrg = await this.dataSource
+                .getRepository(OrganizationEntity)
+                .findOne({
+                    where: {
+                        organizationType: {
+                            name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                        },
+                    },
+                });
+
+            if (!dnaOrg || !dnaOrg.hederaAccountId) {
+                throw new HttpException(
+                    'DNA organization not found or missing Hedera account details',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const serialsToRetire: CreditEventsEntity[] = await this.dataSource
+                .getRepository(CreditEventsEntity)
+                .find({
+                    where: {
+                        transferId: transferId,
+                        type: CreditEventTypeEnum.RETIRED,
+                        status: CreditEventStatusEnum.PENDING,
+                    },
+                });
+
+            const retirementStatuses = [];
+
+            const queryRunner = this.dataSource.createQueryRunner();
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
+
+            try {
+                for (const serial of serialsToRetire) {
+                    const status =
+                        await this.carbonCreditGuardianService.retireProjectNFT(
+                            tokenId,
+                            serial.serialNumnber,
+                            senderAccountId,
+                            senderPrivateKey,
+                        );
+
+                    retirementStatuses.push(status);
+                }
+
+                await queryRunner.manager.update(
+                    CreditEventsEntity,
+                    {
+                        transferId: transferId,
+                        status: CreditEventStatusEnum.PENDING,
+                    },
+                    {
+                        status: CreditEventStatusEnum.COMPLETED,
+                        updatedDate: Date.now(),
+                    },
+                );
+
+                await queryRunner.commitTransaction();
+                this.logger.log(
+                    `Successfully retired NFTs withe transferId ${transferId} and marked as COMPLETED.`,
+                );
+            } catch (error) {
+                this.logger.error(`Error in retirement job: ${error.message}`);
+                await queryRunner.rollbackTransaction();
+                throw error;
+            } finally {
+                await queryRunner.release();
+            }
+
+            return retirementStatuses;
+        } catch (error) {
+            this.logger.error(
+                `Failed to process retirement job: ${error.message}`,
+            );
+            throw new HttpException(
+                `Failed to handle retirement job: ${error.message}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
     async getNFTSerialsOwnedByAccount(
         tokenId: string,
         orgId: number,
@@ -307,6 +440,31 @@ export class CarbonCreditService {
             total ? total : undefined,
         );
     }
+    async queryRetirements(query: QueryDto, user: JWTPayload) {
+        this.logger.log(
+            `Request received to query the token retirements ${user.userName}`,
+        );
+        const [entities, total] = await this.dataSource
+            .getRepository(CreditsRetireView)
+            .createQueryBuilder('user')
+            .where(this.helperService.generateWhereSQL(query))
+            .orderBy(
+                query?.sort?.key && `"${query?.sort?.key}"`,
+                query?.sort?.order,
+                query?.sort?.nullFirst !== undefined
+                    ? query?.sort?.nullFirst === true
+                        ? 'NULLS FIRST'
+                        : 'NULLS LAST'
+                    : undefined,
+            )
+            .offset(query.size * query.page - query.size)
+            .limit(query.size)
+            .getManyAndCount();
+        return new DataListResponseDto(
+            entities ? entities : undefined,
+            total ? total : undefined,
+        );
+    }
 
     async transfer(transferDto: CreditTransferDto, user: JWTPayload) {
         this.logger.log(
@@ -347,6 +505,98 @@ export class CarbonCreditService {
         }
     }
 
+    async retireAction(
+        retireAction: RetireActionDto,
+        user: JWTPayload,
+    ): Promise<any> {
+        this.logger.log(
+            `Request received retire action ${retireAction.action} from ${user.userName}`,
+        );
+
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        try {
+            const retireRequests = await queryRunner.manager.find(
+                CreditEventsEntity,
+                {
+                    where: { transferId: retireAction.transferId },
+                },
+            );
+
+            if (!retireRequests.length) {
+                throw new HttpException(
+                    'Retirement request not found',
+                    HttpStatus.NOT_FOUND,
+                );
+            }
+
+            if (retireAction.action === RetirementACtionEnum.ACCEPT) {
+                this.logger.log(
+                    `Accepting retire request ${retireAction.transferId}`,
+                );
+
+                const payload: RetireNFTJobPayload = {
+                    transferId: retireAction.transferId,
+                    projectId: retireAction.projectId,
+                };
+                const asyncTask: TaskEntity = {
+                    className: 'CarbonCreditService',
+                    functionName: 'handleRetirementJob',
+                    args: [payload],
+                    retryAttemps: 2,
+                    state: TaskEnum.PENDING,
+                };
+                await queryRunner.manager.save(TaskEntity, asyncTask);
+            } else if (retireAction.action === RetirementACtionEnum.CANCEL) {
+                this.logger.log(
+                    `Cancelling retire request ${retireAction.transferId}`,
+                );
+
+                await queryRunner.manager.update(
+                    CreditEventsEntity,
+                    { transferId: retireAction.transferId },
+                    {
+                        status: CreditEventStatusEnum.CANCELLED,
+                        updatedDate: Date.now(),
+                    },
+                );
+            } else if (retireAction.action === RetirementACtionEnum.REJECT) {
+                this.logger.log(
+                    `Rejecting retire request ${retireAction.transferId}`,
+                );
+
+                await queryRunner.manager.update(
+                    CreditEventsEntity,
+                    { transferId: retireAction.transferId },
+                    {
+                        status: CreditEventStatusEnum.REJECTED,
+                        updatedDate: Date.now(),
+                    },
+                );
+            }
+
+            await queryRunner.commitTransaction();
+
+            return new DataResponseDto(
+                HttpStatus.OK,
+                `Successfully updated retire request with action: ${retireAction.action}`,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error processing retire action: ${error.message}`,
+            );
+            await queryRunner.rollbackTransaction();
+            throw new HttpException(
+                'Error processing retire request',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     async retireRequest(
         retireRequest: CreditRetireRequestDto,
         user: JWTPayload,
@@ -363,17 +613,6 @@ export class CarbonCreditService {
                 where: { id: retireRequest.projectId },
                 relations: { organization: true },
             });
-
-            const dnaOrg = await queryRunner.manager.findOne(
-                OrganizationEntity,
-                {
-                    where: {
-                        organizationType: {
-                            name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
-                        },
-                    },
-                },
-            );
 
             if (!project || !project.organization) {
                 throw new Error('Project or Organization not found');
@@ -393,16 +632,20 @@ export class CarbonCreditService {
                 0,
                 retireRequest.amount,
             );
+            const transferId = String(Date.now());
             for (const serial of serialsToTransfer) {
                 await queryRunner.manager.save(CreditEventsEntity, {
                     tokenId: project?.tokenId,
+                    transferId: transferId,
                     batchSerialNumnber: serial.batch,
                     serialNumnber: serial.serial,
                     project,
                     sender: project.organization,
-                    receiver: dnaOrg,
+                    receiver: project.organization,
                     type: CreditEventTypeEnum.RETIRED,
                     status: CreditEventStatusEnum.PENDING,
+                    createdDate: Date.now(),
+                    updatedDate: Date.now(),
                 });
             }
             await queryRunner.commitTransaction();
@@ -450,6 +693,8 @@ export class CarbonCreditService {
             receiver: organization,
             type: CreditEventTypeEnum.ISSUED,
             status: CreditEventStatusEnum.COMPLETED,
+            createdDate: Date.now(),
+            updatedDate: Date.now(),
         });
     }
 
@@ -487,69 +732,10 @@ export class CarbonCreditService {
             receiver,
             type: CreditEventTypeEnum.TRANSFERED,
             status: CreditEventStatusEnum.COMPLETED,
+            createdDate: Date.now(),
+            updatedDate: Date.now(),
         });
 
         return creditEvent;
     }
-    // async retireCreditRequest(
-    //     tokenId: string,
-    //     serialNumber: number,
-    //     projectRefId: string,
-    //     orgSenderRefId: string,
-    //     queryRunner: QueryRunner,
-    // ): Promise<CreditEventsEntity> {
-    //     const project = await queryRunner.manager.findOne(ProjectEntity, {
-    //         where: { refId: projectRefId },
-    //     });
-    //     const organization = await queryRunner.manager.findOne(
-    //         OrganizationEntity,
-    //         {
-    //             where: { refId: orgSenderRefId },
-    //         },
-    //     );
-    //     if (!project || !organization) {
-    //         throw new Error('Project or Organization not found');
-    //     }
-    //     return await queryRunner.manager.save(CreditEventsEntity, {
-    //         tokenId,
-    //         serialNumnber: serialNumber,
-    //         project,
-    //         sender: organization,
-    //         type: CreditEventTypeEnum.RETIRED,
-    //         status: CreditEventStatusEnum.PENDING,
-    //     });
-    // }
-
-    // async retireCreditAction(
-    //     refId: string,
-    //     action: CredtRetireActionsEnum,
-    //     queryRunner: QueryRunner,
-    // ): Promise<CreditEventsEntity> {
-    //     const creditEvent = await queryRunner.manager.findOne(
-    //         CreditEventsEntity,
-    //         {
-    //             where: { refId },
-    //         },
-    //     );
-    //     if (!creditEvent) {
-    //         throw new Error('Credit event not found');
-    //     }
-    //     if (creditEvent.type !== CreditEventTypeEnum.RETIRED) {
-    //         throw new Error('Event is not a retirement request');
-    //     }
-    //     switch (action) {
-    //         case CredtRetireActionsEnum.ACCEPTED:
-    //             creditEvent.status = CreditEventStatusEnum.COMPLETED;
-    //             break;
-    //         case CredtRetireActionsEnum.REJECTED:
-    //             creditEvent.status = CreditEventStatusEnum.REJECTED;
-    //             break;
-    //         case CredtRetireActionsEnum.CANCELLED:
-    //             creditEvent.status = CreditEventStatusEnum.CANCELLED;
-    //             break;
-    //         default:
-    //             throw new Error('Invalid retirement action');
-    //     }
-    //     return await queryRunner.manager.save(creditEvent);
-    // }
 }
