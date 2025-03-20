@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CustomStepsProps } from './StepProps';
 import { Button, Col, DatePicker, Form, Input, Row, Select } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
@@ -8,6 +8,10 @@ import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 
 const StartDateCreditingPeriod = (props: CustomStepsProps) => {
   const { next, prev, form, current, handleValuesUpdate, disableFields } = props;
+
+  useEffect(() => {
+    //console.log('---------form_values----------', form.getFieldsValue(), disableFields);
+  }, []);
 
   const onFinish = (values: any) => {
     const tempValues: any = {
@@ -64,32 +68,17 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                   <Form.Item
                     label={`${t('PDD:projectActivityStartDate')}`}
                     name="projectActivityStartDate"
-                    rules={[
-                      {
-                        required: true,
-                        message: ``,
-                      },
-                      {
-                        validator: async (rule, value) => {
-                          if (
-                            String(value).trim() === '' ||
-                            String(value).trim() === undefined ||
-                            value === null ||
-                            value === undefined
-                          ) {
-                            throw new Error(
-                              `${t('PDD:projectActivityStartDate')} ${t('isRequired')}`
-                            );
-                          }
-                        },
-                      },
-                    ]}
                   >
-                    <DatePicker
+                    {/* <DatePicker
                       size="large"
-                      disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
-                      disabled={disableFields}
-                    />
+                      value={
+                        programData
+                          ? moment(programData?.startDate * 1000)
+                          : null
+                      }
+                      disabled
+                    /> */}
+                    <Input size="large" disabled />
                   </Form.Item>
 
                   <LabelWithTooltip label={t('PDD:projectCreditingPeriod')} required={true} />

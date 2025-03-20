@@ -6,7 +6,7 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import { useLocation } from 'react-router-dom';
 import TextArea from 'antd/lib/input/TextArea';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
-import { CustomStepsProps } from '../PDD/StepProps';
+import { VerificationStepProps } from '../VerificationReport/StepProps';
 import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
 import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 
@@ -17,7 +17,7 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   netEmissionReductions: 'avgNetEmissionReductions',
 };
 
-export const GHGProjectDescriptionStep = (props: CustomStepsProps) => {
+export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
   const { t, current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields } =
     props;
 

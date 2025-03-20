@@ -20,7 +20,7 @@ const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
                   rejectUnauthorized: false,
               }
             : false,
-    migrations: [CustodianDBPopulate1737524138690, UpdateEntities1742383129238],
+    migrations: [CustodianDBPopulate1737524138690],
     migrationsRun: false,
     poolSize: 50,
     extra: {

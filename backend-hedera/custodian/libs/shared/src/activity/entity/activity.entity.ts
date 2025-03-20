@@ -35,7 +35,7 @@ export class ActivityEntity {
         (documentEntity) => documentEntity.activity,
         { cascade: true, nullable: true },
     )
-    documents?: ActivityDocEntity[];
+    documents?: DocumentEntity[];
 
     @Column({ type: Number, generated: 'increment' })
     version?: number;
@@ -53,6 +53,7 @@ export class ActivityEntity {
     generateRefId() {
         this.refId = `A-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         this.createdDate = Date.now();
+        this.updatedDate = Date.now();
     }
 
     @BeforeUpdate()
