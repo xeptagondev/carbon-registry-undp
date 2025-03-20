@@ -1,5 +1,5 @@
 import { Button, Col, Form, Input, message, Row, StepProps, Upload } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CustomStepsProps } from './StepProps';
 import TextArea from 'antd/lib/input/TextArea';
 import { t } from 'i18next';
@@ -47,14 +47,18 @@ const Step08 = (props: CustomStepsProps) => {
     : 5000000;
 
   const { state } = useLocation();
+  //console.log('----------state-----------', state);
 
-  console.log('----------state-----------', state);
   const normFile = (e: any) => {
     if (Array.isArray(e)) {
       return e;
     }
     return e?.fileList;
   };
+
+  useEffect(() => {
+    //console.log('---------form_values----------', form.getFieldsValue(), disableFields);
+  }, []);
 
   const onFinish = async (values: any) => {
     const tempValues = {
@@ -473,7 +477,7 @@ const Step08 = (props: CustomStepsProps) => {
                             },
                           ]}
                         >
-                          <Input size="large" disabled={disableFields} />
+                          <Input size="large" disabled />
                         </Form.Item>
 
                         <Form.Item
@@ -506,7 +510,7 @@ const Step08 = (props: CustomStepsProps) => {
                             },
                           ]}
                         >
-                          <Input size="large" disabled={disableFields} />
+                          <Input size="large" disabled />
                         </Form.Item>
 
                         <Form.Item
@@ -533,7 +537,7 @@ const Step08 = (props: CustomStepsProps) => {
                             },
                           ]}
                         >
-                          <Input size="large" disabled={disableFields} />
+                          <Input size="large" disabled />
                         </Form.Item>
 
                         <Form.Item
@@ -581,7 +585,7 @@ const Step08 = (props: CustomStepsProps) => {
                             countryCallingCodeEditable={false}
                             onChange={(v) => {}}
                             countries={countries as Country[]}
-                            disabled={disableFields}
+                            disabled
                           />
                         </Form.Item>
 
@@ -635,7 +639,7 @@ const Step08 = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input size="large" disabled={disableFields} />
+                        <Input size="large" disabled />
                       </Form.Item>
 
                       <Form.Item
@@ -660,7 +664,7 @@ const Step08 = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={5} disabled={disableFields} />
+                        <TextArea rows={5} disabled />
                       </Form.Item>
 
                       <div className="appendix-fax-top-margin">
@@ -709,7 +713,7 @@ const Step08 = (props: CustomStepsProps) => {
                             countryCallingCodeEditable={false}
                             onChange={(v) => {}}
                             countries={countries as Country[]}
-                            disabled={disableFields}
+                            disabled
                           />
                         </Form.Item>
                       </div>
