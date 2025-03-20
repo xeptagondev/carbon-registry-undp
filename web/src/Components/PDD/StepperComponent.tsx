@@ -43,11 +43,9 @@ const StepperComponent = (props: any) => {
   const { t, selectedVersion, handleDocumentStatus } = props;
   const [current, setCurrent] = useState(0);
   const [documentId, setDocumentId] = useState<string>();
-
   const navigate = useNavigate();
-
   const { state } = useLocation();
-  console.log('-----------state---------', state);
+  //console.log('---state-----', state);
   // const isView = !!state?.isView;
   // const isEdit = !!state?.isEdit;
 
@@ -88,7 +86,8 @@ const StepperComponent = (props: any) => {
   });
 
   const handleValuesUpdate = (val: any) => {
-    console.log('----------temp vals-------------', val);
+    //console.log('----------temp vals-------------', val);
+
     setValues((prevVal: any) => {
       const tempContent = {
         ...prevVal.data,
@@ -96,16 +95,6 @@ const StepperComponent = (props: any) => {
       };
       return { ...prevVal, data: tempContent };
     });
-  };
-
-  const next = () => {
-    setCurrent(current + 1);
-    scrollToDiv();
-  };
-
-  const prev = () => {
-    setCurrent(current - 1);
-    scrollToDiv();
   };
 
   const [countries, setCountries] = useState<[]>([]);
@@ -122,33 +111,42 @@ const StepperComponent = (props: any) => {
   const [form7] = useForm();
   const [form8] = useForm();
 
+  const next = () => {
+    if (current === 0) {
+      const country = form1.getFieldValue('hostParty');
+      form8.setFieldsValue({
+        country: country,
+      });
+    }
+    setCurrent(current + 1);
+    scrollToDiv();
+  };
+
+  const prev = () => {
+    setCurrent(current - 1);
+    scrollToDiv();
+  };
+
   const getProgrammeDetailsById = async (programId: any) => {
     try {
       setLoading(true);
       const { data } = await post(API_PATHS.PROGRAMME_BY_ID, {
         programmeId: programId,
       });
-
       // const {
       //   data: { user },
       // } = await get(API_PATHS.USER_PROFILE);
-
       if (state?.mode === FormMode?.CREATE) {
-        console.log('-------project data---------', data);
         form1.setFieldsValue({
           projectTitle: data?.title,
           projectProponent: data?.company?.name,
-          // dateOfIssue: moment(),
-          // preparedBy: data?.company?.name,
-          // physicalAddress: data?.company?.address,
-          // email: data?.company?.email,
-          // projectProponent: data?.company?.name, // changed to project participants in the UI but key is kept the same
-          // telephone: data?.company?.phoneNo,
-          // website: data?.company?.website,
+          sectoralScope: data?.sectoralScope,
+        });
+        form4.setFieldsValue({
+          projectActivityStartDate: moment(data?.startDate * 1000).format('YYYY-MM-DD'),
         });
       }
-
-      console.log('----------running form values--------', form2.getFieldsValue());
+      //.log('----------running form values--------', form4.getFieldsValue());
       setValues((prevVal) => ({
         ...prevVal,
         // companyId: data?.company?.companyId,
@@ -160,6 +158,25 @@ const StepperComponent = (props: any) => {
     }
   };
 
+  const getOrganizationDetails = async () => {
+    try {
+      setLoading(true);
+      const { data } = await get(API_PATHS.USER_PROFILE_DETAILS);
+      //console.log('----------data----------', data);
+      if (state?.mode === FormMode?.CREATE) {
+        form8.setFieldsValue({
+          organizationName: data?.Organisation?.name,
+          address: data?.Organisation?.address,
+          email: data?.Organisation?.email,
+          website: data?.Organisation?.website,
+          telephone: data?.Organisation?.phoneNo,
+          fax: data?.Organisation?.faxNo,
+          contactPerson: data?.user?.name,
+        });
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     const getViewData = async () => {
       if (
@@ -168,7 +185,7 @@ const StepperComponent = (props: any) => {
         state?.mode === FormMode?.VIEW
       ) {
         setLoading(true);
-        console.log('----------getViewData---------', state);
+        //console.log('----------getViewData---------', state);
         let res;
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
@@ -245,7 +262,7 @@ const StepperComponent = (props: any) => {
     try {
       setLoading(true);
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
-      console.log('------res------------', res);
+      //console.log('------res------------', res);
       if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
@@ -283,16 +300,18 @@ const StepperComponent = (props: any) => {
       console.log(error);
     }
   };
-
   useEffect(() => {
-    getCountryList();
-    getProgrammeDetailsById(id);
-    form2.setFieldValue('projectParticipants', [
-      { partiesInvolved: '', projectParticipants: [{ participant: '' }] },
-    ]);
-  }, []);
+    if (id) {
+      getCountryList();
+      getProgrammeDetailsById(id);
+      getOrganizationDetails();
+      form2.setFieldValue('projectParticipants', [
+        { partiesInvolved: '', projectParticipants: [{ participant: '' }] },
+      ]);
+    }
+  }, [id]);
 
-  console.log('----------disableFields----------', disableFields);
+  //console.log('----------disableFields----------', disableFields);
   const steps = [
     {
       title: (
