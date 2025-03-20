@@ -101,17 +101,27 @@ export class InfDocumentService extends DocumentService {
                 },
             );
 
-            const assignees: OrganizationEntity[] =
-                await queryRunner.manager.find(OrganizationEntity, {
-                    where: {
-                        refId: In(infData.independentCertifiers),
-                        state: OrganizationStateEnum.ACTIVE,
-                    },
-                });
+            if (
+                infData?.independentCertifiers &&
+                infData.independentCertifiers.length
+            ) {
+                const assignees: OrganizationEntity[] =
+                    await queryRunner.manager.find(OrganizationEntity, {
+                        where: {
+                            refId: In(infData.independentCertifiers),
+                            state: OrganizationStateEnum.ACTIVE,
+                        },
+                    });
 
-            if (!(assignees && assignees.length)) {
+                if (!(assignees && assignees.length)) {
+                    throw new HttpException(
+                        'Did not find assignees',
+                        HttpStatus.BAD_REQUEST,
+                    );
+                }
+            } else {
                 throw new HttpException(
-                    'Did not find assignees',
+                    'Assignees cannot be empty',
                     HttpStatus.BAD_REQUEST,
                 );
             }
