@@ -34,20 +34,12 @@ const BasicInformation = (props: ValidationStepsProps) => {
     handleValuesUpdate,
     cmaDetails,
     existingFormValues,
-    formMode,
+    // formMode,
+    disableFields,
     prev,
   } = props;
 
   const { post } = useConnection();
-
-  const { state } = useLocation();
-  const [disableFields, setDisableFields] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
-      setDisableFields(true);
-    }
-  }, []);
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -183,6 +175,8 @@ const BasicInformation = (props: ValidationStepsProps) => {
       mandatarySectoralScopes: values?.mandatarySectoralScopes,
       annualAverageGHGReduction: values?.annualAverageGHGReduction,
       approverName: values?.approverName,
+      creditingPeriodStart: moment(values?.creditingPeriodStart).startOf('day').unix(),
+      creditingPeriodEnd: moment(values?.creditingPeriodEnd).startOf('day').unix(),
     };
 
     console.log('basicInformation', projectDetailsFormValues);
@@ -1308,9 +1302,15 @@ const BasicInformation = (props: ValidationStepsProps) => {
                 <Button danger size={'large'} disabled={false} onClick={prev}>
                   {t('validationReport:cancel')}
                 </Button>
-                <Button type="primary" size={'large'} disabled={false} htmlType="submit">
-                  {t('validationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" size={'large'} disabled={false} onClick={next}>
+                    {t('validationReport:next')}
+                  </Button>
+                ) : (
+                  <Button type="primary" size={'large'} disabled={false} htmlType="submit">
+                    {t('validationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

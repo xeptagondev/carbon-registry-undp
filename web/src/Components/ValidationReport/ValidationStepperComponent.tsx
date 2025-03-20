@@ -69,6 +69,7 @@ const StepperComponent = (props: any) => {
 
   const [documentId, setDocumentId] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
+  const [disableFields, setDisableFields] = useState<boolean>(false);
 
   const handleLoading = (val: boolean) => {
     setLoading(val);
@@ -437,6 +438,10 @@ const StepperComponent = (props: any) => {
             console.log('---------appendix-----------', appendix);
             form9.setFieldsValue(appendix);
           }
+
+          if (state?.mode === FormMode.VERIFY || state?.mode === FormMode.VIEW) {
+            setDisableFields(true);
+          }
         } catch (error) {
           console.log('error', error);
         } finally {
@@ -466,6 +471,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_PROJECT_DETAILS]}
           formMode={state?.mode}
+          disableFields={disableFields}
         />
       ),
     },
@@ -487,6 +493,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_INTRODUCTION]}
           formMode={state?.mode}
+          disableFields={disableFields}
         />
       ),
     },
@@ -507,6 +514,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_GHG_PROJECT_DESCRIPTION]}
           formMode={state?.mode}
+          disableFields={disableFields}
         />
       ),
     },
@@ -527,6 +535,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_METHODOLOGY]}
           formMode={state?.mode}
+          disableFields={disableFields}
         />
       ),
     },
@@ -547,6 +556,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
           projectCategory={projectCategory}
+          disableFields={disableFields}
           formMode={state?.mode}
         />
       ),
@@ -568,6 +578,7 @@ const StepperComponent = (props: any) => {
           handleValuesUpdate={handleValuesUpdate}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_PROCESS]}
           projectCategory={projectCategory}
+          disableFields={disableFields}
           formMode={state?.mode}
         />
       ),
@@ -587,6 +598,7 @@ const StepperComponent = (props: any) => {
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
+          disableFields={disableFields}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_REFERENCE]}
           formMode={state?.mode}
         />
@@ -607,6 +619,7 @@ const StepperComponent = (props: any) => {
           current={current}
           t={t}
           handleValuesUpdate={handleValuesUpdate}
+          disableFields={disableFields}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_VALIDATION_OPINION]}
           formMode={state?.mode}
         />
@@ -639,6 +652,7 @@ const StepperComponent = (props: any) => {
           t={t}
           handleValuesUpdate={submitForm}
           // existingFormValues={existingFormValues.content[ProcessSteps.VR_APPENDIX]}
+          disableFields={disableFields}
           formMode={state?.mode}
           handleLoading={handleLoading}
         />

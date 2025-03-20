@@ -10,21 +10,16 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import moment from 'moment';
 
 const GHGProjectDescription = (props: ValidationStepsProps) => {
-  const { prev, next, form, current, t, countries, handleValuesUpdate } = props;
-
-  const { state } = useLocation();
-  const [disableFields, setDisableFields] = useState<boolean>(false);
+  const { prev, next, form, current, t, countries, handleValuesUpdate, disableFields, formMode } =
+    props;
 
   useEffect(() => {
-    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
-      setDisableFields(true);
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('baselineEmissions', [{ location: '' }]);
+      form.setFieldValue('estimatedNetEmissionReductions', [{ baselineEmissionReductions: 0 }]);
     }
   }, []);
 
-  useEffect(() => {
-    form.setFieldValue('baselineEmissions', [{ location: '' }]);
-    form.setFieldValue('estimatedNetEmissionReductions', [{ baselineEmissionReductions: 0 }]);
-  }, []);
   const onFinish = (values: any) => {
     const body = {
       ...values,
@@ -418,15 +413,15 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
                 <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('validationReport:prev')}
                 </Button>
-                <Button
-                  type="primary"
-                  size={'large'}
-                  // onClick={next}
-                  htmlType="submit"
-                  disabled={false}
-                >
-                  {t('validationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" size={'large'} disabled={false} onClick={next}>
+                    {t('validationReport:next')}
+                  </Button>
+                ) : (
+                  <Button type="primary" size={'large'} disabled={false} htmlType="submit">
+                    {t('validationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

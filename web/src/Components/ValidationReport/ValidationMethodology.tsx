@@ -24,20 +24,14 @@ import { useLocation } from 'react-router-dom';
 const ValidationMethodology = (props: ValidationStepsProps) => {
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
 
-  const { prev, next, form, current, t, countries, handleValuesUpdate, formMode } = props;
-
-  const { state } = useLocation();
-  const [disableFields, setDisableFields] = useState<boolean>(false);
+  const { prev, next, form, current, t, countries, handleValuesUpdate, disableFields, formMode } =
+    props;
 
   useEffect(() => {
-    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
-      setDisableFields(true);
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('validationTeamMembers', [{ role: '' }]);
+      form.setFieldValue('technicalReviews', [{ role: '' }]);
     }
-  }, []);
-
-  useEffect(() => {
-    form.setFieldValue('validationTeamMembers', [{ role: '' }]);
-    form.setFieldValue('technicalReviews', [{ role: '' }]);
   }, []);
 
   const onFinish = async (values: any) => {
@@ -574,9 +568,15 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                 <Button danger size={'large'} disabled={false} onClick={prev}>
                   {t('validationReport:cancel')}
                 </Button>
-                <Button type="primary" size={'large'} disabled={false} htmlType="submit">
-                  {t('validationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" size={'large'} disabled={false} onClick={next}>
+                    {t('validationReport:next')}
+                  </Button>
+                ) : (
+                  <Button type="primary" size={'large'} disabled={false} htmlType="submit">
+                    {t('validationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

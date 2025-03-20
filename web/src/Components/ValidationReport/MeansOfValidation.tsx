@@ -79,14 +79,13 @@ const farCols = [
 ];
 
 const MeansOfValidation = (props: ValidationStepsProps) => {
-  const { prev, next, form, current, t, countries, handleValuesUpdate, formMode } = props;
-
-  const { state } = useLocation();
-  const [disableFields, setDisableFields] = useState<boolean>(false);
+  const { prev, next, form, current, t, countries, handleValuesUpdate, disableFields, formMode } =
+    props;
 
   useEffect(() => {
-    if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
-      setDisableFields(true);
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('onSiteInspection', [{ activity: '' }]);
+      form.setFieldValue('interviewees', [{ lastName: '' }]);
     }
   }, []);
 
@@ -100,11 +99,6 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
     }
     return e?.fileList;
   };
-
-  useEffect(() => {
-    form.setFieldValue('onSiteInspection', [{ activity: '' }]);
-    form.setFieldValue('interviewees', [{ lastName: '' }]);
-  }, []);
 
   const onFinish = async (values: any) => {
     const body: any = {
@@ -3007,9 +3001,15 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
                 <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('validationReport:prev')}
                 </Button>
-                <Button type="primary" size={'large'} disabled={false} htmlType="submit">
-                  {t('validationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" size={'large'} disabled={false} onClick={next}>
+                    {t('validationReport:next')}
+                  </Button>
+                ) : (
+                  <Button type="primary" size={'large'} disabled={false} htmlType="submit">
+                    {t('validationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

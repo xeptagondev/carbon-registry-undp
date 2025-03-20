@@ -2,6 +2,7 @@ import { OrganizationEntity } from '@app/shared/organization/entity/organization
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import {
     BeforeInsert,
+    BeforeUpdate,
     Column,
     Entity,
     ManyToOne,
@@ -15,14 +16,14 @@ export class CreditEventsEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
-    @Column({ nullable: true })
-    refId?: string;
-
     @Column()
     tokenId: string;
 
     @Column()
-    serialNumnber: string;
+    batchSerialNumnber: string;
+
+    @Column()
+    serialNumnber: number;
 
     @ManyToOne(
         () => ProjectEntity,
@@ -50,8 +51,19 @@ export class CreditEventsEntity {
     @Column({ type: 'enum', enum: CreditEventStatusEnum, nullable: false })
     status: CreditEventStatusEnum;
 
+    @Column({ nullable: true, type: 'bigint' })
+    createdDate?: number;
+
+    @Column({ nullable: true, type: 'bigint' })
+    updatedDate?: number;
+
     @BeforeInsert()
     generateRefId() {
-        this.refId = `CE-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        this.createdDate = Date.now();
+    }
+
+    @BeforeUpdate()
+    updateDate() {
+        this.updatedDate = Date.now();
     }
 }

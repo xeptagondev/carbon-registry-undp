@@ -1,6 +1,7 @@
 import { ActivityEntity } from '@app/shared/activity/entity/activity.entity';
 import {
     BeforeInsert,
+    BeforeUpdate,
     Column,
     Entity,
     JoinColumn,
@@ -140,12 +141,23 @@ export class ProjectEntity {
     @Column({ nullable: true })
     tokenId?: string;
 
+    @Column({ nullable: true })
+    serialNumber?: string;
+
     @Column({ nullable: true, type: 'bigint' })
     createdDate?: number;
+
+    @Column({ nullable: true, type: 'bigint' })
+    updatedDate?: number;
 
     @BeforeInsert()
     generateRefId() {
         this.refId = `P-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         this.createdDate = Date.now();
+    }
+
+    @BeforeUpdate()
+    updateDate() {
+        this.updatedDate = Date.now();
     }
 }
