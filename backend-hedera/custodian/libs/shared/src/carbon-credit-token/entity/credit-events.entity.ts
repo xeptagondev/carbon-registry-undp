@@ -19,6 +19,9 @@ export class CreditEventsEntity {
     @Column()
     tokenId: string;
 
+    @Column({ nullable: true })
+    transferId: string;
+
     @Column()
     batchSerialNumnber: string;
 
