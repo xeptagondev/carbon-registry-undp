@@ -1575,6 +1575,38 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                     </Col>
 
                     <Col xl={24} md={24}>
+                      <Form.Item
+                        label={t('PDD:valueApplied')}
+                        name="monitoringValueApplied"
+                        rules={[
+                          {
+                            required: true,
+                            message: ``,
+                          },
+                          {
+                            validator: async (rule, value) => {
+                              if (
+                                String(value).trim() === '' ||
+                                String(value).trim() === undefined ||
+                                value === null ||
+                                value === undefined
+                              ) {
+                                throw new Error(`${t('PDD:valueApplied')} ${t('isRequired')}`);
+                              }
+                            },
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          rows={4}
+                          size="large"
+                          // placeholder={`${t('PDD:valueAppliedPlaceholder')}`}
+                          disabled={disableFields}
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xl={24} md={24}>
                       <div className="step-form-right-col">
                         <Form.Item
                           label={t('PDD:purpose')}

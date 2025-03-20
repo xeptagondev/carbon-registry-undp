@@ -19,6 +19,9 @@ export class CreditEventsEntity {
     @Column()
     tokenId: string;
 
+    @Column({ nullable: true })
+    transferId: string;
+
     @Column()
     batchSerialNumnber: string;
 
@@ -60,6 +63,7 @@ export class CreditEventsEntity {
     @BeforeInsert()
     generateRefId() {
         this.createdDate = Date.now();
+        this.updatedDate = Date.now();
     }
 
     @BeforeUpdate()

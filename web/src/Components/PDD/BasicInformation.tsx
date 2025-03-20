@@ -11,6 +11,8 @@ import PhoneInput, {
 } from 'react-phone-number-input';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { CMASectoralScope } from '../../Definitions/Enums/programmeStage.enum';
+import { API_PATHS } from '../../Config/apiConfig';
+// import {post} from
 
 const ProjectDetails = (props: CustomStepsProps) => {
   const { next, form, current, t, countries, handleValuesUpdate, disableFields, prev, formMode } =
@@ -19,11 +21,11 @@ const ProjectDetails = (props: CustomStepsProps) => {
   const [contactNoInput] = useState<any>();
 
   useEffect(() => {
-    console.log('---------form_values----------', form.getFieldsValue(), disableFields);
+    //console.log('---------form_values----------', form.getFieldsValue(), disableFields);
   }, []);
 
   const onFinish = (values: any) => {
-    console.log('-----------temp Values before-------');
+    //console.log('-----------temp Values before-------');
     const tempValues: any = {
       projectDetails: {
         projectTitle: values?.projectTitle,
@@ -39,7 +41,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
       },
     };
 
-    console.log('----------tempValues-------------', tempValues);
+    //console.log('----------tempValues-------------', tempValues);
     handleValuesUpdate(tempValues);
   };
 
@@ -193,7 +195,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Select size="large" disabled={disableFields}>
+                      {/* <Select size="large" disabled={disableFields}>
                         {Object.values(CMASectoralScope).map(
                           (sectoralScope: string, index: number) => (
                             <Select.Option value={sectoralScope} key={sectoralScope + index}>
@@ -201,7 +203,8 @@ const ProjectDetails = (props: CustomStepsProps) => {
                             </Select.Option>
                           )
                         )}
-                      </Select>
+                      </Select> */}
+                      <Input size="large" disabled />
                     </Form.Item>
                   </div>
                 </Col>
