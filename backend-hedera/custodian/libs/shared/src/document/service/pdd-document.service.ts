@@ -130,10 +130,12 @@ export class PddDocumentService extends DocumentService {
 
             // PDD has to be an Admin of the same organization of the project the document is being submitted to
             if (
-                jwtData.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
-                jwtData.userRole === RoleEnum.Admin &&
-                submittedUser.organization.id !== project.organization.id
+                !(
+                    jwtData.organizationRole ===
+                        OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                    jwtData.userRole === RoleEnum.Admin &&
+                    submittedUser.organization.id === project.organization.id
+                )
             ) {
                 throw new HttpException(
                     'Unauthorized',
