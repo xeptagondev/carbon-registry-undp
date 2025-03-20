@@ -307,7 +307,7 @@ export abstract class DocumentService {
             .getRepository(ActivityEntity)
             .createQueryBuilder()
             .update(ActivityEntity)
-            .set({ state: newStage })
+            .set({ state: newStage, updatedDate: Date.now() })
             .where('refId = :refId', { refId })
             .execute();
     }

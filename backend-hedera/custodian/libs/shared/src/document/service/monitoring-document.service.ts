@@ -246,6 +246,8 @@ export class MonitoringDocumentService extends DocumentService {
                 activity.activityDocs = [];
                 activity.project = project;
                 activity.state = ActivityStateEnum.MONITORING_REPORT_UPLOADED;
+                activity.createdDate = Date.now();
+                activity.updatedDate = Date.now();
 
                 lastActivity = await queryRunner.manager.save(
                     ActivityEntity,
