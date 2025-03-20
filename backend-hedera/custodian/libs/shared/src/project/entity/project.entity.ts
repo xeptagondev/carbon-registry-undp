@@ -154,6 +154,7 @@ export class ProjectEntity {
     generateRefId() {
         this.refId = `P-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         this.createdDate = Date.now();
+        this.updatedDate = Date.now();
     }
 
     @BeforeUpdate()

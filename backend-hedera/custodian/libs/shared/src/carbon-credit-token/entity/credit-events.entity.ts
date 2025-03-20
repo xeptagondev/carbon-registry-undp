@@ -63,6 +63,7 @@ export class CreditEventsEntity {
     @BeforeInsert()
     generateRefId() {
         this.createdDate = Date.now();
+        this.updatedDate = Date.now();
     }
 
     @BeforeUpdate()
