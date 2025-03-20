@@ -128,7 +128,7 @@
   "purposePlaceholder": "Provide the value applied",
   "unit": "Data Unit",
   "unitPlaceholder": "Indicate the unit of measure",
-  "valueApplied": "Value Applied",
+  "valueApplied": "Value(s) Applied",
   "valueAppliedPlaceholder": "Provide the value applied",
   "dataSource": "Source of Data",
   "dataSourcePlaceholder": "Indicate the source(s) of data",
