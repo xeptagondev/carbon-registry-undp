@@ -6,10 +6,12 @@ import {
     Entity,
     JoinColumn,
     ManyToOne,
+    OneToMany,
     OneToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { TaskEnum } from '../enum/task.enum';
+import { EventEntity } from '@app/shared/event/entity/event.entity';
 
 @Entity()
 export class TaskEntity {
@@ -49,6 +51,9 @@ export class TaskEntity {
     @OneToOne(() => TaskEntity, { nullable: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'previous_task_id', referencedColumnName: 'id' })
     previousTask?: TaskEntity = null;
+
+    @OneToOne(() => EventEntity, (event) => event.task, { nullable: true })
+    event: EventEntity;
 
     @BeforeInsert()
     setInitialLastUpdateTime() {
