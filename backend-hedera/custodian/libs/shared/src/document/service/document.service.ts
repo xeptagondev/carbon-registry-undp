@@ -26,6 +26,7 @@ import { DocumentQueryDTO } from '../dto/document.query.dto';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '../enum/additional.document.type';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export abstract class DocumentService {
@@ -260,13 +261,20 @@ export abstract class DocumentService {
         refId: string,
         newStage: ProjectProposalStage,
     ) {
-        await queryRunner.manager
+        const existingProject = await queryRunner.manager
             .getRepository(ProjectEntity)
-            .createQueryBuilder()
-            .update(ProjectEntity)
-            .set({ projectProposalStage: newStage })
-            .where('refId = :refId', { refId })
-            .execute();
+            .findOne({ where: { refId } });
+
+        if (!existingProject) {
+            throw new Error(`Project with refId ${refId} not found`);
+        }
+
+        const updatedProject = plainToClass(ProjectEntity, {
+            ...existingProject,
+            projectProposalStage: newStage,
+        });
+
+        await queryRunner.manager.save(updatedProject);
     }
 
     protected async updateaActivityStage(
@@ -274,13 +282,21 @@ export abstract class DocumentService {
         refId: string,
         newStage: ActivityStateEnum,
     ) {
-        await queryRunner.manager
+        const existingActivity = await queryRunner.manager
             .getRepository(ActivityEntity)
-            .createQueryBuilder()
-            .update(ActivityEntity)
-            .set({ state: newStage, updatedDate: Date.now() })
-            .where('refId = :refId', { refId })
-            .execute();
+            .findOne({ where: { refId } });
+
+        if (!existingActivity) {
+            throw new Error(`Activity with refId ${refId} not found`);
+        }
+
+        const updatedActivity = plainToClass(ActivityEntity, {
+            ...existingActivity,
+            state: newStage,
+            updatedDate: Date.now(),
+        });
+
+        await queryRunner.manager.save(updatedActivity);
     }
 
     protected async logProjectStage(
@@ -339,7 +355,6 @@ export abstract class DocumentService {
     async releaseQueryRunner(queryRunner: QueryRunner) {
         if (!queryRunner.isReleased) {
             try {
-                console.log(queryRunner.isReleased);
                 await queryRunner.release();
             } catch (e) {
                 this.logger.error(

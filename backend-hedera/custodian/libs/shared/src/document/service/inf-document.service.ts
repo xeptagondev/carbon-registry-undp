@@ -156,18 +156,16 @@ export class InfDocumentService extends DocumentService {
 
             // create document in 'PENDING' state
 
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = savedProject;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = createdBy;
-
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: savedProject,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    data: dto.data,
+                    submittedUser: createdBy,
+                }),
             );
 
             const organizationDoc =
@@ -352,7 +350,9 @@ export class InfDocumentService extends DocumentService {
 
             // save document
 
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
                 await this.updateProjectStage(
@@ -376,12 +376,20 @@ export class InfDocumentService extends DocumentService {
                 );
                 const refId = documentEntity?.project?.refId;
 
+                const existingProject = await queryRunner.manager
+                    .getRepository(ProjectEntity)
+                    .findOne({ where: { refId } });
+
+                if (!existingProject) {
+                    throw new Error(`Project with refId ${refId} not found`);
+                }
                 await queryRunner.manager.update(
                     ProjectEntity,
                     {
                         refId: refId,
                     },
                     plainToClass(ProjectEntity, {
+                        ...existingProject,
                         noObjectionLetterUrl: noObjectionLetterUrl,
                     }),
                 );
