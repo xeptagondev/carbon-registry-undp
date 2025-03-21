@@ -33,4 +33,42 @@ export class AnalyticsController {
     ) {
         return await this.analyticsService.getProjectsData(filters, req.user);
     }
+    @UseGuards(AuthGuardService)
+    @Post('getProjectSummary')
+    async getProjectSummary(@Request() req) {
+        return await this.analyticsService.getProjectSummary(req.user);
+    }
+    @UseGuards(AuthGuardService)
+    @Post('getProjectStatusSummary')
+    async getProjectStatusSummary(
+        @Body() filters: ProjectDataRequestDTO,
+        @Request() req,
+    ) {
+        return await this.analyticsService.getProjectStatusSummary(
+            filters,
+            req.user,
+        );
+    }
+    @UseGuards(AuthGuardService)
+    @Post('getProjectsByStatusDetail')
+    async getProjectsByStatusDetail(
+        @Body() filters: ProjectDataRequestDTO,
+        @Request() req,
+    ) {
+        return await this.analyticsService.getProjectsByStatusDetail(
+            filters,
+            req.user,
+        );
+    }
+    @UseGuards(AuthGuardService)
+    @Post('getProjectCountBySector')
+    async getProjectCountBySector(
+        @Body() filters: ProjectDataRequestDTO,
+        @Request() req,
+    ) {
+        return await this.analyticsService.getProjectCountBySector(
+            filters,
+            req.user,
+        );
+    }
 }

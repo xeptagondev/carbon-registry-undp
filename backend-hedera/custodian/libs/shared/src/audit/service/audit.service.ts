@@ -32,7 +32,7 @@ export class AuditService {
       LEFT JOIN 
         "organization_entity" AS "toOrganization" ON projectLogs.data->>'toCompanyId' = CAST("toOrganization"."id" AS TEXT)
       WHERE 
-        projectLogs."refId" = $1
+        projectLogs."projectId" = $1
       ORDER BY 
         projectLogs.id DESC;
     `;
