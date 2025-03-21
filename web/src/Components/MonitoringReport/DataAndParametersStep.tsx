@@ -40,7 +40,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -77,7 +77,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input size="large" />
+                        <Input size="large" disabled={disableFields} />
                       </Form.Item>
                     </div>
                   </Col>
@@ -107,7 +107,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Input size="large" />
+                        <Input size="large" disabled={disableFields} />
                       </Form.Item>
                     </div>
                   </Col>
@@ -127,7 +127,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                       >
                         <TextArea
                           rows={3}
-                          disabled={FormMode.VIEW === formMode}
+                          disabled={disableFields}
                           placeholder={`${t('monitoringReport:dp_descriptionPlaceholder')}`}
                         />
                       </Form.Item>
@@ -149,7 +149,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                       >
                         <TextArea
                           rows={3}
-                          disabled={FormMode.VIEW === formMode}
+                          disabled={disableFields}
                           placeholder={`${t('monitoringReport:dp_sourceOfDataPlaceholder')}`}
                         />
                       </Form.Item>
@@ -171,7 +171,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                       >
                         <TextArea
                           rows={3}
-                          disabled={FormMode.VIEW === formMode}
+                          disabled={disableFields}
                           placeholder={`${t('monitoringReport:dp_valueAppliedPlaceholder')}`}
                         />
                       </Form.Item>
@@ -209,7 +209,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                       >
                         <TextArea
                           rows={6}
-                          disabled={FormMode.VIEW === formMode}
+                          disabled={disableFields}
                           placeholder={`${t(
                             'monitoringReport:dp_choiceOfDataOrMeasurementPlaceholder'
                           )}`}
@@ -247,7 +247,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                       >
                         <TextArea
                           rows={3}
-                          disabled={FormMode.VIEW === formMode}
+                          disabled={disableFields}
                           placeholder={`${t('monitoringReport:dp_purposeOfDataPlaceholder')}`}
                         />
                       </Form.Item>
@@ -269,7 +269,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                       >
                         <TextArea
                           rows={3}
-                          disabled={FormMode.VIEW === formMode}
+                          disabled={disableFields}
                           placeholder={`${t('monitoringReport:dp_commentsPlaceholder')}`}
                         />
                       </Form.Item>
@@ -294,7 +294,7 @@ export const DataAndParametersStep = (props: CustomStepsProps) => {
                       ]}
                     >
                       <TextArea
-                        disabled={FormMode.VIEW === formMode}
+                        disabled={disableFields}
                         rows={6}
                         // placeholder={t('monitoringReport:dpm_descriptionPlaceholder')}
                       />
