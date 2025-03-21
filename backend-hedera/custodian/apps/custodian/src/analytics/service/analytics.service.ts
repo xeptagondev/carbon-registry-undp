@@ -518,4 +518,233 @@ export class AnalyticsService {
 
         return response;
     }
+
+    async getCreditSummary(
+        filters: ProjectDataRequestDTO,
+        jwtData: JWTPayload,
+    ): Promise<any> {
+        const orgId = jwtData.organizationId;
+
+        const baseQb = this.auditRepository
+            .createQueryBuilder('audit')
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            );
+
+        const buildAmountAndTime = (
+            logType: string,
+            direction: 'toCompanyId' | 'fromCompanyId',
+        ) => {
+            const amountSub = this.auditRepository
+                .createQueryBuilder('inner_audit')
+                .select(
+                    `COALESCE(SUM(CAST(inner_audit."data"->>'amount' AS INTEGER)), 0)`,
+                )
+                .where(`inner_audit."logType" = '${logType}'`);
+
+            const timeSub = this.auditRepository
+                .createQueryBuilder('inner_audit')
+                .select(`MAX(inner_audit."createdTime")`)
+                .where(`inner_audit."logType" = '${logType}'`);
+
+            if (filters?.isMine) {
+                amountSub.andWhere(
+                    `(inner_audit."data"->>'${direction}')::int = ${orgId}`,
+                );
+                timeSub.andWhere(
+                    `(inner_audit."data"->>'${direction}')::int = ${orgId}`,
+                );
+            }
+
+            return { amountSub, timeSub };
+        };
+
+        const {
+            amountSub: authorisedAmountSub,
+            timeSub: lastAuthorisedTimeSub,
+        } = buildAmountAndTime('CREDITS_AUTHORISED', 'toCompanyId');
+
+        const { amountSub: issuedAmountSub, timeSub: lastIssuedTimeSub } =
+            buildAmountAndTime('CREDITS_ISSUED', 'toCompanyId');
+
+        const {
+            amountSub: transferredAmountSub,
+            timeSub: lastTransferredTimeSub,
+        } = buildAmountAndTime('CREDIT_TRANSFERED', 'fromCompanyId');
+
+        const { amountSub: retiredAmountSub, timeSub: lastRetiredTimeSub } =
+            buildAmountAndTime('RETIRE_APPROVED', 'fromCompanyId');
+
+        baseQb
+            .select(`(${authorisedAmountSub.getQuery()})`, 'authorisedAmount')
+            .addSelect(
+                `(${lastAuthorisedTimeSub.getQuery()})`,
+                'lastAuthorisedTime',
+            )
+            .addSelect(`(${issuedAmountSub.getQuery()})`, 'issuedAmount')
+            .addSelect(`(${lastIssuedTimeSub.getQuery()})`, 'lastIssuedTime')
+            .addSelect(
+                `(${transferredAmountSub.getQuery()})`,
+                'transferredAmount',
+            )
+            .addSelect(
+                `(${lastTransferredTimeSub.getQuery()})`,
+                'lastTransferredTime',
+            )
+            .addSelect(`(${retiredAmountSub.getQuery()})`, 'retiredAmount')
+            .addSelect(`(${lastRetiredTimeSub.getQuery()})`, 'lastRetiredTime');
+
+        if (filters?.startDate) {
+            baseQb.andWhere(`audit."createdTime" >= :startDate`, {
+                startDate: filters.startDate,
+            });
+        }
+
+        if (filters?.endDate) {
+            baseQb.andWhere(`audit."createdTime" <= :endDate`, {
+                endDate: filters.endDate,
+            });
+        }
+
+        if (filters?.sector) {
+            baseQb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                baseQb.andWhere('project.organization.id = :orgId', { orgId });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                baseQb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId },
+                );
+            }
+        }
+
+        const [result] = await baseQb.getRawMany();
+
+        return {
+            authorisedAmount: parseInt(result.authorisedAmount, 10),
+            lastAuthorisedTime: result.lastAuthorisedTime
+                ? Number(result.lastAuthorisedTime)
+                : null,
+
+            issuedAmount: parseInt(result.issuedAmount, 10),
+            lastIssuedTime: result.lastIssuedTime
+                ? Number(result.lastIssuedTime)
+                : null,
+
+            transferredAmount: parseInt(result.transferredAmount, 10),
+            lastTransferredTime: result.lastTransferredTime
+                ? Number(result.lastTransferredTime)
+                : null,
+
+            retiredAmount: parseInt(result.retiredAmount, 10),
+            lastRetiredTime: result.lastRetiredTime
+                ? Number(result.lastRetiredTime)
+                : null,
+        };
+    }
+
+    async creditsSummaryByDate(
+        filters: ProjectDataRequestDTO,
+        jwtData: JWTPayload,
+    ) {
+        const orgId = jwtData.organizationId;
+
+        const qb = this.auditRepository
+            .createQueryBuilder('audit')
+            .select(
+                `to_char(to_timestamp(audit."createdTime" / 1000), 'YYYY-MM-DD')`,
+                'date',
+            )
+            .addSelect('audit."logType"', 'logType')
+            .addSelect(
+                `SUM(CAST(audit."data"->>'amount' AS INTEGER))`,
+                'totalAmount',
+            )
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            )
+            .where('audit."logType" IN (:...types)', {
+                types: [
+                    'CREDITS_AUTHORISED',
+                    'CREDITS_ISSUED',
+                    'CREDIT_TRANSFERED',
+                    'RETIRE_APPROVED',
+                ],
+            });
+
+        // Apply filters
+        if (filters?.startDate) {
+            qb.andWhere('audit."createdTime" >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+
+        if (filters?.endDate) {
+            qb.andWhere('audit."createdTime" <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
+
+        if (filters?.sector) {
+            qb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                qb.andWhere('project.organization.id = :orgId', { orgId });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                qb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId },
+                );
+            }
+        }
+
+        qb.groupBy('date')
+            .addGroupBy('audit."logType"')
+            .orderBy('date', 'DESC');
+
+        const results = await qb.getRawMany();
+
+        const pivoted: Record<string, any> = {};
+
+        for (const row of results) {
+            const { date, logType, totalAmount } = row;
+
+            if (!pivoted[date]) {
+                pivoted[date] = { date };
+            }
+
+            pivoted[date][logType] = parseInt(totalAmount, 10);
+        }
+
+        return Object.values(pivoted);
+    }
 }

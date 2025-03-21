@@ -71,4 +71,23 @@ export class AnalyticsController {
             req.user,
         );
     }
+    @UseGuards(AuthGuardService)
+    @Post('getCreditSummary')
+    async getCreditSummary(
+        @Body() filters: ProjectDataRequestDTO,
+        @Request() req,
+    ) {
+        return await this.analyticsService.getCreditSummary(filters, req.user);
+    }
+    @UseGuards(AuthGuardService)
+    @Post('creditsSummaryByDate')
+    async creditsSummaryByDate(
+        @Body() filters: ProjectDataRequestDTO,
+        @Request() req,
+    ) {
+        return await this.analyticsService.creditsSummaryByDate(
+            filters,
+            req.user,
+        );
+    }
 }
