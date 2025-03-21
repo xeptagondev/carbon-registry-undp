@@ -205,7 +205,7 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
               </span>
               <span className="stage-last-updated">
                 {moment
-                  .unix(Number(activity?.activityLastUpdatedDate))
+                  .unix(Number(activity?.activityLastUpdatedDate) / 1000)
                   .format('DD MMMM YYYY @ HH:mm')}
               </span>
             </Col>
