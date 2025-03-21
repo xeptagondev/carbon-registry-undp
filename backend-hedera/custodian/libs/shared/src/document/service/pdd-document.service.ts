@@ -35,6 +35,7 @@ import {
 import { DocumentEnum } from '../enum/document.enum';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class PddDocumentService extends DocumentService {
@@ -149,18 +150,16 @@ export class PddDocumentService extends DocumentService {
 
             // create document in 'PENDING' state
 
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = project;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = submittedUser;
-
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: project,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    data: dto.data,
+                    submittedUser: submittedUser,
+                }),
             );
 
             const organizationDoc =
@@ -369,7 +368,9 @@ export class PddDocumentService extends DocumentService {
             documentEntity.approvedUser = user;
 
             // save document
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             /*
                         3. Send emails based on action
