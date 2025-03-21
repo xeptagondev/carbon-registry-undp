@@ -77,7 +77,7 @@ export class CarbonCreditService {
                 await queryRunner.rollbackTransaction();
                 throw error;
             } finally {
-                await queryRunner.release();
+                await this.releaseQueryRunner(queryRunner, 'handleMintJob');
             }
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
@@ -213,7 +213,7 @@ export class CarbonCreditService {
                 await queryRunner.rollbackTransaction();
                 throw error;
             } finally {
-                await queryRunner.release();
+                await this.releaseQueryRunner(queryRunner, 'handleTransferJob');
             }
 
             return transferStatuses;
@@ -340,7 +340,10 @@ export class CarbonCreditService {
                 await queryRunner.rollbackTransaction();
                 throw error;
             } finally {
-                await queryRunner.release();
+                await this.releaseQueryRunner(
+                    queryRunner,
+                    'handleRetirementJob',
+                );
             }
 
             return retirementStatuses;
@@ -501,7 +504,7 @@ export class CarbonCreditService {
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         } finally {
-            await queryRunner.release();
+            await this.releaseQueryRunner(queryRunner, 'transfer');
         }
     }
 
@@ -593,7 +596,7 @@ export class CarbonCreditService {
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         } finally {
-            await queryRunner.release();
+            await this.releaseQueryRunner(queryRunner, 'retireAction');
         }
     }
 
@@ -661,7 +664,7 @@ export class CarbonCreditService {
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         } finally {
-            await queryRunner.release();
+            await this.releaseQueryRunner(queryRunner, 'retireRequest');
         }
     }
 
@@ -737,5 +740,19 @@ export class CarbonCreditService {
         });
 
         return creditEvent;
+    }
+
+    async releaseQueryRunner(queryRunner: QueryRunner, fn?: string) {
+        if (!queryRunner.isReleased) {
+            try {
+                console.log(queryRunner.isReleased, fn);
+                await queryRunner.release();
+            } catch (e) {
+                this.logger.error(
+                    'Error occurred while releasing query runner',
+                    e,
+                );
+            }
+        }
     }
 }
