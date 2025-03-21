@@ -100,18 +100,17 @@ export class InfDocumentService extends DocumentService {
                     where: { id: jwtData.organizationId },
                 },
             );
-
+            let assignees: OrganizationEntity[] = [];
             if (
                 infData?.independentCertifiers &&
                 infData.independentCertifiers.length
             ) {
-                const assignees: OrganizationEntity[] =
-                    await queryRunner.manager.find(OrganizationEntity, {
-                        where: {
-                            refId: In(infData.independentCertifiers),
-                            state: OrganizationStateEnum.ACTIVE,
-                        },
-                    });
+                assignees = await queryRunner.manager.find(OrganizationEntity, {
+                    where: {
+                        refId: In(infData.independentCertifiers),
+                        state: OrganizationStateEnum.ACTIVE,
+                    },
+                });
 
                 if (!(assignees && assignees.length)) {
                     throw new HttpException(
