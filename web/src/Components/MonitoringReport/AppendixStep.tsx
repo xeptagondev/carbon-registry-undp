@@ -1,22 +1,36 @@
-import { Button, Col, Form, Row, Upload } from 'antd';
+import { Button, Col, Form, message, Row, Upload } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
-import { UploadOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, UploadOutlined } from '@ant-design/icons';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
-import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
-import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
-import { DocumentStatus } from '../../Definitions/Enums/document.status';
 import { useState } from 'react';
 import { CustomStepsProps } from './StepProps';
 import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
 import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
+import { useLocation } from 'react-router-dom';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { API_PATHS } from '../../Config/apiConfig';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
 
 export const AnnexureStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields, submitForm } =
-    props;
+  const {
+    t,
+    current,
+    form,
+    formMode,
+    next,
+    prev,
+    handleValuesUpdate,
+    disableFields,
+    documentId,
+    handleLoading,
+  } = props;
 
-  const [loading, setLoading] = useState(false);
-  const { userInfoState } = useUserContext();
+  const { post } = useConnection();
+
+  const { state } = useLocation();
+
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -43,25 +57,153 @@ export const AnnexureStep = (props: CustomStepsProps) => {
 
   const [formValues, setFormValues] = useState<any>();
 
+  const [showVerifyDialog, setShowVerifyDialog] = useState<boolean>(false);
+  const [showDeclineDialog, setShowDeclineDialog] = useState<boolean>(false);
+
+  const closeVerifyDialogBox = () => {
+    setShowVerifyDialog(false);
+  };
+
+  const closeDeclineDialogBox = () => setShowDeclineDialog(false);
+
+  const approve = async () => {
+    if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
+      try {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.MONITORING,
+          remarks: 'approved',
+          action: DocumentStateEnum.IC_APPROVED,
+        });
+
+        if (res?.statusText === 'SUCCESS') {
+          message.open({
+            type: 'success',
+            content: 'Monitoring report was approved successfully',
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+
+          if (next) {
+            next();
+          }
+        }
+      } catch (error) {
+        message.open({
+          type: 'error',
+          content: t('common:somethingWentWrong'),
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } finally {
+        if (handleLoading) {
+          handleLoading(false);
+        }
+      }
+    }
+  };
+
+  const reject = async (remarks?: string) => {
+    if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
+      try {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.MONITORING,
+          remarks: remarks,
+          action: DocumentStateEnum.IC_REJECTED,
+        });
+
+        if (res?.statusText === 'SUCCESS') {
+          message.open({
+            type: 'success',
+            content: 'Monitoring report rejected',
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+
+          if (next) {
+            next();
+          }
+        }
+      } catch (error) {
+        message.open({
+          type: 'error',
+          content: t('common:somethingWentWrong'),
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } finally {
+        if (handleLoading) {
+          handleLoading(false);
+        }
+      }
+    }
+  };
+
   return (
     <>
       {current === 6 && (
         <div>
           <div className="step-form-container">
-            <SlcfFormActionModel
-              icon={<ConfirmSubmitSVG />}
-              title={t('monitoringReport:confirmModalMessage')}
-              onCancel={closeDialog}
-              actionBtnText={t('common:yes')}
-              onFinish={() => {
-                closeDialog();
-                onFinish(formValues);
-              }}
-              openModal={showDialog}
-              type={'primary'}
-              remarkRequired={false}
-              t={t}
-            />
+            {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
+              <>
+                <SlcfFormActionModel
+                  icon={<ConfirmSubmitSVG />}
+                  title={t('monitoringReport:confirmModalMessage')}
+                  onCancel={closeDialog}
+                  actionBtnText={t('common:yes')}
+                  onFinish={() => {
+                    onFinish(formValues);
+                    closeDialog();
+                  }}
+                  openModal={showDialog}
+                  type={'primary'}
+                  remarkRequired={false}
+                  t={t}
+                />
+              </>
+            )}
+
+            {state?.mode === FormMode.VERIFY && (
+              <>
+                <SlcfFormActionModel
+                  actionBtnText={t('monitoringReport:reject')}
+                  onCancel={closeDeclineDialogBox}
+                  icon={<CloseCircleOutlined />}
+                  title={t('monitoringReport:declineMessage')}
+                  onFinish={(remarks: string) => {
+                    console.log('-----remarks-------', remarks);
+                    reject(remarks);
+                  }}
+                  remarkRequired
+                  type="danger"
+                  subText=""
+                  openModal={showDeclineDialog}
+                  t={t}
+                />
+
+                <SlcfFormActionModel
+                  actionBtnText={t('monitoringReport:approve')}
+                  onCancel={closeVerifyDialogBox}
+                  icon={<CheckCircleOutlined />}
+                  title={t('monitoringReport:approveMessage')}
+                  onFinish={() => {
+                    approve();
+                  }}
+                  remarkRequired={false}
+                  type="primary"
+                  subText=""
+                  openModal={showVerifyDialog}
+                  t={t}
+                />
+              </>
+            )}
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -69,7 +211,7 @@ export const AnnexureStep = (props: CustomStepsProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={disableFields}
               onFinish={(values: any) => {
                 setShowDialog(true);
                 setFormValues(values);
@@ -82,7 +224,7 @@ export const AnnexureStep = (props: CustomStepsProps) => {
                 <Col xl={24} md={24}>
                   <div className="step-form-left-col">
                     <Form.Item name="a_appendix">
-                      <TextArea rows={8} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={8} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -114,8 +256,14 @@ export const AnnexureStep = (props: CustomStepsProps) => {
                         action="/upload.do"
                         listType="picture"
                         multiple={false}
+                        disabled={disableFields}
                       >
-                        <Button className="upload-doc" size="large" icon={<UploadOutlined />}>
+                        <Button
+                          className="upload-doc"
+                          size="large"
+                          icon={<UploadOutlined />}
+                          disabled={disableFields}
+                        >
                           {t('monitoringReport:upload')}
                         </Button>
                       </Upload>
@@ -130,7 +278,40 @@ export const AnnexureStep = (props: CustomStepsProps) => {
                   </Button>
                 </Col> */}
               <Row justify={'end'} className="step-actions-end">
-                <Button danger size={'large'} onClick={prev}>
+                {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
+                  <>
+                    <Button danger size={'large'} onClick={prev}>
+                      {t('monitoringReport:prev')}
+                    </Button>
+                    <Button type="primary" htmlType="submit">
+                      {t('monitoringReport:submit')}
+                    </Button>
+                  </>
+                )}
+                {state?.mode === FormMode.VIEW && (
+                  <>
+                    <Button danger size={'large'} onClick={prev}>
+                      {t('monitoringReport:prev')}
+                    </Button>
+                    <Button type="primary" onClick={next}>
+                      {t('monitoringReport:goBackProjectDetails')}
+                    </Button>
+                  </>
+                )}
+                {state?.mode === FormMode.VERIFY && (
+                  <>
+                    <Button size={'large'} onClick={prev} type={'default'}>
+                      {t('monitoringReport:prev')}
+                    </Button>
+                    <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
+                      {t('monitoringReport:reject')}
+                    </Button>
+                    <Button size={'large'} onClick={() => setShowVerifyDialog(true)} type="primary">
+                      {t('monitoringReport:approve')}
+                    </Button>
+                  </>
+                )}
+                {/* <Button danger size={'large'} onClick={prev}>
                   {t('monitoringReport:prev')}
                 </Button>
                 {disableFields ? (
@@ -141,7 +322,7 @@ export const AnnexureStep = (props: CustomStepsProps) => {
                   <Button type="primary" size={'large'} htmlType={'submit'}>
                     {t('monitoringReport:submit')}
                   </Button>
-                )}
+                )} */}
                 {/* </Row> */}
                 {/* {userInfoState?.companyRole === CompanyRole.PROGRAMME_DEVELOPER &&
                   FormMode.VIEW !== formMode && (
