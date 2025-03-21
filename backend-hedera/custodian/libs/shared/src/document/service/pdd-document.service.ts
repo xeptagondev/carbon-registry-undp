@@ -57,8 +57,8 @@ export class PddDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
-            logger,
             documentRepository,
+            logger,
         );
     }
 

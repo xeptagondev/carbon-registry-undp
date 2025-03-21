@@ -41,6 +41,7 @@ import {
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class InfDocumentService extends DocumentService {
@@ -53,9 +54,9 @@ export class InfDocumentService extends DocumentService {
         guardianService: GuardianService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         fileHelperService: FileHelperService,
-        logger: InstantLogger,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
+        logger: InstantLogger,
     ) {
         super(
             configService,
@@ -64,8 +65,8 @@ export class InfDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
-            logger,
             documentRepository,
+            logger,
         );
     }
 
@@ -128,17 +129,17 @@ export class InfDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
-            const projectEntity = new ProjectEntity();
-            projectEntity.title = infData.title;
-            projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
-            projectEntity.sectoralScope = infData.sectoralScope;
-            projectEntity.createdBy = createdBy;
-            projectEntity.serialNumber = 'SN'; //TODO replace with correct one
-            projectEntity.organization = org;
-            projectEntity.assignees = assignees;
+
             const savedProject: ProjectEntity = await queryRunner.manager.save(
-                ProjectEntity,
-                projectEntity,
+                plainToClass(ProjectEntity, {
+                    title: infData.title,
+                    projectProposalStage: ProjectProposalStage.PENDING,
+                    sectoralScope: infData.sectoralScope,
+                    createdBy: createdBy,
+                    serialNumber: 'SN',
+                    organization: org,
+                    assignees: assignees,
+                }),
             );
 
             if (
@@ -222,7 +223,7 @@ export class InfDocumentService extends DocumentService {
             const countryName = this.configService.get('country');
 
             await this.sendEmailToProjectAssignees(
-                projectEntity,
+                savedProject,
                 queryRunner,
                 INF_ASSIGN_HEADER,
                 MailTemplateEnum.INF_ASSIGN,
@@ -230,7 +231,7 @@ export class InfDocumentService extends DocumentService {
                     organizationName: jwtData.organizationName,
                     countryName,
                     programmePageLink: this.getProgrammePageLink(
-                        projectEntity.refId,
+                        savedProject.refId,
                     ),
                 },
             );
@@ -374,13 +375,16 @@ export class InfDocumentService extends DocumentService {
                     jwtData.userId,
                 );
                 const refId = documentEntity?.project?.refId;
-                await queryRunner.manager
-                    .getRepository(ProjectEntity)
-                    .createQueryBuilder()
-                    .update(ProjectEntity)
-                    .set({ noObjectionLetterUrl: noObjectionLetterUrl })
-                    .where('refId = :refId', { refId })
-                    .execute();
+
+                await queryRunner.manager.update(
+                    ProjectEntity,
+                    {
+                        refId: refId,
+                    },
+                    plainToClass(ProjectEntity, {
+                        noObjectionLetterUrl: noObjectionLetterUrl,
+                    }),
+                );
                 const projectDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
                         GridTypeEnum.PROJECT_GRID,

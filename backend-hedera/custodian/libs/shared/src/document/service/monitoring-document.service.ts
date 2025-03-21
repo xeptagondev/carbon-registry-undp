@@ -64,8 +64,8 @@ export class MonitoringDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
-            logger,
             documentRepository,
+            logger,
         );
     }
 
