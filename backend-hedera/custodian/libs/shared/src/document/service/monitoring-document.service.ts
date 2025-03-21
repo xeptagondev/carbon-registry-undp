@@ -531,6 +531,7 @@ export class MonitoringDocumentService extends DocumentService {
                     documentEntity?.project?.refId,
                     ProjectAuditLogType.MONITORING_REPORT_REJECTED,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const activityDoc =
                     await this.guardianService.getGridDocumentUsingRefId(

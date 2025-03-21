@@ -392,6 +392,7 @@ export class PddDocumentService extends DocumentService {
                     documentEntity.project.refId,
                     ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const pddDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
@@ -450,7 +451,7 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
                     jwtData.userId,
                 );
@@ -526,9 +527,10 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_REJECTED_BY_DNA,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const pddDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
@@ -605,7 +607,7 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_APPROVED_BY_DNA,
                     jwtData.userId,
                 );

@@ -5,6 +5,7 @@ export interface MintNFTJobPayload {
     amount: number;
     accountId: string;
     privateKey: string;
-    projectRefId: string;
-    receiverRefId: string;
+    projectId: string;
+    receiverId: number;
+    userId: number;
 }
