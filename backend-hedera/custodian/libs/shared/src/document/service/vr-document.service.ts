@@ -59,8 +59,8 @@ export class VrDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
-            logger,
             documentRepository,
+            logger,
         );
     }
 

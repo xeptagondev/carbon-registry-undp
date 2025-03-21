@@ -26,7 +26,6 @@ import { DocumentQueryDTO } from '../dto/document.query.dto';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '../enum/additional.document.type';
-import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export abstract class DocumentService {
@@ -37,9 +36,8 @@ export abstract class DocumentService {
         protected readonly auditService: AuditService,
         protected readonly guardianService: GuardianService,
         protected readonly fileHelperService: FileHelperService,
-        protected readonly logger: InstantLogger,
-        @InjectRepository(DocumentEntity)
         protected readonly documentRepository: Repository<DocumentEntity>,
+        protected readonly logger: InstantLogger,
     ) {}
 
     protected async uploadDocuments(

@@ -61,8 +61,8 @@ export class VerificationDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
-            logger,
             documentRepository,
+            logger,
         );
     }
 
