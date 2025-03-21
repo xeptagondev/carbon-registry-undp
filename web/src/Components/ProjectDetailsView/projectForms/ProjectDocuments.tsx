@@ -15,6 +15,7 @@ import { saveAs } from 'file-saver';
 interface IPermissionsState {
   mode: FormMode;
   userCompanyRole?: CompanyRole;
+  documentRefId?: string;
 }
 
 interface IProjectDetails {

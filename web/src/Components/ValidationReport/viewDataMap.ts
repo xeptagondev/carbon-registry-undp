@@ -2,7 +2,6 @@ import moment from 'moment';
 
 const mapBase64ToFields = (fileUrls: string[]) => {
   let fileObjs: any[] = [];
-  console.log('--------fileUrls----------', fileUrls, fileUrls?.length);
   if (fileUrls !== undefined && fileUrls.length > 0) {
     fileObjs = fileUrls.map((item: any, index) => {
       const nameParts = item.split('/');
