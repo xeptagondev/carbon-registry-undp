@@ -187,7 +187,7 @@ export class ProjectService {
             const activities = project?.activities?.map((activity) => {
                 return {
                     stage: activity.state,
-                    activityLastUpdatedDate: activity.updateDate,
+                    activityLastUpdatedDate: activity.updatedDate,
                     documents: activity?.documents?.reduce((acc, document) => {
                         if (
                             !acc[document.documentType] ||
