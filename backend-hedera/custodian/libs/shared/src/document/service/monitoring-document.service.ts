@@ -42,6 +42,7 @@ import { AdditionalDocType } from '../enum/additional.document.type';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class MonitoringDocumentService extends DocumentService {
@@ -246,16 +247,12 @@ export class MonitoringDocumentService extends DocumentService {
                     );
                 }
             } else {
-                const activity = new ActivityEntity();
-                activity.activityDocs = [];
-                activity.project = project;
-                activity.state = ActivityStateEnum.MONITORING_REPORT_UPLOADED;
-                activity.createdDate = Date.now();
-                activity.updatedDate = Date.now();
-
                 lastActivity = await queryRunner.manager.save(
-                    ActivityEntity,
-                    activity,
+                    plainToClass(ActivityEntity, {
+                        activityDocs: [],
+                        project: project,
+                        state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
+                    }),
                 );
 
                 const activitySchema: ActivitySchema = {
@@ -278,19 +275,18 @@ export class MonitoringDocumentService extends DocumentService {
                     where: { id: jwtData.userId },
                     relations: { organization: true },
                 });
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = project;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.activity = lastActivity;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = submittedUser;
 
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: project,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    activity: lastActivity,
+                    data: dto.data,
+                    submittedUser: submittedUser,
+                }),
             );
 
             const organizationDoc =
@@ -451,7 +447,9 @@ export class MonitoringDocumentService extends DocumentService {
 
             // save document
 
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             /*
                         3. Send emails based on action
