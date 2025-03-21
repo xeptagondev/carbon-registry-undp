@@ -4,7 +4,7 @@ import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
 
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -41,6 +41,7 @@ import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum
 import { AdditionalDocType } from '../enum/additional.document.type';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class MonitoringDocumentService extends DocumentService {
@@ -53,6 +54,8 @@ export class MonitoringDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -62,6 +65,7 @@ export class MonitoringDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             logger,
+            documentRepository,
         );
     }
 

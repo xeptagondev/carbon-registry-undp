@@ -3,7 +3,7 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -40,6 +40,7 @@ import {
 } from '@app/shared/guardian/enum/button-type.enum';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class InfDocumentService extends DocumentService {
@@ -53,6 +54,8 @@ export class InfDocumentService extends DocumentService {
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -62,6 +65,7 @@ export class InfDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             logger,
+            documentRepository,
         );
     }
 
@@ -284,11 +288,29 @@ export class InfDocumentService extends DocumentService {
         try {
             queryRunner.startTransaction();
             const documentEntity: DocumentEntity =
-                await this.getDocumentWithProjectAssignees(
-                    queryRunner,
-                    requestData.refId,
-                    requestData.documentType,
-                );
+                await queryRunner.manager.findOne(DocumentEntity, {
+                    where: {
+                        refId: requestData.refId,
+                        documentType: requestData.documentType,
+                    },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                    order: {
+                        version: 'DESC',
+                    },
+                });
             if (!documentEntity) {
                 throw new HttpException(
                     'Invalid document id',

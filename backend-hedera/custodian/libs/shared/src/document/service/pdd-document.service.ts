@@ -3,7 +3,7 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -34,6 +34,7 @@ import {
 } from '@app/shared/guardian/enum/button-type.enum';
 import { DocumentEnum } from '../enum/document.enum';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class PddDocumentService extends DocumentService {
@@ -46,6 +47,8 @@ export class PddDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -55,6 +58,7 @@ export class PddDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             logger,
+            documentRepository,
         );
     }
 

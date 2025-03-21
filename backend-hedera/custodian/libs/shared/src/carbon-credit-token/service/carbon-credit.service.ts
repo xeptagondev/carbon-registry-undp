@@ -25,6 +25,7 @@ import { RetirementACtionEnum } from '../dto/retirement.action.enum';
 import { RetireNFTJobPayload } from '../constant/retire-nft-payload';
 import { TransferNFTJobPayload } from '../constant/transfer-nft-payload';
 import { CreditsRetireView } from '../entity/credit.retire.view.entity';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class CarbonCreditService {
@@ -325,10 +326,9 @@ export class CarbonCreditService {
                         transferId: transferId,
                         status: CreditEventStatusEnum.PENDING,
                     },
-                    {
+                    plainToClass(CreditEventsEntity, {
                         status: CreditEventStatusEnum.COMPLETED,
-                        updatedDate: Date.now(),
-                    },
+                    }),
                 );
 
                 await queryRunner.commitTransaction();
@@ -560,10 +560,9 @@ export class CarbonCreditService {
                 await queryRunner.manager.update(
                     CreditEventsEntity,
                     { transferId: retireAction.transferId },
-                    {
+                    plainToClass(CreditEventsEntity, {
                         status: CreditEventStatusEnum.CANCELLED,
-                        updatedDate: Date.now(),
-                    },
+                    }),
                 );
             } else if (retireAction.action === RetirementACtionEnum.REJECT) {
                 this.logger.log(
@@ -573,10 +572,9 @@ export class CarbonCreditService {
                 await queryRunner.manager.update(
                     CreditEventsEntity,
                     { transferId: retireAction.transferId },
-                    {
+                    plainToClass(CreditEventsEntity, {
                         status: CreditEventStatusEnum.REJECTED,
-                        updatedDate: Date.now(),
-                    },
+                    }),
                 );
             }
 
@@ -637,7 +635,7 @@ export class CarbonCreditService {
             );
             const transferId = String(Date.now());
             for (const serial of serialsToTransfer) {
-                await queryRunner.manager.save(CreditEventsEntity, {
+                const creditEvent = plainToClass(CreditEventsEntity, {
                     tokenId: project?.tokenId,
                     transferId: transferId,
                     batchSerialNumnber: serial.batch,
@@ -647,9 +645,8 @@ export class CarbonCreditService {
                     receiver: project.organization,
                     type: CreditEventTypeEnum.RETIRED,
                     status: CreditEventStatusEnum.PENDING,
-                    createdDate: Date.now(),
-                    updatedDate: Date.now(),
                 });
+                queryRunner.manager.save(creditEvent);
             }
             await queryRunner.commitTransaction();
             return new DataResponseDto(
@@ -688,7 +685,7 @@ export class CarbonCreditService {
         if (!project || !organization) {
             throw new Error('Project or Organization not found');
         }
-        return await queryRunner.manager.save(CreditEventsEntity, {
+        const creditEvent = plainToClass(CreditEventsEntity, {
             tokenId,
             batchSerialNumnber: batchSerialNumber,
             serialNumnber: serialNumber,
@@ -696,9 +693,8 @@ export class CarbonCreditService {
             receiver: organization,
             type: CreditEventTypeEnum.ISSUED,
             status: CreditEventStatusEnum.COMPLETED,
-            createdDate: Date.now(),
-            updatedDate: Date.now(),
         });
+        return await queryRunner.manager.save(creditEvent);
     }
 
     async transferCredit(
@@ -725,7 +721,7 @@ export class CarbonCreditService {
             throw new Error('Project or Organizations not found');
         }
 
-        const creditEvent = await queryRunner.manager.save(CreditEventsEntity, {
+        let creditEvent = plainToClass(CreditEventsEntity, {
             tokenId,
             transferId: transferId,
             batchSerialNumnber: batch,
@@ -735,9 +731,8 @@ export class CarbonCreditService {
             receiver,
             type: CreditEventTypeEnum.TRANSFERED,
             status: CreditEventStatusEnum.COMPLETED,
-            createdDate: Date.now(),
-            updatedDate: Date.now(),
         });
+        creditEvent = await queryRunner.manager.save(creditEvent);
 
         return creditEvent;
     }
