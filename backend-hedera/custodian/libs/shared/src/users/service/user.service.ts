@@ -62,6 +62,7 @@ import { GuardianStateEnum } from '@app/shared/guardian/enum/guardian-state.enum
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -352,8 +353,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
                             // If no immediate result, add task and return
                             if (!hederaAccResult) {
-                                const asyncTask: TaskEntity =
-                                    this.taskRepository.create({
+                                const asyncTask: TaskEntity = plainToClass(
+                                    TaskEntity,
+                                    {
                                         className: 'UserService',
                                         functionName:
                                             'updateGuardianUserConfig',
@@ -366,7 +368,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                                         ],
                                         retryAttemps: 2,
                                         state: TaskEnum.PENDING,
-                                    });
+                                    },
+                                );
                                 await this.taskRepository.save(asyncTask);
                                 return {
                                     statusCode: HttpStatus.OK,
@@ -520,18 +523,22 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
                                 // If no immediate result, add task and return
                                 if (!hederaAccResult) {
-                                    const asyncTask: TaskEntity = {
-                                        className: 'UserService',
-                                        functionName: 'hederaOrgAccountStatus',
-                                        args: [
-                                            accGenTaskId.taskId,
-                                            userDto,
-                                            isUserActive,
-                                            requestUser,
-                                        ],
-                                        retryAttemps: 2,
-                                        state: TaskEnum.PENDING,
-                                    };
+                                    const asyncTask: TaskEntity = plainToClass(
+                                        TaskEntity,
+                                        {
+                                            className: 'UserService',
+                                            functionName:
+                                                'hederaOrgAccountStatus',
+                                            args: [
+                                                accGenTaskId.taskId,
+                                                userDto,
+                                                isUserActive,
+                                                requestUser,
+                                            ],
+                                            retryAttemps: 2,
+                                            state: TaskEnum.PENDING,
+                                        },
+                                    );
                                     await this.taskRepository.save(asyncTask);
                                     return {
                                         statusCode: HttpStatus.OK,
@@ -985,7 +992,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 userDto.email,
             );
         if (!isAccountUpdated) {
-            const asyncTask: TaskEntity = this.taskRepository.create({
+            const asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'UserService',
                 functionName: 'checkGuardianUserUpdate',
                 args: [userDto, isUserActive, requestUser, updateTaskId.taskId],

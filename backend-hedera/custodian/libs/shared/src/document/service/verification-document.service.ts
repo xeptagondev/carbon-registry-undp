@@ -38,6 +38,7 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { MintNFTJobPayload } from '@app/shared/carbon-credit-token/constant/mint-nft-payload';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -482,13 +483,14 @@ export class VerificationDocumentService extends DocumentService {
                     receiverRefId: documentEntity?.project?.organization?.refId,
                 };
 
-                const asyncTask: TaskEntity = {
+                const asyncTask: TaskEntity = plainToClass(TaskEntity, {
                     className: 'CarbonCreditService',
                     functionName: 'handleMintJob',
                     args: [payload],
                     retryAttemps: 2,
                     state: TaskEnum.PENDING,
-                };
+                });
+
                 await queryRunner.manager.save(TaskEntity, asyncTask);
 
                 const countryName = this.configService.get('country');

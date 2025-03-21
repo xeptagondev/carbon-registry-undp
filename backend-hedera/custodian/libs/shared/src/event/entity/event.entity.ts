@@ -1,4 +1,5 @@
 import {
+    BeforeInsert,
     Column,
     Entity,
     JoinColumn,
@@ -20,13 +21,20 @@ export class EventEntity {
     @Column({ type: 'enum', enum: EventStateEnum })
     status: EventStateEnum;
 
-    @Column({ type: 'json' })
-    previousState: any;
+    @Column({ type: 'json', nullable: true })
+    previousState?: any;
 
     @Column({ type: 'bigint' })
     createdAt: number;
 
     @ManyToOne(() => TaskEntity, (task) => task.event, { nullable: true })
     @JoinColumn({ name: 'task_id', referencedColumnName: 'id' })
-    task: TaskEntity;
+    task?: TaskEntity;
+
+    @BeforeInsert()
+    setCreatedAt() {
+        if (!this.createdAt) {
+            this.createdAt = Date.now();
+        }
+    }
 }

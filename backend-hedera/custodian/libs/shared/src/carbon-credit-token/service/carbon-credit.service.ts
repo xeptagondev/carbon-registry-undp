@@ -21,6 +21,7 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { CreditRetireRequestDto } from '../dto/credit.retire.request.dto';
 import { TransferNFTJobPayload } from '../constant/transfer-nft-payload copy';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class CarbonCreditService {
@@ -318,13 +319,14 @@ export class CarbonCreditService {
             amount: transferDto.amount,
         };
 
-        const asyncTask: TaskEntity = {
+        const asyncTask: TaskEntity = plainToClass(TaskEntity, {
             className: 'CarbonCreditService',
             functionName: 'handleTransferJob',
             args: [payload],
             retryAttemps: 2,
             state: TaskEnum.PENDING,
-        };
+        });
+
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
