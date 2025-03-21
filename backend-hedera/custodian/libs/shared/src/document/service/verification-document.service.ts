@@ -39,6 +39,7 @@ import { MintNFTJobPayload } from '@app/shared/carbon-credit-token/constant/mint
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -238,19 +239,17 @@ export class VerificationDocumentService extends DocumentService {
             const countryName = this.configService.get('country');
             const programmePageLink = this.getProgrammePageLink(project.refId);
 
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = project;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.activity = lastActivity;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = submittedUser;
-
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: project,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    activity: lastActivity,
+                    data: dto.data,
+                    submittedUser: submittedUser,
+                }),
             );
 
             const organizationDoc =
@@ -282,7 +281,7 @@ export class VerificationDocumentService extends DocumentService {
 
             await this.updateaActivityStage(
                 queryRunner,
-                documentEntity?.activity?.refId,
+                savedDoc?.activity?.refId,
                 ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
             );
 
@@ -428,7 +427,9 @@ export class VerificationDocumentService extends DocumentService {
 
             // save document
 
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
                 await this.updateaActivityStage(
