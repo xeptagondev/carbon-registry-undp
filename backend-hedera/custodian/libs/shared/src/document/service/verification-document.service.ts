@@ -3,7 +3,7 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -38,6 +38,7 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { MintNFTJobPayload } from '@app/shared/carbon-credit-token/constant/mint-nft-payload';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -50,6 +51,8 @@ export class VerificationDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -59,6 +62,7 @@ export class VerificationDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             logger,
+            documentRepository,
         );
     }
 

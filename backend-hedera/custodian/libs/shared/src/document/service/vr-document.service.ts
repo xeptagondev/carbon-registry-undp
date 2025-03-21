@@ -49,6 +49,8 @@ export class VrDocumentService extends DocumentService {
         private readonly carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -58,6 +60,7 @@ export class VrDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             logger,
+            documentRepository,
         );
     }
 
