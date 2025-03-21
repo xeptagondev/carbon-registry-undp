@@ -95,6 +95,7 @@ import { addNdcDesc, TimelineBody } from '../TimelineBody/timelineBody';
 import { RetireType } from '../../Definitions/Enums/retireType.enum';
 import { CreditTransferStage } from '../../Definitions/Enums/creditTransferStage.enum';
 import {
+  ActivityStateEnum,
   CreditType,
   ProgrammeStageUnified,
   ProgrammeStatus,
@@ -136,6 +137,7 @@ import { ROUTES } from '../../Config/uiRoutingConfig';
 import ProjectDocuments from './projectForms/ProjectDocuments';
 import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import VerificationPhaseForms from './projectForms/VerificationPhaseForms';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -1980,21 +1982,28 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     }
     // MARK: need to update after getting the activities array
     console.log(
-      '-------------data?.documents?.monitoringReport---------',
-      data?.documents?.monitoringReport
+      '---------data----------',
+      data.activities,
+      data.activities && data.activities.length
     );
     if (
       userInfoState &&
       data.projectProposalStage === ProjectProposalStage.AUTHORISED &&
       userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
-      data?.documents[DocumentEnum.MONITORING] === undefined
+      userInfoState?.userRole === Role.Admin &&
+      data.activities &&
+      (data?.activities.length === 0 ||
+        data?.activities[data?.activities.length - 1].stage ===
+          ActivityStateEnum.MONITORING_REPORT_VERIFIED)
     ) {
       actionBtns.push(
         <Button
           className="mg-left-1"
           type="primary"
           onClick={() => {
-            navigate(ROUTES.MONITORING_REPORT_CREATE(String(id)));
+            navigate(ROUTES.MONITORING_REPORT_CREATE(String(id)), {
+              state: { mode: FormMode.CREATE, userCompanyRole: CompanyRole.PROJECT_DEVELOPER },
+            });
           }}
         >
           Request Credit
@@ -2371,7 +2380,16 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                 />
               </div>
             </Card>
-            {verificationHistoryData && verificationHistoryData.length > 0 && (
+
+            {data?.activities && data?.activities.length > 0 && (
+              <Card className="card-container">
+                <div>
+                  <VerificationPhaseForms activityData={data?.activities} />
+                </div>
+              </Card>
+            )}
+
+            {/* {verificationHistoryData && verificationHistoryData.length > 0 && (
               <Card className="card-container">
                 <div>
                   <VerificationForms
@@ -2393,7 +2411,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                   />
                 </div>
               </Card>
-            )}
+            )} */}
 
             {data?.programmeProperties?.programmeMaterials &&
               data?.programmeProperties?.programmeMaterials.length > 0 && (

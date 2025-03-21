@@ -193,6 +193,8 @@ const Step08 = (props: CustomStepsProps) => {
     setShowVerifyDialog(false);
   };
 
+  const closeDeclineDialogBox = () => setShowDeclineDialog(false);
+
   const approvePDD = async () => {
     if (documentId) {
       if (handleLoading) {
@@ -346,8 +348,6 @@ const Step08 = (props: CustomStepsProps) => {
       }
     }
   };
-
-  const closeDeclineDialogBox = () => setShowDeclineDialog(false);
 
   return (
     <>

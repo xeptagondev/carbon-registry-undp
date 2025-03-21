@@ -2,7 +2,7 @@ import { CompanyRole } from '../Definitions/Enums/company.role.enum';
 import { DocumentStatus } from '../Definitions/Enums/document.status';
 import { DocType } from '../Definitions/Enums/document.type';
 import { FormMode } from '../Definitions/Enums/formMode.enum';
-import { ProjectProposalStage } from '../Definitions/Enums/programmeStage.enum';
+import { ActivityStateEnum, ProjectProposalStage } from '../Definitions/Enums/programmeStage.enum';
 import { Role } from '../Definitions/Enums/role.enum';
 
 export const linkDocVisible = (docStatus: DocumentStatus) => {
@@ -342,6 +342,269 @@ export const formPermissions = (
     };
   } else {
     return { mode: FormMode.DISABLED };
+  }
+};
+
+export const activityPermissions = (
+  userInfoState: any,
+  docType: DocType,
+  activityStage: ActivityStateEnum,
+  documentId: any
+) => {
+  // MONITORING_REPORT: for IC Admin users at MONITORING_REPORT_UPLOADED
+  if (
+    docType === DocType.MONITORING_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_UPLOADED &&
+    userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
+    userInfoState?.userRole === Role.Admin
+  ) {
+    return {
+      mode: FormMode.VERIFY,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // MONITORING_REPORT: for IC other users at MONITORING_REPORT_UPLOADED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_UPLOADED &&
+    userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
+    userInfoState?.userRole !== Role.Admin
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // MONITORING_REPORT: for other users at MONITORING_REPORT_UPLOADED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_UPLOADED &&
+    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // MONITORING_REPORT: for PD Admin users at MONITORING_REPORT_REJECTED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_REJECTED &&
+    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+    userInfoState?.userRole === Role.Admin
+  ) {
+    return {
+      mode: FormMode.EDIT,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // MONITORING_REPORT: for PD Admin users at MONITORING_REPORT_REJECTED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_REJECTED &&
+    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+    userInfoState?.userRole === Role.Admin
+  ) {
+    return {
+      mode: FormMode.EDIT,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // MONITORING_REPORT: for PD Other users at MONITORING_REPORT_REJECTED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_REJECTED &&
+    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+    userInfoState?.userRole !== Role.Admin
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // MONITORING_REPORT: for Other users at MONITORING_REPORT_REJECTED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_REJECTED &&
+    userInfoState?.companyRole !== CompanyRole.PROJECT_DEVELOPER
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // MONITORING_REPORT: for all users at MONITORING_REPORT_VERIFIED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_VERIFIED
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // VERIFICATION_REPORT: for all users at MONITORING_REPORT_UPLOADED, MONITORING_REPORT_REJECTED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    (activityStage === ActivityStateEnum.MONITORING_REPORT_UPLOADED ||
+      activityStage === ActivityStateEnum.MONITORING_REPORT_REJECTED)
+  ) {
+    return {
+      mode: FormMode.DISABLED,
+      userCompanyRole: userInfoState?.companyRole,
+    };
+  }
+
+  // VERIFICATION_REPORT: for IC Admin User at MONITORING_REPORT_VERIFIED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_VERIFIED &&
+    userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
+    userInfoState?.userRole === Role.Admin
+  ) {
+    return {
+      mode: FormMode.CREATE,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // VERIFICATION_REPORT: for IC Users at MONITORING_REPORT_VERIFIED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_VERIFIED &&
+    userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
+    userInfoState?.userRole !== Role.Admin
+  ) {
+    return {
+      mode: FormMode.DISABLED,
+    };
+  }
+
+  // VERIFICATION_REPORT: for Other Users at MONITORING_REPORT_VERIFIED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.MONITORING_REPORT_VERIFIED &&
+    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
+  ) {
+    return {
+      mode: FormMode.DISABLED,
+    };
+  }
+
+  // VERIFICATION_REPORT: for DNA Admin and Root Users at VERIFICATION_REPORT_UPLOADED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED &&
+    userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+    (userInfoState?.userRole === Role.Admin || userInfoState?.userRole === Role.Root)
+  ) {
+    return {
+      mode: FormMode.VERIFY,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // VERIFICATION_REPORT: for DNA Other Users at VERIFICATION_REPORT_UPLOADED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED &&
+    userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+    (userInfoState?.userRole !== Role.Admin || userInfoState?.userRole !== Role.Root)
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // VERIFICATION_REPORT: for Other Users at VERIFICATION_REPORT_UPLOADED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED &&
+    userInfoState?.companyRole !== CompanyRole.DESIGNATED_NATIONAL_AUTHORITY
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // VERIFICATION_REPORT: for IC Admin Users at VERIFICATION_REPORT_REJECTED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED &&
+    userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
+    userInfoState?.userRole === Role.Admin
+  ) {
+    return {
+      mode: FormMode.EDIT,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // VERIFICATION_REPORT: for IC Other Users at VERIFICATION_REPORT_REJECTED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED &&
+    userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
+    userInfoState?.userRole !== Role.Admin
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // VERIFICATION_REPORT: for Other Users at VERIFICATION_REPORT_REJECTED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED &&
+    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // VERIFICATION_REPORT: for All Users at VERIFICATION_REPORT_APPROVED
+  else if (
+    docType === DocType.VERIFICATION_REPORT &&
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED &&
+    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  } else {
+    return {
+      mode: FormMode.DISABLED,
+    };
   }
 };
 
