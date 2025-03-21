@@ -689,7 +689,6 @@ export class AnalyticsService {
                 ],
             });
 
-        // Apply filters
         if (filters?.startDate) {
             qb.andWhere('audit."createdTime" >= :startDate', {
                 startDate: filters.startDate,
