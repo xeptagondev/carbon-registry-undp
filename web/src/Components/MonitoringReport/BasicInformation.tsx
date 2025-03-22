@@ -13,7 +13,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
       projectDetails: {
         bi_projectTitle: values?.bi_projectTitle,
         bi_applicablePDDVersionNo: values?.bi_applicablePDDVersionNo,
-        completionDate: moment(values?.completionDate).startOf('day').unix(),
+        bi_completionDate: moment(values?.bi_completionDate).startOf('day').unix(),
         bi_duration: values?.bi_duration,
         bi_projectParticipants: values?.bi_projectParticipants,
         bi_appliedMethodologies: values?.bi_appliedMethodologies,
@@ -42,7 +42,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -77,10 +77,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -109,10 +106,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
                     <Form.Item
                       label={t('monitoringReport:bi_completionDate')}
@@ -141,6 +135,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                       <DatePicker
                         size="large"
                         disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                        disabled={disableFields}
                       />
                     </Form.Item>
                     <Form.Item
@@ -167,10 +162,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -197,10 +189,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -229,10 +218,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -261,10 +247,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
@@ -289,10 +272,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -319,10 +299,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -349,10 +326,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -381,10 +355,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -411,10 +382,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -441,10 +409,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -473,10 +438,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input
-                        size="large"
-                        // disabled
-                      />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
 
                     {/* <Form.Item
@@ -530,13 +492,13 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         countries={countries}
                       />
                     </Form.Item> */}
-                    {FormMode.VIEW === formMode ? (
+                    {/* {FormMode.VIEW === formMode ? (
                       <Form.Item label={t('monitoringReport:reportID')} name="reportID">
                         <Input size={'large'} disabled />
                       </Form.Item>
                     ) : (
                       ''
-                    )}
+                    )} */}
                   </div>
                 </Col>
               </Row>

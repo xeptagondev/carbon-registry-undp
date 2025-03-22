@@ -127,9 +127,6 @@ export class ProjectEntity {
     creditRetired?: number;
 
     @Column('real', { nullable: true })
-    creditFrozen?: number;
-
-    @Column('real', { nullable: true })
     creditTransferred?: number;
 
     @Column({ nullable: true })
