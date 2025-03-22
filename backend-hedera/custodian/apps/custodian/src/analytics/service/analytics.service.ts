@@ -378,18 +378,18 @@ export class AnalyticsService {
         jwtData: JWTPayload,
     ) {
         const allowedLogTypes = [
-            'PENDING',
-            'REJECTED',
-            'APPROVED',
-            'NO_OBJECTION_LETTER_GENERATED',
-            'PDD_SUBMITTED',
-            'PDD_REJECTED_BY_CERTIFIER',
-            'PDD_APPROVED_BY_CERTIFIER',
-            'PDD_REJECTED_BY_DNA',
-            'PDD_APPROVED_BY_DNA',
-            'VALIDATION_REPORT_SUBMITTED',
-            'VALIDATION_REPORT_REJECTED',
-            'AUTHORISED',
+            ProjectAuditLogType.PENDING,
+            ProjectAuditLogType.REJECTED,
+            ProjectAuditLogType.APPROVED,
+            ProjectAuditLogType.NO_OBJECTION_LETTER_GENERATED,
+            ProjectAuditLogType.PDD_SUBMITTED,
+            ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_REJECTED_BY_DNA,
+            ProjectAuditLogType.PDD_APPROVED_BY_DNA,
+            ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
+            ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
+            ProjectAuditLogType.AUTHORISED,
         ];
 
         const qb = this.auditRepository
@@ -564,18 +564,30 @@ export class AnalyticsService {
         const {
             amountSub: authorisedAmountSub,
             timeSub: lastAuthorisedTimeSub,
-        } = buildAmountAndTime('CREDITS_AUTHORISED', 'toCompanyId');
+        } = buildAmountAndTime(
+            ProjectAuditLogType.CREDITS_AUTHORISED,
+            'toCompanyId',
+        );
 
         const { amountSub: issuedAmountSub, timeSub: lastIssuedTimeSub } =
-            buildAmountAndTime('CREDITS_ISSUED', 'toCompanyId');
+            buildAmountAndTime(
+                ProjectAuditLogType.CREDITS_ISSUED,
+                'toCompanyId',
+            );
 
         const {
             amountSub: transferredAmountSub,
             timeSub: lastTransferredTimeSub,
-        } = buildAmountAndTime('CREDIT_TRANSFERED', 'fromCompanyId');
+        } = buildAmountAndTime(
+            ProjectAuditLogType.CREDIT_TRANSFERED,
+            'fromCompanyId',
+        );
 
         const { amountSub: retiredAmountSub, timeSub: lastRetiredTimeSub } =
-            buildAmountAndTime('RETIRE_APPROVED', 'fromCompanyId');
+            buildAmountAndTime(
+                ProjectAuditLogType.RETIRE_APPROVED,
+                'fromCompanyId',
+            );
 
         baseQb
             .select(`(${authorisedAmountSub.getQuery()})`, 'authorisedAmount')
@@ -682,10 +694,10 @@ export class AnalyticsService {
             )
             .where('audit."logType" IN (:...types)', {
                 types: [
-                    'CREDITS_AUTHORISED',
-                    'CREDITS_ISSUED',
-                    'CREDIT_TRANSFERED',
-                    'RETIRE_APPROVED',
+                    ProjectAuditLogType.CREDITS_AUTHORISED,
+                    ProjectAuditLogType.CREDITS_ISSUED,
+                    ProjectAuditLogType.CREDIT_TRANSFERED,
+                    ProjectAuditLogType.RETIRE_APPROVED,
                 ],
             });
 
