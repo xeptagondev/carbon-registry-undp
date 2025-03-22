@@ -63,7 +63,7 @@
   "titleOfSpecificCase": "Title(s) of the Specific-case CPA(s)",
   "completionDate": "Completion date of the validation report",
   "pddUploadedGlobalStakeholderConsultation": "Date when PDD was uploaded for global stakeholder consultation",
-  "hostParty": "Host Party(ies)",
+  "hostParty": "Host Party",
   "annualAverageGHGReduction": "Estimated amount of annual average GHG emission reductions or GHG removals by sinks",
   "validationReportApproverSectionTitle": "Approver of the Validation Report",
   "independentCertifierSectionTitle": "Independent Certifier",
