@@ -35,6 +35,7 @@ import { DocumentEnum } from '../enum/document.enum';
 import { AuthorisationLetterGenerateService } from '@app/shared/util/service/authorisation.letter.gen';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
@@ -49,6 +50,8 @@ export class VrDocumentService extends DocumentService {
         private readonly carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -57,6 +60,7 @@ export class VrDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            documentRepository,
             logger,
         );
     }
@@ -129,26 +133,17 @@ export class VrDocumentService extends DocumentService {
 
             // create document in 'PENDING' state
 
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = project;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = submittedUser;
-
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: project,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    data: dto.data,
+                    submittedUser: submittedUser,
+                }),
             );
-
-            const organizationDoc =
-                await this.guardianService.getGridDocumentUsingRefId(
-                    GridTypeEnum.ORGANIZATION_GRID,
-                    project?.organization?.refId,
-                    jwtData.email,
-                );
 
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
@@ -161,15 +156,6 @@ export class VrDocumentService extends DocumentService {
                 activity: dto.activityRefId,
             };
 
-            await this.guardianService.saveDocument(
-                jwtData.email,
-                this.getBlockNameByDocType(dto.documentType),
-                {
-                    document: documentSchema,
-                    ref: { document: organizationDoc },
-                },
-            );
-
             const assigneeOrgIds = project.assignees.map((org) => org.id);
 
             if (
@@ -178,6 +164,22 @@ export class VrDocumentService extends DocumentService {
                 jwtData.userRole === RoleEnum.Admin &&
                 assigneeOrgIds.includes(jwtData.organizationId)
             ) {
+                const organizationDoc =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.ORGANIZATION_GRID,
+                        project?.organization?.refId,
+                        jwtData.email,
+                    );
+
+                await this.guardianService.saveDocument(
+                    jwtData.email,
+                    this.getBlockNameByDocType(dto.documentType),
+                    {
+                        document: documentSchema,
+                        ref: { document: organizationDoc },
+                    },
+                );
+
                 await this.updateProjectStage(
                     queryRunner,
                     project?.refId,
@@ -376,7 +378,9 @@ export class VrDocumentService extends DocumentService {
             documentEntity.approvedUser = user;
 
             // save document
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             const countryName = this.configService.get('country');
 

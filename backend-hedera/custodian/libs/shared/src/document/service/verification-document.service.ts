@@ -3,7 +3,7 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -38,6 +38,8 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { MintNFTJobPayload } from '@app/shared/carbon-credit-token/constant/mint-nft-payload';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
+import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -50,6 +52,8 @@ export class VerificationDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -58,6 +62,7 @@ export class VerificationDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            documentRepository,
             logger,
         );
     }
@@ -234,19 +239,17 @@ export class VerificationDocumentService extends DocumentService {
             const countryName = this.configService.get('country');
             const programmePageLink = this.getProgrammePageLink(project.refId);
 
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = project;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.activity = lastActivity;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = submittedUser;
-
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: project,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    activity: lastActivity,
+                    data: dto.data,
+                    submittedUser: submittedUser,
+                }),
             );
 
             const organizationDoc =
@@ -278,7 +281,7 @@ export class VerificationDocumentService extends DocumentService {
 
             await this.updateaActivityStage(
                 queryRunner,
-                documentEntity?.activity?.refId,
+                savedDoc?.activity?.refId,
                 ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
             );
 
@@ -424,7 +427,9 @@ export class VerificationDocumentService extends DocumentService {
 
             // save document
 
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
                 await this.updateaActivityStage(

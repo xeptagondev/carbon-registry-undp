@@ -17,6 +17,7 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
 import { API_PATHS } from '../../Config/apiConfig';
 import { CustomStepsProps } from '../MonitoringReport/StepProps';
+import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 
 export const ProjectActivityStep = (props: CustomStepsProps) => {
   const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
@@ -192,7 +193,10 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
             city: item.pa_city,
             community: item.community,
             geographicalLocationCoordinates: item.geographicalLocationCoordinates, // Use item, not values
-            pa_uploadImages: values?.pa_uploadImages,
+            pa_uploadImages: await fileUploadValueExtract(
+              values?.pa_uploadImages,
+              'pa_uploadImages'
+            ),
           };
           tempList.push(tempObj);
         }
@@ -203,13 +207,13 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
 
     const tempValues: any = {
       projectActivityDetails: {
-        monitoringPurpose: values?.pa_monitoringPurpose,
+        pa_monitoringPurpose: values?.pa_monitoringPurpose,
         locationOfProjectActivity: locationDetailsOfProjectActivity,
         projectParticipants: values?.projectParticipants,
-        methodologyAndStandardizedBaseline: values?.pa_methodology,
-        projectCreditingPeriodType: values?.pa_creditingPeriodType,
-        creditingPeriodStartDate: moment(values?.pa_projectCreditingPeriod).startOf('day').unix(),
-        creditingPeriodEndDate: moment(values?.pa_projectCreditingPeriodEndDate)
+        pa_methodology: values?.pa_methodology,
+        pa_creditingPeriodType: values?.pa_creditingPeriodType,
+        pa_projectCreditingPeriod: moment(values?.pa_projectCreditingPeriod).startOf('day').unix(),
+        pa_projectCreditingPeriodEndDate: moment(values?.pa_projectCreditingPeriodEndDate)
           .startOf('day')
           .unix(),
       },
@@ -230,7 +234,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={FormMode.VIEW === formMode}
               initialValues={{}}
               onFinish={(values: any) => {
                 onFinish(values);
@@ -253,7 +257,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                     ]}
                   >
                     <TextArea
-                      disabled={FormMode.VIEW === formMode}
+                      disabled={disableFields}
                       rows={6}
                       // placeholder={`${t('monitoringReport:pa_monitoringObjectivePlaceholder')}`}
                     />
@@ -262,232 +266,6 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                   <h3 className="form-section-title">{`${t(
                     'monitoringReport:projectActivityLocation'
                   )}`}</h3>
-                  {/* <h4 className="list-item-title">Location 1</h4>
-                  <Row justify={'space-between'} gutter={[40, 16]} className="form-section">
-                    <Col xl={12} md={24}>
-                      <div className="step-form-right-col">
-                        <Form.Item
-                          label={t('monitoringReport:locationOfProjectActivity')}
-                          name="locationOfProjectActivity"
-                          rules={[
-                            {
-                              required: true,
-                              message: `${t('monitoringReport:locationOfProjectActivity')} ${t(
-                                'isRequired'
-                              )}`,
-                            },
-                          ]}
-                        >
-                          <Input size="large" disabled />
-                        </Form.Item>
-
-                        <Form.Item
-                          label={t('monitoringReport:pa_siteNo')}
-                          name="pa_siteNo"
-                          rules={[
-                            {
-                              required: true,
-                              message: `${t('monitoringReport:pa_siteNo')} ${t('isRequired')}`,
-                            },
-                          ]}
-                        >
-                          <Input size="large" disabled />
-                        </Form.Item> */}
-
-                  {/* <Form.Item
-                            label={t('monitoringReport:telephone')}
-                            name="pp_telephone"
-                            rules={[
-                              {
-                                required: true,
-                                message: ``,
-                              },
-                              {
-                                validator: async (rule: any, value: any) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('monitoringReport:telephone')} ${t('isRequired')}`
-                                    );
-                                  } else {
-                                    const phoneNo = formatPhoneNumber(String(value));
-                                    if (String(value).trim() !== '') {
-                                      if (!isPossiblePhoneNumber(String(value))) {
-                                        throw new Error(
-                                          `${t('monitoringReport:telephone')} ${t('isInvalid')}`
-                                        );
-                                      }
-                                    }
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <PhoneInput
-                              disabled
-                              international
-                              value={formatPhoneNumberIntl(contactNoInput)}
-                              defaultCountry="LK"
-                              countryCallingCodeEditable={false}
-                              onChange={(v) => {}}
-                              countries={countries as Country[]}
-                            />
-                          </Form.Item> */}
-                  {/* <Form.Item
-                          label={t('monitoringReport:province')}
-                          name="province"
-                          rules={[
-                            {
-                              required: true,
-                              message: `${t('monitoringReport:province')} ${t('isRequired')}`,
-                            },
-                          ]}
-                        >
-                          <Select
-                            size="large"
-                            onChange={(value) => onProvinceSelect(value, 0)}
-                            // placeholder={t('PDD:provincePlaceholder')}
-                            disabled
-                          >
-                            {provinces.map((province: string, index: number) => (
-                              <Select.Option value={province} key={province + index}>
-                                {province}
-                              </Select.Option>
-                            ))}
-                          </Select>
-                        </Form.Item>
-
-                        <Form.Item
-                          label={t('monitoringReport:district')}
-                          name="district"
-                          rules={[
-                            {
-                              required: true,
-                              message: `${t('monitoringReport:district')} ${t('isRequired')}`,
-                            },
-                          ]}
-                        >
-                          <Select
-                            size="large"
-                            // placeholder={t('PDD:districtPlaceholder')}
-                            onSelect={(value) => onDistrictSelect(value, 0)}
-                            disabled
-                          >
-                            {districts[0]?.map((district: string, index: number) => (
-                              <Select.Option key={district + index} value={district}>
-                                {district}
-                              </Select.Option>
-                            ))}
-                          </Select>
-                        </Form.Item>
-
-                        <Form.Item
-                          label={t('monitoringReport:pa_city')}
-                          name="pa_city"
-                          rules={[
-                            {
-                              required: true,
-                              message: `${t('monitoringReport:pa_city')} ${t('isRequired')}`,
-                            },
-                          ]}
-                        >
-                          <Select
-                            size="large"
-                            // placeholder={t('PDD:cityPlaceholder')}
-                            disabled
-                          >
-                            {cities[0]?.map((city: string, index) => (
-                              <Select.Option value={city} key={city + index}>
-                                {city}
-                              </Select.Option>
-                            ))}
-                          </Select>
-                        </Form.Item>
-
-                        <Form.Item
-                          label={t('monitoringReport:community')}
-                          name="community"
-                          rules={[
-                            {
-                              required: true,
-                              message: `${t('monitoringReport:community')} ${t('isRequired')}`,
-                            },
-                          ]}
-                        >
-                          <Input size="large" disabled />
-                        </Form.Item>
-                      </div>
-                    </Col>
-
-                    <Col xl={12} md={24}>
-                      <Form.Item
-                        label={t('monitoringReport:setLocation')}
-                        name="location"
-                        rules={[
-                          {
-                            required: true,
-                            message: `${t('monitoringReport:setLocation')} ${t('isRequired')}`,
-                          },
-                        ]}
-                      >
-                        <GetLocationMapComponent
-                          form={form}
-                          formItemName={'location'}
-                          existingCordinate={form.getFieldValue('location')}
-                          disabled={disableFields}
-                        />
-                      </Form.Item>
-                    </Col>
-
-                    <Col xl={24} md={24}>
-                      <Form.Item
-                        label={t('monitoringReport:pa_uploadImages')}
-                        name="pa_uploadImages"
-                        valuePropName="fileList"
-                        getValueFromEvent={normFile}
-                        required={false}
-                        rules={[
-                          {
-                            validator: async (rule, file) => {
-                              if (file?.length > 0) {
-                                if (file[0]?.size > maximumImageSize) {
-                                  // default size format of files would be in bytes -> 1MB = 1000000bytes
-                                  throw new Error(`${t('common:maxSizeVal')}`);
-                                }
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <Upload
-                          accept=".doc, .docx, .pdf, .png, .jpg"
-                          beforeUpload={(file: any) => {
-                            return false;
-                          }}
-                          className="design-upload-section"
-                          name="design"
-                          action="/upload.do"
-                          listType="picture"
-                          multiple={false}
-                          disabled={disableFields}
-                          // maxCount={1}
-                        >
-                          <Button
-                            className="upload-doc"
-                            size="large"
-                            icon={<UploadOutlined />}
-                            disabled
-                          >
-                            Upload
-                          </Button>
-                        </Upload>
-                      </Form.Item>
-                    </Col>
-                  </Row> */}
 
                   {/* ----------------------handle dynamic fields  ---------------------------*/}
                   <Form.List name="locationsDetails">
@@ -515,7 +293,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   size="large"
                                   className="addMinusBtn"
                                   // block
-                                  disabled
+                                  disabled={disableFields}
                                   icon={<MinusOutlined />}
                                 >
                                   {/* Remove Entity */}
@@ -523,9 +301,6 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                               </Form.Item>
                             </div>
 
-                            {/* <h4 className="form-section-title">
-                                  {`${t('monitoringReport:locationOfProjectActivity')}`}
-                                </h4> */}
                             <Row
                               justify={'space-between'}
                               gutter={[40, 16]}
@@ -559,7 +334,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled />
+                                  <Input size="large" disabled={disableFields} />
                                 </Form.Item>
 
                                 <Form.Item
@@ -586,7 +361,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled />
+                                  <Input size="large" disabled={disableFields} />
                                 </Form.Item>
 
                                 <Form.Item
@@ -617,7 +392,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     size="large"
                                     onChange={(value) => onProvinceSelect(value, name + 1)}
                                     // placeholder={t('PDD:provincePlaceholder')}
-                                    disabled
+                                    disabled={disableFields}
                                   >
                                     {provinces.map((province: string, index: number) => (
                                       <Select.Option value={province} key={name + province + index}>
@@ -655,7 +430,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     size="large"
                                     // placeholder={t('PDD:districtPlaceholder')}
                                     onSelect={(value) => onDistrictSelect(value, name + 1)}
-                                    disabled
+                                    disabled={disableFields}
                                   >
                                     {districts[name + 1]?.map((district: string, index: number) => (
                                       <Select.Option key={name + district + index} value={district}>
@@ -692,7 +467,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   <Select
                                     size="large"
                                     // placeholder={t('PDD:cityPlaceholder')}
-                                    disabled
+                                    disabled={disableFields}
                                   >
                                     {cities[name + 1]?.map((city: string, index: number) => (
                                       <Select.Option value={city} key={name + city + index}>
@@ -725,7 +500,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled />
+                                  <Input size="large" disabled={disableFields} />
                                 </Form.Item>
                               </Col>
 
@@ -827,7 +602,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                               className="addMinusBtn"
                               // block
                               icon={<PlusOutlined />}
-                              disabled
+                              disabled={disableFields}
                             >
                               {/* Add Entity */}
                             </Button>
@@ -884,7 +659,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input />
+                                <Input disabled={disableFields} />
                               </Form.Item>
                             </div>
                             <div className="col-2">
@@ -922,7 +697,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                             },
                                           ]}
                                         >
-                                          <Input />
+                                          <Input disabled={disableFields} />
                                         </Form.Item>
 
                                         <Form.Item>
@@ -970,6 +745,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         <div>
                           <Form.Item>
                             <Button
+                              disabled={disableFields}
                               onClick={() => {
                                 // add();
                                 const temp = form.getFieldValue('projectParticipants');
@@ -1068,7 +844,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
                   </div>
                   <LabelWithTooltip
@@ -1106,6 +882,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         <DatePicker
                           size="large"
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                          disabled={disableFields}
                           // onChange={() => updateCreditingPeriodDuration()}
                         />
                       </Form.Item>
@@ -1143,6 +920,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         <DatePicker
                           size="large"
                           disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                          disabled={disableFields}
                           // onChange={() => updateCreditingPeriodDuration()}
                         />
                       </Form.Item>
@@ -1164,7 +942,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" />
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
