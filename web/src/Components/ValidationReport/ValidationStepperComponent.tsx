@@ -164,6 +164,59 @@ const StepperComponent = (props: any) => {
   const [form8] = useForm();
   const [form9] = useForm();
 
+  const getProgrammeDetailsById = async (programId: any) => {
+    try {
+      setLoading(true);
+      const { data } = await post(API_PATHS.PROGRAMME_BY_ID, {
+        programmeId: programId,
+      });
+      // const {
+      //   data: { user },
+      // } = await get(API_PATHS.USER_PROFILE);
+      if (state?.mode === FormMode?.CREATE) {
+        console.log('-------data INF ---------', data);
+        form1.setFieldsValue({
+          titleOfTheProjectActivity: data?.title,
+          mandatarySectoralScopes: data?.sectoralScope,
+        });
+      }
+      setExistingFormValues((prevVal) => ({
+        ...prevVal,
+        // companyId: data?.company?.companyId,
+      }));
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPDDData = async () => {
+    try {
+      const { data } = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documentRefId,
+        documentEnum: DocumentEnum.VALIDATION,
+      });
+      console.log('-----------data----------', data);
+      if (state?.mode === FormMode?.CREATE) {
+        console.log('-----data.data---------', data?.data);
+        const participants =
+          data?.data?.projectActivity?.projectParticipants?.map((participantObj: any) =>
+            participantObj.projectParticipants?.map((p: any) => p.participant)
+          ) || [];
+
+        form1.setFieldsValue({
+          versionNumberPDD: data?.version,
+          projectParticipants: participants.join(', '),
+          hostParty: data?.data?.projectDetails?.hostParty,
+          creditingPeriod: data?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
+        });
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+
   // const getProgrammeDetailsById = async (id: string) => {
   //   try {
   //     const { data } = await post(API_PATHS.PROJECT_BY_ID, {
@@ -374,6 +427,13 @@ const StepperComponent = (props: any) => {
       return { ...prevVal, data: tempContent };
     });
   };
+
+  useEffect(() => {
+    if (id) {
+      getProgrammeDetailsById(id);
+      getPDDData();
+    }
+  }, [id]);
 
   useEffect(() => {
     const getViewData = async () => {
