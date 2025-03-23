@@ -483,8 +483,9 @@ export class VerificationDocumentService extends DocumentService {
                         documentEntity?.project?.organization?.hederaAccountId,
                     privateKey:
                         documentEntity?.project?.organization?.hederaAccountKey,
-                    projectRefId: documentEntity?.project?.refId,
-                    receiverRefId: documentEntity?.project?.organization?.refId,
+                    projectId: documentEntity?.project?.refId,
+                    receiverId: documentEntity?.project?.organization?.id,
+                    userId: jwtData.userId,
                 };
 
                 const asyncTask: TaskEntity = {
@@ -556,6 +557,7 @@ export class VerificationDocumentService extends DocumentService {
                     documentEntity?.project?.refId,
                     ProjectAuditLogType.VERIFICATION_REPORT_REJECTED,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const activityDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
