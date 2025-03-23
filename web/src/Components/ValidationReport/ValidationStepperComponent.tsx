@@ -196,7 +196,7 @@ const StepperComponent = (props: any) => {
     try {
       const { data } = await post(API_PATHS.QUERY_DOCUMENT, {
         refId: state?.documentRefId,
-        documentEnum: DocumentEnum.VALIDATION,
+        documentType: DocumentEnum.PDD,
       });
       console.log('-----------data----------', data);
       if (state?.mode === FormMode?.CREATE) {
