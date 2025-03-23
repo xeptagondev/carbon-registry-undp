@@ -40,33 +40,6 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
     return e?.fileList;
   };
 
-  //API call to fetch location of project activity data from PDD
-  const fetchLocationData = async () => {
-    //test with hardcoded values
-    return [
-      {
-        locationOfProjectActivity: 'Solar Power Plant',
-        pa_siteNo: 'SPP-001',
-        province: 'Western Province',
-        district: 'Colombo',
-        pa_city: 'Colombo',
-        community: 'Downtown',
-        // geographicalLocationCoordinates: { lat: 6.9271, lng: 79.8612 },
-        // uploadImages: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
-      },
-      // {
-      //   locationOfProjectActivity: 'Los Angeles',
-      //   pa_siteNo: '002',
-      //   province: 'California',
-      //   district: 'Los Angeles',
-      //   pa_city: 'Los Angeles',
-      //   community: 'Beverly Hills',
-      //   geographicalLocationCoordinates: { lat: 34.0522, lng: -118.2437 },
-      //   uploadImages: ['https://example.com/image3.jpg'],
-      // },
-    ];
-  };
-
   const getProvinces = async () => {
     try {
       const { data } = await post(API_PATHS.PROVINCES);
@@ -116,27 +89,6 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
 
   useEffect(() => {
     getProvinces();
-
-    //populate the fields with PDD location data
-    const loadData = async () => {
-      const data = await fetchLocationData();
-      setLocationData(data);
-      console.log(data);
-      if (data.length > 0) {
-        form.setFieldsValue({
-          locationsDetails: data.map((item) => ({
-            locationOfProjectActivity: item.locationOfProjectActivity,
-            pa_siteNo: item.pa_siteNo,
-            province: item.province,
-            district: item.district,
-            pa_city: item.pa_city,
-            community: item.community,
-            // location: item.geographicalLocationCoordinates,
-          })),
-        });
-      }
-    };
-    loadData();
   }, [form]);
 
   const onProvinceSelect = async (value: any, index: number) => {
@@ -183,20 +135,17 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
     const locationDetailsOfProjectActivity = await (async function () {
       const tempList: any[] = [];
 
-      if (values?.locationsDetails) {
-        for (const item of values.locationsDetails) {
+      if (values?.extraLocations) {
+        for (const item of values.extraLocations) {
           const tempObj = {
             locationOfProjectActivity: item.locationOfProjectActivity, // Use item, not values
-            siteNo: item.pa_siteNo,
+            siteNo: item.siteNo,
             province: item.province,
             district: item.district,
-            city: item.pa_city,
+            city: item.city,
             community: item.community,
             geographicalLocationCoordinates: item.geographicalLocationCoordinates, // Use item, not values
-            pa_uploadImages: await fileUploadValueExtract(
-              values?.pa_uploadImages,
-              'pa_uploadImages'
-            ),
+            uploadImages: await fileUploadValueExtract(values?.uploadImages, 'uploadImages'),
           };
           tempList.push(tempObj);
         }
@@ -268,7 +217,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                   )}`}</h3>
 
                   {/* ----------------------handle dynamic fields  ---------------------------*/}
-                  <Form.List name="locationsDetails">
+                  <Form.List name="extraLocations">
                     {(fields, { add, remove }) => (
                       <>
                         {fields.map(({ key, name, ...restField }) => (
@@ -334,12 +283,12 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled={disableFields} />
+                                  <Input size="large" disabled />
                                 </Form.Item>
 
                                 <Form.Item
                                   label={t('monitoringReport:pa_siteNo')}
-                                  name={[name, 'pa_siteNo']}
+                                  name={[name, 'siteNo']}
                                   rules={[
                                     {
                                       required: true,
@@ -361,7 +310,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled={disableFields} />
+                                  <Input size="large" disabled />
                                 </Form.Item>
 
                                 <Form.Item
@@ -392,7 +341,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     size="large"
                                     onChange={(value) => onProvinceSelect(value, name + 1)}
                                     // placeholder={t('PDD:provincePlaceholder')}
-                                    disabled={disableFields}
+                                    disabled
                                   >
                                     {provinces.map((province: string, index: number) => (
                                       <Select.Option value={province} key={name + province + index}>
@@ -430,7 +379,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     size="large"
                                     // placeholder={t('PDD:districtPlaceholder')}
                                     onSelect={(value) => onDistrictSelect(value, name + 1)}
-                                    disabled={disableFields}
+                                    disabled
                                   >
                                     {districts[name + 1]?.map((district: string, index: number) => (
                                       <Select.Option key={name + district + index} value={district}>
@@ -442,7 +391,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
 
                                 <Form.Item
                                   label={t('monitoringReport:pa_city')}
-                                  name={[name, 'pa_city']}
+                                  name={[name, 'city']}
                                   rules={[
                                     {
                                       required: true,
@@ -467,7 +416,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   <Select
                                     size="large"
                                     // placeholder={t('PDD:cityPlaceholder')}
-                                    disabled={disableFields}
+                                    disabled
                                   >
                                     {cities[name + 1]?.map((city: string, index: number) => (
                                       <Select.Option value={city} key={name + city + index}>
@@ -500,14 +449,14 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled={disableFields} />
+                                  <Input size="large" disabled />
                                 </Form.Item>
                               </Col>
 
                               <Col xl={12} md={24}>
                                 <Form.Item
                                   label={t('monitoringReport:setLocation')}
-                                  name={[name, 'location']}
+                                  name={[name, 'geographicalLocationCoordinates']}
                                   // rules={[
                                   //   {
                                   //     required: true,
@@ -533,11 +482,12 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                 >
                                   <GetLocationMapComponent
                                     form={form}
-                                    formItemName={[name, 'location']}
+                                    formItemName={[name, 'geographicalLocationCoordinates']}
                                     listName="locationsDetails"
-                                    disabled={disableFields}
+                                    disabled
                                     existingCordinate={
-                                      form?.getFieldValue('locationsDetails')[name]?.location
+                                      form?.getFieldValue('extraLocations')[name]
+                                        ?.geographicalLocationCoordinates
                                     }
                                   />
                                 </Form.Item>
@@ -546,7 +496,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                               <Col xl={24} md={24}>
                                 <Form.Item
                                   label={t('monitoringReport:pa_uploadImages')}
-                                  name={[name, 'pa_uploadImages']}
+                                  name={[name, 'uploadImages']}
                                   valuePropName="fileList"
                                   getValueFromEvent={normFile}
                                   required={false}
@@ -573,7 +523,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     action="/upload.do"
                                     listType="picture"
                                     multiple={false}
-                                    disabled={disableFields}
+                                    disabled
                                     // maxCount={1}
                                   >
                                     <Button
@@ -659,7 +609,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input disabled={disableFields} />
+                                <Input disabled />
                               </Form.Item>
                             </div>
                             <div className="col-2">
@@ -697,7 +647,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                             },
                                           ]}
                                         >
-                                          <Input disabled={disableFields} />
+                                          <Input disabled />
                                         </Form.Item>
 
                                         <Form.Item>
@@ -710,7 +660,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                             className="addMinusBtn"
                                             // block
                                             icon={<PlusOutlined />}
-                                            disabled={disableFields}
+                                            disabled
                                           >
                                             {/* Add Participant */}
                                           </Button>
@@ -727,7 +677,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                               className="addMinusBtn"
                                               // block
                                               icon={<MinusOutlined />}
-                                              disabled={disableFields}
+                                              disabled
                                             >
                                               {/* Minus Participant */}
                                             </Button>
@@ -745,7 +695,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         <div>
                           <Form.Item>
                             <Button
-                              disabled={disableFields}
+                              disabled
                               onClick={() => {
                                 // add();
                                 const temp = form.getFieldValue('projectParticipants');
@@ -942,7 +892,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
                   </div>
                 </Col>
