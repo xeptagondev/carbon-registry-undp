@@ -139,7 +139,7 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
                   <Button
                     className="document-action-btn"
                     onClick={() => {
-                      navigateToMonitoringReport(tempVerificationReportPermissions);
+                      navigateToVerificationReport(tempVerificationReportPermissions);
                     }}
                     disabled={tempVerificationReportPermissions?.mode === FormMode?.DISABLED}
                   >
