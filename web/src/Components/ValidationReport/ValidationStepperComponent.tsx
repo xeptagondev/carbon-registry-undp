@@ -210,6 +210,24 @@ const StepperComponent = (props: any) => {
           projectParticipants: participants.join(', '),
           hostParty: data?.data?.projectDetails?.hostParty,
           creditingPeriod: data?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
+          creditingPeriodStart: moment(
+            data?.data?.startDateCreditingPeriod?.projectCreditingPeriodStartDate * 1000
+          ),
+          creditingPeriodEnd: moment(
+            data?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate * 1000
+          ),
+          locationOfProjectActivity:
+            data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.locationOfProjectActivity,
+          siteNo: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.siteNo,
+          province: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.province,
+          district: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.district,
+          city: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.city,
+          community: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.community,
+          geographicalLocationCoordinates:
+            data?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+              ?.geographicalLocationCoordinates,
+          //handle additional docs
+          extraLocations: data?.data?.projectActivity?.locationsOfProjectActivity?.slice(1),
         });
       }
     } catch (error) {
