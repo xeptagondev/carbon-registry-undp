@@ -88,7 +88,6 @@ export class AnalyticsService {
         };
     }
 
-    // TODO: Filterations based on activity states are to be clarified
     async getPendingActions(jwtData: JWTPayload) {
         // if DNA
         if (
@@ -98,7 +97,7 @@ export class AnalyticsService {
             // get projects with pending actions
             const statesList = [
                 ProjectProposalStage.PENDING,
-                ProjectProposalStage.APPROVED,
+                // ProjectProposalStage.APPROVED,
                 ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER,
                 ProjectProposalStage.VALIDATION_REPORT_SUBMITTED,
             ];
@@ -112,7 +111,7 @@ export class AnalyticsService {
             // get projects with activity states
             const activityStatesList = [
                 ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
-                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
+                // ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
             ];
 
             const activityResults = await this.projectRepository.find({
