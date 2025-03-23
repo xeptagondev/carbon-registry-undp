@@ -142,7 +142,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
               // dsDivision: item?.dsDivision,
               city: item?.city,
               community: item?.community,
-              geographicalLocationCoordinates: item?.location,
+              geographicalLocationCoordinates: item?.geographicalLocationCoordinates,
               additionalDocuments: await (async function () {
                 const base64Docs: string[] = [];
 
@@ -562,12 +562,12 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <DatePicker size="large" disabled={disableFields} />
+                        <DatePicker size="large" disabled />
                       </Form.Item>
                       <p className="crediting-period-duration-to">to</p>
                       <Form.Item
                         // label={t('validationReport:creditingPeriod')}
-                        name="creditingPeriodStart"
+                        name="creditingPeriodEnd"
                         rules={[
                           {
                             required: true,
@@ -575,7 +575,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <DatePicker size="large" disabled={disableFields} />
+                        <DatePicker size="large" disabled />
                       </Form.Item>
                     </div>
                   </Col>
@@ -626,7 +626,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <Input size="large" disabled={disableFields} />
+                        <Input size="large" disabled />
                       </Form.Item>
 
                       <Form.Item
@@ -653,7 +653,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <Input size="large" disabled={disableFields} />
+                        <Input size="large" disabled />
                       </Form.Item>
 
                       <Form.Item
@@ -682,7 +682,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                       >
                         <Select
                           size="large"
-                          disabled={disableFields}
+                          disabled
                           onChange={(value) => onProvinceSelect(value, 0)}
                           // placeholder={t('validationReport:provincePlaceholder')}
                           // disabled={disableFields}
@@ -721,7 +721,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                       >
                         <Select
                           size="large"
-                          disabled={disableFields}
+                          disabled
                           // placeholder={t('validationReport:districtPlaceholder')}
                           onSelect={(value) => onDistrictSelect(value, 0)}
                           // disabled={disableFields}
@@ -793,7 +793,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         <Select
                           size="large"
                           // placeholder={t('validationReport:cityPlaceholder')}
-                          disabled={disableFields}
+                          disabled
                         >
                           {cities[0]?.map((city: string, index) => (
                             <Select.Option value={city} key={city + index}>
@@ -826,14 +826,14 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <Input size="large" disabled={disableFields} />
+                        <Input size="large" disabled />
                       </Form.Item>
                     </Col>
 
                     <Col xl={12} md={24}>
                       <Form.Item
                         label={t('validationReport:setLocation')}
-                        name="location"
+                        name="geographicalLocationCoordinates"
                         rules={[
                           {
                             required: true,
@@ -857,9 +857,9 @@ const BasicInformation = (props: ValidationStepsProps) => {
                       >
                         <GetLocationMapComponent
                           form={form}
-                          formItemName={'location'}
-                          existingCordinate={form.getFieldValue('location')}
-                          disabled={disableFields}
+                          formItemName={'geographicalLocationCoordinates'}
+                          existingCordinate={form.getFieldValue('geographicalLocationCoordinates')}
+                          disabled
                         />
                       </Form.Item>
                     </Col>
@@ -936,7 +936,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                 size="large"
                                 className="addMinusBtn"
                                 // block
-                                disabled={disableFields}
+                                disabled
                                 icon={<MinusOutlined />}
                               >
                                 {/* Remove Entity */}
@@ -979,7 +979,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled={disableFields} />
+                                  <Input size="large" disabled />
                                 </Form.Item>
 
                                 <Form.Item
@@ -1006,7 +1006,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled={disableFields} />
+                                  <Input size="large" disabled />
                                 </Form.Item>
 
                                 <Form.Item
@@ -1037,7 +1037,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                     size="large"
                                     onChange={(value) => onProvinceSelect(value, name + 1)}
                                     // placeholder={t('validationReport:provincePlaceholder')}
-                                    disabled={disableFields}
+                                    disabled
                                   >
                                     {provinces.map((province: string, index: number) => (
                                       <Select.Option value={province} key={name + province + index}>
@@ -1075,7 +1075,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                     size="large"
                                     // placeholder={t('validationReport:districtPlaceholder')}
                                     onSelect={(value) => onDistrictSelect(value, name + 1)}
-                                    disabled={disableFields}
+                                    disabled
                                   >
                                     {districts[name + 1]?.map((district: string, index: number) => (
                                       <Select.Option key={name + district + index} value={district}>
@@ -1153,7 +1153,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                   <Select
                                     size="large"
                                     // placeholder={t('validationReport:cityPlaceholder')}
-                                    disabled={disableFields}
+                                    disabled
                                   >
                                     {cities[name + 1]?.map((city: string, index: number) => (
                                       <Select.Option value={city} key={name + city + index}>
@@ -1186,14 +1186,14 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input size="large" disabled={disableFields} />
+                                  <Input size="large" disabled />
                                 </Form.Item>
                               </Col>
 
                               <Col xl={12} md={24}>
                                 <Form.Item
                                   label={t('validationReport:setLocation')}
-                                  name={[name, 'location']}
+                                  name={[name, 'geographicalLocationCoordinates']}
                                   rules={[
                                     {
                                       required: true,
@@ -1217,11 +1217,12 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                 >
                                   <GetLocationMapComponent
                                     form={form}
-                                    formItemName={[name, 'location']}
+                                    formItemName={[name, 'geographicalLocationCoordinates']}
                                     listName="extraLocations"
-                                    disabled={disableFields}
+                                    disabled
                                     existingCordinate={
-                                      form?.getFieldValue('extraLocations')[name]?.location
+                                      form?.getFieldValue('extraLocations')[name]
+                                        ?.geographicalLocationCoordinates
                                     }
                                   />
                                 </Form.Item>
@@ -1257,7 +1258,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                     action="/upload.do"
                                     listType="picture"
                                     multiple={false}
-                                    disabled={disableFields}
+                                    disabled
                                     // maxCount={1}
                                   >
                                     <Button
@@ -1276,7 +1277,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         </>
                       ))}
 
-                      <div className="form-list-actions">
+                      {/* <div className="form-list-actions">
                         <Form.Item>
                           <Button
                             // type="dashed"
@@ -1289,10 +1290,10 @@ const BasicInformation = (props: ValidationStepsProps) => {
                             icon={<PlusOutlined />}
                             disabled={disableFields}
                           >
-                            {/* Add Entity */}
+                            Add Entity
                           </Button>
                         </Form.Item>
-                      </div>
+                      </div> */}
                     </>
                   )}
                 </Form.List>
