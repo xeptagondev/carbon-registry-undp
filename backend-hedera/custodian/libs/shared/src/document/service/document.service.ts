@@ -301,14 +301,16 @@ export abstract class DocumentService {
 
     protected async logProjectStage(
         queryRunner: QueryRunner,
-        refId: string,
+        projetId: string,
         type: ProjectAuditLogType,
         userId: number,
+        data?: any,
     ): Promise<void> {
         const log = new AuditEntity();
-        log.refId = refId;
+        log.projectId = projetId;
         log.logType = type;
         log.userId = userId;
+        log.data = data;
 
         await queryRunner.manager.save(AuditEntity, log);
     }

@@ -26,6 +26,9 @@ import { RetireNFTJobPayload } from '../constant/retire-nft-payload';
 import { TransferNFTJobPayload } from '../constant/transfer-nft-payload';
 import { CreditsRetireView } from '../entity/credit.retire.view.entity';
 import { plainToClass } from 'class-transformer';
+import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
+import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
+import { RoleEnum } from '@app/shared/role/enum/role.enum';
 
 @Injectable()
 export class CarbonCreditService {
@@ -45,8 +48,9 @@ export class CarbonCreditService {
             amount,
             accountId,
             privateKey,
-            projectRefId,
-            receiverRefId,
+            projectId,
+            receiverId,
+            userId,
         } = job;
 
         try {
@@ -68,11 +72,21 @@ export class CarbonCreditService {
                         tokenId,
                         batchSerialNumber,
                         serial.toNumber(),
-                        projectRefId,
-                        receiverRefId,
+                        projectId,
+                        receiverId,
                         queryRunner,
                     );
                 }
+                const log = new AuditEntity();
+                log.projectId = projectId;
+                log.logType = ProjectAuditLogType.CREDITS_ISSUED;
+                log.userId = userId;
+                log.data = {
+                    amount: amount,
+                    toCompanyId: receiverId,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
                 await queryRunner.commitTransaction();
             } catch (error) {
                 await queryRunner.rollbackTransaction();
@@ -91,13 +105,13 @@ export class CarbonCreditService {
     }
 
     async handleTransferJob(job: TransferNFTJobPayload): Promise<any> {
-        const { projectId, receiverOrgId, amount } = job;
+        const { projectId, receiverOrgId, senderOrgId, amount, userId } = job;
 
         try {
             const project = await this.dataSource
                 .getRepository(ProjectEntity)
                 .findOne({
-                    where: { id: projectId },
+                    where: { refId: projectId },
                     relations: ['organization'],
                 });
             if (!project) {
@@ -209,6 +223,17 @@ export class CarbonCreditService {
                         );
                     transferStatuses.push(status);
                 }
+                const log = new AuditEntity();
+                log.projectId = projectId;
+                log.logType = ProjectAuditLogType.CREDIT_TRANSFERED;
+                log.userId = userId;
+                log.data = {
+                    amount: amount,
+                    toCompanyId: receiverOrgId,
+                    fromCompanyId: senderOrgId,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
                 await queryRunner.commitTransaction();
             } catch (error) {
                 await queryRunner.rollbackTransaction();
@@ -228,7 +253,7 @@ export class CarbonCreditService {
     }
 
     async handleRetirementJob(job: RetireNFTJobPayload): Promise<any> {
-        const { projectId, transferId } = job;
+        const { projectId, transferId, userId } = job;
 
         try {
             this.logger.log(
@@ -240,7 +265,7 @@ export class CarbonCreditService {
             const project = await this.dataSource
                 .getRepository(ProjectEntity)
                 .findOne({
-                    where: { id: projectId },
+                    where: { refId: projectId },
                     relations: ['organization'],
                 });
 
@@ -330,6 +355,17 @@ export class CarbonCreditService {
                         status: CreditEventStatusEnum.COMPLETED,
                     }),
                 );
+
+                const log = new AuditEntity();
+                log.projectId = projectId;
+                log.logType = ProjectAuditLogType.RETIRE_APPROVED;
+                log.userId = userId;
+                log.data = {
+                    amount: serialsToRetire.length,
+                    fromCompanyId: senderOrg.id,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
 
                 await queryRunner.commitTransaction();
                 this.logger.log(
@@ -473,23 +509,43 @@ export class CarbonCreditService {
         this.logger.log(
             `Request received to transfer the tokens from ${user.userName}`,
         );
-        const payload: TransferNFTJobPayload = {
-            projectId: transferDto.projectId,
-            receiverOrgId: transferDto.receiverOrgId,
-            amount: transferDto.amount,
-        };
+        if (
+            !(
+                user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                user.userRole === RoleEnum.Admin
+            )
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
 
-        const asyncTask: TaskEntity = {
-            className: 'CarbonCreditService',
-            functionName: 'handleTransferJob',
-            args: [payload],
-            retryAttemps: 2,
-            state: TaskEnum.PENDING,
-        };
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
+            const project = await queryRunner.manager.findOne(ProjectEntity, {
+                where: { id: transferDto.projectId },
+                relations: { organization: true },
+            });
+
+            if (!project) {
+                throw new Error('Project not found');
+            }
+            const payload: TransferNFTJobPayload = {
+                projectId: project.refId,
+                receiverOrgId: transferDto.receiverOrgId,
+                senderOrgId: user.organizationId,
+                amount: transferDto.amount,
+                userId: user.userId,
+            };
+
+            const asyncTask: TaskEntity = {
+                className: 'CarbonCreditService',
+                functionName: 'handleTransferJob',
+                args: [payload],
+                retryAttemps: 2,
+                state: TaskEnum.PENDING,
+            };
             await queryRunner.manager.save(TaskEntity, asyncTask);
             await queryRunner.commitTransaction();
             return new DataResponseDto(
@@ -535,6 +591,15 @@ export class CarbonCreditService {
                 );
             }
 
+            const project = await queryRunner.manager.findOne(ProjectEntity, {
+                where: { id: retireAction.projectId },
+                relations: { organization: true },
+            });
+
+            if (!project) {
+                throw new Error('Project not found');
+            }
+
             if (retireAction.action === RetirementACtionEnum.ACCEPT) {
                 this.logger.log(
                     `Accepting retire request ${retireAction.transferId}`,
@@ -542,7 +607,8 @@ export class CarbonCreditService {
 
                 const payload: RetireNFTJobPayload = {
                     transferId: retireAction.transferId,
-                    projectId: retireAction.projectId,
+                    projectId: project.refId,
+                    userId: user.userId,
                 };
                 const asyncTask: TaskEntity = {
                     className: 'CarbonCreditService',
@@ -669,17 +735,17 @@ export class CarbonCreditService {
         tokenId: string,
         batchSerialNumber: string,
         serialNumber: number,
-        projectRefId: string,
-        receiverRefId: string,
+        projectId: string,
+        receiverId: number,
         queryRunner: QueryRunner,
     ): Promise<CreditEventsEntity> {
         const project = await queryRunner.manager.findOne(ProjectEntity, {
-            where: { refId: projectRefId },
+            where: { refId: projectId },
         });
         const organization = await queryRunner.manager.findOne(
             OrganizationEntity,
             {
-                where: { refId: receiverRefId },
+                where: { id: receiverId },
             },
         );
         if (!project || !organization) {
