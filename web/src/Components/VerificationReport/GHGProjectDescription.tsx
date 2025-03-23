@@ -581,7 +581,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                   placeholder="Start Date"
                                   picker="month"
                                   format="YYYY MMM"
-                                  disabled={disableFields}
+                                  disabled
                                   // disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                                 />
                               </Form.Item>
@@ -629,7 +629,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                   picker="month"
                                   format="YYYY MMM"
                                   onChange={(value) => onPeriodEndChange(value, 1)}
-                                  disabled={disableFields}
+                                  disabled
                                   disabledDate={(currentDate: any) =>
                                     currentDate <
                                     moment(form.getFieldValue('emissionsPeriodStart')).startOf(
@@ -671,7 +671,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                               >
                                 <Input
                                   type="number"
-                                  disabled={disableFields}
+                                  disabled
                                   onChange={(value) => {
                                     calculateNetGHGEmissions(value);
                                     calculateTotalEmissions(
@@ -719,7 +719,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                               >
                                 <Input
                                   type="number"
-                                  disabled={disableFields}
+                                  disabled
                                   onChange={(value) => {
                                     calculateNetGHGEmissions(value);
                                     calculateTotalEmissions(
@@ -767,7 +767,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                               >
                                 <Input
                                   type="number"
-                                  disabled={disableFields}
+                                  disabled
                                   onChange={(value) => {
                                     calculateNetGHGEmissions(value);
                                     calculateTotalEmissions(
@@ -859,7 +859,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                         >
                                           <DatePicker
                                             size="large"
-                                            disabled={disableFields}
+                                            disabled
                                             placeholder="Start Date"
                                             picker="month"
                                             format="YYYY MMM"
@@ -911,7 +911,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                         >
                                           <DatePicker
                                             size="large"
-                                            disabled={disableFields}
+                                            disabled
                                             placeholder="End Date"
                                             picker="month"
                                             format="YYYY MMM"
@@ -968,7 +968,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                         >
                                           <Input
                                             type="number"
-                                            disabled={disableFields}
+                                            disabled
                                             onChange={(value) => {
                                               calculateNetGHGEmissions(value, name);
                                               calculateTotalEmissions(
@@ -1024,7 +1024,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                         >
                                           <Input
                                             type="number"
-                                            disabled={disableFields}
+                                            disabled
                                             onChange={(value) => {
                                               calculateNetGHGEmissions(value, name);
                                               calculateTotalEmissions(
@@ -1080,7 +1080,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                         >
                                           <Input
                                             type="number"
-                                            disabled={disableFields}
+                                            disabled
                                             onChange={(value) => {
                                               calculateNetGHGEmissions(value, name);
                                               calculateTotalEmissions(
@@ -1164,7 +1164,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                             size="small"
                                             className="addMinusBtn"
                                             icon={<MinusOutlined />}
-                                            disabled={disableFields}
+                                            disabled
                                           >
                                             {/* Add Entity */}
                                           </Button>
@@ -1185,7 +1185,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                                     className="addMinusBtn"
                                     // block
                                     icon={<PlusOutlined />}
-                                    disabled={disableFields}
+                                    disabled
                                   >
                                     {/* Add Entity */}
                                   </Button>
