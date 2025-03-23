@@ -15,6 +15,7 @@ import {
 import { ProjectDataRequestDTO } from '../dto/project-data-request.dto';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
+import { ProjectSectorEnum } from '@app/shared/project/enum/project.sector.enum';
 
 @Injectable()
 export class AnalyticsService {
@@ -413,6 +414,11 @@ export class AnalyticsService {
             ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
         ];
 
+        const allLogTypes = [
+            ...nonAuthorisedLogTypes,
+            ProjectAuditLogType.AUTHORISED,
+        ];
+
         const subQuery = this.auditRepository
             .createQueryBuilder('sub_audit')
             .select('sub_audit.projectId', 'projectId')
@@ -442,19 +448,16 @@ export class AnalyticsService {
                 startDate: filters.startDate,
             });
         }
-
         if (filters?.endDate) {
             latestStatusQb.andWhere('audit.createdTime <= :endDate', {
                 endDate: filters.endDate,
             });
         }
-
         if (filters?.sector) {
             latestStatusQb.andWhere('project.sectoralScope = :sector', {
                 sector: filters.sector,
             });
         }
-
         if (filters?.isMine) {
             if (
                 jwtData.organizationRole ===
@@ -496,19 +499,16 @@ export class AnalyticsService {
                 startDate: filters.startDate,
             });
         }
-
         if (filters?.endDate) {
             authorisedQb.andWhere('audit.createdTime <= :endDate', {
                 endDate: filters.endDate,
             });
         }
-
         if (filters?.sector) {
             authorisedQb.andWhere('project.sectoralScope = :sector', {
                 sector: filters.sector,
             });
         }
-
         if (filters?.isMine) {
             if (
                 jwtData.organizationRole ===
@@ -533,13 +533,14 @@ export class AnalyticsService {
         const authorisedProjects = await authorisedQb.getRawMany();
         const authorisedCount = authorisedProjects.length;
 
-        const formatted = latestResult.reduce(
-            (acc, row) => {
-                acc[row.logType] = parseInt(row.count, 10);
-                return acc;
-            },
-            {} as Record<string, number>,
-        );
+        const formatted: Record<string, number> = {};
+        allLogTypes.forEach((logType) => {
+            formatted[logType] = 0;
+        });
+
+        for (const row of latestResult) {
+            formatted[row.logType] = parseInt(row.count, 10);
+        }
 
         formatted[ProjectAuditLogType.AUTHORISED] = authorisedCount;
 
@@ -603,8 +604,14 @@ export class AnalyticsService {
         const result = await qb.getRawMany();
 
         const response: Record<string, number> = {};
+        for (const sectorKey in ProjectSectorEnum) {
+            const sectorName = ProjectSectorEnum[sectorKey];
+            response[sectorName] = 0;
+        }
+
         for (const row of result) {
-            response[row.sector ?? 'Unknown'] = parseInt(row.count, 10);
+            const sector = row.sector ?? 'Unknown';
+            response[ProjectSectorEnum[sector]] = parseInt(row.count, 10);
         }
 
         return response;
