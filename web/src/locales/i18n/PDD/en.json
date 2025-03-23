@@ -222,6 +222,6 @@
   "checkboxMessage": "I understand that this aciton cannot be undone",
   "reject": "REJECT",
   "certifyMessage": "Are you sure you want to certify this Project Design Document?",
-  "approveMessage": "Are you sure you want to approve this Project Design Documentt?",
+  "approveMessage": "Are you sure you want to approve this Project Design Document?",
   "approve": "approve"
 }

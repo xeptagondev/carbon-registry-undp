@@ -62,12 +62,18 @@ export class CreditEventsEntity {
 
     @BeforeInsert()
     generateRefId() {
-        this.createdDate = Date.now();
-        this.updatedDate = Date.now();
+        if (!this.createdDate) {
+            this.createdDate = Date.now();
+        }
+        if (!this.updatedDate) {
+            this.updatedDate = Date.now();
+        }
     }
 
     @BeforeUpdate()
     updateDate() {
-        this.updatedDate = Date.now();
+        if (!this.updatedDate) {
+            this.updatedDate = Date.now();
+        }
     }
 }

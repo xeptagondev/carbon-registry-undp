@@ -10,7 +10,7 @@ const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
     username: configService.get<string>('database.username'),
     password: configService.get<string>('database.password'),
     database: configService.get<string>('database.database'),
-    synchronize: true,
+    synchronize: false,
     autoLoadEntities: true,
     dropSchema: false,
     logging: false,
@@ -25,7 +25,7 @@ const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
     poolSize: 50,
     extra: {
         max: 10,
-        idleTimeoutMillis: 30000,
+        idleTimeoutMillis: 60000,
     },
 });
 

@@ -3,7 +3,7 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -39,6 +39,9 @@ import {
     ButtonNameEnum,
 } from '@app/shared/guardian/enum/button-type.enum';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
+import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class InfDocumentService extends DocumentService {
@@ -51,6 +54,8 @@ export class InfDocumentService extends DocumentService {
         guardianService: GuardianService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         fileHelperService: FileHelperService,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
         logger: InstantLogger,
     ) {
         super(
@@ -60,6 +65,7 @@ export class InfDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            documentRepository,
             logger,
         );
     }
@@ -99,31 +105,41 @@ export class InfDocumentService extends DocumentService {
                     where: { id: jwtData.organizationId },
                 },
             );
-
-            const assignees: OrganizationEntity[] =
-                await queryRunner.manager.find(OrganizationEntity, {
+            let assignees: OrganizationEntity[] = [];
+            if (
+                infData?.independentCertifiers &&
+                infData.independentCertifiers.length
+            ) {
+                assignees = await queryRunner.manager.find(OrganizationEntity, {
                     where: {
                         refId: In(infData.independentCertifiers),
+                        state: OrganizationStateEnum.ACTIVE,
                     },
                 });
 
-            if (!(assignees && assignees.length)) {
+                if (!(assignees && assignees.length)) {
+                    throw new HttpException(
+                        'Did not find assignees',
+                        HttpStatus.BAD_REQUEST,
+                    );
+                }
+            } else {
                 throw new HttpException(
-                    'Did not find assignees',
+                    'Assignees cannot be empty',
                     HttpStatus.BAD_REQUEST,
                 );
             }
-            const projectEntity = new ProjectEntity();
-            projectEntity.title = infData.title;
-            projectEntity.projectProposalStage = ProjectProposalStage.PENDING;
-            projectEntity.sectoralScope = infData.sectoralScope;
-            projectEntity.createdBy = createdBy;
-            projectEntity.serialNumber = 'SN'; //TODO replace with correct one
-            projectEntity.organization = org;
-            projectEntity.assignees = assignees;
+
             const savedProject: ProjectEntity = await queryRunner.manager.save(
-                ProjectEntity,
-                projectEntity,
+                plainToClass(ProjectEntity, {
+                    title: infData.title,
+                    projectProposalStage: ProjectProposalStage.PENDING,
+                    sectoralScope: infData.sectoralScope,
+                    createdBy: createdBy,
+                    serialNumber: 'SN',
+                    organization: org,
+                    assignees: assignees,
+                }),
             );
 
             if (
@@ -140,18 +156,16 @@ export class InfDocumentService extends DocumentService {
 
             // create document in 'PENDING' state
 
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = savedProject;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = createdBy;
-
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: savedProject,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    data: dto.data,
+                    submittedUser: createdBy,
+                }),
             );
 
             const organizationDoc =
@@ -207,7 +221,7 @@ export class InfDocumentService extends DocumentService {
             const countryName = this.configService.get('country');
 
             await this.sendEmailToProjectAssignees(
-                projectEntity,
+                savedProject,
                 queryRunner,
                 INF_ASSIGN_HEADER,
                 MailTemplateEnum.INF_ASSIGN,
@@ -215,7 +229,7 @@ export class InfDocumentService extends DocumentService {
                     organizationName: jwtData.organizationName,
                     countryName,
                     programmePageLink: this.getProgrammePageLink(
-                        projectEntity.refId,
+                        savedProject.refId,
                     ),
                 },
             );
@@ -273,11 +287,29 @@ export class InfDocumentService extends DocumentService {
         try {
             queryRunner.startTransaction();
             const documentEntity: DocumentEntity =
-                await this.getDocumentWithProjectAssignees(
-                    queryRunner,
-                    requestData.refId,
-                    requestData.documentType,
-                );
+                await queryRunner.manager.findOne(DocumentEntity, {
+                    where: {
+                        refId: requestData.refId,
+                        documentType: requestData.documentType,
+                    },
+                    relations: {
+                        project: {
+                            assignees: true,
+                            organization: true,
+                            createdBy: true,
+                        },
+                        submittedUser: {
+                            organization: true,
+                        },
+                        approvedUser: {
+                            organization: true,
+                        },
+                        activity: true,
+                    },
+                    order: {
+                        version: 'DESC',
+                    },
+                });
             if (!documentEntity) {
                 throw new HttpException(
                     'Invalid document id',
@@ -318,7 +350,9 @@ export class InfDocumentService extends DocumentService {
 
             // save document
 
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
                 await this.updateProjectStage(
@@ -341,13 +375,24 @@ export class InfDocumentService extends DocumentService {
                     jwtData.userId,
                 );
                 const refId = documentEntity?.project?.refId;
-                await queryRunner.manager
+
+                const existingProject = await queryRunner.manager
                     .getRepository(ProjectEntity)
-                    .createQueryBuilder()
-                    .update(ProjectEntity)
-                    .set({ noObjectionLetterUrl: noObjectionLetterUrl })
-                    .where('refId = :refId', { refId })
-                    .execute();
+                    .findOne({ where: { refId } });
+
+                if (!existingProject) {
+                    throw new Error(`Project with refId ${refId} not found`);
+                }
+                await queryRunner.manager.update(
+                    ProjectEntity,
+                    {
+                        refId: refId,
+                    },
+                    plainToClass(ProjectEntity, {
+                        ...existingProject,
+                        noObjectionLetterUrl: noObjectionLetterUrl,
+                    }),
+                );
                 const projectDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
                         GridTypeEnum.PROJECT_GRID,

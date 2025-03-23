@@ -9,7 +9,7 @@ import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 
 @Injectable()
@@ -48,11 +48,10 @@ export class ProjectService {
                     value: requestUser.organizationId,
                 });
             }
-            const qb = this.projectRepository
-                .createQueryBuilder('project')
-                .leftJoinAndSelect('project.organization', 'organization')
-                .leftJoinAndSelect('project.documents', 'documents')
-                .leftJoinAndSelect('project.assignees', 'assignees');
+
+            const page = query.page ?? 1;
+            const size = query.size ?? 10;
+            const offset = (page - 1) * size;
 
             let sortKey: string;
             if (!query.sort || !query.sort.key) {
@@ -66,25 +65,53 @@ export class ProjectService {
                           : `project.${query.sort.key}`;
             }
 
-            qb.where(this.helperService.generateWhereSQL(query))
-                .orderBy(
-                    sortKey,
-                    query?.sort?.order ? query.sort.order : 'DESC',
-                    query?.sort?.nullFirst !== undefined
-                        ? query.sort.nullFirst === true
-                            ? 'NULLS FIRST'
-                            : 'NULLS LAST'
-                        : undefined,
-                )
-                .offset(query.size * query.page - query.size)
-                .limit(query.size);
+            const sortOrder =
+                query?.sort?.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-            const [entities, total] = await qb.getManyAndCount();
+            const qb = this.projectRepository
+                .createQueryBuilder('project')
+                .select([
+                    'project.id',
+                    'project.title',
+                    'project.createdDate',
+                    'organization.id',
+                    'organization.name',
+                ])
+                .leftJoin('project.organization', 'organization')
+                .where(this.helperService.generateWhereSQL(query));
+
+            if (
+                requestUser.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                qb.andWhere(
+                    `EXISTS (
+                    SELECT 1 FROM project_assignees 
+                    WHERE project_assignees.project_id = project.id 
+                    AND project_assignees.organization_id = :organizationId
+                )`,
+                    { organizationId: requestUser.organizationId },
+                );
+            }
+
+            qb.orderBy(sortKey, sortOrder, 'NULLS LAST')
+                .offset(offset)
+                .limit(size);
+
+            const [projects, total] = await qb.getManyAndCount();
+
+            const projectIds = projects.map((p) => p.id);
+            const projectsWithDocuments = await this.projectRepository.find({
+                where: { id: In(projectIds) },
+                relations: ['documents', 'assignees', 'organization'],
+                order: { createdDate: sortOrder as 'ASC' | 'DESC' },
+            });
 
             const oldFormatData = [];
-            for (const project of entities) {
+            for (const project of projectsWithDocuments) {
                 oldFormatData.push(await this.mapNewQueryToOldQuery(project));
             }
+
             return new DataListResponseDto(oldFormatData, total);
         } catch (err) {
             console.log(err);
@@ -160,7 +187,7 @@ export class ProjectService {
             const activities = project?.activities?.map((activity) => {
                 return {
                     stage: activity.state,
-                    activityLastUpdatedDate: activity.updateDate,
+                    activityLastUpdatedDate: activity.updatedDate,
                     documents: activity?.documents?.reduce((acc, document) => {
                         if (
                             !acc[document.documentType] ||

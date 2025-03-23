@@ -5,7 +5,7 @@ import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
@@ -26,6 +26,7 @@ import { DocumentQueryDTO } from '../dto/document.query.dto';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '../enum/additional.document.type';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export abstract class DocumentService {
@@ -36,6 +37,7 @@ export abstract class DocumentService {
         protected readonly auditService: AuditService,
         protected readonly guardianService: GuardianService,
         protected readonly fileHelperService: FileHelperService,
+        protected readonly documentRepository: Repository<DocumentEntity>,
         protected readonly logger: InstantLogger,
     ) {}
 
@@ -98,36 +100,6 @@ export abstract class DocumentService {
                 },
             });
         }
-    }
-
-    async getDocumentWithProjectAssignees(
-        queryRunner: QueryRunner,
-        refId: string,
-        type: DocumentEnum,
-    ) {
-        return await queryRunner.manager.findOne(DocumentEntity, {
-            where: {
-                refId: refId,
-                documentType: type,
-            },
-            relations: {
-                project: {
-                    assignees: true,
-                    organization: true,
-                    createdBy: true,
-                },
-                submittedUser: {
-                    organization: true,
-                },
-                approvedUser: {
-                    organization: true,
-                },
-                activity: true,
-            },
-            order: {
-                version: 'DESC',
-            },
-        });
     }
 
     async sendEmail(
@@ -289,13 +261,20 @@ export abstract class DocumentService {
         refId: string,
         newStage: ProjectProposalStage,
     ) {
-        await queryRunner.manager
+        const existingProject = await queryRunner.manager
             .getRepository(ProjectEntity)
-            .createQueryBuilder()
-            .update(ProjectEntity)
-            .set({ projectProposalStage: newStage })
-            .where('refId = :refId', { refId })
-            .execute();
+            .findOne({ where: { refId } });
+
+        if (!existingProject) {
+            throw new Error(`Project with refId ${refId} not found`);
+        }
+
+        const updatedProject = plainToClass(ProjectEntity, {
+            ...existingProject,
+            projectProposalStage: newStage,
+        });
+
+        await queryRunner.manager.save(updatedProject);
     }
 
     protected async updateaActivityStage(
@@ -303,13 +282,21 @@ export abstract class DocumentService {
         refId: string,
         newStage: ActivityStateEnum,
     ) {
-        await queryRunner.manager
+        const existingActivity = await queryRunner.manager
             .getRepository(ActivityEntity)
-            .createQueryBuilder()
-            .update(ActivityEntity)
-            .set({ state: newStage })
-            .where('refId = :refId', { refId })
-            .execute();
+            .findOne({ where: { refId } });
+
+        if (!existingActivity) {
+            throw new Error(`Activity with refId ${refId} not found`);
+        }
+
+        const updatedActivity = plainToClass(ActivityEntity, {
+            ...existingActivity,
+            state: newStage,
+            updatedDate: Date.now(),
+        });
+
+        await queryRunner.manager.save(updatedActivity);
     }
 
     protected async logProjectStage(
@@ -330,34 +317,44 @@ export abstract class DocumentService {
     abstract verify(requestData: DocumentActionDTO, jwtData: JWTPayload);
 
     async query(query: DocumentQueryDTO) {
-        const queryRunner = this.dataSource.createQueryRunner();
         try {
-            queryRunner.connect();
-            queryRunner.startTransaction();
-            const lastDoc = await this.getDocumentWithProjectAssignees(
-                queryRunner,
-                query.refId,
-                query.documentType,
-            );
-            queryRunner.commitTransaction();
+            const lastDoc = await this.documentRepository.findOne({
+                where: {
+                    refId: query.refId,
+                    documentType: query.documentType,
+                },
+                relations: {
+                    project: {
+                        assignees: true,
+                        organization: true,
+                        createdBy: true,
+                    },
+                    submittedUser: {
+                        organization: true,
+                    },
+                    approvedUser: {
+                        organization: true,
+                    },
+                    activity: true,
+                },
+                order: {
+                    version: 'DESC',
+                },
+            });
 
             return { data: lastDoc };
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            queryRunner.rollbackTransaction();
             throw new HttpException(
                 'Error occurred in query document',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
-        } finally {
-            await this.releaseQueryRunner(queryRunner);
         }
     }
 
     async releaseQueryRunner(queryRunner: QueryRunner) {
         if (!queryRunner.isReleased) {
             try {
-                console.log(queryRunner.isReleased);
                 await queryRunner.release();
             } catch (e) {
                 this.logger.error(

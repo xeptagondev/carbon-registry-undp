@@ -38,7 +38,6 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -59,7 +58,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -74,7 +73,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -87,7 +86,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -100,7 +99,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -115,7 +114,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -128,7 +127,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -143,7 +142,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -160,7 +159,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
@@ -169,9 +168,20 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                 <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
                   {t('monitoringReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('monitoringReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>
