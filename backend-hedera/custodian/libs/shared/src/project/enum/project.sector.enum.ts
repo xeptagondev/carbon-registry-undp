@@ -1,17 +1,17 @@
 export enum ProjectSectorEnum {
-    ENERGY = 'Energy',
-    HEALTH = 'Health',
-    EDUCATION = 'Education',
+    ENERGY_INDUSTRIES = 'Energy Industries (Renewable)',
+    ENERGY_DISTRIBUTION = 'Energy Distribution',
+    ENERGY_DEMAND = 'Energy Demand',
+    MANUFACTURING_INDUSTRIES = 'Manufacturing Industries',
+    CHEMICAL_INDUSTRIES = 'Chemical Industries',
+    CONSTRUCTION = 'Construction',
     TRANSPORT = 'Transport',
-    MANUFACTURING = 'Manufacturing',
-    HOSPITALITY = 'Hospitality',
-    FORESTRY = 'Forestry',
-    WASTE = 'Waste',
-}
-
-export enum ProjectCategoryMap {
-    RENEWABLE_ENERGY = 'Renewable Energy',
-    AFFORESTATION = 'Afforestation',
-    REFORESTATION = 'Reforestation',
-    OTHER = 'Other',
+    MINING_MINERAL_PRODUCTION = 'Mining/Mineral Production',
+    METAL_PRODUCTION = 'Metal Production',
+    FUGITIVE_EMISSIONS_FUELS = 'Fugitive Emissions from fuels',
+    FUGITIVE_EMISSIONS_PRODUCTION = 'Fugitive Emissions from Production and Consumption of Halocarbons and Sulphur Hexafluoride',
+    SOLVENT_USE = 'Solvent Use',
+    WASTE_HANDLING_AND_DISPOSAL = 'Waste Handling and Disposal',
+    AFFORESTATION_AND_REFORESTATION = 'Afforestation and Reforestation',
+    AGRICULTURE = 'Agriculture',
 }
