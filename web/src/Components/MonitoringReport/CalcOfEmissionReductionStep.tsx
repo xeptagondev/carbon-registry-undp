@@ -207,7 +207,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
         ce_remarks: values?.ce_remarks,
       },
     };
-    handleValuesUpdate({ calculateTotalEmissionReductions: tempValues });
+    handleValuesUpdate(tempValues);
     //     titleAndReference: values?.titleAndReferenceOfMethodology,
     //     applicability: values?.applicabilityOfMethodology,
     //     // baselineScenario: values?.baselineScenario,
@@ -375,7 +375,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={disableFields}
               initialValues={{
                 q_baselineEmission2:
                   'B𝑬𝒚 = 𝑬𝑮𝒚×𝑬F𝒚\nWhere,\nB𝑬𝒚= Baseline Emissions in year y (tCO₂ₑ)\n𝑬𝑮𝒚 = Quantity of net electricity supplied to the grid as a result of the implementation of the Clean Development Mechanism (CDM) project activity in year y (MWh).\n𝑬F𝒚 = CO₂ Emission factor of the grid in the year 2020 (tCO₂/ MWh)',
@@ -402,7 +402,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={4} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={4} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item name="q_baselineEmission2">
@@ -458,7 +458,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={4} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={4} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -471,7 +471,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={4} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={4} disabled={disableFields} />
                     </Form.Item>
 
                     <>
@@ -1510,7 +1510,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                             >
                               <TextArea
                                 rows={4}
-                                disabled={FormMode.VIEW === formMode}
+                                disabled={disableFields}
                                 placeholder="Quantify the net GHG emission reductions and removals, summarizing the key results using the table below. Specify breakdown of GHG emission reductions and removals by annually. 
                                 For AFOLU projects, include quantification of the net change in carbon stocks. Also, state the non-permanence risk rating (as determined in the AFOLU non-permanence risk report) and calculate the total number of buffer credits that need to be deposited into the AFOLU pooled buffer account. Attach the non-permanence risk report as either an appendix or a separate document."
                               />
@@ -1546,7 +1546,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input size="large" />
+                                <Input size="large" disabled={disableFields} />
                               </Form.Item>
                             </div>
                           </Col>
@@ -1565,7 +1565,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input size="large" />
+                                <Input size="large" disabled={disableFields} />
                               </Form.Item>
                             </div>
                           </Col>
@@ -1584,7 +1584,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input size="large" />
+                                <Input size="large" disabled={disableFields} />
                               </Form.Item>
                             </div>
                           </Col>
@@ -1601,7 +1601,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={4} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={4} disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
@@ -1610,9 +1610,20 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                 <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
                   {t('monitoringReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('monitoringReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

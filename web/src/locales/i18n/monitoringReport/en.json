@@ -193,9 +193,12 @@
   "reject": "Reject",
   "approve": "Approve",
   "next": "Next",
-  "goBackProjectDetails": "GO BACK TO BASIC INFORMATION PAGE",
+  "goBackProjectDetails": "Back To Project Details",
   "prev": "Back",
   "cancel": "Cancel",
   "confirmModalMessage": "Are you sure you want to submit ?",
-  "confirmModalSubMessage": "You can't undo this action"
+  "confirmModalSubMessage": "You can't undo this action",
+  "approveMessage": "Are you sure you want to approve this Project Design Document ?",
+  "declineMessage": "Are you sure you want to decline this Project Design Document?",
+  "checkboxMessage": "I understand that this aciton cannot be undone"
 }

@@ -377,6 +377,7 @@ export interface ProgrammeT extends Programme {
 }
 
 export interface ProgrammeSlU extends ProgrammeSl {
+  activities: { stage: string; documents: any[]; activityLastUpdatedDate: string }[] | undefined;
   currentStage: ProgrammeStageUnified;
   projectProposalStage: ProjectProposalStage;
   programmeProperties: ProgrammePropertiesU;
