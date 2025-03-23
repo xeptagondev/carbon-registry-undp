@@ -138,7 +138,7 @@ const StepperComponent = (props: CustomStepsProps) => {
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
             refId: state?.documentRefId,
-            documentEnum: DocumentEnum.MONITORING,
+            documentType: DocumentEnum.MONITORING,
           });
 
           console.log('--------mon res---------', res);
@@ -196,8 +196,8 @@ const StepperComponent = (props: CustomStepsProps) => {
     let res;
     try {
       res = await post(API_PATHS.QUERY_DOCUMENT, {
-        projectRefId: state?.documentRefId,
-        DocumentEnum: DocumentEnum.VALIDATION,
+        refId: state?.documentRefId,
+        documentType: DocumentEnum.VALIDATION,
       });
 
       if (res?.statusText === 'SUCCESS') {
