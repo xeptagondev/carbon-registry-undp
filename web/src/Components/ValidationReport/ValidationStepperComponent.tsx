@@ -39,6 +39,7 @@ import {
   validationOpinionMapDataToFields,
   validationReportAppendixMapDataToFields,
 } from './viewDataMap';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -210,11 +211,11 @@ const StepperComponent = (props: any) => {
           projectParticipants: participants.join(', '),
           hostParty: data?.data?.projectDetails?.hostParty,
           creditingPeriod: data?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
-          creditingPeriodStart: moment(
-            data?.data?.startDateCreditingPeriod?.projectCreditingPeriodStartDate * 1000
+          creditingPeriodStart: moment.unix(
+            data?.data?.startDateCreditingPeriod?.projectCreditingPeriodStartDate
           ),
-          creditingPeriodEnd: moment(
-            data?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate * 1000
+          creditingPeriodEnd: moment.unix(
+            data?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate
           ),
           locationOfProjectActivity:
             data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.locationOfProjectActivity,
@@ -226,8 +227,15 @@ const StepperComponent = (props: any) => {
           geographicalLocationCoordinates:
             data?.data?.projectActivity?.locationsOfProjectActivity?.[0]
               ?.geographicalLocationCoordinates,
-          //handle additional docs
-          extraLocations: data?.data?.projectActivity?.locationsOfProjectActivity?.slice(1),
+          optionalImages: mapBase64ToFields(
+            data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
+          ),
+          extraLocations: data?.data?.projectActivity?.locationsOfProjectActivity
+            ?.slice(1)
+            ?.map((location: any) => ({
+              ...location,
+              optionalImages: mapBase64ToFields(location?.additionalDocuments),
+            })),
         });
       }
     } catch (error) {
