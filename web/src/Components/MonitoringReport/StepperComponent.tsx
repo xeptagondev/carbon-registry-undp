@@ -34,6 +34,7 @@ import {
   implementationOfProjectAcitivityMapDataToFields,
   projectActivityMapDataToFields,
 } from './viewDataMap';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 
 const StepperComponent = (props: CustomStepsProps) => {
   const navigate = useNavigate();
@@ -190,6 +191,100 @@ const StepperComponent = (props: CustomStepsProps) => {
     getViewData();
   }, []);
 
+  const getValidationData = async () => {
+    setLoading(true);
+    let res;
+    try {
+      res = await post(API_PATHS.QUERY_DOCUMENT, {
+        projectRefId: state?.documentRefId,
+        DocumentEnum: DocumentEnum.VALIDATION,
+      });
+
+      if (res?.statusText === 'SUCCESS') {
+        const data = res?.data?.data;
+        console.log('---------validation------------', data);
+        basicInformationForm.setFieldsValue({
+          bi_projectTitle: data?.basicInformation?.titleOfTheProjectActivity,
+          bi_applicablePDDVersionNo: data?.basicInformation?.versionNumberPDD,
+          bi_unfccRefNo: data?.basicInformation?.UNFCCReferenceNo,
+          bi_projectParticipants: data?.basicInformation?.projectParticipants,
+          bi_hostParty: data?.basicInformation?.hostParty,
+          bi_appliedMethodologies: data?.basicInformation?.appliedMethodologies,
+        });
+      }
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getProgrammeDetailsById = async (programId: any) => {
+    try {
+      setLoading(true);
+      const { data } = await post(API_PATHS.PROGRAMME_BY_ID, {
+        programmeId: programId,
+      });
+      console.log('--------programme details---------', data);
+      if (state?.mode === FormMode?.CREATE) {
+        basicInformationForm.setFieldsValue({
+          bi_sectoralScope: data?.sectoralScope,
+        });
+      }
+      //.log('----------running form values--------', form4.getFieldsValue());
+      setValues((prevVal) => ({
+        ...prevVal,
+        // companyId: data?.company?.companyId,
+      }));
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPDDData = async () => {
+    try {
+      const { data } = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documentRefId,
+        documentType: DocumentEnum.PDD,
+      });
+      console.log('--------pdd data---------', data);
+      if (state?.mode === FormMode?.CREATE) {
+        const participants =
+          data?.data?.projectActivity?.projectParticipants?.map((participantObj: any) =>
+            participantObj.projectParticipants?.map((p: any) => p.participant)
+          ) || [];
+
+        projectActivityForm.setFieldsValue({
+          projectParticipants: data?.data?.projectActivity?.projectParticipants,
+          pa_creditingPeriodType: data?.data?.startDateCreditingPeriod?.creditingPeriodType,
+          // locationOfProjectActivity:
+          //   data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.locationOfProjectActivity,
+          // siteNo: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.siteNo,
+          // province: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.province,
+          // district: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.district,
+          // city: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.city,
+          // community: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.community,
+          // geographicalLocationCoordinates:
+          //   data?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+          //     ?.geographicalLocationCoordinates,
+          // optionalImages: mapBase64ToFields(
+          //   data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
+          // ),
+          extraLocations: data?.data?.projectActivity?.locationsOfProjectActivity?.map(
+            (location: any) => ({
+              ...location,
+              uploadImages: mapBase64ToFields(location?.additionalDocuments),
+            })
+          ),
+        });
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+
   const submitForm = async (appendixVals: any) => {
     try {
       console.log('----form vals-----', appendixVals);
@@ -243,7 +338,9 @@ const StepperComponent = (props: CustomStepsProps) => {
   useEffect(() => {
     // getLatestReports(id);
     // getCountryList();
-    // getProgrammeDetailsById();
+    getProgrammeDetailsById(id);
+    getValidationData();
+    getPDDData();
     projectActivityForm.setFieldValue('projectParticipants', [
       { partiesInvolved: '', projectParticipants: [{ participant: '' }] },
     ]);
