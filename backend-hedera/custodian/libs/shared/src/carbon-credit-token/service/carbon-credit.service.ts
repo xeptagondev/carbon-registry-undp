@@ -29,6 +29,7 @@ import { plainToClass } from 'class-transformer';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
+import { TokenAssociateEntity } from '../entity/token-associate.entity';
 
 @Injectable()
 export class CarbonCreditService {
@@ -77,6 +78,17 @@ export class CarbonCreditService {
                         queryRunner,
                     );
                 }
+                const existingProject = await queryRunner.manager
+                    .getRepository(ProjectEntity)
+                    .findOne({ where: { refId: projectId } });
+                const updatedProject = plainToClass(ProjectEntity, {
+                    ...existingProject,
+                    creditIssued: existingProject.creditIssued
+                        ? amount + existingProject.creditIssued
+                        : amount,
+                });
+
+                await queryRunner.manager.save(updatedProject);
                 const log = new AuditEntity();
                 log.projectId = projectId;
                 log.logType = ProjectAuditLogType.CREDITS_ISSUED;
@@ -105,7 +117,14 @@ export class CarbonCreditService {
     }
 
     async handleTransferJob(job: TransferNFTJobPayload): Promise<any> {
-        const { projectId, receiverOrgId, senderOrgId, amount, userId } = job;
+        const {
+            projectId,
+            receiverOrgId,
+            senderOrgId,
+            amount,
+            userId,
+            remarks,
+        } = job;
 
         try {
             const project = await this.dataSource
@@ -128,7 +147,11 @@ export class CarbonCreditService {
             }
             const tokenId = project.tokenId;
 
-            const senderOrg = project.organization;
+            const senderOrg = await this.dataSource
+                .getRepository(OrganizationEntity)
+                .findOne({
+                    where: { id: senderOrgId },
+                });
             if (
                 !senderOrg ||
                 !senderOrg.hederaAccountId ||
@@ -161,24 +184,44 @@ export class CarbonCreditService {
             const receiverAccountId = receiverOrg.hederaAccountId;
             const receiverPrivateKey = receiverOrg.hederaAccountKey;
 
-            try {
-                await this.carbonCreditGuardianService.associateNFTToUser(
-                    tokenId,
-                    receiverAccountId,
-                    receiverPrivateKey,
-                );
-            } catch (assocError) {
-                if (
-                    assocError.message &&
-                    assocError.message.includes(
-                        'TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT',
-                    )
-                ) {
-                    console.log(
-                        'Token already associated with receiver, proceeding with transfer.',
+            const tokenAssociation = await this.dataSource
+                .getRepository(TokenAssociateEntity)
+                .findOne({
+                    where: {
+                        tokenId: tokenId,
+                        accountId: receiverAccountId,
+                    },
+                });
+
+            if (!tokenAssociation) {
+                try {
+                    await this.carbonCreditGuardianService.associateNFTToUser(
+                        tokenId,
+                        receiverAccountId,
+                        receiverPrivateKey,
                     );
-                } else {
-                    throw assocError;
+
+                    await this.dataSource
+                        .getRepository(TokenAssociateEntity)
+                        .save(
+                            plainToClass(TokenAssociateEntity, {
+                                tokenId: tokenId,
+                                accountId: receiverAccountId,
+                            }),
+                        );
+                } catch (assocError) {
+                    if (
+                        assocError.message &&
+                        assocError.message.includes(
+                            'TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT',
+                        )
+                    ) {
+                        console.log(
+                            'Token already associated with receiver, proceeding with transfer.',
+                        );
+                    } else {
+                        throw assocError;
+                    }
                 }
             }
 
@@ -223,6 +266,17 @@ export class CarbonCreditService {
                         );
                     transferStatuses.push(status);
                 }
+                if (project.organization.id === senderOrgId) {
+                    const updatedProject = plainToClass(ProjectEntity, {
+                        ...project,
+                        creditTransferred: project.creditTransferred
+                            ? amount + project.creditTransferred
+                            : amount,
+                    });
+
+                    await queryRunner.manager.save(updatedProject);
+                }
+
                 const log = new AuditEntity();
                 log.projectId = projectId;
                 log.logType = ProjectAuditLogType.CREDIT_TRANSFERED;
@@ -231,6 +285,7 @@ export class CarbonCreditService {
                     amount: amount,
                     toCompanyId: receiverOrgId,
                     fromCompanyId: senderOrgId,
+                    remarks: remarks,
                 };
 
                 await queryRunner.manager.save(AuditEntity, log);
@@ -253,7 +308,7 @@ export class CarbonCreditService {
     }
 
     async handleRetirementJob(job: RetireNFTJobPayload): Promise<any> {
-        const { projectId, transferId, userId } = job;
+        const { projectId, transferId, userId, orgId, remarks } = job;
 
         try {
             this.logger.log(
@@ -261,7 +316,6 @@ export class CarbonCreditService {
                 `Processing retirement job for project: ${projectId}, transferId: ${transferId}`,
             );
 
-            // Retrieve project and its organization
             const project = await this.dataSource
                 .getRepository(ProjectEntity)
                 .findOne({
@@ -356,6 +410,16 @@ export class CarbonCreditService {
                     }),
                 );
 
+                if (project.organization.id === orgId) {
+                    const updatedProject = plainToClass(ProjectEntity, {
+                        ...project,
+                        creditTransferred: project.creditRetired
+                            ? serialsToRetire.length + project.creditRetired
+                            : serialsToRetire.length,
+                    });
+
+                    await queryRunner.manager.save(updatedProject);
+                }
                 const log = new AuditEntity();
                 log.projectId = projectId;
                 log.logType = ProjectAuditLogType.RETIRE_APPROVED;
@@ -363,6 +427,7 @@ export class CarbonCreditService {
                 log.data = {
                     amount: serialsToRetire.length,
                     fromCompanyId: senderOrg.id,
+                    remarks: remarks,
                 };
 
                 await queryRunner.manager.save(AuditEntity, log);
@@ -566,6 +631,7 @@ export class CarbonCreditService {
             }
             const payload: TransferNFTJobPayload = {
                 projectId: project.refId,
+                remarks: transferDto.remarks,
                 receiverOrgId: transferDto.receiverOrgId,
                 senderOrgId: user.organizationId,
                 amount: transferDto.amount,
@@ -652,7 +718,9 @@ export class CarbonCreditService {
                 const payload: RetireNFTJobPayload = {
                     transferId: retireAction.transferId,
                     projectId: project.refId,
+                    remarks: retireAction.remarks,
                     userId: user.userId,
+                    orgId: retireAction.orgId,
                 };
                 const asyncTask: TaskEntity = {
                     className: 'CarbonCreditService',
@@ -777,6 +845,7 @@ export class CarbonCreditService {
                     receiver: project.organization,
                     type: CreditEventTypeEnum.RETIRED,
                     status: CreditEventStatusEnum.PENDING,
+                    retiremeType: retireRequest.retirementType,
                 });
                 queryRunner.manager.save(creditEvent);
             }
