@@ -9,8 +9,10 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
   const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
 
   useEffect(() => {
-    form.setFieldValue('verificationTeamMembers', [{ role: '' }]);
-    form.setFieldValue('technicalReviews', [{ role: '' }]);
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('verificationTeamMembers', [{ role: '' }]);
+      form.setFieldValue('technicalReviews', [{ role: '' }]);
+    }
   }, []);
 
   const onFinish = (values: any) => {
