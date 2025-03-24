@@ -467,6 +467,18 @@ export class CarbonCreditService {
         this.logger.log(
             `Request received to query the token transfers ${user.userName}`,
         );
+        if (
+            !(
+                (user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER ||
+                    user.organizationRole ===
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY) &&
+                (user.userRole === RoleEnum.Root ||
+                    user.userRole === RoleEnum.Admin)
+            )
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
         const [entities, total] = await this.dataSource
             .getRepository(CreditsTransferView)
             .createQueryBuilder('user')
@@ -492,6 +504,18 @@ export class CarbonCreditService {
         this.logger.log(
             `Request received to query the token retirements ${user.userName}`,
         );
+        if (
+            !(
+                (user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER ||
+                    user.organizationRole ===
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY) &&
+                (user.userRole === RoleEnum.Root ||
+                    user.userRole === RoleEnum.Admin)
+            )
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
         const [entities, total] = await this.dataSource
             .getRepository(CreditsRetireView)
             .createQueryBuilder('user')
@@ -613,6 +637,17 @@ export class CarbonCreditService {
                 this.logger.log(
                     `Accepting retire request ${retireAction.transferId}`,
                 );
+                if (
+                    user.organizationRole ===
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                    (user.userRole === RoleEnum.Root ||
+                        user.userRole === RoleEnum.Admin)
+                ) {
+                    throw new HttpException(
+                        'Unauthorized',
+                        HttpStatus.UNAUTHORIZED,
+                    );
+                }
 
                 const payload: RetireNFTJobPayload = {
                     transferId: retireAction.transferId,
@@ -631,6 +666,16 @@ export class CarbonCreditService {
                 this.logger.log(
                     `Cancelling retire request ${retireAction.transferId}`,
                 );
+                if (
+                    user.organizationRole ===
+                        OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                    user.userRole === RoleEnum.Admin
+                ) {
+                    throw new HttpException(
+                        'Unauthorized',
+                        HttpStatus.UNAUTHORIZED,
+                    );
+                }
 
                 await queryRunner.manager.update(
                     CreditEventsEntity,
@@ -643,6 +688,18 @@ export class CarbonCreditService {
                 this.logger.log(
                     `Rejecting retire request ${retireAction.transferId}`,
                 );
+
+                if (
+                    user.organizationRole ===
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                    (user.userRole === RoleEnum.Root ||
+                        user.userRole === RoleEnum.Admin)
+                ) {
+                    throw new HttpException(
+                        'Unauthorized',
+                        HttpStatus.UNAUTHORIZED,
+                    );
+                }
 
                 await queryRunner.manager.update(
                     CreditEventsEntity,
