@@ -353,7 +353,6 @@ export const activityPermissions = (
 ) => {
   // MONITORING_REPORT: for IC Admin users at MONITORING_REPORT_UPLOADED
 
-  console.log('--------activityStage------------', activityStage);
   if (
     docType === DocType.MONITORING_REPORT &&
     activityStage === ActivityStateEnum.MONITORING_REPORT_UPLOADED &&
