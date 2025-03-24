@@ -6,7 +6,7 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { VerificationStepProps } from './StepProps';
 
 export const VerificationTeamStep = (props: VerificationStepProps) => {
-  const { t, current, form, formMode, next, prev, handleValuesUpdate } = props;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
 
   useEffect(() => {
     form.setFieldValue('verificationTeamMembers', [{ role: '' }]);
@@ -17,7 +17,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
     console.log('--------values-----------', values);
     const body = { ...values };
     handleValuesUpdate({
-      verificationTeamFormDetails: body,
+      verificationTeam: body,
     });
   };
 
@@ -33,7 +33,6 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -123,7 +122,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     },
                                   ]}
                                 >
-                                  <Select>
+                                  <Select disabled={disableFields}>
                                     <Select.Option value={'TL'}>
                                       {t('verificationReport:teamLeader')}
                                     </Select.Option>
@@ -174,7 +173,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     },
                                   ]}
                                 >
-                                  <Radio.Group className="radio-btn-grp">
+                                  <Radio.Group className="radio-btn-grp" disabled={disableFields}>
                                     <Radio value="IR">{t('verificationReport:IR')}</Radio>
                                     <Radio value="ER">{t('verificationReport:ER')}</Radio>
                                   </Radio.Group>
@@ -206,7 +205,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input />
+                                  <Input disabled={disableFields} />
                                 </Form.Item>
                               </Col>
                               <Col xl={3} className="other-cols col">
@@ -233,7 +232,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input />
+                                  <Input disabled={disableFields} />
                                 </Form.Item>
                               </Col>
                               <Col xl={3} className="other-cols col">
@@ -260,7 +259,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     },
                                   ]}
                                 >
-                                  <Input />
+                                  <Input disabled={disableFields} />
                                 </Form.Item>
                               </Col>
                               <Col xl={4}>
@@ -278,12 +277,12 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       name={[name, 'onsiteInspections']}
                                       valuePropName="checked"
                                     >
-                                      <Checkbox />
+                                      <Checkbox disabled={disableFields} />
                                     </Form.Item>
                                   </Col>
                                   <Col xl={6} className="other-cols checkbox-cols">
                                     <Form.Item name={[name, 'interviews']} valuePropName="checked">
-                                      <Checkbox />
+                                      <Checkbox disabled={disableFields} />
                                     </Form.Item>
                                   </Col>
                                   <Col xl={6} className="other-cols checkbox-cols">
@@ -291,7 +290,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       name={[name, 'verificationFindings']}
                                       valuePropName="checked"
                                     >
-                                      <Checkbox />
+                                      <Checkbox disabled={disableFields} />
                                     </Form.Item>
                                   </Col>
                                 </Row>
@@ -303,6 +302,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     size="small"
                                     className="addMinusBtn"
                                     icon={<PlusOutlined />}
+                                    disabled={disableFields}
                                   ></Button>
                                 </Form.Item>
                                 {name > 0 && (
@@ -394,7 +394,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       },
                                     ]}
                                   >
-                                    <Select>
+                                    <Select disabled={disableFields}>
                                       <Select.Option value="technicalReviewer">
                                         {t('verificationReport:technicalReviewer')}
                                       </Select.Option>
@@ -426,7 +426,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       },
                                     ]}
                                   >
-                                    <Radio.Group className="radio-btn-grp">
+                                    <Radio.Group className="radio-btn-grp" disabled={disableFields}>
                                       <Radio value="IR">{t('verificationReport:IR')}</Radio>
                                       <Radio value="ER">{t('verificationReport:ER')}</Radio>
                                     </Radio.Group>
@@ -454,7 +454,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       },
                                     ]}
                                   >
-                                    <Input />
+                                    <Input disabled={disableFields} />
                                   </Form.Item>
                                 </Col>
                                 <Col xl={4} className="other-cols col">
@@ -479,7 +479,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       },
                                     ]}
                                   >
-                                    <Input />
+                                    <Input disabled={disableFields} />
                                   </Form.Item>
                                 </Col>
                                 <Col xl={4} className="other-cols col">
@@ -504,7 +504,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       },
                                     ]}
                                   >
-                                    <Input />
+                                    <Input disabled={disableFields} />
                                   </Form.Item>
                                 </Col>
                                 <Col xl={3} className="col action-col">
@@ -528,7 +528,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                         className="addMinusBtn"
                                         // block
                                         icon={<MinusOutlined />}
-                                        // disabled={disableFields}
+                                        disabled={disableFields}
                                       >
                                         {/* Minus Participant */}
                                       </Button>
@@ -557,9 +557,20 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                 <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('verificationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

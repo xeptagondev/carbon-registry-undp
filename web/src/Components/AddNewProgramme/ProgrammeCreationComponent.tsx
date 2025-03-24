@@ -281,6 +281,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
   const submitForm = async (values: any) => {
     const base64Docs: string[] = [];
+    console.log('---------optional docs----------', values?.optionalDocuments);
 
     if (values?.optionalDocuments && values?.optionalDocuments.length > 0) {
       const docs = values.optionalDocuments;
