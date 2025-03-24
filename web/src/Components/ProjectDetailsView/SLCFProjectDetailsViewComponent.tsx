@@ -1994,7 +1994,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       data.activities &&
       (data?.activities.length === 0 ||
         data?.activities[data?.activities.length - 1].stage ===
-          ActivityStateEnum.MONITORING_REPORT_VERIFIED)
+          ActivityStateEnum.VERIFICATION_REPORT_VERIFIED)
     ) {
       actionBtns.push(
         <Button

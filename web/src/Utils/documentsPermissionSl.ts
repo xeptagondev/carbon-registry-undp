@@ -352,6 +352,8 @@ export const activityPermissions = (
   documentId: any
 ) => {
   // MONITORING_REPORT: for IC Admin users at MONITORING_REPORT_UPLOADED
+
+  console.log('--------activityStage------------', activityStage);
   if (
     docType === DocType.MONITORING_REPORT &&
     activityStage === ActivityStateEnum.MONITORING_REPORT_UPLOADED &&
@@ -451,6 +453,20 @@ export const activityPermissions = (
   else if (
     docType === DocType.MONITORING_REPORT &&
     activityStage === ActivityStateEnum.MONITORING_REPORT_VERIFIED
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
+  // MONITORING_REPORT: for all users at VERIFICATion_REPORT_UPLOADED, VERIFICATION_REPORT_REJECTED, VERIFICATION_REPORT_VERIFIED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    (activityStage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED ||
+      activityStage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED ||
+      activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED)
   ) {
     return {
       mode: FormMode.VIEW,
