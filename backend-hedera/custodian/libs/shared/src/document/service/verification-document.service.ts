@@ -365,7 +365,7 @@ export class VerificationDocumentService extends DocumentService {
                     jwtData.userRole == RoleEnum.Root)
             )
         ) {
-            throw new HttpException('Unauthroized', HttpStatus.BAD_REQUEST);
+            throw new HttpException('Unauthroized', HttpStatus.UNAUTHORIZED);
         }
 
         const queryRunner = this.dataSource.createQueryRunner();

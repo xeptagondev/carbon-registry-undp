@@ -371,7 +371,7 @@ export class MonitoringDocumentService extends DocumentService {
                 OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
             jwtData.userRole !== RoleEnum.Admin
         ) {
-            throw new HttpException('Unauthroized', HttpStatus.BAD_REQUEST);
+            throw new HttpException('Unauthroized', HttpStatus.UNAUTHORIZED);
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
