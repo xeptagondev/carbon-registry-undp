@@ -432,6 +432,15 @@ export class CarbonCreditService {
         this.logger.log(
             `Request received to query the token balance from ${user.userName}`,
         );
+        if (
+            !(
+                user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                user.userRole === RoleEnum.Admin
+            )
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
         const [entities, total] = await this.dataSource
             .getRepository(CreditsBalanceView)
             .createQueryBuilder('user')
