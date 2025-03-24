@@ -374,6 +374,7 @@ export const appendixDataMapToFields = (vals: any) => {
     appendix4Documents: mapBase64ToFields(vals?.appendix4Documents),
     appendix5Documents: mapBase64ToFields(vals?.appendix5Documents),
     appendix6Documents: mapBase64ToFields(vals?.appendix6Documents),
+    appendix7Documents: mapBase64ToFields(vals?.appendix7Documents),
   };
 
   return tempValues;
