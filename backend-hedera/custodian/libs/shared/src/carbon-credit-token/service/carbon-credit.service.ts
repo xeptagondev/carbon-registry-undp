@@ -845,7 +845,7 @@ export class CarbonCreditService {
                     receiver: project.organization,
                     type: CreditEventTypeEnum.RETIRED,
                     status: CreditEventStatusEnum.PENDING,
-                    retiremeType: retireRequest.retirementType,
+                    retirementType: retireRequest.retirementType,
                 });
                 queryRunner.manager.save(creditEvent);
             }
