@@ -75,7 +75,7 @@ export const basicInformationMapDataToFields = (vals: any) => {
       : undefined,
   };
 
-  console.log('----------vals after--------', tempVals);
+  console.log('----------vals after bb--------', tempVals);
   return tempVals;
 };
 

@@ -11,7 +11,7 @@ import i18n from '../Internationalization/i18n';
 import { VerificationStepProps } from './StepProps';
 
 export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
-  const { current, form, formMode, prev, handleValuesUpdate, next } = props;
+  const { current, form, formMode, prev, handleValuesUpdate, next, disableFields } = props;
   const { userInfoState } = useUserContext();
   const t = i18n.t;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
@@ -49,7 +49,7 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -128,7 +128,7 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                                           },
                                         ]}
                                       >
-                                        <Input />
+                                        <Input disabled={disableFields} />
                                       </Form.Item>
                                     </Col>
 
@@ -156,7 +156,7 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                                           },
                                         ]}
                                       >
-                                        <Input />
+                                        <Input disabled={disableFields} />
                                       </Form.Item>
                                     </Col>
                                     <Col xl={8} className="other-cols col">
@@ -183,7 +183,7 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                                           },
                                         ]}
                                       >
-                                        <Input />
+                                        <Input disabled={disableFields} />
                                       </Form.Item>
                                     </Col>
 
@@ -211,7 +211,7 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                                           },
                                         ]}
                                       >
-                                        <Input />
+                                        <Input disabled={disableFields} />
                                       </Form.Item>
                                     </Col>
                                     <Col xl={3} className="action-col">
@@ -221,6 +221,7 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                                           size="small"
                                           className="addMinusBtn"
                                           icon={<PlusOutlined />}
+                                          disabled={disableFields}
                                         ></Button>
                                       </Form.Item>
                                       {name > 0 && (
@@ -235,7 +236,7 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                                             className="addMinusBtn"
                                             // block
                                             icon={<MinusOutlined />}
-                                            // disabled={disableFields}
+                                            disabled={disableFields}
                                           >
                                             {/* Minus Participant */}
                                           </Button>
@@ -264,7 +265,7 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={6} disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
@@ -273,9 +274,20 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                 <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('verificationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

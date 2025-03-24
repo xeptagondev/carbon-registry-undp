@@ -54,37 +54,23 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
   //   fetchValidationData();
   // },[])
 
+  const normFile = (e: any) => {
+    if (Array.isArray(e)) {
+      return e;
+    }
+    return e?.fileList;
+  };
+
   const onFinish = async (values: any) => {
-    // const tempValues: any = {
-    //   basicInfoDetails: {
-    //     projectTitle: values?.b_projectTitle,
-    //     scaleOfProject: values?.b_scaleOfProject,
-    //     completionDate: values?.b_completionDate,
-    //     versionNoOfMonitoringReport: values?.b_versionNoOfMonitoringReport,
-    //     projectParticipants: values?.b_projectParticipants,
-    //     appliedMethodologies: values?.b_appliedMethodologies,
-    //     conditionalSectoralScopes: values?.b_conditionalSectoralScopes,
-    //     certfiedGHGReductions: values?.b_certfiedGHGReductions,
-    //     unfccRefNo: values?.b_unfccRefNo,
-    //     versionNoOfVerificationReport: values?.b_versionNoOfVerificationReport,
-    //     monitoringPeriodNoAndDuration: values?.b_monitoringPeriodNoAndDuration,
-    //     creditingPeriod: values?.b_creditingPeriod,
-    //     hostParty: values?.b_hostParty,
-    //     mandatorySectoralScopes: values?.b_mandatorySectoralScopes,
-    //     estimatedGHGEmissionReduction: values?.b_estimatedGHGEmissionReduction,
-    //     name: values?.b_name,
-    //     position: values?.b_position,
-    //     signature: values?.b_signature,
-    //   },
-    // };
-    console.log('--------values-----------', values);
+    const signature = (await fileUploadValueExtract(values, 'b_signature'))[0];
     const body = {
       ...values,
       b_completionDate: moment(values?.b_completionDate).startOf('day').unix(),
-      b_signature: (await fileUploadValueExtract(values, 'b_signature'))[0],
+      b_signature: signature,
     };
+
     handleValuesUpdate({
-      basicDetailsFormValues: body,
+      basicInformation: body,
     });
   };
 
@@ -100,7 +86,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -255,6 +240,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       <DatePicker
                         size="large"
                         disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                        disabled={disableFields}
                       />
                     </Form.Item>
 
@@ -604,92 +590,24 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                 </Col>
               </Row>
 
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={12} md={24}>
-                  <h2 className="form-section-title">{`${t('verificationReport:b_approver')}`}</h2>
-
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('verificationReport:b_name')}
-                      name="b_name"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('verificationReport:b_name')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('verificationReport:b_position')}
-                      name="b_position"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('verificationReport:b_position')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('verificationReport:b_signature')}
-                      name="b_signature"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('verificationReport:b_signature')} ${t('isRequired')}`,
-                        },
-                        {
-                          validator: async (rule, file) => {
-                            if (file?.length > 0) {
-                              if (file[0]?.size > maximumImageSize) {
-                                // default size format of files would be in bytes -> 1MB = 1000000bytes
-                                throw new Error(`${t('common:maxSizeVal')}`);
-                              }
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Upload
-                        accept=".doc, .docx, .pdf, .png, .jpg"
-                        beforeUpload={(file: any) => {
-                          return false;
-                        }}
-                        className="design-upload-section"
-                        name="design"
-                        action="/upload.do"
-                        listType="picture"
-                        multiple={false}
-                        maxCount={1}
-                      >
-                        <Button className="upload-doc" size="large" icon={<UploadOutlined />}>
-                          {t('validationReport:upload')}
-                        </Button>
-                      </Upload>
-                    </Form.Item>
-
-                    {/* {FormMode.VIEW === formMode ? (
-                      <Form.Item label={t('verificationReport:reportID')} name="reportID">
-                        <Input size="large" />
-                      </Form.Item>
-                    ) : (
-                      ''
-                    )} */}
-                  </div>
-                </Col>
-              </Row>
               <Row justify={'end'} className="step-actions-end">
                 <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('verificationReport:cancel')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('verificationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('verificationReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('verificationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>
