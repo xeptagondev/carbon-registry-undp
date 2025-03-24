@@ -198,7 +198,7 @@
   "cancel": "Cancel",
   "confirmModalMessage": "Are you sure you want to submit ?",
   "confirmModalSubMessage": "You can't undo this action",
-  "approveMessage": "Are you sure you want to approve this Project Design Document ?",
-  "declineMessage": "Are you sure you want to decline this Project Design Document?",
-  "checkboxMessage": "I understand that this aciton cannot be undone"
+  "approveMessage": "Are you sure you want to approve this Monitoring Report?",
+  "declineMessage": "Are you sure you want to decline this Monitoring Report?",
+  "checkboxMessage": "I understand that this action cannot be undone"
 }

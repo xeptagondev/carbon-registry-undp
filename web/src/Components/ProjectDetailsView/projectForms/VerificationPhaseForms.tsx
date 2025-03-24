@@ -118,12 +118,12 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
                   : 'step-icon-completed'
               }
             >
-              {activity.stage === ActivityStateEnum.MONITORING_REPORT_VERIFIED ? (
-                <Icon.Check />
+              {activity.stage === ActivityStateEnum.MONITORING_REPORT_UPLOADED ? (
+                <Icon.FileText />
               ) : activity.stage === ActivityStateEnum.MONITORING_REPORT_REJECTED ? (
                 <CloseOutlined />
               ) : (
-                <Icon.FileText />
+                <Icon.Check />
               )}
             </span>
           ),
@@ -139,7 +139,7 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
                   <Button
                     className="document-action-btn"
                     onClick={() => {
-                      navigateToMonitoringReport(tempVerificationReportPermissions);
+                      navigateToVerificationReport(tempVerificationReportPermissions);
                     }}
                     disabled={tempVerificationReportPermissions?.mode === FormMode?.DISABLED}
                   >
@@ -170,9 +170,9 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
               {activity.stage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED ? (
                 <Icon.FileText />
               ) : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED ? (
-                <Icon.XCircle />
+                <CloseOutlined />
               ) : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED ? (
-                <Icon.Check2Circle />
+                <Icon.Check />
               ) : (
                 <Icon.Hourglass />
               )}
