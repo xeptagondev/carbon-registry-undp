@@ -14,12 +14,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ROUTES } from '../../../Config/uiRoutingConfig';
 import { CloseCircleFilled, CloseCircleOutlined, CloseOutlined } from '@ant-design/icons';
 
+export interface Iactivity {
+  stage: string;
+  documents: any[];
+  activityLastUpdatedDate: string;
+}
+
 interface IVerificationPhaseForms {
-  activityData: {
-    stage: string;
-    documents: any[];
-    activityLastUpdatedDate: string;
-  }[];
+  activityData: Iactivity[];
 }
 interface IPermissionsState {
   mode: FormMode;
