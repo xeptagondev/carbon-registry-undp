@@ -429,7 +429,8 @@ export class VrDocumentService extends DocumentService {
                     await this.carbonCreditGuardianService.createProjectNFT(
                         documentEntity?.project?.organization?.hederaAccountId,
                         documentEntity?.project?.organization?.hederaAccountKey,
-                        1000, // TODO update the max supply
+                        documentEntity?.data?.ghgProjectDescription
+                            ?.totalNetEmissionReductions,
                     );
 
                 const refId = documentEntity?.project?.refId;
@@ -453,6 +454,9 @@ export class VrDocumentService extends DocumentService {
                 const updatedProject = plainToClass(ProjectEntity, {
                     ...existingProject,
                     tokenId: tokenId,
+                    creditEst:
+                        documentEntity?.data?.ghgProjectDescription
+                            ?.totalNetEmissionReductions,
                     authoroiseLetterUrl: authoroiseLetterUrl,
                 });
 
@@ -464,7 +468,8 @@ export class VrDocumentService extends DocumentService {
                     ProjectAuditLogType.CREDITS_AUTHORISED,
                     jwtData.userId,
                     {
-                        amount: 1000, //TODO update amount
+                        amount: documentEntity?.data?.ghgProjectDescription
+                            ?.totalNetEmissionReductions,
                         toCompanyId: documentEntity?.project?.organization?.id,
                     },
                 );
