@@ -175,7 +175,7 @@ export class MonitoringDocumentService extends DocumentService {
                 );
             } else if (
                 lastActivity &&
-                lastActivity.state ===
+                lastActivity.state !==
                     ActivityStateEnum.MONITORING_REPORT_REJECTED
             ) {
                 throw new HttpException(
