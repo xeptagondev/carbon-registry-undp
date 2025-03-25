@@ -1,25 +1,21 @@
 import { Module } from '@nestjs/common';
 import { UtilModule } from '../util/util.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CreditEventsEntity } from './entity/credit-events.entity';
 import { CarbonCreditService } from './service/carbon-credit.service';
 import { CarbonCreditGuardianService } from './service/carbon-credit-guardian.service';
 
-import { CreditsBalanceView } from './entity/credit.balance.view.entity';
-import { CreditsTransferView } from './entity/credit.transfer.view.entity';
-import { CreditsRetireView } from './entity/credit.retire.view.entity';
 import { TokenAssociateEntity } from './entity/token-associate.entity';
 import { CreditBlocksEntity } from './entity/credit.blocks.entity';
+import { CreditTransactionsEntity } from './entity/credit.transfer.entity';
+import { SerialNumberManagementModule } from '../serial-number-management/serial-number-management.module';
 @Module({
     imports: [
         UtilModule,
+        SerialNumberManagementModule,
         TypeOrmModule.forFeature([
-            CreditEventsEntity,
             TokenAssociateEntity,
-            CreditsBalanceView,
-            CreditsTransferView,
-            CreditsRetireView,
             CreditBlocksEntity,
+            CreditTransactionsEntity,
         ]),
     ],
     providers: [CarbonCreditService, CarbonCreditGuardianService],
