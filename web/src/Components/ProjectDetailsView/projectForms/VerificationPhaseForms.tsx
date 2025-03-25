@@ -14,12 +14,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ROUTES } from '../../../Config/uiRoutingConfig';
 import { CloseCircleFilled, CloseCircleOutlined, CloseOutlined } from '@ant-design/icons';
 
+export interface Iactivity {
+  stage: string;
+  documents: any[];
+  activityLastUpdatedDate: string;
+}
+
 interface IVerificationPhaseForms {
-  activityData: {
-    stage: string;
-    documents: any[];
-    activityLastUpdatedDate: string;
-  }[];
+  activityData: Iactivity[];
 }
 interface IPermissionsState {
   mode: FormMode;
@@ -67,17 +69,6 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
         activity.stage as ActivityStateEnum,
         activity.documents[DocumentEnum.VERIFICATION as any]?.refId
       );
-
-      // console.log(
-      //   '---------tempMonitoringReportPermissions-------------',
-      //   tempMonitoringReportPermissions
-      // );
-      // console.log(
-      //   '---------tempVerificationReportPermissions-------------',
-      //   tempVerificationReportPermissions
-      // );
-
-      console.log('--------activity-----------', activity);
 
       const temp = [
         {
