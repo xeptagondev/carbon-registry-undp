@@ -155,7 +155,7 @@ export class ProjectService {
         mappedProject.creditTransferred = project.creditTransferred;
         mappedProject.creditRetired = project.creditRetired;
         mappedProject.creditBalance =
-            (Number(project.creditEst) || 0) -
+            (Number(project.creditIssued) || 0) -
             ((Number(project.creditTransferred) || 0) +
                 (Number(project.creditRetired) || 0));
 
