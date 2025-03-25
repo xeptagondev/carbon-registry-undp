@@ -244,13 +244,38 @@ export const ProgrammeCreationComponent = (props: any) => {
     }
   };
 
+  const getOrganizationDetails = async () => {
+    try {
+      setLoading(true);
+      const { data } = await get(API_PATHS.USER_PROFILE_DETAILS);
+      if (data && data?.Organisation) {
+        form.setFieldsValue({
+          projectParticipant: data?.Organisation?.name,
+          contactAddress: data?.Organisation?.address,
+          contactEmail: data?.Organisation?.email,
+          contactWebsite: data?.Organisation?.website,
+          contactPhoneNo: data?.Organisation?.phoneNo,
+          contactFax: data?.Organisation?.faxNo,
+          contactName: data?.user?.name,
+        });
+      }
+    } catch (error) {
+      console.log('Error in getOrganizationDetails', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (state?.mode === null || state?.mode === undefined) {
       getProvinces();
       getCountryList();
       getIndependentCertifiers();
-      form.setFieldValue('projectParticipant', localStorage.getItem('name') || '');
+      getOrganizationDetails();
     }
+    getProvinces();
+    getCountryList();
+    getIndependentCertifiers();
   }, []);
 
   const onProvinceSelect = async (value: any) => {
@@ -1160,7 +1185,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                               ]}
                             >
-                              <Input disabled size="large" />
+                              <Input size="large" />
                             </Form.Item>
                             <Form.Item
                               label={t('addProgramme:email')}
