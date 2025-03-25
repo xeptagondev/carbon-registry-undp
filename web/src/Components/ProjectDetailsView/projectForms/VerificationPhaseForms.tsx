@@ -70,7 +70,6 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
         activity.documents[DocumentEnum.VERIFICATION as any]?.refId
       );
 
-
       const temp = [
         {
           title: (
