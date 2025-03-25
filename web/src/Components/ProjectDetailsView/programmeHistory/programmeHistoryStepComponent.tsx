@@ -40,7 +40,7 @@ const logTypeIcons: Record<string, React.ReactNode> = {
   MONITORING_REPORT_APPROVED: <Icon.Check2Circle />,
   VERIFICATION_REPORT_SUBMITTED: <Icon.FileEarmarkBarGraph />,
   VERIFICATION_REPORT_REJECTED: <Icon.XCircle />,
-  VERIFICATION_REPROT_APPROVED: <Icon.Check2Circle />,
+  VERIFICATION_REPORT_APPROVED: <Icon.Check2Circle />,
   CREDITS_ISSUED: <Icon.CurrencyExchange />,
   DEFAULT: <FileOutlined />, // Default icon for unspecified log types
 
