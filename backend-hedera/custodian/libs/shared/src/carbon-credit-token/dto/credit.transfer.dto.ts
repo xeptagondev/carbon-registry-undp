@@ -23,4 +23,7 @@ export class CreditTransferDto {
     @Type(() => Number)
     @ApiProperty()
     amount: number;
+
+    @ApiProperty({ type: 'string' })
+    remarks: string;
 }

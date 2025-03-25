@@ -1,12 +1,11 @@
-import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Col, DatePicker, Form, Input, Row, Select, Upload } from 'antd';
-import TextArea from 'antd/lib/input/TextArea';
-import moment from 'moment';
+import { Button, Form, Input, Row } from 'antd';
+
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { VerificationStepProps } from './StepProps';
+import TextArea from 'antd/lib/input/TextArea';
 
 export const VerificationFindingStep = (props: VerificationStepProps) => {
-  const { t, current, form, formMode, next, prev, handleValuesUpdate } = props;
+  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -19,10 +18,10 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
   };
 
   const onFinish = (values: any) => {
-    // console.log('--------values-----------', values);
+    //console.log('--------values-----------', values);
     const body = { ...values };
     handleValuesUpdate({
-      verificationFindingsFormDetails: body,
+      verificationFindings: body,
     });
   };
 
@@ -38,7 +37,6 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -46,16 +44,33 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                 }
               }}
             >
+              <h4 className="verificationReport-findings-subHeading">
+                {t('verificationReport:remainingFARsFromValidation')}
+              </h4>
+              <Form.Item
+                className="full-width-form-item"
+                name="remainingFARsFromValidation"
+                rules={[
+                  {
+                    required: true,
+                    message: `${t('verificationReport:remainingFARsFromValidation')} ${t(
+                      'isRequired'
+                    )}`,
+                  },
+                ]}
+              >
+                <TextArea rows={6} />
+              </Form.Item>
               {/* Demonstration of prior consideration of the CDM start */}
               <>
                 <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:demonstrationPriorCDM')}
+                  {t('verificationReport:complianceMonitoringReportForm')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="cdmeansOfVerification"
+                    name="complianceMonitoringReportForm_MeansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -65,16 +80,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="cdm_findings"
+                    name="complianceMonitoringReportForm_findings"
                     rules={[
                       {
                         required: true,
@@ -82,16 +94,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="cdm_conclusions"
+                    name="complianceMonitoringReportForm_conclusions"
                     rules={[
                       {
                         required: true,
@@ -99,10 +108,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -111,13 +117,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Identification of project type start */}
               <>
                 <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:identificationOfProjectType')}
+                  {t('verificationReport:complianceProjectImplementation')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="projectType_meansOfVerification"
+                    name="complianceProjectImplementation_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -127,16 +133,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="projectType_findings"
+                    name="complianceProjectImplementation_findings"
                     rules={[
                       {
                         required: true,
@@ -144,16 +147,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="projectType_conclusions"
+                    name="complianceProjectImplementation_conclusions"
                     rules={[
                       {
                         required: true,
@@ -161,10 +161,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -173,13 +170,16 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Description of project activity start */}
               <>
                 <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:descriptionOfProjectActivity')}
+                  {t('verificationReport:postRegistrationChanges')}
                 </h4>
+                <h6 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:temporaryDeviations')}
+                </h6>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="projectActivity_meansOfVerification"
+                    name="temporaryDeviations_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -189,16 +189,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="projectActivity_findings"
+                    name="temporaryDeviations_findings"
                     rules={[
                       {
                         required: true,
@@ -206,16 +203,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="projectActivity_conclusions"
+                    name="temporaryDeviations_conclusions"
                     rules={[
                       {
                         required: true,
@@ -223,29 +217,23 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
               {/* Description of project activity end */}
 
               {/* Application Methodologies main section */}
-              <h3 className="verificationReport-findings-heading">
-                {t('verificationReport:applicationMethodologiesSectionHeading')}
-              </h3>
+              <h4 className="verificationReport-findings-subHeading">
+                {t('verificationReport:corrections')}
+              </h4>
               {/* Application and selection of methodologies and standardized baselines start */}
               <>
-                <h4 className="verificationReport-findings-subHeading">
-                  {t('verificationReport:applicationMethodologiesBaselines')}
-                </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="applicationMethodologies_meansOfVerification"
+                    name="corrections_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -255,16 +243,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="applicationMethodologies_findings"
+                    name="corrections_findings"
                     rules={[
                       {
                         required: true,
@@ -272,16 +257,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="applicationMethodologies_conclusions"
+                    name="corrections_conclusions"
                     rules={[
                       {
                         required: true,
@@ -289,10 +271,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -302,13 +281,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
 
               <>
                 <h4 className="verificationReport-findings-subHeading">
-                  {t('verificationReport:deviationMethodology')}
+                  {t('verificationReport:changesCreditingPeriodStartDate')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="deviationMethodology_meansOfVerification"
+                    name="changesCreditingPeriodStartDate_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -318,16 +297,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="deviationMethodology_findings"
+                    name="changesCreditingPeriodStartDate_findings"
                     rules={[
                       {
                         required: true,
@@ -335,16 +311,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="deviationMethodology_conclusions"
+                    name="changesCreditingPeriodStartDate_conclusions"
                     rules={[
                       {
                         required: true,
@@ -352,10 +325,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -364,13 +334,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Clarification on applicability of methodology, tool and/or standardized baseline start */}
               <>
                 <h4 className="verificationReport-findings-subHeading">
-                  {t('verificationReport:clarificationOnMethodology')}
+                  {t('verificationReport:inclusionMonitoringPlan')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="clarificationOnMethodology_meansOfVerification"
+                    name="inclusionMonitoringPlan_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -380,16 +350,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="clarificationOnMethodology_findings"
+                    name="inclusionMonitoringPlan_findings"
                     rules={[
                       {
                         required: true,
@@ -397,16 +364,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="clarificationOnMethodology_conclusions"
+                    name="inclusionMonitoringPlan_conclusions"
                     rules={[
                       {
                         required: true,
@@ -414,10 +378,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -426,13 +387,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Project boundary, sources and GHGs start */}
               <>
                 <h4 className="verificationReport-findings-subHeading">
-                  {t('verificationReport:projectBoundarySources')}
+                  {t('verificationReport:permanentChangesMonitoringPlan')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="projectBoundarySources_meansOfVerification"
+                    name="permanentChangesMonitoringPlan_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -442,16 +403,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="projectBoundarySources_findings"
+                    name="permanentChangesMonitoringPlan_findings"
                     rules={[
                       {
                         required: true,
@@ -459,16 +417,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="projectBoundarySources_conclusions"
+                    name="permanentChangesMonitoringPlan_conclusions"
                     rules={[
                       {
                         required: true,
@@ -476,10 +431,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -488,13 +440,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Baseline scenario start */}
               <>
                 <h4 className="verificationReport-findings-subHeading">
-                  {t('verificationReport:baselineScenario')}
+                  {t('verificationReport:changesProjectDesign')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="baselineScenario_meansOfVerification"
+                    name="changesProjectDesign_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -504,16 +456,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="baselineScenario_findings"
+                    name="changesProjectDesign_findings"
                     rules={[
                       {
                         required: true,
@@ -521,16 +470,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="baselineScenario_conclusions"
+                    name="changesProjectDesign_conclusions"
                     rules={[
                       {
                         required: true,
@@ -538,10 +484,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -550,13 +493,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Demonstration Of Additionality start */}
               <>
                 <h4 className="verificationReport-findings-subHeading">
-                  {t('verificationReport:demonstrationOfAdditionality')}
+                  {t('verificationReport:changesAfforestationReforestation')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="demonstrationOfAdditionality_meansOfVerification"
+                    name="changesAfforestationReforestation_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -566,16 +509,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="demonstrationOfAdditionality_findings"
+                    name="changesAfforestationReforestation_findings"
                     rules={[
                       {
                         required: true,
@@ -583,16 +523,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="demonstrationOfAdditionality_conclusions"
+                    name="changesAfforestationReforestation_conclusions"
                     rules={[
                       {
                         required: true,
@@ -600,10 +537,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -611,14 +545,14 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
 
               {/* Estimation of emission reductions or net anthropogenic removals start */}
               <>
-                <h4 className="verificationReport-findings-subHeading">
-                  {t('verificationReport:estimationOfEmissionReduction')}
+                <h4 className="verificationReport-findings-heading">
+                  {t('verificationReport:complianceRegisteredMonitoringPlan')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="estimationOfEmissionReduction_meansOfVerification"
+                    name="complianceRegisteredMonitoringPlan_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -628,16 +562,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="estimationOfEmissionReduction_findings"
+                    name="complianceRegisteredMonitoringPlan_findings"
                     rules={[
                       {
                         required: true,
@@ -645,16 +576,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="estimationOfEmissionReduction_conclusions"
+                    name="complianceRegisteredMonitoringPlan_conclusions"
                     rules={[
                       {
                         required: true,
@@ -662,10 +590,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -673,14 +598,18 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
 
               {/* Monitoring Plan start */}
               <>
-                <h4 className="verificationReport-findings-subHeading">
-                  {t('verificationReport:monitoringPlan')}
+                <h4 className="verificationReport-findings-heading">
+                  {t('verificationReport:complianceMonitoringActivities')}
                 </h4>
+                <h6 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:dataParametersFixedExAnte')}
+                </h6>
+
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="monitoringPlan_meansOfVerification"
+                    name="dataParametersFixedExAnte_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -690,16 +619,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="monitoringPlan_findings"
+                    name="dataParametersFixedExAnte_findings"
                     rules={[
                       {
                         required: true,
@@ -707,16 +633,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="monitoringPlan_conclusions"
+                    name="dataParametersFixedExAnte_conclusions"
                     rules={[
                       {
                         required: true,
@@ -724,10 +647,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -735,14 +655,14 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
 
               {/* Start date, crediting period type and duration start */}
               <>
-                <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:startDateCreditingPeriod')}
+                <h4 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:dataParametersMonitored')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="startDateCreditingPeriod_meansOfVerification"
+                    name="dataParametersMonitored_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -752,16 +672,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="startDateCreditingPeriod_findings"
+                    name="dataParametersMonitored_findings"
                     rules={[
                       {
                         required: true,
@@ -769,16 +686,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="startDateCreditingPeriod_conclusions"
+                    name="dataParametersMonitored_conclusions"
                     rules={[
                       {
                         required: true,
@@ -786,10 +700,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -797,14 +708,14 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
 
               {/* Environmental impacts start */}
               <>
-                <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:environmentImpacts')}
+                <h4 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:implementationSamplingPlan')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="environmentImpacts_meansOfVerification"
+                    name="implementationSamplingPlan_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -814,16 +725,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="environmentImpacts_findings"
+                    name="implementationSamplingPlan_findings"
                     rules={[
                       {
                         required: true,
@@ -831,16 +739,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="environmentImpacts_conclusions"
+                    name="implementationSamplingPlan_conclusions"
                     rules={[
                       {
                         required: true,
@@ -848,10 +753,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -860,13 +762,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Local Stakeholder Consultation start */}
               <>
                 <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:localStakeholderConsultation')}
+                  {t('verificationReport:complianceCalibrationFrequency')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="localStakeholderConsultation_meansOfVerification"
+                    name="complianceCalibrationFrequency_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -876,16 +778,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="localStakeholderConsultation_findings"
+                    name="complianceCalibrationFrequency_findings"
                     rules={[
                       {
                         required: true,
@@ -893,16 +792,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="localStakeholderConsultation_conclusions"
+                    name="complianceCalibrationFrequency_conclusions"
                     rules={[
                       {
                         required: true,
@@ -910,87 +806,25 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
               {/* Local Stakeholder Consultation end */}
 
-              {/* Sustainable development co-benefits start */}
-              <>
-                <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:sustainableDevelopment')}
-                </h4>
-                <section className="verificationReport-findings-section">
-                  <Form.Item
-                    className="full-width-form-item"
-                    label={`${t('verificationReport:meansOfVerification')}`}
-                    name="sustainableDevelopment_meansOfVerification"
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('verificationReport:meansOfVerification')} ${t(
-                          'isRequired'
-                        )}`,
-                      },
-                    ]}
-                  >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    className="full-width-form-item"
-                    label={`${t('verificationReport:findings')}`}
-                    name="sustainableDevelopment_findings"
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('verificationReport:findings')} ${t('isRequired')}`,
-                      },
-                    ]}
-                  >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    className="full-width-form-item"
-                    label={`${t('verificationReport:conclusions')}`}
-                    name="sustainableDevelopment_conclusions"
-                    rules={[
-                      {
-                        required: true,
-                        message: `${t('verificationReport:conclusions')} ${t('isRequired')}`,
-                      },
-                    ]}
-                  >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
-                  </Form.Item>
-                </section>
-              </>
-              {/* Sustainable development co-benefits end */}
-
               {/* Approval start */}
               <>
                 <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:approval')}
+                  {t('verificationReport:assessmentDataEmissionReductions')}
                 </h4>
+                <h6 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:calculationBaselineEmissions')}
+                </h6>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="approval_meansOfVerification"
+                    name="calculationBaselineEmissions_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -1000,16 +834,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="approval_findings"
+                    name="calculationBaselineEmissions_findings"
                     rules={[
                       {
                         required: true,
@@ -1017,16 +848,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="approval_conclusions"
+                    name="calculationBaselineEmissions_conclusions"
                     rules={[
                       {
                         required: true,
@@ -1034,10 +862,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -1045,14 +870,14 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
 
               {/* Authorization start */}
               <>
-                <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:authorization')}
+                <h4 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:calculationProjectEmissions')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="authorization_meansOfVerification"
+                    name="calculationProjectEmissions_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -1062,16 +887,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="authorization_findings"
+                    name="calculationProjectEmissions_findings"
                     rules={[
                       {
                         required: true,
@@ -1079,16 +901,13 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="authorization_conclusions"
+                    name="calculationProjectEmissions_conclusions"
                     rules={[
                       {
                         required: true,
@@ -1096,10 +915,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -1107,14 +923,67 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
 
               {/* Modalities of communication start */}
               <>
-                <h4 className="verificationReport-findings-heading">
-                  {t('verificationReport:modalitiesOfCommunication')}
+                <h4 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:calculationLeakageEmissions')}
                 </h4>
                 <section className="verificationReport-findings-section">
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:meansOfVerification')}`}
-                    name="modalitiesOfCommunication_meansOfVerification"
+                    name="calculationLeakageEmissions_meansOfVerification"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:meansOfVerification')} ${t(
+                          'isRequired'
+                        )}`,
+                      },
+                    ]}
+                  >
+                    <Input size="large" disabled={disableFields} />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:findings')}`}
+                    name="calculationLeakageEmissions_findings"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:findings')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input size="large" disabled={disableFields} />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:conclusions')}`}
+                    name="calculationLeakageEmissions_conclusions"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:conclusions')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input size="large" disabled={disableFields} />
+                  </Form.Item>
+                </section>
+              </>
+              {/* Modalities of communication end */}
+
+              {/* Summary Calculation start */}
+              <>
+                <h4 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:summaryGHGEmissionReductions')}
+                </h4>
+                <section className="verificationReport-findings-section">
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:meansOfVerification')}`}
+                    name="summaryGHGEmissionReductions_meansOfVerification"
                     rules={[
                       {
                         required: true,
@@ -1133,7 +1002,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:findings')}`}
-                    name="modalitiesOfCommunication_findings"
+                    name="summaryGHGEmissionReductions_findings"
                     rules={[
                       {
                         required: true,
@@ -1150,7 +1019,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                   <Form.Item
                     className="full-width-form-item"
                     label={`${t('verificationReport:conclusions')}`}
-                    name="modalitiesOfCommunication_conclusions"
+                    name="summaryGHGEmissionReductions_conclusions"
                     rules={[
                       {
                         required: true,
@@ -1165,7 +1034,246 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                   </Form.Item>
                 </section>
               </>
-              {/* Modalities of communication end */}
+              {/* Global stakeholder consultation end */}
+
+              {/* comparison ghg start */}
+              <>
+                <h4 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:comparisonActualEmissionReductions')}
+                </h4>
+                <section className="verificationReport-findings-section">
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:meansOfVerification')}`}
+                    name="comparisonGHG_meansOfVerification"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:meansOfVerification')} ${t(
+                          'isRequired'
+                        )}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:findings')}`}
+                    name="comparisonGHG_findings"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:findings')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:conclusions')}`}
+                    name="comparisonGHG_conclusions"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:conclusions')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+                </section>
+              </>
+              {/* comparison ghg end */}
+
+              {/* remark dif start */}
+              <>
+                <h4 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:remarksDifferenceEstimatedValue')}
+                </h4>
+                <section className="verificationReport-findings-section">
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:meansOfVerification')}`}
+                    name="remarkDif_meansOfVerification"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:meansOfVerification')} ${t(
+                          'isRequired'
+                        )}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:findings')}`}
+                    name="remarkDif_findings"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:findings')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:conclusions')}`}
+                    name="remarkDif_conclusions"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:conclusions')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+                </section>
+              </>
+              {/* remark dif end */}
+
+              {/* actual ghg start */}
+              <>
+                <h4 className="verificationReport-findings-subHeading">
+                  {t('verificationReport:actualEmissionReductions')}
+                </h4>
+                <section className="verificationReport-findings-section">
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:meansOfVerification')}`}
+                    name="actualGHG_meansOfVerification"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:meansOfVerification')} ${t(
+                          'isRequired'
+                        )}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:findings')}`}
+                    name="actualGHG_findings"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:findings')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:conclusions')}`}
+                    name="actualGHG_conclusions"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:conclusions')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      // disabled={FormMode.VIEW === formMode}
+                    />
+                  </Form.Item>
+                </section>
+              </>
+              {/* actual ghg end */}
+
+              {/* assesmentOfReport start */}
+              <>
+                <h4 className="verificationReport-findings-heading">
+                  {t('verificationReport:assessmentSustainableDevelopment')}
+                </h4>
+                <section className="verificationReport-findings-section">
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:meansOfVerification')}`}
+                    name="assesmentOfReport_meansOfVerification"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:meansOfVerification')} ${t(
+                          'isRequired'
+                        )}`,
+                      },
+                    ]}
+                  >
+                    <Input size="large" disabled={disableFields} />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:findings')}`}
+                    name="assesmentOfReport_findings"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:findings')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input size="large" disabled={disableFields} />
+                  </Form.Item>
+
+                  <Form.Item
+                    className="full-width-form-item"
+                    label={`${t('verificationReport:conclusions')}`}
+                    name="assesmentOfReport_conclusions"
+                    rules={[
+                      {
+                        required: true,
+                        message: `${t('verificationReport:conclusions')} ${t('isRequired')}`,
+                      },
+                    ]}
+                  >
+                    <Input size="large" disabled={disableFields} />
+                  </Form.Item>
+                </section>
+              </>
+              {/*assesmentOfReport end */}
 
               {/* Global stakeholder consultation start */}
               <>
@@ -1186,10 +1294,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -1203,10 +1308,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -1220,22 +1322,30 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
               {/* Global stakeholder consultation end */}
 
-              <Row justify={'end'} className="step-actions-end">
+              <Row justify={'end'} className="step-actions-end mg-top-2">
                 <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('verificationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('verificationReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('verificationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

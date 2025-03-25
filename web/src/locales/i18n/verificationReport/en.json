@@ -11,7 +11,6 @@
   "title10": "Certification Statement",
   "title11": "Appendix",
   "verificationReport": "Verification Report",
-
   "b_projectTitle": "Title of the Project Activity",
   "b_scaleOfProject": "Scale of the project activity",
   "b_completionDate": "Completion date of the verification and certification report",
@@ -21,7 +20,8 @@
   "b_conditionalSectoralScopes": "Conditional sectoral scopes, if applicable",
   "b_unfccRefNo": "UNFCC reference number of the project activity ",
   "b_versionNoOfVerificationReport": "Version number of the verification and certification report ",
-  "b_monitoringPeriodNoAndDuration": "Monitoring period number and duration of this monitoring period",
+  "b_monitoringPeriodNo": "Monitoring period number",
+  "b_monitoringPeriodDuration": "Duration of the relevant monitoring period",
   "b_creditingPeriod": "Crediting period of the project activity corresponding to this monitoring period",
   "b_hostParty": "Host Party",
   "b_mandatorySectoralScopes": "Mandatory sectoral scopes",
@@ -31,14 +31,11 @@
   "b_name": "Name",
   "b_position": "Position",
   "b_signature": "Signature",
-
   "g_projectEmissions": "Project Emission",
   "g_leakageEmission": "Leakage Emission",
   "g_netEmmissionsTitle": "Estimated net emission reduction ",
   "shouldHavePositive": "Should have a positive value",
-
   "e_executiveSummary": "Executive Summary",
-
   "v_TeamMemberTableTitle": "Validation team member",
   "No": "NO",
   "role": "Role",
@@ -61,13 +58,37 @@
   "documentReviewOption": "Document Review",
   "siteVisit": "Site Visit",
   "provider": "Provider",
-
   "am_considerationOfMateriality": "Consideration of materiality in planning the verification",
   "am_considerationOfMaterialityTextBox": "Consideration of materiality in conducting the verification",
-
   "samplingApproach": "Sampling approach",
   "clarificationRequestsTableTitle": "Clarification requests (CLs), corrective action requests (CARs) and forward action  requests (FARs) raised",
-  "demonstrationPriorCDM": "Demonstration of prior consideration of the CDM",
+  "remainingFARsFromValidation": "Remaining forward action requests from validation and/or previous verifications",
+  "complianceMonitoringReportForm": "Compliance of the monitoring report with the monitoring report form",
+  "complianceProjectImplementation": "Compliance of the project implementation and operation with the registered project design document",
+  "postRegistrationChanges": "Post-registration changes",
+  "temporaryDeviations": "Temporary deviations from the registered monitoring plan, applied methodologies, standardized baselines or other methodological regulatory documents",
+  "corrections": "Corrections",
+  "changesCreditingPeriodStartDate": "Changes to the start date of the crediting period",
+  "inclusionMonitoringPlan": "Inclusion of a monitoring plan",
+  "permanentChangesMonitoringPlan": "Permanent changes from registered monitoring plan, or permanent deviation of monitoring from the applied methodologies, standardized baselines or other methodological regulatory documents",
+  "changesProjectDesign": "Changes to the project design",
+  "changesAfforestationReforestation": "Changes specific to afforestation and reforestation project activities",
+  "complianceRegisteredMonitoringPlan": "Compliance of the registered monitoring plan with applied methodologies, applied standardized baselines, and other applied methodological regulatory documents",
+  "complianceMonitoringActivities": "Compliance of monitoring activities with the registered monitoring plan",
+  "dataParametersFixedExAnte": "Data and parameters fixed ex ante or at renewal of crediting period",
+  "dataParametersMonitored": "Data and parameters monitored",
+  "implementationSamplingPlan": "Implementation of sampling plan",
+  "complianceCalibrationFrequency": "Compliance with the calibration frequency requirements for measuring instruments",
+  "assessmentDataEmissionReductions": "Assessment of data and calculation of emission reductions or net removals",
+  "calculationBaselineEmissions": "Calculation of baseline GHG emissions or baseline net GHG removals by sinks",
+  "calculationProjectEmissions": "Calculation of project GHG emissions or actual net anthropogenic GHG removals by sinks",
+  "calculationLeakageEmissions": "Calculation of leakage GHG emissions",
+  "summaryGHGEmissionReductions": "Summary calculation of GHG emission reductions or net anthropogenic GHG removals by sinks",
+  "comparisonActualEmissionReductions": "Comparison of actual GHG emission reductions or net anthropogenic GHG removals by sinks with estimates in registered PDD",
+  "remarksDifferenceEstimatedValue": "Remarks on difference from estimated value in registered PDD",
+  "actualEmissionReductions": "Actual GHG emission reductions or net anthropogenic GHG removals by sinks during the first commitment period and the period from 1 January 2013 onwards",
+  "assessmentSustainableDevelopment": "Assessment of reported sustainable development co-benefits",
+  "globalStakeholderConsultation": "Global stakeholder consultation",
   "identificationOfProjectType": "Identification of project type",
   "descriptionOfProjectActivity": "Description of project activity",
   "applicationMethodologiesSectionHeading": "Application and selection of methodologies and standardized baselines",
@@ -84,19 +105,14 @@
   "approval": "Approval",
   "authorization": "Authorization",
   "modalitiesOfCommunication": "Modalities of Communication",
-  "globalStakeholderConsultation": "Global Stakeholder Consultation",
   "monitoringPlan": "Monitoring Plan",
   "localStakeholderConsultation": "Local stakeholder Consultation",
   "others": "Others (please specify)",
-
   "meansOfVerification": "Means of Verification",
   "findings": "Findings",
   "conclusions": "Conclusions",
-
   "iq_internalQuality": "Internal quality control ",
-
   "cs_certificationStatement": "Certification statement",
-
   "appendix": "Appendix",
   "appendixTitle1": "Competence of team members and technical reviewers",
   "appendixTitle2": "Documents reviewed or referenced",
@@ -112,7 +128,6 @@
   "doeAssesment": "DOE assessment",
   "doeDate": "Date",
   "appendix1Documents": "Upload your additional documents here",
-
   "publication": "Publication of the Monitoring Report for Public Review",
   "deskReview": "Desk Review of Monitoring Report and Supporting Documents",
   "onSiteInspection": "On-site Inspections",
@@ -141,7 +156,6 @@
   "creditionPeriod": "Project’s Crediting Period",
   "periodVerified": "Period Verified in This Verification",
   "emissionReductionMethodology": "Methodology for Determining Emission Reductions",
-
   "version": "Version No",
   "creditionPeriodStart": "Start Date",
   "creditionPeriodEnd": "End Date",
@@ -158,7 +172,6 @@
   "verifiedScer": "Verified SCER",
   "shouldBeInteger": "Credit should be a positive integer",
   "summary": "Summary",
-
   "reportID": "Report ID",
   "workCarriedOutBy": "Work Carried Out By",
   "workApprovedBy": "Work Approved By",
@@ -266,7 +279,6 @@
   "dpm_frequencyOfMonitoring": "Frequency of Monitoring/Recording",
   "dpm_calculationData": "Calculation method",
   "dpm_planDescription": "Description of the Monitoring Plan",
-
   "dpm_descriptionPlaceholder": "Provide a brief description of the data/parameter",
   "dpm_mmProceduresPlaceholder": "Specify the measurement methods and procedures, any  standards or protocols to be followed, and the person/entity  responsible for the measurement. Include any relevant  information regarding the accuracy of the measurements  (e.g., accuracy associated with meter equipment or  laboratory tests).",
   "dpm_valueAppliedPlaceholder": "Provide an estimated value for the data/parameter",
@@ -279,7 +291,6 @@
   "dpm_frequencyOfMonitoringPlaceholder": "Specify measurement and recording frequency",
   "dpm_calculationDataPlaceholder": "Where relevant, provide the calculation method, including  any equations, used to establish the data/parameter.",
   "dpm_planDescriptionPlaceholder": "Description of the Monitoring Plan",
-
   "pa_monitoringObjective": "Objective of the Monitoring",
   "pa_monitoringObjectivePlaceholder": "Explain the purpose of the monitoring",
   "pa_implementation": "Summary Description of the Implementation of this Project",
@@ -402,5 +413,10 @@
   "leakageEmissionsContent": "There are no leakages associated with movement of old equipment that need to be assessed as per the methodology AMS-I.D, Version18. Thus, there is no leakage emission form the project activity for this monitoring period.",
   "emissionReductions": "Emission Reductions",
   "emissionReductionsContent": "Therefore, the emission reductions in this monitoring period are: ERy = BEy - PEy - LEy",
-  "addFinding": "Add Finding"
+  "addFinding": "Add Finding",
+  "confirmModalMessage": "Are you sure you want to submit ?",
+  "confirmModalSubMessage": "You can't undo this action",
+  "approveMessage": "Are you sure you want to approve this Verification Report ?",
+  "declineMessage": "Are you sure you want to decline this Verification Report?",
+  "checkboxMessage": "I understand that this action cannot be undone"
 }

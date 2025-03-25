@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-use-before-define */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Row,
   Col,
@@ -138,6 +138,7 @@ import ProjectDocuments from './projectForms/ProjectDocuments';
 import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import VerificationPhaseForms from './projectForms/VerificationPhaseForms';
+import VerificationPhaseStatus from './verificationPhaseStatus/verificationPhaseStatus';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -198,6 +199,8 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalInfo, setSlcfActionModalInfo] = useState<PopupInfo>();
   const [carbonNeutralCertificateData, setCarbonNeutralCertificateData] = useState<any>();
+
+  const projectTimelineRef = useRef<HTMLDivElement>(null);
 
   const accessToken = process.env.REACT_APP_MAPBOXGL_ACCESS_TOKEN
     ? process.env.REACT_APP_MAPBOXGL_ACCESS_TOKEN
@@ -465,6 +468,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       const response: any = await post(API_PATHS.PROGRAMME_BY_ID, {
         programmeId: id,
       });
+      //console.log('-------res-----------', response);
 
       if (response) {
         setData(response.data);
@@ -1994,7 +1998,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       data.activities &&
       (data?.activities.length === 0 ||
         data?.activities[data?.activities.length - 1].stage ===
-          ActivityStateEnum.MONITORING_REPORT_VERIFIED)
+          ActivityStateEnum.VERIFICATION_REPORT_VERIFIED)
     ) {
       actionBtns.push(
         <Button
@@ -2144,10 +2148,15 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         </div>
       </div>
       <div className="content-body">
-        <Row className="programme-status-timeline">
-          <Col xl={24}>
+        <Row
+          className="programme-status-timeline"
+          justify={'space-between'}
+          gutter={20}
+          align={'stretch'}
+        >
+          <Col xl={data.activities && data.activities.length > 0 ? 19 : 24}>
             <Card className="card-container">
-              <div className="info-view">
+              <div className="info-view" ref={projectTimelineRef}>
                 <ProgrammeStatusTimelineComponent
                   programmeDetails={data}
                   translator={t}
@@ -2155,6 +2164,18 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
               </div>
             </Card>
           </Col>
+          {data.activities && data.activities.length > 0 && (
+            <Col xl={5}>
+              <Card className="card-container">
+                <div className="info-view">
+                  <VerificationPhaseStatus
+                    activity={data.activities[data.activities.length - 1]}
+                    timelineRef={projectTimelineRef}
+                  />
+                </div>
+              </Card>
+            </Col>
+          )}
         </Row>
         <Row gutter={16}>
           <Col md={24} lg={10}>
@@ -2384,7 +2405,10 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             {data?.activities && data?.activities.length > 0 && (
               <Card className="card-container">
                 <div>
-                  <VerificationPhaseForms activityData={data?.activities} />
+                  <VerificationPhaseForms
+                    activityData={data?.activities}
+                    documents={data?.documents}
+                  />
                 </div>
               </Card>
             )}

@@ -8,14 +8,18 @@ import { CarbonCreditGuardianService } from './service/carbon-credit-guardian.se
 import { CreditsBalanceView } from './entity/credit.balance.view.entity';
 import { CreditsTransferView } from './entity/credit.transfer.view.entity';
 import { CreditsRetireView } from './entity/credit.retire.view.entity';
+import { TokenAssociateEntity } from './entity/token-associate.entity';
+import { CreditBlocksEntity } from './entity/credit.blocks.entity';
 @Module({
     imports: [
         UtilModule,
         TypeOrmModule.forFeature([
             CreditEventsEntity,
+            TokenAssociateEntity,
             CreditsBalanceView,
             CreditsTransferView,
             CreditsRetireView,
+            CreditBlocksEntity,
         ]),
     ],
     providers: [CarbonCreditService, CarbonCreditGuardianService],
