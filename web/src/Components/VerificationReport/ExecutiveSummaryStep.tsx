@@ -11,7 +11,7 @@ import i18n from '../Internationalization/i18n';
 import { VerificationStepProps } from './StepProps';
 
 export const ExecutiveSummaryStep = (props: VerificationStepProps) => {
-  const { current, form, formMode, prev, next, handleValuesUpdate } = props;
+  const { current, form, formMode, prev, next, handleValuesUpdate, disableFields } = props;
   const { userInfoState } = useUserContext();
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -31,7 +31,7 @@ export const ExecutiveSummaryStep = (props: VerificationStepProps) => {
     console.log('--------values-----------', values);
     const body = { ...values };
     handleValuesUpdate({
-      executiveSummaryFormDetails: body,
+      executiveSummary: body,
     });
   };
 
@@ -47,7 +47,6 @@ export const ExecutiveSummaryStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -70,7 +69,7 @@ export const ExecutiveSummaryStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={6} disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
@@ -79,9 +78,20 @@ export const ExecutiveSummaryStep = (props: VerificationStepProps) => {
                 <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('verificationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

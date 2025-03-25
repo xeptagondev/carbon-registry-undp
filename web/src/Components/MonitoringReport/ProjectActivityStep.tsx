@@ -145,7 +145,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
             city: item.city,
             community: item.community,
             geographicalLocationCoordinates: item.geographicalLocationCoordinates, // Use item, not values
-            uploadImages: await fileUploadValueExtract(values?.uploadImages, 'uploadImages'),
+            pa_uploadImages: await fileUploadValueExtract(item?.pa_uploadImages, 'pa_uploadImages'),
           };
           tempList.push(tempObj);
         }

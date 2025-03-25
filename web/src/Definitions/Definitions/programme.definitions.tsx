@@ -115,34 +115,6 @@ export const getProjectProposalStage = (stage: ProjectProposalStage) => {
       return 'orange';
     case ProjectProposalStage.AUTHORISED:
       return 'success';
-    // case ProjectProposalStage.SUBMITTED_INF:
-    //   return 'processing';
-    // case ProjectProposalStage.APPROVED_INF:
-    //   return 'purple';
-    // case ProjectProposalStage.SUBMITTED_COST_QUOTATION:
-    //   return 'processing';
-    // case ProjectProposalStage.SUBMITTED_PROPOSAL:
-    //   return 'processing';
-    // case ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT:
-    //   return 'processing';
-    // case ProjectProposalStage.ACCEPTED_PROPOSAL:
-    //   return 'purple';
-    // case ProjectProposalStage.SUBMITTED_CMA:
-    //   return 'processing';
-    // case ProjectProposalStage.VALIDATION_PENDING:
-    //   return 'processing';
-    // case ProjectProposalStage.AUTHORISED:
-    //   return 'purple';
-    // case ProjectProposalStage.REJECTED_VALIDATION:
-    //   return 'error';
-    // case ProjectProposalStage.APPROVED_CMA:
-    //   return 'purple';
-    // case ProjectProposalStage.REJECTED_CMA:
-    //   return 'error';
-    // case ProjectProposalStage.REJECTED_PROPOSAL:
-    //   return 'error';
-    // case ProjectProposalStage.REJECTED_INF:
-    //   return 'error';
     default:
       return 'default';
   }

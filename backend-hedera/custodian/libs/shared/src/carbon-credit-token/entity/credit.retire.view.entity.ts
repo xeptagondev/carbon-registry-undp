@@ -1,34 +1,35 @@
 import { ViewEntity, ViewColumn } from 'typeorm';
 import { CreditEventTypeEnum } from '../enum/credit.event.type.enum';
-import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
 
 @ViewEntity({
     schema: 'public',
     name: 'credits_retire_view',
     expression: `
-    -- RETIREMENT RECORDS (GROUPED BY TransferId & Status)
     SELECT 
       credit."transferId" AS "transferId",
       credit."tokenId" AS "tokenId",
       sender."id" AS "organizationId",
-      sender.name AS "organizationName",
+      sender."name" AS "organizationName",
+      sender."logo" AS "organizationLogo",
       project."id" AS "projectId",
-      project.title AS "projectName",
+      project."title" AS "projectName",
       credit."batchSerialNumnber" AS "batchSerialNumnber",
       COUNT(*) AS "retiredAmount",
       credit."status" AS "status",
+      credit."retirementType" AS "retirementType",
       credit."createdDate" AS "createdDate"
     FROM credit_events_entity credit
     LEFT JOIN organization_entity sender ON sender.id = credit."senderId"
     LEFT JOIN project_entity project ON project.id = credit."projectId"
-    WHERE credit.type = '${CreditEventTypeEnum.RETIRED}'
+    WHERE credit."type" = '${CreditEventTypeEnum.RETIRED}'
     GROUP BY 
       credit."transferId",  
       credit."tokenId",
-      sender."id", sender.name,
-      project."id", project.title,
+      sender."id", sender."name", sender."logo",
+      project."id", project."title",
       credit."batchSerialNumnber",
       credit."status",
+      credit."retirementType",
       credit."createdDate"
   `,
 })
@@ -46,6 +47,9 @@ export class CreditsRetireView {
     organizationName: string;
 
     @ViewColumn()
+    organizationLogo: string;
+
+    @ViewColumn()
     projectId: string;
 
     @ViewColumn()
@@ -58,8 +62,11 @@ export class CreditsRetireView {
     retiredAmount: number;
 
     @ViewColumn()
-    status: string; // PENDING, COMPLETED, REJECTED, CANCELLED
+    status: string;
 
     @ViewColumn()
-    createdDate: Date;
+    retirementType: string;
+
+    @ViewColumn()
+    createdDate: number;
 }

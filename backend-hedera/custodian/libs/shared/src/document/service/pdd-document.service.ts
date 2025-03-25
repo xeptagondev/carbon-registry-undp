@@ -36,6 +36,7 @@ import { DocumentEnum } from '../enum/document.enum';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
+import { AdditionalDocType } from '../enum/additional.document.type';
 
 @Injectable()
 export class PddDocumentService extends DocumentService {
@@ -132,7 +133,69 @@ export class PddDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+            const pddData = dto.data;
+            const additionalDocumentFields = [
+                {
+                    field: 'appendix2Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_2_DOCUMENT,
+                },
+                {
+                    field: 'appendix3Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_3_DOCUMENT,
+                },
+                {
+                    field: 'appendix4Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_4_DOCUMENT,
+                },
+                {
+                    field: 'appendix5Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_5_DOCUMENT,
+                },
+                {
+                    field: 'appendix6Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_6_DOCUMENT,
+                },
+                {
+                    field: 'appendix7Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_7_DOCUMENT,
+                },
+            ];
 
+            if (pddData.appendix) {
+                for (const docField of additionalDocumentFields) {
+                    if (
+                        pddData.appendix[docField.field] &&
+                        pddData.appendix[docField.field].length > 0
+                    ) {
+                        const docUrls = await this.uploadDocuments(
+                            pddData.appendix[docField.field],
+                            docField.type,
+                            dto.projectRefId,
+                        );
+                        pddData.appendix[docField.field] = docUrls;
+                    }
+                }
+            }
+
+            if (
+                pddData.projectActivity.locationsOfProjectActivity &&
+                pddData.projectActivity.locationsOfProjectActivity.length > 0
+            ) {
+                for (const location of pddData.projectActivity
+                    .locationsOfProjectActivity) {
+                    if (
+                        location.additionalDocuments &&
+                        location.additionalDocuments.length > 0
+                    ) {
+                        const docUrls = await this.uploadDocuments(
+                            location.additionalDocuments,
+                            AdditionalDocType.PDD_LOCATION_OF_PROJECT_ACTIVITY_ADDITIONAL_DOCUMENT,
+                            dto.projectRefId,
+                        );
+                        location.additionalDocuments = docUrls;
+                    }
+                }
+            }
             // PDD has to be an Admin of the same organization of the project the document is being submitted to
             if (
                 !(
@@ -392,6 +455,7 @@ export class PddDocumentService extends DocumentService {
                     documentEntity.project.refId,
                     ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const pddDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
@@ -450,7 +514,7 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
                     jwtData.userId,
                 );
@@ -526,9 +590,10 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_REJECTED_BY_DNA,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const pddDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
@@ -605,7 +670,7 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_APPROVED_BY_DNA,
                     jwtData.userId,
                 );

@@ -31,131 +31,137 @@
   }
 
   .pending {
-    color: #FF8352;
-    background-color: #FFD2C0;
+    color: #ff8352;
+    background-color: #ffd2c0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .approved {
-    color: #3575C8;
-    background-color:#C0E7FF;
+    color: #3575c8;
+    background-color: #c0e7ff;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .rejected {
-    color: #FF4D4F;
-    background-color: #ffe0e0; 
+    color: #ff4d4f;
+    background-color: #ffe0e0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .no_objection_letter_generated {
-    color: #CFA42F;
-    background-color: #FFEEC0;
+    color: #cfa42f;
+    background-color: #ffeec0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .pdd_submitted {
-    color: #CFA42F;
-    background-color: #FFEEC0;
+    color: #cfa42f;
+    background-color: #ffeec0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .pdd_rejected_by_certifier {
-    color: #FF4D4F;
-    background-color: #ffe0e0; 
+    color: #ff4d4f;
+    background-color: #ffe0e0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .pdd_approved_by_certifier {
-    color: #3DC835;
-    background-color: #C0FFC2;
+    color: #3dc835;
+    background-color: #c0ffc2;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .pdd_rejected_by_dna {
-    color: #FF4D4F;
-    background-color: #ffe0e0; 
+    color: #ff4d4f;
+    background-color: #ffe0e0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .pdd_approved_by_dna {
-    color: #3DC835;
-    background-color: #C0FFC2;
+    color: #3dc835;
+    background-color: #c0ffc2;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .validation_report_submitted {
-    color: #CFA42F;
-    background-color: #FFEEC0;
+    color: #cfa42f;
+    background-color: #ffeec0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .validation_report_rejected {
-    color: #FF4D4F;
-    background-color: #ffe0e0; 
+    color: #ff4d4f;
+    background-color: #ffe0e0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .authorised {
-    color: #F3FCC9;
-    background-color: #BAD442;
+    color: #f3fcc9;
+    background-color: #bad442;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .monitoring_report_submitted {
-    color: #CFA42F;
-    background-color: #FFEEC0;
+    color: #cfa42f;
+    background-color: #ffeec0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .monitoring_report_rejected {
-    color: #FF4D4F;
-    background-color: #ffe0e0; 
+    color: #ff4d4f;
+    background-color: #ffe0e0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .monitoring_report_approved {
-    color: #3DC835;
-    background-color: #C0FFC2;
+    color: #3dc835;
+    background-color: #c0ffc2;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .verification_report_submitted {
-    color: #CFA42F;
-    background-color: #FFEEC0;
+    color: #cfa42f;
+    background-color: #ffeec0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .verification_report_rejected {
-    color: #FF4D4F;
-    background-color: #ffe0e0; 
+    color: #ff4d4f;
+    background-color: #ffe0e0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
   .verification_report_approved {
-    color: #3575C8;
-    background-color: #C0E7FF;
+    color: #3575c8;
+    background-color: #c0e7ff;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
+  .credits_authorised {
+    color: #1bae67;
+    background-color: #bfedd6;
+    font-size: 1rem;
+    padding: 0.3rem 0.4rem 0.2rem 0.4rem;
+  }
   .credits_issued {
     color: #1bae67;
     background-color: #bfedd6;
@@ -163,13 +169,16 @@
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
 
+  .remarks {
+    margin-top: 6px;
 
- 
+    span {
+      color: #3a3541cc;
+      size: 16px;
+      font-weight: 500;
+    }
+  }
 
-
-  
-
-  
   // .transfer_requested {
   //   background-color: rgba(#bfa8ff, 0.5);
   //   color: #937fcc;

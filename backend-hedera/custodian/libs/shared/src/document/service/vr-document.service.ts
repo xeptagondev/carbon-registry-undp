@@ -36,6 +36,8 @@ import { AuthorisationLetterGenerateService } from '@app/shared/util/service/aut
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { plainToClass } from 'class-transformer';
+// eslint-disable-next-line max-len
+import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
@@ -52,6 +54,7 @@ export class VrDocumentService extends DocumentService {
         logger: InstantLogger,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
+        private readonly serialNumberManagementService: SerialNumberManagementService,
     ) {
         super(
             configService,
@@ -429,33 +432,55 @@ export class VrDocumentService extends DocumentService {
                     await this.carbonCreditGuardianService.createProjectNFT(
                         documentEntity?.project?.organization?.hederaAccountId,
                         documentEntity?.project?.organization?.hederaAccountKey,
-                        1000, // TODO update the max supply
+                        documentEntity?.data?.ghgProjectDescription
+                            ?.totalNetEmissionReductions,
                     );
 
                 const refId = documentEntity?.project?.refId;
-                await queryRunner.manager
+
+                const existingProject = await queryRunner.manager
                     .getRepository(ProjectEntity)
-                    .createQueryBuilder()
-                    .update(ProjectEntity)
-                    .set({ tokenId: tokenId })
-                    .where('refId = :refId', { refId })
-                    .execute();
+                    .findOne({ where: { refId } });
+
+                if (!existingProject) {
+                    throw new Error(`Project with refId ${refId} not found`);
+                }
 
                 const authoroiseLetterUrl =
                     await this.authorisationLetterGenerateService.generateLetter(
-                        documentEntity?.project?.refId,
+                        refId,
                         documentEntity?.project?.title,
                         jwtData.organizationName,
                         [documentEntity?.project?.organization.name],
                     );
 
-                await queryRunner.manager
-                    .getRepository(ProjectEntity)
-                    .createQueryBuilder()
-                    .update(ProjectEntity)
-                    .set({ authoroiseLetterUrl: authoroiseLetterUrl })
-                    .where('refId = :refId', { refId })
-                    .execute();
+                const serialNumber =
+                    this.serialNumberManagementService.getProjectSerialNumber(
+                        existingProject.id,
+                    );
+                const updatedProject = plainToClass(ProjectEntity, {
+                    ...existingProject,
+                    tokenId: tokenId,
+                    creditEst:
+                        documentEntity?.data?.ghgProjectDescription
+                            ?.totalNetEmissionReductions,
+                    authoroiseLetterUrl: authoroiseLetterUrl,
+                    serialNumber: serialNumber,
+                });
+
+                await queryRunner.manager.save(updatedProject);
+
+                await this.logProjectStage(
+                    queryRunner,
+                    documentEntity?.project?.refId,
+                    ProjectAuditLogType.CREDITS_AUTHORISED,
+                    jwtData.userId,
+                    {
+                        amount: documentEntity?.data?.ghgProjectDescription
+                            ?.totalNetEmissionReductions,
+                        toCompanyId: documentEntity?.project?.organization?.id,
+                    },
+                );
 
                 const ctx = {
                     icOrganizationName:
@@ -495,6 +520,7 @@ export class VrDocumentService extends DocumentService {
                     documentEntity?.project?.refId,
                     ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const pddDoc =
                     await this.guardianService.getGridDocumentUsingRefId(

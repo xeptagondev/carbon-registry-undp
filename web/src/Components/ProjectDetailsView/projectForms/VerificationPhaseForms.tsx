@@ -14,12 +14,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ROUTES } from '../../../Config/uiRoutingConfig';
 import { CloseCircleFilled, CloseCircleOutlined, CloseOutlined } from '@ant-design/icons';
 
+export interface Iactivity {
+  stage: string;
+  documents: any[];
+  activityLastUpdatedDate: string;
+  refId?: string;
+}
+
 interface IVerificationPhaseForms {
-  activityData: {
-    stage: string;
-    documents: any[];
-    activityLastUpdatedDate: string;
-  }[];
+  activityData: Iactivity[];
+  documents: any[];
 }
 interface IPermissionsState {
   mode: FormMode;
@@ -28,7 +32,7 @@ interface IPermissionsState {
 }
 
 const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
-  const { activityData } = props;
+  const { activityData, documents } = props;
   const { userInfoState } = useUserContext();
   const { id } = useParams();
 
@@ -49,7 +53,9 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
   };
 
   const navigateToVerificationReport = (permissionsState: IPermissionsState) => {
-    navigate(ROUTES.VERIFICATION_REPORT(id as string), { state: permissionsState });
+    navigate(ROUTES.VERIFICATION_REPORT(id as string), {
+      state: { permissionsState },
+    });
   };
 
   useEffect(() => {
@@ -65,19 +71,9 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
         userInfoState,
         DocType.VERIFICATION_REPORT,
         activity.stage as ActivityStateEnum,
-        activity.documents[DocumentEnum.VERIFICATION as any]?.refId
+        activity.documents[DocumentEnum.VERIFICATION as any]?.refId,
+        activity?.refId
       );
-
-      // console.log(
-      //   '---------tempMonitoringReportPermissions-------------',
-      //   tempMonitoringReportPermissions
-      // );
-      // console.log(
-      //   '---------tempVerificationReportPermissions-------------',
-      //   tempVerificationReportPermissions
-      // );
-
-      console.log('--------activity-----------', activity);
 
       const temp = [
         {
@@ -118,12 +114,12 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
                   : 'step-icon-completed'
               }
             >
-              {activity.stage === ActivityStateEnum.MONITORING_REPORT_VERIFIED ? (
-                <Icon.Check />
+              {activity.stage === ActivityStateEnum.MONITORING_REPORT_UPLOADED ? (
+                <Icon.FileText />
               ) : activity.stage === ActivityStateEnum.MONITORING_REPORT_REJECTED ? (
                 <CloseOutlined />
               ) : (
-                <Icon.FileText />
+                <Icon.Check />
               )}
             </span>
           ),
@@ -139,7 +135,7 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
                   <Button
                     className="document-action-btn"
                     onClick={() => {
-                      navigateToMonitoringReport(tempVerificationReportPermissions);
+                      navigateToVerificationReport(tempVerificationReportPermissions);
                     }}
                     disabled={tempVerificationReportPermissions?.mode === FormMode?.DISABLED}
                   >
@@ -170,9 +166,9 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
               {activity.stage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED ? (
                 <Icon.FileText />
               ) : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED ? (
-                <Icon.XCircle />
+                <CloseOutlined />
               ) : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED ? (
-                <Icon.Check2Circle />
+                <Icon.Check />
               ) : (
                 <Icon.Hourglass />
               )}
