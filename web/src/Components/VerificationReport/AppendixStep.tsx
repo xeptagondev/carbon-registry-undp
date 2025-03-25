@@ -1,17 +1,41 @@
-import { Button, Col, Form, Input, Row, Upload, DatePicker } from 'antd';
+import { Button, Col, Form, Input, Row, Upload, DatePicker, message } from 'antd';
 import moment from 'moment';
 import TextArea from 'antd/lib/input/TextArea';
-import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  MinusOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import { DocumentStatus } from '../../Definitions/Enums/document.status';
 import { fileUploadValueExtract } from '../../Utils/utilityHelper';
 import { VerificationStepProps } from './StepProps';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { API_PATHS } from '../../Config/apiConfig';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
+import { SlcfFormActionModel } from '../Models/SlcfFormActionModel';
+import { useLocation } from 'react-router-dom';
+import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
 
 export const AppendixStep = (props: VerificationStepProps) => {
-  const { t, current, form, formMode, prev, handleValuesUpdate, next } = props;
+  const {
+    t,
+    current,
+    form,
+    formMode,
+    prev,
+    handleValuesUpdate,
+    next,
+    disableFields,
+    documentId,
+    handleLoading,
+  } = props;
   const { userInfoState } = useUserContext();
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -23,8 +47,14 @@ export const AppendixStep = (props: VerificationStepProps) => {
     return e?.fileList;
   };
 
+  const { post } = useConnection();
+
+  const { state } = useLocation();
+
   useEffect(() => {
-    form.setFieldValue('appendix-documents-reviewed-table', [{ author: '' }]);
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('documents-reviewed', [{ author: '' }]);
+    }
   }, []);
 
   // const onFinish = (values: any) => {
@@ -35,6 +65,23 @@ export const AppendixStep = (props: VerificationStepProps) => {
   //   });
   // };
 
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+
+  const closeDialog = () => {
+    setShowDialog(false);
+  };
+
+  const [formValues, setFormValues] = useState<any>();
+
+  const [showVerifyDialog, setShowVerifyDialog] = useState<boolean>(false);
+  const [showDeclineDialog, setShowDeclineDialog] = useState<boolean>(false);
+
+  const closeVerifyDialogBox = () => {
+    setShowVerifyDialog(false);
+  };
+
+  const closeDeclineDialogBox = () => setShowDeclineDialog(false);
+
   const onFinish = async (values: any) => {
     const appendixFormValues: any = {
       ...values,
@@ -44,7 +91,87 @@ export const AppendixStep = (props: VerificationStepProps) => {
       doeDate: moment(values?.doeDate).startOf('day').unix(),
     };
 
-    handleValuesUpdate({ appendix: appendixFormValues });
+    handleValuesUpdate({ ...appendixFormValues });
+  };
+
+  const approve = async () => {
+    if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
+      try {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.VERIFICATION,
+          remarks: 'approved',
+          action: DocumentStateEnum.DNA_APPROVED,
+        });
+
+        if (res?.statusText === 'SUCCESS') {
+          message.open({
+            type: 'success',
+            content: 'Monitoring report was approved successfully',
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+
+          if (next) {
+            next();
+          }
+        }
+      } catch (error) {
+        message.open({
+          type: 'error',
+          content: t('common:somethingWentWrong'),
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } finally {
+        if (handleLoading) {
+          handleLoading(false);
+        }
+      }
+    }
+  };
+
+  const reject = async (remarks?: string) => {
+    if (documentId) {
+      if (handleLoading) {
+        handleLoading(true);
+      }
+      try {
+        const res = await post(API_PATHS.VERIFY_DOCUMENT, {
+          refId: documentId,
+          documentType: DocumentEnum.VERIFICATION,
+          remarks: remarks,
+          action: DocumentStateEnum.DNA_REJECTED,
+        });
+
+        if (res?.statusText === 'SUCCESS') {
+          message.open({
+            type: 'success',
+            content: 'Monitoring report rejected',
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+
+          if (next) {
+            next();
+          }
+        }
+      } catch (error) {
+        message.open({
+          type: 'error',
+          content: t('common:somethingWentWrong'),
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } finally {
+        if (handleLoading) {
+          handleLoading(false);
+        }
+      }
+    }
   };
 
   return (
@@ -52,6 +179,59 @@ export const AppendixStep = (props: VerificationStepProps) => {
       {current === 10 && (
         <div>
           <div className="step-form-container">
+            {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
+              <>
+                <SlcfFormActionModel
+                  icon={<ConfirmSubmitSVG />}
+                  title={t('verificationReport:confirmModalMessage')}
+                  onCancel={closeDialog}
+                  actionBtnText={t('common:yes')}
+                  onFinish={() => {
+                    onFinish(formValues);
+                    closeDialog();
+                  }}
+                  openModal={showDialog}
+                  type={'primary'}
+                  remarkRequired={false}
+                  t={t}
+                />
+              </>
+            )}
+
+            {state?.mode === FormMode.VERIFY && (
+              <>
+                <SlcfFormActionModel
+                  actionBtnText={t('verificationReport:reject')}
+                  onCancel={closeDeclineDialogBox}
+                  icon={<CloseCircleOutlined />}
+                  title={t('verificationReport:declineMessage')}
+                  onFinish={(remarks: string) => {
+                    console.log('-----remarks-------', remarks);
+                    reject(remarks);
+                  }}
+                  remarkRequired
+                  type="danger"
+                  subText=""
+                  openModal={showDeclineDialog}
+                  t={t}
+                />
+
+                <SlcfFormActionModel
+                  actionBtnText={t('verificationReport:approve')}
+                  onCancel={closeVerifyDialogBox}
+                  icon={<CheckCircleOutlined />}
+                  title={t('verificationReport:approveMessage')}
+                  onFinish={() => {
+                    approve();
+                  }}
+                  remarkRequired={false}
+                  type="primary"
+                  subText=""
+                  openModal={showVerifyDialog}
+                  t={t}
+                />
+              </>
+            )}
             <Form
               labelCol={{ span: 20 }}
               wrapperCol={{ span: 24 }}
@@ -59,12 +239,9 @@ export const AppendixStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
-                onFinish(values);
-                if (next) {
-                  next();
-                }
+                setShowDialog(true);
+                setFormValues(values);
               }}
             >
               <Row className="row" gutter={[40, 16]}>
@@ -100,7 +277,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={6} />
+                        <TextArea rows={6} disabled={disableFields} />
                       </Form.Item>
 
                       <Form.Item
@@ -133,7 +310,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                           action="/upload.do"
                           listType="picture"
                           multiple={true}
-                          // disabled={disableFields}
+                          disabled={disableFields}
                           // maxCount={1}
                         >
                           <Button
@@ -176,7 +353,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                       </Row>
 
                       <Row className="body">
-                        <Form.List name="appendix-documents-reviewed-table">
+                        <Form.List name="documents-reviewed">
                           {(fields, { add, remove }) => (
                             <>
                               {fields.map(({ key, name, ...restFields }) => (
@@ -210,7 +387,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                                         },
                                       ]}
                                     >
-                                      <Input className="ant-input" />
+                                      <Input className="ant-input" disabled={disableFields} />
                                     </Form.Item>
                                   </Col>
 
@@ -238,7 +415,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                                         },
                                       ]}
                                     >
-                                      <Input className="ant-input" />
+                                      <Input className="ant-input" disabled={disableFields} />
                                     </Form.Item>
                                   </Col>
                                   <Col xl={5} className=" col other-cols">
@@ -265,7 +442,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                                         },
                                       ]}
                                     >
-                                      <Input className="ant-input" />
+                                      <Input className="ant-input" disabled={disableFields} />
                                     </Form.Item>
                                   </Col>
 
@@ -293,7 +470,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                                         },
                                       ]}
                                     >
-                                      <Input className="ant-input" />
+                                      <Input className="ant-input" disabled={disableFields} />
                                     </Form.Item>
                                   </Col>
                                   <Col xl={3} className="action-col">
@@ -360,10 +537,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             //   },
                             // ]}
                           >
-                            <Input
-                              size="large"
-                              // disabled={FormMode.VIEW === formMode}
-                            />
+                            <Input size="large" disabled={disableFields} />
                           </Form.Item>
 
                           <Form.Item
@@ -395,10 +569,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             //   },
                             // ]}
                           >
-                            <Input
-                              size="large"
-                              // disabled={FormMode.VIEW === formMode}
-                            />
+                            <Input size="large" disabled={disableFields} />
                           </Form.Item>
                         </Col>
                         <Col xl={24} md={24}>
@@ -412,10 +583,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             //   },
                             // ]}
                           >
-                            <TextArea
-                              rows={4}
-                              // disabled={FormMode.VIEW === formMode}
-                            />
+                            <TextArea rows={4} disabled={disableFields} />
                           </Form.Item>
                         </Col>
                         <Col xl={12} md={24}>
@@ -429,10 +597,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             //   },
                             // ]}
                           >
-                            <TextArea
-                              rows={4}
-                              // disabled={FormMode.VIEW === formMode}
-                            />
+                            <TextArea rows={4} disabled={disableFields} />
                           </Form.Item>
                         </Col>
                         <Col xl={12} md={24}>
@@ -465,10 +630,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             //   },
                             // ]}
                           >
-                            <TextArea
-                              rows={4}
-                              // disabled={FormMode.VIEW === formMode}
-                            />
+                            <TextArea rows={4} disabled={disableFields} />
                           </Form.Item>
                         </Col>
                         <Col xl={12} md={24}>
@@ -482,10 +644,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             //   },
                             // ]}
                           >
-                            <TextArea
-                              rows={4}
-                              // disabled={FormMode.VIEW === formMode}
-                            />
+                            <TextArea rows={4} disabled={disableFields} />
                           </Form.Item>
                         </Col>
                         <Col xl={12} md={24}>
@@ -514,18 +673,38 @@ export const AppendixStep = (props: VerificationStepProps) => {
               </Row>
 
               <Row justify={'end'} className="step-actions-end">
-                <Button danger size={'large'} onClick={prev} disabled={false}>
-                  {t('verificationReport:back')}
-                </Button>
-                {FormMode.VIEW !== formMode && (
-                  <Button type="primary" size={'large'} htmlType="submit" disabled={false}>
-                    {t('verificationReport:submit')}
-                  </Button>
+                {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
+                  <>
+                    <Button danger size={'large'} onClick={prev}>
+                      {t('verificationReport:prev')}
+                    </Button>
+                    <Button type="primary" htmlType="submit">
+                      {t('verificationReport:submit')}
+                    </Button>
+                  </>
                 )}
-                {FormMode.VIEW === formMode && (
-                  <Button type="primary" size={'large'} disabled={false} onClick={next}>
-                    {t('verificationReport:backtoProjectDetails')}
-                  </Button>
+                {state?.mode === FormMode.VIEW && (
+                  <>
+                    <Button danger size={'large'} onClick={prev}>
+                      {t('verificationReport:prev')}
+                    </Button>
+                    <Button type="primary" onClick={next}>
+                      {t('verificationReport:goBackProjectDetails')}
+                    </Button>
+                  </>
+                )}
+                {state?.mode === FormMode.VERIFY && (
+                  <>
+                    <Button size={'large'} onClick={prev} type={'default'}>
+                      {t('verificationReport:prev')}
+                    </Button>
+                    <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
+                      {t('verificationReport:reject')}
+                    </Button>
+                    <Button size={'large'} onClick={() => setShowVerifyDialog(true)} type="primary">
+                      {t('verificationReport:approve')}
+                    </Button>
+                  </>
                 )}
               </Row>
             </Form>

@@ -11,6 +11,7 @@ import { useUserContext } from '../../../Context/UserInformationContext/userInfo
 import { ProjectProposalStage } from '../../../Definitions/Enums/programmeStage.enum';
 import { DocType } from '../../../Definitions/Enums/document.type';
 import { saveAs } from 'file-saver';
+import { DocumentEnum } from '../../../Definitions/Enums/document.enum';
 
 interface IPermissionsState {
   mode: FormMode;
@@ -47,6 +48,14 @@ const ProjectDocuments = (props: IProjectDetails) => {
   const navigateToValidationReport = (permissionsState: IPermissionsState) => {
     navigate(ROUTES.VALIDATION_REPORT(id), { state: permissionsState });
   };
+
+  const navigateToInfView = () => {
+    navigate(ROUTES.ADD_PROGRAMME, {
+      state: { mode: FormMode.VIEW, documentId: documents[DocumentEnum.INF as string]?.refId },
+    });
+  };
+
+  console.log('---------documents---------', documents[DocumentEnum.INF as string]?.refId);
 
   useEffect(() => {
     const tempPddPermissions = formPermissions(
@@ -88,16 +97,18 @@ const ProjectDocuments = (props: IProjectDetails) => {
         </div>
       </div>
 
-      {/* <Row className="document-info-row-first">
+      <Row className="document-info-row-first">
         <Col md={18} className="documentTitle-col">
           Initial Notification Form
         </Col>
-        <Col md={4} className="documentAction-col">
-          <Button className="document-action-btn">View</Button>
+        <Col md={6} className="documentAction-col">
+          <Button className="document-action-btn" onClick={navigateToInfView}>
+            View
+          </Button>
         </Col>
-      </Row> */}
+      </Row>
 
-      <Row className="document-info-row-first">
+      <Row className="document-info-row">
         <Col md={18} className="documentTitle-col">
           No Objection Letter
         </Col>
