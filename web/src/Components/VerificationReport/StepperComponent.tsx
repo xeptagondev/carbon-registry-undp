@@ -55,7 +55,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
   const { state } = useLocation();
-  // console.log('---------------------verification state--------------------', state);
+  console.log('---------------------verification state--------------------', state);
 
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
@@ -131,53 +131,53 @@ const StepperComponent = (props: VerificationStepProps) => {
       if (state?.mode === FormMode?.CREATE) {
         const response = res?.data?.data;
         console.log('---------Monitoring------------', response);
-        // const creditingPeriodStartDate = moment.unix(
-        //   response?.projectActivityDetails?.pa_projectCreditingPeriod
-        // );
-        // const creditingPeriodEndDate = moment.unix(
-        //   response?.projectActivityDetails?.pa_projectCreditingPeriodEndDate
-        // );
-        // console.log('creditingPeriodStartDate', creditingPeriodStartDate);
-        // console.log('creditingPeriodEndDate', creditingPeriodEndDate);
-        // const creditingPeriodDuration = moment.duration(
-        //   creditingPeriodEndDate.diff(creditingPeriodStartDate)
-        // );
-        // const durationString = `${creditingPeriodDuration.years()} years, ${creditingPeriodDuration.months()} months and ${creditingPeriodDuration.days()} days`;
-        // console.log('durationString', durationString);
-        // basicInformationForm.setFieldsValue({
-        //   b_monitoringPeriodNo: response?.projectDetails?.bi_monitoringPeriodNo,
-        //   b_monitoringPeriodDuration: response?.projectDetails?.bi_duration,
-        //   b_versionNoOfMonitoringReport: response?.projectDetails?.bi_versionNoOfMR,
-        //   b_creditingPeriod: durationString,
-        // });
-        // const netEmReductions = response?.calcEmissionReductions?.netGHGEmissionReductions;
-        // const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
+        const creditingPeriodStartDate = moment.unix(
+          response?.projectActivityDetails?.pa_projectCreditingPeriod
+        );
+        const creditingPeriodEndDate = moment.unix(
+          response?.projectActivityDetails?.pa_projectCreditingPeriodEndDate
+        );
+        console.log('creditingPeriodStartDate', creditingPeriodStartDate);
+        console.log('creditingPeriodEndDate', creditingPeriodEndDate);
+        const creditingPeriodDuration = moment.duration(
+          creditingPeriodEndDate.diff(creditingPeriodStartDate)
+        );
+        const durationString = `${creditingPeriodDuration.years()} years, ${creditingPeriodDuration.months()} months and ${creditingPeriodDuration.days()} days`;
+        console.log('durationString', durationString);
+        basicInformationForm.setFieldsValue({
+          b_monitoringPeriodNo: response?.projectDetails?.bi_monitoringPeriodNo,
+          b_monitoringPeriodDuration: response?.projectDetails?.bi_duration,
+          b_versionNoOfMonitoringReport: response?.projectDetails?.bi_versionNoOfMR,
+          b_creditingPeriod: durationString,
+        });
+        const netEmReductions = response?.calcEmissionReductions?.netGHGEmissionReductions;
+        const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
 
-        // ghgProjectDescriptionForm.setFieldsValue({
-        //   emissionsPeriodStart: moment.unix(emReduction?.[0]?.startDate),
-        //   emissionsPeriodEnd: moment.unix(emReduction?.[0]?.endDate),
-        //   baselineEmissionReductions: emReduction?.[0]?.baselineEmissionReductions,
-        //   projectEmissionReductions: emReduction?.[0]?.projectEmissionReductions,
-        //   leakageEmissionReductions: emReduction?.[0]?.leakageEmissionReductions,
-        //   netEmissionReductions: emReduction?.[0]?.netEmissionReductions,
-        //   extraEmissionReductions: emReduction?.slice(1).map((item: any) => ({
-        //     ...item,
-        //     emissionsPeriodStart: moment.unix(item.startDate),
-        //     emissionsPeriodEnd: moment.unix(item.endDate),
-        //   })),
-        //   totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
-        //   totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
-        //   totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
-        //   totalNetEmissionReductions: Number(netEmReductions?.totalNetEmissionReductions),
-        //   totalNumberOfCreditingYears: Number(netEmReductions?.totalNumberOfCreditingYears),
-        //   avgBaselineEmissionReductions: Number(netEmReductions?.avgBaselineEmissionReductions),
-        //   avgProjectEmissionReductions: Number(netEmReductions?.avgProjectEmissionReductions),
-        //   avgLeakageEmissionReductions: Number(netEmReductions?.avgLeakageEmissionReductions),
-        //   avgNetEmissionReductions: Number(netEmReductions?.avgNetEmissionReductions),
-        // });
-        basicInformationForm.setFieldValue('estimatedNetEmissionReductions', [
-          { baselineEmissionReductions: 0 },
-        ]);
+        ghgProjectDescriptionForm.setFieldsValue({
+          emissionsPeriodStart: moment.unix(emReduction?.[0]?.startDate),
+          emissionsPeriodEnd: moment.unix(emReduction?.[0]?.endDate),
+          baselineEmissionReductions: emReduction?.[0]?.baselineEmissionReductions,
+          projectEmissionReductions: emReduction?.[0]?.projectEmissionReductions,
+          leakageEmissionReductions: emReduction?.[0]?.leakageEmissionReductions,
+          netEmissionReductions: emReduction?.[0]?.netEmissionReductions,
+          extraEmissionReductions: emReduction?.slice(1).map((item: any) => ({
+            ...item,
+            emissionsPeriodStart: moment.unix(item.startDate),
+            emissionsPeriodEnd: moment.unix(item.endDate),
+          })),
+          totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
+          totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
+          totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
+          totalNetEmissionReductions: Number(netEmReductions?.totalNetEmissionReductions),
+          totalNumberOfCreditingYears: Number(netEmReductions?.totalNumberOfCreditingYears),
+          avgBaselineEmissionReductions: Number(netEmReductions?.avgBaselineEmissionReductions),
+          avgProjectEmissionReductions: Number(netEmReductions?.avgProjectEmissionReductions),
+          avgLeakageEmissionReductions: Number(netEmReductions?.avgLeakageEmissionReductions),
+          avgNetEmissionReductions: Number(netEmReductions?.avgNetEmissionReductions),
+        });
+        // basicInformationForm.setFieldValue('estimatedNetEmissionReductions', [
+        //   { baselineEmissionReductions: 0 },
+        // ]);
       }
     } catch (error) {
       console.log('error', error);
