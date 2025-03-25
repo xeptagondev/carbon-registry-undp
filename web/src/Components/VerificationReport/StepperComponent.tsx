@@ -98,8 +98,11 @@ const StepperComponent = (props: VerificationStepProps) => {
   const submitForm = async (appendixVals: any) => {
     setLoading(true);
     try {
+      console.log('---------------activityRefId-------------', state?.activityRefId);
+
       const tempValues = {
         ...values,
+        activityRefId: state?.activityId,
         data: {
           ...values.data,
           appendix: appendixVals,
@@ -107,7 +110,7 @@ const StepperComponent = (props: VerificationStepProps) => {
       };
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
       console.log(res);
-      if (res?.response?.data?.statusCode === 200) {
+      if (res?.statusText === 'SUCCESS') {
         message.open({
           type: 'success',
           content: 'Verification report has been submitted successfully',
