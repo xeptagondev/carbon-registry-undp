@@ -111,6 +111,6 @@
   "confirmModalSubMessage": "You can't undo this action",
   "sectorPlaceholder": "Select your Sector",
   "sectoralScopePlaceholder": "Select your Sectoral Scope",
-  "estimatedProjectCost": "Estimated Project Cost",
+  "estimatedProjectCost": "Estimated Project Cost (USD)",
   "shouldBeAnNumber": "Should be an number"
 }
