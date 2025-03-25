@@ -635,10 +635,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     {t('verificationReport:next')}
                   </Button>
                 )}
-
-                <Button type="primary" size={'large'} disabled={false} onClick={next}>
-                  {t('validationReport:next')}
-                </Button>
               </Row>
             </Form>
           </div>
