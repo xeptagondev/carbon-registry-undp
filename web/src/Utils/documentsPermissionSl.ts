@@ -349,10 +349,10 @@ export const activityPermissions = (
   userInfoState: any,
   docType: DocType,
   activityStage: ActivityStateEnum,
-  documentId: any
+  documentId: any,
+  activityId?: string
 ) => {
   // MONITORING_REPORT: for IC Admin users at MONITORING_REPORT_UPLOADED
-
   if (
     docType === DocType.MONITORING_REPORT &&
     activityStage === ActivityStateEnum.MONITORING_REPORT_UPLOADED &&
@@ -497,6 +497,7 @@ export const activityPermissions = (
       mode: FormMode.CREATE,
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documentId,
+      activityId: activityId,
     };
   }
 
@@ -575,6 +576,7 @@ export const activityPermissions = (
       mode: FormMode.EDIT,
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documentId,
+      activityId: activityId,
     };
   }
 
