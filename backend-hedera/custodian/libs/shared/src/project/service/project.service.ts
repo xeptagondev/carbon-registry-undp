@@ -151,6 +151,13 @@ export class ProjectService {
         mappedProject.sectoralScope = project.sectoralScope;
         mappedProject.title = project.title;
         mappedProject.tokenId = project.tokenId;
+        mappedProject.creditEst = project.creditEst;
+        mappedProject.creditTransferred = project.creditTransferred;
+        mappedProject.creditRetired = project.creditRetired;
+        mappedProject.creditBalance =
+            (Number(project.creditEst) || 0) -
+            ((Number(project.creditTransferred) || 0) +
+                (Number(project.creditRetired) || 0));
 
         mappedProject.company = project?.organization
             ? {
@@ -188,6 +195,7 @@ export class ProjectService {
                 return {
                     stage: activity.state,
                     activityLastUpdatedDate: activity.updatedDate,
+                    refId: activity.refId,
                     documents: activity?.documents?.reduce((acc, document) => {
                         if (
                             !acc[document.documentType] ||

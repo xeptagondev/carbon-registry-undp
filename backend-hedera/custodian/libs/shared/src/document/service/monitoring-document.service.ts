@@ -173,17 +173,14 @@ export class MonitoringDocumentService extends DocumentService {
                     `Project should be in ${ProjectProposalStage.AUTHORISED} stage`,
                     HttpStatus.BAD_REQUEST,
                 );
-            } else if (
-                lastActivity &&
-                lastActivity.state ===
-                    ActivityStateEnum.MONITORING_REPORT_REJECTED
-            ) {
-                throw new HttpException(
-                    `If activity exists it should be in ${ActivityStateEnum.MONITORING_REPORT_REJECTED}`,
-                    HttpStatus.BAD_REQUEST,
-                );
             }
 
+            if (!(project?.organization?.id === jwtData.organizationId)) {
+                throw new HttpException(
+                    'Unauthorized',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
             const monitoringData = dto.data;
 
             if (
@@ -260,7 +257,7 @@ export class MonitoringDocumentService extends DocumentService {
                     project: project.refId,
                 };
 
-                this.guardianService.saveDocument(
+                await this.guardianService.saveDocument(
                     jwtData.email,
                     GUARDIAN_API.BLOCKS.CREATE_ACTIVITY,
                     {
@@ -345,6 +342,7 @@ export class MonitoringDocumentService extends DocumentService {
             await queryRunner.commitTransaction();
             return new DataResponseDto(HttpStatus.OK, {
                 refId: savedDoc.refId,
+                activityRefId: lastActivity.refId,
             });
         } catch (err) {
             console.log(err);
@@ -371,7 +369,7 @@ export class MonitoringDocumentService extends DocumentService {
                 OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
             jwtData.userRole !== RoleEnum.Admin
         ) {
-            throw new HttpException('Unauthroized', HttpStatus.BAD_REQUEST);
+            throw new HttpException('Unauthroized', HttpStatus.UNAUTHORIZED);
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -531,6 +529,7 @@ export class MonitoringDocumentService extends DocumentService {
                     documentEntity?.project?.refId,
                     ProjectAuditLogType.MONITORING_REPORT_REJECTED,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const activityDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
