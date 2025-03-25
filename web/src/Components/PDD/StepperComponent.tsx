@@ -174,7 +174,11 @@ const StepperComponent = (props: any) => {
           contactPerson: data?.user?.name,
         });
       }
-    } catch {}
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
