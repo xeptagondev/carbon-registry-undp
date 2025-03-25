@@ -1,23 +1,5 @@
 import moment from 'moment';
-
-const mapBase64ToFields = (fileUrls: string[]) => {
-  let fileObjs: any[] = [];
-  if (fileUrls !== undefined && fileUrls.length > 0) {
-    fileObjs = fileUrls.map((item: any, index) => {
-      const nameParts = item.split('/');
-      const name = nameParts[nameParts.length - 1];
-      const tempObj = {
-        uid: name,
-        name: name,
-        status: 'done',
-        url: item,
-      };
-      return tempObj;
-    });
-  }
-
-  return fileObjs;
-};
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 
 export const basicInformationMapDataToFields = (vals: any) => {
   console.log('----------vals----------', vals);
