@@ -40,6 +40,7 @@ import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
+// eslint-disable-next-line max-len
 import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
 
 @Injectable()
