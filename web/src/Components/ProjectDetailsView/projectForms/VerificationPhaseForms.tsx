@@ -20,6 +20,9 @@ interface IVerificationPhaseForms {
     documents: any[];
     activityLastUpdatedDate: string;
   }[];
+  documentData: {
+    documents: any[];
+  };
 }
 interface IPermissionsState {
   mode: FormMode;
@@ -28,7 +31,7 @@ interface IPermissionsState {
 }
 
 const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
-  const { activityData } = props;
+  const { activityData, documentData } = props;
   const { userInfoState } = useUserContext();
   const { id } = useParams();
 
@@ -49,7 +52,9 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
   };
 
   const navigateToVerificationReport = (permissionsState: IPermissionsState) => {
-    navigate(ROUTES.VERIFICATION_REPORT(id as string), { state: permissionsState });
+    navigate(ROUTES.VERIFICATION_REPORT(id as string), {
+      state: { permissionsState, documentData },
+    });
   };
 
   useEffect(() => {

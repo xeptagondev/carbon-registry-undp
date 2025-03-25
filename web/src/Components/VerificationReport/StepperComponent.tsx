@@ -40,6 +40,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
   const { state } = useLocation();
+  // console.log('---------------------verification state--------------------', state);
 
   const [basicInformationForm] = useForm();
   const [GHGProjectDescriptionForm] = useForm();
@@ -68,7 +69,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const getValidationData = async () => {
     try {
       const res = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documentRefId,
+        refId: state?.documentData?.VALIDATION?.refId,
         documentType: DocumentEnum.VALIDATION,
       });
 
@@ -90,7 +91,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const getMonitoringData = async () => {
     try {
       const res = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documentRefId,
+        refId: state?.documentData?.MONITORING?.refId,
         documentType: DocumentEnum.MONITORING,
       });
 
@@ -150,7 +151,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const getPDDData = async () => {
     try {
       const res = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documentRefId,
+        refId: state?.documentData?.PDD?.refId,
         documentType: DocumentEnum.PDD,
       });
 
