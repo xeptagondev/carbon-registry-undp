@@ -168,7 +168,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
           totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
           totalNetEmissionReductions: Number(netEmReductions?.totalNetEmissionReductions),
-          totalCreditingYears: Number(netEmReductions?.totalNumberOfCreditingYears),
+          totalNumberOfCreditingYears: Number(netEmReductions?.totalNumberOfCreditingYears),
           avgBaselineEmissionReductions: Number(netEmReductions?.avgBaselineEmissionReductions),
           avgProjectEmissionReductions: Number(netEmReductions?.avgProjectEmissionReductions),
           avgLeakageEmissionReductions: Number(netEmReductions?.avgLeakageEmissionReductions),
