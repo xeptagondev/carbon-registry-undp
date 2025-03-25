@@ -101,7 +101,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const getValidationData = async () => {
     try {
       const res = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documentData?.VALIDATION?.refId,
+        refId: state?.documents?.VALIDATION?.refId,
         documentType: DocumentEnum.VALIDATION,
       });
 
@@ -168,7 +168,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
           totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
           totalNetEmissionReductions: Number(netEmReductions?.totalNetEmissionReductions),
-          totalCreditingYears: Number(netEmReductions?.totalNumberOfCredingYears),
+          totalCreditingYears: Number(netEmReductions?.totalNumberOfCreditingYears),
           avgBaselineEmissionReductions: Number(netEmReductions?.avgBaselineEmissionReductions),
           avgProjectEmissionReductions: Number(netEmReductions?.avgProjectEmissionReductions),
           avgLeakageEmissionReductions: Number(netEmReductions?.avgLeakageEmissionReductions),

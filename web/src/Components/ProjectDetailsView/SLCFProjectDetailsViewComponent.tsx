@@ -2402,7 +2402,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                 <div>
                   <VerificationPhaseForms
                     activityData={data?.activities}
-                    documentData={data?.documents}
+                    documents={data?.documents}
                   />
                 </div>
               </Card>
