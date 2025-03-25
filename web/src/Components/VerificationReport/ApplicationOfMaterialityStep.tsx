@@ -26,7 +26,9 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
   };
 
   useEffect(() => {
-    form.setFieldValue('materialityTable', [{ riskLevel: '' }]);
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('materialityTable', [{ riskLevel: '' }]);
+    }
   }, []);
 
   const onFinish = (values: any) => {
