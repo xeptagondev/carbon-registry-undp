@@ -350,7 +350,8 @@ export const activityPermissions = (
   docType: DocType,
   activityStage: ActivityStateEnum,
   documentId: any,
-  activityId?: string
+  activityId?: string,
+  documents?: any[]
 ) => {
   // MONITORING_REPORT: for IC Admin users at MONITORING_REPORT_UPLOADED
   if (
@@ -498,6 +499,7 @@ export const activityPermissions = (
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documentId,
       activityId: activityId,
+      documents: documents,
     };
   }
 

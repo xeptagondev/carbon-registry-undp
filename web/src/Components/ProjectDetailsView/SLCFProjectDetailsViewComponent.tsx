@@ -466,6 +466,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       const response: any = await post(API_PATHS.PROGRAMME_BY_ID, {
         programmeId: id,
       });
+      //console.log('-------res-----------', response);
 
       if (response) {
         setData(response.data);
@@ -2399,7 +2400,10 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             {data?.activities && data?.activities.length > 0 && (
               <Card className="card-container">
                 <div>
-                  <VerificationPhaseForms activityData={data?.activities} />
+                  <VerificationPhaseForms
+                    activityData={data?.activities}
+                    documents={data?.documents}
+                  />
                 </div>
               </Card>
             )}
