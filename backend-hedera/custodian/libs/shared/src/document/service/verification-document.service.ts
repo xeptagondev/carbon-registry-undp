@@ -40,6 +40,7 @@ import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
+import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -54,6 +55,7 @@ export class VerificationDocumentService extends DocumentService {
         logger: InstantLogger,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
+        private readonly serialNumberManagementService: SerialNumberManagementService,
     ) {
         super(
             configService,
@@ -463,11 +465,21 @@ export class VerificationDocumentService extends DocumentService {
                 const metadata = Uint8Array.from(
                     Buffer.from(documentEntity?.project?.refId, 'utf8'),
                 );
+                const creditAmount =
+                    documentEntity?.data?.ghgProjectDescription
+                        ?.totalNetEmissionReductions;
+                const batchSerialNumber =
+                    this.serialNumberManagementService.getCreditBlockSerialNumber(
+                        documentEntity?.project?.serialNumber,
+                        creditAmount,
+                        String(new Date().getFullYear()),
+                        documentEntity?.project?.creditIssued,
+                    );
                 const payload: MintNFTJobPayload = {
                     tokenId: documentEntity?.project?.tokenId,
-                    batchSerialNumber: `BS-${Date.now()}`,
+                    batchSerialNumber: batchSerialNumber,
                     metadata,
-                    amount: 10, // TODO: update the credit count as needed
+                    amount: creditAmount,
                     accountId:
                         documentEntity?.project?.organization?.hederaAccountId,
                     privateKey:
