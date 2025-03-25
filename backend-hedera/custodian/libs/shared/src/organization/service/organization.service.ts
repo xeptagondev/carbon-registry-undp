@@ -43,7 +43,10 @@ import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, In, Not, Repository } from 'typeorm';
+import { GetOrganizationsRequest } from '../dto/organizations-request.dto';
+import { GetOrganizationsResponse } from '../dto/organizations-response.dto';
+import { IDNameResponse } from '@app/shared/util/dto/id-name.response.dto';
 
 @Injectable()
 export class OrganizationService extends SuperService<
@@ -861,5 +864,45 @@ export class OrganizationService extends SuperService<
             await queryRunner.release();
         }
         return false;
+    }
+
+    async getOrganizationsOfType(
+        dto: GetOrganizationsRequest,
+        requestData: JWTPayload,
+    ): Promise<GetOrganizationsResponse> {
+        // request can only be made by admins of same org type
+        if (
+            requestData.userRole !== RoleEnum.Admin ||
+            requestData.organizationRole !== dto.type
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
+
+        // send data
+        const where: FindOptionsWhere<OrganizationEntity> = {
+            organizationType: {
+                name: dto.type,
+            },
+        };
+
+        if (dto.filterOwn) {
+            where.id = Not(requestData.organizationId);
+        }
+
+        const res = await this.organizationRepository.find({
+            where: where,
+        });
+
+        if (res) {
+            return {
+                organizations: res.map(
+                    (org) => new IDNameResponse(org.id, org.name),
+                ),
+            };
+        }
+
+        return {
+            organizations: [],
+        };
     }
 }
