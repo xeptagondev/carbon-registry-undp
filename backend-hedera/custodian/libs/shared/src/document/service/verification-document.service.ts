@@ -129,18 +129,7 @@ export class VerificationDocumentService extends DocumentService {
                     HttpStatus.CONFLICT,
                 );
             }
-            if (
-                lastActivity &&
-                !(
-                    lastActivity.state ===
-                    ActivityStateEnum.MONITORING_REPORT_VERIFIED
-                )
-            ) {
-                throw new HttpException(
-                    'Action not allowed. Conflicting documents',
-                    HttpStatus.CONFLICT,
-                );
-            }
+
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
                 {
