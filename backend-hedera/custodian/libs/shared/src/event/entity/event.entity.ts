@@ -1,5 +1,6 @@
 import {
     BeforeInsert,
+    BeforeUpdate,
     Column,
     Entity,
     JoinColumn,
@@ -24,17 +25,55 @@ export class EventEntity {
     @Column({ type: 'json', nullable: true })
     previousState?: any;
 
-    @Column({ type: 'bigint' })
-    createdAt: number;
+    @Column({ type: String, nullable: true })
+    affectedTableName?: string;
 
-    @ManyToOne(() => TaskEntity, (task) => task.event, { nullable: true })
+    @Column({ type: Number, nullable: true })
+    affectedRecordId?: number;
+
+    @Column({ type: Boolean, default: false })
+    rollbackOnFail: boolean;
+
+    @Column({ type: 'bigint' })
+    createdAt?: number;
+
+    @Column({ type: 'bigint' })
+    lastUpdateTime?: number;
+
+    @ManyToOne(() => TaskEntity, (task) => task.events, { nullable: true })
     @JoinColumn({ name: 'task_id', referencedColumnName: 'id' })
     task?: TaskEntity;
 
     @BeforeInsert()
-    setCreatedAt() {
+    validateBeforeInsert() {
+        this.validateRollbackRecords();
         if (!this.createdAt) {
             this.createdAt = Date.now();
+        }
+        if (!this.lastUpdateTime) {
+            this.lastUpdateTime = Date.now();
+        }
+    }
+
+    @BeforeUpdate()
+    validateBeforeUpdate() {
+        this.validateRollbackRecords();
+        this.lastUpdateTime = Date.now();
+    }
+
+    validateRollbackRecords() {
+        if (this.rollbackOnFail) {
+            if (
+                !(
+                    this.previousState &&
+                    this.affectedTableName &&
+                    this.affectedRecordId
+                )
+            ) {
+                throw new Error(
+                    'Validation error. "previousState", "affectedEntity", "affectedRecordId" are required to rollback',
+                );
+            }
         }
     }
 }
