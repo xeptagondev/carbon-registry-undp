@@ -192,7 +192,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
           tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
           tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
           tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
-          tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
+          tempGHG.totalNumberOfCreditingYears = Number(values?.totalCreditingYears);
           tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
           tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
           tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);

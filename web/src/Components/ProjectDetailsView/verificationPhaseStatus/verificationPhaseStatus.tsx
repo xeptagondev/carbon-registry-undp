@@ -3,15 +3,28 @@ import { ReactComponent as UploadingSVG } from '../../../Assets/Images/uploading
 import { ActivityStateEnum } from '../../../Definitions/Enums/programmeStage.enum';
 import { Iactivity } from '../projectForms/VerificationPhaseForms';
 import './verificationPhaseStatus.scss';
+import { RefObject, useEffect, useState } from 'react';
 
 interface IVerificationPhaseStatus {
   activity: Iactivity;
+  timelineRef: RefObject<HTMLDivElement>;
 }
 const VerificationPhaseStatus = (props: IVerificationPhaseStatus) => {
-  const { activity } = props;
+  const { activity, timelineRef } = props;
+
+  const [height, setHeight] = useState<number>(0);
+
+  useEffect(() => {
+    if (timelineRef && timelineRef.current !== null) {
+      setHeight(timelineRef.current.offsetHeight);
+    }
+  }, [timelineRef]);
 
   return (
-    <div className="verification-phase-section">
+    <div
+      className="verification-phase-section"
+      style={{ height: height ? `${height}px` : 'fit-content' }}
+    >
       <div className="verification-title-section">
         <UploadingSVG className="uploading-icon" />
         <p className="title">Verification Phase</p>

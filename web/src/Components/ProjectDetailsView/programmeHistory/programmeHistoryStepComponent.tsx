@@ -34,12 +34,13 @@ const logTypeIcons: Record<string, React.ReactNode> = {
   VALIDATION_REPORT_SUBMITTED: <Icon.FileText />,
   VALIDATION_REPORT_REJECTED: <Icon.XCircle />,
   AUTHORISED: <Icon.ClipboardCheck />,
+  CREDITS_AUTHORIEZED: <Icon.CurrencyDollar />,
   MONITORING_REPORT_SUBMITTED: <Icon.ListCheck />,
   MONITORING_REPORT_REJECTED: <Icon.XCircle />,
   MONITORING_REPORT_APPROVED: <Icon.Check2Circle />,
   VERIFICATION_REPORT_SUBMITTED: <Icon.FileEarmarkBarGraph />,
   VERIFICATION_REPORT_REJECTED: <Icon.XCircle />,
-  VERIFICATION_REPORT_APPROVED: <Icon.XCircle />,
+  VERIFICATION_REPORT_APPROVED: <Icon.Check2Circle />,
   CREDITS_ISSUED: <Icon.CurrencyExchange />,
   DEFAULT: <FileOutlined />, // Default icon for unspecified log types
 
@@ -123,6 +124,12 @@ const getLogDescription = (log: any, t: any) => {
       );
     case ProjectActivityStage.AUTHORISED:
       return formatString('slcfProgrammeTimeline:authorisedDescription', [], t);
+    case ProjectActivityStage.CREDITS_AUTHORISED:
+      return formatString(
+        'slcfProgrammeTimeline:creditsAuthorisedDescription',
+        [log.data.amount],
+        t
+      );
     case ProjectActivityStage.MONITORING_REPORT_SUBMITTED:
       return formatString(
         'slcfProgrammeTimeline:monitoringReportCreatedDescription',
@@ -367,16 +374,16 @@ const getLogTitle = (logType: any) => {
       return 'slcfProgrammeTimeline:pddSubmttedTitle';
       break;
     case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:
-      return 'slcfProgrammeTimeline:pddApprovedTitle';
+      return 'slcfProgrammeTimeline:pddApprovedICTitle';
       break;
     case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
-      return 'slcfProgrammeTimeline:pddRejectedTitle';
+      return 'slcfProgrammeTimeline:pddRejectedICTitle';
       break;
     case ProjectActivityStage.PDD_APPROVED_BY_DNA:
-      return 'slcfProgrammeTimeline:pddApprovedTitle';
+      return 'slcfProgrammeTimeline:pddApprovedDNATitle';
       break;
     case ProjectActivityStage.PDD_REJECTED_BY_DNA:
-      return 'slcfProgrammeTimeline:pddRejectedTitle';
+      return 'slcfProgrammeTimeline:pddRejectedDNATitle';
       break;
     case ProjectActivityStage.VALIDATION_REPORT_SUBMITTED:
       return 'slcfProgrammeTimeline:validationReportCreatedTitle';
@@ -386,6 +393,9 @@ const getLogTitle = (logType: any) => {
       break;
     case ProjectActivityStage.AUTHORISED:
       return 'slcfProgrammeTimeline:authorisedTitle';
+      break;
+    case ProjectActivityStage.CREDITS_AUTHORISED:
+      return 'slcfProgrammeTimeline:creditsAuthorisedTitle';
       break;
     case ProjectActivityStage.MONITORING_REPORT_SUBMITTED:
       return 'slcfProgrammeTimeline:monitoringReportCreatedTitle';
@@ -428,8 +438,10 @@ const ProgrammeHistoryStepsComponent: React.FC<ProgrammeHistoryStepsProps> = ({
       <div>
         <div>{getLogDescription(log, t)}</div>
         {log.data?.ref && <div>{`${t('slcfProgrammeTimeline:ref')} : ${log.data?.ref}`}</div>}
-        {log.data?.remark && (
-          <div>{`${t('slcfProgrammeTimeline:remarks')} : ${log.data?.remark}`}</div>
+        {log.data && log.data.remarks && (
+          <p className="remarks">
+            <span>{`${t('slcfProgrammeTimeline:remarks')}`}</span>: {log.data.remarks}
+          </p>
         )}
       </div>
     ),

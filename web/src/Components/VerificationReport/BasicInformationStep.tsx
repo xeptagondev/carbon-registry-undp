@@ -120,7 +120,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
@@ -150,7 +150,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       <Select
                         showSearch
                         size="large"
-                        disabled={disableFields}
+                        disabled
                         placeholder="Select"
                         filterOption={(input, option) =>
                           (option?.label ?? '').toLocaleString().includes(input.toLowerCase())
@@ -160,6 +160,35 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                           { value: '2', label: 'Small Scale' },
                         ]}
                       />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('verificationReport:b_monitoringPeriodDuration')}
+                      name="b_monitoringPeriodDuration"
+                      rules={[
+                        {
+                          required: true,
+                          message: '',
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(
+                                `${t('verificationReport:b_monitoringPeriodDuration')} ${t(
+                                  'isRequired'
+                                )}`
+                              );
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     {/* <Form.Item
@@ -270,7 +299,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
                     <Form.Item
                       label={t('verificationReport:b_projectParticipants')}
@@ -301,7 +330,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       <Input
                         size="large"
                         //placeholder="Add Project Participants"
-                        disabled={disableFields}
+                        disabled
                       />
                     </Form.Item>
 
@@ -334,7 +363,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       <Input
                         size="large"
                         // placeholder="Add Project Participants"
-                        disabled={disableFields}
+                        disabled
                       />
                     </Form.Item>
 
@@ -367,7 +396,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       <Input
                         size="large"
                         // placeholder="Add Project Participants"
-                        disabled={disableFields}
+                        disabled
                       />
                     </Form.Item>
 
@@ -414,7 +443,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
@@ -447,8 +476,8 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     </Form.Item>
 
                     <Form.Item
-                      label={t('verificationReport:b_monitoringPeriodNoAndDuration')}
-                      name="b_monitoringPeriodNoAndDuration"
+                      label={t('verificationReport:b_monitoringPeriodNo')}
+                      name="b_monitoringPeriodNo"
                       rules={[
                         {
                           required: true,
@@ -463,16 +492,14 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                               value === undefined
                             ) {
                               throw new Error(
-                                `${t('verificationReport:b_monitoringPeriodNoAndDuration')} ${t(
-                                  'isRequired'
-                                )}`
+                                `${t('verificationReport:b_monitoringPeriodNo')} ${t('isRequired')}`
                               );
                             }
                           },
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
@@ -499,7 +526,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
@@ -526,7 +553,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
@@ -555,7 +582,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
@@ -584,7 +611,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
                   </div>
                 </Col>
