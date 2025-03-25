@@ -68,8 +68,10 @@ export class CarbonCreditService {
             await queryRunner.connect();
             await queryRunner.startTransaction();
             try {
+                const transferId = String(Date.now());
                 for (const serial of mintedSerials) {
                     await this.issueCredit(
+                        transferId,
                         tokenId,
                         batchSerialNumber,
                         serial.toNumber(),
@@ -867,6 +869,7 @@ export class CarbonCreditService {
     }
 
     async issueCredit(
+        transferId: string,
         tokenId: string,
         batchSerialNumber: string,
         serialNumber: number,
@@ -887,6 +890,7 @@ export class CarbonCreditService {
             throw new Error('Project or Organization not found');
         }
         const creditEvent = plainToClass(CreditEventsEntity, {
+            transferId,
             tokenId,
             batchSerialNumnber: batchSerialNumber,
             serialNumnber: serialNumber,

@@ -21,6 +21,7 @@ import { FileHandlerModule } from './file-handler/file-handler.module';
 import { LocationModule } from './location/location.module';
 import { CarbonCreditTokenModule } from './carbon-credit-token/carbon-credit-token.module';
 import { TaskModule } from './task/task.module';
+import { SerialNumberManagementModule } from './serial-number-management/serial-number-management.module';
 
 @Module({
     providers: [SharedService],
@@ -47,6 +48,7 @@ import { TaskModule } from './task/task.module';
         LocationModule,
         CarbonCreditTokenModule,
         TaskModule,
+        SerialNumberManagementModule,
     ],
 })
 export class SharedModule {}

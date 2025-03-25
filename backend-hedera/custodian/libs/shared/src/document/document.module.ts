@@ -18,6 +18,7 @@ import { PddDocumentService } from './service/pdd-document.service';
 import { VrDocumentService } from './service/vr-document.service';
 import { MonitoringDocumentService } from './service/monitoring-document.service';
 import { VerificationDocumentService } from './service/verification-document.service';
+import { SerialNumberManagementModule } from '../serial-number-management/serial-number-management.module';
 
 @Module({
     imports: [
@@ -36,6 +37,7 @@ import { VerificationDocumentService } from './service/verification-document.ser
         GuardianModule,
         UtilModule,
         CarbonCreditTokenModule,
+        SerialNumberManagementModule,
     ],
     providers: [
         InfDocumentService,

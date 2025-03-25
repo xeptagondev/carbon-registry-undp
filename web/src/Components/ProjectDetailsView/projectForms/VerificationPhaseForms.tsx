@@ -14,12 +14,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ROUTES } from '../../../Config/uiRoutingConfig';
 import { CloseCircleFilled, CloseCircleOutlined, CloseOutlined } from '@ant-design/icons';
 
+export interface Iactivity {
+  stage: string;
+  documents: any[];
+  activityLastUpdatedDate: string;
+  refId?: string;
+}
+
 interface IVerificationPhaseForms {
-  activityData: {
-    stage: string;
-    documents: any[];
-    activityLastUpdatedDate: string;
-  }[];
+  activityData: Iactivity[];
+  documents: any[];
 }
 interface IPermissionsState {
   mode: FormMode;
@@ -28,7 +32,7 @@ interface IPermissionsState {
 }
 
 const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
-  const { activityData } = props;
+  const { activityData, documents } = props;
   const { userInfoState } = useUserContext();
   const { id } = useParams();
 
@@ -49,7 +53,9 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
   };
 
   const navigateToVerificationReport = (permissionsState: IPermissionsState) => {
-    navigate(ROUTES.VERIFICATION_REPORT(id as string), { state: permissionsState });
+    navigate(ROUTES.VERIFICATION_REPORT(id as string), {
+      state: { permissionsState },
+    });
   };
 
   useEffect(() => {
@@ -65,19 +71,9 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
         userInfoState,
         DocType.VERIFICATION_REPORT,
         activity.stage as ActivityStateEnum,
-        activity.documents[DocumentEnum.VERIFICATION as any]?.refId
+        activity.documents[DocumentEnum.VERIFICATION as any]?.refId,
+        activity?.refId
       );
-
-      // console.log(
-      //   '---------tempMonitoringReportPermissions-------------',
-      //   tempMonitoringReportPermissions
-      // );
-      // console.log(
-      //   '---------tempVerificationReportPermissions-------------',
-      //   tempVerificationReportPermissions
-      // );
-
-      console.log('--------activity-----------', activity);
 
       const temp = [
         {
