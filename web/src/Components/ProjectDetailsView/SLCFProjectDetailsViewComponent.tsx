@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-use-before-define */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Row,
   Col,
@@ -199,6 +199,8 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalInfo, setSlcfActionModalInfo] = useState<PopupInfo>();
   const [carbonNeutralCertificateData, setCarbonNeutralCertificateData] = useState<any>();
+
+  const projectTimelineRef = useRef<HTMLDivElement>(null);
 
   const accessToken = process.env.REACT_APP_MAPBOXGL_ACCESS_TOKEN
     ? process.env.REACT_APP_MAPBOXGL_ACCESS_TOKEN
@@ -2153,7 +2155,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         >
           <Col xl={data.activities && data.activities.length > 0 ? 19 : 24}>
             <Card className="card-container">
-              <div className="info-view">
+              <div className="info-view" ref={projectTimelineRef}>
                 <ProgrammeStatusTimelineComponent
                   programmeDetails={data}
                   translator={t}
@@ -2165,7 +2167,10 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             <Col xl={5}>
               <Card className="card-container">
                 <div className="info-view">
-                  <VerificationPhaseStatus activity={data.activities[data.activities.length - 1]} />
+                  <VerificationPhaseStatus
+                    activity={data.activities[data.activities.length - 1]}
+                    timelineRef={projectTimelineRef}
+                  />
                 </div>
               </Card>
             </Col>
