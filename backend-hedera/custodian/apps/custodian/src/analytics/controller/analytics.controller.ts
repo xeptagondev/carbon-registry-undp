@@ -34,7 +34,7 @@ export class AnalyticsController {
         return await this.analyticsService.getProjectsData(filters, req.user);
     }
     @UseGuards(AuthGuardService)
-    @Post('getProjectSummary')
+    @Get('getProjectSummary')
     async getProjectSummary(@Request() req) {
         return await this.analyticsService.getProjectSummary(req.user);
     }

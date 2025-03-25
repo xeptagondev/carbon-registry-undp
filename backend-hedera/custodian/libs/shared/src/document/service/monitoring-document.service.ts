@@ -175,7 +175,7 @@ export class MonitoringDocumentService extends DocumentService {
                 );
             } else if (
                 lastActivity &&
-                lastActivity.state ===
+                lastActivity.state !==
                     ActivityStateEnum.MONITORING_REPORT_REJECTED
             ) {
                 throw new HttpException(
@@ -184,6 +184,12 @@ export class MonitoringDocumentService extends DocumentService {
                 );
             }
 
+            if (!(project?.organization?.id === jwtData.organizationId)) {
+                throw new HttpException(
+                    'Unauthorized',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
             const monitoringData = dto.data;
 
             if (
@@ -345,6 +351,7 @@ export class MonitoringDocumentService extends DocumentService {
             await queryRunner.commitTransaction();
             return new DataResponseDto(HttpStatus.OK, {
                 refId: savedDoc.refId,
+                activityRefId: lastActivity.refId,
             });
         } catch (err) {
             console.log(err);

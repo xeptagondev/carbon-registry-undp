@@ -27,6 +27,21 @@ import { ROUTES } from '../../Config/uiRoutingConfig';
 import { VerificationStepProps } from './StepProps';
 import { NULL } from 'sass';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+// import { basicInformationMapDataToFields } from '../ValidationReport/viewDataMap';
+import {
+  appendixMapDataToFields,
+  applicationOfMaterialityMapDataToFields,
+  basicInformationMapDataToView,
+  certificaitonMapDataToFields,
+  executiveSummaryMapDataToFields,
+  ghgProjectDescriptionMapDataToFields,
+  internalQualityControlMapDataToFields,
+  meansOfVerificationMapDataToFields,
+  verificationFindingsMapDataToFields,
+  verificationOpinionMapDataToFields,
+  verificationTeamsMapDataToFields,
+} from './viewDataMap';
+import { Loading } from '../Loading/loading';
 
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
@@ -42,8 +57,13 @@ const StepperComponent = (props: VerificationStepProps) => {
   const { state } = useLocation();
   // console.log('---------------------verification state--------------------', state);
 
+  const [popupInfo, setPopupInfo] = useState<PopupInfo>();
+  const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
+
+  // const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
+  // const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
   const [basicInformationForm] = useForm();
-  const [GHGProjectDescriptionForm] = useForm();
+  const [ghgProjectDescriptionForm] = useForm();
   const [executiveSummaryForm] = useForm();
   const [verficationTeamForm] = useForm();
   const [applicationOfMeterialityForm] = useForm();
@@ -54,13 +74,25 @@ const StepperComponent = (props: VerificationStepProps) => {
   const [certificationStatementForm] = useForm();
   const [appendixForm] = useForm();
 
-  const [popupInfo, setPopupInfo] = useState<PopupInfo>();
-  const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
+  const [values, setValues] = useState({
+    projectRefId: id,
+    name: 'verification',
+    companyId: undefined,
+    documentType: DocumentEnum.VERIFICATION,
+    data: {},
+  });
 
-  // const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
-  // const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
+  const [loading, setLoading] = useState<boolean>(
+    state?.mode === FormMode.VIEW ||
+      state?.mode === FormMode.EDIT ||
+      state?.mode === FormMode?.VERIFY
+  );
 
-  const [data, setData] = useState({});
+  const handleLoading = (val: boolean) => {
+    setLoading(val);
+  };
+
+  const [disableFields, setDisableFields] = useState<boolean>(false);
 
   const navigateToDetailsPage = () => {
     navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
@@ -120,7 +152,7 @@ const StepperComponent = (props: VerificationStepProps) => {
         const netEmReductions = response?.calcEmissionReductions?.netGHGEmissionReductions;
         const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
 
-        GHGProjectDescriptionForm.setFieldsValue({
+        ghgProjectDescriptionForm.setFieldsValue({
           emissionsPeriodStart: moment.unix(emReduction?.[0]?.startDate),
           emissionsPeriodEnd: moment.unix(emReduction?.[0]?.endDate),
           baselineEmissionReductions: emReduction?.[0]?.baselineEmissionReductions,
@@ -184,58 +216,52 @@ const StepperComponent = (props: VerificationStepProps) => {
     setCurrent(current - 1);
   };
 
+  const submitForm = async (appendixVals: any) => {
+    setLoading(true);
+    try {
+      console.log('---------------activityRefId-------------', state?.activityRefId);
+
+      const tempValues = {
+        ...values,
+        activityRefId: state?.activityId,
+        data: {
+          ...values.data,
+          appendix: appendixVals,
+        },
+      };
+      const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
+      console.log(res);
+      if (res?.statusText === 'SUCCESS') {
+        message.open({
+          type: 'success',
+          content: 'Verification report has been submitted successfully',
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+        navigateToDetailsPage();
+      }
+    } catch (error: any) {
+      message.open({
+        type: 'error',
+        content: 'Something went wrong',
+        duration: 4,
+        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleValuesUpdate = (val: any) => {
-    // console.log('----------temp vals-------------', val);
-    setData((prevVal: any) => {
+    console.log('----------temp vals stepper-------------', val);
+
+    setValues((prevVal: any) => {
       const tempContent = {
-        ...prevVal,
+        ...prevVal.data,
         ...val,
       };
       return { ...prevVal, data: tempContent };
     });
-
-    const submitForm = async (formValues: any) => {
-      console.log(formValues);
-      try {
-        const tempValues = {
-          ...{
-            name: 'VERIFICATION',
-            documentType: DocumentEnum.VERIFICATION,
-            projectRefId: id,
-          },
-
-          data: {
-            ...formValues,
-          },
-        };
-        const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
-        console.log(res);
-        if (res?.response?.data?.statusCode === 200) {
-          message.open({
-            type: 'success',
-            content: 'Verification report has been submitted successfully',
-            duration: 4,
-            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-          });
-          navigateToDetailsPage();
-        }
-      } catch (error: any) {
-        message.open({
-          type: 'error',
-          content: 'Something went wrong',
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
-      }
-    };
-
-    if (current === 10) {
-      const formValues = {
-        ...data,
-        appendixForm: val,
-      };
-      submitForm(formValues);
-    }
   };
 
   useEffect(() => {
@@ -244,167 +270,101 @@ const StepperComponent = (props: VerificationStepProps) => {
     getPDDData();
   }, []);
 
-  // const showModalOnAction = (info: PopupInfo) => {
-  //   setSlcfActioModalVisible(true);
-  //   setPopupInfo(info);
-  // };
-
-  // const approveOrReject = async (verify: boolean, remark?: string) => {
-  //   const body = {
-  //     verify: verify,
-  //     verificationRequestId: Number(verificationRequestId),
-  //     reportId: reportId,
-  //     remark,
-  //   };
-  //   try {
-  //     const res = await post(API_PATHS.VERIFY_VERIFICATION_REPORT, body);
-  //     if (res?.statusText === 'SUCCESS') {
-  //       message.open({
-  //         type: 'success',
-  //         content: verify
-  //           ? t('verificationReport:verificationReportApproveSuccess')
-  //           : t('verificationReport:verificationReportRejectSuccess'),
-  //         duration: 4,
-  //         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-  //       });
-  //       navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
-  //     }
-  //   } catch (error: any) {
-  //     if (error && error.errors && error.errors.length > 0) {
-  //       error.errors.forEach((err: any) => {
-  //         Object.keys(err).forEach((field) => {
-  //           console.log(`Error in ${field}: ${err[field].join(', ')}`);
-  //           message.open({
-  //             type: 'error',
-  //             content: err[field].join(', '),
-  //             duration: 4,
-  //             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-  //           });
-  //         });
-  //       });
-  //     } else {
-  //       message.open({
-  //         type: 'error',
-  //         content: error?.message,
-  //         duration: 4,
-  //         style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-  //       });
-  //     }
-  //   }
-  // };
-
-  // const onFinish = async (newValues: any) => {
-  //   setFormValues((prevValues) => ({
-  //     ...prevValues,
-  //     ...newValues,
-  //   }));
-  //   if (FormMode.VIEW === mode) {
-  //     navigateToDetailsPage();
-  //   } else {
-  //     const content = { ...formValues, ...newValues };
-
-  //     // content.projectDetails.completionDate = moment(content?.projectDetails?.completionDate)
-  //     //   .startOf('day')
-  //     //   .valueOf();
-  //     // content.projectDetails.versionDate = moment(content?.projectDetails?.versionDate)
-  //     //   .startOf('day')
-  //     //   .valueOf();
-  //     // content.projectDetails.monitoringPeriodStart = moment(
-  //     //   content?.projectDetails?.monitoringPeriodStart
-  //     // )
-  //     //   .startOf('day')
-  //     //   .valueOf();
-  //     // content.projectDetails.monitoringPeriodEnd = moment(
-  //     //   content?.projectDetails?.monitoringPeriodEnd
-  //     // )
-  //     //   .startOf('day')
-  //     //   .valueOf();
-
-  //     // content.introduction.creditionPeriodStart = moment(
-  //     //   content?.introduction?.creditionPeriodStart
-  //     // )
-  //     //   .startOf('day')
-  //     //   .valueOf();
-  //     // content.introduction.creditionPeriodEnd = moment(content?.introduction?.creditionPeriodEnd)
-  //     //   .startOf('day')
-  //     //   .valueOf();
-  //     // content.introduction.periodVerifiedStart = moment(content?.introduction?.periodVerifiedStart)
-  //     //   .startOf('day')
-  //     //   .valueOf();
-  //     // content.introduction.periodVerifiedEnd = moment(content?.introduction?.periodVerifiedEnd)
-  //     //   .startOf('day')
-  //     //   .valueOf();
-
-  //     // content.annexures.optionalDocuments = await fileUploadValueExtract(
-  //     //   content?.annexures,
-  //     //   'optionalDocuments'
-  //     // );
-
-  //     // content.verificationFinding.optionalDocuments = await fileUploadValueExtract(
-  //     //   content?.verificationFinding,
-  //     //   'optionalDocuments'
-  //     // );
-
-  //     // content?.verificationFinding?.siteLocations?.forEach(async (val: any) => {
-  //     //   val.commissioningDate = moment(val?.commissioningDate).startOf('day').valueOf();
-  //     // });
-
-  //     // content.verificationOpinion.signature1 = await fileUploadValueExtract(
-  //     //   content?.verificationOpinion,
-  //     //   'signature1'
-  //     // );
-  //     // content.verificationOpinion.signature2 = await fileUploadValueExtract(
-  //     //   content?.verificationOpinion,
-  //     //   'signature2'
-  //     // );
-  //     // content.verificationOpinion.dateOfSignature1 = moment(
-  //     //   content?.verificationOpinion?.dateOfSignature1
-  //     // )
-  //     //   .startOf('day')
-  //     //   .valueOf();
-  //     // content.verificationOpinion.dateOfSignature2 = moment(
-  //     //   content?.verificationOpinion?.dateOfSignature2
-  //     // )
-  //     //   .startOf('day')
-  //     //   .valueOf();
-  //     const body = { content: JSON.stringify(content), programmeId: id };
-  //     try {
-  //       const res = await post(API_PATHS.CREATE_VERIFICATION_REPORT, body);
-  //       if (res?.statusText === 'SUCCESS') {
-  //         message.open({
-  //           type: 'success',
-  //           content: t('verificationReport:createVerificationReportSuccess'),
-  //           duration: 4,
-  //           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-  //         });
-  //         navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
-  //       }
-  //     } catch (error: any) {
-  //       if (error && error.errors && error.errors.length > 0) {
-  //         error.errors.forEach((err: any) => {
-  //           Object.keys(err).forEach((field) => {
-  //             console.log(`Error in ${field}: ${err[field].join(', ')}`);
-  //             message.open({
-  //               type: 'error',
-  //               content: err[field].join(', '),
-  //               duration: 4,
-  //               style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-  //             });
-  //           });
-  //         });
-  //       } else {
-  //         message.open({
-  //           type: 'error',
-  //           content: error?.message,
-  //           duration: 4,
-  //           style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-  //         });
-  //       }
-  //     }
-  //   }
-  // };
+  const [documentId, setDocumentId] = useState<string>();
 
   const safeNumber = (value: any) => Number(value) || 0;
+
+  useEffect(() => {
+    const getViewData = async () => {
+      if (
+        state?.mode === FormMode.EDIT ||
+        state?.mode === FormMode.VERIFY ||
+        state?.mode === FormMode.VIEW
+      ) {
+        setLoading(true);
+
+        let res;
+
+        if (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY) {
+          console.log(
+            '--------state?.mode 2---------',
+            state?.mode,
+            state?.mode === FormMode.VERIFY
+          );
+          setDisableFields(true);
+        }
+
+        try {
+          res = await post(API_PATHS.QUERY_DOCUMENT, {
+            refId: state?.documentRefId,
+            documentEnum: DocumentEnum.VERIFICATION,
+          });
+
+          console.log('--------ver res---------', res);
+          if (res?.statusText === 'SUCCESS') {
+            const data = res?.data;
+            setDocumentId(data?.refId);
+
+            console.log('--------ver res 2---------', data, data.data.basicInformation);
+
+            const basicInformation = basicInformationMapDataToView(data.data.basicInformation);
+            basicInformationForm.setFieldsValue(basicInformation);
+
+            const ghgProjectDescription = ghgProjectDescriptionMapDataToFields(
+              data.data.ghgProjectDescription
+            );
+            ghgProjectDescriptionForm.setFieldsValue(ghgProjectDescription);
+
+            const executiveSummary = executiveSummaryMapDataToFields(data.data.executiveSummary);
+            executiveSummaryForm.setFieldsValue(executiveSummary);
+
+            //
+            const verificationTeam = verificationTeamsMapDataToFields(data.data.verificationTeam);
+            verficationTeamForm.setFieldsValue(verificationTeam);
+
+            const applicationOfMateriality = applicationOfMaterialityMapDataToFields(
+              data.data.applicationOfMateriality
+            );
+            applicationOfMeterialityForm.setFieldsValue(applicationOfMateriality);
+
+            const meansOfVerification = meansOfVerificationMapDataToFields(
+              data.data.meansOfVerification
+            );
+            meansOfVerificationForm.setFieldsValue(meansOfVerification);
+
+            const verificationFindings = verificationFindingsMapDataToFields(
+              data.data.verificationFindings
+            );
+            verificationFindingForm.setFieldsValue(verificationFindings);
+
+            const internalQualityControl = internalQualityControlMapDataToFields(
+              data.data.internalQualityControl
+            );
+            internalQualityControlForm.setFieldsValue(internalQualityControl);
+
+            const verificationOpinion = verificationOpinionMapDataToFields(
+              data.data.verificationOpinion
+            );
+            verificationOpinionForm.setFieldsValue(verificationOpinion);
+
+            const certificationStatement = certificaitonMapDataToFields(
+              data.data.certificationStatement
+            );
+            certificationStatementForm.setFieldsValue(certificationStatement);
+
+            const appendix = appendixMapDataToFields(data.data.appendix);
+            appendixForm.setFieldsValue(appendix);
+          }
+        } catch (error: any) {
+          console.log('-------error--------', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    getViewData();
+  }, []);
 
   // const getProjectById = async (programId: any) => {
   //   try {
@@ -648,6 +608,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={navigateToDetailsPage}
+          disableFields={disableFields}
           // countries={countries}
           // verifiedScer={verifiedScer}
           handleValuesUpdate={handleValuesUpdate}
@@ -665,10 +626,11 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           t={t}
           current={current}
-          form={GHGProjectDescriptionForm}
+          form={ghgProjectDescriptionForm}
           formMode={mode}
           next={next}
           prev={prev}
+          disableFields={disableFields}
           // countries={countries}
           handleValuesUpdate={handleValuesUpdate}
         />
@@ -690,6 +652,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
+          disableFields={disableFields}
           // countries={countries}
           handleValuesUpdate={handleValuesUpdate}
         />
@@ -710,6 +673,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           form={verficationTeamForm}
           formMode={mode}
           next={next}
+          disableFields={disableFields}
           prev={prev}
           handleValuesUpdate={handleValuesUpdate}
         />
@@ -731,6 +695,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
+          disableFields={disableFields}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
@@ -751,6 +716,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
+          disableFields={disableFields}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
@@ -771,6 +737,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
+          disableFields={disableFields}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
@@ -791,6 +758,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
+          disableFields={disableFields}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
@@ -811,6 +779,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
+          disableFields={disableFields}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
@@ -831,6 +800,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           formMode={mode}
           next={next}
           prev={prev}
+          disableFields={disableFields}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
@@ -850,36 +820,19 @@ const StepperComponent = (props: VerificationStepProps) => {
           form={appendixForm}
           formMode={mode}
           prev={prev}
-          handleValuesUpdate={handleValuesUpdate}
-          // approve={() => {
-          //   showModalOnAction({
-          //     actionBtnText: t('verificationReport:btnApprove'),
-          //     icon: <CheckCircleOutlined />,
-          //     title: t('verificationReport:approveVerificationModalTitle'),
-          //     okAction: () => {
-          //       approveOrReject(true);
-          //     },
-          //     remarkRequired: false,
-          //     type: 'primary',
-          //   });
-          // }}
-          // reject={() => {
-          //   showModalOnAction({
-          //     actionBtnText: t('verificationReport:btnReject'),
-          //     icon: <CloseCircleOutlined />,
-          //     title: t('verificationReport:rejectVerificationModalTitle'),
-          //     okAction: (remark: string) => {
-          //       approveOrReject(false, remark);
-          //     },
-          //     remarkRequired: true,
-          //     type: 'danger',
-          //   });
-          // }}
+          next={navigateToDetailsPage}
+          disableFields={disableFields}
+          handleValuesUpdate={submitForm}
+          documentId={documentId}
+          handleLoading={handleLoading}
         />
       ),
     },
   ];
 
+  if (loading) {
+    return <Loading />;
+  }
   return (
     <>
       <Steps

@@ -11,6 +11,14 @@ export class RetireActionDto {
     @ApiProperty()
     projectId: number;
 
+    @IsNumber()
+    @IsPositive()
+    @ApiProperty()
+    orgId: number;
+
     @ApiProperty({ enum: RetirementACtionEnum })
     action: RetirementACtionEnum;
+
+    @ApiProperty({ type: 'string' })
+    remarks: string;
 }

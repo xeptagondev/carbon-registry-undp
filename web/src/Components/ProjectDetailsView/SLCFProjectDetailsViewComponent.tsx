@@ -138,6 +138,7 @@ import ProjectDocuments from './projectForms/ProjectDocuments';
 import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import VerificationPhaseForms from './projectForms/VerificationPhaseForms';
+import VerificationPhaseStatus from './verificationPhaseStatus/verificationPhaseStatus';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -1995,7 +1996,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       data.activities &&
       (data?.activities.length === 0 ||
         data?.activities[data?.activities.length - 1].stage ===
-          ActivityStateEnum.MONITORING_REPORT_VERIFIED)
+          ActivityStateEnum.VERIFICATION_REPORT_VERIFIED)
     ) {
       actionBtns.push(
         <Button
@@ -2145,8 +2146,13 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         </div>
       </div>
       <div className="content-body">
-        <Row className="programme-status-timeline">
-          <Col xl={24}>
+        <Row
+          className="programme-status-timeline"
+          justify={'space-between'}
+          gutter={20}
+          align={'stretch'}
+        >
+          <Col xl={data.activities && data.activities.length > 0 ? 19 : 24}>
             <Card className="card-container">
               <div className="info-view">
                 <ProgrammeStatusTimelineComponent
@@ -2156,6 +2162,15 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
               </div>
             </Card>
           </Col>
+          {data.activities && data.activities.length > 0 && (
+            <Col xl={5}>
+              <Card className="card-container">
+                <div className="info-view">
+                  <VerificationPhaseStatus activity={data.activities[data.activities.length - 1]} />
+                </div>
+              </Card>
+            </Col>
+          )}
         </Row>
         <Row gutter={16}>
           <Col md={24} lg={10}>

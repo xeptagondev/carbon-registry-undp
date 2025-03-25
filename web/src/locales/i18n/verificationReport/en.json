@@ -413,5 +413,10 @@
   "leakageEmissionsContent": "There are no leakages associated with movement of old equipment that need to be assessed as per the methodology AMS-I.D, Version18. Thus, there is no leakage emission form the project activity for this monitoring period.",
   "emissionReductions": "Emission Reductions",
   "emissionReductionsContent": "Therefore, the emission reductions in this monitoring period are: ERy = BEy - PEy - LEy",
-  "addFinding": "Add Finding"
+  "addFinding": "Add Finding",
+  "confirmModalMessage": "Are you sure you want to submit ?",
+  "confirmModalSubMessage": "You can't undo this action",
+  "approveMessage": "Are you sure you want to approve this Verification Report ?",
+  "declineMessage": "Are you sure you want to decline this Verification Report?",
+  "checkboxMessage": "I understand that this action cannot be undone"
 }
