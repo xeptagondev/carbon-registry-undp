@@ -97,7 +97,7 @@ const NetEmissionReduction = (props: any) => {
       });
     }
 
-    const creditingYears = Number(form.getFieldValue('totalNumberOfCredingYears') || 0);
+    const creditingYears = Number(form.getFieldValue('totalNumberOfCreditingYears') || 0);
     if (creditingYears > 0) {
       form.setFieldValue(categoryToAdd, String(tempTotal));
       form.setFieldValue(
@@ -122,7 +122,7 @@ const NetEmissionReduction = (props: any) => {
       return total + (currentVal[category] || 0);
     }, 0);
 
-    const creditingYears = Number(form.getFieldValue('totalNumberOfCredingYears') || 0);
+    const creditingYears = Number(form.getFieldValue('totalNumberOfCreditingYears') || 0);
     if (creditingYears > 0) {
       form.setFieldValue(categoryToAdd, String(tempTotal));
       form.setFieldValue(
@@ -143,7 +143,7 @@ const NetEmissionReduction = (props: any) => {
     }, 0);
 
     const tempTotal = bufferPool;
-    const creditingYears = Number(form.getFieldValue('totalNumberOfCredingYears') || 0);
+    const creditingYears = Number(form.getFieldValue('totalNumberOfCreditingYears') || 0);
     form.setFieldValue(categoryToAdd, bufferPool);
     if (creditingYears > 0) {
       form.setFieldValue(
@@ -156,7 +156,7 @@ const NetEmissionReduction = (props: any) => {
   };
 
   const onPeriodEndChange = (value: any, fieldCounts: number) => {
-    form.setFieldValue('totalNumberOfCredingYears', fieldCounts);
+    form.setFieldValue('totalNumberOfCreditingYears', fieldCounts);
   };
 
   return (
@@ -703,7 +703,7 @@ const NetEmissionReduction = (props: any) => {
           </Col>
           <Col md={3} xl={3} className="total-cols">
             <Form.Item
-              name="totalNumberOfCredingYears"
+              name="totalNumberOfCreditingYears"
               rules={[
                 {
                   required: true,
