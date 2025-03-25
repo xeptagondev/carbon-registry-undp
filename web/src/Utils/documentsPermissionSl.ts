@@ -349,11 +349,11 @@ export const activityPermissions = (
   userInfoState: any,
   docType: DocType,
   activityStage: ActivityStateEnum,
-  documentId: any
+  documentId: any,
+  activityId?: string,
+  documents?: any[]
 ) => {
   // MONITORING_REPORT: for IC Admin users at MONITORING_REPORT_UPLOADED
-
-  console.log('--------activityStage------------', activityStage);
   if (
     docType === DocType.MONITORING_REPORT &&
     activityStage === ActivityStateEnum.MONITORING_REPORT_UPLOADED &&
@@ -498,6 +498,8 @@ export const activityPermissions = (
       mode: FormMode.CREATE,
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documentId,
+      activityId: activityId,
+      documents: documents,
     };
   }
 
@@ -576,6 +578,7 @@ export const activityPermissions = (
       mode: FormMode.EDIT,
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documentId,
+      activityId: activityId,
     };
   }
 
@@ -609,8 +612,7 @@ export const activityPermissions = (
   // VERIFICATION_REPORT: for All Users at VERIFICATION_REPORT_APPROVED
   else if (
     docType === DocType.VERIFICATION_REPORT &&
-    activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED &&
-    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
   ) {
     return {
       mode: FormMode.VIEW,

@@ -21,7 +21,7 @@ import { DocType } from '../../Definitions/Enums/document.type';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import GetMultipleLocationsMapComponent from '../Maps/GetMultipleLocationsMapComponent';
 import { Loading } from '../Loading/loading';
 import PhoneInput, {
@@ -37,6 +37,8 @@ import { SectoralScope } from '../../Definitions/Enums/sectoralScope.enum';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -102,13 +104,17 @@ export const ProgrammeCreationComponent = (props: any) => {
   const { translator } = props;
   const [current, setCurrent] = useState<number>(0);
   const navigate = useNavigate();
+
+  const { state } = useLocation();
+
   const { post, get } = useConnection();
   const [form] = Form.useForm();
   // const [values, setValues] = useState<any>(undefined);
 
+  const [disableFields, setDisableFields] = useState<boolean>(false);
+
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [projectCategory, setProjectCategory] = useState<string>();
   const [isMultipleLocations, setIsMultipleLocations] = useState<boolean>(false);
 
   const [provinces, setProvinces] = useState<string[]>([]);
@@ -238,11 +244,38 @@ export const ProgrammeCreationComponent = (props: any) => {
     }
   };
 
+  const getOrganizationDetails = async () => {
+    try {
+      setLoading(true);
+      const { data } = await get(API_PATHS.USER_PROFILE_DETAILS);
+      if (data && data?.Organisation) {
+        form.setFieldsValue({
+          projectParticipant: data?.Organisation?.name,
+          contactAddress: data?.Organisation?.address,
+          contactEmail: data?.Organisation?.email,
+          contactWebsite: data?.Organisation?.website,
+          contactPhoneNo: data?.Organisation?.phoneNo,
+          contactFax: data?.Organisation?.faxNo,
+          contactName: data?.user?.name,
+        });
+      }
+    } catch (error) {
+      console.log('Error in getOrganizationDetails', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    if (state?.mode === null || state?.mode === undefined) {
+      getProvinces();
+      getCountryList();
+      getIndependentCertifiers();
+      getOrganizationDetails();
+    }
     getProvinces();
     getCountryList();
     getIndependentCertifiers();
-    form.setFieldValue('projectParticipant', localStorage.getItem('name') || '');
   }, []);
 
   const onProvinceSelect = async (value: any) => {
@@ -266,9 +299,9 @@ export const ProgrammeCreationComponent = (props: any) => {
     }
   };
 
-  const onProjectCategorySelect = (value: string) => {
-    setProjectCategory(value);
-  };
+  // const onProjectCategorySelect = (value: string) => {
+  //   setProjectCategory(value);
+  // };
 
   const normFile = (e: any) => {
     if (Array.isArray(e)) {
@@ -278,6 +311,40 @@ export const ProgrammeCreationComponent = (props: any) => {
   };
 
   const t = translator.t;
+
+  useEffect(() => {
+    const getViewData = async () => {
+      setLoading(true);
+      try {
+        if (state?.mode === FormMode.VIEW && state?.documentId) {
+          setDisableFields(true);
+          const res = await post(API_PATHS.QUERY_DOCUMENT, {
+            refId: state?.documentId,
+            DocumentEnum: DocumentEnum.INF,
+          });
+
+          if (res?.statusText === 'SUCCESS') {
+            const data = res?.data?.data;
+
+            console.log('-----------view data-----------', data);
+            const viewData = {
+              ...data,
+              briefProjectDescription: data.projectDescription,
+              optionalDocuments: mapBase64ToFields(data?.additionalDocuments),
+              projectLocation: data.geographicalLocationCoordinates,
+              startTime: moment.unix(data?.startDate),
+            };
+            form.setFieldsValue(viewData);
+          }
+        }
+      } catch (error) {
+        console.log('----------error-----------');
+      } finally {
+        setLoading(false);
+      }
+    };
+    getViewData();
+  }, []);
 
   const submitForm = async (values: any) => {
     const base64Docs: string[] = [];
@@ -445,7 +512,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   },
                                 ]}
                               >
-                                <Input size="large" />
+                                <Input size="large" disabled={disableFields} />
                               </Form.Item>
 
                               {/* <Form.Item
@@ -509,6 +576,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Select
                                   size="large"
                                   placeholder={t('addProgramme:sectoralScopePlaceholder')}
+                                  disabled={disableFields}
                                 >
                                   {Object.keys(INF_SECTORAL_SCOPE).map((key) => (
                                     <Select.Option value={key}>
@@ -727,6 +795,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   size="large"
                                   onChange={onProvinceSelect}
                                   placeholder={t('addProgramme:provincePlaceholder')}
+                                  disabled={disableFields}
                                 >
                                   {provinces.map((province: string, index: number) => (
                                     <Select.Option value={province}>{province}</Select.Option>
@@ -748,6 +817,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   size="large"
                                   placeholder={t('addProgramme:districtPlaceholder')}
                                   onSelect={onDistrictSelect}
+                                  disabled={disableFields}
                                 >
                                   {districts?.map((district: string, index: number) => (
                                     <Select.Option key={district}>{district}</Select.Option>
@@ -788,6 +858,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   size="large"
                                   placeholder={t('addProgramme:cityPlaceholder')}
                                   onSelect={onCitySelect}
+                                  disabled={disableFields}
                                 >
                                   {cities.map((city: string) => (
                                     <Select.Option value={city}>{city}</Select.Option>
@@ -807,6 +878,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Select
                                   size="large"
                                   placeholder={t('addProgramme:postalCodePlaceholder')}
+                                  disabled={disableFields}
                                 >
                                   {postalCodes.map((postalCode: string) => (
                                     <Select.Option value={postalCode}>{postalCode}</Select.Option>
@@ -823,7 +895,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   },
                                 ]}
                               >
-                                <Input size="large" />
+                                <Input size="large" disabled={disableFields} />
                               </Form.Item>
                               <Form.Item
                                 label={t('addProgramme:projectGeography')}
@@ -841,6 +913,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   size="large"
                                   placeholder={t('addProgramme:projectGeographyPlaceholder')}
                                   onChange={onGeographyOfProjectSelect}
+                                  disabled={disableFields}
                                 >
                                   {Object.keys(PROJECT_GEOGRAPHY).map((geography: string) => (
                                     <Select.Option value={geography}>
@@ -865,6 +938,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Select
                                   size="large"
                                   placeholder={t('addProgramme:projectStatusPlaceholder')}
+                                  disabled={disableFields}
                                 >
                                   {Object.keys(PROJECT_STATUS).map((status: string) => (
                                     <Select.Option value={status}>
@@ -878,7 +952,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 label={t('addProgramme:projectStatusDescription')}
                                 name={'projectStatusDescription'}
                               >
-                                <TextArea rows={4} />
+                                <TextArea rows={4} disabled={disableFields} />
                               </Form.Item>
                             </div>
                           </Col>
@@ -901,6 +975,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   form={form}
                                   formItemName={'projectLocation'}
                                   disableMultipleLocations={!isMultipleLocations}
+                                  disabled={disableFields}
+                                  existingCoordinate={
+                                    form.getFieldValue('projectLocation') || undefined
+                                  }
                                 />
                               </Form.Item>
 
@@ -930,6 +1008,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                               >
                                 <DatePicker
                                   size="large"
+                                  disabled={disableFields}
                                   disabledDate={(currentDate: any) =>
                                     currentDate < moment().startOf('day')
                                   }
@@ -950,6 +1029,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                               >
                                 <Select
                                   mode="multiple"
+                                  disabled={disableFields}
                                   size="large"
                                   maxTagCount={2}
                                   loading={organizationsLoading}
@@ -989,7 +1069,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   },
                                 ]}
                               >
-                                <Input size={'large'} />
+                                <Input size={'large'} disabled={disableFields} />
                               </Form.Item>
                               {/* {projectCategory === 'RENEWABLE_ENERGY' && (
                                 <Form.Item
@@ -1033,6 +1113,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   placeholder={`${t(
                                     'addProgramme:briefProjectDescriptionPlaceholder'
                                   )}`}
+                                  disabled={disableFields}
                                 />
                               </Form.Item>
 
@@ -1072,6 +1153,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   action="/upload.do"
                                   listType="picture"
                                   multiple={false}
+                                  disabled={disableFields}
                                   // maxCount={1}
                                 >
                                   <Button
@@ -1103,7 +1185,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                               ]}
                             >
-                              <Input disabled size="large" />
+                              <Input size="large" />
                             </Form.Item>
                             <Form.Item
                               label={t('addProgramme:email')}
@@ -1139,7 +1221,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                               ]}
                             >
-                              <Input size="large" />
+                              <Input size="large" disabled={disableFields} />
                             </Form.Item>
                           </Col>
                           <Col xl={12} md={24}>
@@ -1153,7 +1235,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                               ]}
                             >
-                              <TextArea rows={6} />
+                              <TextArea rows={6} disabled={disableFields} />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1200,6 +1282,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     countryCallingCodeEditable={false}
                                     onChange={(v) => {}}
                                     countries={countries}
+                                    disabled={disableFields}
                                   />
                                 </Form.Item>
                               )}
@@ -1247,6 +1330,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     countryCallingCodeEditable={false}
                                     onChange={(v) => {}}
                                     countries={countries}
+                                    disabled={disableFields}
                                   />
                                 </Form.Item>
                               )}
@@ -1266,7 +1350,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                               ]}
                             >
-                              <Input size="large" />
+                              <Input size="large" disabled={disableFields} />
                             </Form.Item>
                           </Col>
                           <Col xl={12} md={24}>
@@ -1282,7 +1366,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                               ]}
                             >
-                              <Input size="large" />
+                              <Input size="large" disabled={disableFields} />
                             </Form.Item>
                           </Col>
                         </Row>
