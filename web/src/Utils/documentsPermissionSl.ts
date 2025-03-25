@@ -608,8 +608,7 @@ export const activityPermissions = (
   // VERIFICATION_REPORT: for All Users at VERIFICATION_REPORT_APPROVED
   else if (
     docType === DocType.VERIFICATION_REPORT &&
-    activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED &&
-    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
   ) {
     return {
       mode: FormMode.VIEW,

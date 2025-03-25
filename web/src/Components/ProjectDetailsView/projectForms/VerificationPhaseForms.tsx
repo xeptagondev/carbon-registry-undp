@@ -70,16 +70,6 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
         activity.documents[DocumentEnum.VERIFICATION as any]?.refId
       );
 
-      // console.log(
-      //   '---------tempMonitoringReportPermissions-------------',
-      //   tempMonitoringReportPermissions
-      // );
-      // console.log(
-      //   '---------tempVerificationReportPermissions-------------',
-      //   tempVerificationReportPermissions
-      // );
-
-      console.log('--------activity-----------', activity);
 
       const temp = [
         {

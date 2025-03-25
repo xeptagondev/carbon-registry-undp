@@ -9,8 +9,6 @@ interface IVerificationPhaseStatus {
 }
 const VerificationPhaseStatus = (props: IVerificationPhaseStatus) => {
   const { activity } = props;
-  console.log('--------activity---------', activity);
-  activity.stage = ActivityStateEnum.VERIFICATION_REPORT_VERIFIED;
 
   return (
     <div className="verification-phase-section">
