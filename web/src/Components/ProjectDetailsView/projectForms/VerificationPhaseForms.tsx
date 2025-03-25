@@ -18,6 +18,7 @@ export interface Iactivity {
   stage: string;
   documents: any[];
   activityLastUpdatedDate: string;
+  refId?: string;
 }
 
 interface IVerificationPhaseForms {
@@ -67,7 +68,8 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
         userInfoState,
         DocType.VERIFICATION_REPORT,
         activity.stage as ActivityStateEnum,
-        activity.documents[DocumentEnum.VERIFICATION as any]?.refId
+        activity.documents[DocumentEnum.VERIFICATION as any]?.refId,
+        activity?.refId
       );
 
       const temp = [

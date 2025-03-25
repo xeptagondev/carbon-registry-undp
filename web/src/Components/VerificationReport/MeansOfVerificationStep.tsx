@@ -95,7 +95,9 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
     return e?.fileList;
   };
   useEffect(() => {
-    form.setFieldValue('onSiteInspection', [{ activity: '' }]);
+    if (formMode === FormMode.CREATE) {
+      form.setFieldValue('onSiteInspection', [{ activity: '' }]);
+    }
   }, []);
 
   const calculateTotalCL = (value: number) => {
