@@ -173,15 +173,6 @@ export class MonitoringDocumentService extends DocumentService {
                     `Project should be in ${ProjectProposalStage.AUTHORISED} stage`,
                     HttpStatus.BAD_REQUEST,
                 );
-            } else if (
-                lastActivity &&
-                lastActivity.state !==
-                    ActivityStateEnum.MONITORING_REPORT_REJECTED
-            ) {
-                throw new HttpException(
-                    `If activity exists it should be in ${ActivityStateEnum.MONITORING_REPORT_REJECTED}`,
-                    HttpStatus.BAD_REQUEST,
-                );
             }
 
             if (!(project?.organization?.id === jwtData.organizationId)) {
@@ -266,7 +257,7 @@ export class MonitoringDocumentService extends DocumentService {
                     project: project.refId,
                 };
 
-                this.guardianService.saveDocument(
+                await this.guardianService.saveDocument(
                     jwtData.email,
                     GUARDIAN_API.BLOCKS.CREATE_ACTIVITY,
                     {
