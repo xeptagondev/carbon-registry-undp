@@ -6,6 +6,7 @@ import {
     Entity,
     JoinColumn,
     ManyToOne,
+    OneToMany,
     OneToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -51,8 +52,8 @@ export class TaskEntity {
     @JoinColumn({ name: 'previous_task_id', referencedColumnName: 'id' })
     previousTask?: TaskEntity = null;
 
-    @OneToOne(() => EventEntity, (event) => event.task, { nullable: true })
-    event?: EventEntity;
+    @OneToMany(() => EventEntity, (event) => event.task, { nullable: true })
+    events?: EventEntity;
 
     @BeforeInsert()
     setInitialLastUpdateTime() {
