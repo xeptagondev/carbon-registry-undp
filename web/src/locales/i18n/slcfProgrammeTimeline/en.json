@@ -16,10 +16,12 @@
   "pddSubmttedTitle": "Project Design Document Created",
   "pddSubmittedDescription": "Project Design Document was created by {}",
 
-  "pddRejectedTitle": "Project Design Document Rejected",
+  "pddRejectedICTitle": "Project Design Document Rejected by Independent Certifier",
+  "pddRejectedDNATitle": "Project Design Document Rejected by DNA", 
   "pddRejectedDescription": "Project Design Document was rejected by {}",
 
-  "pddApprovedTitle": "Project Design Document Accepted",
+  "pddApprovedICTitle": "Project Design Document Accepted by Independent Certifier",
+  "pddApprovedDNATitle": "Project Design Document Accepted by DNA",
   "pddApprovedDescription": "Project Designed Document was approved by {}",
 
   "validationReportCreatedTitle": "Validation Report Created",
@@ -34,10 +36,13 @@
   "authorisedTitle": "Project Registered",
   "authorisedDescription": "The project was registered under UNDP",
 
+  "creditsAuthorisedTitle": "Credits Authorised",
+  "creditsAuthorisedDescription": "The project has been authorised for {} credits",
+
   "monitoringReportCreatedTitle": "Monitoring Report Created",
   "monitoringReportCreatedDescription": "The Monitoring Report was created by {}",
 
-  "monitoringReportApprovedTitle": "Monitoring Report Approved",
+  "monitoringReportApprovedTitle": "Monitoring Report Accepted",
   "monitoringReportApprovedDescription": "The Monitoring Report was approved by {}",
 
   "monitoringReportRejectedTitle": "Monitoring Report Rejected",
@@ -46,10 +51,10 @@
   "verificationReportCreatedTitle": "Verification Report Created",
   "verificationReportCreatedDescription": "The Verification Report was created by {}",
 
-  "verificationReportApprovedTitle": "Verification Report Approved",
+  "verificationReportApprovedTitle": "Verification Report Approved by DNA",
   "verificationReportApprovedDescription": "The Verification Report was approved by {}",
 
-  "verificationReportRejectedTitle": "Verification Report Rejected",
+  "verificationReportRejectedTitle": "Verification Report Rejected by DNA",
   "verificationReportRejectedDescription": "The Verification Report was rejected by {}",
 
   "creditIssuedTitle": "Credit Issued",
