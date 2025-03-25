@@ -349,7 +349,8 @@ export const activityPermissions = (
   userInfoState: any,
   docType: DocType,
   activityStage: ActivityStateEnum,
-  documentId: any
+  documentId: any,
+  activityId?: string
 ) => {
   // MONITORING_REPORT: for IC Admin users at MONITORING_REPORT_UPLOADED
   if (
@@ -459,6 +460,20 @@ export const activityPermissions = (
     };
   }
 
+  // MONITORING_REPORT: for all users at VERIFICATion_REPORT_UPLOADED, VERIFICATION_REPORT_REJECTED, VERIFICATION_REPORT_VERIFIED
+  else if (
+    docType === DocType.MONITORING_REPORT &&
+    (activityStage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED ||
+      activityStage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED ||
+      activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED)
+  ) {
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documentId,
+    };
+  }
+
   // VERIFICATION_REPORT: for all users at MONITORING_REPORT_UPLOADED, MONITORING_REPORT_REJECTED
   else if (
     docType === DocType.VERIFICATION_REPORT &&
@@ -482,6 +497,7 @@ export const activityPermissions = (
       mode: FormMode.CREATE,
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documentId,
+      activityId: activityId,
     };
   }
 
@@ -560,6 +576,7 @@ export const activityPermissions = (
       mode: FormMode.EDIT,
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documentId,
+      activityId: activityId,
     };
   }
 
@@ -593,8 +610,7 @@ export const activityPermissions = (
   // VERIFICATION_REPORT: for All Users at VERIFICATION_REPORT_APPROVED
   else if (
     docType === DocType.VERIFICATION_REPORT &&
-    activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED &&
-    userInfoState?.companyRole !== CompanyRole.INDEPENDENT_CERTIFIER
+    activityStage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
   ) {
     return {
       mode: FormMode.VIEW,

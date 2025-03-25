@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { CreditEventTypeEnum } from '../enum/credit.event.type.enum';
 import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
+import { CreditRetirementTypeEmnum } from '../enum/credit.retirement.type.enum';
 
 @Entity()
 export class CreditEventsEntity {
@@ -53,6 +54,9 @@ export class CreditEventsEntity {
 
     @Column({ type: 'enum', enum: CreditEventStatusEnum, nullable: false })
     status: CreditEventStatusEnum;
+
+    @Column({ type: 'enum', enum: CreditRetirementTypeEmnum, nullable: true })
+    retirementType: CreditRetirementTypeEmnum;
 
     @Column({ nullable: true, type: 'bigint' })
     createdDate?: number;
