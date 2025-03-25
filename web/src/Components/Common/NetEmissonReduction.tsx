@@ -2,8 +2,8 @@ import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Col, DatePicker, Form, Input, InputNumber, Row } from 'antd';
 import moment from 'moment';
 import { ProjectCategory } from '../../enum/slRegistryEnum';
-import { useEffect } from 'react';
 import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
+import { useState } from 'react';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   baselineEmissionReductions: 'avgBaselineEmissionReductions',
@@ -14,11 +14,9 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
 };
 
 const NetEmissionReduction = (props: any) => {
-  const { form, t, existingEmission, projectCategory, disableFields } = props;
+  const { form, t, existingEmission, projectCategory, disabled } = props;
 
-  useEffect(() => {
-    // onPeriodEndChange()
-  }, []);
+  console.log('--------disabled-----------', disabled);
 
   const calculateNetGHGEmissions = (value: any, index?: number) => {
     let baselineEmissionReductionsVal = 0;
@@ -224,7 +222,7 @@ const NetEmissionReduction = (props: any) => {
                             placeholder="Start Date"
                             picker="month"
                             format="YYYY MMM"
-                            disabled={disableFields}
+                            disabled={disabled}
                           />
                         </Form.Item>
                         <span style={{ marginBottom: 23 }}>to</span>
@@ -285,7 +283,7 @@ const NetEmissionReduction = (props: any) => {
                               }
                               return false;
                             }}
-                            disabled={disableFields}
+                            disabled={disabled}
                           />
                         </Form.Item>
                       </div>
@@ -326,7 +324,7 @@ const NetEmissionReduction = (props: any) => {
                               'totalBaselineEmissionReductions'
                             );
                           }}
-                          disabled={disableFields}
+                          disabled={disabled}
                         />
                       </Form.Item>
                     </Col>
@@ -365,7 +363,7 @@ const NetEmissionReduction = (props: any) => {
                               'totalProjectEmissionReductions'
                             );
                           }}
-                          disabled={disableFields}
+                          disabled={disabled}
                         />
                       </Form.Item>
                     </Col>
@@ -404,7 +402,7 @@ const NetEmissionReduction = (props: any) => {
                               'totalLeakageEmissionReductions'
                             );
                           }}
-                          disabled={disableFields}
+                          disabled={disabled}
                         />
                       </Form.Item>
                     </Col>
@@ -478,7 +476,7 @@ const NetEmissionReduction = (props: any) => {
                                 'totalBufferPoolAllocations'
                               );
                             }}
-                            disabled={disableFields}
+                            disabled={disabled}
                           />
                         </Form.Item>
                       </Col>
@@ -518,7 +516,7 @@ const NetEmissionReduction = (props: any) => {
                             className="addMinusBtn"
                             // block
                             icon={<MinusOutlined />}
-                            disabled={disableFields}
+                            disabled={disabled}
                           >
                             {/* Add Entity */}
                           </Button>
@@ -534,7 +532,7 @@ const NetEmissionReduction = (props: any) => {
                             className="addMinusBtn"
                             // block
                             icon={<PlusOutlined />}
-                            disabled={disableFields}
+                            disabled={disabled}
                           >
                             {/* Add Entity */}
                           </Button>
