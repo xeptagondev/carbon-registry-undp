@@ -188,6 +188,7 @@ export class ProjectService {
                 return {
                     stage: activity.state,
                     activityLastUpdatedDate: activity.updatedDate,
+                    refId: activity.refId,
                     documents: activity?.documents?.reduce((acc, document) => {
                         if (
                             !acc[document.documentType] ||
