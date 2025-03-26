@@ -200,7 +200,7 @@ const StepperComponent = (props: any) => {
         documentType: DocumentEnum.PDD,
       });
       console.log('-----------PDD data ----------', data);
-      if (state?.mode === FormMode?.CREATE) {
+      if (data?.statusText === 'SUCCESS') {
         console.log('-----data.data---------', data?.data);
 
         form1.setFieldsValue({
@@ -476,7 +476,9 @@ const StepperComponent = (props: any) => {
     if (id) {
       getProgrammeDetailsById(id);
     }
-    getPDDData();
+    if (state?.mode === FormMode?.CREATE) {
+      getPDDData();
+    }
     setLatestVersion();
   }, [id]);
 
