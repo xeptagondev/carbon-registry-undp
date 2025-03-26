@@ -195,14 +195,14 @@ const StepperComponent = (props: any) => {
 
   const getPDDData = async () => {
     try {
-      const { data } = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documents?.refId,
+      const res = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documents?.PDD?.refId,
         documentType: DocumentEnum.PDD,
       });
-      console.log('-----------PDD data ----------', data);
-      if (data?.statusText === 'SUCCESS') {
-        console.log('-----data.data---------', data?.data);
-
+      console.log('-----------PDD data ----------', res);
+      if (res?.statusText === 'SUCCESS') {
+        const data = res?.data;
+        console.log('-----------data----------------', data);
         form1.setFieldsValue({
           versionNumberPDD: data?.version,
           hostParty: data?.data?.projectDetails?.hostParty,
@@ -473,11 +473,9 @@ const StepperComponent = (props: any) => {
   };
 
   useEffect(() => {
-    if (id) {
-      getProgrammeDetailsById(id);
-    }
     if (state?.mode === FormMode?.CREATE) {
       getPDDData();
+      getProgrammeDetailsById(id);
     }
     setLatestVersion();
   }, [id]);
