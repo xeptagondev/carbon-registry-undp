@@ -5,5 +5,6 @@ import { UtilModule } from '../util/util.module';
 @Module({
     imports: [UtilModule],
     providers: [SerialNumberManagementService],
+    exports: [SerialNumberManagementService],
 })
 export class SerialNumberManagementModule {}

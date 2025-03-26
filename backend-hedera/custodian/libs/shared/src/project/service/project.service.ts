@@ -151,6 +151,13 @@ export class ProjectService {
         mappedProject.sectoralScope = project.sectoralScope;
         mappedProject.title = project.title;
         mappedProject.tokenId = project.tokenId;
+        mappedProject.creditEst = project.creditEst;
+        mappedProject.creditTransferred = project.creditTransferred;
+        mappedProject.creditRetired = project.creditRetired;
+        mappedProject.creditBalance =
+            (Number(project.creditIssued) || 0) -
+            ((Number(project.creditTransferred) || 0) +
+                (Number(project.creditRetired) || 0));
 
         mappedProject.company = project?.organization
             ? {
