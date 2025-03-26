@@ -272,7 +272,6 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const getPieChartData = (d: ProgrammeSlU) => {
-    const frozen = d.creditFrozen ? Number(d.creditFrozen) : 0;
     const authorised =
       d.projectProposalStage.toString() === ProjectProposalStage.AUTHORISED && d.creditEst
         ? Number(
@@ -280,8 +279,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
               numIsExist(d.creditEst) -
               numIsExist(d?.creditBalance) -
               numIsExist(d.creditTransferred) -
-              numIsExist(d.creditRetired) -
-              frozen
+              numIsExist(d.creditRetired)
             ).toFixed(2)
           )
         : 0;
@@ -290,7 +288,6 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       Number(numIsExist(d.creditBalance).toFixed(2)),
       Number(numIsExist(d.creditTransferred)),
       Number(numIsExist(d.creditRetired)),
-      frozen,
     ];
     return dt;
   };
@@ -2190,11 +2187,11 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                     <Chart
                       id={'creditChart'}
                       options={{
-                        labels: ['Authorised', 'Issued', 'Transferred', 'Retired', 'Frozen'],
+                        labels: ['Authorised', 'Issued', 'Transferred', 'Retired'],
                         legend: {
                           position: 'bottom',
                         },
-                        colors: ['#6ACDFF', '#D2FDBB', '#CDCDCD', '#FF8183', '#B7A4FE'],
+                        colors: ['#6ACDFF', '#D2FDBB', '#CDCDCD', '#FF8183'],
                         tooltip: {
                           fillSeriesColor: false,
                         },
