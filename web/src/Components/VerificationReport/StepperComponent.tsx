@@ -105,8 +105,7 @@ const StepperComponent = (props: VerificationStepProps) => {
         documentType: DocumentEnum.VALIDATION,
       });
       console.log('---------validation------------', res);
-
-      if (state?.mode === FormMode?.CREATE) {
+      if (res?.statusText === 'SUCCESS') {
         const response = res?.data?.data;
         console.log('---------validation------------', response);
         basicInformationForm.setFieldsValue({
@@ -128,7 +127,7 @@ const StepperComponent = (props: VerificationStepProps) => {
         documentType: DocumentEnum.MONITORING,
       });
 
-      if (state?.mode === FormMode?.CREATE) {
+      if (res?.statusText === 'SUCCESS') {
         const response = res?.data?.data;
         console.log('---------Monitoring------------', response);
         const creditingPeriodStartDate = moment.unix(
@@ -171,9 +170,6 @@ const StepperComponent = (props: VerificationStepProps) => {
           avgLeakageEmissionReductions: Number(netEmReductions?.avgLeakageEmissionReductions),
           avgNetEmissionReductions: Number(netEmReductions?.avgNetEmissionReductions),
         });
-        // basicInformationForm.setFieldValue('estimatedNetEmissionReductions', [
-        //   { baselineEmissionReductions: 0 },
-        // ]);
       }
     } catch (error) {
       console.log('error', error);
@@ -187,7 +183,7 @@ const StepperComponent = (props: VerificationStepProps) => {
         documentType: DocumentEnum.PDD,
       });
 
-      if (state?.mode === FormMode?.CREATE) {
+      if (res?.statusText === 'SUCCESS') {
         const response = res?.data?.data;
         console.log('---------PDD------------', response);
         const participants =
@@ -265,9 +261,11 @@ const StepperComponent = (props: VerificationStepProps) => {
   };
 
   useEffect(() => {
-    getValidationData();
-    getMonitoringData();
-    getPDDData();
+    if (state?.mode === FormMode.CREATE) {
+      getValidationData();
+      getMonitoringData();
+      getPDDData();
+    }
   }, []);
 
   const [documentId, setDocumentId] = useState<string>();
