@@ -468,7 +468,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       const response: any = await post(API_PATHS.PROGRAMME_BY_ID, {
         programmeId: id,
       });
-      //console.log('-------res-----------', response);
+      //console.log('-------res programme details-----------', response);
 
       if (response) {
         setData(response.data);

@@ -13,12 +13,13 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
   const { prev, next, form, current, t, countries, handleValuesUpdate, disableFields, formMode } =
     props;
 
-  useEffect(() => {
-    if (formMode === FormMode.CREATE) {
-      form.setFieldValue('baselineEmissions', [{ location: '' }]);
-      form.setFieldValue('estimatedNetEmissionReductions', [{ baselineEmissionReductions: 0 }]);
-    }
-  }, []);
+  console.log('----------------', form.getFieldValue('baselineEmissions'));
+  // useEffect(() => {
+  //   if (formMode === FormMode.CREATE) {
+  //     //form.setFieldValue('baselineEmissions', [{ location: '' }]);
+  //     form.setFieldValue('estimatedNetEmissionReductions', [{ baselineEmissionReductions: 0 }]);
+  //   }
+  // }, []);
 
   const onFinish = (values: any) => {
     const body = {
@@ -199,7 +200,7 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input disabled={disableFields} />
+                                <Input disabled={true} />
                               </Form.Item>
                             </Col>
                             <Col xl={3}>

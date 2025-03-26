@@ -179,6 +179,7 @@ const StepperComponent = (props: any) => {
         form1.setFieldsValue({
           titleOfTheProjectActivity: data?.title,
           mandatarySectoralScopes: data?.sectoralScope,
+          projectParticipants: data?.projectParticipant,
         });
       }
       setExistingFormValues((prevVal) => ({
@@ -195,20 +196,15 @@ const StepperComponent = (props: any) => {
   const getPDDData = async () => {
     try {
       const { data } = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documentRefId,
+        refId: state?.documents?.refId,
         documentType: DocumentEnum.PDD,
       });
-      console.log('-----------data----------', data);
+      console.log('-----------PDD data ----------', data);
       if (state?.mode === FormMode?.CREATE) {
         console.log('-----data.data---------', data?.data);
-        const participants =
-          data?.data?.projectActivity?.projectParticipants?.map((participantObj: any) =>
-            participantObj.projectParticipants?.map((p: any) => p.participant)
-          ) || [];
 
         form1.setFieldsValue({
           versionNumberPDD: data?.version,
-          projectParticipants: participants.join(', '),
           hostParty: data?.data?.projectDetails?.hostParty,
           creditingPeriod: data?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
           creditingPeriodStart: moment.unix(
@@ -237,9 +233,31 @@ const StepperComponent = (props: any) => {
               optionalImages: mapBase64ToFields(location?.additionalDocuments),
             })),
         });
+        form2.setFieldsValue({
+          estimatedNetEmissionReductions:
+            data?.data?.applicationOfMethodology?.netGHGEmissionReductions?.yearlyGHGEmissionReductions?.map(
+              (emissionData: any) => ({
+                startDate: moment.unix(emissionData.startDate),
+                endDate: moment.unix(emissionData.endDate),
+              })
+            ),
+          baselineEmissionReductions: 0,
+          baselineEmissions: data?.data?.projectActivity?.locationsOfProjectActivity?.map(
+            (loc: any) => ({ location: loc.locationOfProjectActivity })
+          ),
+        });
       }
     } catch (error) {
       console.log('error', error);
+    }
+  };
+
+  const setLatestVersion = () => {
+    if (state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) {
+      form1.setFieldsValue({
+        versionNumberValidationReport:
+          state?.documents?.[DocumentEnum.VALIDATION as any]?.version ?? 0 + 1,
+      });
     }
   };
 
@@ -457,8 +475,9 @@ const StepperComponent = (props: any) => {
   useEffect(() => {
     if (id) {
       getProgrammeDetailsById(id);
-      getPDDData();
     }
+    getPDDData();
+    setLatestVersion();
   }, [id]);
 
   useEffect(() => {

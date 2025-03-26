@@ -169,6 +169,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
       })(),
       dateOfIssue: moment(values?.dateOfIssue).valueOf(),
       versionNo: values?.versionNo,
+      versionNumberValidationReport: values?.versionNumberValidationReport,
       versionDate: moment(values?.versionDate).valueOf(),
       telephone: values?.telephone,
       website: values?.website,
@@ -217,7 +218,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           name="titleOfTheProjectActivity"
                           rules={[
                             {
-                              required: true,
+                              required: false,
                               message: `${t('validationReport:titleOfTheProjectActivity')} ${t(
                                 'isRequired'
                               )}`,
@@ -232,14 +233,14 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           name="versionNumberValidationReport"
                           rules={[
                             {
-                              required: true,
+                              required: false,
                               message: `${t('validationReport:versionNumberValidationReport')} ${t(
                                 'isRequired'
                               )}`,
                             },
                           ]}
                         >
-                          <Input size="large" disabled={disableFields} />
+                          <Input size="large" disabled />
                         </Form.Item>
 
                         <Form.Item
@@ -247,7 +248,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           name="versionNumberPDD"
                           rules={[
                             {
-                              required: true,
+                              required: false,
                               message: `${t('validationReport:versionNumberPDD')} ${t(
                                 'isRequired'
                               )}`,
@@ -258,12 +259,12 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         </Form.Item>
 
                         <Form.Item
-                          label={t('validationReport:projectParticipants2')}
+                          label={t('validationReport:projectParticipants')}
                           name="projectParticipants"
                           rules={[
                             {
-                              required: true,
-                              message: `${t('validationReport:projectParticipants2')} ${t(
+                              required: false,
+                              message: `${t('validationReport:projectParticipants')} ${t(
                                 'isRequired'
                               )}`,
                             },
@@ -372,7 +373,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="hostParty"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: `${t('validationReport:hostParty')} ${t('isRequired')}`,
                           },
                         ]}
@@ -385,7 +386,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="mandatarySectoralScopes"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: `${t('validationReport:mandatarySectoralScopes')} ${t(
                               'isRequired'
                             )}`,
@@ -423,7 +424,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                       name="creditingPeriod"
                       rules={[
                         {
-                          required: true,
+                          required: false,
                           message: `${t('validationReport:creditingPeriod')} ${t('isRequired')}`,
                         },
                       ]}
@@ -435,7 +436,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                   <Col md={24} xl={12}>
                     <LabelWithTooltip
                       label={t('validationReport:startDateofCreditingPeriod')}
-                      required={true}
+                      required={false}
                     />
                     <div className="crediting-period-duration">
                       <Form.Item
@@ -443,7 +444,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="creditingPeriodStart"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: `${t('validationReport:creditingPeriod')} ${t('isRequired')}`,
                           },
                         ]}
@@ -456,7 +457,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="creditingPeriodEnd"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: `${t('validationReport:creditingPeriod')} ${t('isRequired')}`,
                           },
                         ]}
@@ -491,7 +492,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="locationOfProjectActivity"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: ``,
                           },
                           {
@@ -520,7 +521,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="siteNo"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: ``,
                           },
                           {
@@ -547,7 +548,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="province"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: ``,
                           },
                           {
@@ -586,7 +587,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="district"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: ``,
                           },
                           {
@@ -659,7 +660,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="city"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: ``,
                           },
                           {
@@ -693,7 +694,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="community"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: ``,
                           },
                           {
@@ -722,7 +723,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         name="geographicalLocationCoordinates"
                         rules={[
                           {
-                            required: true,
+                            required: false,
                             message: ``,
                           },
                           {

@@ -46,7 +46,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
     userInfoState?.userRole === Role.Admin
   ) {
-    return { mode: FormMode.CREATE, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.CREATE,
+      userCompanyRole: userInfoState?.companyRole,
+      documents: documents,
+    };
   }
 
   //PDD: Permissions for PD Admin users at PDD_REJECTED_BY_CERTIFIER, PDD_REJECTED_BY_DNA
@@ -205,7 +209,11 @@ export const formPermissions = (
     userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER &&
     userInfoState?.userRole === Role.Admin
   ) {
-    return { mode: FormMode.CREATE, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.CREATE,
+      userCompanyRole: userInfoState?.companyRole,
+      documents: documents,
+    };
   }
   // VALIDATION_REPORT: for IC admin user at VALIDATION_REPORT_REJECTED
   else if (
