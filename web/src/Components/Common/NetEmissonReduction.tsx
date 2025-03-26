@@ -1,9 +1,9 @@
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Col, DatePicker, Form, Input, InputNumber, Row } from 'antd';
 import moment from 'moment';
-import { ProjectCategory } from '../../enum/slRegistryEnum';
 import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
 import { useState } from 'react';
+import { ProjectCategory } from '../../Definitions/Enums/slRegistryEnum';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   baselineEmissionReductions: 'avgBaselineEmissionReductions',
