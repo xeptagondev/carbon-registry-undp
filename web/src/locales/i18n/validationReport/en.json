@@ -56,7 +56,7 @@
   "versionNumberValidationReport": "Version number of the validation report",
   "versionNumberPDD": "Version number of the PDD to which this report applies",
   "projectParticipants2": "Project Participants(s)",
-  "projectParticipants": "Project Developer(s)",
+  "projectParticipants": "Project Developer",
   "appliedMethodologies": "Applied methodologies and standardized baselines",
   "conditionalSectoralScopes": "Conditional sectoral scopes, if applicable",
   "mandatarySectoralScopes": "Mandatory sectoral scopes",
