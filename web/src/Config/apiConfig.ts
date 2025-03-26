@@ -107,6 +107,16 @@ export const API_PATHS = {
   // TRANSFER_FORZEN_STATUS: (isTransferFrozen:string) => `Settings/query?id=${isTransferFrozen}`
   TRANSACTION_RECORDS_WITHOUT_TIME_RANGE: 'stats/national-accounting/query',
   //DASHBOARD
+  GET_ALL_DATA_COUNTS: 'analytics/all',
+  GET_PENDING_ACTIONS: 'analytics/getPendingActions',
+  GET_PROJECTS_DATA: 'analytics/getProjectsData',
+  GET_PROJECT_SUMMARY: 'analytics/getProjectSummary',
+  GET_PROJECT_STATUS_SUMMARY: 'analytics/getProjectStatusSummary',
+  GET_PROJECTS_BY_STATUS_DETAIL: 'analytics/getProjectsByStatusDetail',
+  GET_PROJECT_COUNT_BY_SECTOR: 'analytics/getProjectCountBySector',
+  GET_CREDIT_SUMMARY: 'analytics/getCreditSummary',
+  GET_CREDIT_SUMMARY_BY_DATE: 'analytics/creditsSummaryByDate',
+  //UNUSED APIS
   ALL_PROGRAMS_AGG_CHART_STATS: 'stats/programme/agg',
   TOTAL_PROGRAM_COUNT: 'stats/programme/totalSLProjects',
   TOTAL_ISSUED_CREDITS: 'stats/programme/totalIssuedCredits',
