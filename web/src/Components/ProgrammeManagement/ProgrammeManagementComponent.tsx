@@ -334,9 +334,9 @@ export const ProgrammeManagementComponent = (props: any) => {
 
     if (search && search !== '') {
       filter.push({
-        key: 'title',
+        key: 'project.title',
         operation: 'like',
-        value: `%${search}%`,
+        value: `${search}%`,
       });
     }
 

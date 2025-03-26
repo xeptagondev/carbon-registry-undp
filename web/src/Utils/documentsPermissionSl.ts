@@ -548,7 +548,7 @@ export const activityPermissions = (
     return {
       mode: FormMode.VERIFY,
       userCompanyRole: userInfoState?.companyRole,
-      documentRefId: documents.VERIFICATION_REPORT?.refId,
+      documentRefId: documents.VERIFICATION?.refId,
     };
   }
 
@@ -562,7 +562,7 @@ export const activityPermissions = (
     return {
       mode: FormMode.VIEW,
       userCompanyRole: userInfoState?.companyRole,
-      documentRefId: documents.VERIFICATION_REPORT?.refId,
+      documentRefId: documents.VERIFICATION?.refId,
     };
   }
 
@@ -575,7 +575,7 @@ export const activityPermissions = (
     return {
       mode: FormMode.VIEW,
       userCompanyRole: userInfoState?.companyRole,
-      documentRefId: documents.VERIFICATION_REPORT?.refId,
+      documentRefId: documents.VERIFICATION?.refId,
     };
   }
 
@@ -589,7 +589,7 @@ export const activityPermissions = (
     return {
       mode: FormMode.EDIT,
       userCompanyRole: userInfoState?.companyRole,
-      documentRefId: documents.VERIFICATION_REPORT?.refId,
+      documentRefId: documents.VERIFICATION?.refId,
       activityId: activity.refId,
     };
   }
@@ -604,7 +604,7 @@ export const activityPermissions = (
     return {
       mode: FormMode.VIEW,
       userCompanyRole: userInfoState?.companyRole,
-      documentRefId: documents.VERIFICATION_REPORT?.refId,
+      documentRefId: documents.VERIFICATION?.refId,
     };
   }
 
@@ -617,7 +617,7 @@ export const activityPermissions = (
     return {
       mode: FormMode.VIEW,
       userCompanyRole: userInfoState?.companyRole,
-      documentRefId: documents.VERIFICATION_REPORT?.refId,
+      documentRefId: documents.VERIFICATION?.refId,
     };
   }
 
@@ -626,10 +626,11 @@ export const activityPermissions = (
     docType === DocType.VERIFICATION_REPORT &&
     activity.stage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
   ) {
+    console.log('----------------verification-----------', documents.VERIFICATION?.refId, activity);
     return {
       mode: FormMode.VIEW,
       userCompanyRole: userInfoState?.companyRole,
-      documentRefId: documents.VERIFICATION_REPORT?.refId,
+      documentRefId: documents.VERIFICATION?.refId,
     };
   } else {
     return {

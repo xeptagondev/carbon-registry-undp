@@ -15,6 +15,7 @@ export const basicInformationMapDataToView = (vals: any) => {
 };
 
 export const ghgProjectDescriptionMapDataToFields = (vals: any) => {
+  console.log('----------ghg project description----------', vals);
   if (vals === undefined) return;
 
   const tempVals = {
