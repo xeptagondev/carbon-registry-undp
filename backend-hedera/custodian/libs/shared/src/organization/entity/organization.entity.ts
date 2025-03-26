@@ -12,7 +12,8 @@ import {
 } from 'typeorm';
 import { OrganizationStateEnum } from '../enum/organization.state.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
-import { CreditEventsEntity } from '@app/shared/carbon-credit-token/entity/credit-events.entity';
+import { CreditBlocksEntity } from '@app/shared/carbon-credit-token/entity/credit.blocks.entity';
+import { CreditTransactionsEntity } from '@app/shared/carbon-credit-token/entity/credit.transfer.entity';
 
 @Entity()
 export class OrganizationEntity {
@@ -110,18 +111,32 @@ export class OrganizationEntity {
     assignedProjects?: ProjectEntity[];
 
     @OneToMany(
-        () => CreditEventsEntity,
+        () => CreditBlocksEntity,
         (creditEvents) => creditEvents.sender,
         { nullable: true },
     )
-    senderCreditEvents?: CreditEventsEntity[];
+    senderCreditBlocks?: CreditBlocksEntity[];
 
     @OneToMany(
-        () => CreditEventsEntity,
+        () => CreditBlocksEntity,
         (creditEvents) => creditEvents.receiver,
         { nullable: true },
     )
-    receiverCreditEvents?: CreditEventsEntity[];
+    receiverCreditBlocks?: CreditBlocksEntity[];
+
+    @OneToMany(
+        () => CreditTransactionsEntity,
+        (creditEvents) => creditEvents.sender,
+        { nullable: true },
+    )
+    creditSenderTransactions?: CreditTransactionsEntity[];
+
+    @OneToMany(
+        () => CreditTransactionsEntity,
+        (creditEvents) => creditEvents.receiver,
+        { nullable: true },
+    )
+    creditReceiverTransactions?: CreditTransactionsEntity[];
 
     @BeforeInsert()
     generateRefId() {

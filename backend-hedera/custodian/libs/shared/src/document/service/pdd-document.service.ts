@@ -178,7 +178,7 @@ export class PddDocumentService extends DocumentService {
             }
 
             if (
-                pddData.projectActivity.locationsOfProjectActivity &&
+                pddData?.projectActivity?.locationsOfProjectActivity &&
                 pddData.projectActivity.locationsOfProjectActivity.length > 0
             ) {
                 for (const location of pddData.projectActivity
