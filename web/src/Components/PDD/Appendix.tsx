@@ -453,30 +453,7 @@ const Step08 = (props: CustomStepsProps) => {
                   <Row justify={'space-between'} gutter={[40, 16]}>
                     <Col xl={12} md={24}>
                       <div className="step-form-right-col">
-                        <Form.Item
-                          label={t('PDD:organizationName')}
-                          name="organizationName"
-                          rules={[
-                            {
-                              required: true,
-                              message: ``,
-                            },
-                            {
-                              validator: async (rule, value) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(
-                                    `${t('PDD:organizationName')} ${t('isRequired')}`
-                                  );
-                                }
-                              },
-                            },
-                          ]}
-                        >
+                        <Form.Item label={t('PDD:organizationName')} name="organizationName">
                           <Input size="large" disabled />
                         </Form.Item>
 
@@ -485,26 +462,13 @@ const Step08 = (props: CustomStepsProps) => {
                           name="email"
                           rules={[
                             {
-                              required: true,
-                              message: ``,
-                            },
-                            {
                               validator: async (rule, value) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(`${t('PDD:email')} ${t('isRequired')}`);
-                                } else {
-                                  const val = value.trim();
-                                  const reg =
-                                    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                                  const matches = val.match(reg) ? val.match(reg) : [];
-                                  if (matches.length === 0) {
-                                    throw new Error(`${t('PDD:email')} ${t('isInvalid')}`);
-                                  }
+                                const val = value.trim();
+                                const reg =
+                                  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                                const matches = val.match(reg) ? val.match(reg) : [];
+                                if (matches.length === 0) {
+                                  throw new Error(`${t('PDD:email')} ${t('isInvalid')}`);
                                 }
                               },
                             },
@@ -518,10 +482,6 @@ const Step08 = (props: CustomStepsProps) => {
                           name="website"
                           className="website-input"
                           rules={[
-                            {
-                              required: true,
-                              message: `${t('PDD:website')} ${t('isRequired')}`,
-                            },
                             {
                               validator: async (rule, value) => {
                                 if (
@@ -545,31 +505,14 @@ const Step08 = (props: CustomStepsProps) => {
                           name="telephone"
                           rules={[
                             {
-                              required: true,
-                              message: ``,
-                            },
-                            {
                               validator: async (rule: any, value: any) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                } else {
-                                  const phoneNo = formatPhoneNumber(String(value));
-                                  if (String(value).trim() !== '') {
-                                    if (
-                                      phoneNo === null ||
-                                      phoneNo === '' ||
-                                      phoneNo === undefined
-                                    ) {
-                                      throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                    } else {
-                                      if (!isPossiblePhoneNumber(String(value))) {
-                                        throw new Error(`${t('PDD:telephone')} ${t('isInvalid')}`);
-                                      }
+                                const phoneNo = formatPhoneNumber(String(value));
+                                if (String(value).trim() !== '') {
+                                  if (phoneNo === null || phoneNo === '' || phoneNo === undefined) {
+                                    throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
+                                  } else {
+                                    if (!isPossiblePhoneNumber(String(value))) {
+                                      throw new Error(`${t('PDD:telephone')} ${t('isInvalid')}`);
                                     }
                                   }
                                 }
@@ -611,100 +554,22 @@ const Step08 = (props: CustomStepsProps) => {
                             },
                           ]}
                         >
-                          <Input size="large" disabled={disableFields} />
+                          <Input size="large" disabled />
                         </Form.Item>
                       </div>
                     </Col>
 
                     <Col xl={12} md={24}>
-                      <Form.Item
-                        label={t('PDD:country')}
-                        name="country"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('PDD:country')} ${t('isRequired')}`);
-                              }
-                            },
-                          },
-                        ]}
-                      >
+                      <Form.Item label={t('PDD:country')} name="country">
                         <Input size="large" disabled />
                       </Form.Item>
 
-                      <Form.Item
-                        label={t('PDD:address')}
-                        name="address"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('PDD:address')} ${t('isRequired')}`);
-                              }
-                            },
-                          },
-                        ]}
-                      >
+                      <Form.Item label={t('PDD:address')} name="address">
                         <TextArea rows={5} disabled />
                       </Form.Item>
 
                       <div className="appendix-fax-top-margin">
-                        <Form.Item
-                          label={t('PDD:fax')}
-                          name="fax"
-                          rules={[
-                            {
-                              required: true,
-                              message: ``,
-                            },
-                            {
-                              validator: async (rule: any, value: any) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                } else {
-                                  const phoneNo = formatPhoneNumber(String(value));
-                                  if (String(value).trim() !== '') {
-                                    if (
-                                      phoneNo === null ||
-                                      phoneNo === '' ||
-                                      phoneNo === undefined
-                                    ) {
-                                      throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                    } else {
-                                      if (!isPossiblePhoneNumber(String(value))) {
-                                        throw new Error(`${t('PDD:telephone')} ${t('isInvalid')}`);
-                                      }
-                                    }
-                                  }
-                                }
-                              },
-                            },
-                          ]}
-                        >
+                        <Form.Item label={t('PDD:fax')} name="fax">
                           <PhoneInput
                             // placeholder={t('PDD:telephone')}
                             international

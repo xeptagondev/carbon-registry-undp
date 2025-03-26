@@ -2,7 +2,7 @@ export default () => ({
     APP_ENV: process.env.APP_ENV || 'dev',
     qaToken: process.env.qaToken || 'qaToken',
     country: process.env.COUNTRY,
-    countryCode: process.env.COUNTRY_CODE || 'NG',
+    countryCode: process.env.COUNTRY_CODE || 'SL',
     url: process.env.URL,
     backendHost: process.env.BACKEND_HOST || 'http://localhost:3000',
     serialNumber: {
