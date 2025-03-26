@@ -46,7 +46,7 @@ import { Loading } from '../Loading/loading';
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
   const navigationLocation = useLocation();
-  const { mode, docId } = navigationLocation.state || {};
+  // const { mode, docId } = navigationLocation.state || {};
   const navigate = useNavigate();
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
@@ -54,8 +54,10 @@ const StepperComponent = (props: VerificationStepProps) => {
   const [verifiedScer, setVerifiedScer] = useState(0);
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
+
   const { state } = useLocation();
-  // console.log('---------------------verification state--------------------', state);
+
+  console.log('---------------------verification state--------------------', state);
 
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
@@ -153,17 +155,13 @@ const StepperComponent = (props: VerificationStepProps) => {
         const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
 
         ghgProjectDescriptionForm.setFieldsValue({
-          emissionsPeriodStart: moment.unix(emReduction?.[0]?.startDate),
-          emissionsPeriodEnd: moment.unix(emReduction?.[0]?.endDate),
-          baselineEmissionReductions: emReduction?.[0]?.baselineEmissionReductions,
-          projectEmissionReductions: emReduction?.[0]?.projectEmissionReductions,
-          leakageEmissionReductions: emReduction?.[0]?.leakageEmissionReductions,
-          netEmissionReductions: emReduction?.[0]?.netEmissionReductions,
-          extraEmissionReductions: emReduction?.slice(1).map((item: any) => ({
-            ...item,
-            emissionsPeriodStart: moment.unix(item.startDate),
-            emissionsPeriodEnd: moment.unix(item.endDate),
-          })),
+          estimatedNetEmissionReductions: emReduction.map((item: any) => {
+            return {
+              ...item,
+              startDate: item?.startDate ? moment.unix(item?.startDate) : undefined,
+              endDate: item?.endDate ? moment.unix(item?.endDate) : undefined,
+            };
+          }),
           totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
           totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
           totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
@@ -605,7 +603,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={basicInformationForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={navigateToDetailsPage}
           disableFields={disableFields}
@@ -627,7 +625,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={ghgProjectDescriptionForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -649,7 +647,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           current={current}
           form={executiveSummaryForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -671,7 +669,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={verficationTeamForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           disableFields={disableFields}
           prev={prev}
@@ -692,7 +690,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={applicationOfMeterialityForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -713,7 +711,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={meansOfVerificationForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -734,7 +732,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           current={current}
           form={verificationFindingForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -755,7 +753,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           current={current}
           form={internalQualityControlForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -776,7 +774,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           current={current}
           form={verificationOpinionForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -797,7 +795,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={certificationStatementForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -818,7 +816,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={appendixForm}
-          formMode={mode}
+          formMode={state?.mode}
           prev={prev}
           next={navigateToDetailsPage}
           disableFields={disableFields}

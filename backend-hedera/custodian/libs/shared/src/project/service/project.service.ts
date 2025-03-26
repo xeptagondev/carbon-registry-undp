@@ -149,13 +149,14 @@ export class ProjectService {
         mappedProject.authoroiseLetterUrl = project.authoroiseLetterUrl;
         mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
         mappedProject.sectoralScope = project.sectoralScope;
+        mappedProject.serialNo = project.serialNumber;
         mappedProject.title = project.title;
         mappedProject.tokenId = project.tokenId;
         mappedProject.creditEst = project.creditEst;
         mappedProject.creditTransferred = project.creditTransferred;
         mappedProject.creditRetired = project.creditRetired;
         mappedProject.creditBalance =
-            (Number(project.creditEst) || 0) -
+            (Number(project.creditIssued) || 0) -
             ((Number(project.creditTransferred) || 0) +
                 (Number(project.creditRetired) || 0));
 

@@ -25,7 +25,7 @@ export class SerialNumberManagementService {
         const creditIdentifier = this.configService.get(
             'serialNumber.creditIdentifier',
         );
-        const originatingPartyId = this.configService.get('systemCountry');
+        const originatingPartyId = this.configService.get('countryCode');
         const firstTransferringPartyId = this.configService.get(
             'serialNumber.firstTransferringPartyId',
         );
@@ -67,8 +67,8 @@ export class SerialNumberManagementService {
             );
         }
         const firstBlocStart = currentBlockStart;
-        const firstBlockEnd = currentBlockStart + transferingAmount - 1;
-        const secondBlockStart = currentBlockStart + transferingAmount;
+        const firstBlockEnd = currentBlockEnd - transferingAmount;
+        const secondBlockStart = currentBlockEnd - transferingAmount + 1;
         const secondBlockEnd = currentBlockEnd;
 
         const vintage = this.getVintage(serialNumber);
