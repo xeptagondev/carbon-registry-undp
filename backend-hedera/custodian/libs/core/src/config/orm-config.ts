@@ -10,7 +10,7 @@ const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
     username: configService.get<string>('database.username'),
     password: configService.get<string>('database.password'),
     database: configService.get<string>('database.database'),
-    synchronize: false,
+    synchronize: true,
     autoLoadEntities: true,
     dropSchema: false,
     logging: false,

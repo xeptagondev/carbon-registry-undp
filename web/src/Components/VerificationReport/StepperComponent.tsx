@@ -154,17 +154,13 @@ const StepperComponent = (props: VerificationStepProps) => {
         const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
 
         ghgProjectDescriptionForm.setFieldsValue({
-          emissionsPeriodStart: moment.unix(emReduction?.[0]?.startDate),
-          emissionsPeriodEnd: moment.unix(emReduction?.[0]?.endDate),
-          baselineEmissionReductions: emReduction?.[0]?.baselineEmissionReductions,
-          projectEmissionReductions: emReduction?.[0]?.projectEmissionReductions,
-          leakageEmissionReductions: emReduction?.[0]?.leakageEmissionReductions,
-          netEmissionReductions: emReduction?.[0]?.netEmissionReductions,
-          extraEmissionReductions: emReduction?.slice(1).map((item: any) => ({
-            ...item,
-            emissionsPeriodStart: moment.unix(item.startDate),
-            emissionsPeriodEnd: moment.unix(item.endDate),
-          })),
+          estimatedNetEmissionReductions: emReduction.map((item: any) => {
+            return {
+              ...item,
+              startDate: item?.startDate ? moment.unix(item?.startDate) : undefined,
+              endDate: item?.endDate ? moment.unix(item?.endDate) : undefined,
+            };
+          }),
           totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
           totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
           totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
