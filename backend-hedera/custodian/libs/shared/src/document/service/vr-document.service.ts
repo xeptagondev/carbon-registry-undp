@@ -36,6 +36,8 @@ import { AuthorisationLetterGenerateService } from '@app/shared/util/service/aut
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/service/carbon-credit-guardian.service';
 import { plainToClass } from 'class-transformer';
+// eslint-disable-next-line max-len
+import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
@@ -52,6 +54,7 @@ export class VrDocumentService extends DocumentService {
         logger: InstantLogger,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
+        private readonly serialNumberManagementService: SerialNumberManagementService,
     ) {
         super(
             configService,
@@ -451,6 +454,10 @@ export class VrDocumentService extends DocumentService {
                         [documentEntity?.project?.organization.name],
                     );
 
+                const serialNumber =
+                    this.serialNumberManagementService.getProjectSerialNumber(
+                        existingProject.id,
+                    );
                 const updatedProject = plainToClass(ProjectEntity, {
                     ...existingProject,
                     tokenId: tokenId,
@@ -458,6 +465,7 @@ export class VrDocumentService extends DocumentService {
                         documentEntity?.data?.ghgProjectDescription
                             ?.totalNetEmissionReductions,
                     authoroiseLetterUrl: authoroiseLetterUrl,
+                    serialNumber: serialNumber,
                 });
 
                 await queryRunner.manager.save(updatedProject);

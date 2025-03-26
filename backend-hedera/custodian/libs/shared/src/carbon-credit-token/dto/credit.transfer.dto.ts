@@ -15,7 +15,7 @@ export class CreditTransferDto {
     @IsInt()
     @Type(() => Number)
     @ApiProperty()
-    projectId: number;
+    blockId: number;
 
     @ValidateIf((o) => o.size)
     @IsPositive()

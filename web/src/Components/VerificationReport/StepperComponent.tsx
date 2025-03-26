@@ -54,14 +54,25 @@ const StepperComponent = (props: VerificationStepProps) => {
   const [verifiedScer, setVerifiedScer] = useState(0);
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
+  const { state } = useLocation();
+  // console.log('---------------------verification state--------------------', state);
 
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalVisible, setSlcfActioModalVisible] = useState<boolean>(false);
 
   // const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
   // const registryName = process.env.REACT_APP_REGISTRY_NAME || 'RegistryX';
-
-  const { state } = useLocation();
+  const [basicInformationForm] = useForm();
+  const [ghgProjectDescriptionForm] = useForm();
+  const [executiveSummaryForm] = useForm();
+  const [verficationTeamForm] = useForm();
+  const [applicationOfMeterialityForm] = useForm();
+  const [meansOfVerificationForm] = useForm();
+  const [verificationFindingForm] = useForm();
+  const [internalQualityControlForm] = useForm();
+  const [verificationOpinionForm] = useForm();
+  const [certificationStatementForm] = useForm();
+  const [appendixForm] = useForm();
 
   const [values, setValues] = useState({
     projectRefId: id,
@@ -85,6 +96,112 @@ const StepperComponent = (props: VerificationStepProps) => {
 
   const navigateToDetailsPage = () => {
     navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
+  };
+
+  const getValidationData = async () => {
+    try {
+      const res = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documents?.VALIDATION?.refId,
+        documentType: DocumentEnum.VALIDATION,
+      });
+
+      if (res?.statusText === 'SUCCESS') {
+        const response = res?.data?.data;
+        console.log('---------validation------------', response);
+        basicInformationForm.setFieldsValue({
+          b_projectTitle: response?.basicInformation?.titleOfTheProjectActivity,
+          b_unfccRefNo: response?.basicInformation?.UNFCCReferenceNo,
+          b_scaleOfProject: response?.basicInformation?.projectScale,
+          b_conditionalSectoralScopes: response?.basicInformation?.conditionalSectoralScopes,
+        });
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+
+  const getMonitoringData = async () => {
+    try {
+      const res = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documentData?.MONITORING?.refId,
+        documentType: DocumentEnum.MONITORING,
+      });
+
+      if (res?.statusText === 'SUCCESS') {
+        const response = res?.data?.data;
+        console.log('---------Monitoring------------', response);
+        const creditingPeriodStartDate = moment.unix(
+          response?.projectActivityDetails?.pa_projectCreditingPeriod
+        );
+        const creditingPeriodEndDate = moment.unix(
+          response?.projectActivityDetails?.pa_projectCreditingPeriodEndDate
+        );
+        console.log('creditingPeriodStartDate', creditingPeriodStartDate);
+        console.log('creditingPeriodEndDate', creditingPeriodEndDate);
+        const creditingPeriodDuration = moment.duration(
+          creditingPeriodEndDate.diff(creditingPeriodStartDate)
+        );
+        const durationString = `${creditingPeriodDuration.years()} years, ${creditingPeriodDuration.months()} months and ${creditingPeriodDuration.days()} days`;
+        console.log('durationString', durationString);
+        basicInformationForm.setFieldsValue({
+          b_monitoringPeriodNo: response?.projectDetails?.bi_monitoringPeriodNo,
+          b_monitoringPeriodDuration: response?.projectDetails?.bi_duration,
+          b_versionNoOfMonitoringReport: response?.projectDetails?.bi_versionNoOfMR,
+          b_creditingPeriod: durationString,
+        });
+        const netEmReductions = response?.calcEmissionReductions?.netGHGEmissionReductions;
+        const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
+
+        ghgProjectDescriptionForm.setFieldsValue({
+          estimatedNetEmissionReductions: emReduction.map((item: any) => {
+            return {
+              ...item,
+              startDate: item?.startDate ? moment.unix(item?.startDate) : undefined,
+              endDate: item?.endDate ? moment.unix(item?.endDate) : undefined,
+            };
+          }),
+          totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
+          totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
+          totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
+          totalNetEmissionReductions: Number(netEmReductions?.totalNetEmissionReductions),
+          totalNumberOfCreditingYears: Number(netEmReductions?.totalNumberOfCreditingYears),
+          avgBaselineEmissionReductions: Number(netEmReductions?.avgBaselineEmissionReductions),
+          avgProjectEmissionReductions: Number(netEmReductions?.avgProjectEmissionReductions),
+          avgLeakageEmissionReductions: Number(netEmReductions?.avgLeakageEmissionReductions),
+          avgNetEmissionReductions: Number(netEmReductions?.avgNetEmissionReductions),
+        });
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+
+  const getPDDData = async () => {
+    try {
+      const res = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documentData?.PDD?.refId,
+        documentType: DocumentEnum.PDD,
+      });
+
+      if (res?.statusText === 'SUCCESS') {
+        const response = res?.data?.data;
+        console.log('---------PDD------------', response);
+        const participants =
+          response?.projectActivity?.projectParticipants?.map((participantObj: any) =>
+            participantObj.projectParticipants?.map((p: any) => p.participant)
+          ) || [];
+        basicInformationForm.setFieldsValue({
+          b_hostParty: response?.projectDetails?.hostParty,
+          b_projectParticipants: participants.join(', '),
+          b_mandatorySectoralScopes: response?.projectDetails?.sectoralScope,
+          b_appliedMethodologies: response?.projectDetails?.appliedMethodologies,
+          b_estimatedGHGEmissionReduction:
+            response?.projectDetails?.estimatedAvgGHGEmissionReductionBasicInformation,
+        });
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
   };
 
   const next = () => {
@@ -143,19 +260,13 @@ const StepperComponent = (props: VerificationStepProps) => {
     });
   };
 
-  const [documentId, setDocumentId] = useState<string>();
+  useEffect(() => {
+    getValidationData();
+    getMonitoringData();
+    getPDDData();
+  }, []);
 
-  const [basicInformationForm] = useForm();
-  const [ghgProjectDescriptionForm] = useForm();
-  const [executiveSummaryForm] = useForm();
-  const [verficationTeamForm] = useForm();
-  const [applicationOfMeterialityForm] = useForm();
-  const [meansOfVerificationForm] = useForm();
-  const [verificationFindingForm] = useForm();
-  const [internalQualityControlForm] = useForm();
-  const [verificationOpinionForm] = useForm();
-  const [certificationStatementForm] = useForm();
-  const [appendixForm] = useForm();
+  const [documentId, setDocumentId] = useState<string>();
 
   const safeNumber = (value: any) => Number(value) || 0;
 
