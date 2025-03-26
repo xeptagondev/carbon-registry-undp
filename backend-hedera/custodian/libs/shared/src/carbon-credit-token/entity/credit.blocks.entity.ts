@@ -3,32 +3,49 @@ import {
     BeforeUpdate,
     Column,
     Entity,
+    ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CreditEventTypeEnum } from '../enum/credit.event.type.enum';
+import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { CreditTransactionsEntity } from './credit.transfer.entity';
 
 @Entity()
 export class CreditBlocksEntity {
     @PrimaryGeneratedColumn()
     id?: number;
 
-    @Column({ type: 'bigint' })
-    createdTime: number;
+    @ManyToOne(
+        () => ProjectEntity,
+        (projectEntity) => projectEntity.creditBlocks,
+    )
+    project: ProjectEntity;
 
-    @Column({ type: 'bigint', nullable: true })
-    sender?: number;
+    @ManyToOne(
+        () => OrganizationEntity,
+        (organizationEntity) => organizationEntity.senderCreditBlocks,
+        { nullable: true },
+    )
+    sender?: OrganizationEntity;
 
-    @Column({ type: 'bigint' })
-    receiver: number;
+    @ManyToOne(
+        () => OrganizationEntity,
+        (organizationEntity) => organizationEntity.receiverCreditBlocks,
+        { nullable: true },
+    )
+    receiver?: OrganizationEntity;
 
-    @Column({ type: 'text' })
-    project: number;
+    @OneToMany(
+        () => CreditTransactionsEntity,
+        (transactions) => transactions.creditBlock,
+        { nullable: true },
+    )
+    transactions?: CreditTransactionsEntity[];
 
     @Column({ type: 'text' })
     serialNumber: string;
-
-    @Column({ type: 'text' })
-    vintage: string;
 
     @Column({ type: 'enum', enum: CreditEventTypeEnum, nullable: false })
     type: CreditEventTypeEnum;
