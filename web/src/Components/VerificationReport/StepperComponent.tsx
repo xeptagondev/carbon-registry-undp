@@ -123,9 +123,10 @@ const StepperComponent = (props: VerificationStepProps) => {
   };
 
   const getMonitoringData = async () => {
+    console.log('--------state monitoring----------', state);
     try {
       const res = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documentData?.MONITORING?.refId,
+        refId: state?.documents?.MONITORING?.refId,
         documentType: DocumentEnum.MONITORING,
       });
 
@@ -181,7 +182,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const getPDDData = async () => {
     try {
       const res = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documentData?.PDD?.refId,
+        refId: state?.documents?.PDD?.refId,
         documentType: DocumentEnum.PDD,
       });
 
