@@ -126,10 +126,13 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: blockId },
-                    relations: { project: { organization: true } },
+                    relations: {
+                        project: { organization: true },
+                        sender: true,
+                    },
                 });
 
-            const project = creditBlock.project;
+            let project = creditBlock.project;
             const tokenId = project.tokenId;
 
             const senderOrg = await this.dataSource
@@ -224,15 +227,18 @@ export class CarbonCreditService {
                         );
                     transferStatuses.push(status);
                 }
-                if (project?.organization?.id === senderOrgId) {
-                    const updatedProject = plainToClass(ProjectEntity, {
-                        ...project,
-                        creditTransferred: project.creditTransferred
-                            ? amount + project.creditTransferred
-                            : amount,
+                if (!creditBlock.sender) {
+                    project = await queryRunner.manager.findOne(ProjectEntity, {
+                        where: { id: project.id },
                     });
-
-                    await queryRunner.manager.save(updatedProject);
+                    await queryRunner.manager.save(
+                        plainToClass(ProjectEntity, {
+                            ...project,
+                            creditTransferred: project.creditTransferred
+                                ? amount + project.creditTransferred
+                                : amount,
+                        }),
+                    );
                 }
 
                 const log = new AuditEntity();
@@ -299,9 +305,10 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: retireRequest?.creditBlock?.id },
+                    relations: { sender: true },
                 });
 
-            const project = retireRequest?.project;
+            let project = retireRequest?.project;
             const tokenId = project.tokenId;
             const senderOrg = project.organization;
 
@@ -384,14 +391,20 @@ export class CarbonCreditService {
                     }),
                 );
 
-                const updatedProject = plainToClass(ProjectEntity, {
-                    ...project,
-                    creditTransferred: project.creditRetired
-                        ? serialsToRetire.length + project.creditRetired
-                        : serialsToRetire.length,
-                });
+                if (!creditBlock.sender) {
+                    project = await queryRunner.manager.findOne(ProjectEntity, {
+                        where: { id: project.id },
+                    });
+                    await queryRunner.manager.save(
+                        plainToClass(ProjectEntity, {
+                            ...project,
+                            creditRetired: project.creditRetired
+                                ? serialsToRetire.length + project.creditRetired
+                                : serialsToRetire.length,
+                        }),
+                    );
+                }
 
-                await queryRunner.manager.save(updatedProject);
                 const log = new AuditEntity();
                 log.projectId = project.refId;
                 log.logType = ProjectAuditLogType.RETIRE_APPROVED;
