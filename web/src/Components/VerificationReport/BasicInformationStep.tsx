@@ -443,7 +443,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled />
+                      <Input size="large" /> //TODO need to disable this after data migration
                     </Form.Item>
 
                     <Form.Item
