@@ -469,6 +469,16 @@ export class VerificationDocumentService extends DocumentService {
                 const creditAmount =
                     documentEntity?.data?.ghgProjectDescription
                         ?.totalNetEmissionReductions;
+
+                if (
+                    documentEntity?.project?.creditEst <
+                    documentEntity?.project?.creditIssued + creditAmount
+                ) {
+                    throw new HttpException(
+                        'Project has reached maximum allowed credit limit',
+                        HttpStatus.UNAUTHORIZED,
+                    );
+                }
                 const batchSerialNumber =
                     this.serialNumberManagementService.getCreditBlockSerialNumber(
                         documentEntity?.project?.serialNumber,
