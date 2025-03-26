@@ -424,7 +424,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       name="b_unfccRefNo"
                       rules={[
                         {
-                          required: true,
+                          required: false,
                           message: '',
                         },
                         {
@@ -443,7 +443,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" /> //TODO need to disable this after data migration
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
