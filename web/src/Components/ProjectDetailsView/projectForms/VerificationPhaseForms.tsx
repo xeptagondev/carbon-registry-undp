@@ -63,16 +63,15 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
       const tempMonitoringReportPermissions = activityPermissions(
         userInfoState,
         DocType.MONITORING_REPORT,
-        activity.stage as ActivityStateEnum,
-        activity.documents[DocumentEnum.MONITORING as any]?.refId
+        activity,
+        documents
       );
 
       const tempVerificationReportPermissions = activityPermissions(
         userInfoState,
         DocType.VERIFICATION_REPORT,
-        activity.stage as ActivityStateEnum,
-        activity.documents[DocumentEnum.VERIFICATION as any]?.refId,
-        activity?.refId
+        activity,
+        documents
       );
 
       const temp = [
