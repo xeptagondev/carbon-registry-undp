@@ -5,11 +5,9 @@ import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
-import { CreditsBalanceView } from '../entity/credit.balance.view.entity';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
-import { CreditsTransferView } from '../entity/credit.transfer.view.entity';
 import { CreditTransferDto } from '../dto/credit.transfer.dto';
 import { CarbonCreditGuardianService } from './carbon-credit-guardian.service';
 import { MintNFTJobPayload } from '../constant/mint-nft-payload';
@@ -23,7 +21,6 @@ import { RetireActionDto } from '../dto/retire.action.dto';
 import { RetirementActionEnum } from '../dto/retirement.action.enum';
 import { RetireNFTJobPayload } from '../constant/retire-nft-payload';
 import { TransferNFTJobPayload } from '../constant/transfer-nft-payload';
-import { CreditsRetireView } from '../entity/credit.retire.view.entity';
 import { plainToClass } from 'class-transformer';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
@@ -128,10 +125,13 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: blockId },
-                    relations: { project: { organization: true } },
+                    relations: {
+                        project: { organization: true },
+                        sender: true,
+                    },
                 });
 
-            const project = creditBlock.project;
+            let project = creditBlock.project;
             const tokenId = project.tokenId;
 
             const senderOrg = await this.dataSource
@@ -226,15 +226,18 @@ export class CarbonCreditService {
                         );
                     transferStatuses.push(status);
                 }
-                if (project?.organization?.id === senderOrgId) {
-                    const updatedProject = plainToClass(ProjectEntity, {
-                        ...project,
-                        creditTransferred: project.creditTransferred
-                            ? amount + project.creditTransferred
-                            : amount,
+                if (!creditBlock.sender) {
+                    project = await queryRunner.manager.findOne(ProjectEntity, {
+                        where: { id: project.id },
                     });
-
-                    await queryRunner.manager.save(updatedProject);
+                    await queryRunner.manager.save(
+                        plainToClass(ProjectEntity, {
+                            ...project,
+                            creditTransferred: project.creditTransferred
+                                ? amount + project.creditTransferred
+                                : amount,
+                        }),
+                    );
                 }
 
                 const log = new AuditEntity();
@@ -268,34 +271,43 @@ export class CarbonCreditService {
     }
 
     async handleRetirementJob(job: RetireNFTJobPayload): Promise<any> {
-        const { projectId, transferId, userId, orgId, remarks } = job;
+        const { transactionId, userId, remarks } = job;
 
         try {
             this.logger.log(
                 // eslint-disable-next-line max-len
-                `Processing retirement job for project: ${projectId}, transferId: ${transferId}`,
+                `Processing retirement job for transactionId: ${transactionId}`,
             );
 
-            const project = await this.dataSource
-                .getRepository(ProjectEntity)
+            const retireRequest = await this.dataSource
+                .getRepository(CreditTransactionsEntity)
                 .findOne({
-                    where: { refId: projectId },
-                    relations: ['organization'],
+                    where: { id: transactionId },
+                    relations: {
+                        project: { organization: true },
+                        creditBlock: true,
+                    },
                 });
 
-            if (!project) {
+            if (!retireRequest) {
                 throw new HttpException(
-                    'Project not found',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            if (!project.tokenId) {
-                throw new HttpException(
-                    'Project does not have a token ID',
-                    HttpStatus.BAD_REQUEST,
+                    'Retirement request not found',
+                    HttpStatus.NOT_FOUND,
                 );
             }
 
+            if (!retireRequest?.project) {
+                throw new Error('Project not found');
+            }
+
+            const creditBlock = await await this.dataSource
+                .getRepository(CreditBlocksEntity)
+                .findOne({
+                    where: { id: retireRequest?.creditBlock?.id },
+                    relations: { sender: true },
+                });
+
+            let project = retireRequest?.project;
             const tokenId = project.tokenId;
             const senderOrg = project.organization;
 
@@ -330,82 +342,94 @@ export class CarbonCreditService {
                 );
             }
 
-            // const serialsToRetire: CreditEventsEntity[] = await this.dataSource
-            //     .getRepository(CreditEventsEntity)
-            //     .find({
-            //         where: {
-            //             transferId: transferId,
-            //             type: CreditEventTypeEnum.RETIRED,
-            //             status: CreditEventStatusEnum.PENDING,
-            //         },
-            //     });
-
             const retirementStatuses = [];
 
             const queryRunner = this.dataSource.createQueryRunner();
             await queryRunner.connect();
             await queryRunner.startTransaction();
 
-            // try {
-            //     for (const serial of serialsToRetire) {
-            //         const status =
-            //             await this.carbonCreditGuardianService.retireProjectNFT(
-            //                 tokenId,
-            //                 serial.serialNumnber,
-            //                 senderAccountId,
-            //                 senderPrivateKey,
-            //             );
+            try {
+                const serialsToRetire: number[] =
+                    this.getNFTSerialsOwnedByAccount(
+                        creditBlock.serialNumber,
+                        retireRequest.creditAmount,
+                    );
+                for (const serial of serialsToRetire) {
+                    const status =
+                        await this.carbonCreditGuardianService.retireProjectNFT(
+                            tokenId,
+                            serial,
+                            senderAccountId,
+                            senderPrivateKey,
+                        );
 
-            //         retirementStatuses.push(status);
-            //     }
+                    retirementStatuses.push(status);
+                }
 
-            //     await queryRunner.manager.update(
-            //         CreditEventsEntity,
-            //         {
-            //             transferId: transferId,
-            //             status: CreditEventStatusEnum.PENDING,
-            //         },
-            //         plainToClass(CreditEventsEntity, {
-            //             status: CreditEventStatusEnum.COMPLETED,
-            //         }),
-            //     );
+                const { firstSerialNumber, secondSerialNumber } =
+                    this.serialNumberManagementService.splitCreditBlockSerialNumber(
+                        creditBlock.serialNumber,
+                        retireRequest.creditAmount,
+                    );
+                await queryRunner.manager.save(
+                    plainToClass(CreditBlocksEntity, {
+                        ...creditBlock,
+                        serialNumber: firstSerialNumber,
+                        creditAmount: creditBlock.creditAmount,
+                        reservedCreditAmount:
+                            creditBlock.reservedCreditAmount -
+                            retireRequest.creditAmount,
+                    }),
+                );
 
-            //     if (project.organization.id === orgId) {
-            //         const updatedProject = plainToClass(ProjectEntity, {
-            //             ...project,
-            //             creditTransferred: project.creditRetired
-            //                 ? serialsToRetire.length + project.creditRetired
-            //                 : serialsToRetire.length,
-            //         });
+                await queryRunner.manager.save(
+                    plainToClass(CreditTransactionsEntity, {
+                        ...retireRequest,
+                        serialNumber: secondSerialNumber,
+                        status: CreditEventStatusEnum.COMPLETED,
+                    }),
+                );
 
-            //         await queryRunner.manager.save(updatedProject);
-            //     }
-            //     const log = new AuditEntity();
-            //     log.projectId = projectId;
-            //     log.logType = ProjectAuditLogType.RETIRE_APPROVED;
-            //     log.userId = userId;
-            //     log.data = {
-            //         amount: serialsToRetire.length,
-            //         fromCompanyId: senderOrg.id,
-            //         remarks: remarks,
-            //     };
+                if (!creditBlock.sender) {
+                    project = await queryRunner.manager.findOne(ProjectEntity, {
+                        where: { id: project.id },
+                    });
+                    await queryRunner.manager.save(
+                        plainToClass(ProjectEntity, {
+                            ...project,
+                            creditRetired: project.creditRetired
+                                ? serialsToRetire.length + project.creditRetired
+                                : serialsToRetire.length,
+                        }),
+                    );
+                }
 
-            //     await queryRunner.manager.save(AuditEntity, log);
+                const log = new AuditEntity();
+                log.projectId = project.refId;
+                log.logType = ProjectAuditLogType.RETIRE_APPROVED;
+                log.userId = userId;
+                log.data = {
+                    amount: serialsToRetire.length,
+                    fromCompanyId: senderOrg.id,
+                    remarks: remarks,
+                };
 
-            //     await queryRunner.commitTransaction();
-            //     this.logger.log(
-            //         `Successfully retired NFTs withe transferId ${transferId} and marked as COMPLETED.`,
-            //     );
-            // } catch (error) {
-            //     this.logger.error(`Error in retirement job: ${error.message}`);
-            //     await queryRunner.rollbackTransaction();
-            //     throw error;
-            // } finally {
-            //     await this.releaseQueryRunner(
-            //         queryRunner,
-            //         'handleRetirementJob',
-            //     );
-            // }
+                await queryRunner.manager.save(AuditEntity, log);
+
+                await queryRunner.commitTransaction();
+                this.logger.log(
+                    `Successfully retired NFTs withe transferId ${retireRequest.transferId} and marked as COMPLETED.`,
+                );
+            } catch (error) {
+                this.logger.error(`Error in retirement job: ${error.message}`);
+                await queryRunner.rollbackTransaction();
+                throw error;
+            } finally {
+                await this.releaseQueryRunner(
+                    queryRunner,
+                    'handleRetirementJob',
+                );
+            }
 
             return retirementStatuses;
         } catch (error) {
@@ -602,10 +626,14 @@ export class CarbonCreditService {
         return new DataListResponseDto(rawEntities || [], total || 0);
     }
 
-    async queryRetirements(query: QueryDto, user: JWTPayload) {
+    async queryRetirements(
+        query: QueryDto,
+        user: JWTPayload,
+    ): Promise<DataListResponseDto> {
         this.logger.log(
             `Request received to query the token retirements ${user.userName}`,
         );
+
         if (
             !(
                 (user.organizationRole ===
@@ -618,26 +646,66 @@ export class CarbonCreditService {
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
-        const [entities, total] = await this.dataSource
-            .getRepository(CreditsRetireView)
-            .createQueryBuilder('user')
-            .where(this.helperService.generateWhereSQL(query))
-            .orderBy(
-                query?.sort?.key && `"${query?.sort?.key}"`,
-                query?.sort?.order,
-                query?.sort?.nullFirst !== undefined
-                    ? query?.sort?.nullFirst === true
-                        ? 'NULLS FIRST'
-                        : 'NULLS LAST'
-                    : undefined,
-            )
-            .offset(query.size * query.page - query.size)
-            .limit(query.size)
-            .getManyAndCount();
-        return new DataListResponseDto(
-            entities ? entities : undefined,
-            total ? total : undefined,
+
+        const orgId = user.organizationId;
+
+        const qb = this.dataSource
+            .getRepository(CreditTransactionsEntity)
+            .createQueryBuilder('creditTx')
+            .leftJoinAndSelect('creditTx.project', 'project')
+            .leftJoinAndSelect('creditTx.sender', 'sender')
+            .leftJoinAndSelect('creditTx.receiver', 'receiver')
+            .select([
+                'creditTx.id as id',
+                'creditTx.serialNumber as serialNumber',
+                'creditTx.creditAmount as creditAmount',
+                'creditTx.createdDate as createdDate',
+                'creditTx.retirementType as retirementType',
+                'creditTx.status as status',
+                'project.id as projectId',
+                'project.title as projectName',
+                'sender.id as senderId',
+                'sender.name as senderName',
+                'sender.logo as senderLogo',
+            ])
+            .where('creditTx.type = :transferredType', {
+                transferredType: CreditEventTypeEnum.RETIRED,
+            });
+
+        if (user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER) {
+            qb.andWhere('sender.id = :orgId', { orgId });
+        }
+
+        const extraWhere = this.helperService.generateWhereSQL(query);
+        if (extraWhere && extraWhere.trim() !== '') {
+            qb.andWhere(extraWhere);
+        }
+
+        let sortColumn = 'creditTx.createdDate';
+        if (query?.sort?.key) {
+            sortColumn = 'creditTx.' + query.sort.key;
+        }
+        const sortOrder: 'ASC' | 'DESC' =
+            query?.sort?.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+        qb.orderBy(
+            sortColumn,
+            sortOrder,
+            query?.sort?.nullFirst !== undefined
+                ? query.sort.nullFirst === true
+                    ? 'NULLS FIRST'
+                    : 'NULLS LAST'
+                : undefined,
         );
+
+        const page = query.page ?? 1;
+        const size = query.size ?? 10;
+        qb.offset((page - 1) * size).limit(size);
+
+        const rawEntities = await qb.getRawMany();
+        const total = await qb.getCount();
+
+        return new DataListResponseDto(rawEntities || [], total || 0);
     }
 
     async transfer(transferDto: CreditTransferDto, user: JWTPayload) {
@@ -785,7 +853,11 @@ export class CarbonCreditService {
                 CreditTransactionsEntity,
                 {
                     where: { id: retireAction.transactionId },
-                    relations: { project: { organization: true } },
+                    relations: {
+                        project: { organization: true },
+                        creditBlock: true,
+                        sender: true,
+                    },
                 },
             );
 
@@ -794,21 +866,38 @@ export class CarbonCreditService {
                     'Retirement request not found',
                     HttpStatus.NOT_FOUND,
                 );
+            } else if (
+                !(
+                    retireRequest?.type === CreditEventTypeEnum.RETIRED &&
+                    retireRequest?.status === CreditEventStatusEnum.PENDING
+                )
+            ) {
+                throw new HttpException(
+                    'Retirement request not in expected status',
+                    HttpStatus.UNAUTHORIZED,
+                );
             }
-
             if (!retireRequest?.project) {
                 throw new Error('Project not found');
             }
 
+            const creditBlock = await queryRunner.manager.findOne(
+                CreditBlocksEntity,
+                {
+                    where: { id: retireRequest?.creditBlock?.id },
+                },
+            );
             if (retireAction.action === RetirementActionEnum.ACCEPT) {
                 this.logger.log(
                     `Accepting retire request ${retireRequest.transferId}`,
                 );
                 if (
-                    user.organizationRole ===
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
-                    (user.userRole === RoleEnum.Root ||
-                        user.userRole === RoleEnum.Admin)
+                    !(
+                        user.organizationRole ===
+                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                        (user.userRole === RoleEnum.Root ||
+                            user.userRole === RoleEnum.Admin)
+                    )
                 ) {
                     throw new HttpException(
                         'Unauthorized',
@@ -816,29 +905,29 @@ export class CarbonCreditService {
                     );
                 }
 
-                // const payload: RetireNFTJobPayload = {
-                //     transferId: retireAction.transferId,
-                //     projectId: project.refId,
-                //     remarks: retireAction.remarks,
-                //     userId: user.userId,
-                //     orgId: retireAction.orgId,
-                // };
-                // const asyncTask: TaskEntity = {
-                //     className: 'CarbonCreditService',
-                //     functionName: 'handleRetirementJob',
-                //     args: [payload],
-                //     retryAttemps: 2,
-                //     state: TaskEnum.PENDING,
-                // };
-                // await queryRunner.manager.save(TaskEntity, asyncTask);
+                const payload: RetireNFTJobPayload = {
+                    transactionId: retireAction.transactionId,
+                    remarks: retireAction.remarks,
+                    userId: user.userId,
+                };
+                const asyncTask: TaskEntity = {
+                    className: 'CarbonCreditService',
+                    functionName: 'handleRetirementJob',
+                    args: [payload],
+                    retryAttemps: 2,
+                    state: TaskEnum.PENDING,
+                };
+                await queryRunner.manager.save(TaskEntity, asyncTask);
             } else if (retireAction.action === RetirementActionEnum.CANCEL) {
                 this.logger.log(
                     `Cancelling retire request ${retireRequest.transferId}`,
                 );
                 if (
-                    user.organizationRole ===
-                        OrganizationTypeEnum.PROJECT_DEVELOPER &&
-                    user.userRole === RoleEnum.Admin
+                    !(
+                        user.organizationRole ===
+                            OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                        user.userRole === RoleEnum.Admin
+                    )
                 ) {
                     throw new HttpException(
                         'Unauthorized',
@@ -846,23 +935,48 @@ export class CarbonCreditService {
                     );
                 }
 
-                // await queryRunner.manager.update(
-                //     CreditEventsEntity,
-                //     { transferId: retireAction.transferId },
-                //     plainToClass(CreditEventsEntity, {
-                //         status: CreditEventStatusEnum.CANCELLED,
-                //     }),
-                // );
+                await queryRunner.manager.save(
+                    plainToClass(CreditBlocksEntity, {
+                        ...creditBlock,
+                        creditAmount:
+                            creditBlock.creditAmount +
+                            retireRequest.creditAmount,
+                        reservedCreditAmount:
+                            creditBlock.reservedCreditAmount -
+                            retireRequest.creditAmount,
+                    }),
+                );
+
+                await queryRunner.manager.save(
+                    plainToClass(CreditTransactionsEntity, {
+                        ...retireRequest,
+                        status: CreditEventStatusEnum.CANCELLED,
+                    }),
+                );
+
+                const log = new AuditEntity();
+                log.projectId = retireRequest?.project?.refId;
+                log.logType = ProjectAuditLogType.RETIRE_CANCELLED;
+                log.userId = user.userId;
+                log.data = {
+                    amount: retireRequest.creditAmount,
+                    fromCompanyId: retireRequest.sender.id,
+                    remarks: retireAction.remarks,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
             } else if (retireAction.action === RetirementActionEnum.REJECT) {
                 this.logger.log(
                     `Rejecting retire request ${retireRequest.transferId}`,
                 );
 
                 if (
-                    user.organizationRole ===
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
-                    (user.userRole === RoleEnum.Root ||
-                        user.userRole === RoleEnum.Admin)
+                    !(
+                        user.organizationRole ===
+                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                        (user.userRole === RoleEnum.Root ||
+                            user.userRole === RoleEnum.Admin)
+                    )
                 ) {
                     throw new HttpException(
                         'Unauthorized',
@@ -870,13 +984,35 @@ export class CarbonCreditService {
                     );
                 }
 
-                // await queryRunner.manager.update(
-                //     CreditEventsEntity,
-                //     { transferId: retireAction.transferId },
-                //     plainToClass(CreditEventsEntity, {
-                //         status: CreditEventStatusEnum.REJECTED,
-                //     }),
-                // );
+                await queryRunner.manager.save(
+                    plainToClass(CreditBlocksEntity, {
+                        ...creditBlock,
+                        creditAmount:
+                            creditBlock.creditAmount +
+                            retireRequest.creditAmount,
+                        reservedCreditAmount:
+                            creditBlock.reservedCreditAmount -
+                            retireRequest.creditAmount,
+                    }),
+                );
+
+                await queryRunner.manager.save(
+                    plainToClass(CreditTransactionsEntity, {
+                        ...retireRequest,
+                        status: CreditEventStatusEnum.REJECTED,
+                    }),
+                );
+                const log = new AuditEntity();
+                log.projectId = retireRequest?.project?.refId;
+                log.logType = ProjectAuditLogType.RETIRE_REJECTED;
+                log.userId = user.userId;
+                log.data = {
+                    amount: retireRequest.creditAmount,
+                    fromCompanyId: retireRequest.sender.id,
+                    remarks: retireAction.remarks,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
             }
 
             await queryRunner.commitTransaction();

@@ -37,7 +37,7 @@
   "authorisedDescription": "The project was registered under UNDP",
 
   "creditsAuthorisedTitle": "Credits Authorised",
-  "creditsAuthorisedDescription": "The project has been authorised for {} credits",
+  "creditsAuthorisedDescription": "{} number of credits were Authorised",
 
   "monitoringReportCreatedTitle": "Monitoring Report Created",
   "monitoringReportCreatedDescription": "The Monitoring Report was created by {}",
