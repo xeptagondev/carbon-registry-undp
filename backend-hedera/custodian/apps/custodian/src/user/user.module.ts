@@ -17,7 +17,6 @@ import { TokenModule } from '@app/shared/token/token.module';
 import { FileHandlerModule } from '@app/shared/file-handler/file-handler.module';
 import { UsersModule } from '@app/shared/users/users.module';
 import { OrganizationModule } from '@app/shared/organization/organization.module';
-import { CreditEventsEntity } from '@app/shared/carbon-credit-token/entity/credit-events.entity';
 
 @Module({
     imports: [
@@ -27,7 +26,6 @@ import { CreditEventsEntity } from '@app/shared/carbon-credit-token/entity/credi
             RoleEntity,
             OrganizationEntity,
             OrganizationTypeEntity,
-            CreditEventsEntity,
         ]),
         AuditModule,
         GuardianModule,

@@ -15,7 +15,6 @@ import { MailModule } from '../mail/mail.module';
 import { UtilModule } from '../util/util.module';
 import { GuardianModule } from '../guardian/guardian.module';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
-import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.entity';
 import { DocumentModule } from '../document/document.module';
 
 @Module({
@@ -36,7 +35,6 @@ import { DocumentModule } from '../document/document.module';
             ActivityDocEntity,
             DocumentTypeEntity,
             DocumentEntity,
-            CreditEventsEntity,
         ]),
     ],
     providers: [ProjectService],

@@ -1,4 +1,4 @@
-export enum RetirementACtionEnum {
+export enum RetirementActionEnum {
     ACCEPT = 'ACCEPT',
     REJECT = 'REJECT',
     CANCEL = 'CANCEL',
