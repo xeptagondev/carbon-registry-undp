@@ -54,7 +54,7 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
 
   const navigateToVerificationReport = (permissionsState: IPermissionsState) => {
     navigate(ROUTES.VERIFICATION_REPORT(id as string), {
-      state: { permissionsState },
+      state: permissionsState,
     });
   };
 
