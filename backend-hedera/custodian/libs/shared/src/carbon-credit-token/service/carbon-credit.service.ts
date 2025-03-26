@@ -866,8 +866,17 @@ export class CarbonCreditService {
                     'Retirement request not found',
                     HttpStatus.NOT_FOUND,
                 );
+            } else if (
+                !(
+                    retireRequest?.type === CreditEventTypeEnum.RETIRED &&
+                    retireRequest?.status === CreditEventStatusEnum.PENDING
+                )
+            ) {
+                throw new HttpException(
+                    'Retirement request not in expected status',
+                    HttpStatus.UNAUTHORIZED,
+                );
             }
-
             if (!retireRequest?.project) {
                 throw new Error('Project not found');
             }
