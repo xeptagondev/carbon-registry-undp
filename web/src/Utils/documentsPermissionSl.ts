@@ -30,7 +30,7 @@ export const formPermissions = (
     userInfoState,
     docType,
     projectProposalStage,
-    docType === DocType.VALIDATION_REPORT
+    documents
   );
 
   //PDD: Permissions pending and rejected stage for all users
@@ -90,7 +90,11 @@ export const formPermissions = (
       projectProposalStage === ProjectProposalStage.PDD_REJECTED_BY_DNA) &&
     userInfoState?.companyRole !== CompanyRole.PROJECT_DEVELOPER
   ) {
-    return { mode: FormMode.VIEW, userCompanyRole: userInfoState?.companyRole };
+    return {
+      mode: FormMode.VIEW,
+      userCompanyRole: userInfoState?.companyRole,
+      documentRefId: documents?.PDD?.refId,
+    };
   }
   //PDD: Permissions for other users for PDD at APPROVED stage
   else if (
