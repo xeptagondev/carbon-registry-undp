@@ -429,7 +429,6 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     dsDivision: programme.dsDivision,
     postalCode: programme.postalCode,
     city: programme.city,
-    community: programme.community,
     projectDescription: programme.projectDescription,
     additionalDocuments: programme.additionalDocuments,
   };
