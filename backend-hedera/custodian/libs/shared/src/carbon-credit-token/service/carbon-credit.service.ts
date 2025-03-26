@@ -844,6 +844,7 @@ export class CarbonCreditService {
                     relations: {
                         project: { organization: true },
                         creditBlock: true,
+                        sender: true,
                     },
                 },
             );
@@ -931,6 +932,18 @@ export class CarbonCreditService {
                         status: CreditEventStatusEnum.CANCELLED,
                     }),
                 );
+
+                const log = new AuditEntity();
+                log.projectId = retireRequest?.project?.refId;
+                log.logType = ProjectAuditLogType.RETIRE_CANCELLED;
+                log.userId = user.userId;
+                log.data = {
+                    amount: retireRequest.creditAmount,
+                    fromCompanyId: retireRequest.sender.id,
+                    remarks: retireAction.remarks,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
             } else if (retireAction.action === RetirementActionEnum.REJECT) {
                 this.logger.log(
                     `Rejecting retire request ${retireRequest.transferId}`,
@@ -968,6 +981,17 @@ export class CarbonCreditService {
                         status: CreditEventStatusEnum.REJECTED,
                     }),
                 );
+                const log = new AuditEntity();
+                log.projectId = retireRequest?.project?.refId;
+                log.logType = ProjectAuditLogType.RETIRE_REJECTED;
+                log.userId = user.userId;
+                log.data = {
+                    amount: retireRequest.creditAmount,
+                    fromCompanyId: retireRequest.sender.id,
+                    remarks: retireAction.remarks,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
             }
 
             await queryRunner.commitTransaction();

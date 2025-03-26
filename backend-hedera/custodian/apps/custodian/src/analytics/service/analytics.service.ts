@@ -835,9 +835,7 @@ export class AnalyticsService {
             }
         }
 
-        qb.groupBy('date')
-            .addGroupBy('audit."logType"')
-            .orderBy('date', 'DESC');
+        qb.groupBy('date').addGroupBy('audit."logType"').orderBy('date', 'ASC');
 
         const results = await qb.getRawMany();
 
