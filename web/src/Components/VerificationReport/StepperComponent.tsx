@@ -46,7 +46,7 @@ import { Loading } from '../Loading/loading';
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
   const navigationLocation = useLocation();
-  const { mode, docId } = navigationLocation.state || {};
+  // const { mode, docId } = navigationLocation.state || {};
   const navigate = useNavigate();
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
@@ -54,7 +54,9 @@ const StepperComponent = (props: VerificationStepProps) => {
   const [verifiedScer, setVerifiedScer] = useState(0);
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
+
   const { state } = useLocation();
+
   console.log('---------------------verification state--------------------', state);
 
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
@@ -583,7 +585,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={basicInformationForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={navigateToDetailsPage}
           disableFields={disableFields}
@@ -605,7 +607,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={ghgProjectDescriptionForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -627,7 +629,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           current={current}
           form={executiveSummaryForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -649,7 +651,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={verficationTeamForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           disableFields={disableFields}
           prev={prev}
@@ -670,7 +672,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={applicationOfMeterialityForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -691,7 +693,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={meansOfVerificationForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -712,7 +714,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           current={current}
           form={verificationFindingForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -733,7 +735,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           current={current}
           form={internalQualityControlForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -754,7 +756,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           translator={translator}
           current={current}
           form={verificationOpinionForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -775,7 +777,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={certificationStatementForm}
-          formMode={mode}
+          formMode={state?.mode}
           next={next}
           prev={prev}
           disableFields={disableFields}
@@ -796,7 +798,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           t={t}
           current={current}
           form={appendixForm}
-          formMode={mode}
+          formMode={state?.mode}
           prev={prev}
           next={navigateToDetailsPage}
           disableFields={disableFields}

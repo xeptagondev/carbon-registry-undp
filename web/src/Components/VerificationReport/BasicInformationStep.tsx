@@ -96,56 +96,13 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
               <Row className="row" gutter={[40, 16]}>
                 <Col xl={12} md={24}>
                   <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('verificationReport:b_projectTitle')}
-                      name="b_projectTitle"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_projectTitle')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
-                    >
+                    <Form.Item label={t('verificationReport:b_projectTitle')} name="b_projectTitle">
                       <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
                       label={t('verificationReport:b_scaleOfProject')}
                       name="b_scaleOfProject"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_scaleOfProject')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Select
                         showSearch
@@ -165,28 +122,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     <Form.Item
                       label={t('verificationReport:b_monitoringPeriodDuration')}
                       name="b_monitoringPeriodDuration"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_monitoringPeriodDuration')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Input size="large" disabled />
                     </Form.Item>
@@ -304,28 +239,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     <Form.Item
                       label={t('verificationReport:b_projectParticipants')}
                       name={'b_projectParticipants'}
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_projectParticipants')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Input
                         size="large"
@@ -337,28 +250,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     <Form.Item
                       label={t('verificationReport:b_appliedMethodologies')}
                       name={'b_appliedMethodologies'}
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_appliedMethodologies')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Input
                         size="large"
@@ -478,26 +369,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     <Form.Item
                       label={t('verificationReport:b_monitoringPeriodNo')}
                       name="b_monitoringPeriodNo"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_monitoringPeriodNo')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Input size="large" disabled />
                     </Form.Item>
@@ -505,82 +376,17 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     <Form.Item
                       label={t('verificationReport:b_creditingPeriod')}
                       name="b_creditingPeriod"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_creditingPeriod')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Input size="large" disabled />
                     </Form.Item>
 
-                    <Form.Item
-                      label={t('verificationReport:b_hostParty')}
-                      name="b_hostParty"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_hostParty')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
-                    >
+                    <Form.Item label={t('verificationReport:b_hostParty')} name="b_hostParty">
                       <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
                       label={t('verificationReport:b_mandatorySectoralScopes')}
                       name="b_mandatorySectoralScopes"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_mandatorySectoralScopes')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Input size="large" disabled />
                     </Form.Item>
@@ -588,28 +394,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     <Form.Item
                       label={t('verificationReport:b_estimatedGHGEmissionReduction')}
                       name="b_estimatedGHGEmissionReduction"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_estimatedGHGEmissionReduction')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Input size="large" disabled />
                     </Form.Item>
