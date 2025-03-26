@@ -21,7 +21,6 @@ import { RetireActionDto } from '../dto/retire.action.dto';
 import { RetirementActionEnum } from '../dto/retirement.action.enum';
 import { RetireNFTJobPayload } from '../constant/retire-nft-payload';
 import { TransferNFTJobPayload } from '../constant/transfer-nft-payload';
-import { CreditsRetireView } from '../entity/credit.retire.view.entity';
 import { plainToClass } from 'class-transformer';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
