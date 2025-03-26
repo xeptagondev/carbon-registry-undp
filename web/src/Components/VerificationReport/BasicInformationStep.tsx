@@ -422,26 +422,26 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     <Form.Item
                       label={t('verificationReport:b_unfccRefNo')}
                       name="b_unfccRefNo"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_unfccRefNo')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
+                      // rules={[
+                      //   {
+                      //     required: false,
+                      //     message: '',
+                      //   },
+                      //   {
+                      //     validator: async (rule, value) => {
+                      //       if (
+                      //         String(value).trim() === '' ||
+                      //         String(value).trim() === undefined ||
+                      //         value === null ||
+                      //         value === undefined
+                      //       ) {
+                      //         throw new Error(
+                      //           `${t('verificationReport:b_unfccRefNo')} ${t('isRequired')}`
+                      //         );
+                      //       }
+                      //     },
+                      //   },
+                      // ]}
                     >
                       <Input size="large" disabled />
                     </Form.Item>
