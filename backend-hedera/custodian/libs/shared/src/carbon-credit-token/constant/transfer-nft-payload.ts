@@ -1,5 +1,5 @@
 export interface TransferNFTJobPayload {
-    projectId: string;
+    blockId: number;
     remarks: string;
     receiverOrgId: number;
     senderOrgId: number;

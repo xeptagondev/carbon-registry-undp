@@ -4,13 +4,10 @@ import { CreditEventTypeEnum } from '../enum/credit.event.type.enum';
 import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
-import { CreditEventsEntity } from '../entity/credit-events.entity';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
-import { CreditsBalanceView } from '../entity/credit.balance.view.entity';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
 import { HelperService } from '@app/shared/util/service/helper.service';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
-import { CreditsTransferView } from '../entity/credit.transfer.view.entity';
 import { CreditTransferDto } from '../dto/credit.transfer.dto';
 import { CarbonCreditGuardianService } from './carbon-credit-guardian.service';
 import { MintNFTJobPayload } from '../constant/mint-nft-payload';
@@ -21,15 +18,18 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { CreditRetireRequestDto } from '../dto/credit.retire.request.dto';
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { RetireActionDto } from '../dto/retire.action.dto';
-import { RetirementACtionEnum } from '../dto/retirement.action.enum';
+import { RetirementActionEnum } from '../dto/retirement.action.enum';
 import { RetireNFTJobPayload } from '../constant/retire-nft-payload';
 import { TransferNFTJobPayload } from '../constant/transfer-nft-payload';
-import { CreditsRetireView } from '../entity/credit.retire.view.entity';
 import { plainToClass } from 'class-transformer';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { TokenAssociateEntity } from '../entity/token-associate.entity';
+import { CreditBlocksEntity } from '../entity/credit.blocks.entity';
+import { CreditTransactionsEntity } from '../entity/credit.transfer.entity';
+// eslint-disable-next-line max-len
+import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
 
 @Injectable()
 export class CarbonCreditService {
@@ -38,6 +38,7 @@ export class CarbonCreditService {
         private readonly dataSource: DataSource,
         private readonly helperService: HelperService,
         private readonly carbonCreditGuardianService: CarbonCreditGuardianService,
+        private readonly serialNumberManagementService: SerialNumberManagementService,
         private readonly logger: InstantLogger,
     ) {}
 
@@ -55,31 +56,20 @@ export class CarbonCreditService {
         } = job;
 
         try {
-            const mintedSerials =
-                await this.carbonCreditGuardianService.mintProjectNFT(
-                    tokenId,
-                    metadata,
-                    amount,
-                    accountId,
-                    privateKey,
-                );
-
             const queryRunner = this.dataSource.createQueryRunner();
             await queryRunner.connect();
             await queryRunner.startTransaction();
             try {
                 const transferId = String(Date.now());
-                for (const serial of mintedSerials) {
-                    await this.issueCredit(
-                        transferId,
-                        tokenId,
-                        batchSerialNumber,
-                        serial.toNumber(),
-                        projectId,
-                        receiverId,
-                        queryRunner,
-                    );
-                }
+                await this.issueCredit(
+                    transferId,
+                    tokenId,
+                    batchSerialNumber,
+                    amount,
+                    projectId,
+                    receiverId,
+                    queryRunner,
+                );
                 const existingProject = await queryRunner.manager
                     .getRepository(ProjectEntity)
                     .findOne({ where: { refId: projectId } });
@@ -100,6 +90,14 @@ export class CarbonCreditService {
                     toCompanyId: receiverId,
                 };
 
+                await this.carbonCreditGuardianService.mintProjectNFT(
+                    tokenId,
+                    metadata,
+                    amount,
+                    accountId,
+                    privateKey,
+                );
+
                 await queryRunner.manager.save(AuditEntity, log);
                 await queryRunner.commitTransaction();
             } catch (error) {
@@ -119,34 +117,21 @@ export class CarbonCreditService {
     }
 
     async handleTransferJob(job: TransferNFTJobPayload): Promise<any> {
-        const {
-            projectId,
-            receiverOrgId,
-            senderOrgId,
-            amount,
-            userId,
-            remarks,
-        } = job;
+        const { blockId, receiverOrgId, senderOrgId, amount, userId, remarks } =
+            job;
 
         try {
-            const project = await this.dataSource
-                .getRepository(ProjectEntity)
+            const creditBlock = await this.dataSource
+                .getRepository(CreditBlocksEntity)
                 .findOne({
-                    where: { refId: projectId },
-                    relations: ['organization'],
+                    where: { id: blockId },
+                    relations: {
+                        project: { organization: true },
+                        sender: true,
+                    },
                 });
-            if (!project) {
-                throw new HttpException(
-                    'Project not found',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            if (!project.tokenId) {
-                throw new HttpException(
-                    'Project does not have a token id',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
+
+            let project = creditBlock.project;
             const tokenId = project.tokenId;
 
             const senderOrg = await this.dataSource
@@ -154,91 +139,23 @@ export class CarbonCreditService {
                 .findOne({
                     where: { id: senderOrgId },
                 });
-            if (
-                !senderOrg ||
-                !senderOrg.hederaAccountId ||
-                !senderOrg.hederaAccountKey
-            ) {
-                throw new HttpException(
-                    'Project organization missing Hedera account details',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
+
             const senderAccountId = senderOrg.hederaAccountId;
             const senderPrivateKey = senderOrg.hederaAccountKey;
 
-            // Retrieve receiver organization details
             const receiverOrg = await this.dataSource
                 .getRepository(OrganizationEntity)
                 .findOne({
                     where: { id: receiverOrgId },
                 });
-            if (
-                !receiverOrg ||
-                !receiverOrg.hederaAccountId ||
-                !receiverOrg.hederaAccountKey
-            ) {
-                throw new HttpException(
-                    'Receiver organization not found or missing Hedera account details',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
+
             const receiverAccountId = receiverOrg.hederaAccountId;
             const receiverPrivateKey = receiverOrg.hederaAccountKey;
 
-            const tokenAssociation = await this.dataSource
-                .getRepository(TokenAssociateEntity)
-                .findOne({
-                    where: {
-                        tokenId: tokenId,
-                        accountId: receiverAccountId,
-                    },
-                });
-
-            if (!tokenAssociation) {
-                try {
-                    await this.carbonCreditGuardianService.associateNFTToUser(
-                        tokenId,
-                        receiverAccountId,
-                        receiverPrivateKey,
-                    );
-
-                    await this.dataSource
-                        .getRepository(TokenAssociateEntity)
-                        .save(
-                            plainToClass(TokenAssociateEntity, {
-                                tokenId: tokenId,
-                                accountId: receiverAccountId,
-                            }),
-                        );
-                } catch (assocError) {
-                    if (
-                        assocError.message &&
-                        assocError.message.includes(
-                            'TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT',
-                        )
-                    ) {
-                        console.log(
-                            'Token already associated with receiver, proceeding with transfer.',
-                        );
-                    } else {
-                        throw assocError;
-                    }
-                }
-            }
-
-            const ownedSerials: any[] = await this.getNFTSerialsOwnedByAccount(
-                tokenId,
-                senderOrg?.id,
+            const serialsToTransfer: any[] = this.getNFTSerialsOwnedByAccount(
+                creditBlock.serialNumber,
+                amount,
             );
-
-            if (ownedSerials.length < amount) {
-                throw new HttpException(
-                    'Insufficient NFT serials available for transfer',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            const serialsToTransfer = ownedSerials.slice(0, amount);
 
             const transferStatuses = [];
 
@@ -246,41 +163,85 @@ export class CarbonCreditService {
             await queryRunner.connect();
             await queryRunner.startTransaction();
             const transferId = String(Date.now());
+
             try {
+                await this.transferCredit(
+                    creditBlock,
+                    transferId,
+                    tokenId,
+                    project.refId,
+                    senderOrg.refId,
+                    receiverOrg.refId,
+                    amount,
+                    queryRunner,
+                );
+                const tokenAssociation = await this.dataSource
+                    .getRepository(TokenAssociateEntity)
+                    .findOne({
+                        where: {
+                            tokenId: tokenId,
+                            accountId: receiverAccountId,
+                        },
+                    });
+
+                if (!tokenAssociation) {
+                    try {
+                        await this.carbonCreditGuardianService.associateNFTToUser(
+                            tokenId,
+                            receiverAccountId,
+                            receiverPrivateKey,
+                        );
+
+                        await this.dataSource
+                            .getRepository(TokenAssociateEntity)
+                            .save(
+                                plainToClass(TokenAssociateEntity, {
+                                    tokenId: tokenId,
+                                    accountId: receiverAccountId,
+                                }),
+                            );
+                    } catch (assocError) {
+                        if (
+                            assocError.message &&
+                            assocError.message.includes(
+                                'TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT',
+                            )
+                        ) {
+                            console.log(
+                                'Token already associated with receiver, proceeding with transfer.',
+                            );
+                        } else {
+                            throw assocError;
+                        }
+                    }
+                }
                 for (const serial of serialsToTransfer) {
-                    await this.transferCredit(
-                        transferId,
-                        tokenId,
-                        serial.serial,
-                        serial.batch,
-                        project.refId,
-                        senderOrg.refId,
-                        receiverOrg.refId,
-                        queryRunner,
-                    );
                     const status =
                         await this.carbonCreditGuardianService.transferProjectNFT(
                             tokenId,
-                            serial.serial,
+                            serial,
                             senderAccountId,
                             senderPrivateKey,
                             receiverAccountId,
                         );
                     transferStatuses.push(status);
                 }
-                if (project.organization.id === senderOrgId) {
-                    const updatedProject = plainToClass(ProjectEntity, {
-                        ...project,
-                        creditTransferred: project.creditTransferred
-                            ? amount + project.creditTransferred
-                            : amount,
+                if (!creditBlock.sender) {
+                    project = await queryRunner.manager.findOne(ProjectEntity, {
+                        where: { id: project.id },
                     });
-
-                    await queryRunner.manager.save(updatedProject);
+                    await queryRunner.manager.save(
+                        plainToClass(ProjectEntity, {
+                            ...project,
+                            creditTransferred: project.creditTransferred
+                                ? amount + project.creditTransferred
+                                : amount,
+                        }),
+                    );
                 }
 
                 const log = new AuditEntity();
-                log.projectId = projectId;
+                log.projectId = project.refId;
                 log.logType = ProjectAuditLogType.CREDIT_TRANSFERED;
                 log.userId = userId;
                 log.data = {
@@ -310,34 +271,43 @@ export class CarbonCreditService {
     }
 
     async handleRetirementJob(job: RetireNFTJobPayload): Promise<any> {
-        const { projectId, transferId, userId, orgId, remarks } = job;
+        const { transactionId, userId, remarks } = job;
 
         try {
             this.logger.log(
                 // eslint-disable-next-line max-len
-                `Processing retirement job for project: ${projectId}, transferId: ${transferId}`,
+                `Processing retirement job for transactionId: ${transactionId}`,
             );
 
-            const project = await this.dataSource
-                .getRepository(ProjectEntity)
+            const retireRequest = await this.dataSource
+                .getRepository(CreditTransactionsEntity)
                 .findOne({
-                    where: { refId: projectId },
-                    relations: ['organization'],
+                    where: { id: transactionId },
+                    relations: {
+                        project: { organization: true },
+                        creditBlock: true,
+                    },
                 });
 
-            if (!project) {
+            if (!retireRequest) {
                 throw new HttpException(
-                    'Project not found',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            if (!project.tokenId) {
-                throw new HttpException(
-                    'Project does not have a token ID',
-                    HttpStatus.BAD_REQUEST,
+                    'Retirement request not found',
+                    HttpStatus.NOT_FOUND,
                 );
             }
 
+            if (!retireRequest?.project) {
+                throw new Error('Project not found');
+            }
+
+            const creditBlock = await await this.dataSource
+                .getRepository(CreditBlocksEntity)
+                .findOne({
+                    where: { id: retireRequest?.creditBlock?.id },
+                    relations: { sender: true },
+                });
+
+            let project = retireRequest?.project;
             const tokenId = project.tokenId;
             const senderOrg = project.organization;
 
@@ -372,16 +342,6 @@ export class CarbonCreditService {
                 );
             }
 
-            const serialsToRetire: CreditEventsEntity[] = await this.dataSource
-                .getRepository(CreditEventsEntity)
-                .find({
-                    where: {
-                        transferId: transferId,
-                        type: CreditEventTypeEnum.RETIRED,
-                        status: CreditEventStatusEnum.PENDING,
-                    },
-                });
-
             const retirementStatuses = [];
 
             const queryRunner = this.dataSource.createQueryRunner();
@@ -389,11 +349,16 @@ export class CarbonCreditService {
             await queryRunner.startTransaction();
 
             try {
+                const serialsToRetire: number[] =
+                    this.getNFTSerialsOwnedByAccount(
+                        creditBlock.serialNumber,
+                        retireRequest.creditAmount,
+                    );
                 for (const serial of serialsToRetire) {
                     const status =
                         await this.carbonCreditGuardianService.retireProjectNFT(
                             tokenId,
-                            serial.serialNumnber,
+                            serial,
                             senderAccountId,
                             senderPrivateKey,
                         );
@@ -401,29 +366,46 @@ export class CarbonCreditService {
                     retirementStatuses.push(status);
                 }
 
-                await queryRunner.manager.update(
-                    CreditEventsEntity,
-                    {
-                        transferId: transferId,
-                        status: CreditEventStatusEnum.PENDING,
-                    },
-                    plainToClass(CreditEventsEntity, {
+                const { firstSerialNumber, secondSerialNumber } =
+                    this.serialNumberManagementService.splitCreditBlockSerialNumber(
+                        creditBlock.serialNumber,
+                        retireRequest.creditAmount,
+                    );
+                await queryRunner.manager.save(
+                    plainToClass(CreditBlocksEntity, {
+                        ...creditBlock,
+                        serialNumber: firstSerialNumber,
+                        creditAmount: creditBlock.creditAmount,
+                        reservedCreditAmount:
+                            creditBlock.reservedCreditAmount -
+                            retireRequest.creditAmount,
+                    }),
+                );
+
+                await queryRunner.manager.save(
+                    plainToClass(CreditTransactionsEntity, {
+                        ...retireRequest,
+                        serialNumber: secondSerialNumber,
                         status: CreditEventStatusEnum.COMPLETED,
                     }),
                 );
 
-                if (project.organization.id === orgId) {
-                    const updatedProject = plainToClass(ProjectEntity, {
-                        ...project,
-                        creditTransferred: project.creditRetired
-                            ? serialsToRetire.length + project.creditRetired
-                            : serialsToRetire.length,
+                if (!creditBlock.sender) {
+                    project = await queryRunner.manager.findOne(ProjectEntity, {
+                        where: { id: project.id },
                     });
-
-                    await queryRunner.manager.save(updatedProject);
+                    await queryRunner.manager.save(
+                        plainToClass(ProjectEntity, {
+                            ...project,
+                            creditRetired: project.creditRetired
+                                ? serialsToRetire.length + project.creditRetired
+                                : serialsToRetire.length,
+                        }),
+                    );
                 }
+
                 const log = new AuditEntity();
-                log.projectId = projectId;
+                log.projectId = project.refId;
                 log.logType = ProjectAuditLogType.RETIRE_APPROVED;
                 log.userId = userId;
                 log.data = {
@@ -436,7 +418,7 @@ export class CarbonCreditService {
 
                 await queryRunner.commitTransaction();
                 this.logger.log(
-                    `Successfully retired NFTs withe transferId ${transferId} and marked as COMPLETED.`,
+                    `Successfully retired NFTs withe transferId ${retireRequest.transferId} and marked as COMPLETED.`,
                 );
             } catch (error) {
                 this.logger.error(`Error in retirement job: ${error.message}`);
@@ -461,79 +443,110 @@ export class CarbonCreditService {
         }
     }
 
-    async getNFTSerialsOwnedByAccount(
-        tokenId: string,
-        orgId: number,
-    ): Promise<any[]> {
-        const statuses = [
-            CreditEventStatusEnum.COMPLETED,
-            CreditEventStatusEnum.PENDING,
-        ];
+    getNFTSerialsOwnedByAccount(
+        serialNumber: string,
+        amount: number,
+    ): number[] {
+        const parts = serialNumber.split('-');
 
-        const qb = this.dataSource
-            .getRepository(CreditEventsEntity)
-            .createQueryBuilder('ce')
-            .select('ce."serialNumnber"', 'serial')
-            .addSelect('ce."batchSerialNumnber"', 'batch')
-            .where('ce."tokenId" = :tokenId', { tokenId })
-            .andWhere('ce.status IN (:...statuses)', { statuses })
-            .andWhere(
-                'ce.id = ( ' +
-                    'SELECT MAX(ce2.id) ' +
-                    'FROM credit_events_entity ce2 ' +
-                    'WHERE ce2."tokenId" = ce."tokenId" ' +
-                    'AND ce2."serialNumnber" = ce."serialNumnber" ' +
-                    'AND ce2.status IN (:...statuses) ' +
-                    ')',
-                { statuses, tokenId },
-            )
-            .andWhere('ce."receiverId" = :orgId', { orgId });
+        const startingValue = parseInt(parts[parts.length - 2], 10);
 
-        const results = await qb.getRawMany();
-        return results.map((r) => {
-            return { serial: Number(r.serial), batch: r.batch };
-        });
+        if (isNaN(startingValue)) {
+            throw new Error(
+                'Invalid input string: could not extract starting number',
+            );
+        }
+
+        const result: number[] = [];
+        for (let i = 0; i < amount; i++) {
+            result.push(startingValue - i);
+        }
+
+        return result;
     }
-
-    async queryBalance(query: QueryDto, user: JWTPayload) {
+    async queryBalance(
+        query: QueryDto,
+        user: JWTPayload,
+    ): Promise<DataListResponseDto> {
         this.logger.log(
             `Request received to query the token balance from ${user.userName}`,
+            this.loggerContext,
         );
-        if (
-            !(
-                user.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
-                user.userRole === RoleEnum.Admin
-            )
-        ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+
+        const qb = this.dataSource
+            .getRepository(CreditBlocksEntity)
+            .createQueryBuilder('creditBlock')
+            .leftJoinAndSelect('creditBlock.project', 'project')
+            .leftJoinAndSelect('creditBlock.receiver', 'receiver')
+            .leftJoinAndSelect('creditBlock.sender', 'sender')
+            .select([
+                'creditBlock.id as id',
+                'creditBlock.serialNumber as "serialNumber"',
+                'creditBlock.creditAmount as "creditAmount"',
+                'creditBlock.createdDate as "createdDate"',
+                'project.id as "projectId"',
+                'project.title as "projectName"',
+                'receiver.id as "receiverId"',
+                'receiver.name as "receiverName"',
+                'receiver.logo as "receiverLogo"',
+                'sender.id as "senderId"',
+                'sender.name as "senderName"',
+                'sender.logo as "senderLogo"',
+            ])
+            .addSelect(
+                `CASE 
+               WHEN sender.id IS NULL THEN 'Issued' 
+               ELSE 'Received' 
+             END`,
+                'eventType',
+            );
+
+        if (user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER) {
+            qb.andWhere('receiver.id = :orgId', { orgId: user.organizationId });
         }
-        const [entities, total] = await this.dataSource
-            .getRepository(CreditsBalanceView)
-            .createQueryBuilder('user')
-            .where(this.helperService.generateWhereSQL(query))
-            .orderBy(
-                query?.sort?.key && `"${query?.sort?.key}"`,
-                query?.sort?.order,
-                query?.sort?.nullFirst !== undefined
-                    ? query?.sort?.nullFirst === true
-                        ? 'NULLS FIRST'
-                        : 'NULLS LAST'
-                    : undefined,
-            )
-            .offset(query.size * query.page - query.size)
-            .limit(query.size)
-            .getManyAndCount();
-        return new DataListResponseDto(
-            entities ? entities : undefined,
-            total ? total : undefined,
+
+        const whereSQL = this.helperService.generateWhereSQL(query);
+        if (whereSQL && whereSQL.trim() !== '') {
+            qb.andWhere(whereSQL);
+        }
+
+        let sortKey = 'creditBlock.createdDate';
+        let sortOrder: 'ASC' | 'DESC' = 'DESC';
+        if (query?.sort?.key) {
+            sortKey = query.sort.key.includes('.')
+                ? query.sort.key
+                : `creditBlock.${query.sort.key}`;
+            sortOrder =
+                query.sort.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+        }
+        qb.orderBy(
+            sortKey,
+            sortOrder,
+            query?.sort?.nullFirst !== undefined
+                ? query.sort.nullFirst === true
+                    ? 'NULLS FIRST'
+                    : 'NULLS LAST'
+                : undefined,
         );
+
+        const page = query.page ?? 1;
+        const size = query.size ?? 10;
+        qb.offset((page - 1) * size).limit(size);
+
+        const rawEntities = await qb.getRawMany();
+        const total = await qb.getCount();
+
+        return new DataListResponseDto(rawEntities || [], total || 0);
     }
 
-    async queryTransfers(query: QueryDto, user: JWTPayload) {
+    async queryTransfers(
+        query: QueryDto,
+        user: JWTPayload,
+    ): Promise<DataListResponseDto> {
         this.logger.log(
             `Request received to query the token transfers ${user.userName}`,
         );
+
         if (
             !(
                 (user.organizationRole ===
@@ -546,31 +559,81 @@ export class CarbonCreditService {
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
-        const [entities, total] = await this.dataSource
-            .getRepository(CreditsTransferView)
-            .createQueryBuilder('user')
-            .where(this.helperService.generateWhereSQL(query))
-            .orderBy(
-                query?.sort?.key && `"${query?.sort?.key}"`,
-                query?.sort?.order,
-                query?.sort?.nullFirst !== undefined
-                    ? query?.sort?.nullFirst === true
-                        ? 'NULLS FIRST'
-                        : 'NULLS LAST'
-                    : undefined,
+
+        const orgId = user.organizationId;
+
+        const qb = this.dataSource
+            .getRepository(CreditTransactionsEntity)
+            .createQueryBuilder('creditTx')
+            .leftJoinAndSelect('creditTx.project', 'project')
+            .leftJoinAndSelect('creditTx.sender', 'sender')
+            .leftJoinAndSelect('creditTx.receiver', 'receiver')
+            .select([
+                'creditTx.id as id',
+                'creditTx.serialNumber as "serialNumber"',
+                'creditTx.creditAmount as "creditAmount"',
+                'creditTx.createdDate as "createdDate"',
+                'project.id as "projectId"',
+                'project.title as "projectName"',
+                'receiver.id as "receiverId"',
+                'receiver.name as "receiverName"',
+                'receiver.logo as "receiverLogo"',
+                'sender.id as "senderId"',
+                'sender.name as "senderName"',
+                'sender.logo as "senderLogo"',
+            ])
+            .addSelect(
+                `CASE 
+               WHEN sender.id = ${orgId} THEN 'Sent' 
+               WHEN receiver.id = ${orgId} THEN 'Received' 
+               ELSE 'UNKNOWN' 
+             END`,
+                'transferStatus',
             )
-            .offset(query.size * query.page - query.size)
-            .limit(query.size)
-            .getManyAndCount();
-        return new DataListResponseDto(
-            entities ? entities : undefined,
-            total ? total : undefined,
+            .where('creditTx.type = :transferredType', {
+                transferredType: CreditEventTypeEnum.TRANSFERED,
+            });
+
+        const extraWhere = this.helperService.generateWhereSQL(query);
+        if (extraWhere && extraWhere.trim() !== '') {
+            qb.andWhere(extraWhere);
+        }
+
+        let sortColumn = 'creditTx.createdDate';
+        if (query?.sort?.key) {
+            sortColumn = 'creditTx.' + query.sort.key;
+        }
+        const sortOrder: 'ASC' | 'DESC' =
+            query?.sort?.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+        qb.orderBy(
+            sortColumn,
+            sortOrder,
+            query?.sort?.nullFirst !== undefined
+                ? query.sort.nullFirst === true
+                    ? 'NULLS FIRST'
+                    : 'NULLS LAST'
+                : undefined,
         );
+
+        const page = query.page ?? 1;
+        const size = query.size ?? 10;
+        qb.offset((page - 1) * size).limit(size);
+
+        const rawEntities = await qb.getRawMany();
+        const total = await qb.getCount();
+
+        return new DataListResponseDto(rawEntities || [], total || 0);
     }
-    async queryRetirements(query: QueryDto, user: JWTPayload) {
+
+    async queryRetirements(
+        query: QueryDto,
+        user: JWTPayload,
+    ): Promise<DataListResponseDto> {
         this.logger.log(
             `Request received to query the token retirements ${user.userName}`,
         );
+
         if (
             !(
                 (user.organizationRole ===
@@ -583,26 +646,66 @@ export class CarbonCreditService {
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
-        const [entities, total] = await this.dataSource
-            .getRepository(CreditsRetireView)
-            .createQueryBuilder('user')
-            .where(this.helperService.generateWhereSQL(query))
-            .orderBy(
-                query?.sort?.key && `"${query?.sort?.key}"`,
-                query?.sort?.order,
-                query?.sort?.nullFirst !== undefined
-                    ? query?.sort?.nullFirst === true
-                        ? 'NULLS FIRST'
-                        : 'NULLS LAST'
-                    : undefined,
-            )
-            .offset(query.size * query.page - query.size)
-            .limit(query.size)
-            .getManyAndCount();
-        return new DataListResponseDto(
-            entities ? entities : undefined,
-            total ? total : undefined,
+
+        const orgId = user.organizationId;
+
+        const qb = this.dataSource
+            .getRepository(CreditTransactionsEntity)
+            .createQueryBuilder('creditTx')
+            .leftJoinAndSelect('creditTx.project', 'project')
+            .leftJoinAndSelect('creditTx.sender', 'sender')
+            .leftJoinAndSelect('creditTx.receiver', 'receiver')
+            .select([
+                'creditTx.id as id',
+                'creditTx.serialNumber as serialNumber',
+                'creditTx.creditAmount as creditAmount',
+                'creditTx.createdDate as createdDate',
+                'creditTx.retirementType as retirementType',
+                'creditTx.status as status',
+                'project.id as projectId',
+                'project.title as projectName',
+                'sender.id as senderId',
+                'sender.name as senderName',
+                'sender.logo as senderLogo',
+            ])
+            .where('creditTx.type = :transferredType', {
+                transferredType: CreditEventTypeEnum.RETIRED,
+            });
+
+        if (user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER) {
+            qb.andWhere('sender.id = :orgId', { orgId });
+        }
+
+        const extraWhere = this.helperService.generateWhereSQL(query);
+        if (extraWhere && extraWhere.trim() !== '') {
+            qb.andWhere(extraWhere);
+        }
+
+        let sortColumn = 'creditTx.createdDate';
+        if (query?.sort?.key) {
+            sortColumn = 'creditTx.' + query.sort.key;
+        }
+        const sortOrder: 'ASC' | 'DESC' =
+            query?.sort?.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+        qb.orderBy(
+            sortColumn,
+            sortOrder,
+            query?.sort?.nullFirst !== undefined
+                ? query.sort.nullFirst === true
+                    ? 'NULLS FIRST'
+                    : 'NULLS LAST'
+                : undefined,
         );
+
+        const page = query.page ?? 1;
+        const size = query.size ?? 10;
+        qb.offset((page - 1) * size).limit(size);
+
+        const rawEntities = await qb.getRawMany();
+        const total = await qb.getCount();
+
+        return new DataListResponseDto(rawEntities || [], total || 0);
     }
 
     async transfer(transferDto: CreditTransferDto, user: JWTPayload) {
@@ -623,16 +726,84 @@ export class CarbonCreditService {
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
-            const project = await queryRunner.manager.findOne(ProjectEntity, {
-                where: { id: transferDto.projectId },
-                relations: { organization: true },
-            });
+            const creditBlock = await queryRunner.manager.findOne(
+                CreditBlocksEntity,
+                {
+                    where: { id: transferDto.blockId },
+                    relations: { project: true },
+                },
+            );
 
-            if (!project) {
-                throw new Error('Project not found');
+            if (!creditBlock) {
+                throw new HttpException(
+                    'Credit block not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            } else if (!creditBlock?.project) {
+                throw new HttpException(
+                    'Project not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            } else if (!creditBlock?.project.tokenId) {
+                throw new HttpException(
+                    'Project does not have a token id',
+                    HttpStatus.BAD_REQUEST,
+                );
+            } else if (creditBlock.creditAmount < transferDto.amount) {
+                throw new HttpException(
+                    'Do not have enough credit to transfer',
+                    HttpStatus.BAD_REQUEST,
+                );
             }
+
+            const senderOrg = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: user.organizationId },
+                },
+            );
+            if (
+                !senderOrg ||
+                !senderOrg.hederaAccountId ||
+                !senderOrg.hederaAccountKey
+            ) {
+                throw new HttpException(
+                    'Project organization missing Hedera account details',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const receiverOrg = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: transferDto.receiverOrgId },
+                },
+            );
+            if (
+                !receiverOrg ||
+                !receiverOrg.hederaAccountId ||
+                !receiverOrg.hederaAccountKey
+            ) {
+                throw new HttpException(
+                    'Receiver organization not found or missing Hedera account details',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const ownedSerials: any[] = this.getNFTSerialsOwnedByAccount(
+                creditBlock.serialNumber,
+                transferDto.amount,
+            );
+
+            if (ownedSerials.length < transferDto.amount) {
+                throw new HttpException(
+                    'Insufficient NFT serials available for transfer',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
             const payload: TransferNFTJobPayload = {
-                projectId: project.refId,
+                blockId: transferDto.blockId,
                 remarks: transferDto.remarks,
                 receiverOrgId: transferDto.receiverOrgId,
                 senderOrgId: user.organizationId,
@@ -678,38 +849,46 @@ export class CarbonCreditService {
         await queryRunner.startTransaction();
 
         try {
-            const retireRequests = await queryRunner.manager.find(
-                CreditEventsEntity,
+            const retireRequest = await queryRunner.manager.findOne(
+                CreditTransactionsEntity,
                 {
-                    where: { transferId: retireAction.transferId },
+                    where: { id: retireAction.transactionId },
+                    relations: {
+                        project: { organization: true },
+                        creditBlock: true,
+                        sender: true,
+                    },
                 },
             );
 
-            if (!retireRequests.length) {
+            if (!retireRequest) {
                 throw new HttpException(
                     'Retirement request not found',
                     HttpStatus.NOT_FOUND,
                 );
             }
 
-            const project = await queryRunner.manager.findOne(ProjectEntity, {
-                where: { id: retireAction.projectId },
-                relations: { organization: true },
-            });
-
-            if (!project) {
+            if (!retireRequest?.project) {
                 throw new Error('Project not found');
             }
 
-            if (retireAction.action === RetirementACtionEnum.ACCEPT) {
+            const creditBlock = await queryRunner.manager.findOne(
+                CreditBlocksEntity,
+                {
+                    where: { id: retireRequest?.creditBlock?.id },
+                },
+            );
+            if (retireAction.action === RetirementActionEnum.ACCEPT) {
                 this.logger.log(
-                    `Accepting retire request ${retireAction.transferId}`,
+                    `Accepting retire request ${retireRequest.transferId}`,
                 );
                 if (
-                    user.organizationRole ===
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
-                    (user.userRole === RoleEnum.Root ||
-                        user.userRole === RoleEnum.Admin)
+                    !(
+                        user.organizationRole ===
+                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                        (user.userRole === RoleEnum.Root ||
+                            user.userRole === RoleEnum.Admin)
+                    )
                 ) {
                     throw new HttpException(
                         'Unauthorized',
@@ -718,11 +897,9 @@ export class CarbonCreditService {
                 }
 
                 const payload: RetireNFTJobPayload = {
-                    transferId: retireAction.transferId,
-                    projectId: project.refId,
+                    transactionId: retireAction.transactionId,
                     remarks: retireAction.remarks,
                     userId: user.userId,
-                    orgId: retireAction.orgId,
                 };
                 const asyncTask: TaskEntity = {
                     className: 'CarbonCreditService',
@@ -732,14 +909,16 @@ export class CarbonCreditService {
                     state: TaskEnum.PENDING,
                 };
                 await queryRunner.manager.save(TaskEntity, asyncTask);
-            } else if (retireAction.action === RetirementACtionEnum.CANCEL) {
+            } else if (retireAction.action === RetirementActionEnum.CANCEL) {
                 this.logger.log(
-                    `Cancelling retire request ${retireAction.transferId}`,
+                    `Cancelling retire request ${retireRequest.transferId}`,
                 );
                 if (
-                    user.organizationRole ===
-                        OrganizationTypeEnum.PROJECT_DEVELOPER &&
-                    user.userRole === RoleEnum.Admin
+                    !(
+                        user.organizationRole ===
+                            OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                        user.userRole === RoleEnum.Admin
+                    )
                 ) {
                     throw new HttpException(
                         'Unauthorized',
@@ -747,23 +926,48 @@ export class CarbonCreditService {
                     );
                 }
 
-                await queryRunner.manager.update(
-                    CreditEventsEntity,
-                    { transferId: retireAction.transferId },
-                    plainToClass(CreditEventsEntity, {
+                await queryRunner.manager.save(
+                    plainToClass(CreditBlocksEntity, {
+                        ...creditBlock,
+                        creditAmount:
+                            creditBlock.creditAmount +
+                            retireRequest.creditAmount,
+                        reservedCreditAmount:
+                            creditBlock.reservedCreditAmount -
+                            retireRequest.creditAmount,
+                    }),
+                );
+
+                await queryRunner.manager.save(
+                    plainToClass(CreditTransactionsEntity, {
+                        ...retireRequest,
                         status: CreditEventStatusEnum.CANCELLED,
                     }),
                 );
-            } else if (retireAction.action === RetirementACtionEnum.REJECT) {
+
+                const log = new AuditEntity();
+                log.projectId = retireRequest?.project?.refId;
+                log.logType = ProjectAuditLogType.RETIRE_CANCELLED;
+                log.userId = user.userId;
+                log.data = {
+                    amount: retireRequest.creditAmount,
+                    fromCompanyId: retireRequest.sender.id,
+                    remarks: retireAction.remarks,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
+            } else if (retireAction.action === RetirementActionEnum.REJECT) {
                 this.logger.log(
-                    `Rejecting retire request ${retireAction.transferId}`,
+                    `Rejecting retire request ${retireRequest.transferId}`,
                 );
 
                 if (
-                    user.organizationRole ===
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
-                    (user.userRole === RoleEnum.Root ||
-                        user.userRole === RoleEnum.Admin)
+                    !(
+                        user.organizationRole ===
+                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                        (user.userRole === RoleEnum.Root ||
+                            user.userRole === RoleEnum.Admin)
+                    )
                 ) {
                     throw new HttpException(
                         'Unauthorized',
@@ -771,13 +975,35 @@ export class CarbonCreditService {
                     );
                 }
 
-                await queryRunner.manager.update(
-                    CreditEventsEntity,
-                    { transferId: retireAction.transferId },
-                    plainToClass(CreditEventsEntity, {
+                await queryRunner.manager.save(
+                    plainToClass(CreditBlocksEntity, {
+                        ...creditBlock,
+                        creditAmount:
+                            creditBlock.creditAmount +
+                            retireRequest.creditAmount,
+                        reservedCreditAmount:
+                            creditBlock.reservedCreditAmount -
+                            retireRequest.creditAmount,
+                    }),
+                );
+
+                await queryRunner.manager.save(
+                    plainToClass(CreditTransactionsEntity, {
+                        ...retireRequest,
                         status: CreditEventStatusEnum.REJECTED,
                     }),
                 );
+                const log = new AuditEntity();
+                log.projectId = retireRequest?.project?.refId;
+                log.logType = ProjectAuditLogType.RETIRE_REJECTED;
+                log.userId = user.userId;
+                log.data = {
+                    amount: retireRequest.creditAmount,
+                    fromCompanyId: retireRequest.sender.id,
+                    remarks: retireAction.remarks,
+                };
+
+                await queryRunner.manager.save(AuditEntity, log);
             }
 
             await queryRunner.commitTransaction();
@@ -808,49 +1034,66 @@ export class CarbonCreditService {
             `Request received to retire tokens from ${user.userName}`,
         );
 
+        if (
+            !(
+                user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                user.userRole === RoleEnum.Admin
+            )
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
+
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
-            const project = await queryRunner.manager.findOne(ProjectEntity, {
-                where: { id: retireRequest.projectId },
-                relations: { organization: true },
-            });
+            const creditBlock = await queryRunner.manager.findOne(
+                CreditBlocksEntity,
+                {
+                    where: { id: retireRequest.blockId },
+                    relations: { project: { organization: true } },
+                },
+            );
 
+            const project = creditBlock.project;
             if (!project || !project.organization) {
                 throw new Error('Project or Organization not found');
             }
-            const ownedSerials: any[] = await this.getNFTSerialsOwnedByAccount(
-                project?.tokenId,
-                project?.organization?.id,
-            );
 
-            if (ownedSerials.length < retireRequest.amount) {
+            if (creditBlock.creditAmount < retireRequest.amount) {
                 throw new HttpException(
                     'Insufficient NFT serials available for retire',
                     HttpStatus.BAD_REQUEST,
                 );
             }
-            const serialsToTransfer = ownedSerials.slice(
-                0,
-                retireRequest.amount,
+
+            await queryRunner.manager.save(
+                plainToClass(CreditBlocksEntity, {
+                    ...creditBlock,
+                    creditAmount:
+                        creditBlock.creditAmount - retireRequest.amount,
+                    reservedCreditAmount: creditBlock.reservedCreditAmount
+                        ? creditBlock.reservedCreditAmount +
+                          retireRequest.amount
+                        : retireRequest.amount,
+                }),
             );
+
             const transferId = String(Date.now());
-            for (const serial of serialsToTransfer) {
-                const creditEvent = plainToClass(CreditEventsEntity, {
-                    tokenId: project?.tokenId,
-                    transferId: transferId,
-                    batchSerialNumnber: serial.batch,
-                    serialNumnber: serial.serial,
-                    project,
-                    sender: project.organization,
-                    receiver: project.organization,
-                    type: CreditEventTypeEnum.RETIRED,
-                    status: CreditEventStatusEnum.PENDING,
-                    retirementType: retireRequest.retirementType,
-                });
-                queryRunner.manager.save(creditEvent);
-            }
+            const creditTransaction = plainToClass(CreditTransactionsEntity, {
+                transferId,
+                tokenId: project.tokenId,
+                creditBlock: creditBlock,
+                serialNumber: creditBlock.serialNumber,
+                creditAmount: retireRequest.amount,
+                project,
+                sender: project.organization,
+                type: CreditEventTypeEnum.RETIRED,
+                retirementType: retireRequest.retirementType,
+                status: CreditEventStatusEnum.PENDING,
+            });
+            await queryRunner.manager.save(creditTransaction);
             await queryRunner.commitTransaction();
             return new DataResponseDto(
                 HttpStatus.OK,
@@ -872,11 +1115,11 @@ export class CarbonCreditService {
         transferId: string,
         tokenId: string,
         batchSerialNumber: string,
-        serialNumber: number,
+        amount: number,
         projectId: string,
         receiverId: number,
         queryRunner: QueryRunner,
-    ): Promise<CreditEventsEntity> {
+    ) {
         const project = await queryRunner.manager.findOne(ProjectEntity, {
             where: { refId: projectId },
         });
@@ -889,29 +1132,40 @@ export class CarbonCreditService {
         if (!project || !organization) {
             throw new Error('Project or Organization not found');
         }
-        const creditEvent = plainToClass(CreditEventsEntity, {
+
+        const creditBlock = plainToClass(CreditBlocksEntity, {
+            serialNumber: batchSerialNumber,
+            creditAmount: amount,
+            project,
+            receiver: organization,
+            type: CreditEventTypeEnum.ISSUED,
+        });
+        const savedBlock = await queryRunner.manager.save(creditBlock);
+
+        const creditTransaction = plainToClass(CreditTransactionsEntity, {
             transferId,
             tokenId,
-            batchSerialNumnber: batchSerialNumber,
-            serialNumnber: serialNumber,
+            creditBlock: savedBlock,
+            serialNumber: batchSerialNumber,
+            creditAmount: amount,
             project,
             receiver: organization,
             type: CreditEventTypeEnum.ISSUED,
             status: CreditEventStatusEnum.COMPLETED,
         });
-        return await queryRunner.manager.save(creditEvent);
+        await queryRunner.manager.save(creditTransaction);
     }
 
     async transferCredit(
+        transferingBlock: CreditBlocksEntity,
         transferId: string,
         tokenId: string,
-        serialNumber: number,
-        batch: string,
         projectRefId: string,
         senderRefId: string,
         receiverRefId: string,
+        amount: number,
         queryRunner: QueryRunner,
-    ): Promise<CreditEventsEntity> {
+    ) {
         const project = await queryRunner.manager.findOne(ProjectEntity, {
             where: { refId: projectRefId },
         });
@@ -926,20 +1180,45 @@ export class CarbonCreditService {
             throw new Error('Project or Organizations not found');
         }
 
-        let creditEvent = plainToClass(CreditEventsEntity, {
+        const { firstSerialNumber, secondSerialNumber } =
+            this.serialNumberManagementService.splitCreditBlockSerialNumber(
+                transferingBlock.serialNumber,
+                amount,
+            );
+
+        await queryRunner.manager.save(
+            plainToClass(CreditBlocksEntity, {
+                ...transferingBlock,
+                serialNumber: firstSerialNumber,
+                creditAmount: transferingBlock.creditAmount - amount,
+            }),
+        );
+
+        const creditBlock = plainToClass(CreditBlocksEntity, {
+            serialNumber: secondSerialNumber,
+            creditAmount: amount,
+            project,
+            sender,
+            receiver,
+            type: CreditEventTypeEnum.TRANSFERED,
+        });
+
+        const savedBlock = await queryRunner.manager.save(creditBlock);
+
+        const creditTransaction = plainToClass(CreditTransactionsEntity, {
+            transferId,
             tokenId,
-            transferId: transferId,
-            batchSerialNumnber: batch,
-            serialNumnber: serialNumber,
+            creditBlock: savedBlock,
+            serialNumber: secondSerialNumber,
+            creditAmount: amount,
             project,
             sender,
             receiver,
             type: CreditEventTypeEnum.TRANSFERED,
             status: CreditEventStatusEnum.COMPLETED,
         });
-        creditEvent = await queryRunner.manager.save(creditEvent);
 
-        return creditEvent;
+        await queryRunner.manager.save(creditTransaction);
     }
 
     async releaseQueryRunner(queryRunner: QueryRunner, fn?: string) {

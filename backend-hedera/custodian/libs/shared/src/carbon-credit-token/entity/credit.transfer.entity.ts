@@ -1,5 +1,3 @@
-import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
-import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import {
     BeforeInsert,
     BeforeUpdate,
@@ -11,11 +9,14 @@ import {
 import { CreditEventTypeEnum } from '../enum/credit.event.type.enum';
 import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
 import { CreditRetirementTypeEmnum } from '../enum/credit.retirement.type.enum';
+import { ProjectEntity } from '@app/shared/project/entity/project.entity';
+import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { CreditBlocksEntity } from './credit.blocks.entity';
 
 @Entity()
-export class CreditEventsEntity {
+export class CreditTransactionsEntity {
     @PrimaryGeneratedColumn()
-    id?: number;
+    id: number;
 
     @Column()
     tokenId: string;
@@ -23,37 +24,42 @@ export class CreditEventsEntity {
     @Column({ nullable: true })
     transferId: string;
 
-    @Column()
-    batchSerialNumnber: string;
-
-    @Column()
-    serialNumnber: number;
-
     @ManyToOne(
         () => ProjectEntity,
-        (projectEntity) => projectEntity.creditEvents,
+        (projectEntity) => projectEntity.creditTransactions,
     )
     project: ProjectEntity;
 
     @ManyToOne(
         () => OrganizationEntity,
-        (organizationEntity) => organizationEntity.senderCreditEvents,
+        (organizationEntity) => organizationEntity.senderCreditBlocks,
         { nullable: true },
     )
     sender?: OrganizationEntity;
 
     @ManyToOne(
         () => OrganizationEntity,
-        (organizationEntity) => organizationEntity.receiverCreditEvents,
+        (organizationEntity) => organizationEntity.receiverCreditBlocks,
         { nullable: true },
     )
     receiver?: OrganizationEntity;
 
-    @Column({ type: 'enum', enum: CreditEventTypeEnum, nullable: false })
+    @Column({ type: 'enum', enum: CreditEventTypeEnum })
     type: CreditEventTypeEnum;
 
-    @Column({ type: 'enum', enum: CreditEventStatusEnum, nullable: false })
+    @Column({ type: 'enum', enum: CreditEventStatusEnum })
     status: CreditEventStatusEnum;
+
+    @ManyToOne(() => CreditBlocksEntity, (block) => block.transactions, {
+        nullable: true,
+    })
+    creditBlock?: CreditBlocksEntity;
+
+    @Column({ type: 'text' })
+    serialNumber: string;
+
+    @Column()
+    creditAmount: number;
 
     @Column({ type: 'enum', enum: CreditRetirementTypeEmnum, nullable: true })
     retirementType: CreditRetirementTypeEmnum;

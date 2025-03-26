@@ -8,6 +8,7 @@ import { VerificationStepProps } from './StepProps';
 export const VerificationTeamStep = (props: VerificationStepProps) => {
   const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
 
+  console.log('---------formMode--------------', formMode);
   useEffect(() => {
     if (formMode === FormMode.CREATE) {
       form.setFieldValue('verificationTeamMembers', [{ role: '' }]);

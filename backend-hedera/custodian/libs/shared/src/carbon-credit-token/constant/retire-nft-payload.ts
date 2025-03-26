@@ -1,7 +1,5 @@
 export interface RetireNFTJobPayload {
-    projectId: string;
-    transferId: string;
+    transactionId: number;
     remarks: string;
     userId: number;
-    orgId: number;
 }

@@ -67,7 +67,7 @@
   "community": "Community",
   "street": "Street Name and Number",
   "projectGeography": "Geography of the Project",
-  "projectGeographyPlaceholder": "Select project activity",
+  "projectGeographyPlaceholder": "Select geography",
   "landExtent": "Land Extent",
   "landExtentAndSpeciesPlantedInfo": "(This is applicable to Afforestation and Reforestation projects only)",
   "speciesPlanted": "Species Planted/To Be Planted",

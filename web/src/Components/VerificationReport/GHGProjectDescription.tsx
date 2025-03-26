@@ -111,7 +111,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                   form={form}
                   t={t}
                   projectCategory={null}
-                  disabled={disableFields}
+                  disabled={true}
                 ></NetEmissionReduction>
               </>
 
