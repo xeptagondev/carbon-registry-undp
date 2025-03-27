@@ -376,10 +376,6 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
               requiredMark={true}
               form={form}
               // disabled={disableFields}
-              initialValues={{
-                q_baselineEmission2:
-                  'B𝑬𝒚 = 𝑬𝑮𝒚×𝑬F𝒚\nWhere,\nB𝑬𝒚= Baseline Emissions in year y (tCO₂ₑ)\n𝑬𝑮𝒚 = Quantity of net electricity supplied to the grid as a result of the implementation of the Clean Development Mechanism (CDM) project activity in year y (MWh).\n𝑬F𝒚 = CO₂ Emission factor of the grid in the year 2020 (tCO₂/ MWh)',
-              }}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -405,9 +401,9 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                       <TextArea rows={4} disabled={disableFields} />
                     </Form.Item>
 
-                    <Form.Item name="q_baselineEmission2">
+                    {/* <Form.Item name="q_baselineEmission2">
                       <TextArea rows={4} disabled={true} />
-                    </Form.Item>
+                    </Form.Item> */}
 
                     <Form.Item
                       label={t('monitoringReport:ce_documentUpload')}

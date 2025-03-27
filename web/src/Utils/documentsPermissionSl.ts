@@ -418,20 +418,7 @@ export const activityPermissions = (
       mode: FormMode.EDIT,
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documents.MONITORING?.refId,
-    };
-  }
-
-  // MONITORING_REPORT: for PD Admin users at MONITORING_REPORT_REJECTED
-  else if (
-    docType === DocType.MONITORING_REPORT &&
-    activity.stage === ActivityStateEnum.MONITORING_REPORT_REJECTED &&
-    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
-    userInfoState?.userRole === Role.Admin
-  ) {
-    return {
-      mode: FormMode.EDIT,
-      userCompanyRole: userInfoState?.companyRole,
-      documentRefId: documents.MONITORING?.refId,
+      documents: documents,
     };
   }
 
@@ -591,6 +578,7 @@ export const activityPermissions = (
       userCompanyRole: userInfoState?.companyRole,
       documentRefId: documents.VERIFICATION?.refId,
       activityId: activity.refId,
+      documents: documents,
     };
   }
 

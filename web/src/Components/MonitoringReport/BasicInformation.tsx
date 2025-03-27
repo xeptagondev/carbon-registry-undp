@@ -15,7 +15,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
         bi_applicablePDDVersionNo: values?.bi_applicablePDDVersionNo,
         bi_completionDate: moment(values?.bi_completionDate).startOf('day').unix(),
         bi_duration: values?.bi_duration,
-        bi_projectParticipants: values?.bi_projectParticipants,
+        bi_projectDeveloper: values?.bi_projectDeveloper,
         bi_appliedMethodologies: values?.bi_appliedMethodologies,
         bi_achievedGHGReductions: values?.bi_achievedGHGReductions,
         bi_unfccRefNo: values?.bi_unfccRefNo,
@@ -166,8 +166,8 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                     </Form.Item>
 
                     <Form.Item
-                      label={t('monitoringReport:bi_projectParticipants')}
-                      name="bi_projectParticipants"
+                      label={t('monitoringReport:bi_projectDeveloper')}
+                      name="bi_projectDeveloper"
                       rules={[
                         {
                           required: true,
@@ -182,7 +182,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                               value === undefined
                             ) {
                               throw new Error(
-                                `${t('monitoringReport:bi_projectParticipants')} ${t('isRequired')}`
+                                `${t('monitoringReport:bi_projectDeveloper')} ${t('isRequired')}`
                               );
                             }
                           },
@@ -299,7 +299,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled={true} />
                     </Form.Item>
 
                     <Form.Item

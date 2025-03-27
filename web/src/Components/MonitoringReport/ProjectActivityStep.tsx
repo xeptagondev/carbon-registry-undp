@@ -242,7 +242,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   size="large"
                                   className="addMinusBtn"
                                   // block
-                                  disabled={disableFields}
+                                  disabled={true}
                                   icon={<MinusOutlined />}
                                 >
                                   {/* Remove Entity */}
@@ -484,7 +484,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     form={form}
                                     formItemName={[name, 'geographicalLocationCoordinates']}
                                     listName="locationsDetails"
-                                    disabled
+                                    disabled={true}
                                     existingCordinate={
                                       form?.getFieldValue('extraLocations')[name]
                                         ?.geographicalLocationCoordinates
@@ -523,7 +523,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                     action="/upload.do"
                                     listType="picture"
                                     multiple={false}
-                                    disabled
+                                    disabled={true}
                                     // maxCount={1}
                                   >
                                     <Button
@@ -552,7 +552,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                               className="addMinusBtn"
                               // block
                               icon={<PlusOutlined />}
-                              disabled={disableFields}
+                              disabled={true}
                             >
                               {/* Add Entity */}
                             </Button>
@@ -609,7 +609,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input disabled />
+                                <Input disabled={disableFields} />
                               </Form.Item>
                             </div>
                             <div className="col-2">
@@ -647,7 +647,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                             },
                                           ]}
                                         >
-                                          <Input disabled />
+                                          <Input disabled={disableFields} />
                                         </Form.Item>
 
                                         <Form.Item>
@@ -660,7 +660,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                             className="addMinusBtn"
                                             // block
                                             icon={<PlusOutlined />}
-                                            disabled
+                                            disabled={disableFields}
                                           >
                                             {/* Add Participant */}
                                           </Button>
@@ -677,7 +677,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                               className="addMinusBtn"
                                               // block
                                               icon={<MinusOutlined />}
-                                              disabled
+                                              disabled={disableFields}
                                             >
                                               {/* Minus Participant */}
                                             </Button>
@@ -692,10 +692,10 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                           </div>
                         ))}
 
-                        <div>
+                        <div className="btn">
                           <Form.Item>
                             <Button
-                              disabled
+                              disabled={disableFields}
                               onClick={() => {
                                 // add();
                                 const temp = form.getFieldValue('projectParticipants');
@@ -715,68 +715,67 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                       </>
                     )}
                   </Form.List>
-                  {/* <Form.List name="projectParticipants">
-                                    {(fields, { add, remove }) => (
-                                      <>
-                                        1212345
-                                        <>{console.log('fields', fields[0])}</>
-                                        {fields.map(({ key, name, ...restField }) => {
-                                          <div>
-                                            123
-                                            <div className="col-1">
-                                              a
-                                              <Form.Item
-                                                name={[name, 'partiesInvolved']}
-                                                rules={[
-                                                  {
-                                                    validator: async (rule, value) => {
-                                                      if (
-                                                        String(value).trim() === '' ||
-                                                        String(value).trim() === undefined ||
-                                                        value === null ||
-                                                        value === undefined
-                                                      ) {
-                                                        throw new Error(
-                                                          `${t('PDD:partiesInvolved')} ${t('isRequired')}`
-                                                        );
-                                                      }
-                                                    },
-                                                  },
-                                                ]}
-                                              >
-                                                <Input />
-                                              </Form.Item>
-                                            </div>
-                                            <div className="col-2">
-                                              b
-                                              <Form.Item
-                                                name={[name, 'projectParticipant']}
-                                                rules={[
-                                                  {
-                                                    validator: async (rule, value) => {
-                                                      if (
-                                                        String(value).trim() === '' ||
-                                                        String(value).trim() === undefined ||
-                                                        value === null ||
-                                                        value === undefined
-                                                      ) {
-                                                        throw new Error(
-                                                          `${t('PDD:projectParticipant')} ${t('isRequired')}`
-                                                        );
-                                                      }
-                                                    },
-                                                  },
-                                                ]}
-                                              >
-                                                <Input />
-                                              </Form.Item>
-                                            </div>
-                                            <button onClick={add}>+</button>
-                                          </div>;
-                                        })}
-                                      </>
-                                    )}
-                                  </Form.List> */}
+                  <Form.List name="projectParticipants">
+                    {(fields, { add, remove }) => (
+                      <>
+                        <>{console.log('fields', fields[0])}</>
+                        {fields.map(({ key, name, ...restField }) => {
+                          <div>
+                            123
+                            <div className="col-1">
+                              a
+                              <Form.Item
+                                name={[name, 'partiesInvolved']}
+                                rules={[
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('PDD:partiesInvolved')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Input />
+                              </Form.Item>
+                            </div>
+                            <div className="col-2">
+                              b
+                              <Form.Item
+                                name={[name, 'projectParticipant']}
+                                rules={[
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('PDD:projectParticipant')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Input />
+                              </Form.Item>
+                            </div>
+                            <button onClick={add}>+</button>
+                          </div>;
+                        })}
+                      </>
+                    )}
+                  </Form.List>
                 </div>
               </div>
               {/* project participant table end */}
