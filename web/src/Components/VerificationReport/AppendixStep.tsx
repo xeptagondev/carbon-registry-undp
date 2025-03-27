@@ -552,6 +552,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                           >
                             <DatePicker
                               size="large"
+                              disabled={disableFields}
                               disabledDate={(currentDate: any) =>
                                 currentDate < moment().startOf('day')
                               }
@@ -612,6 +613,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             // ]}
                           >
                             <DatePicker
+                              disabled={disableFields}
                               size="large"
                               disabledDate={(currentDate: any) =>
                                 currentDate < moment().startOf('day')
@@ -659,6 +661,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             // ]}
                           >
                             <DatePicker
+                              disabled={disableFields}
                               size="large"
                               disabledDate={(currentDate: any) =>
                                 currentDate < moment().startOf('day')

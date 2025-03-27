@@ -41,6 +41,7 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
   const [monitoringReportPermissions, setMonitoringReportPermissions] = useState<
     IPermissionsState[]
   >([]);
+
   const [verificationReportPermissions, setVerificationReportPermissions] = useState<
     IPermissionsState[]
   >([]);
@@ -53,132 +54,146 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
   };
 
   const navigateToVerificationReport = (permissionsState: IPermissionsState) => {
+    console.log('---------verification permissions-----------', permissionsState);
     navigate(ROUTES.VERIFICATION_REPORT(id as string), {
-      state: { permissionsState },
+      state: permissionsState,
     });
   };
 
   useEffect(() => {
-    activityData.forEach((activity) => {
-      const tempMonitoringReportPermissions = activityPermissions(
-        userInfoState,
-        DocType.MONITORING_REPORT,
-        activity.stage as ActivityStateEnum,
-        activity.documents[DocumentEnum.MONITORING as any]?.refId
-      );
+    const generatePermissions = () => {
+      const monitoringPermissions: IPermissionsState[] = [];
+      const verificationPermissions: IPermissionsState[] = [];
 
-      const tempVerificationReportPermissions = activityPermissions(
-        userInfoState,
-        DocType.VERIFICATION_REPORT,
-        activity.stage as ActivityStateEnum,
-        activity.documents[DocumentEnum.VERIFICATION as any]?.refId,
-        activity?.refId
-      );
+      console.log('-----------activityData---------', activityData);
 
-      const temp = [
-        {
-          title: (
-            <>
-              <Row className="document-info-row-first">
-                <Col md={18} className="documentTitle-col">
-                  Monitoring Report
-                </Col>
-                <Col md={6} className="documentAction-col">
-                  <Button
-                    className="document-action-btn"
-                    onClick={() => {
-                      console.log('----------clidke 111');
-                      navigateToMonitoringReport(tempMonitoringReportPermissions);
-                    }}
-                    disabled={tempMonitoringReportPermissions?.mode === FormMode?.DISABLED}
-                  >
-                    {tempMonitoringReportPermissions?.mode === FormMode.CREATE
-                      ? 'CREATE'
-                      : tempMonitoringReportPermissions?.mode === FormMode.VERIFY
-                      ? 'VERIFY'
-                      : tempMonitoringReportPermissions?.mode === FormMode.EDIT
-                      ? 'EDIT'
-                      : 'VIEW'}
-                  </Button>
-                </Col>
-              </Row>
-            </>
-          ),
-          icon: (
-            <span
-              className={
-                activity.stage === ActivityStateEnum.MONITORING_REPORT_UPLOADED
-                  ? 'step-icon-submitted'
-                  : activity.stage === ActivityStateEnum.MONITORING_REPORT_REJECTED
-                  ? 'step-icon-rejected'
-                  : 'step-icon-completed'
-              }
-            >
-              {activity.stage === ActivityStateEnum.MONITORING_REPORT_UPLOADED ? (
-                <Icon.FileText />
-              ) : activity.stage === ActivityStateEnum.MONITORING_REPORT_REJECTED ? (
-                <CloseOutlined />
-              ) : (
-                <Icon.Check />
-              )}
-            </span>
-          ),
-        },
-        {
-          title: (
-            <>
-              <Row className="document-info-row-first">
-                <Col md={18} className="documentTitle-col">
-                  Verification Report
-                </Col>
-                <Col md={6} className="documentAction-col">
-                  <Button
-                    className="document-action-btn"
-                    onClick={() => {
-                      navigateToVerificationReport(tempVerificationReportPermissions);
-                    }}
-                    disabled={tempVerificationReportPermissions?.mode === FormMode?.DISABLED}
-                  >
-                    {tempVerificationReportPermissions?.mode === FormMode.CREATE
-                      ? 'CREATE'
-                      : tempVerificationReportPermissions?.mode === FormMode.VERIFY
-                      ? 'VERIFY'
-                      : tempVerificationReportPermissions?.mode === FormMode.EDIT
-                      ? 'EDIT'
-                      : 'VIEW'}
-                  </Button>
-                </Col>
-              </Row>
-            </>
-          ),
-          icon: (
-            <span
-              className={
-                activity.stage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED
-                  ? 'step-icon-submitted'
-                  : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED
-                  ? 'step-icon-rejected'
-                  : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
-                  ? 'step-icon-completed'
-                  : 'step-icon-pending'
-              }
-            >
-              {activity.stage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED ? (
-                <Icon.FileText />
-              ) : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED ? (
-                <CloseOutlined />
-              ) : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED ? (
-                <Icon.Check />
-              ) : (
-                <Icon.Hourglass />
-              )}
-            </span>
-          ),
-        },
-      ];
+      activityData.forEach((activity, index) => {
+        const tempMonitoringReportPermissions = activityPermissions(
+          userInfoState,
+          DocType.MONITORING_REPORT,
+          activity,
+          documents
+        );
 
-      setItems((prev) => [...prev, temp]);
-    });
+        // monitoringPermissions.push(tempMonitoringReportPermissions as IPermissionsState);
+
+        const tempVerificationReportPermissions = activityPermissions(
+          userInfoState,
+          DocType.VERIFICATION_REPORT,
+          activity,
+          documents
+        );
+
+        // verificationPermissions.push(tempVerificationReportPermissions as IPermissionsState);
+
+        const temp = [
+          {
+            title: (
+              <>
+                <Row className="document-info-row-first">
+                  <Col md={18} className="documentTitle-col">
+                    Monitoring Report
+                  </Col>
+                  <Col md={6} className="documentAction-col">
+                    <Button
+                      className="document-action-btn"
+                      onClick={() => {
+                        console.log('----------clidke 111');
+                        navigateToMonitoringReport(tempMonitoringReportPermissions);
+                      }}
+                      disabled={tempMonitoringReportPermissions?.mode === FormMode?.DISABLED}
+                    >
+                      {tempMonitoringReportPermissions?.mode === FormMode.CREATE
+                        ? 'CREATE'
+                        : tempMonitoringReportPermissions?.mode === FormMode.VERIFY
+                        ? 'VERIFY'
+                        : tempMonitoringReportPermissions?.mode === FormMode.EDIT
+                        ? 'EDIT'
+                        : 'VIEW'}
+                    </Button>
+                  </Col>
+                </Row>
+              </>
+            ),
+            icon: (
+              <span
+                className={
+                  activity.stage === ActivityStateEnum.MONITORING_REPORT_UPLOADED
+                    ? 'step-icon-submitted'
+                    : activity.stage === ActivityStateEnum.MONITORING_REPORT_REJECTED
+                    ? 'step-icon-rejected'
+                    : 'step-icon-completed'
+                }
+              >
+                {activity.stage === ActivityStateEnum.MONITORING_REPORT_UPLOADED ? (
+                  <Icon.FileText />
+                ) : activity.stage === ActivityStateEnum.MONITORING_REPORT_REJECTED ? (
+                  <CloseOutlined />
+                ) : (
+                  <Icon.Check />
+                )}
+              </span>
+            ),
+          },
+          {
+            title: (
+              <>
+                <Row className="document-info-row-first">
+                  <Col md={18} className="documentTitle-col">
+                    Verification Report
+                  </Col>
+                  <Col md={6} className="documentAction-col">
+                    <Button
+                      className="document-action-btn"
+                      onClick={() => {
+                        navigateToVerificationReport(tempVerificationReportPermissions);
+                      }}
+                      disabled={tempVerificationReportPermissions?.mode === FormMode?.DISABLED}
+                    >
+                      {tempVerificationReportPermissions?.mode === FormMode.CREATE
+                        ? 'CREATE'
+                        : tempVerificationReportPermissions?.mode === FormMode.VERIFY
+                        ? 'VERIFY'
+                        : tempVerificationReportPermissions?.mode === FormMode.EDIT
+                        ? 'EDIT'
+                        : 'VIEW'}
+                    </Button>
+                  </Col>
+                </Row>
+              </>
+            ),
+            icon: (
+              <span
+                className={
+                  activity.stage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED
+                    ? 'step-icon-submitted'
+                    : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED
+                    ? 'step-icon-rejected'
+                    : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
+                    ? 'step-icon-completed'
+                    : 'step-icon-pending'
+                }
+              >
+                {activity.stage === ActivityStateEnum.VERIFICATION_REPORT_UPLOADED ? (
+                  <Icon.FileText />
+                ) : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_REJECTED ? (
+                  <CloseOutlined />
+                ) : activity.stage === ActivityStateEnum.VERIFICATION_REPORT_VERIFIED ? (
+                  <Icon.Check />
+                ) : (
+                  <Icon.Hourglass />
+                )}
+              </span>
+            ),
+          },
+        ];
+
+        setItems((prev) => [...prev, temp]);
+      });
+      setMonitoringReportPermissions(monitoringPermissions);
+      setVerificationReportPermissions(verificationPermissions);
+    };
+    generatePermissions();
   }, []);
 
   return (
