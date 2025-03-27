@@ -7,6 +7,8 @@ export const ROUTES = {
   //PROGRAMME_DETAILS_BY_PROGRAMME_ID: (programId: string) => `/programmeManagement/view/${programId}`,
   ADD_PROGRAMME: '/programmeManagement/addProgramme',
   ADD_INVESTMENT_TO_PROGRAMME: '/programmeManagement/addInvestment',
+  // PROGRAMME VIEW -> INF VIEW
+  INF_VIEW: (id: string) => `/programmeManagement/addProgramme/${id}`,
   //USERS
   VIEW_USERS: '/userManagement/viewAll',
   VIEW_USER_PROFILE: '/userProfile/view',

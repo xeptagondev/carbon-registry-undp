@@ -110,7 +110,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
         if (res?.statusText === 'SUCCESS') {
           message.open({
             type: 'success',
-            content: 'Monitoring report was approved successfully',
+            content: 'Verification report was approved successfully',
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
@@ -119,13 +119,23 @@ export const AppendixStep = (props: VerificationStepProps) => {
             next();
           }
         }
-      } catch (error) {
-        message.open({
-          type: 'error',
-          content: t('common:somethingWentWrong'),
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
+      } catch (error: any) {
+        console.log('--------------error----------------', error);
+        if (error?.status === 401) {
+          message.open({
+            type: 'error',
+            content: error.message,
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+        } else {
+          message.open({
+            type: 'error',
+            content: t('common:somethingWentWrong'),
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+        }
       } finally {
         if (handleLoading) {
           handleLoading(false);
@@ -150,7 +160,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
         if (res?.statusText === 'SUCCESS') {
           message.open({
             type: 'success',
-            content: 'Monitoring report rejected',
+            content: 'Verification report rejected',
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
@@ -317,7 +327,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             className="upload-doc"
                             size="large"
                             icon={<UploadOutlined />}
-                            // disabled={disableFields}
+                            disabled={disableFields}
                           >
                             {t('verificationReport:upload')}
                           </Button>
@@ -480,6 +490,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                                         size="small"
                                         className="addMinusBtn"
                                         icon={<PlusOutlined />}
+                                        disabled={disableFields}
                                       ></Button>
                                     </Form.Item>
                                     {name > 0 && (
@@ -552,6 +563,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                           >
                             <DatePicker
                               size="large"
+                              disabled={disableFields}
                               disabledDate={(currentDate: any) =>
                                 currentDate < moment().startOf('day')
                               }
@@ -612,6 +624,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             // ]}
                           >
                             <DatePicker
+                              disabled={disableFields}
                               size="large"
                               disabledDate={(currentDate: any) =>
                                 currentDate < moment().startOf('day')
@@ -659,6 +672,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                             // ]}
                           >
                             <DatePicker
+                              disabled={disableFields}
                               size="large"
                               disabledDate={(currentDate: any) =>
                                 currentDate < moment().startOf('day')

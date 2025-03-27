@@ -77,7 +77,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={6} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -92,7 +92,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={6} disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
@@ -116,7 +116,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
               </>
 
               <Row justify={'end'} className="step-actions-end">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button danger onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
                 {disableFields ? (
