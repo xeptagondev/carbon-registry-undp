@@ -49,12 +49,10 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
   const [items, setItems] = useState<any[]>([]);
 
   const navigateToMonitoringReport = (permissionsState: IPermissionsState) => {
-    console.log('-------click---------');
     navigate(ROUTES.MONITORING_REPORT_CREATE(id as string), { state: permissionsState });
   };
 
   const navigateToVerificationReport = (permissionsState: IPermissionsState) => {
-    console.log('---------verification permissions-----------', permissionsState);
     navigate(ROUTES.VERIFICATION_REPORT(id as string), {
       state: permissionsState,
     });
@@ -64,8 +62,6 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
     const generatePermissions = () => {
       const monitoringPermissions: IPermissionsState[] = [];
       const verificationPermissions: IPermissionsState[] = [];
-
-      console.log('-----------activityData---------', activityData);
 
       activityData.forEach((activity, index) => {
         const tempMonitoringReportPermissions = activityPermissions(
