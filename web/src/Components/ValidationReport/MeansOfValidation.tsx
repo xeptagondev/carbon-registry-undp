@@ -637,6 +637,7 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
                                     size="small"
                                     className="addMinusBtn"
                                     icon={<PlusOutlined />}
+                                    disabled={disableFields}
                                   ></Button>
                                 </Form.Item>
                                 {name > 0 && (
