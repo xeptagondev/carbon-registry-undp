@@ -466,9 +466,10 @@ export class VerificationDocumentService extends DocumentService {
                 const metadata = Uint8Array.from(
                     Buffer.from(documentEntity?.project?.refId, 'utf8'),
                 );
-                const creditAmount =
+                const creditAmount = Number(
                     documentEntity?.data?.ghgProjectDescription
-                        ?.totalNetEmissionReductions;
+                        ?.totalNetEmissionReductions,
+                );
 
                 if (
                     documentEntity?.project?.creditEst <
