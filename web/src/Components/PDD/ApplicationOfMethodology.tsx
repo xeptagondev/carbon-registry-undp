@@ -387,7 +387,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   <div className="data-side">
                     <div className="header-row">
                       <div className="col1">Source</div>
-                      <div className="col2"></div>
+                      <div className="col2">GHG</div>
                       <div className="col3">Included?</div>
                       <div className="col4">Justification/Explanation</div>
                     </div>
