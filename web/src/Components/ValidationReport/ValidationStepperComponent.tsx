@@ -165,92 +165,180 @@ const StepperComponent = (props: any) => {
   const [form8] = useForm();
   const [form9] = useForm();
 
-  const getProgrammeDetailsById = async (programId: any) => {
-    try {
-      setLoading(true);
-      const { data } = await post(API_PATHS.PROGRAMME_BY_ID, {
-        programmeId: programId,
-      });
-      // const {
-      //   data: { user },
-      // } = await get(API_PATHS.USER_PROFILE);
-      if (state?.mode === FormMode?.CREATE) {
-        console.log('-------data INF ---------', data);
-        form1.setFieldsValue({
-          titleOfTheProjectActivity: data?.title,
-          mandatarySectoralScopes: data?.sectoralScope,
-          projectParticipants: data?.projectParticipant,
-        });
-      }
-      setExistingFormValues((prevVal) => ({
-        ...prevVal,
-        // companyId: data?.company?.companyId,
-      }));
-    } catch (error) {
-      console.log('error', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchAndSetProgrammeData = async (programId: any) => {
+    setLoading(true);
 
-  const getPDDData = async () => {
+    let programmeData = null;
+    let pddData = null;
+
     try {
-      const res = await post(API_PATHS.QUERY_DOCUMENT, {
+      // Fetch Programme Data
+      const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, { programmeId: programId });
+      if (programmeResponse?.statusText === 'SUCCESS') {
+        programmeData = programmeResponse?.data;
+        console.log('-----------------Programme Data-----------------', programmeData);
+      } else {
+        console.log('Error: Programme API did not return SUCCESS status');
+      }
+    } catch (error) {
+      console.log('Error fetching programme data:', error);
+    }
+
+    try {
+      // Fetch PDD Data
+      const pddResponse = await post(API_PATHS.QUERY_DOCUMENT, {
         refId: state?.documents?.PDD?.refId,
         documentType: DocumentEnum.PDD,
       });
-      console.log('-----------PDD data ----------', res);
-      if (res?.statusText === 'SUCCESS') {
-        const data = res?.data;
-        console.log('-----------data----------------', data);
-        form1.setFieldsValue({
-          versionNumberPDD: data?.version,
-          hostParty: data?.data?.projectDetails?.hostParty,
-          creditingPeriod: data?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
-          creditingPeriodStart: moment.unix(
-            data?.data?.startDateCreditingPeriod?.projectCreditingPeriodStartDate
-          ),
-          creditingPeriodEnd: moment.unix(
-            data?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate
-          ),
-          locationOfProjectActivity:
-            data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.locationOfProjectActivity,
-          siteNo: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.siteNo,
-          province: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.province,
-          district: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.district,
-          city: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.city,
-          community: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.community,
-          geographicalLocationCoordinates:
-            data?.data?.projectActivity?.locationsOfProjectActivity?.[0]
-              ?.geographicalLocationCoordinates,
-          optionalImages: mapBase64ToFields(
-            data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
-          ),
-          extraLocations: data?.data?.projectActivity?.locationsOfProjectActivity
-            ?.slice(1)
-            ?.map((location: any) => ({
-              ...location,
-              optionalImages: mapBase64ToFields(location?.additionalDocuments),
-            })),
-        });
-        form2.setFieldsValue({
-          estimatedNetEmissionReductions:
-            data?.data?.applicationOfMethodology?.netGHGEmissionReductions?.yearlyGHGEmissionReductions?.map(
-              (emissionData: any) => ({
-                startDate: moment.unix(emissionData.startDate),
-                endDate: moment.unix(emissionData.endDate),
-              })
-            ),
-          baselineEmissionReductions: 0,
-          baselineEmissions: data?.data?.projectActivity?.locationsOfProjectActivity?.map(
-            (loc: any) => ({ location: loc.locationOfProjectActivity })
-          ),
-        });
+      console.log('-----------------PDD Response-----------------', pddResponse);
+      if (pddResponse?.statusText === 'SUCCESS') {
+        pddData = pddResponse?.data;
+      } else {
+        console.log('Error: PDD API did not return SUCCESS status');
       }
     } catch (error) {
-      console.log('error', error);
+      console.log('Error fetching PDD data:', error);
     }
+
+    if (programmeData && pddData) {
+      form1.setFieldsValue({
+        titleOfTheProjectActivity: programmeData?.title,
+        mandatarySectoralScopes: programmeData?.sectoralScope,
+        projectDeveloper: programmeData?.projectParticipant,
+        versionNumberPDD: pddData?.data?.projectDetails?.versionNumber,
+        hostParty: pddData?.data?.projectDetails?.hostParty,
+        creditingPeriod: pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
+        creditingPeriodStart: pddData?.data?.startDateCreditingPeriod
+          ?.projectCreditingPeriodStartDate
+          ? moment.unix(pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodStartDate)
+          : null,
+        creditingPeriodEnd: pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate
+          ? moment.unix(pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate)
+          : null,
+        locationOfProjectActivity:
+          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+            ?.locationOfProjectActivity,
+        siteNo: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.siteNo,
+        province: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.province,
+        district: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.district,
+        city: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.city,
+        community: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.community,
+        geographicalLocationCoordinates:
+          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+            ?.geographicalLocationCoordinates,
+        optionalImages: mapBase64ToFields(
+          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
+        ),
+        extraLocations: pddData?.data?.projectActivity?.locationsOfProjectActivity
+          ?.slice(1)
+          ?.map((location: any) => ({
+            ...location,
+            optionalImages: mapBase64ToFields(location?.additionalDocuments),
+          })),
+      });
+
+      form2.setFieldsValue({
+        estimatedNetEmissionReductions:
+          pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions?.yearlyGHGEmissionReductions?.map(
+            (emissionData: any) => ({
+              startDate: moment.unix(emissionData.startDate),
+              endDate: moment.unix(emissionData.endDate),
+            })
+          ),
+        baselineEmissionReductions: 0,
+        baselineEmissions: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
+          (loc: any) => ({ location: loc.locationOfProjectActivity })
+        ),
+      });
+    }
+
+    setLoading(false);
   };
+
+  // const getProgrammeDetailsById = async (programId: any) => {
+  //   try {
+  //     setLoading(true);
+  //     const { data } = await post(API_PATHS.PROGRAMME_BY_ID, {
+  //       programmeId: programId,
+  //     });
+
+  //     if (state?.mode === FormMode?.CREATE) {
+  //       console.log('-------data INF ---------', data);
+  //       form1.setFieldsValue({
+  //         titleOfTheProjectActivity: data?.title,
+  //         mandatarySectoralScopes: data?.sectoralScope,
+  //         projectDeveloper: data?.projectParticipant,
+  //       });
+  //     }
+  //     setExistingFormValues((prevVal) => ({
+  //       ...prevVal,
+  //       // companyId: data?.company?.companyId,
+  //     }));
+  //   } catch (error) {
+  //     console.log('error', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const getPDDData = async () => {
+  //   try {
+  //     const res = await post(API_PATHS.QUERY_DOCUMENT, {
+  //       refId: state?.documents?.PDD?.refId,
+  //       documentType: DocumentEnum.PDD,
+  //     });
+  //     console.log('-----------PDD data ----------', res);
+  //     if (res?.statusText === 'SUCCESS') {
+  //       const data = res?.data;
+  //       console.log('-----------data----------------', data);
+  //       form1.setFieldsValue({
+  //         versionNumberPDD: data?.version,
+  //         hostParty: data?.data?.projectDetails?.hostParty,
+  //         creditingPeriod: data?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
+  //         creditingPeriodStart: moment.unix(
+  //           data?.data?.startDateCreditingPeriod?.projectCreditingPeriodStartDate
+  //         ),
+  //         creditingPeriodEnd: moment.unix(
+  //           data?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate
+  //         ),
+  //         locationOfProjectActivity:
+  //           data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.locationOfProjectActivity,
+  //         siteNo: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.siteNo,
+  //         province: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.province,
+  //         district: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.district,
+  //         city: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.city,
+  //         community: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.community,
+  //         geographicalLocationCoordinates:
+  //           data?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+  //             ?.geographicalLocationCoordinates,
+  //         optionalImages: mapBase64ToFields(
+  //           data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
+  //         ),
+  //         extraLocations: data?.data?.projectActivity?.locationsOfProjectActivity
+  //           ?.slice(1)
+  //           ?.map((location: any) => ({
+  //             ...location,
+  //             optionalImages: mapBase64ToFields(location?.additionalDocuments),
+  //           })),
+  //       });
+  //       form2.setFieldsValue({
+  //         estimatedNetEmissionReductions:
+  //           data?.data?.applicationOfMethodology?.netGHGEmissionReductions?.yearlyGHGEmissionReductions?.map(
+  //             (emissionData: any) => ({
+  //               startDate: moment.unix(emissionData.startDate),
+  //               endDate: moment.unix(emissionData.endDate),
+  //             })
+  //           ),
+  //         baselineEmissionReductions: 0,
+  //         baselineEmissions: data?.data?.projectActivity?.locationsOfProjectActivity?.map(
+  //           (loc: any) => ({ location: loc.locationOfProjectActivity })
+  //         ),
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.log('error', error);
+  //   }
+  // };
 
   const setLatestVersion = () => {
     if (state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) {
@@ -260,207 +348,6 @@ const StepperComponent = (props: any) => {
       });
     }
   };
-
-  // const getProgrammeDetailsById = async (id: string) => {
-  //   try {
-  //     const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-  //       programmeId: id,
-  //     });
-
-  //     const {
-  //       data: { user },
-  //     } = await get(API_PATHS.USER_PROFILE);
-
-  //     form1.setFieldsValue({
-  //       projectTitle: data?.title,
-  //       dateOfIssue: moment(),
-  //       client: data.title,
-  //     });
-
-  //     setProjectCategory(data?.projectCategory);
-
-  //     setExistingFormValues((prevVal) => ({
-  //       ...prevVal,
-  //       companyId: data?.company?.companyId,
-  //     }));
-  //   } catch (error) {
-  //     console.log('error');
-  //   }
-  // };
-
-  // const getCountryList = async () => {
-  //   try {
-  //     const response = await get(API_PATHS.COUNTRY_LIST);
-  //     if (response.data) {
-  //       const alpha2Names = response.data.map((item: any) => {
-  //         return item.alpha2;
-  //       });
-  //       setCountries(alpha2Names);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
-  // const getCMALastVersion = async (id: string) => {
-  //   try {
-  //     const {
-  //       data: { content },
-  //     } = await post(API_PATHS.LAST_DOC_VERSION, {
-  //       programmeId: id,
-  //       docType: 'cma',
-  //     });
-
-  //     const projectContent = JSON.parse(content);
-
-  //     form1.setFieldsValue({
-  //       telephone: projectContent?.projectDetails?.telephone,
-  //       email: projectContent?.projectDetails?.email,
-  //       address: projectContent?.projectDetails?.physicalAddress,
-  //       website: projectContent?.projectDetails?.website,
-  //       reportNo: `SLCCS/VDR/${new Date().getFullYear()}/${id}`,
-  //       workCarriedOutBy: `Validation Division - ${registryName}`,
-  //     });
-
-  //     form2.setFieldsValue({
-  //       titleOfProjectActivity: projectContent?.projectDetails?.title,
-  //       projectParticipant: projectContent?.projectActivity?.projectProponent?.organizationName,
-  //     });
-
-  //     form3.setFieldsValue({
-  //       creditingPeriod: Number(projectContent?.projectActivity?.totalCreditingYears),
-  //       startDateCreditingPeriod: moment(
-  //         projectContent?.projectActivity?.creditingPeriodStartDate * 1000
-  //       ),
-  //       locationsOfProjectActivity: projectContent?.projectActivity.locationsOfProjectActivity.map(
-  //         (location: any) => {
-  //           return {
-  //             ...location,
-  //             additionalDocuments:
-  //               location.additionalDocuments && location.additionalDocuments?.length > 0
-  //                 ? location.additionalDocuments?.map((document: string, index: number) => {
-  //                     return {
-  //                       uid: index,
-  //                       name: extractFilePropertiesFromLink(document).fileName,
-  //                       status: 'done',
-  //                       url: document,
-  //                     };
-  //                   })
-  //                 : [],
-  //             technicalProjectDescriptionItems: [
-  //               {
-  //                 item: '',
-  //                 parameterValue: [
-  //                   {
-  //                     parameter: '',
-  //                     value: '',
-  //                   },
-  //                 ],
-  //               },
-  //             ],
-  //           };
-  //         }
-  //       ),
-  //     });
-
-  //     form4.setFieldsValue({
-  //       validationReportFinding: [
-  //         {
-  //           typeOfFinding: '',
-  //           findingNo: '',
-  //           rfToCMA: '',
-  //           actionRequestsByValidationTeam: '',
-  //           summaryOfProjectOwnerResponse: '',
-  //           validationTeamAssessment: '',
-  //           conclusion: [],
-  //         },
-  //       ],
-  //       teamMembers: [
-  //         {
-  //           name: '',
-  //           company: `${t('validationReport:ClimateFund', { countryName: countryName })}`,
-  //           function: '',
-  //           taskPerformed: '',
-  //         },
-  //       ],
-  //       followupInterviews: [
-  //         {
-  //           name: '',
-  //           designation: '',
-  //           organization: '',
-  //         },
-  //       ],
-  //     });
-
-  //     form5.setFieldsValue({
-  //       employedTechnologies: projectContent?.projectActivity.locationsOfProjectActivity.map(
-  //         (location: any, index: number) => {
-  //           return {
-  //             siteNo: index + 1,
-  //             location: location.locationOfProjectActivity,
-  //             capacity: '',
-  //           };
-  //         }
-  //       ),
-  //       gridEmissionFactorUnit: 'tCO2e/MWh',
-  //       gridEmissionFactorValueGlobal: 0.72222,
-  //       baselineEmissions: [
-  //         ...projectContent?.projectActivity.locationsOfProjectActivity.map(
-  //           (location: any, index: number) => {
-  //             return {
-  //               type: 'value',
-  //               location: location.locationOfProjectActivity,
-  //               projectCapacityValue: '',
-  //               plantFactorValue: '',
-  //               avgEnergyOutputValue: '',
-  //               gridEmissionFactorValue: '',
-  //               emissionReductionValue: '',
-  //             };
-  //           }
-  //         ),
-  //       ],
-  //       estimatedNetEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.yearlyGHGEmissionReductions.map(
-  //           (emissionData: any) => {
-  //             return {
-  //               startDate: moment(emissionData.startDate * 1000),
-  //               endDate: moment(emissionData.endDate * 1000),
-  //               baselineEmissionReductions: emissionData.baselineEmissionReductions,
-  //               projectEmissionReductions: emissionData.projectEmissionReductions,
-  //               leakageEmissionReductions: emissionData.leakageEmissionReductions,
-  //               netEmissionReductions: emissionData.netEmissionReductions,
-  //             };
-  //           }
-  //         ),
-  //       totalBaselineEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.totalBaselineEmissionReductions,
-  //       totalProjectEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.totalProjectEmissionReductions,
-  //       totalLeakageEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.totalLeakageEmissionReductions,
-  //       totalNetEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.totalNetEmissionReductions,
-  //       avgBaselineEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.avgBaselineEmissionReductions,
-  //       avgProjectEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.avgProjectEmissionReductions,
-  //       avgLeakageEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.avgLeakageEmissionReductions,
-  //       avgNetEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.avgNetEmissionReductions,
-  //       totalNumberOfCredingYears:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.totalNumberOfCredingYears,
-  //     });
-  //   } catch (error) {
-  //     console.log('error');
-  //   }
-  // };
 
   const handleValuesUpdate = (val: any) => {
     setExistingFormValues((prevVal: any) => {
@@ -474,8 +361,7 @@ const StepperComponent = (props: any) => {
 
   useEffect(() => {
     if (state?.mode === FormMode?.CREATE) {
-      getPDDData();
-      getProgrammeDetailsById(id);
+      fetchAndSetProgrammeData(id);
     }
     setLatestVersion();
   }, [id]);

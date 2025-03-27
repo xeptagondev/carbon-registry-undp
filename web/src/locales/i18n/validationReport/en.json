@@ -65,6 +65,7 @@
   "pddUploadedGlobalStakeholderConsultation": "Date when PDD was uploaded for global stakeholder consultation",
   "hostParty": "Host Party",
   "annualAverageGHGReduction": "Estimated amount of annual average GHG emission reductions or GHG removals by sinks",
+  "unfccRefNo": "UNFCCC reference number of the project activity",
   "validationReportApproverSectionTitle": "Approver of the Validation Report",
   "independentCertifierSectionTitle": "Independent Certifier",
   "approverName": "Name",

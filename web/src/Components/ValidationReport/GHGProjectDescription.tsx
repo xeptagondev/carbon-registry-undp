@@ -200,7 +200,7 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input disabled={true} />
+                                <Input disabled={disableFields} />
                               </Form.Item>
                             </Col>
                             <Col xl={3}>
