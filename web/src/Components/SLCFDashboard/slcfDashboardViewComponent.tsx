@@ -152,13 +152,13 @@ export const SLCFDashboardComponent = (props: any) => {
 
   // Chart Components Width
   const [statusBarchartWidth, setStatusBarChartWidth] = useState(
-    window.innerWidth > 1600 ? '1150px' : '1000px'
+    window.innerWidth > 1600 ? '370%' : '300%'
   );
   const [scopeBarchartWidth, setScopeBarChartWidth] = useState(
     window.innerWidth > 1600 ? '270%' : '220%'
   );
   const [creditChartsWidth, setCreditChartsWidth] = useState(
-    window.innerWidth > 1600 ? '1515px' : '1130px'
+    window.innerWidth > 1600 ? '440%' : '390%'
   );
 
   const getPendingActions = async () => {
@@ -871,7 +871,7 @@ export const SLCFDashboardComponent = (props: any) => {
                     type={overallMineButton === OverallMineButtons.MINE ? 'primary' : 'default'}
                     className="slcf-default"
                   >
-                    {OverallMineButtons.MINE}
+                    MY ORGANISATION
                   </Button>
                 </ButtonGroup>
               ) : (

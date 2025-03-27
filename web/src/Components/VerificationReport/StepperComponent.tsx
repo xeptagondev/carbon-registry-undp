@@ -264,9 +264,11 @@ const StepperComponent = (props: VerificationStepProps) => {
   };
 
   useEffect(() => {
-    getValidationData();
-    getMonitoringData();
-    getPDDData();
+    if (state?.mode === FormMode.CREATE) {
+      getValidationData();
+      getMonitoringData();
+      getPDDData();
+    }
   }, []);
 
   const [documentId, setDocumentId] = useState<string>();
