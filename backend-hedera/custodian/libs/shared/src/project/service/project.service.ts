@@ -98,13 +98,16 @@ export class ProjectService {
                 .offset(offset)
                 .limit(size);
 
+            const order = {};
+            order[sortKey.replace('project.', '')] = sortOrder;
+
             const [projects, total] = await qb.getManyAndCount();
 
             const projectIds = projects.map((p) => p.id);
             const projectsWithDocuments = await this.projectRepository.find({
                 where: { id: In(projectIds) },
                 relations: ['documents', 'assignees', 'organization'],
-                order: { createdDate: sortOrder as 'ASC' | 'DESC' },
+                order: order,
             });
 
             const oldFormatData = [];
@@ -149,6 +152,7 @@ export class ProjectService {
         mappedProject.authoroiseLetterUrl = project.authoroiseLetterUrl;
         mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
         mappedProject.sectoralScope = project.sectoralScope;
+        mappedProject.serialNo = project.serialNumber;
         mappedProject.title = project.title;
         mappedProject.tokenId = project.tokenId;
         mappedProject.creditEst = project.creditEst;

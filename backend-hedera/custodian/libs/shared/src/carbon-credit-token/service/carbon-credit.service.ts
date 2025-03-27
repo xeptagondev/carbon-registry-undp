@@ -21,7 +21,6 @@ import { RetireActionDto } from '../dto/retire.action.dto';
 import { RetirementActionEnum } from '../dto/retirement.action.enum';
 import { RetireNFTJobPayload } from '../constant/retire-nft-payload';
 import { TransferNFTJobPayload } from '../constant/transfer-nft-payload';
-import { CreditsRetireView } from '../entity/credit.retire.view.entity';
 import { plainToClass } from 'class-transformer';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
@@ -126,10 +125,13 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: blockId },
-                    relations: { project: { organization: true } },
+                    relations: {
+                        project: { organization: true },
+                        sender: true,
+                    },
                 });
 
-            const project = creditBlock.project;
+            let project = creditBlock.project;
             const tokenId = project.tokenId;
 
             const senderOrg = await this.dataSource
@@ -224,15 +226,18 @@ export class CarbonCreditService {
                         );
                     transferStatuses.push(status);
                 }
-                if (project?.organization?.id === senderOrgId) {
-                    const updatedProject = plainToClass(ProjectEntity, {
-                        ...project,
-                        creditTransferred: project.creditTransferred
-                            ? amount + project.creditTransferred
-                            : amount,
+                if (!creditBlock.sender) {
+                    project = await queryRunner.manager.findOne(ProjectEntity, {
+                        where: { id: project.id },
                     });
-
-                    await queryRunner.manager.save(updatedProject);
+                    await queryRunner.manager.save(
+                        plainToClass(ProjectEntity, {
+                            ...project,
+                            creditTransferred: project.creditTransferred
+                                ? amount + project.creditTransferred
+                                : amount,
+                        }),
+                    );
                 }
 
                 const log = new AuditEntity();
@@ -299,9 +304,10 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: retireRequest?.creditBlock?.id },
+                    relations: { sender: true },
                 });
 
-            const project = retireRequest?.project;
+            let project = retireRequest?.project;
             const tokenId = project.tokenId;
             const senderOrg = project.organization;
 
@@ -384,14 +390,20 @@ export class CarbonCreditService {
                     }),
                 );
 
-                const updatedProject = plainToClass(ProjectEntity, {
-                    ...project,
-                    creditTransferred: project.creditRetired
-                        ? serialsToRetire.length + project.creditRetired
-                        : serialsToRetire.length,
-                });
+                if (!creditBlock.sender) {
+                    project = await queryRunner.manager.findOne(ProjectEntity, {
+                        where: { id: project.id },
+                    });
+                    await queryRunner.manager.save(
+                        plainToClass(ProjectEntity, {
+                            ...project,
+                            creditRetired: project.creditRetired
+                                ? serialsToRetire.length + project.creditRetired
+                                : serialsToRetire.length,
+                        }),
+                    );
+                }
 
-                await queryRunner.manager.save(updatedProject);
                 const log = new AuditEntity();
                 log.projectId = project.refId;
                 log.logType = ProjectAuditLogType.RETIRE_APPROVED;
@@ -854,8 +866,17 @@ export class CarbonCreditService {
                     'Retirement request not found',
                     HttpStatus.NOT_FOUND,
                 );
+            } else if (
+                !(
+                    retireRequest?.type === CreditEventTypeEnum.RETIRED &&
+                    retireRequest?.status === CreditEventStatusEnum.PENDING
+                )
+            ) {
+                throw new HttpException(
+                    'Retirement request not in expected status',
+                    HttpStatus.UNAUTHORIZED,
+                );
             }
-
             if (!retireRequest?.project) {
                 throw new Error('Project not found');
             }
