@@ -27,53 +27,27 @@ const logTypeIcons: Record<string, React.ReactNode> = {
   APPROVED: <Icon.Check2Circle />,
   PDD_SUBMITTED: <Icon.FileText />,
   NO_OBJECTION_LETTER_GENERATED: <Icon.FileText />,
-  PDD_REJECTED_BY_CERTIFIER: <Icon.XCircle />,
+  PDD_REJECTED_BY_CERTIFIER: <Icon.FileX />,
   PDD_APPROVED_BY_CERTIFIER: <Icon.Check2Circle />,
-  PDD_REJECTED_BY_DNA: <Icon.XCircle />,
+  PDD_REJECTED_BY_DNA: <Icon.FileX />,
   PDD_APPROVED_BY_DNA: <Icon.Check2Circle />,
   VALIDATION_REPORT_SUBMITTED: <Icon.FileText />,
-  VALIDATION_REPORT_REJECTED: <Icon.XCircle />,
+  VALIDATION_REPORT_REJECTED: <Icon.FileX />,
   AUTHORISED: <Icon.ClipboardCheck />,
-  CREDITS_AUTHORIEZED: <Icon.CurrencyDollar />,
+  CREDITS_AUTHORISED: <Icon.FileCheck />,
   MONITORING_REPORT_SUBMITTED: <Icon.ListCheck />,
-  MONITORING_REPORT_REJECTED: <Icon.XCircle />,
+  MONITORING_REPORT_REJECTED: <Icon.FileX />,
   MONITORING_REPORT_APPROVED: <Icon.Check2Circle />,
   VERIFICATION_REPORT_SUBMITTED: <Icon.FileEarmarkBarGraph />,
-  VERIFICATION_REPORT_REJECTED: <Icon.XCircle />,
+  VERIFICATION_REPORT_REJECTED: <Icon.FileX />,
   VERIFICATION_REPORT_APPROVED: <Icon.Check2Circle />,
   CREDITS_ISSUED: <Icon.CurrencyExchange />,
-  DEFAULT: <FileOutlined />, // Default icon for unspecified log types
-
-  // CREATE: <Icon.CaretRight />,
-  // INF_APPROVED: <Icon.FileEarmarkCheck />,
-  // INF_REJECTED: <Icon.FileEarmarkX />,
-  // CREATE_COST_QUOTATION: <Icon.FileText />,
-  // CREATE_PROJECT_PROPOSAL: <Icon.FileText />,
-  // CREATE_VALIDATION_AGREEMENT: <Icon.FileText />,
-  // PROJECT_PROPOSAL_ACCEPTED: <Icon.Check2Circle />,
-  // PROJECT_PROPOSAL_REJECTED: <Icon.FileX />,
-  // CMA_CREATE: <Icon.FileEarmark />,
-  // CMA_APPROVED: <Icon.FileEarmarkCheck />,
-  // CMA_REJECTED: <Icon.FileEarmarkX />,
-  // VALIDATION_REPORT_CREATED: <Icon.FileEarmarkBarGraph />,
-  // VALIDATION_REPORT_APPROVED: <Icon.FileEarmarkCheck />,
-  // VALIDATION_REPORT_REJECTED: <Icon.FileEarmarkX />,
-  // AUTHORISED: <Icon.Clipboard2Check />,
-  // MONITORING_CREATE: <Icon.ListUl />,
-  // MONITORING_APPROVED: <Icon.ListCheck />,
-  // MONITORING_REJECTED: <Icon.BookmarkX />,
-  // VERIFICATION_CREATE: <Icon.CardList />,
-  // VERIFICATION_APPROVED: <Icon.CardChecklist />,
-  // VERIFICATION_REJECTED: <Icon.BookmarkX />,
-  // CREDIT_ISSUED: <Icon.CurrencyExchange />,
-  // TRANSFER_REQUESTED: <Icon.ClockHistory />,
-  // TRANSFER_APPROVED: <Icon.BoxArrowRight />,
-  // TRANSFER_REJECTED: <Icon.XOctagon />,
-  // TRANSFER_CANCELLED: <Icon.ExclamationOctagon />,
-  // RETIRE_REQUESTED: <Icon.ClockHistory />,
-  // RETIRE_APPROVED: <Icon.Save />,
-  // RETIRE_REJECTED: <Icon.XOctagon />,
-  // RETIRE_CANCELLED: <Icon.ExclamationOctagon />,
+  CREDIT_TRANSFERED: <Icon.BoxArrowRight />,
+  RETIRE_REQUESTED: <Icon.BoxArrowInDown />,
+  RETIRE_APPROVED: <Icon.Check2Circle />,
+  RETIRE_REJECTED: <Icon.FileX />,
+  RETIRE_CANCELLED: <Icon.X />,
+  DEFAULT: <FileOutlined />,
 };
 
 interface ProgrammeHistoryStepsProps {
@@ -167,12 +141,13 @@ const getLogDescription = (log: any, t: any) => {
         t
       );
     case ProjectActivityStage.CREDITS_ISSUED:
+      return formatString('slcfProgrammeTimeline:creditIssuedDescription', [log.data.amount], t);
+    case ProjectActivityStage.CREDIT_TRANSFERED:
       return formatString(
-        'slcfProgrammeTimeline:creditIssuedDescription',
-        [log.data.creditIssued],
+        'slcfProgrammeTimeline:creditTransferedDescription',
+        [log.data.amount, log.toOrganization],
         t
       );
-
     default:
       break;
     // case 'CREATE_COST_QUOTATION':
@@ -418,7 +393,21 @@ const getLogTitle = (logType: any) => {
     case ProjectActivityStage.CREDITS_ISSUED:
       return 'slcfProgrammeTimeline:creditIssuedTitle';
       break;
-
+    case ProjectActivityStage.CREDIT_TRANSFERED:
+      return 'slcfProgrammeTimeline:creditTransferedTitle';
+      break;
+    case ProjectActivityStage.RETIRE_APPROVED:
+      return 'slcfProgrammeTimeline:retirementApprovedTitle';
+      break;
+    case ProjectActivityStage.RETIRE_REJECTED:
+      return 'slcfProgrammeTimeline:retirementRejectedTitle';
+      break;
+    case ProjectActivityStage.RETIRE_CANCELLED:
+      return 'slcfProgrammeTimeline:retirementCancelledTitle';
+      break;
+    case ProjectActivityStage.RETIRE_REQUESTED:
+      return 'slcfProgrammeTimeline:retireRequestedTitle';
+      break;
     default:
       break;
   }
@@ -430,7 +419,6 @@ const ProgrammeHistoryStepsComponent: React.FC<ProgrammeHistoryStepsProps> = ({
 }) => {
   const t = translator;
 
-  console.log('---------history--------------', historyData);
   const items = historyData.map((log) => ({
     title: t(getLogTitle(log.logType)),
     subTitle: DateTime.fromMillis(Number(log.createdTime)).toFormat(dateTimeFormat),

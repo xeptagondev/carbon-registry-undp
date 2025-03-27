@@ -106,7 +106,6 @@ const StepperComponent = (props: any) => {
         appendix: appendixVals,
       },
     };
-    console.log('--------adding form-values------', tempValues);
 
     try {
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
