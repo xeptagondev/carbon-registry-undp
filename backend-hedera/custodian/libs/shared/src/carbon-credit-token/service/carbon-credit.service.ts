@@ -411,6 +411,8 @@ export class CarbonCreditService {
                 log.data = {
                     amount: serialsToRetire.length,
                     fromCompanyId: senderOrg.id,
+                    retirementType: retireRequest.retirementType,
+                    toCompanyId: dnaOrg.id,
                     remarks: remarks,
                 };
 
