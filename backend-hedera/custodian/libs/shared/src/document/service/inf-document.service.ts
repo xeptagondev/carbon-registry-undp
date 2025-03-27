@@ -136,7 +136,6 @@ export class InfDocumentService extends DocumentService {
                     projectProposalStage: ProjectProposalStage.PENDING,
                     sectoralScope: infData.sectoralScope,
                     createdBy: createdBy,
-                    serialNumber: 'SN',
                     organization: org,
                     assignees: assignees,
                 }),
