@@ -21,7 +21,7 @@ import { DocType } from '../../Definitions/Enums/document.type';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import GetMultipleLocationsMapComponent from '../Maps/GetMultipleLocationsMapComponent';
 import { Loading } from '../Loading/loading';
 import PhoneInput, {
@@ -105,6 +105,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const [current, setCurrent] = useState<number>(0);
   const navigate = useNavigate();
 
+  const { id } = useParams();
   const { state } = useLocation();
 
   const { post, get } = useConnection();
@@ -266,6 +267,12 @@ export const ProgrammeCreationComponent = (props: any) => {
     }
   };
 
+  const navigateToProjectDetailsPageOnView = () => {
+    if (id) {
+      navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
+    }
+  };
+
   useEffect(() => {
     if (state?.mode === null || state?.mode === undefined) {
       getProvinces();
@@ -273,9 +280,6 @@ export const ProgrammeCreationComponent = (props: any) => {
       getIndependentCertifiers();
       getOrganizationDetails();
     }
-    getProvinces();
-    getCountryList();
-    getIndependentCertifiers();
   }, []);
 
   const onProvinceSelect = async (value: any) => {
@@ -1160,6 +1164,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     className="upload-doc"
                                     size="large"
                                     icon={<UploadOutlined />}
+                                    disabled={disableFields}
                                   >
                                     {t('addProgramme:upload')}
                                   </Button>
@@ -1372,11 +1377,19 @@ export const ProgrammeCreationComponent = (props: any) => {
                         </Row>
                         {/* <InfDocumentInformation t={t}></InfDocumentInformation> */}
 
-                        <div className="steps-actions">
-                          <Button type="primary" htmlType="submit">
-                            {t('addProgramme:submit')}
-                          </Button>
-                        </div>
+                        {state?.mode === FormMode.VIEW ? (
+                          <div className="steps-actions">
+                            <Button danger onClick={navigateToProjectDetailsPageOnView}>
+                              {t('addProgramme:back')}
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="steps-actions">
+                            <Button type="primary" htmlType="submit">
+                              {t('addProgramme:submit')}
+                            </Button>
+                          </div>
+                        )}
                       </Form>
                     </div>
                   </div>

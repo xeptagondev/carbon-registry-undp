@@ -165,7 +165,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                 </Col>
               </Row>
               <Row justify={'end'} className="step-actions-end">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button onClick={prev} disabled={false} danger>
                   {t('monitoringReport:back')}
                 </Button>
                 {disableFields ? (

@@ -50,9 +50,12 @@ const ProjectDocuments = (props: IProjectDetails) => {
   };
 
   const navigateToInfView = () => {
-    navigate(ROUTES.ADD_PROGRAMME, {
-      state: { mode: FormMode.VIEW, documentId: documents[DocumentEnum.INF as string]?.refId },
-    });
+    console.log('----------inf_view_route____', id, ROUTES.INF_VIEW(id as string));
+    if (id) {
+      navigate(ROUTES.INF_VIEW(id), {
+        state: { mode: FormMode.VIEW, documentId: documents[DocumentEnum.INF as string]?.refId },
+      });
+    }
   };
 
   console.log('---------documents---------', documents[DocumentEnum.INF as string]?.refId);

@@ -405,6 +405,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                           onClick={add}
                                           size="small"
                                           className="addMinusBtn"
+                                          disabled={disableFields}
                                           icon={<PlusOutlined />}
                                         ></Button>
                                       </Form.Item>

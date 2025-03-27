@@ -272,7 +272,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       name={[name, 'documentReview']}
                                       valuePropName="checked"
                                     >
-                                      <Checkbox />
+                                      <Checkbox disabled={disableFields} />
                                     </Form.Item>
                                   </Col>
                                   <Col xl={6} className="other-cols checkbox-cols">
@@ -516,6 +516,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       onClick={add}
                                       size="small"
                                       className="addMinusBtn"
+                                      disabled={disableFields}
                                       icon={<PlusOutlined />}
                                     ></Button>
                                   </Form.Item>
@@ -557,7 +558,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
               </Row>
 
               <Row justify={'end'} className="step-actions-end">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button danger onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
                 {disableFields ? (

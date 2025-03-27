@@ -59,7 +59,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                   },
                 ]}
               >
-                <TextArea rows={6} />
+                <TextArea rows={6} disabled={disableFields} />
               </Form.Item>
               {/* Demonstration of prior consideration of the CDM start */}
               <>
@@ -995,6 +995,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                   >
                     <Input
                       size="large"
+                      disabled={disableFields}
                       // disabled={FormMode.VIEW === formMode}
                     />
                   </Form.Item>
@@ -1012,6 +1013,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                   >
                     <Input
                       size="large"
+                      disabled={disableFields}
                       // disabled={FormMode.VIEW === formMode}
                     />
                   </Form.Item>
@@ -1029,6 +1031,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                   >
                     <Input
                       size="large"
+                      disabled={disableFields}
                       // disabled={FormMode.VIEW === formMode}
                     />
                   </Form.Item>
@@ -1055,10 +1058,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -1072,10 +1072,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -1089,10 +1086,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -1117,10 +1111,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -1134,10 +1125,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -1151,10 +1139,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -1179,10 +1164,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -1196,10 +1178,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
 
                   <Form.Item
@@ -1213,10 +1192,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
                       },
                     ]}
                   >
-                    <Input
-                      size="large"
-                      // disabled={FormMode.VIEW === formMode}
-                    />
+                    <Input size="large" disabled={disableFields} />
                   </Form.Item>
                 </section>
               </>
@@ -1329,7 +1305,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Global stakeholder consultation end */}
 
               <Row justify={'end'} className="step-actions-end mg-top-2">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button danger onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
                 {disableFields ? (
