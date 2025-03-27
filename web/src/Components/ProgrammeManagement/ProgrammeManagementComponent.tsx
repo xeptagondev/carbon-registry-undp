@@ -334,8 +334,8 @@ export const ProgrammeManagementComponent = (props: any) => {
 
     if (search && search !== '') {
       filter.push({
-        key: 'project.title',
-        operation: 'like',
+        key: 'title',
+        operation: 'ilike',
         value: `${search}%`,
       });
     }
@@ -588,7 +588,7 @@ export const ProgrammeManagementComponent = (props: any) => {
                   onChange={(e) => {}}
                   onSearch={(value: string) => {
                     console.log('----------value-----------', value);
-                    setSearch(value.toLowerCase());
+                    setSearch(value);
                   }}
                   style={{ width: 265 }}
                 />

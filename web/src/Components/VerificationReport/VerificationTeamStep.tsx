@@ -516,6 +516,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                       onClick={add}
                                       size="small"
                                       className="addMinusBtn"
+                                      disabled={disableFields}
                                       icon={<PlusOutlined />}
                                     ></Button>
                                   </Form.Item>
