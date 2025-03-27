@@ -121,6 +121,7 @@ const App = () => {
                     <Route path="viewAllProjects" element={<ProgrammeManagement />} />
                     <Route path="view/:id" element={<ProjectDetailsView />} />
                     <Route path="addProgramme" element={<AddProgramme />} />
+                    <Route path="addProgramme/:id" element={<AddProgramme />} />
                     <Route path="addNdcAction" element={<AddNDCAction />} />
                     <Route path="monitoringReport/:id" element={<MonitoringReport />} />
                     <Route

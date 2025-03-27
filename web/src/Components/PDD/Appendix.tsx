@@ -1043,20 +1043,20 @@ const Step08 = (props: CustomStepsProps) => {
                 {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
                   <>
                     <Button danger size={'large'} onClick={prev}>
-                      {t('pdd:prev')}
+                      {t('PDD:prev')}
                     </Button>
                     <Button type="primary" htmlType="submit">
-                      {t('pdd:submit')}
+                      {t('PDD:submit')}
                     </Button>
                   </>
                 )}
                 {state?.mode === FormMode.VIEW && (
                   <>
                     <Button danger size={'large'} onClick={prev}>
-                      {t('pdd:prev')}
+                      {t('PDD:prev')}
                     </Button>
                     <Button type="primary" onClick={next}>
-                      {t('pdd:goBackProjectDetails')}
+                      {t('PDD:goBackProjectDetails')}
                     </Button>
                   </>
                 )}
@@ -1064,14 +1064,14 @@ const Step08 = (props: CustomStepsProps) => {
                   state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER && (
                     <>
                       <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
-                        {t('pdd:decline')}
+                        {t('PDD:decline')}
                       </Button>
                       <Button
                         size={'large'}
                         onClick={() => setShowVerifyDialog(true)}
                         type="primary"
                       >
-                        {t('pdd:certify')}
+                        {t('PDD:certify')}
                       </Button>
                     </>
                   )}
@@ -1079,14 +1079,14 @@ const Step08 = (props: CustomStepsProps) => {
                   state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <>
                       <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
-                        {t('pdd:reject')}
+                        {t('PDD:reject')}
                       </Button>
                       <Button
                         size={'large'}
                         onClick={() => setShowVerifyDialog(true)}
                         type="primary"
                       >
-                        {t('pdd:approve')}
+                        {t('PDD:approve')}
                       </Button>
                     </>
                   )}
