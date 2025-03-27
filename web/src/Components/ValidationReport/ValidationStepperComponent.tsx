@@ -245,6 +245,7 @@ const StepperComponent = (props: any) => {
               endDate: moment.unix(emissionData.endDate),
             })
           ),
+        totalNumberOfCreditingYears: 1,
         baselineEmissionReductions: 0,
         baselineEmissions: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
           (loc: any) => ({ location: loc.locationOfProjectActivity })

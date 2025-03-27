@@ -116,7 +116,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
               </>
 
               <Row justify={'end'} className="step-actions-end">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button danger onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
                 {disableFields ? (
