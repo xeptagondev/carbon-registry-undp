@@ -1063,6 +1063,9 @@ const Step08 = (props: CustomStepsProps) => {
                 {state?.mode === FormMode.VERIFY &&
                   state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER && (
                     <>
+                      <Button size={'large'} onClick={prev} type={'default'}>
+                        {t('PDD:prev')}
+                      </Button>
                       <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
                         {t('PDD:decline')}
                       </Button>
@@ -1078,6 +1081,9 @@ const Step08 = (props: CustomStepsProps) => {
                 {state?.mode === FormMode.VERIFY &&
                   state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <>
+                      <Button size={'large'} onClick={prev} type={'default'}>
+                        {t('PDD:prev')}
+                      </Button>
                       <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
                         {t('PDD:reject')}
                       </Button>
