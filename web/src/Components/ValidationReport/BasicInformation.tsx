@@ -168,9 +168,10 @@ const BasicInformation = (props: ValidationStepsProps) => {
         return tempList;
       })(),
       dateOfIssue: moment(values?.dateOfIssue).valueOf(),
-      versionNo: values?.versionNo,
+      versionNumberPDD: values?.versionNumberPDD,
       versionNumberValidationReport: values?.versionNumberValidationReport,
       versionDate: moment(values?.versionDate).valueOf(),
+      unfccRefNo: values?.unfccRefNo,
       telephone: values?.telephone,
       website: values?.website,
       mandatarySectoralScopes: values?.mandatarySectoralScopes,
@@ -260,7 +261,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
 
                         <Form.Item
                           label={t('validationReport:projectParticipants')}
-                          name="projectParticipants"
+                          name="projectDeveloper"
                           rules={[
                             {
                               required: false,
@@ -287,8 +288,8 @@ const BasicInformation = (props: ValidationStepsProps) => {
                             className="project-scale-radio-btns"
                             disabled={disableFields}
                           >
-                            <Radio value="smallScale">{t('validationReport:smallScale')}</Radio>
-                            <Radio value="largeScale">{t('validationReport:largeScale')}</Radio>
+                            <Radio value="Small_Scale">{t('validationReport:smallScale')}</Radio>
+                            <Radio value="Large_Scale">{t('validationReport:largeScale')}</Radio>
                           </Radio.Group>
                         </Form.Item>
 
@@ -405,6 +406,19 @@ const BasicInformation = (props: ValidationStepsProps) => {
                             message: `${t('validationReport:annualAverageGHGReduction')} ${t(
                               'isRequired'
                             )}`,
+                          },
+                        ]}
+                      >
+                        <Input size="large" disabled={disableFields} />
+                      </Form.Item>
+
+                      <Form.Item
+                        label={t('validationReport:unfccRefNo')}
+                        name="unfccRefNo"
+                        rules={[
+                          {
+                            required: true,
+                            message: `${t('validationReport:unfccRefNo')} ${t('isRequired')}`,
                           },
                         ]}
                       >
@@ -781,14 +795,14 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           action="/upload.do"
                           listType="picture"
                           multiple={false}
-                          disabled={disableFields}
+                          disabled={true}
                           // maxCount={1}
                         >
                           <Button
                             className="upload-doc"
                             size="large"
                             icon={<UploadOutlined />}
-                            disabled={disableFields}
+                            disabled={true}
                           >
                             {t('validationReport:upload')}
                           </Button>
