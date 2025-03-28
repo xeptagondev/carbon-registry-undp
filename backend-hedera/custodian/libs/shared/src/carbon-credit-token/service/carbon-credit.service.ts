@@ -76,7 +76,7 @@ export class CarbonCreditService {
                 const updatedProject = plainToClass(ProjectEntity, {
                     ...existingProject,
                     creditIssued: existingProject.creditIssued
-                        ? amount + existingProject.creditIssued
+                        ? Number(amount) + Number(existingProject.creditIssued)
                         : amount,
                 });
 
@@ -234,7 +234,8 @@ export class CarbonCreditService {
                         plainToClass(ProjectEntity, {
                             ...project,
                             creditTransferred: project.creditTransferred
-                                ? amount + project.creditTransferred
+                                ? Number(amount) +
+                                  Number(project.creditTransferred)
                                 : amount,
                         }),
                     );
@@ -300,7 +301,7 @@ export class CarbonCreditService {
                 throw new Error('Project not found');
             }
 
-            const creditBlock = await await this.dataSource
+            const creditBlock = await this.dataSource
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: retireRequest?.creditBlock?.id },
@@ -418,7 +419,8 @@ export class CarbonCreditService {
                         plainToClass(ProjectEntity, {
                             ...project,
                             creditRetired: project.creditRetired
-                                ? serialsToRetire.length + project.creditRetired
+                                ? Number(serialsToRetire.length) +
+                                  Number(project.creditRetired)
                                 : serialsToRetire.length,
                         }),
                     );
@@ -1124,7 +1126,21 @@ export class CarbonCreditService {
                 retirementType: retireRequest.retirementType,
                 status: CreditEventStatusEnum.PENDING,
             });
+
             await queryRunner.manager.save(creditTransaction);
+
+            const log = new AuditEntity();
+            log.projectId = project.refId;
+            log.logType = ProjectAuditLogType.RETIRE_REQUESTED;
+            log.userId = user.userId;
+            log.data = {
+                amount: retireRequest.amount,
+                fromCompanyId: user.organizationId,
+                retirementType: retireRequest.retirementType,
+            };
+
+            await queryRunner.manager.save(AuditEntity, log);
+
             await queryRunner.commitTransaction();
             return new DataResponseDto(
                 HttpStatus.OK,
