@@ -76,7 +76,7 @@ export class CarbonCreditService {
                 const updatedProject = plainToClass(ProjectEntity, {
                     ...existingProject,
                     creditIssued: existingProject.creditIssued
-                        ? amount + existingProject.creditIssued
+                        ? Number(amount) + Number(existingProject.creditIssued)
                         : amount,
                 });
 
@@ -234,7 +234,8 @@ export class CarbonCreditService {
                         plainToClass(ProjectEntity, {
                             ...project,
                             creditTransferred: project.creditTransferred
-                                ? amount + project.creditTransferred
+                                ? Number(amount) +
+                                  Number(project.creditTransferred)
                                 : amount,
                         }),
                     );
@@ -300,7 +301,7 @@ export class CarbonCreditService {
                 throw new Error('Project not found');
             }
 
-            const creditBlock = await await this.dataSource
+            const creditBlock = await this.dataSource
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: retireRequest?.creditBlock?.id },
@@ -366,29 +367,49 @@ export class CarbonCreditService {
                     retirementStatuses.push(status);
                 }
 
-                const { firstSerialNumber, secondSerialNumber } =
-                    this.serialNumberManagementService.splitCreditBlockSerialNumber(
-                        creditBlock.serialNumber,
-                        retireRequest.creditAmount,
+                if (
+                    !creditBlock.reservedCreditAmount &&
+                    creditBlock.creditAmount == serialsToRetire.length
+                ) {
+                    const savedBlock = await queryRunner.manager.save(
+                        plainToClass(CreditBlocksEntity, {
+                            ...creditBlock,
+                            creditAmount: 0,
+                        }),
                     );
-                await queryRunner.manager.save(
-                    plainToClass(CreditBlocksEntity, {
-                        ...creditBlock,
-                        serialNumber: firstSerialNumber,
-                        creditAmount: creditBlock.creditAmount,
-                        reservedCreditAmount:
-                            creditBlock.reservedCreditAmount -
-                            retireRequest.creditAmount,
-                    }),
-                );
 
-                await queryRunner.manager.save(
-                    plainToClass(CreditTransactionsEntity, {
-                        ...retireRequest,
-                        serialNumber: secondSerialNumber,
-                        status: CreditEventStatusEnum.COMPLETED,
-                    }),
-                );
+                    await queryRunner.manager.save(
+                        plainToClass(CreditTransactionsEntity, {
+                            ...retireRequest,
+                            serialNumber: savedBlock.serialNumber,
+                            status: CreditEventStatusEnum.COMPLETED,
+                        }),
+                    );
+                } else {
+                    const { firstSerialNumber, secondSerialNumber } =
+                        this.serialNumberManagementService.splitCreditBlockSerialNumber(
+                            creditBlock.serialNumber,
+                            retireRequest.creditAmount,
+                        );
+                    await queryRunner.manager.save(
+                        plainToClass(CreditBlocksEntity, {
+                            ...creditBlock,
+                            serialNumber: firstSerialNumber,
+                            creditAmount: creditBlock.creditAmount,
+                            reservedCreditAmount:
+                                creditBlock.reservedCreditAmount -
+                                retireRequest.creditAmount,
+                        }),
+                    );
+
+                    await queryRunner.manager.save(
+                        plainToClass(CreditTransactionsEntity, {
+                            ...retireRequest,
+                            serialNumber: secondSerialNumber,
+                            status: CreditEventStatusEnum.COMPLETED,
+                        }),
+                    );
+                }
 
                 if (!creditBlock.sender) {
                     project = await queryRunner.manager.findOne(ProjectEntity, {
@@ -398,7 +419,8 @@ export class CarbonCreditService {
                         plainToClass(ProjectEntity, {
                             ...project,
                             creditRetired: project.creditRetired
-                                ? serialsToRetire.length + project.creditRetired
+                                ? Number(serialsToRetire.length) +
+                                  Number(project.creditRetired)
                                 : serialsToRetire.length,
                         }),
                     );
@@ -1104,7 +1126,21 @@ export class CarbonCreditService {
                 retirementType: retireRequest.retirementType,
                 status: CreditEventStatusEnum.PENDING,
             });
+
             await queryRunner.manager.save(creditTransaction);
+
+            const log = new AuditEntity();
+            log.projectId = project.refId;
+            log.logType = ProjectAuditLogType.RETIRE_REQUESTED;
+            log.userId = user.userId;
+            log.data = {
+                amount: retireRequest.amount,
+                fromCompanyId: user.organizationId,
+                retirementType: retireRequest.retirementType,
+            };
+
+            await queryRunner.manager.save(AuditEntity, log);
+
             await queryRunner.commitTransaction();
             return new DataResponseDto(
                 HttpStatus.OK,
@@ -1191,45 +1227,73 @@ export class CarbonCreditService {
             throw new Error('Project or Organizations not found');
         }
 
-        const { firstSerialNumber, secondSerialNumber } =
-            this.serialNumberManagementService.splitCreditBlockSerialNumber(
-                transferingBlock.serialNumber,
-                amount,
+        if (
+            !transferingBlock.reservedCreditAmount &&
+            transferingBlock.creditAmount === amount
+        ) {
+            const creditBlock = plainToClass(CreditBlocksEntity, {
+                ...transferingBlock,
+                sender,
+                receiver,
+                type: CreditEventTypeEnum.TRANSFERED,
+            });
+
+            const savedBlock = await queryRunner.manager.save(creditBlock);
+
+            const creditTransaction = plainToClass(CreditTransactionsEntity, {
+                transferId,
+                tokenId,
+                creditBlock: savedBlock,
+                serialNumber: savedBlock.serialNumber,
+                creditAmount: amount,
+                project,
+                sender,
+                receiver,
+                type: CreditEventTypeEnum.TRANSFERED,
+                status: CreditEventStatusEnum.COMPLETED,
+            });
+
+            await queryRunner.manager.save(creditTransaction);
+        } else {
+            const { firstSerialNumber, secondSerialNumber } =
+                this.serialNumberManagementService.splitCreditBlockSerialNumber(
+                    transferingBlock.serialNumber,
+                    amount,
+                );
+            await queryRunner.manager.save(
+                plainToClass(CreditBlocksEntity, {
+                    ...transferingBlock,
+                    serialNumber: firstSerialNumber,
+                    creditAmount: transferingBlock.creditAmount - amount,
+                }),
             );
 
-        await queryRunner.manager.save(
-            plainToClass(CreditBlocksEntity, {
-                ...transferingBlock,
-                serialNumber: firstSerialNumber,
-                creditAmount: transferingBlock.creditAmount - amount,
-            }),
-        );
+            const creditBlock = plainToClass(CreditBlocksEntity, {
+                serialNumber: secondSerialNumber,
+                creditAmount: amount,
+                project,
+                sender,
+                receiver,
+                type: CreditEventTypeEnum.TRANSFERED,
+            });
 
-        const creditBlock = plainToClass(CreditBlocksEntity, {
-            serialNumber: secondSerialNumber,
-            creditAmount: amount,
-            project,
-            sender,
-            receiver,
-            type: CreditEventTypeEnum.TRANSFERED,
-        });
+            const savedBlock = await queryRunner.manager.save(creditBlock);
 
-        const savedBlock = await queryRunner.manager.save(creditBlock);
+            const creditTransaction = plainToClass(CreditTransactionsEntity, {
+                transferId,
+                tokenId,
+                creditBlock: savedBlock,
+                serialNumber: secondSerialNumber,
+                creditAmount: amount,
+                project,
+                sender,
+                receiver,
+                type: CreditEventTypeEnum.TRANSFERED,
+                status: CreditEventStatusEnum.COMPLETED,
+            });
 
-        const creditTransaction = plainToClass(CreditTransactionsEntity, {
-            transferId,
-            tokenId,
-            creditBlock: savedBlock,
-            serialNumber: secondSerialNumber,
-            creditAmount: amount,
-            project,
-            sender,
-            receiver,
-            type: CreditEventTypeEnum.TRANSFERED,
-            status: CreditEventStatusEnum.COMPLETED,
-        });
-
-        await queryRunner.manager.save(creditTransaction);
+            await queryRunner.manager.save(creditTransaction);
+        }
     }
 
     async releaseQueryRunner(queryRunner: QueryRunner, fn?: string) {
