@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, Layout, MenuProps } from 'antd';
 import sliderLogo from '../../Assets/Images/logo-slider.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './layout.sider.scss';
 import * as Icon from 'react-bootstrap-icons';
 import {
@@ -49,17 +49,21 @@ const LayoutSider = (props: LayoutSiderProps) => {
   const { selectedKey } = props;
   const navigate = useNavigate();
   const { userInfoState } = useUserContext();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [selectKey, setSelectKey] = useState<any>(selectedKey);
   const { i18n, t } = useTranslation(['nav']);
+
+  const currentPage = location.pathname.replace(/^\/|\/$/g, '');
 
   const items: MenuItem[] = [
     getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
     getItem(t('nav:slcfprogrammes'), 'programmeManagement/viewAllProjects', <AppstoreOutlined />),
     getItem(t('nav:projectList'), 'programmeManagement/viewAll', <UnorderedListOutlined />),
     getItem(t('nav:credits'), 'credits', <AppstoreOutlined />, [
-      getItem(t('nav:creditBalance'), 'credits/balance', <ShopOutlined />),
+      getItem(t('nav:creditBalance'), 'credits/balance', <Icon.Wallet2 />),
       getItem(t('nav:transfers'), 'credits/transfers', <SwapOutlined />),
-      getItem(t('nav:retirements'), 'credits/retirements', <SplitCellsOutlined />),
+      getItem(t('nav:retirements'), 'credits/retirements', <Icon.ExclamationOctagon />),
     ]),
     // getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
     // getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
@@ -71,6 +75,10 @@ const LayoutSider = (props: LayoutSiderProps) => {
     getItem(t('nav:companies'), 'companyManagement/viewAll', <ShopOutlined />),
     getItem(t('nav:users'), 'userManagement/viewAll', <UserOutlined />),
   ];
+
+  useEffect(() => {
+    setSelectKey(currentPage);
+  }, [currentPage]);
 
   // if (
   //   userInfoState?.userRole === Role.Root ||
@@ -141,7 +149,9 @@ const LayoutSider = (props: LayoutSiderProps) => {
         <div className="layout-sider-menu-container">
           <Menu
             theme="light"
-            selectedKeys={[selectedKey ? selectedKey : 'dashboard']}
+            selectedKeys={[
+              selectedKey ? selectedKey : !selectedKey && selectKey ? selectKey : 'dashboard',
+            ]}
             mode="inline"
             onClick={onClick}
           >
@@ -149,11 +159,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
               item?.children ? (
                 <Menu.SubMenu key={item.key} icon={item.icon} title={item.label}>
                   {item.children.map((child) => (
-                    <Menu.Item
-                      key={child?.key}
-                      icon={child?.icon}
-                      className={selectedKey === child?.key ? 'highlighted-menu-item' : ''}
-                    >
+                    <Menu.Item key={child?.key} icon={child?.icon}>
                       <Link to={`/${child?.key}`}>{child?.label}</Link>
                     </Menu.Item>
                   ))}

@@ -146,7 +146,7 @@ const App = () => {
                     <Route path="pdd/:id/" element={<CMAFormPage />} />
                     <Route path="validationReport/:id" element={<ValidationReportPage />} />
                   </Route>
-                  <Route path="/credits" element={<CustomLayout selectedKey="credits/balance" />}>
+                  <Route path="/credits" element={<CustomLayout />}>
                     <Route path="balance" element={<CreditBalancePage />} />
                     <Route path="transfers" element={<CreditTransfersPage />} />
                     <Route path="retirements" element={<CreditRetirementsPage />} />

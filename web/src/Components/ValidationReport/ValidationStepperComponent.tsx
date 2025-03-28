@@ -200,12 +200,15 @@ const StepperComponent = (props: any) => {
     }
 
     if (programmeData && pddData) {
+      const docVersions = state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
+      const latestVersion = docVersions ? docVersions + 1 : 1;
       form1.setFieldsValue({
         titleOfTheProjectActivity: programmeData?.title,
         mandatarySectoralScopes: programmeData?.sectoralScope,
         projectDeveloper: programmeData?.projectParticipant,
         versionNumberPDD: pddData?.data?.projectDetails?.versionNumber,
         hostParty: pddData?.data?.projectDetails?.hostParty,
+        versionNumberValidationReport: latestVersion,
         creditingPeriod: pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
         creditingPeriodStart: pddData?.data?.startDateCreditingPeriod
           ?.projectCreditingPeriodStartDate
@@ -250,19 +253,26 @@ const StepperComponent = (props: any) => {
           (loc: any) => ({ location: loc.locationOfProjectActivity })
         ),
       });
+      form5.setFieldsValue({
+        onSiteInspection: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
+          (loc: any) => ({
+            siteLocation: loc.locationOfProjectActivity,
+          })
+        ),
+      });
     }
 
     setLoading(false);
   };
 
-  const setLatestVersion = () => {
-    if (state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) {
-      form1.setFieldsValue({
-        versionNumberValidationReport:
-          state?.documents?.[DocumentEnum.VALIDATION as any]?.version ?? 0 + 1,
-      });
-    }
-  };
+  // const setLatestVersion = () => {
+  //   if (state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) {
+  //     form1.setFieldsValue({
+  //       versionNumberValidationReport:
+  //         state?.documents?.[DocumentEnum.VALIDATION as any]?.version ?? 0 + 1,
+  //     });
+  //   }
+  // };
 
   const handleValuesUpdate = (val: any) => {
     setExistingFormValues((prevVal: any) => {
@@ -278,7 +288,7 @@ const StepperComponent = (props: any) => {
     if (state?.mode === FormMode?.CREATE) {
       fetchAndSetProgrammeData(id);
     }
-    setLatestVersion();
+    //setLatestVersion();
   }, [id]);
 
   useEffect(() => {
@@ -304,8 +314,20 @@ const StepperComponent = (props: any) => {
           if (res?.statusText === 'SUCCESS') {
             const data = res?.data;
             setDocumentId(data?.refId);
-
-            const basicInformation = basicInformationMapDataToFields(data.data?.basicInformation);
+            console.log(
+              '---------validation------------',
+              data?.data,
+              data?.data?.basicInformation
+            );
+            let basicInformation = basicInformationMapDataToFields(data.data?.basicInformation);
+            const docVersions = state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
+            const latestVersion = docVersions ? docVersions + 1 : 1;
+            if (state?.mode === FormMode.EDIT) {
+              basicInformation = {
+                ...basicInformation,
+                versionNumberValidationReport: latestVersion,
+              };
+            }
             form1.setFieldsValue(basicInformation);
 
             const ghgProjectDescription = ghgProjectDescriptionMapDataToFields(
