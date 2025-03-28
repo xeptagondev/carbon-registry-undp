@@ -34,6 +34,7 @@ import {
   implementationOfProjectAcitivityMapDataToFields,
   projectActivityMapDataToFields,
 } from './viewDataMap';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 
 const StepperComponent = (props: CustomStepsProps) => {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ const StepperComponent = (props: CustomStepsProps) => {
   const [annexuresForm] = useForm();
 
   const { state } = useLocation();
+  console.log('----state-----------', state);
 
   const [loading, setLoading] = useState<boolean>(
     state?.mode === FormMode.VIEW ||
@@ -96,14 +98,6 @@ const StepperComponent = (props: CustomStepsProps) => {
     navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
-  // const [values, setValues] = useState({
-  //   projectRefId: Number(id),
-  //   name: 'MonitoringReport',
-  //   companyId: undefined,
-  //   documentType: DocumentEnum.MONITORING,
-  //   data: {},
-  // });
-
   const next = () => {
     setCurrent(current + 1);
     scrollToDiv();
@@ -113,6 +107,117 @@ const StepperComponent = (props: CustomStepsProps) => {
     setCurrent(current - 1);
     scrollToDiv();
   };
+
+  const fetchAndSetData = async (programId: any) => {
+    setLoading(true);
+
+    let programmeData = null;
+    let orgData = null;
+    let pddData = null;
+    let validationData = null;
+
+    try {
+      //fetch programme data
+      const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, { programmeId: programId });
+      if (programmeResponse?.statusText === 'SUCCESS') {
+        programmeData = programmeResponse?.data;
+        console.log('-------programme data Monitoring-----------', programmeData);
+      } else {
+        console.log('Error: Programme API did not return SUCCESS status');
+      }
+    } catch (error) {
+      console.log('Error fetching programme data:', error);
+    }
+
+    try {
+      const orgDetailsResponse = await get(API_PATHS.USER_PROFILE_DETAILS);
+      console.log('---------org details------------', orgDetailsResponse);
+      if (orgDetailsResponse?.statusText === 'SUCCESS') {
+        orgData = orgDetailsResponse?.data?.Organisation;
+      } else {
+        console.log('Error: Org API fetch failed');
+      }
+    } catch (error) {
+      console.log('Error fetching Org details', error);
+    }
+
+    try {
+      // Fetch PDD Data
+      const pddResponse = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documents?.PDD?.refId,
+        documentType: DocumentEnum.PDD,
+      });
+      console.log('-----------------PDD Response-----------------', pddResponse);
+      if (pddResponse?.statusText === 'SUCCESS') {
+        pddData = pddResponse?.data;
+      } else {
+        console.log('Error: PDD API did not return SUCCESS status');
+      }
+    } catch (error) {
+      console.log('Error fetching PDD data:', error);
+    }
+
+    try {
+      //fetch validation data
+      const validationResponse = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documents?.VALIDATION?.refId,
+        documentType: DocumentEnum.VALIDATION,
+      });
+      if (validationResponse?.statusText === 'SUCCESS') {
+        validationData = validationResponse?.data?.data;
+        console.log('---------validation data monitoring----------', validationData);
+      }
+    } catch (error) {
+      console.log('Error fetching data from validation report', error);
+    }
+
+    if (programmeData) {
+      const docVersions = state?.documents?.[DocumentEnum.MONITORING as any]?.version;
+      const latestVersion = docVersions ? docVersions + 1 : 1;
+      basicInformationForm.setFieldsValue({
+        bi_sectoralScope: programmeData?.sectoralScope,
+        bi_projectTitle: validationData?.basicInformation?.titleOfTheProjectActivity,
+        bi_applicablePDDVersionNo: validationData?.basicInformation?.versionNumberPDD,
+        bi_projectDeveloper: orgData?.name,
+        bi_hostParty: validationData?.basicInformation?.hostParty,
+        bi_appliedMethodologies: validationData?.basicInformation?.appliedMethodologies,
+        bi_unfccRefNo: validationData?.basicInformation?.unfccRefNo,
+        bi_versionNoOfMR: latestVersion,
+      });
+      projectActivityForm.setFieldsValue({
+        projectParticipants: pddData?.data?.projectActivity?.projectParticipants,
+        pa_creditingPeriodType: pddData?.data?.startDateCreditingPeriod?.creditingPeriodType,
+        // locationOfProjectActivity:
+        //   data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.locationOfProjectActivity,
+        // siteNo: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.siteNo,
+        // province: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.province,
+        // district: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.district,
+        // city: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.city,
+        // community: data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.community,
+        // geographicalLocationCoordinates:
+        //   data?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+        //     ?.geographicalLocationCoordinates,
+        // optionalImages: mapBase64ToFields(
+        //   data?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
+        // ),
+        extraLocations: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
+          (location: any) => ({
+            ...location,
+            uploadImages: mapBase64ToFields(location?.additionalDocuments),
+          })
+        ),
+      });
+    }
+    setLoading(false);
+  };
+
+  // const setLatestVersion = () => {
+  //   if (state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) {
+  //     basicInformationForm.setFieldsValue({
+  //       bi_versionNoOfMR: state?.documents?.[DocumentEnum.MONITORING as any]?.version ?? 0 + 1,
+  //     });
+  //   }
+  // };
 
   useEffect(() => {
     const getViewData = async () => {
@@ -147,7 +252,17 @@ const StepperComponent = (props: CustomStepsProps) => {
 
             console.log('--------mon res 2---------', data, data.data.basicInformation);
 
-            const basicInformation = basicInformationMapDataToFields(data.data.projectDetails);
+            let basicInformation = basicInformationMapDataToFields(data.data.projectDetails);
+            console.log('-----------state getview monitoring-----------', state);
+            const docVersions = state?.documents?.[DocumentEnum.MONITORING as any]?.version;
+            const latestVersion = docVersions ? docVersions + 1 : 1;
+            console.log('------------latest version-----------', latestVersion);
+            if (state?.mode === FormMode.EDIT) {
+              basicInformation = {
+                ...basicInformation,
+                bi_versionNoOfMR: latestVersion,
+              };
+            }
             basicInformationForm.setFieldsValue(basicInformation);
 
             const projectActivity = projectActivityMapDataToFields(
@@ -241,9 +356,10 @@ const StepperComponent = (props: CustomStepsProps) => {
   console.log('----------state disableFields-------------', disableFields);
 
   useEffect(() => {
-    // getLatestReports(id);
-    // getCountryList();
-    // getProgrammeDetailsById();
+    if (state?.mode === FormMode?.CREATE) {
+      fetchAndSetData(id);
+      //setLatestVersion();
+    }
     projectActivityForm.setFieldValue('projectParticipants', [
       { partiesInvolved: '', projectParticipants: [{ participant: '' }] },
     ]);
