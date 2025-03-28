@@ -135,7 +135,9 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
 
   useEffect(() => {
     setCreditAmount(undefined);
+    setChecked(type === CreditActionType.TRANSFER ? true : false);
     setActionDisable(true);
+    setRemark('');
     if (isProceed) {
       setRetirementType(
         data &&

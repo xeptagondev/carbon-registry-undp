@@ -91,8 +91,8 @@ export const CreditRetirementsTableComponent = (props: any) => {
   const [checkAllBox, setCheckAllBox] = useState<boolean>(true);
   const [checkBoxOptions, setCheckBoxOptions] = useState<any[]>([]);
   const checkBoxMenu = Object.keys(StatusOptions).map((k, index) => ({
-    label: t(Object.values(StatusOptions)[index]),
-    value: k,
+    label: Object.values(StatusOptions)[index],
+    value: Object.values(StatusOptions)[index],
   }));
   const [modalActionVisible, setModalActionVisible] = useState<boolean>(false);
   const [modalActionLoading, setModalActionLoading] = useState<boolean>(false);
@@ -119,9 +119,9 @@ export const CreditRetirementsTableComponent = (props: any) => {
     const filter: any[] = [];
     const filterOr: any[] = [];
 
-    // if (checkBoxOptions) {
-    //   filterAnd.push({
-    //     key: 'type',
+    // if (checkBoxOptions && checkBoxOptions.length > 0) {
+    //   filter.push({
+    //     key: 'status',
     //     operation: 'in',
     //     value: checkBoxOptions,
     //   });
@@ -129,7 +129,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
 
     if (search && search !== '') {
       filter.push({
-        key: 'projectName',
+        key: 'project"."title',
         operation: 'like',
         value: `%${search}%`,
       });
@@ -262,7 +262,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.PROJECT_NAME),
-      key: CrediRetirementsColumns.PROJECT_NAME,
+      key: 'project.title',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
@@ -271,7 +271,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.ORGANIZATION_NAME),
-      key: CrediRetirementsColumns.ORGANIZATION_NAME,
+      key: 'sender.name',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
@@ -298,7 +298,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.DATE),
-      key: CrediRetirementsColumns.DATE,
+      key: 'createdDate',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
@@ -317,7 +317,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.STATUS),
-      key: CrediRetirementsColumns.STATUS,
+      key: 'status',
       sorter: true,
       align: 'center' as const,
       render: (item: CreditRetirementInterface) => {
@@ -326,7 +326,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.RETIREMENT_TYPE),
-      key: CrediRetirementsColumns.RETIREMENT_TYPE,
+      key: 'retirementType',
       sorter: true,
       align: 'center' as const,
       render: (item: CreditRetirementInterface) => {
@@ -356,9 +356,11 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
   ];
 
-  const onSearch = async () => {
-    if (search) {
-      setSearch(search?.toLowerCase());
+  const onSearch = async (value: string) => {
+    if (value) {
+      setSearch(value.toLowerCase());
+    } else {
+      setSearch('');
     }
   };
 
@@ -408,6 +410,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     sortField,
     sortOrder,
     search,
+    checkBoxOptions,
     modalActionVisible,
     modalResponseVisible,
   ]);
@@ -502,7 +505,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
           <div className="filter-section">
             <div className="search-bar">
               <Search
-                onPressEnter={onSearch}
+                onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                 placeholder={`${t('searchByNameProjectName')}`}
                 allowClear
                 onSearch={onSearch}

@@ -85,8 +85,8 @@ export const CreditBalanceTableComponent = (props: any) => {
   const [checkAllBox, setCheckAllBox] = useState<boolean>(true);
   const [checkBoxOptions, setCheckBoxOptions] = useState<any[]>([]);
   const checkBoxMenu = Object.keys(IssuedOrReceivedOptions).map((k, index) => ({
-    label: t(Object.values(IssuedOrReceivedOptions)[index]),
-    value: k,
+    label: Object.values(IssuedOrReceivedOptions)[index],
+    value: Object.values(IssuedOrReceivedOptions)[index],
   }));
   const [modalActionVisible, setModalActionVisible] = useState<boolean>(false);
   const [modalActionLoading, setModalActionLoading] = useState<boolean>(false);
@@ -122,17 +122,12 @@ export const CreditBalanceTableComponent = (props: any) => {
 
     if (search && search !== '') {
       filterOr.push({
-        key: 'senderName',
+        key: 'receiver.name',
         operation: 'like',
         value: `%${search}%`,
       });
       filterOr.push({
-        key: 'receiverName',
-        operation: 'like',
-        value: `%${search}%`,
-      });
-      filterOr.push({
-        key: 'projectName',
+        key: 'project.title',
         operation: 'like',
         value: `%${search}%`,
       });
@@ -228,7 +223,7 @@ export const CreditBalanceTableComponent = (props: any) => {
   const columns = [
     {
       title: t(CrediBalanceColumns.ORGANIZATION_NAME),
-      key: CrediBalanceColumns.ORGANIZATION_NAME,
+      key: 'receiver.name',
       sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
@@ -247,7 +242,7 @@ export const CreditBalanceTableComponent = (props: any) => {
     },
     {
       title: t(CrediBalanceColumns.PROJECT_NAME),
-      key: CrediBalanceColumns.PROJECT_NAME,
+      key: 'project.title',
       sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
@@ -264,7 +259,7 @@ export const CreditBalanceTableComponent = (props: any) => {
     },
     {
       title: t(CrediBalanceColumns.DATE),
-      key: CrediBalanceColumns.DATE,
+      key: 'createdDate',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditBalanceInterface) => {
@@ -301,7 +296,7 @@ export const CreditBalanceTableComponent = (props: any) => {
       : []),
     {
       title: t(CrediBalanceColumns.CREDITS),
-      key: CrediBalanceColumns.CREDITS,
+      key: 'creditAmount',
       sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
@@ -336,9 +331,11 @@ export const CreditBalanceTableComponent = (props: any) => {
       : []),
   ];
 
-  const onSearch = async () => {
-    if (search) {
-      setSearch(search?.toLowerCase());
+  const onSearch = async (value: string) => {
+    if (value) {
+      setSearch(value.toLowerCase());
+    } else {
+      setSearch('');
     }
   };
 
@@ -485,7 +482,7 @@ export const CreditBalanceTableComponent = (props: any) => {
           <div className="filter-section">
             <div className="search-bar">
               <Search
-                onPressEnter={onSearch}
+                onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                 placeholder={`${t('searchByProjectOrOrg')}`}
                 allowClear
                 onSearch={onSearch}
