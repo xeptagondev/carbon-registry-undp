@@ -354,23 +354,24 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                       rules={[
                         {
                           validator: (_, value) => {
+                            if (isProceed) return Promise.resolve();
                             if (
-                              (!isProceed && value === undefined) ||
+                              value === undefined ||
                               value === null ||
-                              value.trim() === ''
+                              value.toString().trim() === ''
                             ) {
                               setActionDisable(true);
                               return Promise.reject(new Error(t('required')));
                             }
-                            if ((!isProceed && value <= 0) || (!isProceed && isNaN(value))) {
+                            if (value <= 0 || isNaN(value)) {
                               setActionDisable(true);
                               return Promise.reject(new Error(t('wrongInput')));
                             }
-                            if (!isProceed && !Number.isInteger(Number(value))) {
+                            if (!Number.isInteger(Number(value))) {
                               setActionDisable(true);
                               return Promise.reject(new Error(t('shouldBeInterger')));
                             }
-                            if (!isProceed && value > data.creditAmount) {
+                            if (Number(value) > data.creditAmount) {
                               setActionDisable(true);
                               return Promise.reject(new Error(t('insufficientBalance')));
                             }

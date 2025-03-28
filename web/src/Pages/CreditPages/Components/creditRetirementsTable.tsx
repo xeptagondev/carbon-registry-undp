@@ -321,7 +321,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
       sorter: true,
       align: 'center' as const,
       render: (item: CreditRetirementInterface) => {
-        return <Tag color={getStatusColor(item.status)}>{t(item.status)}</Tag>;
+        return <Tag color={getStatusColor(item.status)}>{item.status}</Tag>;
       },
     },
     {
@@ -342,7 +342,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
         const menu = actionMenu(record);
         return (
           record.status === StatusOptions.PENDING &&
-          userInfoState?.userRole === (Role.Admin || Role.Root) &&
+          (userInfoState?.userRole === Role.Admin || userInfoState?.userRole === Role.Root) &&
           menu && (
             <Popover placement="bottomRight" content={menu} trigger="click">
               <EllipsisOutlined
