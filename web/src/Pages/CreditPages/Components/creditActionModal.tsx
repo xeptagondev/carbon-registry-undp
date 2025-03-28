@@ -134,6 +134,7 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
   }, [remark, retirementType, creditAmount, reciveParty, checked, isProceed, type]);
 
   useEffect(() => {
+    setCreditAmount(undefined);
     setActionDisable(true);
     if (isProceed) {
       setRetirementType(
@@ -225,7 +226,19 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                       loading={listLoading}
                       placeholder={t('searchOrganizationByName')}
                       showArrow={true}
-                      filterOption={false}
+                      autoClearSearchValue
+                      filterOption={(input, option: any) => {
+                        const optionLabel = option?.label?.props?.children || '';
+                        const optionValue = option?.label ? option?.label : '';
+                        const label =
+                          typeof optionLabel === 'string' ? optionLabel : optionLabel.join('');
+                        const value = optionValue.toString().toLowerCase();
+
+                        return (
+                          label.toLowerCase().includes(input.toLowerCase()) ||
+                          value.includes(input.toLowerCase())
+                        );
+                      }}
                       options={dropDownList?.map((item) => ({
                         label: item.label,
                         value: item.value,
@@ -280,7 +293,19 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                           showSearch
                           placeholder={t('selectCountry')}
                           showArrow={true}
-                          filterOption={false}
+                          autoClearSearchValue
+                          filterOption={(input, option: any) => {
+                            const optionLabel = option?.label?.props?.children || '';
+                            const optionValue = option?.label ? option?.label : '';
+                            const label =
+                              typeof optionLabel === 'string' ? optionLabel : optionLabel.join('');
+                            const value = optionValue.toString().toLowerCase();
+
+                            return (
+                              label.toLowerCase().includes(input.toLowerCase()) ||
+                              value.includes(input.toLowerCase())
+                            );
+                          }}
                           options={dropDownList?.map((item) => ({
                             label: item.label,
                             value: item.value,
@@ -328,18 +353,22 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                       name="creditAmount"
                       rules={[
                         {
-                          required: !isProceed ? true : false,
-                          message: t('required'),
-                        },
-                        {
                           validator: (_, value) => {
-                            if ((!isProceed && value === undefined) || value === null) {
+                            if (
+                              (!isProceed && value === undefined) ||
+                              value === null ||
+                              value.trim() === ''
+                            ) {
                               setActionDisable(true);
                               return Promise.reject(new Error(t('required')));
                             }
                             if ((!isProceed && value <= 0) || (!isProceed && isNaN(value))) {
                               setActionDisable(true);
                               return Promise.reject(new Error(t('wrongInput')));
+                            }
+                            if (!isProceed && !Number.isInteger(Number(value))) {
+                              setActionDisable(true);
+                              return Promise.reject(new Error(t('shouldBeInterger')));
                             }
                             if (!isProceed && value > data.creditAmount) {
                               setActionDisable(true);
@@ -358,6 +387,7 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                               placeholder={addCommSep(data.creditAmount)}
                               style={{ flex: 1, marginRight: 8 }}
                               disabled={isProceed}
+                              value={creditAmount}
                             />
                             <span style={{ margin: '0 8px' }}>/</span>
                           </>
