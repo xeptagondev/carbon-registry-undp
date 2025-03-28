@@ -60,11 +60,6 @@ const LayoutSider = (props: LayoutSiderProps) => {
     getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
     getItem(t('nav:slcfprogrammes'), 'programmeManagement/viewAllProjects', <AppstoreOutlined />),
     getItem(t('nav:projectList'), 'programmeManagement/viewAll', <UnorderedListOutlined />),
-    getItem(t('nav:credits'), 'credits', <AppstoreOutlined />, [
-      getItem(t('nav:creditBalance'), 'credits/balance', <Icon.Wallet2 />),
-      getItem(t('nav:transfers'), 'credits/transfers', <SwapOutlined />),
-      getItem(t('nav:retirements'), 'credits/retirements', <Icon.ExclamationOctagon />),
-    ]),
     // getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
     // getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
     // getItem(t('nav:verra'), 'verraManagement/viewAll', <AppstoreOutlined />),
@@ -75,6 +70,21 @@ const LayoutSider = (props: LayoutSiderProps) => {
     getItem(t('nav:companies'), 'companyManagement/viewAll', <ShopOutlined />),
     getItem(t('nav:users'), 'userManagement/viewAll', <UserOutlined />),
   ];
+
+  if (
+    userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
+    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
+  ) {
+    items.splice(
+      3,
+      0,
+      getItem(t('nav:credits'), 'credits', <AppstoreOutlined />, [
+        getItem(t('nav:creditBalance'), 'credits/balance', <Icon.Wallet2 />),
+        getItem(t('nav:transfers'), 'credits/transfers', <SwapOutlined />),
+        getItem(t('nav:retirements'), 'credits/retirements', <Icon.ClockHistory />),
+      ])
+    );
+  }
 
   useEffect(() => {
     setSelectKey(currentPage);

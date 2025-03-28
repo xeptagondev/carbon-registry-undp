@@ -296,7 +296,7 @@ export const SLCFDashboardComponent = (props: any) => {
             name: 'Validation Report Rejected',
             statusColor: 'rgba(255, 99, 97, 1)',
           },
-          { key: 'AUTHORISED', name: 'Authorized', statusColor: 'rgba(22, 200, 199, 1)' },
+          { key: 'AUTHORISED', name: 'Authorised', statusColor: 'rgba(22, 200, 199, 1)' },
         ];
 
         const statusCount: number[] = [];
@@ -697,17 +697,17 @@ export const SLCFDashboardComponent = (props: any) => {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth > 1600) {
-        setScopeBarChartWidth('230%');
-        setStatusBarChartWidth('750px');
-        setCreditChartsWidth('1530px');
+        setScopeBarChartWidth('270%');
+        setStatusBarChartWidth('370%');
+        setCreditChartsWidth('510%');
       } else if (window.innerWidth > 1200) {
-        setScopeBarChartWidth('180%');
-        setStatusBarChartWidth('600px');
-        setCreditChartsWidth('1148px');
+        setScopeBarChartWidth('220%');
+        setStatusBarChartWidth('300%');
+        setCreditChartsWidth('390%');
       } else {
-        setScopeBarChartWidth('180%');
-        setStatusBarChartWidth('600px');
-        setCreditChartsWidth('1148px');
+        setScopeBarChartWidth('220%');
+        setStatusBarChartWidth('300%');
+        setCreditChartsWidth('390%');
       }
     };
 

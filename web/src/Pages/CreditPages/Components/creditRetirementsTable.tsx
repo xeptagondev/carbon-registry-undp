@@ -36,6 +36,7 @@ import {
 import { CreditRetirementInterface } from '../Interfaces/creditRetirement.interface';
 import moment from 'moment';
 import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
+import { Role } from '../../../Definitions/Enums/role.enum';
 
 const { Search } = Input;
 
@@ -119,7 +120,11 @@ export const CreditRetirementsTableComponent = (props: any) => {
     const filterOr: any[] = [];
 
     // if (checkBoxOptions) {
-    //   filter.push(checkBoxOptions);
+    //   filterAnd.push({
+    //     key: 'type',
+    //     operation: 'in',
+    //     value: checkBoxOptions,
+    //   });
     // }
 
     if (search && search !== '') {
@@ -250,7 +255,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.REFERENCE),
       key: CrediRetirementsColumns.REFERENCE,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
         return <span style={{ marginLeft: '20px' }}>{item?.id}</span>;
@@ -287,7 +291,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.SERIAL_NO),
       key: CrediRetirementsColumns.SERIAL_NO,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
         return <span>{item?.serialNumber}</span>;
@@ -307,7 +310,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.CREDITS),
       key: CrediRetirementsColumns.CREDITS,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
         return <span style={{ marginLeft: '20px' }}>{addCommSep(String(item?.creditAmount))}</span>;
@@ -316,6 +318,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.STATUS),
       key: CrediRetirementsColumns.STATUS,
+      sorter: true,
       align: 'center' as const,
       render: (item: CreditRetirementInterface) => {
         return <Tag color={getStatusColor(item.status)}>{t(item.status)}</Tag>;
@@ -324,6 +327,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.RETIREMENT_TYPE),
       key: CrediRetirementsColumns.RETIREMENT_TYPE,
+      sorter: true,
       align: 'center' as const,
       render: (item: CreditRetirementInterface) => {
         return <span>{item?.retirementType}</span>;
@@ -338,6 +342,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
         const menu = actionMenu(record);
         return (
           record.status === StatusOptions.PENDING &&
+          userInfoState?.userRole === (Role.Admin || Role.Root) &&
           menu && (
             <Popover placement="bottomRight" content={menu} trigger="click">
               <EllipsisOutlined
@@ -358,28 +363,21 @@ export const CreditRetirementsTableComponent = (props: any) => {
   };
 
   const onStatusQuery = async (checkedValues: CheckboxValueType[]) => {
-    if (checkedValues !== checkBoxOptions) {
-      setCheckBoxOptions(checkedValues);
-
-      setIndeterminate(
-        !!checkedValues.length && checkedValues.length < Object.keys(checkBoxOptions).length
-      );
-      setCheckAllBox(checkedValues.length === Object.keys(checkBoxOptions).length);
-    }
-
-    if (checkedValues.length === 0) {
-      setTableData([]);
-      setTotalProgramme(0);
-      return;
-    }
+    setCheckBoxOptions(checkedValues as string[]);
+    setIndeterminate(!!checkedValues.length && checkedValues.length < checkBoxMenu.length);
+    setCheckAllBox(checkedValues.length === checkBoxMenu.length);
   };
 
   const onCheckBoxesChange = (e: CheckboxChangeEvent) => {
-    const nw = e.target.checked ? checkBoxOptions.map((el) => el) : [];
-    setCheckBoxOptions(nw);
+    const checked = e.target.checked;
+    setCheckAllBox(checked);
     setIndeterminate(false);
-    setCheckAllBox(e.target.checked);
-    onStatusQuery(nw);
+    if (checked) {
+      const allValues = Object.values(StatusOptions);
+      setCheckBoxOptions(allValues);
+    } else {
+      setCheckBoxOptions([]);
+    }
   };
 
   const onPaginationChange: PaginationProps['onChange'] = (page, size) => {
@@ -463,6 +461,12 @@ export const CreditRetirementsTableComponent = (props: any) => {
       }
     } catch (error: any) {
       message.error(error.message || t('somethingWentWrong'));
+      setModalResponseData({
+        type: ActionResponseType.FAILED,
+        icon: <Icon.ExclamationCircle color="#FF4D4F" />,
+        title: t('somethingWentWrong'),
+        buttonText: t('okay'),
+      });
     } finally {
       setModalActionVisible(false);
       setModalActionLoading(false);
@@ -483,7 +487,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
               checked={checkAllBox}
               defaultChecked={true}
             >
-              {t('projectList:all')}
+              {t('all')}
             </Checkbox>
             <Checkbox.Group
               disabled={loading}

@@ -36,6 +36,9 @@ import { ActionResponseType } from '../../../Definitions/Enums/actionResponse.en
 import * as Icon from 'react-bootstrap-icons';
 import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedType.enum';
 import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
+import moment from 'moment';
+import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
+import { Role } from '../../../Definitions/Enums/role.enum';
 
 const { Search } = Input;
 
@@ -46,6 +49,7 @@ enum CrediBalanceColumns {
   ISSUE_OR_RECEIVED = 'issueOrReceived',
   CREDITS = 'credits',
   ACTION = 'action',
+  DATE = 'date',
 }
 enum IssuedOrReceivedOptions {
   ISSUED = 'issued',
@@ -196,7 +200,7 @@ export const CreditBalanceTableComponent = (props: any) => {
           },
           {
             text: t('retire'),
-            icon: <Icon.ExclamationDiamond color="#FF4D4F" />,
+            icon: <Icon.ClockHistory color="#FF4D4F" />,
             click: () => {
               setModalActionData({
                 icon: <Icon.BoxArrowDown color="#70B554" />,
@@ -253,10 +257,20 @@ export const CreditBalanceTableComponent = (props: any) => {
     {
       title: t(CrediBalanceColumns.SERIAL_NO),
       key: CrediBalanceColumns.SERIAL_NO,
-      sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
         return <span>{record?.serialNumber}</span>;
+      },
+    },
+    {
+      title: t(CrediBalanceColumns.DATE),
+      key: CrediBalanceColumns.DATE,
+      sorter: true,
+      align: 'left' as const,
+      render: (item: CreditBalanceInterface) => {
+        return (
+          <span>{moment(parseInt(String(item?.createdDate))).format('YYYY-MM-DD HH:mm:ss')}</span>
+        );
       },
     },
     ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
@@ -291,10 +305,13 @@ export const CreditBalanceTableComponent = (props: any) => {
       sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
-        return <span style={{ marginLeft: '20px' }}>{record?.creditAmount}</span>;
+        return (
+          <span style={{ marginLeft: '20px' }}>{addCommSep(String(record?.creditAmount))}</span>
+        );
       },
     },
-    ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
+    ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+    userInfoState?.userRole === Role.Admin
       ? [
           {
             title: t(''),
@@ -426,8 +443,13 @@ export const CreditBalanceTableComponent = (props: any) => {
         });
       }
     } catch (error: any) {
-      console.error(error);
       message.error(error.message || t('somethingWentWrong'));
+      setModalResponseData({
+        type: ActionResponseType.FAILED,
+        icon: <Icon.ExclamationCircle color="#FF4D4F" />,
+        title: t('somethingWentWrong'),
+        buttonText: t('okay'),
+      });
     } finally {
       setModalResponseVisible(true);
       setModalActionLoading(false);
