@@ -1394,7 +1394,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                       value !== null ||
                                       value !== undefined
                                     ) {
-                                      if (value && !validator.isURL('https://' + value))
+                                      if (value && !validator.isURL(value))
                                         throw new Error(
                                           `${t('addProgramme:website')} ${t('isInvalid')}`
                                         );
