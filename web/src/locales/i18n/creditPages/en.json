@@ -225,7 +225,7 @@
     "insufficientBalance": "Insufficient Credit Balance",
     "wrongInput": "Incorrect Input",
     "creditRetireRejectedSuccessfully": "The credit retire request has been rejected successfully",
-    "creditRetireAcceptedSuccessfully": "The credit retirement request has been accepted successfully",
+    "creditRetireAcceptedSuccessfully": "The credit retirement request, Acceptance has been initiated",
     "creditRetireCancelledSuccessfully": "The credit retire request has been cancelled successfully",
     "country": "Country",
     "shouldBeInterger": "Credit Amount Should be Interger Value"
