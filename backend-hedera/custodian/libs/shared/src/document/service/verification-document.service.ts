@@ -475,8 +475,8 @@ export class VerificationDocumentService extends DocumentService {
                 console.log(documentEntity?.project?.creditIssued);
                 console.log(creditAmount);
                 if (
-                    documentEntity?.project?.creditEst <
-                    documentEntity?.project?.creditIssued + creditAmount
+                    Number(documentEntity?.project?.creditEst) <
+                    Number(documentEntity?.project?.creditIssued) + creditAmount
                 ) {
                     throw new HttpException(
                         'Project has reached maximum allowed credit limit',
