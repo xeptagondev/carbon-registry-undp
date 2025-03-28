@@ -38,6 +38,7 @@ import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedT
 import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
 import moment from 'moment';
 import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
+import { Role } from '../../../Definitions/Enums/role.enum';
 
 const { Search } = Input;
 
@@ -309,7 +310,8 @@ export const CreditBalanceTableComponent = (props: any) => {
         );
       },
     },
-    ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
+    ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+    userInfoState?.userRole === Role.Admin
       ? [
           {
             title: t(''),

@@ -36,6 +36,7 @@ import {
 import { CreditRetirementInterface } from '../Interfaces/creditRetirement.interface';
 import moment from 'moment';
 import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
+import { Role } from '../../../Definitions/Enums/role.enum';
 
 const { Search } = Input;
 
@@ -341,6 +342,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
         const menu = actionMenu(record);
         return (
           record.status === StatusOptions.PENDING &&
+          userInfoState?.userRole === (Role.Admin || Role.Root) &&
           menu && (
             <Popover placement="bottomRight" content={menu} trigger="click">
               <EllipsisOutlined
