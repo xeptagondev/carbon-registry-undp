@@ -237,8 +237,8 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       <Input size="large" disabled />
                     </Form.Item>
                     <Form.Item
-                      label={t('verificationReport:b_projectParticipants')}
-                      name={'b_projectParticipants'}
+                      label={t('verificationReport:b_projectDeveloper')}
+                      name={'b_projectDeveloper'}
                     >
                       <Input
                         size="large"
@@ -289,21 +289,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         // placeholder="Add Project Participants"
                         disabled
                       />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('verificationReport:b_certfiedGHGReductions')}
-                      name="b_certfiedGHGReductions"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('verificationReport:b_certfiedGHGReductions')} ${t(
-                            'isRequired'
-                          )}`,
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
@@ -363,7 +348,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled={true} />
                     </Form.Item>
 
                     <Form.Item
@@ -396,6 +381,21 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       name="b_estimatedGHGEmissionReduction"
                     >
                       <Input size="large" disabled />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('verificationReport:b_certfiedGHGReductions')}
+                      name="b_certfiedGHGReductions"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t('verificationReport:b_certfiedGHGReductions')} ${t(
+                            'isRequired'
+                          )}`,
+                        },
+                      ]}
+                    >
+                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
