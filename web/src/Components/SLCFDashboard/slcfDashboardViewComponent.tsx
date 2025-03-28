@@ -158,7 +158,7 @@ export const SLCFDashboardComponent = (props: any) => {
     window.innerWidth > 1600 ? '270%' : '220%'
   );
   const [creditChartsWidth, setCreditChartsWidth] = useState(
-    window.innerWidth > 1600 ? '440%' : '390%'
+    window.innerWidth > 1600 ? '510%' : '390%'
   );
 
   const getPendingActions = async () => {
@@ -943,7 +943,13 @@ export const SLCFDashboardComponent = (props: any) => {
                 t={t}
               />
             </Col>
-            <Col xxl={16} xl={16} md={12} className="statistic-card-col">
+            <Col
+              xxl={16}
+              xl={16}
+              md={12}
+              className="statistic-card-col"
+              style={{ paddingRight: '0px' }}
+            >
               <SLCFSideBarChartsStatComponent
                 id="credits"
                 title={t('projectsBySectoralScope')}
