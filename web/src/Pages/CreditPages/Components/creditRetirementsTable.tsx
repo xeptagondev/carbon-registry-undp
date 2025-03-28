@@ -29,8 +29,12 @@ import * as Icon from 'react-bootstrap-icons';
 import { CreditActionModal } from './creditActionModal';
 import { ActionResponseModal } from '../../../Components/Models/actionResponseModal';
 import { HttpStatusCode } from 'axios';
-import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedType.enum';
+import {
+  CreditRetirementProceedAction,
+  RetirementActionEnum,
+} from '../Enums/creditRetirementProceedType.enum';
 import { CreditRetirementInterface } from '../Interfaces/creditRetirement.interface';
+import moment from 'moment';
 
 const { Search } = Input;
 
@@ -294,7 +298,9 @@ export const CreditRetirementsTableComponent = (props: any) => {
       sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
-        return <span>{item?.createdDate}</span>;
+        return (
+          <span>{moment(parseInt(String(item?.createdDate))).format('YYYY-MM-DD HH:mm:ss')}</span>
+        );
       },
     },
     {
@@ -400,7 +406,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
 
   const onFinishAction = async (
     transactionId: any,
-    action: CreditRetirementProceedAction,
+    action: RetirementActionEnum,
     remark?: string
   ) => {
     try {
@@ -415,23 +421,23 @@ export const CreditRetirementsTableComponent = (props: any) => {
       if (response.status === HttpStatusCode.Created) {
         setModalResponseData({
           type:
-            action === CreditRetirementProceedAction.ACCEPT
+            action === RetirementActionEnum.ACCEPT
               ? ActionResponseType.SUCCESS
-              : action === CreditRetirementProceedAction.REJECT
+              : action === RetirementActionEnum.REJECT
               ? ActionResponseType.PROCESSSED
               : ActionResponseType.PROCESSSED,
           icon:
-            action === CreditRetirementProceedAction.ACCEPT ? (
+            action === RetirementActionEnum.ACCEPT ? (
               <Icon.Check2Circle color="#70B554" />
-            ) : action === CreditRetirementProceedAction.REJECT ? (
+            ) : action === RetirementActionEnum.REJECT ? (
               <Icon.Check2Circle color="#16B1FF" />
             ) : (
               <Icon.Check2Circle color="#16B1FF" />
             ),
           title: t(
-            action === CreditRetirementProceedAction.ACCEPT
+            action === RetirementActionEnum.ACCEPT
               ? 'creditRetireAcceptedSuccessfully'
-              : action === CreditRetirementProceedAction.REJECT
+              : action === RetirementActionEnum.REJECT
               ? 'creditRetireRejectedSuccessfully'
               : 'creditRetireCancelledSuccessfully'
           ),

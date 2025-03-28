@@ -229,8 +229,8 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                         label: item.label,
                         value: item.value,
                       }))}
-                      onChange={(value) => setReciveParty(value)}
                       disabled={isProceed}
+                      onChange={(val) => setReciveParty(val)}
                     />
                   </Form.Item>
                 </Col>
