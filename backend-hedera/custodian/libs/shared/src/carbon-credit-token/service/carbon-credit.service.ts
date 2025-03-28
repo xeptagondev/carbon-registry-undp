@@ -30,6 +30,7 @@ import { CreditBlocksEntity } from '../entity/credit.blocks.entity';
 import { CreditTransactionsEntity } from '../entity/credit.transfer.entity';
 // eslint-disable-next-line max-len
 import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
+import { CreditRetirementTypeEmnum } from '../enum/credit.retirement.type.enum';
 
 @Injectable()
 export class CarbonCreditService {
@@ -356,15 +357,31 @@ export class CarbonCreditService {
                         retireRequest.creditAmount,
                     );
                 for (const serial of serialsToRetire) {
-                    const status =
-                        await this.carbonCreditGuardianService.retireProjectNFT(
-                            tokenId,
-                            serial,
-                            senderAccountId,
-                            senderPrivateKey,
-                        );
+                    if (
+                        retireRequest.retirementType ===
+                        CreditRetirementTypeEmnum.VOLUNTARY_CANCELLATIONS
+                    ) {
+                        const status =
+                            await this.carbonCreditGuardianService.retireProjectNFT(
+                                tokenId,
+                                serial,
+                                senderAccountId,
+                                senderPrivateKey,
+                            );
 
-                    retirementStatuses.push(status);
+                        retirementStatuses.push(status);
+                    } else {
+                        const status =
+                            await this.carbonCreditGuardianService.transferProjectNFT(
+                                tokenId,
+                                serial,
+                                senderAccountId,
+                                senderPrivateKey,
+                                dnaOrg.hederaAccountId,
+                            );
+
+                        retirementStatuses.push(status);
+                    }
                 }
 
                 if (
@@ -374,6 +391,7 @@ export class CarbonCreditService {
                     const savedBlock = await queryRunner.manager.save(
                         plainToClass(CreditBlocksEntity, {
                             ...creditBlock,
+                            receiver: dnaOrg,
                             creditAmount: 0,
                         }),
                     );
