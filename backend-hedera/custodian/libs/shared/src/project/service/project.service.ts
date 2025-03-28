@@ -147,7 +147,6 @@ export class ProjectService {
             infRefId: lastInf?.refId,
             refId: project.refId,
         };
-        console.log(project.assignees);
         mappedProject.documents = lastDocuments;
         mappedProject.projectProposalStage = project.projectProposalStage;
         mappedProject.authoroiseLetterUrl = project.authoroiseLetterUrl;
