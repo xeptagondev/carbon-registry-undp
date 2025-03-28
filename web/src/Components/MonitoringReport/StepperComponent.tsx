@@ -145,7 +145,7 @@ const StepperComponent = (props: CustomStepsProps) => {
       // Fetch PDD Data
       const pddResponse = await post(API_PATHS.QUERY_DOCUMENT, {
         refId: state?.documents?.PDD?.refId,
-        documentEnum: DocumentEnum.PDD,
+        documentType: DocumentEnum.PDD,
       });
       console.log('-----------------PDD Response-----------------', pddResponse);
       if (pddResponse?.statusText === 'SUCCESS') {
@@ -161,7 +161,7 @@ const StepperComponent = (props: CustomStepsProps) => {
       //fetch validation data
       const validationResponse = await post(API_PATHS.QUERY_DOCUMENT, {
         refId: state?.documents?.VALIDATION?.refId,
-        documentEnum: DocumentEnum.VALIDATION,
+        documentType: DocumentEnum.VALIDATION,
       });
       if (validationResponse?.statusText === 'SUCCESS') {
         validationData = validationResponse?.data?.data;
