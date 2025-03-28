@@ -471,6 +471,9 @@ export class VerificationDocumentService extends DocumentService {
                         ?.totalNetEmissionReductions,
                 );
 
+                console.log(documentEntity?.project?.creditEst);
+                console.log(documentEntity?.project?.creditIssued);
+                console.log(creditAmount);
                 if (
                     documentEntity?.project?.creditEst <
                     documentEntity?.project?.creditIssued + creditAmount
