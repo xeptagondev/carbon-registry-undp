@@ -486,7 +486,7 @@ export class VerificationDocumentService extends DocumentService {
                         documentEntity?.project?.serialNumber,
                         creditAmount,
                         String(new Date().getFullYear()),
-                        documentEntity?.project?.creditIssued,
+                        Number(documentEntity?.project?.creditIssued),
                     );
                 const payload: MintNFTJobPayload = {
                     tokenId: documentEntity?.project?.tokenId,
