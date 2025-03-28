@@ -6,6 +6,7 @@ import { API_PATHS } from '../../../Config/apiConfig';
 import { ProfileIcon } from '../../../Components/IconComponents/ProfileIcon/profile.icon';
 import '../creditPageStyles.scss';
 import { CreditTransfersInterface } from '../Interfaces/creditTransfers.interface';
+import moment from 'moment';
 
 const { Search } = Input;
 
@@ -126,7 +127,9 @@ export const CreditTransfersTableComponent = (props: any) => {
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
-        return <span>{item?.createdDate}</span>;
+        return (
+          <span>{moment(parseInt(String(item?.createdDate))).format('YYYY-MM-DD HH:mm:ss')}</span>
+        );
       },
     },
     {
