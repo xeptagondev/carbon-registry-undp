@@ -116,6 +116,7 @@ const StepperComponent = (props: CustomStepsProps) => {
     let pddData = null;
     let validationData = null;
 
+    console.log('-------state mon---------', state);
     try {
       //fetch programme data
       const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, { programmeId: programId });

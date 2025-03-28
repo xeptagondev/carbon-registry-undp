@@ -869,7 +869,7 @@ export class OrganizationService extends SuperService<
     async getOrganizationsOfType(
         dto: GetOrganizationsRequest,
         requestData: JWTPayload,
-    ): Promise<GetOrganizationsResponse> {
+    ): Promise<IDNameResponse[]> {
         // request can only be made by admins of same org type
         if (
             requestData.userRole !== RoleEnum.Admin ||
@@ -894,15 +894,9 @@ export class OrganizationService extends SuperService<
         });
 
         if (res) {
-            return {
-                organizations: res.map(
-                    (org) => new IDNameResponse(org.id, org.name),
-                ),
-            };
+            return res.map((org) => new IDNameResponse(org.id, org.name));
         }
 
-        return {
-            organizations: [],
-        };
+        return [];
     }
 }
