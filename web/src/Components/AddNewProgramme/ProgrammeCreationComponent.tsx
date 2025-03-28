@@ -82,7 +82,7 @@ const INF_SECTOR: { [key: string]: string } = {
   WASTE: 'Waste',
 };
 
-const INF_SECTORAL_SCOPE: { [key: string]: string } = {
+export const INF_SECTORAL_SCOPE: { [key: string]: string } = {
   ENERGY_INDUSTRIES: 'Energy Industries (Renewable)',
   ENERGY_DISTRIBUTION: 'Energy Distribution',
   ENERGY_DEMAND: 'Energy Demand',
@@ -1394,7 +1394,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                       value !== null ||
                                       value !== undefined
                                     ) {
-                                      if (value && !validator.isURL('https://' + value))
+                                      if (value && !validator.isURL(value))
                                         throw new Error(
                                           `${t('addProgramme:website')} ${t('isInvalid')}`
                                         );

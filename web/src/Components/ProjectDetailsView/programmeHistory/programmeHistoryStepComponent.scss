@@ -157,7 +157,7 @@
   }
 
   .credits_authorised {
-    color: #2515AD;
+    color: #2515ad;
     background-color: #e5e3f6;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
@@ -170,7 +170,7 @@
   }
 
   .credit_transfered {
-    color: #72CB57;
+    color: #72cb57;
     background-color: #eeffe6;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
@@ -178,7 +178,7 @@
 
   .retire_requested {
     color: #f6f2e3;
-    background-color: #CBB057;
+    background-color: #cbb057;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
@@ -186,6 +186,20 @@
   .retire_cancelled {
     color: #ff4d4f;
     background-color: #ffe0e0;
+    font-size: 1rem;
+    padding: 0.3rem 0.4rem 0.2rem 0.4rem;
+  }
+
+  .retire_approved {
+    color: #3DC835;
+    background-color: #c0ffc2;
+    font-size: 1rem;
+    padding: 0.3rem 0.4rem 0.2rem 0.4rem;
+  }
+
+  .retire_rejected {
+    color: #ad1515;
+    background-color: #f6e3e3;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
