@@ -12,6 +12,7 @@ import {
   SplitCellsOutlined,
   UnorderedListOutlined,
   UserOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { LayoutSiderProps } from '../../Definitions/Definitions/layout.sider.definitions';
@@ -27,6 +28,7 @@ type MenuItem = {
   key: React.Key;
   icon?: React.ReactNode;
   label: React.ReactNode;
+  children?: MenuItem[];
 } | null;
 
 function getItem(
@@ -54,7 +56,11 @@ const LayoutSider = (props: LayoutSiderProps) => {
     getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
     getItem(t('nav:slcfprogrammes'), 'programmeManagement/viewAllProjects', <AppstoreOutlined />),
     getItem(t('nav:projectList'), 'programmeManagement/viewAll', <UnorderedListOutlined />),
-    getItem(t('nav:retirements'), 'retirementManagement/viewAll', <SplitCellsOutlined />),
+    getItem(t('nav:credits'), 'credits', <AppstoreOutlined />, [
+      getItem(t('nav:creditBalance'), 'credits/balance', <ShopOutlined />),
+      getItem(t('nav:transfers'), 'credits/transfers', <SwapOutlined />),
+      getItem(t('nav:retirements'), 'credits/retirements', <SplitCellsOutlined />),
+    ]),
     // getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
     // getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
     // getItem(t('nav:verra'), 'verraManagement/viewAll', <AppstoreOutlined />),
@@ -93,10 +99,9 @@ const LayoutSider = (props: LayoutSiderProps) => {
   //   items.push(getItem(t('nav:settings'), 'settings', <SettingOutlined />));
   // }
 
-  const onClick: MenuProps['onClick'] = (e) => {
+  const onClick: MenuProps['onClick'] = (e: { key: string }) => {
     navigate('/' + e.key);
   };
-
   return (
     <Sider
       width={240}
@@ -140,31 +145,45 @@ const LayoutSider = (props: LayoutSiderProps) => {
             mode="inline"
             onClick={onClick}
           >
-            {items.map((item) => (
-              <Menu.Item
-                key={item?.key}
-                icon={item?.icon}
-                className={
-                  item?.key === 'ndcManagement/viewAll' ||
-                  item?.key === 'investmentManagement/viewAll' ||
-                  item?.key === 'retirementManagement/viewAll' ||
-                  item?.key === 'programmeManagement/viewAll' ||
-                  item?.key === 'creditTransfers/viewAll'
-                    ? 'custom-padding-left'
-                    : item?.key === 'cdmManagement/viewAll'
-                    ? 'custom-padding-left wrap-content-overflow'
-                    : ''
-                }
-                disabled={
-                  // item?.key === 'programmeManagement/viewAll' ||
-                  item?.key === 'cdmManagement/viewAll' ||
-                  item?.key === 'goldStandardManagement/viewAll' ||
-                  item?.key === 'verraManagement/viewAll'
-                }
-              >
-                <Link to={`/${item?.key}`}>{item?.label}</Link>
-              </Menu.Item>
-            ))}
+            {items.map((item) =>
+              item?.children ? (
+                <Menu.SubMenu key={item.key} icon={item.icon} title={item.label}>
+                  {item.children.map((child) => (
+                    <Menu.Item
+                      key={child?.key}
+                      icon={child?.icon}
+                      className={selectedKey === child?.key ? 'highlighted-menu-item' : ''}
+                    >
+                      <Link to={`/${child?.key}`}>{child?.label}</Link>
+                    </Menu.Item>
+                  ))}
+                </Menu.SubMenu>
+              ) : (
+                <Menu.Item
+                  key={item?.key}
+                  icon={item?.icon}
+                  className={
+                    item?.key === 'ndcManagement/viewAll' ||
+                    item?.key === 'investmentManagement/viewAll' ||
+                    item?.key === 'retirementManagement/viewAll' ||
+                    item?.key === 'programmeManagement/viewAll' ||
+                    item?.key === 'creditTransfers/viewAll'
+                      ? 'custom-padding-left'
+                      : item?.key === 'cdmManagement/viewAll'
+                      ? 'custom-padding-left wrap-content-overflow'
+                      : ''
+                  }
+                  disabled={
+                    // item?.key === 'programmeManagement/viewAll' ||
+                    item?.key === 'cdmManagement/viewAll' ||
+                    item?.key === 'goldStandardManagement/viewAll' ||
+                    item?.key === 'verraManagement/viewAll'
+                  }
+                >
+                  <Link to={`/${item?.key}`}>{item?.label}</Link>
+                </Menu.Item>
+              )
+            )}
           </Menu>
         </div>
       </div>
