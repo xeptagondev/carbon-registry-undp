@@ -298,7 +298,7 @@ const StepperComponent = (props: VerificationStepProps) => {
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
             refId: state?.documentRefId,
-            documentEnum: DocumentEnum.VERIFICATION,
+            documentType: DocumentEnum.VERIFICATION,
           });
 
           console.log('--------ver res---------', res);

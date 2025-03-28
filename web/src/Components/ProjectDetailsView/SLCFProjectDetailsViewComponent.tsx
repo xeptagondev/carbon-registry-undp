@@ -2086,6 +2086,12 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             <span>{v as string}</span>
           </span>
         );
+      } else if (k === 'projectGeography') {
+        generalInfo[text] = t('projectDetailsView:' + v);
+      } else if (k === 'estimatedProjectCost') {
+        generalInfo[text] = `${v} USD`;
+      } else if (k === 'independentCertifier') {
+        generalInfo[text] = `${v.join()}`;
       } else if (k === 'additionalDocuments') {
         generalInfo[text] = (
           <span>
@@ -2467,7 +2473,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                   <InfoView
                     data={getContactPersonInfo()}
                     title={t('projectDetailsView:contactPerson')}
-                    icon={<MailOutlined />}
+                    icon={<Icon.Headset />}
                   />
                 </div>
               </Card>
