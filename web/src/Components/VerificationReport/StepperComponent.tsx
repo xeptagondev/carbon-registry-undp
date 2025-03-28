@@ -50,7 +50,7 @@ const StepperComponent = (props: VerificationStepProps) => {
   const navigate = useNavigate();
   const [reportId, setReportId] = useState(0);
   const [status, setStatus] = useState(null);
-  const [current, setCurrent] = useState(5);
+  const [current, setCurrent] = useState(0);
   const [verifiedScer, setVerifiedScer] = useState(0);
   const { get, post } = useConnection();
   const { id, verificationRequestId } = useParams();
@@ -177,7 +177,11 @@ const StepperComponent = (props: VerificationStepProps) => {
     const netEmReductions = monitoringData?.calcEmissionReductions?.netGHGEmissionReductions;
     const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
 
-    if (programmeData) {
+    if (programmeData && pddData && validationData && monitoringData) {
+      const docVersions = state?.documents?.[DocumentEnum.VERIFICATION as any]?.version;
+      console.log('------------docVersions-----------', docVersions);
+      console.log('--------state---------', state);
+      const latestVersion = docVersions ? docVersions + 1 : 1;
       basicInformationForm.setFieldsValue({
         b_projectDeveloper: programmeData?.projectParticipant,
         b_hostParty: pddData?.projectDetails?.hostParty,
@@ -193,6 +197,7 @@ const StepperComponent = (props: VerificationStepProps) => {
         b_monitoringPeriodDuration: monitoringData?.projectDetails?.bi_duration,
         b_versionNoOfMonitoringReport: monitoringData?.projectDetails?.bi_versionNoOfMR,
         b_creditingPeriod: durationString,
+        b_versionNoOfVerificationReport: latestVersion,
       });
 
       ghgProjectDescriptionForm.setFieldsValue({
@@ -281,9 +286,6 @@ const StepperComponent = (props: VerificationStepProps) => {
 
   useEffect(() => {
     if (state?.mode === FormMode.CREATE) {
-      //getValidationData();
-      //getMonitoringData();
-      //getPDDData();
       fetchAndSetData(id);
     }
   }, []);
@@ -325,7 +327,16 @@ const StepperComponent = (props: VerificationStepProps) => {
 
             console.log('--------ver res 2---------', data, data.data.basicInformation);
 
-            const basicInformation = basicInformationMapDataToView(data.data.basicInformation);
+            let basicInformation = basicInformationMapDataToView(data.data.basicInformation);
+            const docVersions = state?.documents?.[DocumentEnum.VERIFICATION as any]?.version;
+            const latestVersion = docVersions ? docVersions + 1 : 1;
+            console.log('------------latest version-----------', latestVersion);
+            if (state?.mode === FormMode.EDIT) {
+              basicInformation = {
+                ...basicInformation,
+                b_versionNoOfVerificationReport: latestVersion,
+              };
+            }
             basicInformationForm.setFieldsValue(basicInformation);
 
             const ghgProjectDescription = ghgProjectDescriptionMapDataToFields(

@@ -348,7 +348,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled={true} />
                     </Form.Item>
 
                     <Form.Item

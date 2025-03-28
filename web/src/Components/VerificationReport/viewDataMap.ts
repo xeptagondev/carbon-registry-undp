@@ -76,6 +76,7 @@ export const meansOfVerificationMapDataToFields = (vals: any) => {
     onSiteInspection: vals?.onSiteInspection?.map((item: any) => {
       const temp = {
         ...item,
+        siteLocation: item?.siteLocation,
         activityPerformedDate: item?.activityPerformedDate
           ? moment.unix(item?.activityPerformedDate)
           : undefined,
