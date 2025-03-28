@@ -15,7 +15,7 @@
   "b_scaleOfProject": "Scale of the project activity",
   "b_completionDate": "Completion date of the verification and certification report",
   "b_versionNoOfMonitoringReport": "Version number of the monitoring report to which this report applies",
-  "b_projectParticipants": "Project participants",
+  "b_projectDeveloper": "Project Developer",
   "b_appliedMethodologies": "Applied methodologies and standardized baseline",
   "b_conditionalSectoralScopes": "Conditional sectoral scopes, if applicable",
   "b_unfccRefNo": "UNFCC reference number of the project activity ",
