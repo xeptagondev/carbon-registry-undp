@@ -7,6 +7,7 @@ import { ProfileIcon } from '../../../Components/IconComponents/ProfileIcon/prof
 import '../creditPageStyles.scss';
 import { CreditTransfersInterface } from '../Interfaces/creditTransfers.interface';
 import moment from 'moment';
+import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
 
 const { Search } = Input;
 
@@ -105,7 +106,7 @@ export const CreditTransfersTableComponent = (props: any) => {
   const columns = [
     {
       title: t(CrediTransferColumns.TRANSFER_ID),
-      key: CrediTransferColumns.PROJECT_NAME,
+      key: CrediTransferColumns.TRANSFER_ID,
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -135,7 +136,6 @@ export const CreditTransfersTableComponent = (props: any) => {
     {
       title: t(CrediTransferColumns.SERIAL_NO),
       key: CrediTransferColumns.SERIAL_NO,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
         return <span>{item?.serialNumber}</span>;
@@ -182,10 +182,9 @@ export const CreditTransfersTableComponent = (props: any) => {
     {
       title: t(CrediTransferColumns.CREDIT_TRANSFERRED),
       key: CrediTransferColumns.CREDIT_TRANSFERRED,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
-        return <span style={{ marginLeft: '20px' }}>{item?.creditAmount}</span>;
+        return <span style={{ marginLeft: '20px' }}>{addCommSep(String(item?.creditAmount))}</span>;
       },
     },
     {

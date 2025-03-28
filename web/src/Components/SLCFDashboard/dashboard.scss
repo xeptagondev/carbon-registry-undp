@@ -172,7 +172,7 @@
       flex-direction: row !important;
       justify-content: center !important; /* or space-between/space-around */
       flex-wrap: wrap !important;
-      gap: 5px;
+      gap: 8px;
       overflow: visible !important;
       align-items: center !important;
     }
@@ -189,7 +189,7 @@
 
   .project-details-bar-chart {
     ul {
-      padding-left: 15px;
+      padding-left: 50px;
       list-style-type: none;
     }
     .list-title {
@@ -200,7 +200,7 @@
       margin-top: 20px;
     }
     .list-item {
-      margin-left: -20px;
+      margin-left: 10px;
       list-style-type: none;
       font-size: 0.7rem;
       font-weight: 400;

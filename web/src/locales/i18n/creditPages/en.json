@@ -193,8 +193,8 @@
     "projectName": "project Name",
     "organizationName": "Organization Name",
     "serialNo": "Serial No",
-    "reference": "Reference",
-    "date": "Date",
+    "reference": "Reference Id",
+    "date": "Date & Time",
     "credits": "Credits",
     "status": "Status",
     "retirementType": "Retirement Type",
@@ -227,5 +227,6 @@
     "creditRetireRejectedSuccessfully": "The credit retire request has been rejected successfully",
     "creditRetireAcceptedSuccessfully": "The credit retirement request has been accepted successfully",
     "creditRetireCancelledSuccessfully": "The credit retire request has been cancelled successfully",
-    "country": "Country"
+    "country": "Country",
+    "shouldBeInterger": "Credit Amount Should be Interger Value"
 }
