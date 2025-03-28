@@ -171,7 +171,7 @@ const StepperComponent = (props: CustomStepsProps) => {
       console.log('Error fetching data from validation report', error);
     }
 
-    if (programmeData) {
+    if (programmeData && pddData && validationData) {
       const docVersions = state?.documents?.[DocumentEnum.MONITORING as any]?.version;
       const latestVersion = docVersions ? docVersions + 1 : 1;
       basicInformationForm.setFieldsValue({
