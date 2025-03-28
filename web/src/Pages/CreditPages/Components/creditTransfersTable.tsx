@@ -59,7 +59,7 @@ export const CreditTransfersTableComponent = (props: any) => {
 
     if (search && search !== '') {
       filter.push({
-        key: 'projectName',
+        key: 'project.title',
         operation: 'like',
         value: `%${search}%`,
       });
@@ -106,7 +106,7 @@ export const CreditTransfersTableComponent = (props: any) => {
   const columns = [
     {
       title: t(CrediTransferColumns.TRANSFER_ID),
-      key: CrediTransferColumns.TRANSFER_ID,
+      key: 'id',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -115,7 +115,7 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
     {
       title: t(CrediTransferColumns.PROJECT_NAME),
-      key: CrediTransferColumns.PROJECT_NAME,
+      key: 'project.title',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -124,7 +124,7 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
     {
       title: t(CrediTransferColumns.DATE),
-      key: CrediTransferColumns.DATE,
+      key: 'createdDate',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -143,7 +143,7 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
     {
       title: t(CrediTransferColumns.CREDIT_SENDER),
-      key: CrediTransferColumns.CREDIT_SENDER,
+      key: 'sender.name',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -162,7 +162,7 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
     {
       title: t(CrediTransferColumns.CREDIT_RECEIVER),
-      key: CrediTransferColumns.CREDIT_RECEIVER,
+      key: 'receiver.name',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -201,9 +201,11 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
   ];
 
-  const onSearch = async () => {
-    if (search) {
-      setSearch(search?.toLowerCase());
+  const onSearch = async (value: string) => {
+    if (value) {
+      setSearch(value.toLowerCase());
+    } else {
+      setSearch('');
     }
   };
 
@@ -240,7 +242,7 @@ export const CreditTransfersTableComponent = (props: any) => {
           <div className="filter-section">
             <div className="search-bar">
               <Search
-                onPressEnter={onSearch}
+                onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                 placeholder={`${t('search')}`}
                 allowClear
                 onSearch={onSearch}
