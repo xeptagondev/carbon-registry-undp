@@ -58,29 +58,20 @@
   "verificationReportRejectedDescription": "The Verification Report was rejected by {}",
 
   "creditIssuedTitle": "Credit Issued",
-  "creditIssuedDescription": "{} credit(s) were issued for the project",
+  "creditIssuedDescription": "{} credits have been issued for the project",
 
-  "transferRequestedTitle": "Credit Transfer Requested",
-  "transferRequestedDescription": "{} has requested to transfer {} credit(s) to {} organisation",
+  "creditTransferedTitle": "Credit Transfered",
+  "creditTransferedDescription": "{} credits has been transferred to {}",
 
-  "transferApprovedTitle": "Credit Transfer Approved",
-  "transferApprovedDescription": "The credit transfer was approved by {} of {{countryName}} Climate Fund and the Voluntary Cancellation Certificate was generated",
+  "retireRequestedTitle": "Credit Retirement Request",
+  "retireRequestedDescription": "{} Credits has been requested to retire on {} for the type {}",
 
-  "transferRejectedTitle": "Credit Transfer Rejected",
-  "transferRejectedDescription": "{} of {{countryName}} Climate Fund has rejected the transfer of {} credit(s) to {} organisation",
+  "retirementApprovedTitle": "Credit Retirement Accepted",
+  "retirementApprovedDescription": "{} Credits has been accepted on {} for the type {} was Accepted",
 
-  "transferCancelledTitle": "Credit Transfer Cancelled",
-  "transferCancelledDescription": "{} has cancelled the request to transfer {} credit(s)",
+  "retirementCancelledTitle": "Credit Retirement Cancelled",
+  "retirementCancelledDescription": "{} Credits has been requested to retire on {} for the type {} was Cancelled",
 
-  "retireRequestedTitle": "Credit Retirement Requested",
-  "retireRequestedDescription": "{} has requested to retire {} credit(s)",
-
-  "retireApprovedTitle": "Credit Retirement Approved",
-  "retireApprovedDescription": "The credit retirement was approved by {} of {{countryName}} Climate Fund and the Voluntary Cancellation Certificate was generated",
-
-  "retireRejectedTitle": "Credit Retirement Rejected",
-  "retireRejectedDescription": "{} of {{countryName}} Climate Fund has rejected the retirement of {} credit(s)",
-
-  "retireCancelledTitle": "Credit Retirement Cancelled",
-  "retireCancelledDescription": "{} has cancelled the request to retire {} credit(s)"
+  "retirementRejectedTitle": "Credit Retirement Rejected",
+  "retirementRejectedDescription": "{} Credits has been rejected on {} for the type {} was cancelled"
 }
