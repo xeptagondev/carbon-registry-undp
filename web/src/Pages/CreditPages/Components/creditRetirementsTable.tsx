@@ -35,6 +35,7 @@ import {
 } from '../Enums/creditRetirementProceedType.enum';
 import { CreditRetirementInterface } from '../Interfaces/creditRetirement.interface';
 import moment from 'moment';
+import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
 
 const { Search } = Input;
 
@@ -228,7 +229,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
                 type: CreditActionType.RETIREMENT,
                 actionBtnText: t('proceed'),
                 remarkRequired: true,
-                proceedAction: CreditRetirementProceedAction.REJECT,
+                proceedAction: CreditRetirementProceedAction.CANCEL,
                 data: record,
               });
               setModalActionVisible(true);
@@ -301,6 +302,15 @@ export const CreditRetirementsTableComponent = (props: any) => {
         return (
           <span>{moment(parseInt(String(item?.createdDate))).format('YYYY-MM-DD HH:mm:ss')}</span>
         );
+      },
+    },
+    {
+      title: t(CrediRetirementsColumns.CREDITS),
+      key: CrediRetirementsColumns.CREDITS,
+      sorter: true,
+      align: 'left' as const,
+      render: (item: CreditRetirementInterface) => {
+        return <span style={{ marginLeft: '20px' }}>{addCommSep(String(item?.creditAmount))}</span>;
       },
     },
     {
@@ -541,6 +551,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
         type={modalActionData?.type}
         remarkRequired={modalActionData?.remarkRequired}
         data={modalActionData?.data}
+        proceedAction={modalActionData?.proceedAction}
       />
       <ActionResponseModal
         type={modalResponseData?.type}
