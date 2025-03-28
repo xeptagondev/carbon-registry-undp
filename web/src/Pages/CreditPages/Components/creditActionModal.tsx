@@ -67,13 +67,7 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
   const { userInfoState } = useUserContext();
   const [remark, setRemark] = useState<string>('');
   const [actionDisable, setActionDisable] = useState<boolean>(true);
-  const [retirementType, setRetirementType] = useState<RetirementType>(
-    data &&
-      'retirementType' in data &&
-      data.retirementType === CreditRetirementTypeEmnum.VOLUNTARY_CANCELLATIONS
-      ? RetirementType.VOLUNTARY_CANCELLATION
-      : RetirementType.CROSS_BORDER
-  );
+  const [retirementType, setRetirementType] = useState<RetirementType>(RetirementType.CROSS_BORDER);
   const [creditAmount, setCreditAmount] = useState<number>();
   const [checked, setChecked] = useState<boolean>(
     type === CreditActionType.TRANSFER ? true : false
@@ -116,7 +110,7 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
 
   useEffect(() => {
     let valid = true;
-    if (!checked) {
+    if (type !== CreditActionType.TRANSFER && !checked) {
       valid = false;
     }
     if (isProceed) {
@@ -124,12 +118,10 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
         valid = false;
       }
     } else {
-      if (
-        type === CreditActionType.TRANSFER ||
-        (type === CreditActionType.RETIREMENT &&
-          retirementType === RetirementType.VOLUNTARY_CANCELLATION)
-      ) {
-        if (!reciveParty) valid = false;
+      if (type === CreditActionType.TRANSFER) {
+        if (!reciveParty) {
+          valid = false;
+        }
       }
       if (creditAmount === undefined || creditAmount === null) {
         valid = false;
@@ -143,6 +135,15 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
 
   useEffect(() => {
     setActionDisable(true);
+    if (isProceed) {
+      setRetirementType(
+        data &&
+          'retirementType' in data &&
+          data.retirementType.trim() === CreditRetirementTypeEmnum.VOLUNTARY_CANCELLATIONS
+          ? RetirementType.VOLUNTARY_CANCELLATION
+          : RetirementType.CROSS_BORDER
+      );
+    }
     if (
       !(
         type === CreditActionType.RETIREMENT &&

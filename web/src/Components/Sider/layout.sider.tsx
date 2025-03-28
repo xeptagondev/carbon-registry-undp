@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, Layout, MenuProps } from 'antd';
 import sliderLogo from '../../Assets/Images/logo-slider.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './layout.sider.scss';
 import * as Icon from 'react-bootstrap-icons';
 import {
@@ -49,8 +49,12 @@ const LayoutSider = (props: LayoutSiderProps) => {
   const { selectedKey } = props;
   const navigate = useNavigate();
   const { userInfoState } = useUserContext();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [selectKey, setSelectKey] = useState<any>(selectedKey);
   const { i18n, t } = useTranslation(['nav']);
+
+  const currentPage = location.pathname.replace(/^\/|\/$/g, '');
 
   const items: MenuItem[] = [
     getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
@@ -71,6 +75,10 @@ const LayoutSider = (props: LayoutSiderProps) => {
     getItem(t('nav:companies'), 'companyManagement/viewAll', <ShopOutlined />),
     getItem(t('nav:users'), 'userManagement/viewAll', <UserOutlined />),
   ];
+
+  useEffect(() => {
+    setSelectKey(currentPage);
+  }, [currentPage]);
 
   // if (
   //   userInfoState?.userRole === Role.Root ||
@@ -141,7 +149,9 @@ const LayoutSider = (props: LayoutSiderProps) => {
         <div className="layout-sider-menu-container">
           <Menu
             theme="light"
-            selectedKeys={[selectedKey ? selectedKey : 'dashboard']}
+            selectedKeys={[
+              selectedKey ? selectedKey : !selectedKey && selectKey ? selectKey : 'dashboard',
+            ]}
             mode="inline"
             onClick={onClick}
           >
