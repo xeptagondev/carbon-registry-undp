@@ -1934,7 +1934,10 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   // MARK: Action Buttons
   if (userInfoState?.userRole !== 'ViewOnly') {
     if (userInfoState && data.projectProposalStage === ProjectProposalStage.PENDING) {
-      if (userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
+      if (
+        userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+        userInfoState?.userRole !== Role.Manager
+      ) {
         actionBtns.push(
           <Button
             danger
@@ -2003,7 +2006,11 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
           type="primary"
           onClick={() => {
             navigate(ROUTES.MONITORING_REPORT_CREATE(String(id)), {
-              state: { mode: FormMode.CREATE, userCompanyRole: CompanyRole.PROJECT_DEVELOPER },
+              state: {
+                mode: FormMode.CREATE,
+                userCompanyRole: CompanyRole.PROJECT_DEVELOPER,
+                documents: data?.documents,
+              },
             });
           }}
         >
