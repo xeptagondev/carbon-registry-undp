@@ -137,7 +137,7 @@ const StepperComponent = (props: CustomStepsProps) => {
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
             refId: state?.documentRefId,
-            documentEnum: DocumentEnum.MONITORING,
+            documentType: DocumentEnum.MONITORING,
           });
 
           console.log('--------mon res---------', res);

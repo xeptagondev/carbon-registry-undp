@@ -106,7 +106,6 @@ const StepperComponent = (props: any) => {
         appendix: appendixVals,
       },
     };
-    console.log('--------adding form-values------', tempValues);
 
     try {
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
@@ -299,17 +298,13 @@ const StepperComponent = (props: any) => {
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
             refId: state?.documentRefId,
-            DocumentEnum: DocumentEnum.VALIDATION,
+            DocumentType: DocumentEnum.VALIDATION,
           });
 
           if (res?.statusText === 'SUCCESS') {
             const data = res?.data;
             setDocumentId(data?.refId);
-            console.log(
-              '---------validation------------',
-              data?.data,
-              data?.data?.basicInformation
-            );
+
             const basicInformation = basicInformationMapDataToFields(data.data?.basicInformation);
             form1.setFieldsValue(basicInformation);
 
