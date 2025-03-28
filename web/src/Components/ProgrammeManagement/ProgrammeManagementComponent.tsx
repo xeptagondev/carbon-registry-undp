@@ -533,6 +533,7 @@ export const ProgrammeManagementComponent = (props: any) => {
         <div className="actions">
           {userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
             userInfoState.userRole !== Role.ViewOnly &&
+            userInfoState.userRole !== Role.Manager &&
             enableAddProgramme && (
               <div className="action-bar">
                 <Button
