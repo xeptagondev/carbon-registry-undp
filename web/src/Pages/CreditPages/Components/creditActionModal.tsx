@@ -218,17 +218,6 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                     label={t('to')}
                     name="toCompanyId"
                     required
-                    rules={[
-                      {
-                        validator: (_, v) => {
-                          if (v !== undefined && v !== '' && v.trim() === '') {
-                            setActionDisable(true);
-                            return Promise.reject(t('required'));
-                          }
-                          return Promise.resolve();
-                        },
-                      },
-                    ]}
                   >
                     <Select
                       showSearch

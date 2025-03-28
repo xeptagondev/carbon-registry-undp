@@ -57,11 +57,11 @@ export const getStatusColor = (status: string) => {
     case StatusOptions.ACCEPTED:
       return 'processing';
     case StatusOptions.REJECTED:
-      return 'success';
+      return 'orange';
     case StatusOptions.PENDING:
-      return 'processing';
+      return 'purple';
     case StatusOptions.CANCELLED:
-      return 'processing';
+      return 'error';
     default:
       return 'default';
   }

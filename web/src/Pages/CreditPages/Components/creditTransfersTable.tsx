@@ -27,9 +27,9 @@ enum TransferStatus {
 export const getStatusColor = (status: TransferStatus) => {
   switch (status) {
     case TransferStatus.SENT:
-      return 'processing';
-    case TransferStatus.RECEIVED:
       return 'success';
+    case TransferStatus.RECEIVED:
+      return 'gold';
     default:
       return 'default';
   }
