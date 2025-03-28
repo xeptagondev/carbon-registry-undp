@@ -47,6 +47,7 @@ import { Role } from '../../Definitions/Enums/role.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { APPLICATION_STAGE } from '../../Definitions/Constants/ApplicationStage';
 import { downloadCSV } from '../../Utils/downloadCSV';
+import { deepCopy } from '../../Utils/deepCopy';
 
 const { Search } = Input;
 
@@ -516,7 +517,14 @@ export const ProgrammeManagementComponent = (props: any) => {
           ...res.data,
           ...res.data.company,
         };
-        downloadCSV(res.data, 'projectList.csv', ['additionalDocuments']);
+        downloadCSV(deepCopy(res.data), 'projectList.csv', [
+          'additionalDocuments',
+          'geographicalLocationCoordinates',
+          'documents',
+          'infRefId',
+          'refId',
+          'company',
+        ]);
       }
     } catch (error) {
       console.log('------error--------', error);

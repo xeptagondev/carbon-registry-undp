@@ -8,15 +8,11 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 
 import moment from 'moment';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import DataValidationProcess from './DataValidationProcess';
-import ValidationReportIntroduction from './ValidationReportIntroduction';
-// import Reference from './Reference';
-// import ValicationReportGHGDescriptionOfProjectActivity from './ValicationReportGHGDescriptionOfProjectActivity';
+
 import ValidationMethodology from './ValidationMethodology';
 import ValidationOpinion from './ValidationOpinion';
 import ValidationReportAppendix from './ValidationReportAppendix';
-import { projectScopeList } from './validationReportHelper';
-import { extractFilePropertiesFromLink } from '../../Utils/utilityHelper';
+
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
@@ -40,6 +36,7 @@ import {
   validationReportAppendixMapDataToFields,
 } from './viewDataMap';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -204,7 +201,7 @@ const StepperComponent = (props: any) => {
       const latestVersion = docVersions ? docVersions + 1 : 1;
       form1.setFieldsValue({
         titleOfTheProjectActivity: programmeData?.title,
-        mandatarySectoralScopes: programmeData?.sectoralScope,
+        mandatarySectoralScopes: INF_SECTORAL_SCOPE[programmeData?.sectoralScope],
         projectDeveloper: programmeData?.projectParticipant,
         versionNumberPDD: pddData?.data?.projectDetails?.versionNumber,
         hostParty: pddData?.data?.projectDetails?.hostParty,
