@@ -85,7 +85,7 @@ export const CreditBalanceTableComponent = (props: any) => {
   const [checkAllBox, setCheckAllBox] = useState<boolean>(true);
   const [checkBoxOptions, setCheckBoxOptions] = useState<any[]>([]);
   const checkBoxMenu = Object.keys(IssuedOrReceivedOptions).map((k, index) => ({
-    label: Object.values(IssuedOrReceivedOptions)[index],
+    label: t(Object.values(IssuedOrReceivedOptions)[index]),
     value: Object.values(IssuedOrReceivedOptions)[index],
   }));
   const [modalActionVisible, setModalActionVisible] = useState<boolean>(false);
