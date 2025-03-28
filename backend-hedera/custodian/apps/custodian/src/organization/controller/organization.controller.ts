@@ -133,6 +133,6 @@ export class OrganizationController {
         @Body() dto: GetOrganizationsRequest,
         @Request() req,
     ) {
-        return this.organizationService.getOrganizationsOfType(dto, req);
+        return this.organizationService.getOrganizationsOfType(dto, req.user);
     }
 }

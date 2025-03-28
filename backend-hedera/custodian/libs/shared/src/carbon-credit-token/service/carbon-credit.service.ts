@@ -411,6 +411,8 @@ export class CarbonCreditService {
                 log.data = {
                     amount: serialsToRetire.length,
                     fromCompanyId: senderOrg.id,
+                    retirementType: retireRequest.retirementType,
+                    toCompanyId: dnaOrg.id,
                     remarks: remarks,
                 };
 
@@ -657,16 +659,16 @@ export class CarbonCreditService {
             .leftJoinAndSelect('creditTx.receiver', 'receiver')
             .select([
                 'creditTx.id as id',
-                'creditTx.serialNumber as serialNumber',
-                'creditTx.creditAmount as creditAmount',
-                'creditTx.createdDate as createdDate',
-                'creditTx.retirementType as retirementType',
+                'creditTx.serialNumber as "serialNumber"',
+                'creditTx.creditAmount as "creditAmount"',
+                'creditTx.createdDate as "createdDate"',
+                'creditTx.retirementType as "retirementType"',
                 'creditTx.status as status',
-                'project.id as projectId',
-                'project.title as projectName',
-                'sender.id as senderId',
-                'sender.name as senderName',
-                'sender.logo as senderLogo',
+                'project.id as "projectId"',
+                'project.title as "projectName"',
+                'sender.id as "senderId"',
+                'sender.name as "senderName"',
+                'sender.logo as "senderLogo"',
             ])
             .where('creditTx.type = :transferredType', {
                 transferredType: CreditEventTypeEnum.RETIRED,

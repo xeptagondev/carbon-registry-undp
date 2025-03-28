@@ -157,14 +157,35 @@
   }
 
   .credits_authorised {
-    color: #1bae67;
-    background-color: #bfedd6;
+    color: #2515AD;
+    background-color: #e5e3f6;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
   .credits_issued {
     color: #1bae67;
     background-color: #bfedd6;
+    font-size: 1rem;
+    padding: 0.3rem 0.4rem 0.2rem 0.4rem;
+  }
+
+  .credit_transfered {
+    color: #72CB57;
+    background-color: #eeffe6;
+    font-size: 1rem;
+    padding: 0.3rem 0.4rem 0.2rem 0.4rem;
+  }
+
+  .retire_requested {
+    color: #f6f2e3;
+    background-color: #CBB057;
+    font-size: 1rem;
+    padding: 0.3rem 0.4rem 0.2rem 0.4rem;
+  }
+
+  .retire_cancelled {
+    color: #ff4d4f;
+    background-color: #ffe0e0;
     font-size: 1rem;
     padding: 0.3rem 0.4rem 0.2rem 0.4rem;
   }
