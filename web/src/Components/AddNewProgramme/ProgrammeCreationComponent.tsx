@@ -39,6 +39,7 @@ import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/Con
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import validator from 'validator';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -897,6 +898,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     required: true,
                                     message: `${t('addProgramme:street')} ${t('isRequired')}`,
                                   },
+                                  {
+                                    whitespace: true,
+                                    message: `${t('addProgramme:street')} ${t('isRequired')}`,
+                                  },
                                 ]}
                               >
                                 <Input size="large" disabled={disableFields} />
@@ -1056,6 +1061,12 @@ export const ProgrammeCreationComponent = (props: any) => {
                                     )}`,
                                   },
                                   {
+                                    whitespace: true,
+                                    message: `${t('addProgramme:independentCertifiers')} ${t(
+                                      'isRequired'
+                                    )}`,
+                                  },
+                                  {
                                     validator(rule, value) {
                                       if (!value) {
                                         return Promise.resolve();
@@ -1106,6 +1117,12 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 rules={[
                                   {
                                     required: true,
+                                    message: `${t('addProgramme:briefProjectDescription')} ${t(
+                                      'isRequired'
+                                    )}`,
+                                  },
+                                  {
+                                    whitespace: true,
                                     message: `${t('addProgramme:briefProjectDescription')} ${t(
                                       'isRequired'
                                     )}`,
@@ -1173,7 +1190,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                             </div>
                           </Col>
                         </Row>
-                        <div className="title contact-person-title">
+                        <div className="title contact-person-title mg-bottom-2 mg-top-2">
                           {t('addProgramme:contactPersonTitle')}
                         </div>
                         <Row className="row" gutter={[40, 16]}>
@@ -1184,6 +1201,12 @@ export const ProgrammeCreationComponent = (props: any) => {
                               rules={[
                                 {
                                   required: true,
+                                  message: `${t('addProgramme:projectParticipant')} ${t(
+                                    'isRequired'
+                                  )}`,
+                                },
+                                {
+                                  whitespace: true,
                                   message: `${t('addProgramme:projectParticipant')} ${t(
                                     'isRequired'
                                   )}`,
@@ -1201,6 +1224,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   message: '',
                                 },
                                 {
+                                  whitespace: true,
+                                  message: `${t('addProgramme:email')} ${t('isRequired')}`,
+                                },
+                                {
                                   validator: async (rule, value) => {
                                     if (
                                       String(value).trim() === '' ||
@@ -1208,9 +1235,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                       value === null ||
                                       value === undefined
                                     ) {
-                                      throw new Error(
-                                        `${t('addUser:email')} ${t('addUser:isRequired')}`
-                                      );
+                                      return;
                                     } else {
                                       const val = value.trim();
                                       const reg =
@@ -1218,7 +1243,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                       const matches = val.match(reg) ? val.match(reg) : [];
                                       if (matches.length === 0) {
                                         throw new Error(
-                                          `${t('addUser:email')} ${t('addUser:isInvalid')}`
+                                          `${t('addProgramme:email')} ${t('isInvalid')}`
                                         );
                                       }
                                     }
@@ -1236,6 +1261,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                               rules={[
                                 {
                                   required: true,
+                                  message: `${t('addProgramme:address')} ${t('isRequired')}`,
+                                },
+                                {
+                                  whitespace: true,
                                   message: `${t('addProgramme:address')} ${t('isRequired')}`,
                                 },
                               ]}
@@ -1352,6 +1381,25 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 {
                                   required: true,
                                   message: `${t('addProgramme:website')} ${t('isRequired')}`,
+                                },
+                                {
+                                  whitespace: true,
+                                  message: `${t('addProgramme:website')} ${t('isRequired')}`,
+                                },
+                                {
+                                  validator: async (rule, value) => {
+                                    if (
+                                      String(value).trim() !== '' ||
+                                      String(value).trim() !== undefined ||
+                                      value !== null ||
+                                      value !== undefined
+                                    ) {
+                                      if (value && !validator.isURL('https://' + value))
+                                        throw new Error(
+                                          `${t('addProgramme:website')} ${t('isInvalid')}`
+                                        );
+                                    }
+                                  },
                                 },
                               ]}
                             >
