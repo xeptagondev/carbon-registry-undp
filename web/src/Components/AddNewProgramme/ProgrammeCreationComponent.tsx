@@ -46,7 +46,7 @@ const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
   ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
   : 5000000;
 
-const PROJECT_GEOGRAPHY: { [key: string]: string } = {
+export const PROJECT_GEOGRAPHY: { [key: string]: string } = {
   SINGLE: 'Single Location',
   MULTIPLE: 'Scattered in multiple locations',
 };
@@ -324,7 +324,7 @@ export const ProgrammeCreationComponent = (props: any) => {
           setDisableFields(true);
           const res = await post(API_PATHS.QUERY_DOCUMENT, {
             refId: state?.documentId,
-            DocumentEnum: DocumentEnum.INF,
+            documentType: DocumentEnum.INF,
           });
 
           if (res?.statusText === 'SUCCESS') {
