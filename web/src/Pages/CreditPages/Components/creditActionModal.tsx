@@ -118,7 +118,10 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
         valid = false;
       }
     } else {
-      if (type === CreditActionType.TRANSFER) {
+      if (
+        type === CreditActionType.TRANSFER ||
+        (type === CreditActionType.RETIREMENT && retirementType === RetirementType.CROSS_BORDER)
+      ) {
         if (!reciveParty) {
           valid = false;
         }
