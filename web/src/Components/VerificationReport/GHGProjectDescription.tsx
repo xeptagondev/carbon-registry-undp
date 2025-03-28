@@ -17,7 +17,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
 
   useEffect(() => {
     if (formMode === FormMode.CREATE) {
-      form.setFieldValue('estimatedNetEmissionReductions', [{ baselineEmissionReductions: 0 }]);
+      //form.setFieldValue('estimatedNetEmissionReductions', [{ baselineEmissionReductions: 0 }]);
     }
   }, []);
 
@@ -111,7 +111,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                   form={form}
                   t={t}
                   projectCategory={null}
-                  disabled={true}
+                  disabled={disableFields}
                 ></NetEmissionReduction>
               </>
 

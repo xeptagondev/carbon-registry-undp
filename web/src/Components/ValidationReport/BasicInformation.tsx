@@ -288,8 +288,8 @@ const BasicInformation = (props: ValidationStepsProps) => {
                             className="project-scale-radio-btns"
                             disabled={disableFields}
                           >
-                            <Radio value="Small_Scale">{t('validationReport:smallScale')}</Radio>
-                            <Radio value="Large_Scale">{t('validationReport:largeScale')}</Radio>
+                            <Radio value="Small Scale">{t('validationReport:smallScale')}</Radio>
+                            <Radio value="Large Scale">{t('validationReport:largeScale')}</Radio>
                           </Radio.Group>
                         </Form.Item>
 
