@@ -424,6 +424,20 @@ export class VerificationDocumentService extends DocumentService {
             );
 
             if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
+                const creditAmount = Number(
+                    documentEntity?.data?.ghgProjectDescription
+                        ?.totalNetEmissionReductions,
+                );
+
+                if (
+                    Number(documentEntity?.project?.creditEst) <
+                    Number(documentEntity?.project?.creditIssued) + creditAmount
+                ) {
+                    throw new HttpException(
+                        'Project has reached maximum allowed credit limit',
+                        HttpStatus.UNAUTHORIZED,
+                    );
+                }
                 await this.updateaActivityStage(
                     queryRunner,
                     documentEntity?.activity?.refId,
@@ -466,23 +480,7 @@ export class VerificationDocumentService extends DocumentService {
                 const metadata = Uint8Array.from(
                     Buffer.from(documentEntity?.project?.refId, 'utf8'),
                 );
-                const creditAmount = Number(
-                    documentEntity?.data?.ghgProjectDescription
-                        ?.totalNetEmissionReductions,
-                );
 
-                console.log(documentEntity?.project?.creditEst);
-                console.log(documentEntity?.project?.creditIssued);
-                console.log(creditAmount);
-                if (
-                    Number(documentEntity?.project?.creditEst) <
-                    Number(documentEntity?.project?.creditIssued) + creditAmount
-                ) {
-                    throw new HttpException(
-                        'Project has reached maximum allowed credit limit',
-                        HttpStatus.UNAUTHORIZED,
-                    );
-                }
                 const batchSerialNumber =
                     this.serialNumberManagementService.getCreditBlockSerialNumber(
                         documentEntity?.project?.serialNumber,
