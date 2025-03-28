@@ -112,10 +112,11 @@ const StepperComponent = (props: CustomStepsProps) => {
     setLoading(true);
 
     let programmeData = null;
-    let orgData = null;
+    //let orgData = null;
     let pddData = null;
     let validationData = null;
 
+    console.log('-------state mon---------', state);
     try {
       //fetch programme data
       const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, { programmeId: programId });
@@ -129,17 +130,17 @@ const StepperComponent = (props: CustomStepsProps) => {
       console.log('Error fetching programme data:', error);
     }
 
-    try {
-      const orgDetailsResponse = await get(API_PATHS.USER_PROFILE_DETAILS);
-      console.log('---------org details------------', orgDetailsResponse);
-      if (orgDetailsResponse?.statusText === 'SUCCESS') {
-        orgData = orgDetailsResponse?.data?.Organisation;
-      } else {
-        console.log('Error: Org API fetch failed');
-      }
-    } catch (error) {
-      console.log('Error fetching Org details', error);
-    }
+    // try {
+    //   const orgDetailsResponse = await get(API_PATHS.USER_PROFILE_DETAILS);
+    //   console.log('---------org details------------', orgDetailsResponse);
+    //   if (orgDetailsResponse?.statusText === 'SUCCESS') {
+    //     orgData = orgDetailsResponse?.data?.Organisation;
+    //   } else {
+    //     console.log('Error: Org API fetch failed');
+    //   }
+    // } catch (error) {
+    //   console.log('Error fetching Org details', error);
+    // }
 
     try {
       // Fetch PDD Data
@@ -171,14 +172,14 @@ const StepperComponent = (props: CustomStepsProps) => {
       console.log('Error fetching data from validation report', error);
     }
 
-    if (programmeData) {
+    if (programmeData && pddData && validationData) {
       const docVersions = state?.documents?.[DocumentEnum.MONITORING as any]?.version;
       const latestVersion = docVersions ? docVersions + 1 : 1;
       basicInformationForm.setFieldsValue({
         bi_sectoralScope: programmeData?.sectoralScope,
         bi_projectTitle: validationData?.basicInformation?.titleOfTheProjectActivity,
         bi_applicablePDDVersionNo: validationData?.basicInformation?.versionNumberPDD,
-        bi_projectDeveloper: orgData?.name,
+        bi_projectDeveloper: programmeData?.projectParticipant,
         bi_hostParty: validationData?.basicInformation?.hostParty,
         bi_appliedMethodologies: validationData?.basicInformation?.appliedMethodologies,
         bi_unfccRefNo: validationData?.basicInformation?.unfccRefNo,
