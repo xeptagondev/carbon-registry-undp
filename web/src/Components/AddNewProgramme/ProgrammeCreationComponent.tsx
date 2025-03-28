@@ -82,7 +82,7 @@ const INF_SECTOR: { [key: string]: string } = {
   WASTE: 'Waste',
 };
 
-const INF_SECTORAL_SCOPE: { [key: string]: string } = {
+export const INF_SECTORAL_SCOPE: { [key: string]: string } = {
   ENERGY_INDUSTRIES: 'Energy Industries (Renewable)',
   ENERGY_DISTRIBUTION: 'Energy Distribution',
   ENERGY_DEMAND: 'Energy Demand',
