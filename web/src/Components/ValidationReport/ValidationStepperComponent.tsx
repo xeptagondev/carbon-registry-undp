@@ -304,7 +304,7 @@ const StepperComponent = (props: any) => {
           if (res?.statusText === 'SUCCESS') {
             const data = res?.data;
             setDocumentId(data?.refId);
-            
+
             const basicInformation = basicInformationMapDataToFields(data.data?.basicInformation);
             form1.setFieldsValue(basicInformation);
 
