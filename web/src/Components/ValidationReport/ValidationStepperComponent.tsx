@@ -188,7 +188,7 @@ const StepperComponent = (props: any) => {
       // Fetch PDD Data
       const pddResponse = await post(API_PATHS.QUERY_DOCUMENT, {
         refId: state?.documents?.PDD?.refId,
-        documentType: DocumentEnum.PDD,
+        documentEnum: DocumentEnum.PDD,
       });
       console.log('-----------------PDD Response-----------------', pddResponse);
       if (pddResponse?.statusText === 'SUCCESS') {
