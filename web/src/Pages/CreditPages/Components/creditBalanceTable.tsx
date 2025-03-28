@@ -364,7 +364,16 @@ export const CreditBalanceTableComponent = (props: any) => {
     if (isInitialRender.current) {
       getQueryData();
     }
-  }, [currentPage, pageSize, sortField, sortOrder, search, checkBoxOptions]);
+  }, [
+    currentPage,
+    pageSize,
+    sortField,
+    sortOrder,
+    search,
+    checkBoxOptions,
+    modalActionVisible,
+    modalResponseVisible,
+  ]);
 
   const onFinishAction = async (
     reciveParty: any,
@@ -506,6 +515,7 @@ export const CreditBalanceTableComponent = (props: any) => {
         isProceed={false}
         type={modalActionData?.type}
         remarkRequired={modalActionData?.remarkRequired}
+        proceedAction={modalActionData?.proceedAction}
         data={modalActionData?.data}
       />
       <ActionResponseModal

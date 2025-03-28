@@ -541,6 +541,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
         type={modalActionData?.type}
         remarkRequired={modalActionData?.remarkRequired}
         data={modalActionData?.data}
+        proceedAction={modalActionData?.proceedAction}
       />
       <ActionResponseModal
         type={modalResponseData?.type}
