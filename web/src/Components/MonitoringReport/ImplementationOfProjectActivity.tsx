@@ -18,6 +18,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
         io_corrections: values?.io_corrections,
         io_changesToTheStartDate: values?.io_changesToTheStartDate,
         io_inclusionOfMP: values?.io_inclusionOfMP,
+        io_permanantMonitoringPlan: values?.io_permanantMonitoringPlan,
         io_changesToProjectDesign: values?.io_changesToProjectDesign,
         io_changesSpecificToAfforestrationOrReforestration:
           values?.io_changesSpecificToAfforestrationOrReforestration,
@@ -124,6 +125,21 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         {
                           required: true,
                           message: `${t('monitoringReport:io_inclusionOfMP')} ${t('isRequired')}`,
+                        },
+                      ]}
+                    >
+                      <TextArea rows={5} disabled={disableFields} />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={`${t('monitoringReport:io_permanantMonitoringPlan')}`}
+                      name="io_permanantMonitoringPlan"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t('monitoringReport:io_permanantMonitoringPlan')} ${t(
+                            'isRequired'
+                          )}`,
                         },
                       ]}
                     >

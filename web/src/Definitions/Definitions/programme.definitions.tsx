@@ -286,6 +286,8 @@ export interface ProgrammeSl {
   sector: string;
   countryCodeA2: string;
   projectStatus: ProgrammeStatus;
+  projectGeography: string;
+  independentCertifiers: string[];
   postalCode: number;
   projectCategory: ProgrammeCategory;
   purposeOfCreditDevelopment: string;
@@ -412,10 +414,13 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     tokenId: programme.tokenId,
     registrationSerialNo: programme.serialNo,
     projectProposalStage: programme.projectProposalStage,
-    projectStatus: programme.projectStatus,
+    // projectStatus: programme.projectStatus,
     // projectCategory: getProjectCategory[programme.projectCategory],
     sectoralScope: programme.sectoralScope,
+    projectGeography: programme.projectGeography,
     startDate: DateTime.fromSeconds(Number(programme.startDate)),
+    estimatedProjectCost: programme.estimatedProjectCost,
+    independentCertifier: programme.independentCertifiers,
     // purposeOfCreditDevelopment: programme.purposeOfCreditDevelopment,
     creditReceived:
       safeNumber(programme.creditBalance) +
@@ -426,11 +431,9 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     creditBalance: programme.creditBalance,
     province: programme.province,
     district: programme.district,
-    dsDivision: programme.dsDivision,
     postalCode: programme.postalCode,
     city: programme.city,
     projectDescription: programme.projectDescription,
-    additionalDocuments: programme.additionalDocuments,
   };
 
   return res;
