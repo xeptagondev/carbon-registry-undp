@@ -254,6 +254,13 @@ const StepperComponent = (props: any) => {
           (loc: any) => ({ location: loc.locationOfProjectActivity })
         ),
       });
+      form5.setFieldsValue({
+        onSiteInspection: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
+          (loc: any) => ({
+            siteLocation: loc.locationOfProjectActivity,
+          })
+        ),
+      });
     }
 
     setLoading(false);
