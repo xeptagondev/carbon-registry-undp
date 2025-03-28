@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, Layout, MenuProps } from 'antd';
 import sliderLogo from '../../Assets/Images/logo-slider.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './layout.sider.scss';
 import * as Icon from 'react-bootstrap-icons';
 import {
@@ -12,6 +12,7 @@ import {
   SplitCellsOutlined,
   UnorderedListOutlined,
   UserOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { LayoutSiderProps } from '../../Definitions/Definitions/layout.sider.definitions';
@@ -27,6 +28,7 @@ type MenuItem = {
   key: React.Key;
   icon?: React.ReactNode;
   label: React.ReactNode;
+  children?: MenuItem[];
 } | null;
 
 function getItem(
@@ -47,14 +49,22 @@ const LayoutSider = (props: LayoutSiderProps) => {
   const { selectedKey } = props;
   const navigate = useNavigate();
   const { userInfoState } = useUserContext();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [selectKey, setSelectKey] = useState<any>(selectedKey);
   const { i18n, t } = useTranslation(['nav']);
+
+  const currentPage = location.pathname.replace(/^\/|\/$/g, '');
 
   const items: MenuItem[] = [
     getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
     getItem(t('nav:slcfprogrammes'), 'programmeManagement/viewAllProjects', <AppstoreOutlined />),
     getItem(t('nav:projectList'), 'programmeManagement/viewAll', <UnorderedListOutlined />),
-    getItem(t('nav:retirements'), 'retirementManagement/viewAll', <SplitCellsOutlined />),
+    getItem(t('nav:credits'), 'credits', <AppstoreOutlined />, [
+      getItem(t('nav:creditBalance'), 'credits/balance', <Icon.Wallet2 />),
+      getItem(t('nav:transfers'), 'credits/transfers', <SwapOutlined />),
+      getItem(t('nav:retirements'), 'credits/retirements', <Icon.ExclamationOctagon />),
+    ]),
     // getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
     // getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
     // getItem(t('nav:verra'), 'verraManagement/viewAll', <AppstoreOutlined />),
@@ -65,6 +75,10 @@ const LayoutSider = (props: LayoutSiderProps) => {
     getItem(t('nav:companies'), 'companyManagement/viewAll', <ShopOutlined />),
     getItem(t('nav:users'), 'userManagement/viewAll', <UserOutlined />),
   ];
+
+  useEffect(() => {
+    setSelectKey(currentPage);
+  }, [currentPage]);
 
   // if (
   //   userInfoState?.userRole === Role.Root ||
@@ -93,10 +107,9 @@ const LayoutSider = (props: LayoutSiderProps) => {
   //   items.push(getItem(t('nav:settings'), 'settings', <SettingOutlined />));
   // }
 
-  const onClick: MenuProps['onClick'] = (e) => {
+  const onClick: MenuProps['onClick'] = (e: { key: string }) => {
     navigate('/' + e.key);
   };
-
   return (
     <Sider
       width={240}
@@ -136,35 +149,47 @@ const LayoutSider = (props: LayoutSiderProps) => {
         <div className="layout-sider-menu-container">
           <Menu
             theme="light"
-            selectedKeys={[selectedKey ? selectedKey : 'dashboard']}
+            selectedKeys={[
+              selectedKey ? selectedKey : !selectedKey && selectKey ? selectKey : 'dashboard',
+            ]}
             mode="inline"
             onClick={onClick}
           >
-            {items.map((item) => (
-              <Menu.Item
-                key={item?.key}
-                icon={item?.icon}
-                className={
-                  item?.key === 'ndcManagement/viewAll' ||
-                  item?.key === 'investmentManagement/viewAll' ||
-                  item?.key === 'retirementManagement/viewAll' ||
-                  item?.key === 'programmeManagement/viewAll' ||
-                  item?.key === 'creditTransfers/viewAll'
-                    ? 'custom-padding-left'
-                    : item?.key === 'cdmManagement/viewAll'
-                    ? 'custom-padding-left wrap-content-overflow'
-                    : ''
-                }
-                disabled={
-                  // item?.key === 'programmeManagement/viewAll' ||
-                  item?.key === 'cdmManagement/viewAll' ||
-                  item?.key === 'goldStandardManagement/viewAll' ||
-                  item?.key === 'verraManagement/viewAll'
-                }
-              >
-                <Link to={`/${item?.key}`}>{item?.label}</Link>
-              </Menu.Item>
-            ))}
+            {items.map((item) =>
+              item?.children ? (
+                <Menu.SubMenu key={item.key} icon={item.icon} title={item.label}>
+                  {item.children.map((child) => (
+                    <Menu.Item key={child?.key} icon={child?.icon}>
+                      <Link to={`/${child?.key}`}>{child?.label}</Link>
+                    </Menu.Item>
+                  ))}
+                </Menu.SubMenu>
+              ) : (
+                <Menu.Item
+                  key={item?.key}
+                  icon={item?.icon}
+                  className={
+                    item?.key === 'ndcManagement/viewAll' ||
+                    item?.key === 'investmentManagement/viewAll' ||
+                    item?.key === 'retirementManagement/viewAll' ||
+                    item?.key === 'programmeManagement/viewAll' ||
+                    item?.key === 'creditTransfers/viewAll'
+                      ? 'custom-padding-left'
+                      : item?.key === 'cdmManagement/viewAll'
+                      ? 'custom-padding-left wrap-content-overflow'
+                      : ''
+                  }
+                  disabled={
+                    // item?.key === 'programmeManagement/viewAll' ||
+                    item?.key === 'cdmManagement/viewAll' ||
+                    item?.key === 'goldStandardManagement/viewAll' ||
+                    item?.key === 'verraManagement/viewAll'
+                  }
+                >
+                  <Link to={`/${item?.key}`}>{item?.label}</Link>
+                </Menu.Item>
+              )
+            )}
           </Menu>
         </div>
       </div>

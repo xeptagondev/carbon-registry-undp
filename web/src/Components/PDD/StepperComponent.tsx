@@ -193,7 +193,7 @@ const StepperComponent = (props: any) => {
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
             refId: state?.documentRefId,
-            documentEnum: DocumentEnum.PDD,
+            documentType: DocumentEnum.PDD,
           });
           console.log('------PDD data-----', res?.data);
           if (res?.statusText === 'SUCCESS') {

@@ -173,6 +173,11 @@ export class ProjectService {
                   state: project?.organization?.state,
               }
             : null;
+        if (project.assignees && project.assignees.length) {
+            mappedProject.independentCertifiers = project.assignees.map(
+                (assignee) => assignee.name,
+            );
+        }
         return mappedProject;
     }
 
@@ -191,6 +196,7 @@ export class ProjectService {
                 relations: {
                     organization: true,
                     documents: true,
+                    assignees: true,
                     activities: { documents: true },
                 },
             });
