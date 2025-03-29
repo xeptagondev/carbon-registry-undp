@@ -35,6 +35,7 @@ import {
   projectActivityMapDataToFields,
 } from './viewDataMap';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 const StepperComponent = (props: CustomStepsProps) => {
   const navigate = useNavigate();
@@ -176,7 +177,7 @@ const StepperComponent = (props: CustomStepsProps) => {
       const docVersions = state?.documents?.[DocumentEnum.MONITORING as any]?.version;
       const latestVersion = docVersions ? docVersions + 1 : 1;
       basicInformationForm.setFieldsValue({
-        bi_sectoralScope: programmeData?.sectoralScope,
+        bi_sectoralScope: INF_SECTORAL_SCOPE[programmeData?.sectoralScope],
         bi_projectTitle: validationData?.basicInformation?.titleOfTheProjectActivity,
         bi_applicablePDDVersionNo: validationData?.basicInformation?.versionNumberPDD,
         bi_projectDeveloper: programmeData?.projectParticipant,

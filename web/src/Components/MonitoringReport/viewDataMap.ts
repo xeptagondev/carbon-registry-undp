@@ -117,7 +117,7 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
     totalProjectEmissionReductions: String(ghgEmissionReductions?.totalProjectEmissionReductions),
     totalLeakageEmissionReductions: String(ghgEmissionReductions?.totalLeakageEmissionReductions),
     totalNetEmissionReductions: String(ghgEmissionReductions?.totalNetEmissionReductions),
-    totalCreditingYears: String(ghgEmissionReductions?.totalNumberOfCredingYears),
+    totalCreditingYears: String(ghgEmissionReductions?.totalNumberOfCreditingYears),
     avgBaselineEmissionReductions: String(ghgEmissionReductions?.avgBaselineEmissionReductions),
     avgProjectEmissionReductions: String(ghgEmissionReductions?.avgProjectEmissionReductions),
     avgLeakageEmissionReductions: String(ghgEmissionReductions?.avgLeakageEmissionReductions),
