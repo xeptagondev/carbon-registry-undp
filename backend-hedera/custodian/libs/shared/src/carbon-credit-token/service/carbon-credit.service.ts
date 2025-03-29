@@ -337,7 +337,11 @@ export class CarbonCreditService {
                     },
                 });
 
-            if (!dnaOrg || !dnaOrg.hederaAccountId) {
+            if (
+                !dnaOrg ||
+                !dnaOrg.hederaAccountId ||
+                !dnaOrg.hederaAccountKey
+            ) {
                 throw new HttpException(
                     'DNA organization not found or missing Hedera account details',
                     HttpStatus.BAD_REQUEST,
@@ -356,6 +360,51 @@ export class CarbonCreditService {
                         creditBlock.serialNumber,
                         retireRequest.creditAmount,
                     );
+                if (
+                    retireRequest.retirementType ===
+                    CreditRetirementTypeEmnum.CROSS_BORDER_TRANSACTIONS
+                ) {
+                    const tokenAssociation = await this.dataSource
+                        .getRepository(TokenAssociateEntity)
+                        .findOne({
+                            where: {
+                                tokenId: tokenId,
+                                accountId: dnaOrg.hederaAccountId,
+                            },
+                        });
+
+                    if (!tokenAssociation) {
+                        try {
+                            await this.carbonCreditGuardianService.associateNFTToUser(
+                                tokenId,
+                                dnaOrg.hederaAccountId,
+                                dnaOrg.hederaAccountKey,
+                            );
+
+                            await this.dataSource
+                                .getRepository(TokenAssociateEntity)
+                                .save(
+                                    plainToClass(TokenAssociateEntity, {
+                                        tokenId: tokenId,
+                                        accountId: dnaOrg.hederaAccountId,
+                                    }),
+                                );
+                        } catch (assocError) {
+                            if (
+                                assocError.message &&
+                                assocError.message.includes(
+                                    'TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT',
+                                )
+                            ) {
+                                console.log(
+                                    'Token already associated with receiver, proceeding with transfer.',
+                                );
+                            } else {
+                                throw assocError;
+                            }
+                        }
+                    }
+                }
                 for (const serial of serialsToRetire) {
                     if (
                         retireRequest.retirementType ===
