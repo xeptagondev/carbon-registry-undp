@@ -374,6 +374,15 @@ export class InfDocumentService extends DocumentService {
                     ProjectAuditLogType.APPROVED,
                     jwtData.userId,
                 );
+
+                await this.logProjectStage(
+                    queryRunner,
+                    documentEntity?.project?.refId,
+                    ProjectAuditLogType.NO_OBJECTION_LETTER_GENERATED,
+                    jwtData.userId,
+                    { url: noObjectionLetterUrl },
+                );
+
                 const refId = documentEntity?.project?.refId;
 
                 const existingProject = await queryRunner.manager
