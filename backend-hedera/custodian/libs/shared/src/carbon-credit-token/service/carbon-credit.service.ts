@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DataSource, QueryRunner } from 'typeorm';
+import { Brackets, DataSource, QueryRunner } from 'typeorm';
 import { CreditEventTypeEnum } from '../enum/credit.event.type.enum';
 import { CreditEventStatusEnum } from '../enum/credit.event.status.enum';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
@@ -684,7 +684,15 @@ export class CarbonCreditService {
             .where('creditTx.type = :transferredType', {
                 transferredType: CreditEventTypeEnum.TRANSFERED,
             });
-
+        if (user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER) {
+            qb.andWhere(
+                new Brackets((subQb) => {
+                    subQb
+                        .where('sender.id = :orgId', { orgId })
+                        .orWhere('receiver.id = :orgId', { orgId });
+                }),
+            );
+        }
         const extraWhere = this.helperService.generateWhereSQL(query);
         if (extraWhere && extraWhere.trim() !== '') {
             qb.andWhere(extraWhere);
