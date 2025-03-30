@@ -246,6 +246,7 @@ export class MonitoringDocumentService extends DocumentService {
             } else {
                 lastActivity = await queryRunner.manager.save(
                     plainToClass(ActivityEntity, {
+                        ...lastActivity,
                         activityDocs: [],
                         project: project,
                         state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
