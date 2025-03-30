@@ -449,7 +449,7 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
                           First name
                         </Col>
                         <Col xl={8} className="interviewee-col-subCols-last">
-                          Affliation name
+                          Affliation
                         </Col>
                       </Row>
                     </Col>
