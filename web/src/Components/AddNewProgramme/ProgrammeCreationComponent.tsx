@@ -1235,7 +1235,9 @@ export const ProgrammeCreationComponent = (props: any) => {
                                       value === null ||
                                       value === undefined
                                     ) {
-                                      return;
+                                      throw new Error(
+                                        `${t('addProgramme:email')} ${t('isRequired')}`
+                                      );
                                     } else {
                                       const val = value.trim();
                                       const reg =
@@ -1388,17 +1390,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() !== '' ||
-                                      String(value).trim() !== undefined ||
-                                      value !== null ||
-                                      value !== undefined
-                                    ) {
-                                      if (value && !validator.isURL(value))
-                                        throw new Error(
-                                          `${t('addProgramme:website')} ${t('isInvalid')}`
-                                        );
-                                    }
+                                    if (value && !validator.isURL(value))
+                                      throw new Error(
+                                        `${t('addProgramme:website')} ${t('isInvalid')}`
+                                      );
                                   },
                                 },
                               ]}
@@ -1413,6 +1408,12 @@ export const ProgrammeCreationComponent = (props: any) => {
                               rules={[
                                 {
                                   required: true,
+                                  message: `${t('addProgramme:contactPersonName')} ${t(
+                                    'isRequired'
+                                  )}`,
+                                },
+                                {
+                                  whitespace: true,
                                   message: `${t('addProgramme:contactPersonName')} ${t(
                                     'isRequired'
                                   )}`,
