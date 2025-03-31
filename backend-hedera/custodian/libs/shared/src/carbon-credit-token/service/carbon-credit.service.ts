@@ -1165,12 +1165,19 @@ export class CarbonCreditService {
                 CreditBlocksEntity,
                 {
                     where: { id: retireRequest.blockId },
-                    relations: { project: { organization: true } },
+                    relations: { project: true },
+                },
+            );
+
+            const sender = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: user.organizationId },
                 },
             );
 
             const project = creditBlock.project;
-            if (!project || !project.organization) {
+            if (!project || !sender) {
                 throw new Error('Project or Organization not found');
             }
 
@@ -1201,7 +1208,7 @@ export class CarbonCreditService {
                 serialNumber: creditBlock.serialNumber,
                 creditAmount: retireRequest.amount,
                 project,
-                sender: project.organization,
+                sender: sender,
                 type: CreditEventTypeEnum.RETIRED,
                 retirementType: retireRequest.retirementType,
                 status: CreditEventStatusEnum.PENDING,
