@@ -83,6 +83,14 @@ export const meansOfVerificationMapDataToFields = (vals: any) => {
       };
       return temp;
     }),
+    interviewees: vals?.interviewees.map((item: any) => {
+      const temp = {
+        ...item,
+        date: item?.date ? moment.unix(item?.date) : undefined,
+      };
+
+      return temp;
+    }),
   };
 
   return tempVals;

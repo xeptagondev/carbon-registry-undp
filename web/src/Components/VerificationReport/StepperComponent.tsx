@@ -42,6 +42,7 @@ import {
   verificationTeamsMapDataToFields,
 } from './viewDataMap';
 import { Loading } from '../Loading/loading';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
@@ -185,7 +186,7 @@ const StepperComponent = (props: VerificationStepProps) => {
       basicInformationForm.setFieldsValue({
         b_projectDeveloper: programmeData?.projectParticipant,
         b_hostParty: pddData?.projectDetails?.hostParty,
-        b_mandatorySectoralScopes: pddData?.projectDetails?.sectoralScope,
+        b_mandatorySectoralScopes: INF_SECTORAL_SCOPE[pddData?.projectDetails?.sectoralScope],
         b_appliedMethodologies: pddData?.projectDetails?.appliedMethodologies,
         b_estimatedGHGEmissionReduction:
           pddData?.projectDetails?.estimatedAvgGHGEmissionReductionBasicInformation,
@@ -219,6 +220,10 @@ const StepperComponent = (props: VerificationStepProps) => {
         avgNetEmissionReductions: Number(netEmReductions?.avgNetEmissionReductions),
       });
 
+      console.log(
+        '----------pdd-data loc-----------------',
+        pddData?.projectActivity?.locationsOfProjectActivity
+      );
       meansOfVerificationForm.setFieldsValue({
         onSiteInspection: pddData?.projectActivity?.locationsOfProjectActivity?.map((loc: any) => ({
           siteLocation: loc.locationOfProjectActivity,

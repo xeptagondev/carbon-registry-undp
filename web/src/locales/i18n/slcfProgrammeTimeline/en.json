@@ -12,6 +12,7 @@
   "infRejectedDescription": "The Initial Notification was rejected by {}",
 
   "noObjectionLetterGeneratedTitle": "Letter of No Objection Issued",
+  "noObjectionLetterGeneratedDescription": "The Letter of no objection was issued by Designated National Authority",
 
   "pddSubmttedTitle": "Project Design Document Created",
   "pddSubmittedDescription": "Project Design Document was created by {}",
