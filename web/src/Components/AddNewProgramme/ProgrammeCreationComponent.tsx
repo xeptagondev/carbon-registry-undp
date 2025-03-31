@@ -1213,7 +1213,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                               ]}
                             >
-                              <Input size="large" />
+                              <Input size="large" disabled={disableFields} />
                             </Form.Item>
                             <Form.Item
                               label={t('addProgramme:email')}
