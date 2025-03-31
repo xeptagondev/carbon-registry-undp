@@ -501,6 +501,7 @@ export const SLCFDashboardComponent = (props: any) => {
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         sector: sector || undefined,
+        timeZone: new Date().getTimezoneOffset(),
       });
       if (response && response.data) {
         const creditRetirementAndTranserStatuses = [

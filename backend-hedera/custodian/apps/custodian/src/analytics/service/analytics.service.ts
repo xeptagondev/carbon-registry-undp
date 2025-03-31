@@ -774,10 +774,16 @@ export class AnalyticsService {
     ) {
         const orgId = jwtData.organizationId;
 
+        const offsetInMinutes = filters.timeZone ?? 0;
+
         const qb = this.auditRepository
             .createQueryBuilder('audit')
             .select(
-                `to_char(to_timestamp(audit."createdTime" / 1000), 'YYYY-MM-DD')`,
+                `to_char(
+               to_timestamp(audit."createdTime" / 1000) 
+               - (:offsetInMinutes * interval '1 minute'),
+               'YYYY-MM-DD'
+             )`,
                 'date',
             )
             .addSelect('audit."logType"', 'logType')
@@ -797,7 +803,8 @@ export class AnalyticsService {
                     ProjectAuditLogType.CREDIT_TRANSFERED,
                     ProjectAuditLogType.RETIRE_APPROVED,
                 ],
-            });
+            })
+            .setParameter('offsetInMinutes', offsetInMinutes);
 
         if (filters?.startDate) {
             qb.andWhere('audit."createdTime" >= :startDate', {
@@ -841,14 +848,11 @@ export class AnalyticsService {
         const results = await qb.getRawMany();
 
         const pivoted: Record<string, any> = {};
-
         for (const row of results) {
             const { date, logType, totalAmount } = row;
-
             if (!pivoted[date]) {
                 pivoted[date] = { date };
             }
-
             pivoted[date][logType] = parseInt(totalAmount, 10);
         }
 
