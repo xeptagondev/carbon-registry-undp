@@ -14,6 +14,7 @@ export interface OrganizationSchema {
     faxNumber?: string;
     website?: string;
     provinces?: string[];
+    eventIds?: number[];
 }
 
 export interface UserSchema {
@@ -26,6 +27,7 @@ export interface UserSchema {
     refId: string;
     hederaAccount: string;
     organization: string;
+    eventIds?: number[];
 }
 
 export interface ProjectSchema {
@@ -38,11 +40,13 @@ export interface ProjectSchema {
     creditRetired?: number;
     creditTransferred?: number;
     creditEst?: number;
+    eventIds?: number[];
 }
 
 export interface ActivitySchema {
     refId: string;
     project: string;
+    eventIds?: number[];
 }
 export interface DocumentSchema {
     refId: string;
@@ -53,4 +57,5 @@ export interface DocumentSchema {
     name: string;
     version: number;
     data: string;
+    eventIds?: number[];
 }

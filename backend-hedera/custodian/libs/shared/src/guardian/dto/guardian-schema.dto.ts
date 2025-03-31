@@ -22,6 +22,7 @@ export class OrganizationSchemaDtos {
     faxNumber?: string;
     website?: string;
     provinces?: string[];
+    eventIds?: number[];
 
     constructor(data: OrganizationSchema) {
         this.refId = data.refId;
@@ -39,6 +40,7 @@ export class OrganizationSchemaDtos {
         this.faxNumber = data.faxNumber;
         this.website = data.website;
         this.provinces = data.provinces;
+        this.eventIds = data.eventIds;
     }
 }
 
@@ -52,6 +54,7 @@ export class UserSchemaDtos {
     refId: string;
     hederaAccount: string;
     organization: string;
+    eventIds?: number[];
 
     constructor(data: UserSchema) {
         this.name = data.name;
@@ -63,6 +66,7 @@ export class UserSchemaDtos {
         this.refId = data.refId;
         this.hederaAccount = data.hederaAccount;
         this.organization = data.organization;
+        this.eventIds = data.eventIds;
     }
 }
 
@@ -75,6 +79,7 @@ export class ProjectSchemaDtos {
     creditRetired?: number;
     creditTransferred?: number;
     creditEst?: number;
+    eventIds?: number[];
 
     constructor(data: ProjectSchema) {
         this.refId = data.refId;
@@ -85,16 +90,19 @@ export class ProjectSchemaDtos {
         this.creditRetired = data.creditRetired;
         this.creditTransferred = data.creditTransferred;
         this.creditEst = data.creditEst;
+        this.eventIds = data.eventIds;
     }
 }
 
 export class ActivitySchemaDtos {
     refId: string;
     project: string;
+    eventIds?: number[];
 
     constructor(data: ActivitySchema) {
         this.refId = data.refId;
         this.project = data.project;
+        this.eventIds = data.eventIds;
     }
 }
 
@@ -107,6 +115,7 @@ export class DocumentSchemaDtos {
     name: string;
     version: number;
     data: string;
+    eventIds?: number[];
 
     constructor(data: DocumentSchema) {
         this.refId = data.refId;
@@ -119,5 +128,6 @@ export class DocumentSchemaDtos {
         this.name = data.name;
         this.version = data.version;
         this.data = data.data;
+        this.eventIds = data.eventIds;
     }
 }
