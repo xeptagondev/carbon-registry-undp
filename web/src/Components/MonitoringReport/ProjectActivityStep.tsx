@@ -457,28 +457,28 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                 <Form.Item
                                   label={t('monitoringReport:setLocation')}
                                   name={[name, 'geographicalLocationCoordinates']}
-                                  // rules={[
-                                  //   {
-                                  //     required: true,
-                                  //     message: ``,
-                                  //   },
-                                  //   {
-                                  //     validator: async (rule, value) => {
-                                  //       if (
-                                  //         String(value).trim() === '' ||
-                                  //         String(value).trim() === undefined ||
-                                  //         value === null ||
-                                  //         value === undefined
-                                  //       ) {
-                                  //         throw new Error(
-                                  //           `${t('monitoringReport:setLocation')} ${t(
-                                  //             'isRequired'
-                                  //           )}`
-                                  //         );
-                                  //       }
-                                  //     },
-                                  //   },
-                                  // ]}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: ``,
+                                    },
+                                    {
+                                      validator: async (rule, value) => {
+                                        if (
+                                          String(value).trim() === '' ||
+                                          String(value).trim() === undefined ||
+                                          value === null ||
+                                          value === undefined
+                                        ) {
+                                          throw new Error(
+                                            `${t('monitoringReport:setLocation')} ${t(
+                                              'isRequired'
+                                            )}`
+                                          );
+                                        }
+                                      },
+                                    },
+                                  ]}
                                 >
                                   <GetLocationMapComponent
                                     form={form}
@@ -692,26 +692,38 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                           </div>
                         ))}
 
-                        <div className="btn">
-                          <Form.Item>
-                            <Button
-                              disabled={disableFields}
-                              onClick={() => {
-                                // add();
-                                const temp = form.getFieldValue('projectParticipants');
-                                console.log('---------temp--------', temp);
-                                temp[fields.length] = {
-                                  partiesInvolved: '',
-                                  projectParticipants: [{ participant: '' }],
-                                };
-                                console.log('---------temp after--------', temp);
-                                form.setFieldValue('projectParticipants', temp);
-                              }}
-                            >
-                              {t('monitoringReport:pa_addProjectParticipant')}
-                            </Button>
-                          </Form.Item>
-                        </div>
+                        <Row className="row btn" gutter={[8, 16]} justify="start">
+                          <Col>
+                            <Form.Item>
+                              <Button
+                                disabled={disableFields}
+                                onClick={() => {
+                                  // add();
+                                  const temp = form.getFieldValue('projectParticipants');
+                                  console.log('---------temp--------', temp);
+                                  temp[fields.length] = {
+                                    partiesInvolved: '',
+                                    projectParticipants: [{ participant: '' }],
+                                  };
+                                  console.log('---------temp after--------', temp);
+                                  form.setFieldValue('projectParticipants', temp);
+                                }}
+                              >
+                                {t('monitoringReport:pa_addProjectParticipant')}
+                              </Button>
+                            </Form.Item>
+                          </Col>
+                          <Col>
+                            <Form.Item>
+                              <Button
+                                disabled={disableFields}
+                                onClick={() => remove(fields.length - 1)}
+                              >
+                                {t('monitoringReport:pa_removeProjectParticipant')}
+                              </Button>
+                            </Form.Item>
+                          </Col>
+                        </Row>
                       </>
                     )}
                   </Form.List>
@@ -721,10 +733,9 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         <>{console.log('fields', fields[0])}</>
                         {fields.map(({ key, name, ...restField }) => {
                           <div>
-                            123
                             <div className="col-1">
-                              a
                               <Form.Item
+                                {...restField}
                                 name={[name, 'partiesInvolved']}
                                 rules={[
                                   {
@@ -747,8 +758,8 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                               </Form.Item>
                             </div>
                             <div className="col-2">
-                              b
                               <Form.Item
+                                {...restField}
                                 name={[name, 'projectParticipant']}
                                 rules={[
                                   {
@@ -771,6 +782,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                               </Form.Item>
                             </div>
                             <button onClick={add}>+</button>
+                            {/* <MinusCircleOutlined onClick={() => remove(name)} /> */}
                           </div>;
                         })}
                       </>
