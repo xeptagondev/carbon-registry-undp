@@ -128,11 +128,12 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
         tokenId: string,
         serial: number,
         accountId: string,
+        privateKey: string,
         supplyKey: string,
     ): Promise<any> {
         const client = Client.forTestnet();
         const operatorId = AccountId.fromString(accountId);
-        const operatorKey = PrivateKey.fromStringED25519(supplyKey);
+        const operatorKey = PrivateKey.fromStringED25519(privateKey);
         client.setOperator(operatorId, operatorKey);
 
         const burnTx = await new TokenBurnTransaction()
@@ -140,7 +141,9 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
             .setSerials([serial])
             .freezeWith(client);
 
-        const burnSign = await burnTx.sign(operatorKey);
+        const burnSign = await burnTx.sign(
+            PrivateKey.fromStringED25519(supplyKey),
+        );
         const burnSubmit = await burnSign.execute(client);
         const receipt: TransactionReceipt = await burnSubmit.getReceipt(client);
 
