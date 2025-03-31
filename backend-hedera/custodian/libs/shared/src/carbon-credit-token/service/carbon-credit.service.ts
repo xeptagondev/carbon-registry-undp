@@ -326,6 +326,7 @@ export class CarbonCreditService {
 
             const senderAccountId = senderOrg.hederaAccountId;
             const senderPrivateKey = senderOrg.hederaAccountKey;
+            const supplyKey = project?.organization?.hederaAccountKey;
 
             const dnaOrg = await this.dataSource
                 .getRepository(OrganizationEntity)
@@ -415,7 +416,7 @@ export class CarbonCreditService {
                                 tokenId,
                                 serial,
                                 senderAccountId,
-                                senderPrivateKey,
+                                supplyKey,
                             );
 
                         retirementStatuses.push(status);
