@@ -132,7 +132,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
     ): Promise<any> {
         const client = Client.forTestnet();
         const operatorId = AccountId.fromString(accountId);
-        const operatorKey = PrivateKey.fromString(supplyKey);
+        const operatorKey = PrivateKey.fromStringED25519(supplyKey);
         client.setOperator(operatorId, operatorKey);
 
         const burnTx = await new TokenBurnTransaction()
