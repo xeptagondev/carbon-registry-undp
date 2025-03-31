@@ -1529,11 +1529,27 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                       </h3>
 
                       <Row justify={'space-between'} gutter={[40, 16]} className="form-section">
-                        <Row className="row" gutter={[40, 16]}>
+                        {/* First Row - Labels */}
+                        <Row className="row" gutter={[40, 8]} wrap={false}>
+                          <Col xl={8} md={24}>
+                            <div className="step-form-label">{t('monitoringReport:item')}</div>
+                          </Col>
+                          <Col xl={8} md={24}>
+                            <div className="step-form-label">
+                              {t('monitoringReport:valueApplied')}
+                            </div>
+                          </Col>
+                          <Col xl={8} md={24}>
+                            <div className="step-form-label">
+                              {t('monitoringReport:actualValues')}
+                            </div>
+                          </Col>
+                        </Row>
+                        <Row className="row " gutter={[40, 16]} wrap={false}>
                           <Col xl={8} md={24}>
                             <div className="step-form-left-col">
                               <Form.Item
-                                label={t('monitoringReport:item')}
+                                //label={t('monitoringReport:item')}
                                 name="item"
                                 rules={[
                                   {
@@ -1550,7 +1566,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                           <Col xl={8} md={24}>
                             <div className="step-form-right-col">
                               <Form.Item
-                                label={t('monitoringReport:valueApplied')}
+                                //label={t('monitoringReport:valueApplied')}
                                 name="valueApplied"
                                 rules={[
                                   {
@@ -1569,7 +1585,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                           <Col xl={8} md={24}>
                             <div className="step-form-right-col">
                               <Form.Item
-                                label={t('monitoringReport:actualValues')}
+                                //label={t('monitoringReport:actualValues')}
                                 name="actualValues"
                                 rules={[
                                   {
