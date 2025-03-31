@@ -89,42 +89,50 @@ export class AnalyticsService {
     }
 
     async getPendingActions(jwtData: JWTPayload) {
-        // if DNA
+        const combineAndSort = (
+            arr1: ProjectEntity[],
+            arr2: ProjectEntity[],
+        ) => {
+            const combined = [...arr1, ...arr2];
+            return combined.sort(
+                (a, b) =>
+                    new Date(b.updatedDate).getTime() -
+                    new Date(a.updatedDate).getTime(),
+            );
+        };
         if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
         ) {
-            // get projects with pending actions
             const statesList = [
                 ProjectProposalStage.PENDING,
-                // ProjectProposalStage.APPROVED,
                 ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER,
                 ProjectProposalStage.VALIDATION_REPORT_SUBMITTED,
             ];
-
-            const results = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: In(statesList),
-                },
-            });
-
-            // get projects with activity states
             const activityStatesList = [
                 ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
-                // ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
             ];
 
-            const activityResults = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: ProjectProposalStage.AUTHORISED,
-                    activities: {
-                        state: In(activityStatesList),
+            const [results, activityResults] = await Promise.all([
+                this.projectRepository.find({
+                    where: { projectProposalStage: In(statesList) },
+                    order: { updatedDate: 'DESC' },
+                }),
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: ProjectProposalStage.AUTHORISED,
+                        activities: { state: In(activityStatesList) },
                     },
-                },
-            });
+                    order: { updatedDate: 'DESC' },
+                }),
+            ]);
 
-            return results.concat(activityResults);
-        } else if (
+            // Combine & sort by updatedAt (descending)
+            return combineAndSort(results, activityResults);
+        }
+
+        // 2) PROJECT_DEVELOPER
+        else if (
             jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER
         ) {
             const statesList = [
@@ -133,36 +141,34 @@ export class AnalyticsService {
                 ProjectProposalStage.PDD_REJECTED_BY_DNA,
                 ProjectProposalStage.AUTHORISED,
             ];
-
-            const results = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: In(statesList),
-                    organization: {
-                        id: jwtData.organizationId,
-                    },
-                    activities: null,
-                },
-            });
-
-            // get projects with activity states
             const activityStatesList = [
                 ActivityStateEnum.MONITORING_REPORT_REJECTED,
             ];
 
-            const activityResults = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: ProjectProposalStage.AUTHORISED,
-                    organization: {
-                        id: jwtData.organizationId,
+            const [results, activityResults] = await Promise.all([
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: In(statesList),
+                        organization: { id: jwtData.organizationId },
+                        activities: null,
                     },
-                    activities: {
-                        state: In(activityStatesList),
+                    order: { updatedDate: 'DESC' },
+                }),
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: ProjectProposalStage.AUTHORISED,
+                        organization: { id: jwtData.organizationId },
+                        activities: { state: In(activityStatesList) },
                     },
-                },
-            });
+                    order: { updatedDate: 'DESC' },
+                }),
+            ]);
 
-            return results.concat(activityResults);
-        } else if (
+            return combineAndSort(results, activityResults);
+        }
+
+        // 3) INDEPENDENT_CERTIFIER
+        else if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
@@ -171,36 +177,31 @@ export class AnalyticsService {
                 ProjectProposalStage.PDD_APPROVED_BY_DNA,
                 ProjectProposalStage.VALIDATION_REPORT_REJECTED,
             ];
-
-            const results = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: In(statesList),
-                    assignees: {
-                        id: jwtData.organizationId,
-                    },
-                },
-            });
-
-            // get projects with activity states
             const activityStatesList = [
                 ActivityStateEnum.MONITORING_REPORT_UPLOADED,
                 ActivityStateEnum.MONITORING_REPORT_VERIFIED,
                 ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
             ];
 
-            const activityResults = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: ProjectProposalStage.AUTHORISED,
-                    activities: {
-                        state: In(activityStatesList),
+            const [results, activityResults] = await Promise.all([
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: In(statesList),
+                        assignees: { id: jwtData.organizationId },
                     },
-                    assignees: {
-                        id: jwtData.organizationId,
+                    order: { updatedDate: 'DESC' },
+                }),
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: ProjectProposalStage.AUTHORISED,
+                        activities: { state: In(activityStatesList) },
+                        assignees: { id: jwtData.organizationId },
                     },
-                },
-            });
+                    order: { updatedDate: 'DESC' },
+                }),
+            ]);
 
-            return results.concat(activityResults);
+            return combineAndSort(results, activityResults);
         }
     }
 
