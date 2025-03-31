@@ -87,7 +87,7 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
       form.setFieldValue('onSiteInspection', [{ activity: '' }]);
       form.setFieldValue('interviewees', [{ lastName: '' }]);
     }
-  }, []);
+  }, [formMode]);
 
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
@@ -429,7 +429,7 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
 
               {/* Interviews table start */}
               <>
-                <h4 className="form-section-heading">{t('validationReport:interviews')}</h4>
+                <h4 className="form-section-heading">{t('verificationReport:interviews')}</h4>
                 <div className="interviews-table">
                   <Row className="header">
                     <Col xl={1} className="col-1 col">
@@ -449,7 +449,7 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
                           First name
                         </Col>
                         <Col xl={8} className="interviewee-col-subCols-last">
-                          Affliation name
+                          Affliation
                         </Col>
                       </Row>
                     </Col>

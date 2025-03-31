@@ -78,6 +78,8 @@ const getLogDescription = (log: any, t: any) => {
     case ProjectActivityStage.REJECTED:
       return formatString('slcfProgrammeTimeline:infRejectedDescription', [log.name], t);
       break;
+    case ProjectActivityStage.NO_OBJECTION_LETTER_GENERATED:
+      return formatString('slcfProgrammeTimeline:noObjectionLetterGeneratedDescription', [], t);
     case ProjectActivityStage.PDD_SUBMITTED:
       return formatString('slcfProgrammeTimeline:pddSubmttedTitle', [log.name], t);
     case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
@@ -369,7 +371,10 @@ const getLogTitle = (logType: any) => {
     case ProjectActivityStage.REJECTED:
       return 'slcfProgrammeTimeline:infRejectedTitle';
       break;
-    case ProjectActivityStage.PDD_SUBMITTED:
+    case ProjectActivityStage.NO_OBJECTION_LETTER_GENERATED:
+      return 'slcfProgrammeTimeline:noObjectionLetterGeneratedTitle';
+      break;
+    case ProjectActivityStage.NO_OBJECTION_LETTER_GENERATED:
       return 'slcfProgrammeTimeline:pddSubmttedTitle';
       break;
     case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:

@@ -32,7 +32,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
       form.setFieldValue('validationTeamMembers', [{ role: '' }]);
       form.setFieldValue('technicalReviews', [{ role: '' }]);
     }
-  }, []);
+  }, [formMode]);
 
   const onFinish = async (values: any) => {
     console.log('--------values-----------', values);
