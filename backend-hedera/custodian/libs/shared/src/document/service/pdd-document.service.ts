@@ -206,7 +206,7 @@ export class PddDocumentService extends DocumentService {
                 )
             ) {
                 throw new HttpException(
-                    'Unauthorized',
+                    'You do not have permission to submit Project Design Documents.',
                     HttpStatus.UNAUTHORIZED,
                 );
             }
@@ -368,10 +368,23 @@ export class PddDocumentService extends DocumentService {
                     );
                 }
 
+                if (
+                    !(
+                        jwtData.userRole === RoleEnum.Admin &&
+                        jwtData.organizationRole ===
+                            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+                    )
+                ) {
+                    throw new HttpException(
+                        'You do not have permission to certify or decline Project Design Documents.',
+                        HttpStatus.UNAUTHORIZED,
+                    );
+                }
+
                 // can only be performed by project assignees
                 if (!assigneeAdminEmails.includes(jwtData.email)) {
                     throw new HttpException(
-                        'Unauthorised',
+                        'Your organisation has been not assigned to certify this Project Design Document.',
                         HttpStatus.UNAUTHORIZED,
                     );
                 }
@@ -389,7 +402,7 @@ export class PddDocumentService extends DocumentService {
                     )
                 ) {
                     throw new HttpException(
-                        'Unauthorised',
+                        'You do not have permission to approve or reject Project Design Documents.',
                         HttpStatus.UNAUTHORIZED,
                     );
                 }

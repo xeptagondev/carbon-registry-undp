@@ -94,7 +94,10 @@ export class MonitoringDocumentService extends DocumentService {
                 jwtData.userRole === RoleEnum.Admin
             )
         ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to create Monitoring reports.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         // start transaction and save document
@@ -370,7 +373,10 @@ export class MonitoringDocumentService extends DocumentService {
                 OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
             jwtData.userRole !== RoleEnum.Admin
         ) {
-            throw new HttpException('Unauthroized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to approve or reject Monitoring reports.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -423,7 +429,7 @@ export class MonitoringDocumentService extends DocumentService {
             // can only be made by DNA admin(s)
             if (!assigneeAdminEmails.includes(jwtData.email)) {
                 throw new HttpException(
-                    'Unauthorised',
+                    'Your organisation has been not assigned to approve or reject this Monitoring report.',
                     HttpStatus.UNAUTHORIZED,
                 );
             }

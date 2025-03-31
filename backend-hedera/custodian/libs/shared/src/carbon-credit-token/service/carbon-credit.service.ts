@@ -818,7 +818,10 @@ export class CarbonCreditService {
                 user.userRole === RoleEnum.Admin
             )
         ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to transfer credits.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -999,7 +1002,7 @@ export class CarbonCreditService {
                     )
                 ) {
                     throw new HttpException(
-                        'Unauthorized',
+                        'You do not have permission to approve retirement requests.',
                         HttpStatus.UNAUTHORIZED,
                     );
                 }
@@ -1029,7 +1032,7 @@ export class CarbonCreditService {
                     )
                 ) {
                     throw new HttpException(
-                        'Unauthorized',
+                        'You do not have permission to cancel credit retirement requests.',
                         HttpStatus.UNAUTHORIZED,
                     );
                 }
@@ -1078,7 +1081,7 @@ export class CarbonCreditService {
                     )
                 ) {
                     throw new HttpException(
-                        'Unauthorized',
+                        'You do not have permission to reject credit retirement requests.',
                         HttpStatus.UNAUTHORIZED,
                     );
                 }
@@ -1149,7 +1152,10 @@ export class CarbonCreditService {
                 user.userRole === RoleEnum.Admin
             )
         ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to retire credits.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         const queryRunner = this.dataSource.createQueryRunner();

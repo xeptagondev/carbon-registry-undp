@@ -160,6 +160,18 @@ export class VrDocumentService extends DocumentService {
             };
 
             const assigneeOrgIds = project.assignees.map((org) => org.id);
+            if (
+                !(
+                    jwtData.organizationRole ===
+                        OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+                    jwtData.userRole === RoleEnum.Admin
+                )
+            ) {
+                throw new HttpException(
+                    'You do not have permission to create Validation reports.',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
 
             if (
                 jwtData.organizationRole ===
@@ -250,7 +262,7 @@ export class VrDocumentService extends DocumentService {
                 });
             } else {
                 throw new HttpException(
-                    'Unauthorized',
+                    'Your organisation has been not assigned to create a Validation report.',
                     HttpStatus.UNAUTHORIZED,
                 );
             }
@@ -324,7 +336,7 @@ export class VrDocumentService extends DocumentService {
                 // can only be made by DNA admin(s)
                 if (!dnaAdminEmails.includes(jwtData.email)) {
                     throw new HttpException(
-                        'Unauthorised',
+                        'You do not have permission to approve or reject Validation reports.',
                         HttpStatus.UNAUTHORIZED,
                     );
                 }
