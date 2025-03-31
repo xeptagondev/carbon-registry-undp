@@ -287,6 +287,7 @@ export class CarbonCreditService {
                     where: { id: transactionId },
                     relations: {
                         project: { organization: true },
+                        sender: true,
                         creditBlock: true,
                     },
                 });
@@ -306,12 +307,12 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: retireRequest?.creditBlock?.id },
-                    relations: { sender: true, receiver: true },
+                    relations: { sender: true },
                 });
 
             let project = retireRequest?.project;
             const tokenId = project.tokenId;
-            const senderOrg = creditBlock.receiver;
+            const senderOrg = retireRequest.sender;
 
             if (
                 !senderOrg ||
