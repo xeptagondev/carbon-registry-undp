@@ -1064,6 +1064,7 @@ export class CarbonCreditService {
                     amount: retireRequest.creditAmount,
                     fromCompanyId: retireRequest.sender.id,
                     remarks: retireAction.remarks,
+                    retirementType: retireRequest.retirementType,
                 };
 
                 await queryRunner.manager.save(AuditEntity, log);
@@ -1112,6 +1113,7 @@ export class CarbonCreditService {
                     amount: retireRequest.creditAmount,
                     fromCompanyId: retireRequest.sender.id,
                     remarks: retireAction.remarks,
+                    retirementType: retireRequest.retirementType,
                 };
 
                 await queryRunner.manager.save(AuditEntity, log);
