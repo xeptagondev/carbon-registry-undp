@@ -640,12 +640,10 @@ export class CarbonCreditService {
 
         if (
             !(
-                (user.organizationRole ===
+                user.organizationRole ===
                     OrganizationTypeEnum.PROJECT_DEVELOPER ||
-                    user.organizationRole ===
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY) &&
-                (user.userRole === RoleEnum.Root ||
-                    user.userRole === RoleEnum.Admin)
+                user.organizationRole ===
+                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
             )
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -735,12 +733,10 @@ export class CarbonCreditService {
 
         if (
             !(
-                (user.organizationRole ===
+                user.organizationRole ===
                     OrganizationTypeEnum.PROJECT_DEVELOPER ||
-                    user.organizationRole ===
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY) &&
-                (user.userRole === RoleEnum.Root ||
-                    user.userRole === RoleEnum.Admin)
+                user.organizationRole ===
+                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
             )
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
