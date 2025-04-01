@@ -38,6 +38,8 @@ import { CarbonCreditGuardianService } from '@app/shared/carbon-credit-token/ser
 import { plainToClass } from 'class-transformer';
 // eslint-disable-next-line max-len
 import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
+import { AdditionalDocType } from '../enum/additional.document.type';
+import doc from 'pdfkit';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
@@ -126,6 +128,25 @@ export class VrDocumentService extends DocumentService {
                 DocumentEnum.PDD,
                 dto.projectRefId,
             );
+
+            //console.log('reached backend-----');
+            const validationData = dto.data;
+            // console.log(
+            //     '--------------',
+            //     validationData?.appendix.appendix1Documents,
+            // );
+            if (
+                validationData?.appendix?.appendix1Documents &&
+                validationData.appendix.appendix1Documents.length > 0
+            ) {
+                const docUrls = await this.uploadDocuments(
+                    validationData.appendix.appendix1Documents,
+                    AdditionalDocType.VALIDATION_APPENDIX_DOCS,
+                    dto.projectRefId,
+                );
+                validationData.appendix.appendix1Documents = docUrls;
+                //console.log('------doc url---------', docUrls);
+            }
 
             if (!lastPDD || lastPDD.state !== DocumentStateEnum.DNA_APPROVED) {
                 throw new HttpException(
