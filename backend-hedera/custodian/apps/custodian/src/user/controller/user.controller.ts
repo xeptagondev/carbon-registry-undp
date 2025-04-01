@@ -30,9 +30,16 @@ export class UserController {
     async add(@Body() userDto: UsersDTO, @Request() req): Promise<any> {
         if (
             req?.user &&
-            (req?.user?.userRole !== RoleEnum.Admin ||
-                req?.user?.userRole !== RoleEnum.Root)
+            (req?.user?.userRole === RoleEnum.Admin ||
+                req?.user?.userRole === RoleEnum.Root)
         ) {
+            return this.userService.register(
+                userDto,
+                '',
+                UserStateConstant.ACTIVE,
+                req?.user,
+            );
+        } else {
             throw new HttpException(
                 userDto.company
                     ? 'You do not have permission to create a new organisation.'
@@ -40,12 +47,6 @@ export class UserController {
                 HttpStatus.UNAUTHORIZED,
             );
         }
-        return this.userService.register(
-            userDto,
-            '',
-            UserStateConstant.ACTIVE,
-            req?.user,
-        );
     }
 
     @UseGuards(AuthGuardService)
@@ -81,14 +82,16 @@ export class UserController {
     updateUser(@Body() userUpdate: UserUpdateDto, @Request() req) {
         if (
             req?.user &&
-            (req?.user?.userRole !== RoleEnum.Admin ||
-                req?.user?.userRole !== RoleEnum.Root)
-        )
+            (req?.user?.userRole === RoleEnum.Admin ||
+                req?.user?.userRole === RoleEnum.Root)
+        ) {
+            return this.userService.updateUserDetails(userUpdate, req.user);
+        } else {
             throw new HttpException(
                 'You do not have permission to delete users.',
                 HttpStatus.UNAUTHORIZED,
             );
-        return this.userService.updateUserDetails(userUpdate, req.user);
+        }
     }
 
     @UseGuards(AuthGuardService)
@@ -102,13 +105,15 @@ export class UserController {
     deleteUser(@Query('userId') userId: number, @Request() req) {
         if (
             req?.user &&
-            (req?.user?.userRole !== RoleEnum.Admin ||
-                req?.user?.userRole !== RoleEnum.Root)
-        )
+            (req?.user?.userRole === RoleEnum.Admin ||
+                req?.user?.userRole === RoleEnum.Root)
+        ) {
+            return this.userService.deleteUser(userId, req.user);
+        } else {
             throw new HttpException(
                 'You do not have permission to delete users.',
                 HttpStatus.UNAUTHORIZED,
             );
-        return this.userService.deleteUser(userId, req.user);
+        }
     }
 }
