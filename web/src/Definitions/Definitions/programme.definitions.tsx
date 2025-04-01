@@ -98,51 +98,23 @@ export const getProjectProposalStage = (stage: ProjectProposalStage) => {
     case ProjectProposalStage.REJECTED:
       return 'error';
     case ProjectProposalStage.APPROVED:
-      return 'success';
+      return 'green';
     case ProjectProposalStage.PDD_SUBMITTED:
       return 'processing';
     case ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER:
       return 'orange';
     case ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER:
-      return 'success';
+      return 'lime';
     case ProjectProposalStage.PDD_APPROVED_BY_DNA:
-      return 'success';
+      return 'cyan';
     case ProjectProposalStage.PDD_REJECTED_BY_DNA:
       return 'error';
     case ProjectProposalStage.VALIDATION_REPORT_SUBMITTED:
       return 'default';
     case ProjectProposalStage.VALIDATION_REPORT_REJECTED:
-      return 'orange';
+      return 'volcano';
     case ProjectProposalStage.AUTHORISED:
-      return 'success';
-    // case ProjectProposalStage.SUBMITTED_INF:
-    //   return 'processing';
-    // case ProjectProposalStage.APPROVED_INF:
-    //   return 'purple';
-    // case ProjectProposalStage.SUBMITTED_COST_QUOTATION:
-    //   return 'processing';
-    // case ProjectProposalStage.SUBMITTED_PROPOSAL:
-    //   return 'processing';
-    // case ProjectProposalStage.SUBMITTED_VALIDATION_AGREEMENT:
-    //   return 'processing';
-    // case ProjectProposalStage.ACCEPTED_PROPOSAL:
-    //   return 'purple';
-    // case ProjectProposalStage.SUBMITTED_CMA:
-    //   return 'processing';
-    // case ProjectProposalStage.VALIDATION_PENDING:
-    //   return 'processing';
-    // case ProjectProposalStage.AUTHORISED:
-    //   return 'purple';
-    // case ProjectProposalStage.REJECTED_VALIDATION:
-    //   return 'error';
-    // case ProjectProposalStage.APPROVED_CMA:
-    //   return 'purple';
-    // case ProjectProposalStage.REJECTED_CMA:
-    //   return 'error';
-    // case ProjectProposalStage.REJECTED_PROPOSAL:
-    //   return 'error';
-    // case ProjectProposalStage.REJECTED_INF:
-    //   return 'error';
+      return 'geekblue';
     default:
       return 'default';
   }
@@ -314,6 +286,8 @@ export interface ProgrammeSl {
   sector: string;
   countryCodeA2: string;
   projectStatus: ProgrammeStatus;
+  projectGeography: string;
+  independentCertifiers: string[];
   postalCode: number;
   projectCategory: ProgrammeCategory;
   purposeOfCreditDevelopment: string;
@@ -377,6 +351,7 @@ export interface ProgrammeT extends Programme {
 }
 
 export interface ProgrammeSlU extends ProgrammeSl {
+  activities: { stage: string; documents: any[]; activityLastUpdatedDate: string }[] | undefined;
   currentStage: ProgrammeStageUnified;
   projectProposalStage: ProjectProposalStage;
   programmeProperties: ProgrammePropertiesU;
@@ -439,10 +414,13 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     tokenId: programme.tokenId,
     registrationSerialNo: programme.serialNo,
     projectProposalStage: programme.projectProposalStage,
-    projectStatus: programme.projectStatus,
+    // projectStatus: programme.projectStatus,
     // projectCategory: getProjectCategory[programme.projectCategory],
     sectoralScope: programme.sectoralScope,
+    projectGeography: programme.projectGeography,
     startDate: DateTime.fromSeconds(Number(programme.startDate)),
+    estimatedProjectCost: programme.estimatedProjectCost,
+    independentCertifier: programme.independentCertifiers,
     // purposeOfCreditDevelopment: programme.purposeOfCreditDevelopment,
     creditReceived:
       safeNumber(programme.creditBalance) +
@@ -453,12 +431,9 @@ export const getGeneralFieldsSl = (programme: ProgrammeSl, system?: CarbonSystem
     creditBalance: programme.creditBalance,
     province: programme.province,
     district: programme.district,
-    dsDivision: programme.dsDivision,
     postalCode: programme.postalCode,
     city: programme.city,
-    community: programme.community,
     projectDescription: programme.projectDescription,
-    additionalDocuments: programme.additionalDocuments,
   };
 
   return res;

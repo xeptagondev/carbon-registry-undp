@@ -10,7 +10,8 @@ import i18n from '../Internationalization/i18n';
 import { VerificationStepProps } from './StepProps';
 
 export const VerificationOpinionStep = (props: VerificationStepProps) => {
-  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate } = props;
+  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields } =
+    props;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -25,7 +26,7 @@ export const VerificationOpinionStep = (props: VerificationStepProps) => {
     // console.log('--------values-----------', values);
     const body = { ...values };
     handleValuesUpdate({
-      verificationOpinionFormDetails: body,
+      verificationOpinion: body,
     });
   };
 
@@ -41,7 +42,6 @@ export const VerificationOpinionStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -64,19 +64,30 @@ export const VerificationOpinionStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={6} disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
               </Row>
 
               <Row justify={'end'} className="step-actions-end">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button danger onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('verificationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('verificationReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('verificationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

@@ -21,6 +21,7 @@ import { FileHandlerModule } from './file-handler/file-handler.module';
 import { LocationModule } from './location/location.module';
 import { CarbonCreditTokenModule } from './carbon-credit-token/carbon-credit-token.module';
 import { TaskModule } from './task/task.module';
+import { SerialNumberManagementModule } from './serial-number-management/serial-number-management.module';
 import { EventModule } from './event/event.module';
 
 @Module({
@@ -48,6 +49,7 @@ import { EventModule } from './event/event.module';
         LocationModule,
         CarbonCreditTokenModule,
         TaskModule,
+        SerialNumberManagementModule,
         EventModule,
     ],
 })

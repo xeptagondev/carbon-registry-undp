@@ -8,15 +8,11 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 
 import moment from 'moment';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import DataValidationProcess from './DataValidationProcess';
-import ValidationReportIntroduction from './ValidationReportIntroduction';
-// import Reference from './Reference';
-// import ValicationReportGHGDescriptionOfProjectActivity from './ValicationReportGHGDescriptionOfProjectActivity';
+
 import ValidationMethodology from './ValidationMethodology';
 import ValidationOpinion from './ValidationOpinion';
 import ValidationReportAppendix from './ValidationReportAppendix';
-import { projectScopeList } from './validationReportHelper';
-import { extractFilePropertiesFromLink } from '../../Utils/utilityHelper';
+
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
@@ -39,6 +35,8 @@ import {
   validationOpinionMapDataToFields,
   validationReportAppendixMapDataToFields,
 } from './viewDataMap';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -105,7 +103,6 @@ const StepperComponent = (props: any) => {
         appendix: appendixVals,
       },
     };
-    console.log('--------adding form-values------', tempValues);
 
     try {
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
@@ -164,204 +161,113 @@ const StepperComponent = (props: any) => {
   const [form8] = useForm();
   const [form9] = useForm();
 
-  // const getProgrammeDetailsById = async (id: string) => {
-  //   try {
-  //     const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-  //       programmeId: id,
-  //     });
+  const fetchAndSetProgrammeData = async (programId: any) => {
+    setLoading(true);
 
-  //     const {
-  //       data: { user },
-  //     } = await get(API_PATHS.USER_PROFILE);
+    let programmeData = null;
+    let pddData = null;
 
+    try {
+      // Fetch Programme Data
+      const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, { programmeId: programId });
+      if (programmeResponse?.statusText === 'SUCCESS') {
+        programmeData = programmeResponse?.data;
+        console.log('-----------------Programme Data-----------------', programmeData);
+      } else {
+        console.log('Error: Programme API did not return SUCCESS status');
+      }
+    } catch (error) {
+      console.log('Error fetching programme data:', error);
+    }
+
+    try {
+      // Fetch PDD Data
+      const pddResponse = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documents?.PDD?.refId,
+        documentType: DocumentEnum.PDD,
+      });
+      console.log('-----------------PDD Response-----------------', pddResponse);
+      if (pddResponse?.statusText === 'SUCCESS') {
+        pddData = pddResponse?.data;
+      } else {
+        console.log('Error: PDD API did not return SUCCESS status');
+      }
+    } catch (error) {
+      console.log('Error fetching PDD data:', error);
+    }
+
+    if (programmeData && pddData) {
+      const docVersions = state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
+      const latestVersion = docVersions ? docVersions + 1 : 1;
+      form1.setFieldsValue({
+        titleOfTheProjectActivity: programmeData?.title,
+        mandatarySectoralScopes: INF_SECTORAL_SCOPE[programmeData?.sectoralScope],
+        projectDeveloper: programmeData?.projectParticipant,
+        versionNumberPDD: pddData?.data?.projectDetails?.versionNumber,
+        hostParty: pddData?.data?.projectDetails?.hostParty,
+        versionNumberValidationReport: latestVersion,
+        creditingPeriod: pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
+        creditingPeriodStart: pddData?.data?.startDateCreditingPeriod
+          ?.projectCreditingPeriodStartDate
+          ? moment.unix(pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodStartDate)
+          : null,
+        creditingPeriodEnd: pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate
+          ? moment.unix(pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate)
+          : null,
+        locationOfProjectActivity:
+          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+            ?.locationOfProjectActivity,
+        siteNo: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.siteNo,
+        province: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.province,
+        district: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.district,
+        city: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.city,
+        community: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.community,
+        geographicalLocationCoordinates:
+          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+            ?.geographicalLocationCoordinates,
+        optionalImages: mapBase64ToFields(
+          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
+        ),
+        extraLocations: pddData?.data?.projectActivity?.locationsOfProjectActivity
+          ?.slice(1)
+          ?.map((location: any) => ({
+            ...location,
+            optionalImages: mapBase64ToFields(location?.additionalDocuments),
+          })),
+      });
+
+      form2.setFieldsValue({
+        estimatedNetEmissionReductions:
+          pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions?.yearlyGHGEmissionReductions?.map(
+            (emissionData: any) => ({
+              startDate: moment.unix(emissionData.startDate),
+              endDate: moment.unix(emissionData.endDate),
+            })
+          ),
+        totalNumberOfCreditingYears: 1,
+        baselineEmissionReductions: 0,
+        baselineEmissions: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
+          (loc: any) => ({ location: loc.locationOfProjectActivity })
+        ),
+      });
+      form5.setFieldsValue({
+        onSiteInspection: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
+          (loc: any) => ({
+            siteLocation: loc.locationOfProjectActivity,
+          })
+        ),
+      });
+    }
+
+    setLoading(false);
+  };
+
+  // const setLatestVersion = () => {
+  //   if (state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) {
   //     form1.setFieldsValue({
-  //       projectTitle: data?.title,
-  //       dateOfIssue: moment(),
-  //       client: data.title,
+  //       versionNumberValidationReport:
+  //         state?.documents?.[DocumentEnum.VALIDATION as any]?.version ?? 0 + 1,
   //     });
-
-  //     setProjectCategory(data?.projectCategory);
-
-  //     setExistingFormValues((prevVal) => ({
-  //       ...prevVal,
-  //       companyId: data?.company?.companyId,
-  //     }));
-  //   } catch (error) {
-  //     console.log('error');
-  //   }
-  // };
-
-  // const getCountryList = async () => {
-  //   try {
-  //     const response = await get(API_PATHS.COUNTRY_LIST);
-  //     if (response.data) {
-  //       const alpha2Names = response.data.map((item: any) => {
-  //         return item.alpha2;
-  //       });
-  //       setCountries(alpha2Names);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
-  // const getCMALastVersion = async (id: string) => {
-  //   try {
-  //     const {
-  //       data: { content },
-  //     } = await post(API_PATHS.LAST_DOC_VERSION, {
-  //       programmeId: id,
-  //       docType: 'cma',
-  //     });
-
-  //     const projectContent = JSON.parse(content);
-
-  //     form1.setFieldsValue({
-  //       telephone: projectContent?.projectDetails?.telephone,
-  //       email: projectContent?.projectDetails?.email,
-  //       address: projectContent?.projectDetails?.physicalAddress,
-  //       website: projectContent?.projectDetails?.website,
-  //       reportNo: `SLCCS/VDR/${new Date().getFullYear()}/${id}`,
-  //       workCarriedOutBy: `Validation Division - ${registryName}`,
-  //     });
-
-  //     form2.setFieldsValue({
-  //       titleOfProjectActivity: projectContent?.projectDetails?.title,
-  //       projectParticipant: projectContent?.projectActivity?.projectProponent?.organizationName,
-  //     });
-
-  //     form3.setFieldsValue({
-  //       creditingPeriod: Number(projectContent?.projectActivity?.totalCreditingYears),
-  //       startDateCreditingPeriod: moment(
-  //         projectContent?.projectActivity?.creditingPeriodStartDate * 1000
-  //       ),
-  //       locationsOfProjectActivity: projectContent?.projectActivity.locationsOfProjectActivity.map(
-  //         (location: any) => {
-  //           return {
-  //             ...location,
-  //             additionalDocuments:
-  //               location.additionalDocuments && location.additionalDocuments?.length > 0
-  //                 ? location.additionalDocuments?.map((document: string, index: number) => {
-  //                     return {
-  //                       uid: index,
-  //                       name: extractFilePropertiesFromLink(document).fileName,
-  //                       status: 'done',
-  //                       url: document,
-  //                     };
-  //                   })
-  //                 : [],
-  //             technicalProjectDescriptionItems: [
-  //               {
-  //                 item: '',
-  //                 parameterValue: [
-  //                   {
-  //                     parameter: '',
-  //                     value: '',
-  //                   },
-  //                 ],
-  //               },
-  //             ],
-  //           };
-  //         }
-  //       ),
-  //     });
-
-  //     form4.setFieldsValue({
-  //       validationReportFinding: [
-  //         {
-  //           typeOfFinding: '',
-  //           findingNo: '',
-  //           rfToCMA: '',
-  //           actionRequestsByValidationTeam: '',
-  //           summaryOfProjectOwnerResponse: '',
-  //           validationTeamAssessment: '',
-  //           conclusion: [],
-  //         },
-  //       ],
-  //       teamMembers: [
-  //         {
-  //           name: '',
-  //           company: `${t('validationReport:ClimateFund', { countryName: countryName })}`,
-  //           function: '',
-  //           taskPerformed: '',
-  //         },
-  //       ],
-  //       followupInterviews: [
-  //         {
-  //           name: '',
-  //           designation: '',
-  //           organization: '',
-  //         },
-  //       ],
-  //     });
-
-  //     form5.setFieldsValue({
-  //       employedTechnologies: projectContent?.projectActivity.locationsOfProjectActivity.map(
-  //         (location: any, index: number) => {
-  //           return {
-  //             siteNo: index + 1,
-  //             location: location.locationOfProjectActivity,
-  //             capacity: '',
-  //           };
-  //         }
-  //       ),
-  //       gridEmissionFactorUnit: 'tCO2e/MWh',
-  //       gridEmissionFactorValueGlobal: 0.72222,
-  //       baselineEmissions: [
-  //         ...projectContent?.projectActivity.locationsOfProjectActivity.map(
-  //           (location: any, index: number) => {
-  //             return {
-  //               type: 'value',
-  //               location: location.locationOfProjectActivity,
-  //               projectCapacityValue: '',
-  //               plantFactorValue: '',
-  //               avgEnergyOutputValue: '',
-  //               gridEmissionFactorValue: '',
-  //               emissionReductionValue: '',
-  //             };
-  //           }
-  //         ),
-  //       ],
-  //       estimatedNetEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.yearlyGHGEmissionReductions.map(
-  //           (emissionData: any) => {
-  //             return {
-  //               startDate: moment(emissionData.startDate * 1000),
-  //               endDate: moment(emissionData.endDate * 1000),
-  //               baselineEmissionReductions: emissionData.baselineEmissionReductions,
-  //               projectEmissionReductions: emissionData.projectEmissionReductions,
-  //               leakageEmissionReductions: emissionData.leakageEmissionReductions,
-  //               netEmissionReductions: emissionData.netEmissionReductions,
-  //             };
-  //           }
-  //         ),
-  //       totalBaselineEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.totalBaselineEmissionReductions,
-  //       totalProjectEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.totalProjectEmissionReductions,
-  //       totalLeakageEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.totalLeakageEmissionReductions,
-  //       totalNetEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.totalNetEmissionReductions,
-  //       avgBaselineEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.avgBaselineEmissionReductions,
-  //       avgProjectEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.avgProjectEmissionReductions,
-  //       avgLeakageEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions
-  //           ?.avgLeakageEmissionReductions,
-  //       avgNetEmissionReductions:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.avgNetEmissionReductions,
-  //       totalNumberOfCredingYears:
-  //         projectContent?.quantificationOfGHG?.netGHGEmissionReductions?.totalNumberOfCredingYears,
-  //     });
-  //   } catch (error) {
-  //     console.log('error');
   //   }
   // };
 
@@ -376,6 +282,13 @@ const StepperComponent = (props: any) => {
   };
 
   useEffect(() => {
+    if (state?.mode === FormMode?.CREATE) {
+      fetchAndSetProgrammeData(id);
+    }
+    //setLatestVersion();
+  }, [id]);
+
+  useEffect(() => {
     const getViewData = async () => {
       if (
         state?.mode === FormMode?.EDIT ||
@@ -384,10 +297,15 @@ const StepperComponent = (props: any) => {
       ) {
         setLoading(true);
         let res;
+
+        if (state?.mode === FormMode.VERIFY || state?.mode === FormMode.VIEW) {
+          setDisableFields(true);
+        }
+
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
-            projectRefId: state?.documentRefId,
-            DocumentEnum: DocumentEnum.VALIDATION,
+            refId: state?.documentRefId,
+            DocumentType: DocumentEnum.VALIDATION,
           });
 
           if (res?.statusText === 'SUCCESS') {
@@ -398,7 +316,15 @@ const StepperComponent = (props: any) => {
               data?.data,
               data?.data?.basicInformation
             );
-            const basicInformation = basicInformationMapDataToFields(data.data?.basicInformation);
+            let basicInformation = basicInformationMapDataToFields(data.data?.basicInformation);
+            const docVersions = state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
+            const latestVersion = docVersions ? docVersions + 1 : 1;
+            if (state?.mode === FormMode.EDIT) {
+              basicInformation = {
+                ...basicInformation,
+                versionNumberValidationReport: latestVersion,
+              };
+            }
             form1.setFieldsValue(basicInformation);
 
             const ghgProjectDescription = ghgProjectDescriptionMapDataToFields(
@@ -437,10 +363,6 @@ const StepperComponent = (props: any) => {
             const appendix = validationReportAppendixMapDataToFields(data.data?.appendix);
             console.log('---------appendix-----------', appendix);
             form9.setFieldsValue(appendix);
-          }
-
-          if (state?.mode === FormMode.VERIFY || state?.mode === FormMode.VIEW) {
-            setDisableFields(true);
           }
         } catch (error) {
           console.log('error', error);

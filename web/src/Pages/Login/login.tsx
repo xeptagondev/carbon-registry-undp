@@ -76,7 +76,7 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
         removeToken();
         setIsTokenExpired(false);
         return IsAuthenticated(response.data.access_token)
-          ? navigate(redirectLocation ? redirectLocation : ROUTES.VIEW_USERS, {
+          ? navigate(redirectLocation ? redirectLocation : ROUTES.DASHBOARD, {
               replace: true,
             })
           : navigate(ROUTES.LOGIN);

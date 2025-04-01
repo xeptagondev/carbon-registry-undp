@@ -3,7 +3,7 @@ import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -34,6 +34,9 @@ import {
 } from '@app/shared/guardian/enum/button-type.enum';
 import { DocumentEnum } from '../enum/document.enum';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
+import { AdditionalDocType } from '../enum/additional.document.type';
 
 @Injectable()
 export class PddDocumentService extends DocumentService {
@@ -46,6 +49,8 @@ export class PddDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -54,6 +59,7 @@ export class PddDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            documentRepository,
             logger,
         );
     }
@@ -127,7 +133,69 @@ export class PddDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+            const pddData = dto.data;
+            const additionalDocumentFields = [
+                {
+                    field: 'appendix2Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_2_DOCUMENT,
+                },
+                {
+                    field: 'appendix3Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_3_DOCUMENT,
+                },
+                {
+                    field: 'appendix4Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_4_DOCUMENT,
+                },
+                {
+                    field: 'appendix5Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_5_DOCUMENT,
+                },
+                {
+                    field: 'appendix6Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_6_DOCUMENT,
+                },
+                {
+                    field: 'appendix7Documents',
+                    type: AdditionalDocType.PDD_APPENDIX_7_DOCUMENT,
+                },
+            ];
 
+            if (pddData.appendix) {
+                for (const docField of additionalDocumentFields) {
+                    if (
+                        pddData.appendix[docField.field] &&
+                        pddData.appendix[docField.field].length > 0
+                    ) {
+                        const docUrls = await this.uploadDocuments(
+                            pddData.appendix[docField.field],
+                            docField.type,
+                            dto.projectRefId,
+                        );
+                        pddData.appendix[docField.field] = docUrls;
+                    }
+                }
+            }
+
+            if (
+                pddData?.projectActivity?.locationsOfProjectActivity &&
+                pddData.projectActivity.locationsOfProjectActivity.length > 0
+            ) {
+                for (const location of pddData.projectActivity
+                    .locationsOfProjectActivity) {
+                    if (
+                        location.additionalDocuments &&
+                        location.additionalDocuments.length > 0
+                    ) {
+                        const docUrls = await this.uploadDocuments(
+                            location.additionalDocuments,
+                            AdditionalDocType.PDD_LOCATION_OF_PROJECT_ACTIVITY_ADDITIONAL_DOCUMENT,
+                            dto.projectRefId,
+                        );
+                        location.additionalDocuments = docUrls;
+                    }
+                }
+            }
             // PDD has to be an Admin of the same organization of the project the document is being submitted to
             if (
                 !(
@@ -138,25 +206,23 @@ export class PddDocumentService extends DocumentService {
                 )
             ) {
                 throw new HttpException(
-                    'Unauthorized',
+                    'You do not have permission to submit Project Design Documents.',
                     HttpStatus.UNAUTHORIZED,
                 );
             }
 
             // create document in 'PENDING' state
 
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = project;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = submittedUser;
-
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: project,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    data: dto.data,
+                    submittedUser: submittedUser,
+                }),
             );
 
             const organizationDoc =
@@ -302,10 +368,23 @@ export class PddDocumentService extends DocumentService {
                     );
                 }
 
+                if (
+                    !(
+                        jwtData.userRole === RoleEnum.Admin &&
+                        jwtData.organizationRole ===
+                            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+                    )
+                ) {
+                    throw new HttpException(
+                        'You do not have permission to certify or decline Project Design Documents.',
+                        HttpStatus.UNAUTHORIZED,
+                    );
+                }
+
                 // can only be performed by project assignees
                 if (!assigneeAdminEmails.includes(jwtData.email)) {
                     throw new HttpException(
-                        'Unauthorised',
+                        'Your organisation has been not assigned to certify this Project Design Document.',
                         HttpStatus.UNAUTHORIZED,
                     );
                 }
@@ -323,7 +402,7 @@ export class PddDocumentService extends DocumentService {
                     )
                 ) {
                     throw new HttpException(
-                        'Unauthorised',
+                        'You do not have permission to approve or reject Project Design Documents.',
                         HttpStatus.UNAUTHORIZED,
                     );
                 }
@@ -365,7 +444,9 @@ export class PddDocumentService extends DocumentService {
             documentEntity.approvedUser = user;
 
             // save document
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             /*
                         3. Send emails based on action
@@ -387,6 +468,7 @@ export class PddDocumentService extends DocumentService {
                     documentEntity.project.refId,
                     ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const pddDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
@@ -445,7 +527,7 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
                     jwtData.userId,
                 );
@@ -521,9 +603,10 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_REJECTED_BY_DNA,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const pddDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
@@ -600,7 +683,7 @@ export class PddDocumentService extends DocumentService {
                 );
                 await this.logProjectStage(
                     queryRunner,
-                    documentEntity.project.refId,
+                    documentEntity?.project?.refId,
                     ProjectAuditLogType.PDD_APPROVED_BY_DNA,
                     jwtData.userId,
                 );

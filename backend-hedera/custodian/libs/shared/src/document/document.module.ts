@@ -11,13 +11,13 @@ import { TaskEntity } from '../task/entity/task.entity';
 import { AuditModule } from '../audit/audit.module';
 import { GuardianModule } from '../guardian/guardian.module';
 import { UtilModule } from '../util/util.module';
-import { CreditEventsEntity } from '../carbon-credit-token/entity/credit-events.entity';
 import { CarbonCreditTokenModule } from '../carbon-credit-token/carbon-credit-token.module';
 import { InfDocumentService } from './service/inf-document.service';
 import { PddDocumentService } from './service/pdd-document.service';
 import { VrDocumentService } from './service/vr-document.service';
 import { MonitoringDocumentService } from './service/monitoring-document.service';
 import { VerificationDocumentService } from './service/verification-document.service';
+import { SerialNumberManagementModule } from '../serial-number-management/serial-number-management.module';
 
 @Module({
     imports: [
@@ -27,7 +27,6 @@ import { VerificationDocumentService } from './service/verification-document.ser
             ActivityEntity,
             UsersEntity,
             OrganizationEntity,
-            CreditEventsEntity,
             TaskEntity,
         ]),
         MailModule,
@@ -36,6 +35,7 @@ import { VerificationDocumentService } from './service/verification-document.ser
         GuardianModule,
         UtilModule,
         CarbonCreditTokenModule,
+        SerialNumberManagementModule,
     ],
     providers: [
         InfDocumentService,

@@ -29,6 +29,15 @@ export const API_PATHS = {
   PROJECT_BY_STATUS: 'stats/programme/queryProgrammesByStatus',
   PROJECT_BY_CATEGORY: 'stats/programme/queryProgrammesByCategory',
   PROJECT_ACTION: (action: string) => `programme/${action}`,
+  // CREDITS
+  CREDIT_BALANCE_QUERY: 'creditTokens/queryBalance',
+  CREDIT_TRANSFERS_QUERY: 'creditTokens/queryTransfers',
+  CREDIT_RETIREMENT_QUERY: 'creditTokens/queryRetirements',
+  TRANSFER_ORGANIZATIONS: 'organisation/getOrganizations',
+  CB_RETIRE_COINTRY_QUERY: 'location/countries',
+  CREDIT_RETIREMENT_REQUEST: 'creditTokens/retireRequest',
+  CREDIT_RETIREMENT_PERFROM: 'creditTokens/performRetireAction',
+  CREDIT_TRANSFER_REQUEST: 'creditTokens/transfer',
   //LOCATION
   PROVINCES: 'location/province',
   DISTRICTS: 'location/district',
@@ -107,6 +116,16 @@ export const API_PATHS = {
   // TRANSFER_FORZEN_STATUS: (isTransferFrozen:string) => `Settings/query?id=${isTransferFrozen}`
   TRANSACTION_RECORDS_WITHOUT_TIME_RANGE: 'stats/national-accounting/query',
   //DASHBOARD
+  GET_ALL_DATA_COUNTS: 'analytics/all',
+  GET_PENDING_ACTIONS: 'analytics/getPendingActions',
+  GET_PROJECTS_DATA: 'analytics/getProjectsData',
+  GET_PROJECT_SUMMARY: 'analytics/getProjectSummary',
+  GET_PROJECT_STATUS_SUMMARY: 'analytics/getProjectStatusSummary',
+  GET_PROJECTS_BY_STATUS_DETAIL: 'analytics/getProjectsByStatusDetail',
+  GET_PROJECT_COUNT_BY_SECTOR: 'analytics/getProjectCountBySector',
+  GET_CREDIT_SUMMARY: 'analytics/getCreditSummary',
+  GET_CREDIT_SUMMARY_BY_DATE: 'analytics/creditsSummaryByDate',
+  //UNUSED APIS
   ALL_PROGRAMS_AGG_CHART_STATS: 'stats/programme/agg',
   TOTAL_PROGRAM_COUNT: 'stats/programme/totalSLProjects',
   TOTAL_ISSUED_CREDITS: 'stats/programme/totalIssuedCredits',

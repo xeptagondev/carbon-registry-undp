@@ -12,14 +12,17 @@
   "infRejectedDescription": "The Initial Notification was rejected by {}",
 
   "noObjectionLetterGeneratedTitle": "Letter of No Objection Issued",
+  "noObjectionLetterGeneratedDescription": "The Letter of no objection was issued by Designated National Authority",
 
   "pddSubmttedTitle": "Project Design Document Created",
   "pddSubmittedDescription": "Project Design Document was created by {}",
 
-  "pddRejectedTitle": "Project Design Document Rejected",
+  "pddRejectedICTitle": "Project Design Document Rejected by Independent Certifier",
+  "pddRejectedDNATitle": "Project Design Document Rejected by DNA", 
   "pddRejectedDescription": "Project Design Document was rejected by {}",
 
-  "pddApprovedTitle": "Project Design Document Accepted",
+  "pddApprovedICTitle": "Project Design Document Accepted by Independent Certifier",
+  "pddApprovedDNATitle": "Project Design Document Accepted by DNA",
   "pddApprovedDescription": "Project Designed Document was approved by {}",
 
   "validationReportCreatedTitle": "Validation Report Created",
@@ -34,10 +37,13 @@
   "authorisedTitle": "Project Registered",
   "authorisedDescription": "The project was registered under UNDP",
 
+  "creditsAuthorisedTitle": "Credits Authorised",
+  "creditsAuthorisedDescription": "{} number of credits were Authorised",
+
   "monitoringReportCreatedTitle": "Monitoring Report Created",
   "monitoringReportCreatedDescription": "The Monitoring Report was created by {}",
 
-  "monitoringReportApprovedTitle": "Monitoring Report Approved",
+  "monitoringReportApprovedTitle": "Monitoring Report Accepted",
   "monitoringReportApprovedDescription": "The Monitoring Report was approved by {}",
 
   "monitoringReportRejectedTitle": "Monitoring Report Rejected",
@@ -46,36 +52,27 @@
   "verificationReportCreatedTitle": "Verification Report Created",
   "verificationReportCreatedDescription": "The Verification Report was created by {}",
 
-  "verificationReportApprovedTitle": "Verification Report Approved",
+  "verificationReportApprovedTitle": "Verification Report Approved by DNA",
   "verificationReportApprovedDescription": "The Verification Report was approved by {}",
 
-  "verificationReportRejectedTitle": "Verification Report Rejected",
+  "verificationReportRejectedTitle": "Verification Report Rejected by DNA",
   "verificationReportRejectedDescription": "The Verification Report was rejected by {}",
 
   "creditIssuedTitle": "Credit Issued",
-  "creditIssuedDescription": "{} credit(s) were issued for the project",
+  "creditIssuedDescription": "{} credits have been issued for the project",
 
-  "transferRequestedTitle": "Credit Transfer Requested",
-  "transferRequestedDescription": "{} has requested to transfer {} credit(s) to {} organisation",
+  "creditTransferedTitle": "Credit Transfered",
+  "creditTransferedDescription": "{} credits has been transferred to {} from {}",
 
-  "transferApprovedTitle": "Credit Transfer Approved",
-  "transferApprovedDescription": "The credit transfer was approved by {} of {{countryName}} Climate Fund and the Voluntary Cancellation Certificate was generated",
+  "retireRequestedTitle": "Credit Retirement Request",
+  "retireRequestedDescription": "{} Credits has been requested to retire on {} for the type {}",
 
-  "transferRejectedTitle": "Credit Transfer Rejected",
-  "transferRejectedDescription": "{} of {{countryName}} Climate Fund has rejected the transfer of {} credit(s) to {} organisation",
+  "retirementApprovedTitle": "Credit Retirement Accepted",
+  "retirementApprovedDescription": "{} Credits has been accepted on {} for the type {} was Accepted",
 
-  "transferCancelledTitle": "Credit Transfer Cancelled",
-  "transferCancelledDescription": "{} has cancelled the request to transfer {} credit(s)",
+  "retirementCancelledTitle": "Credit Retirement Cancelled",
+  "retirementCancelledDescription": "{} Credits has been requested to retire on {} for the type {} was Cancelled",
 
-  "retireRequestedTitle": "Credit Retirement Requested",
-  "retireRequestedDescription": "{} has requested to retire {} credit(s)",
-
-  "retireApprovedTitle": "Credit Retirement Approved",
-  "retireApprovedDescription": "The credit retirement was approved by {} of {{countryName}} Climate Fund and the Voluntary Cancellation Certificate was generated",
-
-  "retireRejectedTitle": "Credit Retirement Rejected",
-  "retireRejectedDescription": "{} of {{countryName}} Climate Fund has rejected the retirement of {} credit(s)",
-
-  "retireCancelledTitle": "Credit Retirement Cancelled",
-  "retireCancelledDescription": "{} has cancelled the request to retire {} credit(s)"
+  "retirementRejectedTitle": "Credit Retirement Rejected",
+  "retirementRejectedDescription": "{} Credits has been rejected on {} for the type {} was cancelled"
 }

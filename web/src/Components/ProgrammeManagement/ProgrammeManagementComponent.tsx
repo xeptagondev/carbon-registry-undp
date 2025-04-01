@@ -47,6 +47,7 @@ import { Role } from '../../Definitions/Enums/role.enum';
 import { API_PATHS } from '../../Config/apiConfig';
 import { APPLICATION_STAGE } from '../../Definitions/Constants/ApplicationStage';
 import { downloadCSV } from '../../Utils/downloadCSV';
+import { deepCopy } from '../../Utils/deepCopy';
 
 const { Search } = Input;
 
@@ -335,8 +336,8 @@ export const ProgrammeManagementComponent = (props: any) => {
     if (search && search !== '') {
       filter.push({
         key: 'title',
-        operation: 'like',
-        value: `%${search}%`,
+        operation: 'ilike',
+        value: `${search}%`,
       });
     }
 
@@ -516,7 +517,14 @@ export const ProgrammeManagementComponent = (props: any) => {
           ...res.data,
           ...res.data.company,
         };
-        downloadCSV(res.data, 'projectList.csv', ['additionalDocuments']);
+        downloadCSV(deepCopy(res.data), 'projectList.csv', [
+          'additionalDocuments',
+          'geographicalLocationCoordinates',
+          'documents',
+          'infRefId',
+          'refId',
+          'company',
+        ]);
       }
     } catch (error) {
       console.log('------error--------', error);
@@ -533,6 +541,7 @@ export const ProgrammeManagementComponent = (props: any) => {
         <div className="actions">
           {userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
             userInfoState.userRole !== Role.ViewOnly &&
+            userInfoState.userRole !== Role.Manager &&
             enableAddProgramme && (
               <div className="action-bar">
                 <Button
@@ -588,7 +597,7 @@ export const ProgrammeManagementComponent = (props: any) => {
                   onChange={(e) => {}}
                   onSearch={(value: string) => {
                     console.log('----------value-----------', value);
-                    setSearch(value.toLowerCase());
+                    setSearch(value);
                   }}
                   style={{ width: 265 }}
                 />

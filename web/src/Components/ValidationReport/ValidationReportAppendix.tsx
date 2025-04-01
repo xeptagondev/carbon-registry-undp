@@ -1404,6 +1404,9 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                 )}
                 {state?.mode === FormMode.VERIFY && (
                   <>
+                    <Button size={'large'} onClick={prev} disabled={false} type={'default'}>
+                      {t('validationReport:prev')}
+                    </Button>
                     <Button
                       danger
                       size={'large'}

@@ -17,6 +17,8 @@ export interface VerificationStepProps {
   // existingFormValues?: any;
   disableFields?: boolean;
   formMode?: FormMode;
+  handleLoading?: (val: boolean) => void;
+  documentId?: string;
   // selectedVersion: number | undefined;
   // handleDocumentStatus: (value: string) => void;
 }

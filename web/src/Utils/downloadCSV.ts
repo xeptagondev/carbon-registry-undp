@@ -1,11 +1,23 @@
+import moment from 'moment';
+
 export function downloadCSV(data: any, filename = 'data.csv', filterCols: string[] = []) {
+  console.log('----------data-------------', data);
   // Extract headers from object keys
   const headers = Object.keys(data[0]).filter((key: string) => !filterCols.includes(key));
 
   // Map objects to CSV rows
   const csvContent = [
     headers.join(','), // Header row
-    ...data.map((row: any) => headers.map((field) => JSON.stringify(row[field] ?? '')).join(',')), // Data rows
+    ...Object.values(data).map((row: any) =>
+      headers
+        .map((field) => {
+          if (field === 'startDate') {
+            return moment.unix(Number(row[field])).format('DD/MM/YYYY');
+          }
+          return String(row[field] ?? '');
+        })
+        .join(',')
+    ), // Data rows
   ].join('\n');
 
   // Create a Blob and a temporary anchor element
