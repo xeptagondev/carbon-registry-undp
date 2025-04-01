@@ -601,6 +601,34 @@ export class CarbonCreditService {
             qb.andWhere('receiver.id = :orgId', { orgId: user.organizationId });
         }
 
+        if (query.filterAnd) {
+            for (const filter of query.filterAnd) {
+                if (
+                    filter.key === 'creditBlock"."type' &&
+                    filter.operation === 'in' &&
+                    Array.isArray(filter.value) &&
+                    filter.value.length
+                ) {
+                    for (let i = 0; i < filter.value.length; i++) {
+                        const lowerVal = String(filter.value[i]).toLowerCase();
+                        if (lowerVal === 'issued') {
+                            filter.value[i] = 'Issued';
+                        } else if (lowerVal === 'received') {
+                            filter.value[i] = 'Transfered';
+                        }
+                    }
+                } else if (
+                    filter.key === 'creditBlock"."type' &&
+                    filter.operation === 'in' &&
+                    Array.isArray(filter.value) &&
+                    !filter.value.length
+                ) {
+                    filter.value.push('Issued');
+                    filter.value.push('Transfered');
+                }
+            }
+        }
+
         const whereSQL = this.helperService.generateWhereSQL(query);
         if (whereSQL && whereSQL.trim() !== '') {
             qb.andWhere(whereSQL);
