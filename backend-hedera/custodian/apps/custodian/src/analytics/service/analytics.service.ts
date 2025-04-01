@@ -103,7 +103,7 @@ export class AnalyticsService {
                     ? new Date(b.updatedDate).getTime()
                     : -Infinity;
 
-                return dateB - dateA;
+                return dateA - dateB;
             });
         };
         if (
