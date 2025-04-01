@@ -123,12 +123,12 @@ export const CreditBalanceTableComponent = (props: any) => {
 
     if (search && search !== '') {
       filterOr.push({
-        key: 'receiver.name',
+        key: 'receiver"."name',
         operation: 'like',
         value: `%${search}%`,
       });
       filterOr.push({
-        key: 'project.title',
+        key: 'project"."title',
         operation: 'like',
         value: `%${search}%`,
       });
