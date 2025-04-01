@@ -94,11 +94,17 @@ export class AnalyticsService {
             arr2: ProjectEntity[],
         ) => {
             const combined = [...arr1, ...arr2];
-            return combined.sort(
-                (a, b) =>
-                    new Date(b.updatedDate).getTime() -
-                    new Date(a.updatedDate).getTime(),
-            );
+
+            return combined.sort((a, b) => {
+                const dateA = a.updatedDate
+                    ? new Date(a.updatedDate).getTime()
+                    : -Infinity;
+                const dateB = b.updatedDate
+                    ? new Date(b.updatedDate).getTime()
+                    : -Infinity;
+
+                return dateB - dateA;
+            });
         };
         if (
             jwtData.organizationRole ===

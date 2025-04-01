@@ -287,6 +287,7 @@ export class CarbonCreditService {
                     where: { id: transactionId },
                     relations: {
                         project: { organization: true },
+                        sender: true,
                         creditBlock: true,
                     },
                 });
@@ -306,12 +307,12 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: retireRequest?.creditBlock?.id },
-                    relations: { sender: true, receiver: true },
+                    relations: { sender: true },
                 });
 
             let project = retireRequest?.project;
             const tokenId = project.tokenId;
-            const senderOrg = creditBlock.receiver;
+            const senderOrg = retireRequest.sender;
 
             if (
                 !senderOrg ||
@@ -326,6 +327,8 @@ export class CarbonCreditService {
 
             const senderAccountId = senderOrg.hederaAccountId;
             const senderPrivateKey = senderOrg.hederaAccountKey;
+            const supplyKey = project?.organization?.hederaAccountKey;
+            const teasuryAccount = project?.organization?.hederaAccountId;
 
             const dnaOrg = await this.dataSource
                 .getRepository(OrganizationEntity)
@@ -416,6 +419,8 @@ export class CarbonCreditService {
                                 serial,
                                 senderAccountId,
                                 senderPrivateKey,
+                                supplyKey,
+                                teasuryAccount,
                             );
 
                         retirementStatuses.push(status);
@@ -640,12 +645,10 @@ export class CarbonCreditService {
 
         if (
             !(
-                (user.organizationRole ===
+                user.organizationRole ===
                     OrganizationTypeEnum.PROJECT_DEVELOPER ||
-                    user.organizationRole ===
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY) &&
-                (user.userRole === RoleEnum.Root ||
-                    user.userRole === RoleEnum.Admin)
+                user.organizationRole ===
+                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
             )
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -735,12 +738,10 @@ export class CarbonCreditService {
 
         if (
             !(
-                (user.organizationRole ===
+                user.organizationRole ===
                     OrganizationTypeEnum.PROJECT_DEVELOPER ||
-                    user.organizationRole ===
-                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY) &&
-                (user.userRole === RoleEnum.Root ||
-                    user.userRole === RoleEnum.Admin)
+                user.organizationRole ===
+                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
             )
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -1168,12 +1169,19 @@ export class CarbonCreditService {
                 CreditBlocksEntity,
                 {
                     where: { id: retireRequest.blockId },
-                    relations: { project: { organization: true } },
+                    relations: { project: true },
+                },
+            );
+
+            const sender = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: user.organizationId },
                 },
             );
 
             const project = creditBlock.project;
-            if (!project || !project.organization) {
+            if (!project || !sender) {
                 throw new Error('Project or Organization not found');
             }
 
@@ -1204,7 +1212,7 @@ export class CarbonCreditService {
                 serialNumber: creditBlock.serialNumber,
                 creditAmount: retireRequest.amount,
                 project,
-                sender: project.organization,
+                sender: sender,
                 type: CreditEventTypeEnum.RETIRED,
                 retirementType: retireRequest.retirementType,
                 status: CreditEventStatusEnum.PENDING,
