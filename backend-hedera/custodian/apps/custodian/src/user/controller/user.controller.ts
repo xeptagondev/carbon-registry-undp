@@ -30,8 +30,10 @@ export class UserController {
     async add(@Body() userDto: UsersDTO, @Request() req): Promise<any> {
         if (
             req?.user &&
-            (req?.user?.userRole !== RoleEnum.Admin ||
-                req?.user?.userRole !== RoleEnum.Root)
+            !(
+                req?.user?.userRole === RoleEnum.Admin &&
+                req?.user?.userRole === RoleEnum.Root
+            )
         ) {
             throw new HttpException(
                 userDto.company
@@ -81,8 +83,10 @@ export class UserController {
     updateUser(@Body() userUpdate: UserUpdateDto, @Request() req) {
         if (
             req?.user &&
-            (req?.user?.userRole !== RoleEnum.Admin ||
-                req?.user?.userRole !== RoleEnum.Root)
+            !(
+                req?.user?.userRole === RoleEnum.Admin &&
+                req?.user?.userRole === RoleEnum.Root
+            )
         )
             throw new HttpException(
                 'You do not have permission to delete users.',
@@ -102,8 +106,10 @@ export class UserController {
     deleteUser(@Query('userId') userId: number, @Request() req) {
         if (
             req?.user &&
-            (req?.user?.userRole !== RoleEnum.Admin ||
-                req?.user?.userRole !== RoleEnum.Root)
+            !(
+                req?.user?.userRole === RoleEnum.Admin &&
+                req?.user?.userRole === RoleEnum.Root
+            )
         )
             throw new HttpException(
                 'You do not have permission to delete users.',
