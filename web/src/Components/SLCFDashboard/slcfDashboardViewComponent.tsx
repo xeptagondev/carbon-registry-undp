@@ -505,8 +505,8 @@ export const SLCFDashboardComponent = (props: any) => {
       });
       if (response && response.data) {
         const creditRetirementAndTranserStatuses = [
-          { key: 'CREDIT_TRANSFERED', name: 'Transferred' },
           { key: 'RETIRE_APPROVED', name: 'Retired' },
+          { key: 'CREDIT_TRANSFERED', name: 'Transferred' },
         ];
         const categoriesRetirement = [
           ...new Set(

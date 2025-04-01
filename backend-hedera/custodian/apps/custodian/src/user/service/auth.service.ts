@@ -176,7 +176,7 @@ export class AuthService {
 
         if (!user) {
             throw new HttpException(
-                'Email or Password is Incorrect',
+                'Invalid credentials. Please check your username and password and try again.',
                 HttpStatus.UNAUTHORIZED,
             );
         }
@@ -196,7 +196,7 @@ export class AuthService {
 
         if (!decryptedPassword) {
             throw new HttpException(
-                'Email or Password is Incorrect',
+                'Invalid credentials. Please check your username and password and try again.',
                 HttpStatus.UNAUTHORIZED,
             );
         }
@@ -208,7 +208,7 @@ export class AuthService {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
             throw new HttpException(
-                'Email or Password is Incorrect',
+                'Invalid credentials. Please check your username and password and try again.',
                 HttpStatus.UNAUTHORIZED,
             );
         }
@@ -267,7 +267,7 @@ export class AuthService {
             return response;
         } else {
             throw new HttpException(
-                'Email or Password is Incorrect',
+                'Invalid credentials. Please check your username and password and try again.',
                 HttpStatus.UNAUTHORIZED,
             );
         }
