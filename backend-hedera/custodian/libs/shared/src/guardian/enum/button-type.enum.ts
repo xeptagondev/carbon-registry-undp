@@ -26,6 +26,7 @@ export enum ButtonNameEnum {
     PDD_DNA_APPROVE_REJECT = 'pdd_dna_approve_reject_buttons',
     PDD_IC_APPROVE_REJECT = 'pdd_ic_approve_reject_buttons',
     VALIDATION_REPORT_APPROVE_REJECT = 'validation_report_approve_reject_buttons',
+    ACTIVITY_MONITORING_REPORT_SUBMIT = 'activity_monitoring_report_submit_button',
     ACTIVITY_MONITORING_REPORT_APPROVE_REJECT = 'activity_monitoring_report_approve_reject_button',
     ACTIVITY_VERIFICATION_REPORT_SUBMIT = 'activity_verification_report_submit_button',
     ACTIVITY_VERIFICATION_REPORT_APPROVE_REJECT = 'activity_verification_report_approve_reject_button',
