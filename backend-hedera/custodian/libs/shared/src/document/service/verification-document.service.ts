@@ -195,36 +195,36 @@ export class VerificationDocumentService extends DocumentService {
             const verificationData = dto.data;
 
             if (
-                verificationData?.verificationFinding?.optionalDocuments &&
-                verificationData?.verificationFinding?.optionalDocuments
-                    .length > 0
+                verificationData?.appendix?.appendix1Documents &&
+                verificationData?.appendix?.appendix1Documents.length > 0
             ) {
-                await this.uploadDocuments(
-                    verificationData?.verificationFinding?.optionalDocuments,
-                    AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_FINDING_OPTIONAL_DOCUMENT,
-                    project.refId,
+                const docUrls = await this.uploadDocuments(
+                    verificationData?.appendix?.appendix1Documents,
+                    AdditionalDocType.VERIFICATION_REPORT_APPENDIX_ADDITIONAL_DOC,
+                    dto.projectRefId,
                 );
+                verificationData.appendix.appendix1Documents = docUrls;
             }
-            if (
-                verificationData?.verificationOpinion?.signature1 &&
-                verificationData?.verificationOpinion?.signature1.length > 0
-            ) {
-                await this.uploadDocuments(
-                    verificationData?.verificationOpinion?.signature1,
-                    AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
-                    project.refId,
-                );
-            }
-            if (
-                verificationData?.verificationOpinion?.signature2 &&
-                verificationData?.verificationOpinion?.signature2.length > 0
-            ) {
-                await this.uploadDocuments(
-                    verificationData?.verificationOpinion?.signature2,
-                    AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
-                    project.refId,
-                );
-            }
+            // if (
+            //     verificationData?.verificationOpinion?.signature1 &&
+            //     verificationData?.verificationOpinion?.signature1.length > 0
+            // ) {
+            //     await this.uploadDocuments(
+            //         verificationData?.verificationOpinion?.signature1,
+            //         AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
+            //         project.refId,
+            //     );
+            // }
+            // if (
+            //     verificationData?.verificationOpinion?.signature2 &&
+            //     verificationData?.verificationOpinion?.signature2.length > 0
+            // ) {
+            //     await this.uploadDocuments(
+            //         verificationData?.verificationOpinion?.signature2,
+            //         AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
+            //         project.refId,
+            //     );
+            // }
 
             const submittedUser: UsersEntity =
                 await queryRunner.manager.findOne(UsersEntity, {
