@@ -134,6 +134,10 @@ export class PddDocumentService extends DocumentService {
                 );
             }
             const pddData = dto.data;
+            // console.log(
+            //     '------------pdd-------------',
+            //     pddData?.appendix?.appendix2Documents,
+            // );
             const additionalDocumentFields = [
                 {
                     field: 'appendix2Documents',
@@ -164,7 +168,7 @@ export class PddDocumentService extends DocumentService {
             if (pddData.appendix) {
                 for (const docField of additionalDocumentFields) {
                     if (
-                        pddData.appendix[docField.field] &&
+                        pddData?.appendix[docField.field] &&
                         pddData.appendix[docField.field].length > 0
                     ) {
                         const docUrls = await this.uploadDocuments(
