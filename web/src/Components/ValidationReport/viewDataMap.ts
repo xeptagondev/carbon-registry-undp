@@ -7,18 +7,13 @@ export const basicInformationMapDataToFields = (vals: any) => {
     return;
   }
 
-  // const firstLocation =
-  //   vals?.locationsOfProjectActivity && vals?.locationsOfProjectActivity?.length > 0
-  //     ? vals?.locationsOfProjectActivity.shift()
-  //     : undefined;
-
   const tempVals = {
     ...vals,
     locationOfProjectActivity: vals?.locationOfProjectActivity,
     province: vals?.province,
     siteNo: vals?.siteNo,
     district: vals?.district,
-    dsDivision: vals?.dsDivision,
+    //dsDivision: vals?.dsDivision,
     city: vals?.city,
     community: vals?.community,
     location: vals?.location,
