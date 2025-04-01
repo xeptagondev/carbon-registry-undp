@@ -98,10 +98,10 @@ export class AnalyticsService {
             return combined.sort((a, b) => {
                 const dateA = a.updatedDate
                     ? new Date(a.updatedDate).getTime()
-                    : -Infinity;
+                    : Infinity;
                 const dateB = b.updatedDate
                     ? new Date(b.updatedDate).getTime()
-                    : -Infinity;
+                    : Infinity;
 
                 return dateA - dateB;
             });
