@@ -401,7 +401,17 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         label={
                           <span>
                             {t('validationReport:annualAverageGHGReduction')}
-                            <span style={{ color: '#FF4D4F', marginLeft: 2 }}>*</span>
+                            <span
+                              style={{
+                                color: '#FF4D4F',
+                                marginLeft: 2,
+                                fontSize: '16px',
+                                position: 'relative',
+                                top: '3px',
+                              }}
+                            >
+                              *
+                            </span>
                           </span>
                         }
                         name="annualAverageGHGReduction"
