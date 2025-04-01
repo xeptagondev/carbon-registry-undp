@@ -81,7 +81,7 @@ const farCols = [
 ];
 
 export const MeansOfVerificationStep = (props: VerificationStepProps) => {
-  const { current, form, formMode, prev, handleValuesUpdate, next } = props;
+  const { current, form, formMode, prev, handleValuesUpdate, next, disableFields } = props;
   const { userInfoState } = useUserContext();
   const t = i18n.t;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
@@ -94,9 +94,12 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
     }
     return e?.fileList;
   };
-  useEffect(() => {
-    form.setFieldValue('onSiteInspection', [{ activity: '' }]);
-  }, []);
+  // useEffect(() => {
+  //   if (formMode === FormMode.CREATE) {
+  //     form.setFieldValue('onSiteInspection', [{ activity: '' }]);
+  //     form.setFieldValue('interviewees', [{ lastName: '' }]);
+  //   }
+  // }, []);
 
   const calculateTotalCL = (value: number) => {
     let total = 0;
@@ -133,10 +136,21 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
         .startOf('day')
         .unix(),
       siteInspectionDurationEnd: moment(values?.siteInspectionDurationEnd).startOf('day').unix(),
-      activityPerformedDate: moment(values?.activityPerformedDate).startOf('day').unix(),
+      onSiteInspection: values?.onSiteInspection.map((item: any) => {
+        return {
+          ...item,
+          activityPerformedDate: moment(item?.activityPerformedDate).startOf('day').unix(),
+        };
+      }),
+      interviewees: values?.interviewees.map((item: any) => {
+        return {
+          ...item,
+          date: moment.unix(item?.date).startOf('day').unix(),
+        };
+      }),
     };
     handleValuesUpdate({
-      meansOfVerificationFormDetails: body,
+      meansOfVerification: body,
     });
   };
 
@@ -152,7 +166,6 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -175,7 +188,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={6} disabled={disableFields} />
                     </Form.Item>
 
                     {/* On-site inspection table start */}
@@ -213,7 +226,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 disabledDate={(currentDate: any) =>
                                   currentDate < moment().startOf('day')
                                 }
-                                // disabled={disableFields}
+                                disabled={disableFields}
                               />
                             </Form.Item>
                             <p>to</p>
@@ -243,7 +256,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 disabledDate={(currentDate: any) =>
                                   currentDate < moment().startOf('day')
                                 }
-                                // disabled={disableFields}
+                                disabled={disableFields}
                               />
                             </Form.Item>
                           </Col>
@@ -301,7 +314,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                           },
                                         ]}
                                       >
-                                        <Input />
+                                        <Input disabled={disableFields} />
                                       </Form.Item>
                                     </Col>
                                     <Col xl={5} className="other-cols col">
@@ -328,7 +341,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                           },
                                         ]}
                                       >
-                                        <Input />
+                                        <Input disabled={disableFields} />
                                       </Form.Item>
                                     </Col>
                                     <Col xl={5} className="other-cols col">
@@ -360,7 +373,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                           disabledDate={(currentDate: any) =>
                                             currentDate < moment().startOf('day')
                                           }
-                                          // disabled={disableFields}
+                                          disabled={disableFields}
                                         />
                                       </Form.Item>
                                     </Col>
@@ -390,7 +403,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                           },
                                         ]}
                                       >
-                                        <Input />
+                                        <Input disabled={disableFields} />
                                       </Form.Item>
                                     </Col>
                                     <Col xl={3} className="action-col">
@@ -399,6 +412,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                           onClick={add}
                                           size="small"
                                           className="addMinusBtn"
+                                          disabled={disableFields}
                                           icon={<PlusOutlined />}
                                         ></Button>
                                       </Form.Item>
@@ -414,7 +428,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                             className="addMinusBtn"
                                             // block
                                             icon={<MinusOutlined />}
-                                            // disabled={disableFields}
+                                            disabled={disableFields}
                                           >
                                             {/* Minus Participant */}
                                           </Button>
@@ -431,6 +445,260 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                     </>
                     {/* On-site inspection table end */}
 
+                    {/* Interviews table start */}
+                    <>
+                      <h4 className="form-section-heading">{t('verificationReport:interviews')}</h4>
+                      <div className="interviews-table">
+                        <Row className="header">
+                          <Col xl={1} className="col-1 col">
+                            No
+                          </Col>
+                          <Col xl={9} className="interviewee-col">
+                            <Row>
+                              <Col xl={24} className="other-cols col">
+                                Interviewee
+                              </Col>
+                            </Row>
+                            <Row>
+                              <Col xl={8} className="interviewee-col-subCols-first">
+                                Last name
+                              </Col>
+                              <Col xl={8} className="interviewee-col-subCols">
+                                First name
+                              </Col>
+                              <Col xl={8} className="interviewee-col-subCols-last">
+                                Affliation
+                              </Col>
+                            </Row>
+                          </Col>
+                          <Col xl={3} className="other-cols col">
+                            Date
+                          </Col>
+                          <Col xl={3} className="other-cols col">
+                            Subject
+                          </Col>
+                          <Col xl={4} className="other-cols col">
+                            Team Member
+                          </Col>
+                          <Col xl={3}></Col>
+                        </Row>
+                        <Row className="body mg-bottom-2">
+                          <Form.List name="interviewees">
+                            {(fields, { add, remove }) => (
+                              <>
+                                {fields.map(({ key, name, ...restFields }) => (
+                                  <>
+                                    <Col xl={1} className="col-1 col">
+                                      {name + 1 < 10 && '0'}
+                                      {name + 1}
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'lastName']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'firstName']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'affliationName']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'date']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <DatePicker
+                                          size="small"
+                                          disabledDate={(currentDate: any) =>
+                                            currentDate < moment().startOf('day')
+                                          }
+                                          disabled={disableFields}
+                                        />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'subject ']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={4} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'teamMember']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={4} className="action-col">
+                                      <Form.Item>
+                                        <Button
+                                          onClick={add}
+                                          size="small"
+                                          className="addMinusBtn"
+                                          icon={<PlusOutlined />}
+                                          disabled={disableFields}
+                                        ></Button>
+                                      </Form.Item>
+                                      {name > 0 && (
+                                        <Form.Item>
+                                          <Button
+                                            // type="dashed"
+                                            onClick={() => {
+                                              // removeParticipants(name2);
+                                              remove(name);
+                                            }}
+                                            size="small"
+                                            className="addMinusBtn"
+                                            // block
+                                            icon={<MinusOutlined />}
+                                            disabled={disableFields}
+                                          >
+                                            {/* Minus Participant */}
+                                          </Button>
+                                        </Form.Item>
+                                      )}
+                                    </Col>
+                                  </>
+                                ))}
+                              </>
+                            )}
+                          </Form.List>
+                        </Row>
+                      </div>
+                    </>
+                    {/* Interviews table end */}
+
                     <Form.Item
                       label={t('verificationReport:samplingApproach')}
                       name="samplingApproach"
@@ -441,7 +709,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={6} disabled={disableFields} />
                     </Form.Item>
 
                     {/* Clarification Table start */}
@@ -496,7 +764,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -527,7 +798,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -558,7 +832,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -595,7 +872,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -626,7 +906,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -657,7 +940,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -694,7 +980,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -725,7 +1014,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -756,7 +1048,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -802,7 +1097,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -833,7 +1131,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -864,7 +1165,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -901,7 +1205,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -932,7 +1239,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -963,7 +1273,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1000,7 +1313,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1031,7 +1347,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1062,7 +1381,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1099,7 +1421,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1130,7 +1455,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1161,7 +1489,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1198,7 +1529,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1229,7 +1563,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1260,7 +1597,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1297,7 +1637,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1328,7 +1671,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1359,7 +1705,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1396,7 +1745,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1427,7 +1779,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1458,7 +1813,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1495,7 +1853,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1526,7 +1887,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1557,7 +1921,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1594,7 +1961,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1625,7 +1995,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1656,7 +2029,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1693,7 +2069,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1724,7 +2103,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1755,7 +2137,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1792,7 +2177,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1823,7 +2211,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1854,7 +2245,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1890,7 +2284,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1921,7 +2318,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -1952,7 +2352,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -1989,7 +2392,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2020,7 +2426,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2051,7 +2460,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -2088,7 +2500,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2119,7 +2534,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2150,7 +2568,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -2187,7 +2608,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2218,7 +2642,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2249,7 +2676,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -2286,7 +2716,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2317,7 +2750,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2348,7 +2784,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                               ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -2376,7 +2815,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                               //     },
                               //   ]}
                             >
-                              <Input placeholder={`${t('verificationReport:others')}`} />
+                              <Input
+                                placeholder={`${t('verificationReport:others')}`}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2407,7 +2849,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                               //     },
                               //   ]}
                             >
-                              <Input onChange={(e) => calculateTotalCL(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCL(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2438,7 +2883,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                               //     },
                               //   ]}
                             >
-                              <Input onChange={(e) => calculateTotalCar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalCar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                           <Col xl={3} className="col other-cols">
@@ -2469,7 +2917,10 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                               //     },
                               //   ]}
                             >
-                              <Input onChange={(e) => calculateTotalFar(Number(e.target.value))} />
+                              <Input
+                                onChange={(e) => calculateTotalFar(Number(e.target.value))}
+                                disabled={disableFields}
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
@@ -2582,9 +3033,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                 <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('verificationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('verificationReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('verificationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

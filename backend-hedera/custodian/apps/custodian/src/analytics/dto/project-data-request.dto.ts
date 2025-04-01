@@ -10,6 +10,11 @@ export class ProjectDataRequestDTO {
     @ApiProperty()
     @IsNumber()
     @IsOptional()
+    timeZone?: number;
+
+    @ApiProperty()
+    @IsNumber()
+    @IsOptional()
     startDate?: number;
 
     @ApiProperty()

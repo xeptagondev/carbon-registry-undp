@@ -15,6 +15,8 @@ export interface CustomStepsProps {
   submitForm?: (appendixVals: any) => void;
   disableFields?: boolean;
   formMode?: FormMode;
+  handleLoading?: (val: boolean) => void;
+  documentId?: string; 
   // countries?: string[];
   // projectCategory?: string;
   // existingFormValues?: any;

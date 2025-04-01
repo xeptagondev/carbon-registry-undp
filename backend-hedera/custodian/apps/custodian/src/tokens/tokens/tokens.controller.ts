@@ -1,6 +1,7 @@
 import { AuthGuardService } from '@app/core/auth-guard/service/auth-guard.service';
 import { CreditRetireRequestDto } from '@app/shared/carbon-credit-token/dto/credit.retire.request.dto';
 import { CreditTransferDto } from '@app/shared/carbon-credit-token/dto/credit.transfer.dto';
+import { RetireActionDto } from '@app/shared/carbon-credit-token/dto/retire.action.dto';
 import { CarbonCreditService } from '@app/shared/carbon-credit-token/service/carbon-credit.service';
 import { QueryDto } from '@app/shared/util/dto/query.dto';
 import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common';
@@ -27,6 +28,15 @@ export class TokensController {
     }
 
     @UseGuards(AuthGuardService)
+    @Post('queryRetirements')
+    async queryRetirements(
+        @Body() queryDto: QueryDto,
+        @Request() req,
+    ): Promise<any> {
+        return this.carbonCreditService.queryRetirements(queryDto, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
     @Post('transfer')
     async transfer(
         @Body() transferDto: CreditTransferDto,
@@ -41,5 +51,14 @@ export class TokensController {
         @Request() req,
     ): Promise<any> {
         return this.carbonCreditService.retireRequest(retireRequest, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Post('performRetireAction')
+    async performRetireAction(
+        @Body() retireAction: RetireActionDto,
+        @Request() req,
+    ): Promise<any> {
+        return this.carbonCreditService.retireAction(retireAction, req.user);
     }
 }

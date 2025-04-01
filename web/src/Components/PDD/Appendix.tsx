@@ -193,6 +193,8 @@ const Step08 = (props: CustomStepsProps) => {
     setShowVerifyDialog(false);
   };
 
+  const closeDeclineDialogBox = () => setShowDeclineDialog(false);
+
   const approvePDD = async () => {
     if (documentId) {
       if (handleLoading) {
@@ -347,8 +349,6 @@ const Step08 = (props: CustomStepsProps) => {
     }
   };
 
-  const closeDeclineDialogBox = () => setShowDeclineDialog(false);
-
   return (
     <>
       {current === 7 && (
@@ -446,37 +446,14 @@ const Step08 = (props: CustomStepsProps) => {
             >
               <>
                 {/* appendix 1 start */}
-                <h4 className="appendix-title">
+                <h4 className="appendix-title custom-required">
                   <i>{`${t('PDD:appendix1')}`}</i> : {t('PDD:appendix1Title')}
                 </h4>
                 <div>
                   <Row justify={'space-between'} gutter={[40, 16]}>
                     <Col xl={12} md={24}>
                       <div className="step-form-right-col">
-                        <Form.Item
-                          label={t('PDD:organizationName')}
-                          name="organizationName"
-                          rules={[
-                            {
-                              required: true,
-                              message: ``,
-                            },
-                            {
-                              validator: async (rule, value) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(
-                                    `${t('PDD:organizationName')} ${t('isRequired')}`
-                                  );
-                                }
-                              },
-                            },
-                          ]}
-                        >
+                        <Form.Item label={t('PDD:organizationName')} name="organizationName">
                           <Input size="large" disabled />
                         </Form.Item>
 
@@ -485,26 +462,13 @@ const Step08 = (props: CustomStepsProps) => {
                           name="email"
                           rules={[
                             {
-                              required: true,
-                              message: ``,
-                            },
-                            {
                               validator: async (rule, value) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(`${t('PDD:email')} ${t('isRequired')}`);
-                                } else {
-                                  const val = value.trim();
-                                  const reg =
-                                    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                                  const matches = val.match(reg) ? val.match(reg) : [];
-                                  if (matches.length === 0) {
-                                    throw new Error(`${t('PDD:email')} ${t('isInvalid')}`);
-                                  }
+                                const val = value.trim();
+                                const reg =
+                                  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                                const matches = val.match(reg) ? val.match(reg) : [];
+                                if (matches.length === 0) {
+                                  throw new Error(`${t('PDD:email')} ${t('isInvalid')}`);
                                 }
                               },
                             },
@@ -518,10 +482,6 @@ const Step08 = (props: CustomStepsProps) => {
                           name="website"
                           className="website-input"
                           rules={[
-                            {
-                              required: true,
-                              message: `${t('PDD:website')} ${t('isRequired')}`,
-                            },
                             {
                               validator: async (rule, value) => {
                                 if (
@@ -545,31 +505,14 @@ const Step08 = (props: CustomStepsProps) => {
                           name="telephone"
                           rules={[
                             {
-                              required: true,
-                              message: ``,
-                            },
-                            {
                               validator: async (rule: any, value: any) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                } else {
-                                  const phoneNo = formatPhoneNumber(String(value));
-                                  if (String(value).trim() !== '') {
-                                    if (
-                                      phoneNo === null ||
-                                      phoneNo === '' ||
-                                      phoneNo === undefined
-                                    ) {
-                                      throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                    } else {
-                                      if (!isPossiblePhoneNumber(String(value))) {
-                                        throw new Error(`${t('PDD:telephone')} ${t('isInvalid')}`);
-                                      }
+                                const phoneNo = formatPhoneNumber(String(value));
+                                if (String(value).trim() !== '') {
+                                  if (phoneNo === null || phoneNo === '' || phoneNo === undefined) {
+                                    throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
+                                  } else {
+                                    if (!isPossiblePhoneNumber(String(value))) {
+                                      throw new Error(`${t('PDD:telephone')} ${t('isInvalid')}`);
                                     }
                                   }
                                 }
@@ -611,100 +554,22 @@ const Step08 = (props: CustomStepsProps) => {
                             },
                           ]}
                         >
-                          <Input size="large" disabled={disableFields} />
+                          <Input size="large" disabled />
                         </Form.Item>
                       </div>
                     </Col>
 
                     <Col xl={12} md={24}>
-                      <Form.Item
-                        label={t('PDD:country')}
-                        name="country"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('PDD:country')} ${t('isRequired')}`);
-                              }
-                            },
-                          },
-                        ]}
-                      >
+                      <Form.Item label={t('PDD:country')} name="country">
                         <Input size="large" disabled />
                       </Form.Item>
 
-                      <Form.Item
-                        label={t('PDD:address')}
-                        name="address"
-                        rules={[
-                          {
-                            required: true,
-                            message: ``,
-                          },
-                          {
-                            validator: async (rule, value) => {
-                              if (
-                                String(value).trim() === '' ||
-                                String(value).trim() === undefined ||
-                                value === null ||
-                                value === undefined
-                              ) {
-                                throw new Error(`${t('PDD:address')} ${t('isRequired')}`);
-                              }
-                            },
-                          },
-                        ]}
-                      >
+                      <Form.Item label={t('PDD:address')} name="address">
                         <TextArea rows={5} disabled />
                       </Form.Item>
 
                       <div className="appendix-fax-top-margin">
-                        <Form.Item
-                          label={t('PDD:fax')}
-                          name="fax"
-                          rules={[
-                            {
-                              required: true,
-                              message: ``,
-                            },
-                            {
-                              validator: async (rule: any, value: any) => {
-                                if (
-                                  String(value).trim() === '' ||
-                                  String(value).trim() === undefined ||
-                                  value === null ||
-                                  value === undefined
-                                ) {
-                                  throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                } else {
-                                  const phoneNo = formatPhoneNumber(String(value));
-                                  if (String(value).trim() !== '') {
-                                    if (
-                                      phoneNo === null ||
-                                      phoneNo === '' ||
-                                      phoneNo === undefined
-                                    ) {
-                                      throw new Error(`${t('PDD:telephone')} ${t('isRequired')}`);
-                                    } else {
-                                      if (!isPossiblePhoneNumber(String(value))) {
-                                        throw new Error(`${t('PDD:telephone')} ${t('isInvalid')}`);
-                                      }
-                                    }
-                                  }
-                                }
-                              },
-                            },
-                          ]}
-                        >
+                        <Form.Item label={t('PDD:fax')} name="fax">
                           <PhoneInput
                             // placeholder={t('PDD:telephone')}
                             international
@@ -724,7 +589,7 @@ const Step08 = (props: CustomStepsProps) => {
               {/* appendix 1 end */}
 
               {/* appendix 2 start */}
-              <h4 className="appendix-title">
+              <h4 className="appendix-title custom-required">
                 <i>{`${t('PDD:appendix2')}`}</i> : {t('PDD:appendix2Title')}
               </h4>
               <Form.Item
@@ -798,7 +663,7 @@ const Step08 = (props: CustomStepsProps) => {
               {/* appendix 2 end */}
 
               {/* appendix 3 start */}
-              <h4 className="appendix-title">
+              <h4 className="appendix-title custom-required">
                 <i>{`${t('PDD:appendix3')}`}</i> : {t('PDD:appendix3Title')}
               </h4>
               <Form.Item
@@ -872,7 +737,7 @@ const Step08 = (props: CustomStepsProps) => {
               {/* appendix 3 end */}
 
               {/* appendix 4 start */}
-              <h4 className="appendix-title">
+              <h4 className="appendix-title custom-required">
                 <i>{`${t('PDD:appendix4')}`}</i> : {t('PDD:appendix4Title')}
               </h4>
               <Form.Item
@@ -947,7 +812,7 @@ const Step08 = (props: CustomStepsProps) => {
               {/* appendix 4 end */}
 
               {/* appendix 5 start */}
-              <h4 className="appendix-title">
+              <h4 className="appendix-title custom-required">
                 <i>{`${t('PDD:appendix5')}`}</i> : {t('PDD:appendix5Title')}
               </h4>
 
@@ -1023,7 +888,7 @@ const Step08 = (props: CustomStepsProps) => {
               {/* appendix 5 end */}
 
               {/* appendix 6 start */}
-              <h4 className="appendix-title">
+              <h4 className="appendix-title custom-required">
                 <i>{`${t('PDD:appendix6')}`}</i> : {t('PDD:appendix6Title')}
               </h4>
 
@@ -1099,7 +964,7 @@ const Step08 = (props: CustomStepsProps) => {
               {/* appendix 6 end */}
 
               {/* appendix 7 start */}
-              <h4 className="appendix-title">
+              <h4 className="appendix-title custom-required">
                 <i>{`${t('PDD:appendix7')}`}</i> : {t('PDD:appendix7Title')}
               </h4>
 
@@ -1178,50 +1043,56 @@ const Step08 = (props: CustomStepsProps) => {
                 {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
                   <>
                     <Button danger size={'large'} onClick={prev}>
-                      {t('pdd:prev')}
+                      {t('PDD:prev')}
                     </Button>
                     <Button type="primary" htmlType="submit">
-                      {t('pdd:submit')}
+                      {t('PDD:submit')}
                     </Button>
                   </>
                 )}
                 {state?.mode === FormMode.VIEW && (
                   <>
                     <Button danger size={'large'} onClick={prev}>
-                      {t('pdd:prev')}
+                      {t('PDD:prev')}
                     </Button>
                     <Button type="primary" onClick={next}>
-                      {t('pdd:goBackProjectDetails')}
+                      {t('PDD:goBackProjectDetails')}
                     </Button>
                   </>
                 )}
                 {state?.mode === FormMode.VERIFY &&
                   state?.userCompanyRole === CompanyRole.INDEPENDENT_CERTIFIER && (
                     <>
+                      <Button size={'large'} onClick={prev} type={'default'}>
+                        {t('PDD:prev')}
+                      </Button>
                       <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
-                        {t('pdd:decline')}
+                        {t('PDD:decline')}
                       </Button>
                       <Button
                         size={'large'}
                         onClick={() => setShowVerifyDialog(true)}
                         type="primary"
                       >
-                        {t('pdd:certify')}
+                        {t('PDD:certify')}
                       </Button>
                     </>
                   )}
                 {state?.mode === FormMode.VERIFY &&
                   state?.userCompanyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY && (
                     <>
+                      <Button size={'large'} onClick={prev} type={'default'}>
+                        {t('PDD:prev')}
+                      </Button>
                       <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
-                        {t('pdd:reject')}
+                        {t('PDD:reject')}
                       </Button>
                       <Button
                         size={'large'}
                         onClick={() => setShowVerifyDialog(true)}
                         type="primary"
                       >
-                        {t('pdd:approve')}
+                        {t('PDD:approve')}
                       </Button>
                     </>
                   )}

@@ -18,6 +18,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
         io_corrections: values?.io_corrections,
         io_changesToTheStartDate: values?.io_changesToTheStartDate,
         io_inclusionOfMP: values?.io_inclusionOfMP,
+        io_permanantMonitoringPlan: values?.io_permanantMonitoringPlan,
         io_changesToProjectDesign: values?.io_changesToProjectDesign,
         io_changesSpecificToAfforestrationOrReforestration:
           values?.io_changesSpecificToAfforestrationOrReforestration,
@@ -38,7 +39,6 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -59,7 +59,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -74,7 +74,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -87,7 +87,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -100,7 +100,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -115,7 +115,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -128,7 +128,22 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={`${t('monitoringReport:io_permanantMonitoringPlan')}`}
+                      name="io_permanantMonitoringPlan"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t('monitoringReport:io_permanantMonitoringPlan')} ${t(
+                            'isRequired'
+                          )}`,
+                        },
+                      ]}
+                    >
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -143,7 +158,7 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
 
                     <Form.Item
@@ -160,18 +175,29 @@ export const ImplementationOfProjectActivityStep = (props: CustomStepsProps) => 
                         },
                       ]}
                     >
-                      <TextArea rows={5} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={5} disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
               </Row>
               <Row justify={'end'} className="step-actions-end">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button onClick={prev} disabled={false} danger>
                   {t('monitoringReport:back')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('monitoringReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('monitoringReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('monitoringReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

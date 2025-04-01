@@ -7,7 +7,7 @@ export class AuditEntity {
     id: number;
 
     @Column({ nullable: true })
-    refId: string;
+    projectId: string;
 
     @Column({
         type: 'enum',

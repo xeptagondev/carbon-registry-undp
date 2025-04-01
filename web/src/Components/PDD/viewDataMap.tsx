@@ -71,6 +71,7 @@ export const descriptionOfProjectActivityDataMapToFields = (vals: any) => {
             province: location?.province,
             district: location?.district,
             dsDivision: location?.dsDivision,
+            siteNo: location?.siteNo,
             city: location?.city,
             community: location?.community,
             location: location?.geographicalLocationCoordinates,
@@ -374,6 +375,7 @@ export const appendixDataMapToFields = (vals: any) => {
     appendix4Documents: mapBase64ToFields(vals?.appendix4Documents),
     appendix5Documents: mapBase64ToFields(vals?.appendix5Documents),
     appendix6Documents: mapBase64ToFields(vals?.appendix6Documents),
+    appendix7Documents: mapBase64ToFields(vals?.appendix7Documents),
   };
 
   return tempValues;

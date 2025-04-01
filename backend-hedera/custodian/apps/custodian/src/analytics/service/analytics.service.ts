@@ -13,12 +13,17 @@ import {
     Repository,
 } from 'typeorm';
 import { ProjectDataRequestDTO } from '../dto/project-data-request.dto';
+import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
+import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
+import { ProjectSectorEnum } from '@app/shared/project/enum/project.sector.enum';
 
 @Injectable()
 export class AnalyticsService {
     constructor(
         @InjectRepository(ProjectEntity)
         private readonly projectRepository: Repository<ProjectEntity>,
+        @InjectRepository(AuditEntity)
+        private readonly auditRepository: Repository<AuditEntity>,
     ) {}
 
     async getProjectsData(filters: ProjectDataRequestDTO, jwtData: JWTPayload) {
@@ -83,44 +88,57 @@ export class AnalyticsService {
         };
     }
 
-    // TODO: Filterations based on activity states are to be clarified
     async getPendingActions(jwtData: JWTPayload) {
-        // if DNA
+        const combineAndSort = (
+            arr1: ProjectEntity[],
+            arr2: ProjectEntity[],
+        ) => {
+            const combined = [...arr1, ...arr2];
+
+            return combined.sort((a, b) => {
+                const dateA = a.updatedDate
+                    ? new Date(a.updatedDate).getTime()
+                    : -Infinity;
+                const dateB = b.updatedDate
+                    ? new Date(b.updatedDate).getTime()
+                    : -Infinity;
+
+                return dateB - dateA;
+            });
+        };
         if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
         ) {
-            // get projects with pending actions
             const statesList = [
                 ProjectProposalStage.PENDING,
-                ProjectProposalStage.APPROVED,
                 ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER,
                 ProjectProposalStage.VALIDATION_REPORT_SUBMITTED,
             ];
-
-            const results = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: In(statesList),
-                },
-            });
-
-            // get projects with activity states
             const activityStatesList = [
                 ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
-                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
             ];
 
-            const activityResults = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: ProjectProposalStage.AUTHORISED,
-                    activities: {
-                        state: In(activityStatesList),
+            const [results, activityResults] = await Promise.all([
+                this.projectRepository.find({
+                    where: { projectProposalStage: In(statesList) },
+                    order: { updatedDate: 'DESC' },
+                }),
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: ProjectProposalStage.AUTHORISED,
+                        activities: { state: In(activityStatesList) },
                     },
-                },
-            });
+                    order: { updatedDate: 'DESC' },
+                }),
+            ]);
 
-            return results.concat(activityResults);
-        } else if (
+            // Combine & sort by updatedAt (descending)
+            return combineAndSort(results, activityResults);
+        }
+
+        // 2) PROJECT_DEVELOPER
+        else if (
             jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER
         ) {
             const statesList = [
@@ -129,36 +147,34 @@ export class AnalyticsService {
                 ProjectProposalStage.PDD_REJECTED_BY_DNA,
                 ProjectProposalStage.AUTHORISED,
             ];
-
-            const results = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: In(statesList),
-                    organization: {
-                        id: jwtData.organizationId,
-                    },
-                    activities: null,
-                },
-            });
-
-            // get projects with activity states
             const activityStatesList = [
                 ActivityStateEnum.MONITORING_REPORT_REJECTED,
             ];
 
-            const activityResults = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: ProjectProposalStage.AUTHORISED,
-                    organization: {
-                        id: jwtData.organizationId,
+            const [results, activityResults] = await Promise.all([
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: In(statesList),
+                        organization: { id: jwtData.organizationId },
+                        activities: null,
                     },
-                    activities: {
-                        state: In(activityStatesList),
+                    order: { updatedDate: 'DESC' },
+                }),
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: ProjectProposalStage.AUTHORISED,
+                        organization: { id: jwtData.organizationId },
+                        activities: { state: In(activityStatesList) },
                     },
-                },
-            });
+                    order: { updatedDate: 'DESC' },
+                }),
+            ]);
 
-            return results.concat(activityResults);
-        } else if (
+            return combineAndSort(results, activityResults);
+        }
+
+        // 3) INDEPENDENT_CERTIFIER
+        else if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
@@ -167,36 +183,685 @@ export class AnalyticsService {
                 ProjectProposalStage.PDD_APPROVED_BY_DNA,
                 ProjectProposalStage.VALIDATION_REPORT_REJECTED,
             ];
-
-            const results = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: In(statesList),
-                    assignees: {
-                        id: jwtData.organizationId,
-                    },
-                },
-            });
-
-            // get projects with activity states
             const activityStatesList = [
                 ActivityStateEnum.MONITORING_REPORT_UPLOADED,
                 ActivityStateEnum.MONITORING_REPORT_VERIFIED,
                 ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
             ];
 
-            const activityResults = await this.projectRepository.find({
-                where: {
-                    projectProposalStage: ProjectProposalStage.AUTHORISED,
-                    activities: {
-                        state: In(activityStatesList),
+            const [results, activityResults] = await Promise.all([
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: In(statesList),
+                        assignees: { id: jwtData.organizationId },
                     },
-                    assignees: {
-                        id: jwtData.organizationId,
+                    order: { updatedDate: 'DESC' },
+                }),
+                this.projectRepository.find({
+                    where: {
+                        projectProposalStage: ProjectProposalStage.AUTHORISED,
+                        activities: { state: In(activityStatesList) },
+                        assignees: { id: jwtData.organizationId },
                     },
-                },
+                    order: { updatedDate: 'DESC' },
+                }),
+            ]);
+
+            return combineAndSort(results, activityResults);
+        }
+    }
+
+    async getProjectSummary(jwtData: JWTPayload) {
+        const [result] = await this.auditRepository.query(`
+            SELECT
+              (SELECT COUNT(DISTINCT "projectId") FROM audit_entity WHERE "logType" = 'PENDING')
+               AS total_pending_projects,
+              (SELECT MAX("createdTime") FROM audit_entity WHERE "logType" = 'PENDING')
+               AS last_pending_project_time,
+              (SELECT COALESCE(SUM((data->>'amount')::INTEGER), 0) FROM audit_entity WHERE "logType" = 'CREDITS_ISSUED')
+               AS total_credits_issued,
+              (SELECT MAX("createdTime") FROM audit_entity WHERE "logType" = 'CREDITS_ISSUED')
+               AS last_credit_issued_time,
+              (SELECT COALESCE(SUM((data->>'amount')::INTEGER), 0) FROM audit_entity WHERE "logType" = 'RETIRE_APPROVED')
+               AS total_credits_retired,
+              (SELECT MAX("createdTime") FROM audit_entity WHERE "logType" = 'RETIRE_APPROVED') 
+              AS last_retire_approved_time
+          `);
+
+        return result;
+    }
+
+    async getProjectStatusSummary(
+        filters: ProjectDataRequestDTO,
+        jwtData: JWTPayload,
+    ): Promise<any> {
+        const pendingStatuses = [
+            ProjectAuditLogType.PENDING,
+            ProjectAuditLogType.APPROVED,
+            ProjectAuditLogType.PDD_SUBMITTED,
+            ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_APPROVED_BY_DNA,
+        ];
+
+        const rejectedStatuses = [
+            ProjectAuditLogType.REJECTED,
+            ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_REJECTED_BY_DNA,
+            ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
+        ];
+
+        const subQuery = this.auditRepository
+            .createQueryBuilder('sub_audit')
+            .select('sub_audit.projectId', 'projectId')
+            .addSelect('MAX(sub_audit.createdTime)', 'latestTime')
+            .groupBy('sub_audit.projectId');
+
+        const latestStatusQb = this.auditRepository
+            .createQueryBuilder('audit')
+            .innerJoin(
+                `(${subQuery.getQuery()})`,
+                'latest',
+                'latest."projectId" = audit.projectId AND latest."latestTime" = audit.createdTime',
+            )
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            );
+
+        if (filters?.startDate) {
+            latestStatusQb.andWhere('audit.createdTime >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+
+        if (filters?.endDate) {
+            latestStatusQb.andWhere('audit.createdTime <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
+
+        if (filters?.sector) {
+            latestStatusQb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                latestStatusQb.andWhere('project.organization.id = :orgId', {
+                    orgId: jwtData.organizationId,
+                });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                latestStatusQb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId: jwtData.organizationId },
+                );
+            }
+        }
+
+        const latestAudits = await latestStatusQb.getRawMany();
+
+        let pendingCount = 0;
+        let rejectedCount = 0;
+        let lastStatusUpdateTime: number = 0;
+        const seenProjects = new Set<string>();
+        const projectIdSetForFilter = new Set<string>();
+
+        for (const row of latestAudits) {
+            const status = row.audit_logType;
+            const projectId = row.audit_projectId;
+            const createdTime = Number(row.audit_createdTime);
+
+            seenProjects.add(projectId);
+            projectIdSetForFilter.add(projectId);
+            lastStatusUpdateTime = Math.max(lastStatusUpdateTime, createdTime);
+
+            if (pendingStatuses.includes(status)) {
+                pendingCount++;
+            } else if (rejectedStatuses.includes(status)) {
+                rejectedCount++;
+            }
+        }
+
+        const authorisedQb = this.auditRepository
+            .createQueryBuilder('audit')
+            .select('DISTINCT audit.projectId', 'projectId')
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            )
+            .where('audit.logType = :authType', {
+                authType: ProjectAuditLogType.AUTHORISED,
             });
 
-            return results.concat(activityResults);
+        // Apply same filters again
+        if (filters?.startDate) {
+            authorisedQb.andWhere('audit.createdTime >= :startDate', {
+                startDate: filters.startDate,
+            });
         }
+
+        if (filters?.endDate) {
+            authorisedQb.andWhere('audit.createdTime <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
+
+        if (filters?.sector) {
+            authorisedQb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                authorisedQb.andWhere('project.organization.id = :orgId', {
+                    orgId: jwtData.organizationId,
+                });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                authorisedQb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId: jwtData.organizationId },
+                );
+            }
+        }
+
+        if (projectIdSetForFilter.size > 0) {
+            authorisedQb.andWhere('audit.projectId IN (:...ids)', {
+                ids: Array.from(projectIdSetForFilter),
+            });
+        }
+
+        const authorisedProjects = await authorisedQb.getRawMany();
+        const authorisedCount = authorisedProjects.length;
+
+        return {
+            totalProjects: seenProjects.size,
+            authorisedCount,
+            pendingCount,
+            rejectedCount,
+            lastStatusUpdateTime: lastStatusUpdateTime || null,
+        };
+    }
+
+    async getProjectsByStatusDetail(
+        filters: ProjectDataRequestDTO,
+        jwtData: JWTPayload,
+    ) {
+        const nonAuthorisedLogTypes = [
+            ProjectAuditLogType.PENDING,
+            ProjectAuditLogType.REJECTED,
+            ProjectAuditLogType.APPROVED,
+            ProjectAuditLogType.NO_OBJECTION_LETTER_GENERATED,
+            ProjectAuditLogType.PDD_SUBMITTED,
+            ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_REJECTED_BY_DNA,
+            ProjectAuditLogType.PDD_APPROVED_BY_DNA,
+            ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
+            ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
+        ];
+
+        const allLogTypes = [
+            ...nonAuthorisedLogTypes,
+            ProjectAuditLogType.AUTHORISED,
+        ];
+
+        const subQuery = this.auditRepository
+            .createQueryBuilder('sub_audit')
+            .select('sub_audit.projectId', 'projectId')
+            .addSelect('MAX(sub_audit.createdTime)', 'latestTime')
+            .groupBy('sub_audit.projectId');
+
+        const latestStatusQb = this.auditRepository
+            .createQueryBuilder('audit')
+            .innerJoin(
+                `(${subQuery.getQuery()})`,
+                'latest',
+                'latest."projectId" = audit.projectId AND latest."latestTime" = audit.createdTime',
+            )
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            )
+            .select('audit.logType', 'logType')
+            .addSelect('COUNT(DISTINCT project.id)', 'count')
+            .where('audit.logType IN (:...logTypes)', {
+                logTypes: nonAuthorisedLogTypes,
+            });
+
+        if (filters?.startDate) {
+            latestStatusQb.andWhere('audit.createdTime >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+        if (filters?.endDate) {
+            latestStatusQb.andWhere('audit.createdTime <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
+        if (filters?.sector) {
+            latestStatusQb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                latestStatusQb.andWhere('project.organization.id = :orgId', {
+                    orgId: jwtData.organizationId,
+                });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                latestStatusQb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId: jwtData.organizationId },
+                );
+            }
+        }
+
+        latestStatusQb.groupBy('audit.logType');
+        const latestResult = await latestStatusQb.getRawMany();
+
+        const authorisedQb = this.auditRepository
+            .createQueryBuilder('audit')
+            .select('DISTINCT audit.projectId', 'projectId')
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            )
+            .where('audit.logType = :authType', {
+                authType: ProjectAuditLogType.AUTHORISED,
+            });
+
+        if (filters?.startDate) {
+            authorisedQb.andWhere('audit.createdTime >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+        if (filters?.endDate) {
+            authorisedQb.andWhere('audit.createdTime <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
+        if (filters?.sector) {
+            authorisedQb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                authorisedQb.andWhere('project.organization.id = :orgId', {
+                    orgId: jwtData.organizationId,
+                });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                authorisedQb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId: jwtData.organizationId },
+                );
+            }
+        }
+
+        const authorisedProjects = await authorisedQb.getRawMany();
+        const authorisedCount = authorisedProjects.length;
+
+        const formatted: Record<string, number> = {};
+        allLogTypes.forEach((logType) => {
+            formatted[logType] = 0;
+        });
+
+        for (const row of latestResult) {
+            formatted[row.logType] = parseInt(row.count, 10);
+        }
+
+        formatted[ProjectAuditLogType.AUTHORISED] = authorisedCount;
+
+        return formatted;
+    }
+
+    async getProjectCountBySector(
+        filters: ProjectDataRequestDTO,
+        jwtData: JWTPayload,
+    ): Promise<Record<string, number>> {
+        const qb = this.auditRepository
+            .createQueryBuilder('audit')
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            )
+            .select('project.sectoralScope', 'sector')
+            .addSelect('COUNT(DISTINCT project.id)', 'count')
+            .groupBy('project.sectoralScope');
+
+        if (filters?.startDate) {
+            qb.andWhere('audit.createdTime >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+
+        if (filters?.endDate) {
+            qb.andWhere('audit.createdTime <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
+
+        if (filters?.sector) {
+            qb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                qb.andWhere('project.organization.id = :orgId', {
+                    orgId: jwtData.organizationId,
+                });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                qb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId: jwtData.organizationId },
+                );
+            }
+        }
+
+        const result = await qb.getRawMany();
+
+        const response: Record<string, number> = {};
+        for (const sectorKey in ProjectSectorEnum) {
+            const sectorName = ProjectSectorEnum[sectorKey];
+            response[sectorName] = 0;
+        }
+
+        for (const row of result) {
+            const sector = row.sector ?? 'Unknown';
+            response[ProjectSectorEnum[sector]] = parseInt(row.count, 10);
+        }
+
+        return response;
+    }
+
+    async getCreditSummary(
+        filters: ProjectDataRequestDTO,
+        jwtData: JWTPayload,
+    ): Promise<any> {
+        const orgId = jwtData.organizationId;
+
+        const baseQb = this.auditRepository
+            .createQueryBuilder('audit')
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            );
+
+        const buildAmountAndTime = (
+            logType: string,
+            direction: 'toCompanyId' | 'fromCompanyId',
+        ) => {
+            const amountSub = this.auditRepository
+                .createQueryBuilder('inner_audit')
+                .select(
+                    `COALESCE(SUM(CAST(inner_audit."data"->>'amount' AS INTEGER)), 0)`,
+                )
+                .where(`inner_audit."logType" = '${logType}'`);
+
+            const timeSub = this.auditRepository
+                .createQueryBuilder('inner_audit')
+                .select(`MAX(inner_audit."createdTime")`)
+                .where(`inner_audit."logType" = '${logType}'`);
+
+            if (filters?.isMine) {
+                amountSub.andWhere(
+                    `(inner_audit."data"->>'${direction}')::int = ${orgId}`,
+                );
+                timeSub.andWhere(
+                    `(inner_audit."data"->>'${direction}')::int = ${orgId}`,
+                );
+            }
+
+            return { amountSub, timeSub };
+        };
+
+        const {
+            amountSub: authorisedAmountSub,
+            timeSub: lastAuthorisedTimeSub,
+        } = buildAmountAndTime(
+            ProjectAuditLogType.CREDITS_AUTHORISED,
+            'toCompanyId',
+        );
+
+        const { amountSub: issuedAmountSub, timeSub: lastIssuedTimeSub } =
+            buildAmountAndTime(
+                ProjectAuditLogType.CREDITS_ISSUED,
+                'toCompanyId',
+            );
+
+        const {
+            amountSub: transferredAmountSub,
+            timeSub: lastTransferredTimeSub,
+        } = buildAmountAndTime(
+            ProjectAuditLogType.CREDIT_TRANSFERED,
+            'fromCompanyId',
+        );
+
+        const { amountSub: retiredAmountSub, timeSub: lastRetiredTimeSub } =
+            buildAmountAndTime(
+                ProjectAuditLogType.RETIRE_APPROVED,
+                'fromCompanyId',
+            );
+
+        baseQb
+            .select(`(${authorisedAmountSub.getQuery()})`, 'authorisedAmount')
+            .addSelect(
+                `(${lastAuthorisedTimeSub.getQuery()})`,
+                'lastAuthorisedTime',
+            )
+            .addSelect(`(${issuedAmountSub.getQuery()})`, 'issuedAmount')
+            .addSelect(`(${lastIssuedTimeSub.getQuery()})`, 'lastIssuedTime')
+            .addSelect(
+                `(${transferredAmountSub.getQuery()})`,
+                'transferredAmount',
+            )
+            .addSelect(
+                `(${lastTransferredTimeSub.getQuery()})`,
+                'lastTransferredTime',
+            )
+            .addSelect(`(${retiredAmountSub.getQuery()})`, 'retiredAmount')
+            .addSelect(`(${lastRetiredTimeSub.getQuery()})`, 'lastRetiredTime');
+
+        if (filters?.startDate) {
+            baseQb.andWhere(`audit."createdTime" >= :startDate`, {
+                startDate: filters.startDate,
+            });
+        }
+
+        if (filters?.endDate) {
+            baseQb.andWhere(`audit."createdTime" <= :endDate`, {
+                endDate: filters.endDate,
+            });
+        }
+
+        if (filters?.sector) {
+            baseQb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                baseQb.andWhere('project.organization.id = :orgId', { orgId });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                baseQb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId },
+                );
+            }
+        }
+
+        const [result] = await baseQb.getRawMany();
+
+        return {
+            authorisedAmount: parseInt(result.authorisedAmount, 10),
+            lastAuthorisedTime: result.lastAuthorisedTime
+                ? Number(result.lastAuthorisedTime)
+                : null,
+
+            issuedAmount: parseInt(result.issuedAmount, 10),
+            lastIssuedTime: result.lastIssuedTime
+                ? Number(result.lastIssuedTime)
+                : null,
+
+            transferredAmount: parseInt(result.transferredAmount, 10),
+            lastTransferredTime: result.lastTransferredTime
+                ? Number(result.lastTransferredTime)
+                : null,
+
+            retiredAmount: parseInt(result.retiredAmount, 10),
+            lastRetiredTime: result.lastRetiredTime
+                ? Number(result.lastRetiredTime)
+                : null,
+        };
+    }
+
+    async creditsSummaryByDate(
+        filters: ProjectDataRequestDTO,
+        jwtData: JWTPayload,
+    ) {
+        const orgId = jwtData.organizationId;
+
+        const offsetInMinutes = filters.timeZone ?? 0;
+
+        const qb = this.auditRepository
+            .createQueryBuilder('audit')
+            .select(
+                `to_char(
+               to_timestamp(audit."createdTime" / 1000) 
+               - (:offsetInMinutes * interval '1 minute'),
+               'YYYY-MM-DD'
+             )`,
+                'date',
+            )
+            .addSelect('audit."logType"', 'logType')
+            .addSelect(
+                `SUM(CAST(audit."data"->>'amount' AS INTEGER))`,
+                'totalAmount',
+            )
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            )
+            .where('audit."logType" IN (:...types)', {
+                types: [
+                    ProjectAuditLogType.CREDITS_AUTHORISED,
+                    ProjectAuditLogType.CREDITS_ISSUED,
+                    ProjectAuditLogType.CREDIT_TRANSFERED,
+                    ProjectAuditLogType.RETIRE_APPROVED,
+                ],
+            })
+            .setParameter('offsetInMinutes', offsetInMinutes);
+
+        if (filters?.startDate) {
+            qb.andWhere('audit."createdTime" >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+
+        if (filters?.endDate) {
+            qb.andWhere('audit."createdTime" <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
+
+        if (filters?.sector) {
+            qb.andWhere('project.sectoralScope = :sector', {
+                sector: filters.sector,
+            });
+        }
+
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                qb.andWhere('project.organization.id = :orgId', { orgId });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                qb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId },
+                );
+            }
+        }
+
+        qb.groupBy('date').addGroupBy('audit."logType"').orderBy('date', 'ASC');
+
+        const results = await qb.getRawMany();
+
+        const pivoted: Record<string, any> = {};
+        for (const row of results) {
+            const { date, logType, totalAmount } = row;
+            if (!pivoted[date]) {
+                pivoted[date] = { date };
+            }
+            pivoted[date][logType] = parseInt(totalAmount, 10);
+        }
+
+        return Object.values(pivoted);
     }
 }

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-use-before-define */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Row,
   Col,
@@ -95,6 +95,7 @@ import { addNdcDesc, TimelineBody } from '../TimelineBody/timelineBody';
 import { RetireType } from '../../Definitions/Enums/retireType.enum';
 import { CreditTransferStage } from '../../Definitions/Enums/creditTransferStage.enum';
 import {
+  ActivityStateEnum,
   CreditType,
   ProgrammeStageUnified,
   ProgrammeStatus,
@@ -136,6 +137,8 @@ import { ROUTES } from '../../Config/uiRoutingConfig';
 import ProjectDocuments from './projectForms/ProjectDocuments';
 import { DocumentStateEnum } from '../../Definitions/Definitions/documentState.enum';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import VerificationPhaseForms from './projectForms/VerificationPhaseForms';
+import VerificationPhaseStatus from './verificationPhaseStatus/verificationPhaseStatus';
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -196,6 +199,8 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   const [popupInfo, setPopupInfo] = useState<PopupInfo>();
   const [slcfActionModalInfo, setSlcfActionModalInfo] = useState<PopupInfo>();
   const [carbonNeutralCertificateData, setCarbonNeutralCertificateData] = useState<any>();
+
+  const projectTimelineRef = useRef<HTMLDivElement>(null);
 
   const accessToken = process.env.REACT_APP_MAPBOXGL_ACCESS_TOKEN
     ? process.env.REACT_APP_MAPBOXGL_ACCESS_TOKEN
@@ -267,7 +272,6 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   };
 
   const getPieChartData = (d: ProgrammeSlU) => {
-    const frozen = d.creditFrozen ? Number(d.creditFrozen) : 0;
     const authorised =
       d.projectProposalStage.toString() === ProjectProposalStage.AUTHORISED && d.creditEst
         ? Number(
@@ -275,8 +279,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
               numIsExist(d.creditEst) -
               numIsExist(d?.creditBalance) -
               numIsExist(d.creditTransferred) -
-              numIsExist(d.creditRetired) -
-              frozen
+              numIsExist(d.creditRetired)
             ).toFixed(2)
           )
         : 0;
@@ -285,7 +288,6 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       Number(numIsExist(d.creditBalance).toFixed(2)),
       Number(numIsExist(d.creditTransferred)),
       Number(numIsExist(d.creditRetired)),
-      frozen,
     ];
     return dt;
   };
@@ -463,6 +465,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
       const response: any = await post(API_PATHS.PROGRAMME_BY_ID, {
         programmeId: id,
       });
+      //console.log('-------res programme details-----------', response);
 
       if (response) {
         setData(response.data);
@@ -1931,7 +1934,10 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
   // MARK: Action Buttons
   if (userInfoState?.userRole !== 'ViewOnly') {
     if (userInfoState && data.projectProposalStage === ProjectProposalStage.PENDING) {
-      if (userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
+      if (
+        userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+        userInfoState?.userRole !== Role.Manager
+      ) {
         actionBtns.push(
           <Button
             danger
@@ -1980,21 +1986,32 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
     }
     // MARK: need to update after getting the activities array
     console.log(
-      '-------------data?.documents?.monitoringReport---------',
-      data?.documents?.monitoringReport
+      '---------data----------',
+      data.activities,
+      data.activities && data.activities.length
     );
     if (
       userInfoState &&
       data.projectProposalStage === ProjectProposalStage.AUTHORISED &&
       userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
-      data?.documents[DocumentEnum.MONITORING] === undefined
+      userInfoState?.userRole === Role.Admin &&
+      data.activities &&
+      (data?.activities.length === 0 ||
+        data?.activities[data?.activities.length - 1].stage ===
+          ActivityStateEnum.VERIFICATION_REPORT_VERIFIED)
     ) {
       actionBtns.push(
         <Button
           className="mg-left-1"
           type="primary"
           onClick={() => {
-            navigate(ROUTES.MONITORING_REPORT_CREATE(String(id)));
+            navigate(ROUTES.MONITORING_REPORT_CREATE(String(id)), {
+              state: {
+                mode: FormMode.CREATE,
+                userCompanyRole: CompanyRole.PROJECT_DEVELOPER,
+                documents: data?.documents,
+              },
+            });
           }}
         >
           Request Credit
@@ -2076,6 +2093,12 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
             <span>{v as string}</span>
           </span>
         );
+      } else if (k === 'projectGeography') {
+        generalInfo[text] = t('projectDetailsView:' + v);
+      } else if (k === 'estimatedProjectCost') {
+        generalInfo[text] = `${v} USD`;
+      } else if (k === 'independentCertifier') {
+        generalInfo[text] = `${v.join()}`;
       } else if (k === 'additionalDocuments') {
         generalInfo[text] = (
           <span>
@@ -2135,10 +2158,15 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         </div>
       </div>
       <div className="content-body">
-        <Row className="programme-status-timeline">
-          <Col xl={24}>
+        <Row
+          className="programme-status-timeline"
+          justify={'space-between'}
+          gutter={20}
+          align={'stretch'}
+        >
+          <Col xl={data.activities && data.activities.length > 0 ? 19 : 24}>
             <Card className="card-container">
-              <div className="info-view">
+              <div className="info-view" ref={projectTimelineRef}>
                 <ProgrammeStatusTimelineComponent
                   programmeDetails={data}
                   translator={t}
@@ -2146,6 +2174,18 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
               </div>
             </Card>
           </Col>
+          {data.activities && data.activities.length > 0 && (
+            <Col xl={5}>
+              <Card className="card-container">
+                <div className="info-view">
+                  <VerificationPhaseStatus
+                    activity={data.activities[data.activities.length - 1]}
+                    timelineRef={projectTimelineRef}
+                  />
+                </div>
+              </Card>
+            </Col>
+          )}
         </Row>
         <Row gutter={16}>
           <Col md={24} lg={10}>
@@ -2160,11 +2200,11 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                     <Chart
                       id={'creditChart'}
                       options={{
-                        labels: ['Authorised', 'Issued', 'Transferred', 'Retired', 'Frozen'],
+                        labels: ['Authorised', 'Issued', 'Transferred', 'Retired'],
                         legend: {
                           position: 'bottom',
                         },
-                        colors: ['#6ACDFF', '#D2FDBB', '#CDCDCD', '#FF8183', '#B7A4FE'],
+                        colors: ['#6ACDFF', '#D2FDBB', '#CDCDCD', '#FF8183'],
                         tooltip: {
                           fillSeriesColor: false,
                         },
@@ -2371,7 +2411,19 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                 />
               </div>
             </Card>
-            {verificationHistoryData && verificationHistoryData.length > 0 && (
+
+            {data?.activities && data?.activities.length > 0 && (
+              <Card className="card-container">
+                <div>
+                  <VerificationPhaseForms
+                    activityData={data?.activities}
+                    documents={data?.documents}
+                  />
+                </div>
+              </Card>
+            )}
+
+            {/* {verificationHistoryData && verificationHistoryData.length > 0 && (
               <Card className="card-container">
                 <div>
                   <VerificationForms
@@ -2393,7 +2445,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                   />
                 </div>
               </Card>
-            )}
+            )} */}
 
             {data?.programmeProperties?.programmeMaterials &&
               data?.programmeProperties?.programmeMaterials.length > 0 && (
@@ -2428,7 +2480,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                   <InfoView
                     data={getContactPersonInfo()}
                     title={t('projectDetailsView:contactPerson')}
-                    icon={<MailOutlined />}
+                    icon={<Icon.Headset />}
                   />
                 </div>
               </Card>

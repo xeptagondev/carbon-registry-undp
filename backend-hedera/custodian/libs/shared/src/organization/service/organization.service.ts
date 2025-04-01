@@ -43,7 +43,11 @@ import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, In, Not, Repository } from 'typeorm';
+import { GetOrganizationsRequest } from '../dto/organizations-request.dto';
+import { GetOrganizationsResponse } from '../dto/organizations-response.dto';
+import { IDNameResponse } from '@app/shared/util/dto/id-name.response.dto';
+import { CreditBlocksEntity } from '@app/shared/carbon-credit-token/entity/credit.blocks.entity';
 
 @Injectable()
 export class OrganizationService extends SuperService<
@@ -103,7 +107,7 @@ export class OrganizationService extends SuperService<
         ExecutiveCommittee: 'Executive Committee',
         Ministry: 'Ministry',
     };
-    mapNewQueryToOldQuery(organization: OrganizationEntity) {
+    mapNewQueryToOldQuery(organization: any) {
         return {
             companyId: organization?.id,
             taxId: organization?.taxId,
@@ -119,7 +123,7 @@ export class OrganizationService extends SuperService<
             country: null,
             companyRole: organization?.organizationType.name,
             state: organization?.state,
-            creditBalance: null,
+            creditBalance: organization?.creditBalance,
             secondaryAccountBalance: null,
             slcfAccountBalance: null,
             programmeCount: organization?.numberOfProjects,
@@ -144,14 +148,40 @@ export class OrganizationService extends SuperService<
         requestUser: JWTPayload,
     ): Promise<Partial<OrganizationEntity>> {
         this.helperService.validateRequestUser(requestUser);
-        const organizationDetails = await this.organizationRepository.findOne({
-            where: {
-                id: organizationId,
-            },
-            relations: {
-                organizationType: true,
-            },
-        });
+        // const organizationDetails = await this.organizationRepository.findOne({
+        //     where: {
+        //         id: organizationId,
+        //     },
+        //     relations: {
+        //         organizationType: true,
+        //         projects: true,
+        //     },
+        // });
+        const organizationDetails = await this.organizationRepository
+            .createQueryBuilder('organization')
+            .leftJoin('organization.projects', 'project')
+            .leftJoinAndSelect(
+                'organization.organizationType',
+                'organizationType',
+            )
+            .where('organization.id = :organizationId', { organizationId })
+            .loadRelationCountAndMap(
+                'organization.numberOfProjects',
+                'organization.projects',
+            )
+            .getOne();
+
+        // get credits
+        const receiverSum = await this.dataSource
+            .getRepository(CreditBlocksEntity)
+            .createQueryBuilder('creditBlock')
+            .leftJoin('creditBlock.receiver', 'receiver')
+            .where('receiver.id = :organizationId', { organizationId })
+            .select('COALESCE(SUM(creditBlock.creditAmount), 0)', 'recvSum')
+            .getRawOne();
+
+        organizationDetails['creditBalance'] = Number(receiverSum.recvSum);
+
         return this.mapNewQueryToOldQuery(organizationDetails);
     }
 
@@ -861,5 +891,39 @@ export class OrganizationService extends SuperService<
             await queryRunner.release();
         }
         return false;
+    }
+
+    async getOrganizationsOfType(
+        dto: GetOrganizationsRequest,
+        requestData: JWTPayload,
+    ): Promise<IDNameResponse[]> {
+        // request can only be made by admins of same org type
+        if (
+            requestData.userRole !== RoleEnum.Admin ||
+            requestData.organizationRole !== dto.type
+        ) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
+
+        // send data
+        const where: FindOptionsWhere<OrganizationEntity> = {
+            organizationType: {
+                name: dto.type,
+            },
+        };
+
+        if (dto.filterOwn) {
+            where.id = Not(requestData.organizationId);
+        }
+
+        const res = await this.organizationRepository.find({
+            where: where,
+        });
+
+        if (res) {
+            return res.map((org) => new IDNameResponse(org.id, org.name));
+        }
+
+        return [];
     }
 }

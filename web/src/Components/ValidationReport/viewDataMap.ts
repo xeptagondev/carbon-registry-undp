@@ -1,24 +1,5 @@
 import moment from 'moment';
-
-const mapBase64ToFields = (fileUrls: string[]) => {
-  let fileObjs: any[] = [];
-  console.log('--------fileUrls----------', fileUrls, fileUrls?.length);
-  if (fileUrls !== undefined && fileUrls.length > 0) {
-    fileObjs = fileUrls.map((item: any, index) => {
-      const nameParts = item.split('/');
-      const name = nameParts[nameParts.length - 1];
-      const tempObj = {
-        uid: name,
-        name: name,
-        status: 'done',
-        url: item,
-      };
-      return tempObj;
-    });
-  }
-
-  return fileObjs;
-};
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 
 export const basicInformationMapDataToFields = (vals: any) => {
   console.log('----------vals----------', vals);
@@ -76,7 +57,7 @@ export const basicInformationMapDataToFields = (vals: any) => {
       : undefined,
   };
 
-  console.log('----------vals after--------', tempVals);
+  console.log('----------vals after bb--------', tempVals);
   return tempVals;
 };
 
@@ -134,6 +115,7 @@ export const meansOfValidationMapDataToFields = (vals: any) => {
     onSiteInspection: vals?.onSiteInspection?.map((item: any) => {
       const temp = {
         ...item,
+        siteLocation: item?.siteLocation,
         date: item?.date ? moment.unix(item?.date) : undefined,
       };
       return temp;

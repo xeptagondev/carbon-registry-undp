@@ -4,7 +4,7 @@ import { BaseDocumentDTO } from '../dto/base-document.dto';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { DocumentEntity } from '../entity/document.entity';
 
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { AuditService } from '@app/shared/audit/service/audit.service';
@@ -41,6 +41,8 @@ import { ActivityStateEnum } from '@app/shared/activity/enum/activity.state.enum
 import { AdditionalDocType } from '../enum/additional.document.type';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class MonitoringDocumentService extends DocumentService {
@@ -53,6 +55,8 @@ export class MonitoringDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        @InjectRepository(DocumentEntity)
+        documentRepository: Repository<DocumentEntity>,
     ) {
         super(
             configService,
@@ -61,6 +65,7 @@ export class MonitoringDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            documentRepository,
             logger,
         );
     }
@@ -89,7 +94,10 @@ export class MonitoringDocumentService extends DocumentService {
                 jwtData.userRole === RoleEnum.Admin
             )
         ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to create Monitoring reports.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         // start transaction and save document
@@ -168,17 +176,14 @@ export class MonitoringDocumentService extends DocumentService {
                     `Project should be in ${ProjectProposalStage.AUTHORISED} stage`,
                     HttpStatus.BAD_REQUEST,
                 );
-            } else if (
-                lastActivity &&
-                lastActivity.state ===
-                    ActivityStateEnum.MONITORING_REPORT_REJECTED
-            ) {
-                throw new HttpException(
-                    `If activity exists it should be in ${ActivityStateEnum.MONITORING_REPORT_REJECTED}`,
-                    HttpStatus.BAD_REQUEST,
-                );
             }
 
+            if (!(project?.organization?.id === jwtData.organizationId)) {
+                throw new HttpException(
+                    'Unauthorized',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
             const monitoringData = dto.data;
 
             if (
@@ -242,14 +247,13 @@ export class MonitoringDocumentService extends DocumentService {
                     );
                 }
             } else {
-                const activity = new ActivityEntity();
-                activity.activityDocs = [];
-                activity.project = project;
-                activity.state = ActivityStateEnum.MONITORING_REPORT_UPLOADED;
-
                 lastActivity = await queryRunner.manager.save(
-                    ActivityEntity,
-                    activity,
+                    plainToClass(ActivityEntity, {
+                        ...lastActivity,
+                        activityDocs: [],
+                        project: project,
+                        state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
+                    }),
                 );
 
                 const activitySchema: ActivitySchema = {
@@ -257,7 +261,68 @@ export class MonitoringDocumentService extends DocumentService {
                     project: project.refId,
                 };
 
-                this.guardianService.saveDocument(
+                await this.guardianService.saveDocument(
+                    jwtData.email,
+                    GUARDIAN_API.BLOCKS.CREATE_ACTIVITY,
+                    {
+                        document: activitySchema,
+                        ref: null,
+                    },
+                );
+            }
+
+            if (
+                lastActivity &&
+                (lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_UPLOADED ||
+                    lastActivity.state ===
+                        ActivityStateEnum.MONITORING_REPORT_VERIFIED)
+            ) {
+                throw new HttpException(
+                    'Monitoring report already exists',
+                    HttpStatus.BAD_REQUEST,
+                );
+            } else if (
+                lastActivity &&
+                lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_REJECTED
+            ) {
+                lastActivity = await queryRunner.manager.save(
+                    plainToClass(ActivityEntity, {
+                        ...lastActivity,
+                        activityDocs: [],
+                        project: project,
+                        state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
+                    }),
+                );
+                // const activityDoc =
+                //     await this.guardianService.getGridDocumentUsingRefId(
+                //         GridTypeEnum.ACTIVITY_GRID,
+                //         lastActivity?.refId,
+                //         jwtData.email,
+                //     );
+
+                // await this.guardianService.buttonActionRequest(
+                //     ButtonNameEnum.MO,
+                //     ButtonActionEnum.APPROVE,
+                //     activityDoc,
+                //     jwtData.email,
+                // );
+            } else {
+                lastActivity = await queryRunner.manager.save(
+                    plainToClass(ActivityEntity, {
+                        activityDocs: [],
+                        project: project,
+                        state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
+                    }),
+                );
+
+                const activitySchema: ActivitySchema = {
+                    refId: lastActivity.refId,
+                    project: project.refId,
+                };
+
+                await this.guardianService.saveDocument(
                     jwtData.email,
                     GUARDIAN_API.BLOCKS.CREATE_ACTIVITY,
                     {
@@ -272,19 +337,18 @@ export class MonitoringDocumentService extends DocumentService {
                     where: { id: jwtData.userId },
                     relations: { organization: true },
                 });
-            const documentEntity = new DocumentEntity();
-            documentEntity.title = dto.name;
-            documentEntity.project = project;
-            documentEntity.documentType = dto.documentType;
-            documentEntity.state = DocumentStateEnum.PENDING;
-            documentEntity.activity = lastActivity;
-            documentEntity.data = dto.data;
-            documentEntity.submittedUser = submittedUser;
 
             // save document
             const savedDoc = await queryRunner.manager.save(
-                DocumentEntity,
-                documentEntity,
+                plainToClass(DocumentEntity, {
+                    title: dto.name,
+                    project: project,
+                    documentType: dto.documentType,
+                    state: DocumentStateEnum.PENDING,
+                    activity: lastActivity,
+                    data: dto.data,
+                    submittedUser: submittedUser,
+                }),
             );
 
             const organizationDoc =
@@ -343,6 +407,7 @@ export class MonitoringDocumentService extends DocumentService {
             await queryRunner.commitTransaction();
             return new DataResponseDto(HttpStatus.OK, {
                 refId: savedDoc.refId,
+                activityRefId: lastActivity.refId,
             });
         } catch (err) {
             console.log(err);
@@ -369,7 +434,10 @@ export class MonitoringDocumentService extends DocumentService {
                 OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
             jwtData.userRole !== RoleEnum.Admin
         ) {
-            throw new HttpException('Unauthroized', HttpStatus.BAD_REQUEST);
+            throw new HttpException(
+                'You do not have permission to approve or reject Monitoring reports.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -422,7 +490,7 @@ export class MonitoringDocumentService extends DocumentService {
             // can only be made by DNA admin(s)
             if (!assigneeAdminEmails.includes(jwtData.email)) {
                 throw new HttpException(
-                    'Unauthorised',
+                    'Your organisation has been not assigned to approve or reject this Monitoring report.',
                     HttpStatus.UNAUTHORIZED,
                 );
             }
@@ -445,7 +513,9 @@ export class MonitoringDocumentService extends DocumentService {
 
             // save document
 
-            await queryRunner.manager.save(DocumentEntity, documentEntity);
+            await queryRunner.manager.save(
+                plainToClass(DocumentEntity, documentEntity),
+            );
 
             /*
                         3. Send emails based on action
@@ -527,6 +597,7 @@ export class MonitoringDocumentService extends DocumentService {
                     documentEntity?.project?.refId,
                     ProjectAuditLogType.MONITORING_REPORT_REJECTED,
                     jwtData.userId,
+                    { remarks: requestData.remarks },
                 );
                 const activityDoc =
                     await this.guardianService.getGridDocumentUsingRefId(

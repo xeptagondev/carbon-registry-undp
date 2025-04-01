@@ -54,37 +54,23 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
   //   fetchValidationData();
   // },[])
 
+  const normFile = (e: any) => {
+    if (Array.isArray(e)) {
+      return e;
+    }
+    return e?.fileList;
+  };
+
   const onFinish = async (values: any) => {
-    // const tempValues: any = {
-    //   basicInfoDetails: {
-    //     projectTitle: values?.b_projectTitle,
-    //     scaleOfProject: values?.b_scaleOfProject,
-    //     completionDate: values?.b_completionDate,
-    //     versionNoOfMonitoringReport: values?.b_versionNoOfMonitoringReport,
-    //     projectParticipants: values?.b_projectParticipants,
-    //     appliedMethodologies: values?.b_appliedMethodologies,
-    //     conditionalSectoralScopes: values?.b_conditionalSectoralScopes,
-    //     certfiedGHGReductions: values?.b_certfiedGHGReductions,
-    //     unfccRefNo: values?.b_unfccRefNo,
-    //     versionNoOfVerificationReport: values?.b_versionNoOfVerificationReport,
-    //     monitoringPeriodNoAndDuration: values?.b_monitoringPeriodNoAndDuration,
-    //     creditingPeriod: values?.b_creditingPeriod,
-    //     hostParty: values?.b_hostParty,
-    //     mandatorySectoralScopes: values?.b_mandatorySectoralScopes,
-    //     estimatedGHGEmissionReduction: values?.b_estimatedGHGEmissionReduction,
-    //     name: values?.b_name,
-    //     position: values?.b_position,
-    //     signature: values?.b_signature,
-    //   },
-    // };
-    console.log('--------values-----------', values);
+    const signature = (await fileUploadValueExtract(values, 'b_signature'))[0];
     const body = {
       ...values,
       b_completionDate: moment(values?.b_completionDate).startOf('day').unix(),
-      b_signature: (await fileUploadValueExtract(values, 'b_signature'))[0],
+      b_signature: signature,
     };
+
     handleValuesUpdate({
-      basicDetailsFormValues: body,
+      basicInformation: body,
     });
   };
 
@@ -100,7 +86,6 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -111,61 +96,18 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
               <Row className="row" gutter={[40, 16]}>
                 <Col xl={12} md={24}>
                   <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('verificationReport:b_projectTitle')}
-                      name="b_projectTitle"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_projectTitle')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
+                    <Form.Item label={t('verificationReport:b_projectTitle')} name="b_projectTitle">
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
                       label={t('verificationReport:b_scaleOfProject')}
                       name="b_scaleOfProject"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_scaleOfProject')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Select
                         showSearch
                         size="large"
-                        disabled={disableFields}
+                        disabled
                         placeholder="Select"
                         filterOption={(input, option) =>
                           (option?.label ?? '').toLocaleString().includes(input.toLowerCase())
@@ -175,6 +117,13 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                           { value: '2', label: 'Small Scale' },
                         ]}
                       />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('verificationReport:b_monitoringPeriodDuration')}
+                      name="b_monitoringPeriodDuration"
+                    >
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     {/* <Form.Item
@@ -255,6 +204,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       <DatePicker
                         size="large"
                         disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                        disabled={disableFields}
                       />
                     </Form.Item>
 
@@ -284,71 +234,27 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
                     <Form.Item
-                      label={t('verificationReport:b_projectParticipants')}
-                      name={'b_projectParticipants'}
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_projectParticipants')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
+                      label={t('verificationReport:b_projectDeveloper')}
+                      name={'b_projectDeveloper'}
                     >
                       <Input
                         size="large"
                         //placeholder="Add Project Participants"
-                        disabled={disableFields}
+                        disabled
                       />
                     </Form.Item>
 
                     <Form.Item
                       label={t('verificationReport:b_appliedMethodologies')}
                       name={'b_appliedMethodologies'}
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_appliedMethodologies')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
                       <Input
                         size="large"
                         // placeholder="Add Project Participants"
-                        disabled={disableFields}
+                        disabled
                       />
                     </Form.Item>
 
@@ -381,23 +287,8 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                       <Input
                         size="large"
                         // placeholder="Add Project Participants"
-                        disabled={disableFields}
+                        disabled
                       />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('verificationReport:b_certfiedGHGReductions')}
-                      name="b_certfiedGHGReductions"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('verificationReport:b_certfiedGHGReductions')} ${t(
-                            'isRequired'
-                          )}`,
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
@@ -407,28 +298,28 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                     <Form.Item
                       label={t('verificationReport:b_unfccRefNo')}
                       name="b_unfccRefNo"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_unfccRefNo')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
+                      // rules={[
+                      //   {
+                      //     required: false,
+                      //     message: '',
+                      //   },
+                      //   {
+                      //     validator: async (rule, value) => {
+                      //       if (
+                      //         String(value).trim() === '' ||
+                      //         String(value).trim() === undefined ||
+                      //         value === null ||
+                      //         value === undefined
+                      //       ) {
+                      //         throw new Error(
+                      //           `${t('verificationReport:b_unfccRefNo')} ${t('isRequired')}`
+                      //         );
+                      //       }
+                      //     },
+                      //   },
+                      // ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
@@ -457,144 +348,50 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         },
                       ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled={true} />
                     </Form.Item>
 
                     <Form.Item
-                      label={t('verificationReport:b_monitoringPeriodNoAndDuration')}
-                      name="b_monitoringPeriodNoAndDuration"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_monitoringPeriodNoAndDuration')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
+                      label={t('verificationReport:b_monitoringPeriodNo')}
+                      name="b_monitoringPeriodNo"
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
                       label={t('verificationReport:b_creditingPeriod')}
                       name="b_creditingPeriod"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_creditingPeriod')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
-                    <Form.Item
-                      label={t('verificationReport:b_hostParty')}
-                      name="b_hostParty"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_hostParty')} ${t('isRequired')}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
+                    <Form.Item label={t('verificationReport:b_hostParty')} name="b_hostParty">
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
                       label={t('verificationReport:b_mandatorySectoralScopes')}
                       name="b_mandatorySectoralScopes"
-                      rules={[
-                        {
-                          required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_mandatorySectoralScopes')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
-                        },
-                      ]}
                     >
-                      <Input size="large" disabled={disableFields} />
+                      <Input size="large" disabled />
                     </Form.Item>
 
                     <Form.Item
                       label={t('verificationReport:b_estimatedGHGEmissionReduction')}
                       name="b_estimatedGHGEmissionReduction"
+                    >
+                      <Input size="large" disabled />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('verificationReport:b_certfiedGHGReductions')}
+                      name="b_certfiedGHGReductions"
                       rules={[
                         {
                           required: true,
-                          message: '',
-                        },
-                        {
-                          validator: async (rule, value) => {
-                            if (
-                              String(value).trim() === '' ||
-                              String(value).trim() === undefined ||
-                              value === null ||
-                              value === undefined
-                            ) {
-                              throw new Error(
-                                `${t('verificationReport:b_estimatedGHGEmissionReduction')} ${t(
-                                  'isRequired'
-                                )}`
-                              );
-                            }
-                          },
+                          message: `${t('verificationReport:b_certfiedGHGReductions')} ${t(
+                            'isRequired'
+                          )}`,
                         },
                       ]}
                     >
@@ -604,92 +401,24 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                 </Col>
               </Row>
 
-              <Row className="row" gutter={[40, 16]}>
-                <Col xl={12} md={24}>
-                  <h2 className="form-section-title">{`${t('verificationReport:b_approver')}`}</h2>
-
-                  <div className="step-form-left-col">
-                    <Form.Item
-                      label={t('verificationReport:b_name')}
-                      name="b_name"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('verificationReport:b_name')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('verificationReport:b_position')}
-                      name="b_position"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('verificationReport:b_position')} ${t('isRequired')}`,
-                        },
-                      ]}
-                    >
-                      <Input size="large" disabled={disableFields} />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t('verificationReport:b_signature')}
-                      name="b_signature"
-                      rules={[
-                        {
-                          required: true,
-                          message: `${t('verificationReport:b_signature')} ${t('isRequired')}`,
-                        },
-                        {
-                          validator: async (rule, file) => {
-                            if (file?.length > 0) {
-                              if (file[0]?.size > maximumImageSize) {
-                                // default size format of files would be in bytes -> 1MB = 1000000bytes
-                                throw new Error(`${t('common:maxSizeVal')}`);
-                              }
-                            }
-                          },
-                        },
-                      ]}
-                    >
-                      <Upload
-                        accept=".doc, .docx, .pdf, .png, .jpg"
-                        beforeUpload={(file: any) => {
-                          return false;
-                        }}
-                        className="design-upload-section"
-                        name="design"
-                        action="/upload.do"
-                        listType="picture"
-                        multiple={false}
-                        maxCount={1}
-                      >
-                        <Button className="upload-doc" size="large" icon={<UploadOutlined />}>
-                          {t('validationReport:upload')}
-                        </Button>
-                      </Upload>
-                    </Form.Item>
-
-                    {/* {FormMode.VIEW === formMode ? (
-                      <Form.Item label={t('verificationReport:reportID')} name="reportID">
-                        <Input size="large" />
-                      </Form.Item>
-                    ) : (
-                      ''
-                    )} */}
-                  </div>
-                </Col>
-              </Row>
               <Row justify={'end'} className="step-actions-end">
                 <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('verificationReport:cancel')}
                 </Button>
-                <Button type="primary" htmlType="submit" disabled={false}>
-                  {t('verificationReport:next')}
-                </Button>
+                {disableFields ? (
+                  <Button type="primary" onClick={next}>
+                    {t('verificationReport:next')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size={'large'}
+                    htmlType={'submit'}
+                    // onClick={next}
+                  >
+                    {t('verificationReport:next')}
+                  </Button>
+                )}
               </Row>
             </Form>
           </div>

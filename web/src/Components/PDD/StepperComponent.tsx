@@ -36,6 +36,7 @@ import { API_PATHS } from '../../Config/apiConfig';
 import Monitoring from './Monitoring';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { ROUTES } from '../../Config/uiRoutingConfig';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 const CMA_STEPS = {};
 
@@ -140,7 +141,7 @@ const StepperComponent = (props: any) => {
         form1.setFieldsValue({
           projectTitle: data?.title,
           projectProponent: data?.company?.name,
-          sectoralScope: data?.sectoralScope,
+          sectoralScope: INF_SECTORAL_SCOPE[data?.sectoralScope],
         });
         form4.setFieldsValue({
           projectActivityStartDate: moment(data?.startDate * 1000).format('YYYY-MM-DD'),
@@ -174,7 +175,11 @@ const StepperComponent = (props: any) => {
           contactPerson: data?.user?.name,
         });
       }
-    } catch {}
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -185,14 +190,13 @@ const StepperComponent = (props: any) => {
         state?.mode === FormMode?.VIEW
       ) {
         setLoading(true);
-        //console.log('----------getViewData---------', state);
         let res;
         try {
           res = await post(API_PATHS.QUERY_DOCUMENT, {
             refId: state?.documentRefId,
-            documentEnum: DocumentEnum.PDD,
+            documentType: DocumentEnum.PDD,
           });
-
+          console.log('------PDD data-----', res?.data);
           if (res?.statusText === 'SUCCESS') {
             const data = res?.data;
             setDocumentId(data?.refId);

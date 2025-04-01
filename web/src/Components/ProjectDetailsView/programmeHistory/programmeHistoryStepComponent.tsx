@@ -27,52 +27,27 @@ const logTypeIcons: Record<string, React.ReactNode> = {
   APPROVED: <Icon.Check2Circle />,
   PDD_SUBMITTED: <Icon.FileText />,
   NO_OBJECTION_LETTER_GENERATED: <Icon.FileText />,
-  PDD_REJECTED_BY_CERTIFIER: <Icon.XCircle />,
+  PDD_REJECTED_BY_CERTIFIER: <Icon.FileX />,
   PDD_APPROVED_BY_CERTIFIER: <Icon.Check2Circle />,
-  PDD_REJECTED_BY_DNA: <Icon.XCircle />,
+  PDD_REJECTED_BY_DNA: <Icon.FileX />,
   PDD_APPROVED_BY_DNA: <Icon.Check2Circle />,
   VALIDATION_REPORT_SUBMITTED: <Icon.FileText />,
-  VALIDATION_REPORT_REJECTED: <Icon.XCircle />,
+  VALIDATION_REPORT_REJECTED: <Icon.FileX />,
   AUTHORISED: <Icon.ClipboardCheck />,
+  CREDITS_AUTHORISED: <Icon.FileCheck />,
   MONITORING_REPORT_SUBMITTED: <Icon.ListCheck />,
-  MONITORING_REPORT_REJECTED: <Icon.XCircle />,
+  MONITORING_REPORT_REJECTED: <Icon.FileX />,
   MONITORING_REPORT_APPROVED: <Icon.Check2Circle />,
   VERIFICATION_REPORT_SUBMITTED: <Icon.FileEarmarkBarGraph />,
-  VERIFICATION_REPORT_REJECTED: <Icon.XCircle />,
-  VERIFICATION_REPORT_APPROVED: <Icon.XCircle />,
+  VERIFICATION_REPORT_REJECTED: <Icon.FileX />,
+  VERIFICATION_REPORT_APPROVED: <Icon.Check2Circle />,
   CREDITS_ISSUED: <Icon.CurrencyExchange />,
-  DEFAULT: <FileOutlined />, // Default icon for unspecified log types
-
-  // CREATE: <Icon.CaretRight />,
-  // INF_APPROVED: <Icon.FileEarmarkCheck />,
-  // INF_REJECTED: <Icon.FileEarmarkX />,
-  // CREATE_COST_QUOTATION: <Icon.FileText />,
-  // CREATE_PROJECT_PROPOSAL: <Icon.FileText />,
-  // CREATE_VALIDATION_AGREEMENT: <Icon.FileText />,
-  // PROJECT_PROPOSAL_ACCEPTED: <Icon.Check2Circle />,
-  // PROJECT_PROPOSAL_REJECTED: <Icon.FileX />,
-  // CMA_CREATE: <Icon.FileEarmark />,
-  // CMA_APPROVED: <Icon.FileEarmarkCheck />,
-  // CMA_REJECTED: <Icon.FileEarmarkX />,
-  // VALIDATION_REPORT_CREATED: <Icon.FileEarmarkBarGraph />,
-  // VALIDATION_REPORT_APPROVED: <Icon.FileEarmarkCheck />,
-  // VALIDATION_REPORT_REJECTED: <Icon.FileEarmarkX />,
-  // AUTHORISED: <Icon.Clipboard2Check />,
-  // MONITORING_CREATE: <Icon.ListUl />,
-  // MONITORING_APPROVED: <Icon.ListCheck />,
-  // MONITORING_REJECTED: <Icon.BookmarkX />,
-  // VERIFICATION_CREATE: <Icon.CardList />,
-  // VERIFICATION_APPROVED: <Icon.CardChecklist />,
-  // VERIFICATION_REJECTED: <Icon.BookmarkX />,
-  // CREDIT_ISSUED: <Icon.CurrencyExchange />,
-  // TRANSFER_REQUESTED: <Icon.ClockHistory />,
-  // TRANSFER_APPROVED: <Icon.BoxArrowRight />,
-  // TRANSFER_REJECTED: <Icon.XOctagon />,
-  // TRANSFER_CANCELLED: <Icon.ExclamationOctagon />,
-  // RETIRE_REQUESTED: <Icon.ClockHistory />,
-  // RETIRE_APPROVED: <Icon.Save />,
-  // RETIRE_REJECTED: <Icon.XOctagon />,
-  // RETIRE_CANCELLED: <Icon.ExclamationOctagon />,
+  CREDIT_TRANSFERED: <Icon.BoxArrowRight />,
+  RETIRE_REQUESTED: <Icon.BoxArrowInDown />,
+  RETIRE_APPROVED: <Icon.Check2Circle />,
+  RETIRE_REJECTED: <Icon.FileX />,
+  RETIRE_CANCELLED: <Icon.X />,
+  DEFAULT: <FileOutlined />,
 };
 
 interface ProgrammeHistoryStepsProps {
@@ -103,18 +78,24 @@ const getLogDescription = (log: any, t: any) => {
     case ProjectActivityStage.REJECTED:
       return formatString('slcfProgrammeTimeline:infRejectedDescription', [log.name], t);
       break;
+    case ProjectActivityStage.NO_OBJECTION_LETTER_GENERATED:
+      return formatString('slcfProgrammeTimeline:noObjectionLetterGeneratedDescription', [], t);
     case ProjectActivityStage.PDD_SUBMITTED:
-      return formatString('slcfProgrammeTimeline:pddSubmttedTitle', [log.name], t);
+      return formatString('slcfProgrammeTimeline:pddSubmittedDescription', [log.name], t);
     case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
       return formatString('slcfProgrammeTimeline:pddRejectedDescription', [log.name], t);
     case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:
       return formatString('slcfProgrammeTimeline:pddApprovedDescription', [log.name], t);
     case ProjectActivityStage.PDD_REJECTED_BY_DNA:
-      return formatString('slcfProgrammeTimeline:pddRejectedTitle', [log.name], t);
+      return formatString('slcfProgrammeTimeline:pddRejectedDescription', [log.name], t);
     case ProjectActivityStage.PDD_APPROVED_BY_DNA:
       return formatString('slcfProgrammeTimeline:pddApprovedDescription', [log.name], t);
     case ProjectActivityStage.VALIDATION_REPORT_SUBMITTED:
-      return formatString('slcfProgrammeTimeline:validationReportCreatedTitle', [log.name], t);
+      return formatString(
+        'slcfProgrammeTimeline:validationReportCreatedDescription',
+        [log.name],
+        t
+      );
     case ProjectActivityStage.VALIDATION_REPORT_REJECTED:
       return formatString(
         'slcfProgrammeTimeline:validationReportRejectedDescription',
@@ -123,6 +104,12 @@ const getLogDescription = (log: any, t: any) => {
       );
     case ProjectActivityStage.AUTHORISED:
       return formatString('slcfProgrammeTimeline:authorisedDescription', [], t);
+    case ProjectActivityStage.CREDITS_AUTHORISED:
+      return formatString(
+        'slcfProgrammeTimeline:creditsAuthorisedDescription',
+        [log.data.amount],
+        t
+      );
     case ProjectActivityStage.MONITORING_REPORT_SUBMITTED:
       return formatString(
         'slcfProgrammeTimeline:monitoringReportCreatedDescription',
@@ -160,12 +147,37 @@ const getLogDescription = (log: any, t: any) => {
         t
       );
     case ProjectActivityStage.CREDITS_ISSUED:
+      return formatString('slcfProgrammeTimeline:creditIssuedDescription', [log.data.amount], t);
+    case ProjectActivityStage.CREDIT_TRANSFERED:
       return formatString(
-        'slcfProgrammeTimeline:creditIssuedDescription',
-        [log.data.creditIssued],
+        'slcfProgrammeTimeline:creditTransferedDescription',
+        [log.data.amount, log.toCompanyName, log.fromCompanyName],
         t
       );
-
+    case ProjectActivityStage.RETIRE_REQUESTED:
+      return formatString(
+        'slcfProgrammeTimeline:retireRequestedDescription',
+        [log.data.amount, log.fromCompanyName, log.data.retirementType],
+        t
+      );
+    case ProjectActivityStage.RETIRE_CANCELLED:
+      return formatString(
+        'slcfProgrammeTimeline:retirementCancelledDescription',
+        [log.data.amount, log.fromCompanyName, log.data.retirementType],
+        t
+      );
+    case ProjectActivityStage.RETIRE_APPROVED:
+      return formatString(
+        'slcfProgrammeTimeline:retirementApprovedDescription',
+        [log.data.amount, log.fromCompanyName, log.data.retirementType],
+        t
+      );
+    case ProjectActivityStage.RETIRE_REJECTED:
+      return formatString(
+        'slcfProgrammeTimeline:retirementRejectedDescription',
+        [log.data.amount, log.fromCompanyName, log.data.retirementType],
+        t
+      );
     default:
       break;
     // case 'CREATE_COST_QUOTATION':
@@ -363,20 +375,23 @@ const getLogTitle = (logType: any) => {
     case ProjectActivityStage.REJECTED:
       return 'slcfProgrammeTimeline:infRejectedTitle';
       break;
+    case ProjectActivityStage.NO_OBJECTION_LETTER_GENERATED:
+      return 'slcfProgrammeTimeline:noObjectionLetterGeneratedTitle';
+      break;
     case ProjectActivityStage.PDD_SUBMITTED:
       return 'slcfProgrammeTimeline:pddSubmttedTitle';
       break;
     case ProjectActivityStage.PDD_APPROVED_BY_CERTIFIER:
-      return 'slcfProgrammeTimeline:pddApprovedTitle';
+      return 'slcfProgrammeTimeline:pddApprovedICTitle';
       break;
     case ProjectActivityStage.PDD_REJECTED_BY_CERTIFIER:
-      return 'slcfProgrammeTimeline:pddRejectedTitle';
+      return 'slcfProgrammeTimeline:pddRejectedICTitle';
       break;
     case ProjectActivityStage.PDD_APPROVED_BY_DNA:
-      return 'slcfProgrammeTimeline:pddApprovedTitle';
+      return 'slcfProgrammeTimeline:pddApprovedDNATitle';
       break;
     case ProjectActivityStage.PDD_REJECTED_BY_DNA:
-      return 'slcfProgrammeTimeline:pddRejectedTitle';
+      return 'slcfProgrammeTimeline:pddRejectedDNATitle';
       break;
     case ProjectActivityStage.VALIDATION_REPORT_SUBMITTED:
       return 'slcfProgrammeTimeline:validationReportCreatedTitle';
@@ -386,6 +401,9 @@ const getLogTitle = (logType: any) => {
       break;
     case ProjectActivityStage.AUTHORISED:
       return 'slcfProgrammeTimeline:authorisedTitle';
+      break;
+    case ProjectActivityStage.CREDITS_AUTHORISED:
+      return 'slcfProgrammeTimeline:creditsAuthorisedTitle';
       break;
     case ProjectActivityStage.MONITORING_REPORT_SUBMITTED:
       return 'slcfProgrammeTimeline:monitoringReportCreatedTitle';
@@ -408,7 +426,21 @@ const getLogTitle = (logType: any) => {
     case ProjectActivityStage.CREDITS_ISSUED:
       return 'slcfProgrammeTimeline:creditIssuedTitle';
       break;
-
+    case ProjectActivityStage.CREDIT_TRANSFERED:
+      return 'slcfProgrammeTimeline:creditTransferedTitle';
+      break;
+    case ProjectActivityStage.RETIRE_APPROVED:
+      return 'slcfProgrammeTimeline:retirementApprovedTitle';
+      break;
+    case ProjectActivityStage.RETIRE_REJECTED:
+      return 'slcfProgrammeTimeline:retirementRejectedTitle';
+      break;
+    case ProjectActivityStage.RETIRE_CANCELLED:
+      return 'slcfProgrammeTimeline:retirementCancelledTitle';
+      break;
+    case ProjectActivityStage.RETIRE_REQUESTED:
+      return 'slcfProgrammeTimeline:retireRequestedTitle';
+      break;
     default:
       break;
   }
@@ -420,7 +452,6 @@ const ProgrammeHistoryStepsComponent: React.FC<ProgrammeHistoryStepsProps> = ({
 }) => {
   const t = translator;
 
-  console.log('---------history--------------', historyData);
   const items = historyData.map((log) => ({
     title: t(getLogTitle(log.logType)),
     subTitle: DateTime.fromMillis(Number(log.createdTime)).toFormat(dateTimeFormat),
@@ -428,8 +459,10 @@ const ProgrammeHistoryStepsComponent: React.FC<ProgrammeHistoryStepsProps> = ({
       <div>
         <div>{getLogDescription(log, t)}</div>
         {log.data?.ref && <div>{`${t('slcfProgrammeTimeline:ref')} : ${log.data?.ref}`}</div>}
-        {log.data?.remark && (
-          <div>{`${t('slcfProgrammeTimeline:remarks')} : ${log.data?.remark}`}</div>
+        {log.data && log.data.remarks && (
+          <p className="remarks">
+            <span>{`${t('slcfProgrammeTimeline:remarks')}`}</span>: {log.data.remarks}
+          </p>
         )}
       </div>
     ),

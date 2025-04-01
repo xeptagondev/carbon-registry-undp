@@ -31,7 +31,7 @@ export const DescriptionOfMSStep = (props: CustomStepsProps) => {
               layout="vertical"
               requiredMark={true}
               form={form}
-              disabled={FormMode.VIEW === formMode}
+              // disabled={FormMode.VIEW === formMode}
               onFinish={(values: any) => {
                 onFinish(values);
                 if (next) {
@@ -54,13 +54,13 @@ export const DescriptionOfMSStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <TextArea rows={6} disabled={FormMode.VIEW === formMode} />
+                      <TextArea rows={6} disabled={disableFields} />
                     </Form.Item>
                   </div>
                 </Col>
               </Row>
               <Row justify={'end'} className="step-actions-end">
-                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false}>
+                <Button style={{ margin: '0 8px' }} onClick={prev} disabled={false} danger>
                   {t('monitoringReport:back')}
                 </Button>
                 {disableFields ? (

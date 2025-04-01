@@ -19,6 +19,7 @@ import { OrganizationStateEnum } from '@app/shared/organization/enum/organizatio
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { OrganizationService } from '@app/shared/organization/service/organization.service';
+import { GetOrganizationsRequest } from '@app/shared/organization/dto/organizations-request.dto';
 
 @Controller('organisation')
 export class OrganizationController {
@@ -124,5 +125,14 @@ export class OrganizationController {
             throw new HttpException('Invalid', HttpStatus.BAD_REQUEST);
         }
         return await this.organizationService.updateStatus(dto, req.user);
+    }
+
+    @UseGuards(AuthGuardService)
+    @Post('getOrganizations')
+    async getOrganizations(
+        @Body() dto: GetOrganizationsRequest,
+        @Request() req,
+    ) {
+        return this.organizationService.getOrganizationsOfType(dto, req.user);
     }
 }
