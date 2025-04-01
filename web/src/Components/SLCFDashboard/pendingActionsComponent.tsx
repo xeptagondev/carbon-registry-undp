@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { List, Row, Col, Button, Skeleton, Tooltip } from 'antd';
+import { List, Row, Col, Button, Skeleton, Tooltip, Empty } from 'antd';
 import {
   ShieldPlus,
   ArrowRepeat,
@@ -151,7 +151,7 @@ export const PendingActionsComponent: FC<PendingActionsCardItemProps> = ({
               </Tooltip>
             </div>
           </Row>
-          <div className="pending-item-list">{t('noPendingActions')}</div>
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('noPendingActions')} />
         </div>
       </div>
     );
@@ -202,6 +202,14 @@ export const PendingActionsComponent: FC<PendingActionsCardItemProps> = ({
         <div className="pending-item-list">
           <List
             dataSource={flattenedData}
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={flattenedData.length === 0 ? t('noPendingActions') : null}
+                />
+              ),
+            }}
             renderItem={(item) => (
               <List.Item
                 key={item.id}

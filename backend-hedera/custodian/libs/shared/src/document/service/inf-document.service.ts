@@ -82,7 +82,10 @@ export class InfDocumentService extends DocumentService {
                 jwtData.userRole === RoleEnum.Admin
             )
         ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to create a project.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -279,7 +282,10 @@ export class InfDocumentService extends DocumentService {
                     jwtData.userRole === RoleEnum.Root)
             )
         ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to approve or reject Initial Notifications.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -374,6 +380,15 @@ export class InfDocumentService extends DocumentService {
                     ProjectAuditLogType.APPROVED,
                     jwtData.userId,
                 );
+
+                await this.logProjectStage(
+                    queryRunner,
+                    documentEntity?.project?.refId,
+                    ProjectAuditLogType.NO_OBJECTION_LETTER_GENERATED,
+                    jwtData.userId,
+                    { url: noObjectionLetterUrl },
+                );
+
                 const refId = documentEntity?.project?.refId;
 
                 const existingProject = await queryRunner.manager

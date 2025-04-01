@@ -1,5 +1,6 @@
 import moment from 'moment';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 export const basicInformationMapDataToView = (vals: any) => {
   if (vals === undefined) return;
@@ -8,6 +9,7 @@ export const basicInformationMapDataToView = (vals: any) => {
     ...vals,
     b_completionDate: vals?.b_completionDate ? moment.unix(vals?.b_completionDate) : undefined,
     b_signature: mapBase64ToFields([vals?.b_signature]),
+    b_sectoralScope: INF_SECTORAL_SCOPE[vals?.b_sectoralScope],
   };
 
   console.log('--------------vals after------------', tempVals);
@@ -76,10 +78,19 @@ export const meansOfVerificationMapDataToFields = (vals: any) => {
     onSiteInspection: vals?.onSiteInspection?.map((item: any) => {
       const temp = {
         ...item,
+        siteLocation: item?.siteLocation,
         activityPerformedDate: item?.activityPerformedDate
           ? moment.unix(item?.activityPerformedDate)
           : undefined,
       };
+      return temp;
+    }),
+    interviewees: vals?.interviewees.map((item: any) => {
+      const temp = {
+        ...item,
+        date: item?.date ? moment.unix(item?.date) : undefined,
+      };
+
       return temp;
     }),
   };

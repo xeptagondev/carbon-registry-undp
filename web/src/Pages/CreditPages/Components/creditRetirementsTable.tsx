@@ -36,6 +36,8 @@ import {
 import { CreditRetirementInterface } from '../Interfaces/creditRetirement.interface';
 import moment from 'moment';
 import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
+import { Role } from '../../../Definitions/Enums/role.enum';
+import { COLOR_CONFIGS } from '../../../Config/colorConfigs';
 
 const { Search } = Input;
 
@@ -90,8 +92,8 @@ export const CreditRetirementsTableComponent = (props: any) => {
   const [checkAllBox, setCheckAllBox] = useState<boolean>(true);
   const [checkBoxOptions, setCheckBoxOptions] = useState<any[]>([]);
   const checkBoxMenu = Object.keys(StatusOptions).map((k, index) => ({
-    label: t(Object.values(StatusOptions)[index]),
-    value: k,
+    label: Object.values(StatusOptions)[index],
+    value: Object.values(StatusOptions)[index],
   }));
   const [modalActionVisible, setModalActionVisible] = useState<boolean>(false);
   const [modalActionLoading, setModalActionLoading] = useState<boolean>(false);
@@ -118,13 +120,17 @@ export const CreditRetirementsTableComponent = (props: any) => {
     const filter: any[] = [];
     const filterOr: any[] = [];
 
-    // if (checkBoxOptions) {
-    //   filter.push(checkBoxOptions);
-    // }
+    if (checkBoxOptions && checkBoxOptions.length > 0) {
+      filter.push({
+        key: 'creditTx"."status',
+        operation: 'in',
+        value: checkBoxOptions,
+      });
+    }
 
     if (search && search !== '') {
       filter.push({
-        key: 'projectName',
+        key: 'project"."title',
         operation: 'like',
         value: `%${search}%`,
       });
@@ -179,7 +185,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
             icon: <Icon.Clipboard color="#6ACDFFFA" />,
             click: () => {
               setModalActionData({
-                icon: <Icon.Clipboard2Check color="#70B554" />,
+                icon: <Icon.Clipboard2Check color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
                 title: t('acceptCreditRetireRequest'),
                 type: CreditActionType.RETIREMENT,
                 actionBtnText: t('proceed'),
@@ -250,7 +256,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.REFERENCE),
       key: CrediRetirementsColumns.REFERENCE,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
         return <span style={{ marginLeft: '20px' }}>{item?.id}</span>;
@@ -258,7 +263,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.PROJECT_NAME),
-      key: CrediRetirementsColumns.PROJECT_NAME,
+      key: 'project.title',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
@@ -267,7 +272,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.ORGANIZATION_NAME),
-      key: CrediRetirementsColumns.ORGANIZATION_NAME,
+      key: 'sender.name',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
@@ -287,7 +292,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.SERIAL_NO),
       key: CrediRetirementsColumns.SERIAL_NO,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
         return <span>{item?.serialNumber}</span>;
@@ -295,7 +299,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.DATE),
-      key: CrediRetirementsColumns.DATE,
+      key: 'createdDate',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
@@ -307,7 +311,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.CREDITS),
       key: CrediRetirementsColumns.CREDITS,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditRetirementInterface) => {
         return <span style={{ marginLeft: '20px' }}>{addCommSep(String(item?.creditAmount))}</span>;
@@ -315,15 +318,17 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
     {
       title: t(CrediRetirementsColumns.STATUS),
-      key: CrediRetirementsColumns.STATUS,
+      key: 'status',
+      sorter: true,
       align: 'center' as const,
       render: (item: CreditRetirementInterface) => {
-        return <Tag color={getStatusColor(item.status)}>{t(item.status)}</Tag>;
+        return <Tag color={getStatusColor(item.status)}>{item.status}</Tag>;
       },
     },
     {
       title: t(CrediRetirementsColumns.RETIREMENT_TYPE),
-      key: CrediRetirementsColumns.RETIREMENT_TYPE,
+      key: 'retirementType',
+      sorter: true,
       align: 'center' as const,
       render: (item: CreditRetirementInterface) => {
         return <span>{item?.retirementType}</span>;
@@ -338,6 +343,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
         const menu = actionMenu(record);
         return (
           record.status === StatusOptions.PENDING &&
+          (userInfoState?.userRole === Role.Admin || userInfoState?.userRole === Role.Root) &&
           menu && (
             <Popover placement="bottomRight" content={menu} trigger="click">
               <EllipsisOutlined
@@ -351,35 +357,30 @@ export const CreditRetirementsTableComponent = (props: any) => {
     },
   ];
 
-  const onSearch = async () => {
-    if (search) {
-      setSearch(search?.toLowerCase());
+  const onSearch = async (value: string) => {
+    if (value) {
+      setSearch(value.toLowerCase());
+    } else {
+      setSearch('');
     }
   };
 
   const onStatusQuery = async (checkedValues: CheckboxValueType[]) => {
-    if (checkedValues !== checkBoxOptions) {
-      setCheckBoxOptions(checkedValues);
-
-      setIndeterminate(
-        !!checkedValues.length && checkedValues.length < Object.keys(checkBoxOptions).length
-      );
-      setCheckAllBox(checkedValues.length === Object.keys(checkBoxOptions).length);
-    }
-
-    if (checkedValues.length === 0) {
-      setTableData([]);
-      setTotalProgramme(0);
-      return;
-    }
+    setCheckBoxOptions(checkedValues as string[]);
+    setIndeterminate(!!checkedValues.length && checkedValues.length < checkBoxMenu.length);
+    setCheckAllBox(checkedValues.length === checkBoxMenu.length);
   };
 
   const onCheckBoxesChange = (e: CheckboxChangeEvent) => {
-    const nw = e.target.checked ? checkBoxOptions.map((el) => el) : [];
-    setCheckBoxOptions(nw);
+    const checked = e.target.checked;
+    setCheckAllBox(checked);
     setIndeterminate(false);
-    setCheckAllBox(e.target.checked);
-    onStatusQuery(nw);
+    if (checked) {
+      const allValues = Object.values(StatusOptions);
+      setCheckBoxOptions(allValues);
+    } else {
+      setCheckBoxOptions([]);
+    }
   };
 
   const onPaginationChange: PaginationProps['onChange'] = (page, size) => {
@@ -410,6 +411,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     sortField,
     sortOrder,
     search,
+    checkBoxOptions,
     modalActionVisible,
     modalResponseVisible,
   ]);
@@ -438,11 +440,11 @@ export const CreditRetirementsTableComponent = (props: any) => {
               : ActionResponseType.PROCESSSED,
           icon:
             action === RetirementActionEnum.ACCEPT ? (
-              <Icon.Check2Circle color="#70B554" />
+              <Icon.Check2Circle color={COLOR_CONFIGS.SUCCESS_RESPONSE_COLOR} />
             ) : action === RetirementActionEnum.REJECT ? (
-              <Icon.Check2Circle color="#16B1FF" />
+              <Icon.Check2Circle color={COLOR_CONFIGS.PROCESSED_RESPONSE_COLOR} />
             ) : (
-              <Icon.Check2Circle color="#16B1FF" />
+              <Icon.Check2Circle color={COLOR_CONFIGS.PROCESSED_RESPONSE_COLOR} />
             ),
           title: t(
             action === RetirementActionEnum.ACCEPT
@@ -456,13 +458,19 @@ export const CreditRetirementsTableComponent = (props: any) => {
       } else {
         setModalResponseData({
           type: ActionResponseType.FAILED,
-          icon: <Icon.ExclamationCircle color="#FF4D4F" />,
+          icon: <Icon.ExclamationCircle color={COLOR_CONFIGS.FAILED_RESPONSE_COLOR} />,
           title: t('creditRetirementSubmittedFailed'),
           buttonText: t('okay'),
         });
       }
     } catch (error: any) {
       message.error(error.message || t('somethingWentWrong'));
+      setModalResponseData({
+        type: ActionResponseType.FAILED,
+        icon: <Icon.ExclamationCircle color={COLOR_CONFIGS.FAILED_RESPONSE_COLOR} />,
+        title: t('somethingWentWrong'),
+        buttonText: t('okay'),
+      });
     } finally {
       setModalActionVisible(false);
       setModalActionLoading(false);
@@ -483,7 +491,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
               checked={checkAllBox}
               defaultChecked={true}
             >
-              {t('projectList:all')}
+              {t('all')}
             </Checkbox>
             <Checkbox.Group
               disabled={loading}
@@ -498,7 +506,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
           <div className="filter-section">
             <div className="search-bar">
               <Search
-                onPressEnter={onSearch}
+                onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                 placeholder={`${t('searchByNameProjectName')}`}
                 allowClear
                 onSearch={onSearch}

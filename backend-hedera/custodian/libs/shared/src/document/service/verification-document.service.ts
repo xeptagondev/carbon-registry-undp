@@ -94,7 +94,10 @@ export class VerificationDocumentService extends DocumentService {
                 jwtData.userRole === RoleEnum.Admin
             )
         ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to create Verification reports.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         // start transaction and save document
@@ -185,7 +188,7 @@ export class VerificationDocumentService extends DocumentService {
 
             if (!assigneeAdminEmails.includes(jwtData.email)) {
                 throw new HttpException(
-                    'Unauthorised',
+                    'Your organisation has been not assigned to create Verification reports. ',
                     HttpStatus.UNAUTHORIZED,
                 );
             }
@@ -357,7 +360,10 @@ export class VerificationDocumentService extends DocumentService {
                     jwtData.userRole == RoleEnum.Root)
             )
         ) {
-            throw new HttpException('Unauthroized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to approve or reject Verification reports.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -486,7 +492,7 @@ export class VerificationDocumentService extends DocumentService {
                         documentEntity?.project?.serialNumber,
                         creditAmount,
                         String(new Date().getFullYear()),
-                        documentEntity?.project?.creditIssued,
+                        Number(documentEntity?.project?.creditIssued),
                     );
                 const payload: MintNFTJobPayload = {
                     tokenId: documentEntity?.project?.tokenId,

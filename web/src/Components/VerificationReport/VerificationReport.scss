@@ -150,6 +150,80 @@
 
     // }
   }
+
+  .interviews-table {
+    .header {
+      .col {
+        padding: 10px 15px;
+        background-color: #fbfbfb;
+      }
+      .col-1 {
+        border: 1px solid #c6c6c6;
+        // border-top: none;
+      }
+
+      .interviewee-col {
+        text-align: center;
+        background-color: #fbfbfb;
+
+        &-subCols {
+          background-color: #fbfbfb;
+          border: 1px solid #c6c6c6;
+          border-top: none;
+          border-right: none;
+          padding: 8px;
+        }
+
+        &-subCols-first {
+          background-color: #fbfbfb;
+          border: 1px solid #c6c6c6;
+          border-top: none;
+          border-right: none;
+          border-left: none;
+          padding: 8px;
+        }
+
+        &-subCols-last {
+          background-color: #fbfbfb;
+          border: 1px solid #c6c6c6;
+          border-top: none;
+          padding: 8px;
+        }
+      }
+
+      .other-cols {
+        border: 1px solid #c6c6c6;
+        border-left: none;
+        // border-top: none;
+      }
+    }
+
+    .body {
+      .ant-form-item {
+        margin-bottom: 0px !important;
+      }
+
+      .col {
+        padding: 10px 15px;
+      }
+      .col-1 {
+        border: 1px solid #c6c6c6;
+        border-top: none;
+      }
+      .other-cols {
+        border: 1px solid #c6c6c6;
+        border-left: none;
+        border-top: none;
+      }
+
+      .action-col {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        padding: 10px 15px;
+      }
+    }
+  }
 }
 
 .full-width-form-item {

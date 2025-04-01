@@ -36,6 +36,10 @@ import { ActionResponseType } from '../../../Definitions/Enums/actionResponse.en
 import * as Icon from 'react-bootstrap-icons';
 import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedType.enum';
 import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
+import moment from 'moment';
+import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
+import { Role } from '../../../Definitions/Enums/role.enum';
+import { COLOR_CONFIGS } from '../../../Config/colorConfigs';
 
 const { Search } = Input;
 
@@ -46,6 +50,7 @@ enum CrediBalanceColumns {
   ISSUE_OR_RECEIVED = 'issueOrReceived',
   CREDITS = 'credits',
   ACTION = 'action',
+  DATE = 'date',
 }
 enum IssuedOrReceivedOptions {
   ISSUED = 'issued',
@@ -82,7 +87,7 @@ export const CreditBalanceTableComponent = (props: any) => {
   const [checkBoxOptions, setCheckBoxOptions] = useState<any[]>([]);
   const checkBoxMenu = Object.keys(IssuedOrReceivedOptions).map((k, index) => ({
     label: t(Object.values(IssuedOrReceivedOptions)[index]),
-    value: k,
+    value: Object.values(IssuedOrReceivedOptions)[index],
   }));
   const [modalActionVisible, setModalActionVisible] = useState<boolean>(false);
   const [modalActionLoading, setModalActionLoading] = useState<boolean>(false);
@@ -108,27 +113,22 @@ export const CreditBalanceTableComponent = (props: any) => {
     const filterAnd: any[] = [];
     const filterOr: any[] = [];
 
-    // if (checkBoxOptions) {
-    //   filterAnd.push({
-    //     key: 'type',
-    //     operation: 'in',
-    //     value: checkBoxOptions,
-    //   });
-    // }
+    if (checkBoxOptions) {
+      filterAnd.push({
+        key: 'creditBlock"."type',
+        operation: 'in',
+        value: checkBoxOptions,
+      });
+    }
 
     if (search && search !== '') {
       filterOr.push({
-        key: 'senderName',
+        key: 'receiver"."name',
         operation: 'like',
         value: `%${search}%`,
       });
       filterOr.push({
-        key: 'receiverName',
-        operation: 'like',
-        value: `%${search}%`,
-      });
-      filterOr.push({
-        key: 'projectName',
+        key: 'project"."title',
         operation: 'like',
         value: `%${search}%`,
       });
@@ -180,10 +180,10 @@ export const CreditBalanceTableComponent = (props: any) => {
         dataSource={[
           {
             text: t('transfer'),
-            icon: <Icon.ArrowLeftRight color="#70B554" />,
+            icon: <Icon.ArrowLeftRight color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
             click: () => {
               setModalActionData({
-                icon: <Icon.BoxArrowRight color="#70B554" />,
+                icon: <Icon.BoxArrowRight color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
                 title: t('tranferCredit'),
                 type: CreditActionType.TRANSFER,
                 actionBtnText: t('transfer'),
@@ -196,10 +196,10 @@ export const CreditBalanceTableComponent = (props: any) => {
           },
           {
             text: t('retire'),
-            icon: <Icon.ExclamationDiamond color="#FF4D4F" />,
+            icon: <Icon.ClockHistory color="#FF4D4F" />,
             click: () => {
               setModalActionData({
-                icon: <Icon.BoxArrowDown color="#70B554" />,
+                icon: <Icon.BoxArrowDown color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
                 title: t('areYouWantToRetireCredit'),
                 type: CreditActionType.RETIREMENT,
                 actionBtnText: t('retire'),
@@ -224,7 +224,7 @@ export const CreditBalanceTableComponent = (props: any) => {
   const columns = [
     {
       title: t(CrediBalanceColumns.ORGANIZATION_NAME),
-      key: CrediBalanceColumns.ORGANIZATION_NAME,
+      key: 'receiver.name',
       sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
@@ -243,7 +243,7 @@ export const CreditBalanceTableComponent = (props: any) => {
     },
     {
       title: t(CrediBalanceColumns.PROJECT_NAME),
-      key: CrediBalanceColumns.PROJECT_NAME,
+      key: 'project.title',
       sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
@@ -253,10 +253,20 @@ export const CreditBalanceTableComponent = (props: any) => {
     {
       title: t(CrediBalanceColumns.SERIAL_NO),
       key: CrediBalanceColumns.SERIAL_NO,
-      sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
         return <span>{record?.serialNumber}</span>;
+      },
+    },
+    {
+      title: t(CrediBalanceColumns.DATE),
+      key: 'createdDate',
+      sorter: true,
+      align: 'left' as const,
+      render: (item: CreditBalanceInterface) => {
+        return (
+          <span>{moment(parseInt(String(item?.createdDate))).format('YYYY-MM-DD HH:mm:ss')}</span>
+        );
       },
     },
     ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
@@ -287,14 +297,17 @@ export const CreditBalanceTableComponent = (props: any) => {
       : []),
     {
       title: t(CrediBalanceColumns.CREDITS),
-      key: CrediBalanceColumns.CREDITS,
+      key: 'creditAmount',
       sorter: true,
       align: 'left' as const,
       render: (record: CreditBalanceInterface) => {
-        return <span style={{ marginLeft: '20px' }}>{record?.creditAmount}</span>;
+        return (
+          <span style={{ marginLeft: '20px' }}>{addCommSep(String(record?.creditAmount))}</span>
+        );
       },
     },
-    ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
+    ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+    userInfoState?.userRole === Role.Admin
       ? [
           {
             title: t(''),
@@ -319,9 +332,11 @@ export const CreditBalanceTableComponent = (props: any) => {
       : []),
   ];
 
-  const onSearch = async () => {
-    if (search) {
-      setSearch(search?.toLowerCase());
+  const onSearch = async (value: string) => {
+    if (value) {
+      setSearch(value.toLowerCase());
+    } else {
+      setSearch('');
     }
   };
 
@@ -426,8 +441,13 @@ export const CreditBalanceTableComponent = (props: any) => {
         });
       }
     } catch (error: any) {
-      console.error(error);
       message.error(error.message || t('somethingWentWrong'));
+      setModalResponseData({
+        type: ActionResponseType.FAILED,
+        icon: <Icon.ExclamationCircle color="#FF4D4F" />,
+        title: t('somethingWentWrong'),
+        buttonText: t('okay'),
+      });
     } finally {
       setModalResponseVisible(true);
       setModalActionLoading(false);
@@ -463,7 +483,7 @@ export const CreditBalanceTableComponent = (props: any) => {
           <div className="filter-section">
             <div className="search-bar">
               <Search
-                onPressEnter={onSearch}
+                onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                 placeholder={`${t('searchByProjectOrOrg')}`}
                 allowClear
                 onSearch={onSearch}

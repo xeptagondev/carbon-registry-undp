@@ -42,6 +42,7 @@ import {
   verificationTeamsMapDataToFields,
 } from './viewDataMap';
 import { Loading } from '../Loading/loading';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
@@ -100,113 +101,143 @@ const StepperComponent = (props: VerificationStepProps) => {
     navigate(ROUTES.PROGRAMME_DETAILS_BY_ID(String(id)));
   };
 
-  const getValidationData = async () => {
-    try {
-      const res = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documents?.VALIDATION?.refId,
-        documentType: DocumentEnum.VALIDATION,
-      });
+  const fetchAndSetData = async (programId: any) => {
+    setLoading(true);
 
-      if (res?.statusText === 'SUCCESS') {
-        const response = res?.data?.data;
-        console.log('---------validation------------', response);
-        basicInformationForm.setFieldsValue({
-          b_projectTitle: response?.basicInformation?.titleOfTheProjectActivity,
-          b_unfccRefNo: response?.basicInformation?.UNFCCReferenceNo,
-          b_scaleOfProject: response?.basicInformation?.projectScale,
-          b_conditionalSectoralScopes: response?.basicInformation?.conditionalSectoralScopes,
-        });
+    let programmeData = null;
+    let pddData = null;
+    let validationData = null;
+    let monitoringData = null;
+
+    //fetch programme data
+    try {
+      const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, { programmeId: programId });
+      if (programmeResponse?.statusText === 'SUCCESS') {
+        programmeData = programmeResponse?.data;
       }
+      console.log('---------------programmeData--------------', programmeData);
     } catch (error) {
-      console.log('error', error);
+      console.log('Error fetching programme data', error);
     }
-  };
 
-  const getMonitoringData = async () => {
-    console.log('--------state monitoring----------', state);
+    //fetch PDD data
     try {
-      const res = await post(API_PATHS.QUERY_DOCUMENT, {
-        refId: state?.documents?.MONITORING?.refId,
-        documentType: DocumentEnum.MONITORING,
-      });
-
-      if (res?.statusText === 'SUCCESS') {
-        const response = res?.data?.data;
-        console.log('---------Monitoring------------', response);
-        const creditingPeriodStartDate = moment.unix(
-          response?.projectActivityDetails?.pa_projectCreditingPeriod
-        );
-        const creditingPeriodEndDate = moment.unix(
-          response?.projectActivityDetails?.pa_projectCreditingPeriodEndDate
-        );
-        console.log('creditingPeriodStartDate', creditingPeriodStartDate);
-        console.log('creditingPeriodEndDate', creditingPeriodEndDate);
-        const creditingPeriodDuration = moment.duration(
-          creditingPeriodEndDate.diff(creditingPeriodStartDate)
-        );
-        const durationString = `${creditingPeriodDuration.years()} years, ${creditingPeriodDuration.months()} months and ${creditingPeriodDuration.days()} days`;
-        console.log('durationString', durationString);
-        basicInformationForm.setFieldsValue({
-          b_monitoringPeriodNo: response?.projectDetails?.bi_monitoringPeriodNo,
-          b_monitoringPeriodDuration: response?.projectDetails?.bi_duration,
-          b_versionNoOfMonitoringReport: response?.projectDetails?.bi_versionNoOfMR,
-          b_creditingPeriod: durationString,
-        });
-        const netEmReductions = response?.calcEmissionReductions?.netGHGEmissionReductions;
-        const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
-
-        ghgProjectDescriptionForm.setFieldsValue({
-          estimatedNetEmissionReductions: emReduction.map((item: any) => {
-            return {
-              ...item,
-              startDate: item?.startDate ? moment.unix(item?.startDate) : undefined,
-              endDate: item?.endDate ? moment.unix(item?.endDate) : undefined,
-            };
-          }),
-          totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
-          totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
-          totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
-          totalNetEmissionReductions: Number(netEmReductions?.totalNetEmissionReductions),
-          totalNumberOfCreditingYears: Number(netEmReductions?.totalNumberOfCreditingYears),
-          avgBaselineEmissionReductions: Number(netEmReductions?.avgBaselineEmissionReductions),
-          avgProjectEmissionReductions: Number(netEmReductions?.avgProjectEmissionReductions),
-          avgLeakageEmissionReductions: Number(netEmReductions?.avgLeakageEmissionReductions),
-          avgNetEmissionReductions: Number(netEmReductions?.avgNetEmissionReductions),
-        });
-      }
-    } catch (error) {
-      console.log('error', error);
-    }
-  };
-
-  const getPDDData = async () => {
-    try {
-      const res = await post(API_PATHS.QUERY_DOCUMENT, {
+      const pddResponse = await post(API_PATHS.QUERY_DOCUMENT, {
         refId: state?.documents?.PDD?.refId,
         documentType: DocumentEnum.PDD,
       });
+      if (pddResponse?.statusText === 'SUCCESS') {
+        pddData = pddResponse?.data?.data;
+      }
+      console.log('-----------pddData--------------', pddData);
+    } catch (error) {
+      console.log('Error fetching PDD data', error);
+    }
 
-      if (res?.statusText === 'SUCCESS') {
-        const response = res?.data?.data;
-        console.log('---------PDD------------', response);
-        const participants =
-          response?.projectActivity?.projectParticipants?.map((participantObj: any) =>
-            participantObj.projectParticipants?.map((p: any) => p.participant)
-          ) || [];
-        basicInformationForm.setFieldsValue({
-          b_hostParty: response?.projectDetails?.hostParty,
-          b_projectParticipants: participants.join(', '),
-          b_mandatorySectoralScopes: response?.projectDetails?.sectoralScope,
-          b_appliedMethodologies: response?.projectDetails?.appliedMethodologies,
-          b_estimatedGHGEmissionReduction:
-            response?.projectDetails?.estimatedAvgGHGEmissionReductionBasicInformation,
-        });
+    //fetch validation data
+    try {
+      const validationResponse = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documents?.VALIDATION?.refId,
+        documentType: DocumentEnum.VALIDATION,
+      });
+      if (validationResponse?.statusText === 'SUCCESS') {
+        validationData = validationResponse?.data?.data;
+      }
+      console.log('-----------validationData--------------', validationData);
+    } catch (error) {
+      console.log('Error fetching validation data', error);
+    }
+
+    //fetch monitoring data
+    try {
+      const monitoringResponse = await post(API_PATHS.QUERY_DOCUMENT, {
+        refId: state?.documents?.MONITORING?.refId,
+        documentType: DocumentEnum.MONITORING,
+      });
+      if (monitoringResponse?.statusText === 'SUCCESS') {
+        monitoringData = monitoringResponse?.data?.data;
       }
     } catch (error) {
-      console.log('error', error);
+      console.log('Error fetching monitoring data', error);
+    }
+
+    const creditingPeriodStartDate = moment.unix(
+      monitoringData?.projectActivityDetails?.pa_projectCreditingPeriod
+    );
+    const creditingPeriodEndDate = moment.unix(
+      monitoringData?.projectActivityDetails?.pa_projectCreditingPeriodEndDate
+    );
+    console.log('creditingPeriodStartDate', creditingPeriodStartDate);
+    console.log('creditingPeriodEndDate', creditingPeriodEndDate);
+    const creditingPeriodDuration = moment.duration(
+      creditingPeriodEndDate.diff(creditingPeriodStartDate)
+    );
+    const durationString = `${creditingPeriodDuration.years()} years, ${creditingPeriodDuration.months()} months and ${creditingPeriodDuration.days()} days`;
+    console.log('durationString', durationString);
+
+    const netEmReductions = monitoringData?.calcEmissionReductions?.netGHGEmissionReductions;
+    const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
+
+    if (programmeData && pddData && validationData && monitoringData) {
+      const docVersions = state?.documents?.[DocumentEnum.VERIFICATION as any]?.version;
+      console.log('------------docVersions-----------', docVersions);
+      console.log('--------state---------', state);
+      const latestVersion = docVersions ? docVersions + 1 : 1;
+      basicInformationForm.setFieldsValue({
+        b_projectDeveloper: programmeData?.projectParticipant,
+        b_hostParty: pddData?.projectDetails?.hostParty,
+        b_mandatorySectoralScopes: pddData?.projectDetails?.sectoralScope,
+        b_appliedMethodologies: pddData?.projectDetails?.appliedMethodologies,
+        b_estimatedGHGEmissionReduction:
+          pddData?.projectDetails?.estimatedAvgGHGEmissionReductionBasicInformation,
+        b_projectTitle: validationData?.basicInformation?.titleOfTheProjectActivity,
+        b_unfccRefNo: validationData?.basicInformation?.unfccRefNo,
+        b_scaleOfProject: validationData?.basicInformation?.projectScale,
+        b_conditionalSectoralScopes: validationData?.basicInformation?.conditionalSectoralScopes,
+        b_monitoringPeriodNo: monitoringData?.projectDetails?.bi_monitoringPeriodNo,
+        b_monitoringPeriodDuration: monitoringData?.projectDetails?.bi_duration,
+        b_versionNoOfMonitoringReport: monitoringData?.projectDetails?.bi_versionNoOfMR,
+        b_creditingPeriod: durationString,
+        b_versionNoOfVerificationReport: latestVersion,
+      });
+
+      ghgProjectDescriptionForm.setFieldsValue({
+        estimatedNetEmissionReductions: emReduction.map((item: any) => {
+          return {
+            ...item,
+            startDate: item?.startDate ? moment.unix(item?.startDate) : undefined,
+            endDate: item?.endDate ? moment.unix(item?.endDate) : undefined,
+          };
+        }),
+        totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
+        totalProjectEmissionReductions: Number(netEmReductions?.totalProjectEmissionReductions),
+        totalLeakageEmissionReductions: Number(netEmReductions?.totalLeakageEmissionReductions),
+        totalNetEmissionReductions: Number(netEmReductions?.totalNetEmissionReductions),
+        totalNumberOfCreditingYears: Number(netEmReductions?.totalNumberOfCreditingYears),
+        avgBaselineEmissionReductions: Number(netEmReductions?.avgBaselineEmissionReductions),
+        avgProjectEmissionReductions: Number(netEmReductions?.avgProjectEmissionReductions),
+        avgLeakageEmissionReductions: Number(netEmReductions?.avgLeakageEmissionReductions),
+        avgNetEmissionReductions: Number(netEmReductions?.avgNetEmissionReductions),
+      });
+
+      console.log(
+        '----------pdd-data loc-----------------',
+        pddData?.projectActivity?.locationsOfProjectActivity
+      );
+      meansOfVerificationForm.setFieldsValue({
+        onSiteInspection: pddData?.projectActivity?.locationsOfProjectActivity?.map((loc: any) => ({
+          siteLocation: loc.locationOfProjectActivity,
+        })),
+        interviewees: [{ lastName: '' }],
+      });
+
+      verficationTeamForm.setFieldsValue({
+        verificationTeamMembers: [{ role: '' }],
+        technicalReviews: [{ role: '' }],
+      });
+      setLoading(false);
     }
   };
-
   const next = () => {
     setCurrent(current + 1);
   };
@@ -264,10 +295,9 @@ const StepperComponent = (props: VerificationStepProps) => {
   };
 
   useEffect(() => {
+    console.log('-------state?.mode-----------', state);
     if (state?.mode === FormMode.CREATE) {
-      getValidationData();
-      getMonitoringData();
-      getPDDData();
+      fetchAndSetData(id);
     }
   }, []);
 
@@ -308,7 +338,16 @@ const StepperComponent = (props: VerificationStepProps) => {
 
             console.log('--------ver res 2---------', data, data.data.basicInformation);
 
-            const basicInformation = basicInformationMapDataToView(data.data.basicInformation);
+            let basicInformation = basicInformationMapDataToView(data.data.basicInformation);
+            const docVersions = state?.documents?.[DocumentEnum.VERIFICATION as any]?.version;
+            const latestVersion = docVersions ? docVersions + 1 : 1;
+            console.log('------------latest version-----------', latestVersion);
+            if (state?.mode === FormMode.EDIT) {
+              basicInformation = {
+                ...basicInformation,
+                b_versionNoOfVerificationReport: latestVersion,
+              };
+            }
             basicInformationForm.setFieldsValue(basicInformation);
 
             const ghgProjectDescription = ghgProjectDescriptionMapDataToFields(
@@ -366,26 +405,6 @@ const StepperComponent = (props: VerificationStepProps) => {
 
     getViewData();
   }, []);
-
-  // const getProjectById = async (programId: any) => {
-  //   try {
-  //     const { data } = await post(API_PATHS.PROJECT_BY_ID, {
-  //       programmeId: programId,
-  //     });
-  //     const creditReceived =
-  //       safeNumber(data.creditBalance) +
-  //       safeNumber(data.creditFrozen) +
-  //       safeNumber(data.creditRetired) +
-  //       safeNumber(data.creditTransferred);
-  //     const creditEst = safeNumber(data.creditEst);
-  //     setVerifiedScer(creditEst - creditReceived);
-  //     basicInformationForm.setFieldsValue({
-  //       projectTitle: data?.title,
-  //     });
-  //   } catch (error) {
-  //     console.log('error');
-  //   }
-  // };
 
   // const getLatestReports = async (programId: any) => {
   //   try {

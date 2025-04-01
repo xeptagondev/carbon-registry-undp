@@ -82,7 +82,7 @@ const INF_SECTOR: { [key: string]: string } = {
   WASTE: 'Waste',
 };
 
-const INF_SECTORAL_SCOPE: { [key: string]: string } = {
+export const INF_SECTORAL_SCOPE: { [key: string]: string } = {
   ENERGY_INDUSTRIES: 'Energy Industries (Renewable)',
   ENERGY_DISTRIBUTION: 'Energy Distribution',
   ENERGY_DEMAND: 'Energy Demand',
@@ -1213,7 +1213,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                               ]}
                             >
-                              <Input size="large" />
+                              <Input size="large" disabled={disableFields} />
                             </Form.Item>
                             <Form.Item
                               label={t('addProgramme:email')}
@@ -1221,7 +1221,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                               rules={[
                                 {
                                   required: true,
-                                  message: '',
+                                  message: `${t('addProgramme:email')} ${t('isRequired')}`,
                                 },
                                 {
                                   whitespace: true,
@@ -1229,23 +1229,14 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      return;
-                                    } else {
-                                      const val = value.trim();
-                                      const reg =
-                                        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                                      const matches = val.match(reg) ? val.match(reg) : [];
-                                      if (matches.length === 0) {
-                                        throw new Error(
-                                          `${t('addProgramme:email')} ${t('isInvalid')}`
-                                        );
-                                      }
+                                    const val = value.trim();
+                                    const reg =
+                                      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                                    const matches = val.match(reg) ? val.match(reg) : [];
+                                    if (val.length > 0 && matches.length === 0) {
+                                      throw new Error(
+                                        `${t('addProgramme:email')} ${t('isInvalid')}`
+                                      );
                                     }
                                   },
                                 },
@@ -1388,17 +1379,10 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() !== '' ||
-                                      String(value).trim() !== undefined ||
-                                      value !== null ||
-                                      value !== undefined
-                                    ) {
-                                      if (value && !validator.isURL('https://' + value))
-                                        throw new Error(
-                                          `${t('addProgramme:website')} ${t('isInvalid')}`
-                                        );
-                                    }
+                                    if (value.trim().length > 0 && !validator.isURL(value))
+                                      throw new Error(
+                                        `${t('addProgramme:website')} ${t('isInvalid')}`
+                                      );
                                   },
                                 },
                               ]}
@@ -1413,6 +1397,12 @@ export const ProgrammeCreationComponent = (props: any) => {
                               rules={[
                                 {
                                   required: true,
+                                  message: `${t('addProgramme:contactPersonName')} ${t(
+                                    'isRequired'
+                                  )}`,
+                                },
+                                {
+                                  whitespace: true,
                                   message: `${t('addProgramme:contactPersonName')} ${t(
                                     'isRequired'
                                   )}`,

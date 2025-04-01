@@ -94,11 +94,12 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
     }
     return e?.fileList;
   };
-  useEffect(() => {
-    if (formMode === FormMode.CREATE) {
-      form.setFieldValue('onSiteInspection', [{ activity: '' }]);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (formMode === FormMode.CREATE) {
+  //     form.setFieldValue('onSiteInspection', [{ activity: '' }]);
+  //     form.setFieldValue('interviewees', [{ lastName: '' }]);
+  //   }
+  // }, []);
 
   const calculateTotalCL = (value: number) => {
     let total = 0;
@@ -139,6 +140,12 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
         return {
           ...item,
           activityPerformedDate: moment(item?.activityPerformedDate).startOf('day').unix(),
+        };
+      }),
+      interviewees: values?.interviewees.map((item: any) => {
+        return {
+          ...item,
+          date: moment.unix(item?.date).startOf('day').unix(),
         };
       }),
     };
@@ -437,6 +444,260 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                       </div>
                     </>
                     {/* On-site inspection table end */}
+
+                    {/* Interviews table start */}
+                    <>
+                      <h4 className="form-section-heading">{t('verificationReport:interviews')}</h4>
+                      <div className="interviews-table">
+                        <Row className="header">
+                          <Col xl={1} className="col-1 col">
+                            No
+                          </Col>
+                          <Col xl={9} className="interviewee-col">
+                            <Row>
+                              <Col xl={24} className="other-cols col">
+                                Interviewee
+                              </Col>
+                            </Row>
+                            <Row>
+                              <Col xl={8} className="interviewee-col-subCols-first">
+                                Last name
+                              </Col>
+                              <Col xl={8} className="interviewee-col-subCols">
+                                First name
+                              </Col>
+                              <Col xl={8} className="interviewee-col-subCols-last">
+                                Affliation
+                              </Col>
+                            </Row>
+                          </Col>
+                          <Col xl={3} className="other-cols col">
+                            Date
+                          </Col>
+                          <Col xl={3} className="other-cols col">
+                            Subject
+                          </Col>
+                          <Col xl={4} className="other-cols col">
+                            Team Member
+                          </Col>
+                          <Col xl={3}></Col>
+                        </Row>
+                        <Row className="body mg-bottom-2">
+                          <Form.List name="interviewees">
+                            {(fields, { add, remove }) => (
+                              <>
+                                {fields.map(({ key, name, ...restFields }) => (
+                                  <>
+                                    <Col xl={1} className="col-1 col">
+                                      {name + 1 < 10 && '0'}
+                                      {name + 1}
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'lastName']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'firstName']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'affliationName']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'date']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <DatePicker
+                                          size="small"
+                                          disabledDate={(currentDate: any) =>
+                                            currentDate < moment().startOf('day')
+                                          }
+                                          disabled={disableFields}
+                                        />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={3} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'subject ']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={4} className="other-cols col">
+                                      <Form.Item
+                                        name={[name, 'teamMember']}
+                                        rules={[
+                                          {
+                                            required: true,
+                                            message: ``,
+                                          },
+                                          {
+                                            validator: async (rule, value) => {
+                                              if (
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
+                                                value === null ||
+                                                value === undefined
+                                              ) {
+                                                throw new Error(
+                                                  `${t('validationReport:required')}`
+                                                );
+                                              }
+                                            },
+                                          },
+                                        ]}
+                                      >
+                                        <Input disabled={disableFields} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xl={4} className="action-col">
+                                      <Form.Item>
+                                        <Button
+                                          onClick={add}
+                                          size="small"
+                                          className="addMinusBtn"
+                                          icon={<PlusOutlined />}
+                                          disabled={disableFields}
+                                        ></Button>
+                                      </Form.Item>
+                                      {name > 0 && (
+                                        <Form.Item>
+                                          <Button
+                                            // type="dashed"
+                                            onClick={() => {
+                                              // removeParticipants(name2);
+                                              remove(name);
+                                            }}
+                                            size="small"
+                                            className="addMinusBtn"
+                                            // block
+                                            icon={<MinusOutlined />}
+                                            disabled={disableFields}
+                                          >
+                                            {/* Minus Participant */}
+                                          </Button>
+                                        </Form.Item>
+                                      )}
+                                    </Col>
+                                  </>
+                                ))}
+                              </>
+                            )}
+                          </Form.List>
+                        </Row>
+                      </div>
+                    </>
+                    {/* Interviews table end */}
 
                     <Form.Item
                       label={t('verificationReport:samplingApproach')}

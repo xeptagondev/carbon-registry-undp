@@ -254,7 +254,7 @@ export const retirementsByDateOptions: any = {
     showForSingleSeries: false,
     showForNullSeries: false,
     showForZeroSeries: false,
-    position: 'right',
+    position: 'bottom',
     horizontalAlign: 'center',
     floating: false,
     fontSize: '12px',
@@ -266,18 +266,18 @@ export const retirementsByDateOptions: any = {
     tooltipHoverFormatter: undefined,
     customLegendItems: ['Retirements', 'Transfers'],
     offsetX: 0,
-    offsetY: 5,
+    offsetY: 0,
     labels: {
       colors: '#000000d9',
       useSeriesColors: false,
     },
     formatter: function (seriesName: any) {
       // Return the legend item with added margin-top
-      return `<span style="display: inline-block; margin-top: 10px; padding-left: 5px; color: rgba(140, 140, 140, 1);">${seriesName}</span>`;
+      return `<span style="display: inline-block; margin-top: 0px; padding-left: 5px; color: rgba(140, 140, 140, 1);">${seriesName}</span>`;
     },
     markers: {
-      width: 8,
-      height: 8,
+      width: 12,
+      height: 12,
       strokeWidth: 0,
       strokeColor: '#fff',
       fillColors: ['rgba(255, 99, 97, 1)', 'rgba(72, 150, 254, 1)'],
@@ -425,7 +425,7 @@ export const creditsByDateOptions: any = {
     showForNullSeries: false,
     showForZeroSeries: false,
     position: 'bottom',
-    horizontalAlign: 'left',
+    horizontalAlign: 'center',
     floating: false,
     fontSize: '12px',
     fontFamily: 'Inter',
@@ -439,21 +439,21 @@ export const creditsByDateOptions: any = {
     offsetX: 0,
     offsetY: 5,
     labels: {
-      colors: '#000000d9',
+      colors: 'rgba(140, 140, 140, 1)',
       useSeriesColors: false,
     },
     markers: {
-      width: 8,
-      height: 8,
+      width: 12,
+      height: 12,
       strokeWidth: 0,
       strokeColor: '#fff',
+      radius: 2,
       fillColors: [
         'rgba(72, 150, 254, 1)',
         'rgba(22, 200, 199, 1)',
         'rgba(136, 124, 253, 1)',
         'rgba(255, 99, 97, 1)',
       ],
-      radius: 2,
       customHTML: undefined,
       onClick: undefined,
       offsetX: 0,
