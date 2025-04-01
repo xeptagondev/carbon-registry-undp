@@ -7,6 +7,9 @@ import { ProfileIcon } from '../../../Components/IconComponents/ProfileIcon/prof
 import '../creditPageStyles.scss';
 import { CreditTransfersInterface } from '../Interfaces/creditTransfers.interface';
 import moment from 'moment';
+import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
+import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
+import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
 
 const { Search } = Input;
 
@@ -40,6 +43,7 @@ export const CreditTransfersTableComponent = (props: any) => {
   const { t } = props;
 
   const { post } = useConnection();
+  const { userInfoState } = useUserContext();
   const isInitialRender = useRef(false);
   const [totalProgramme, setTotalProgramme] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -58,7 +62,7 @@ export const CreditTransfersTableComponent = (props: any) => {
 
     if (search && search !== '') {
       filter.push({
-        key: 'projectName',
+        key: 'project"."title',
         operation: 'like',
         value: `%${search}%`,
       });
@@ -105,7 +109,7 @@ export const CreditTransfersTableComponent = (props: any) => {
   const columns = [
     {
       title: t(CrediTransferColumns.TRANSFER_ID),
-      key: CrediTransferColumns.PROJECT_NAME,
+      key: 'id',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -114,7 +118,7 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
     {
       title: t(CrediTransferColumns.PROJECT_NAME),
-      key: CrediTransferColumns.PROJECT_NAME,
+      key: 'project.title',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -123,7 +127,7 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
     {
       title: t(CrediTransferColumns.DATE),
-      key: CrediTransferColumns.DATE,
+      key: 'createdDate',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -135,7 +139,6 @@ export const CreditTransfersTableComponent = (props: any) => {
     {
       title: t(CrediTransferColumns.SERIAL_NO),
       key: CrediTransferColumns.SERIAL_NO,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
         return <span>{item?.serialNumber}</span>;
@@ -143,7 +146,7 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
     {
       title: t(CrediTransferColumns.CREDIT_SENDER),
-      key: CrediTransferColumns.CREDIT_SENDER,
+      key: 'sender.name',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -162,7 +165,7 @@ export const CreditTransfersTableComponent = (props: any) => {
     },
     {
       title: t(CrediTransferColumns.CREDIT_RECEIVER),
-      key: CrediTransferColumns.CREDIT_RECEIVER,
+      key: 'receiver.name',
       sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
@@ -182,29 +185,34 @@ export const CreditTransfersTableComponent = (props: any) => {
     {
       title: t(CrediTransferColumns.CREDIT_TRANSFERRED),
       key: CrediTransferColumns.CREDIT_TRANSFERRED,
-      sorter: true,
       align: 'left' as const,
       render: (item: CreditTransfersInterface) => {
-        return <span style={{ marginLeft: '20px' }}>{item?.creditAmount}</span>;
+        return <span style={{ marginLeft: '20px' }}>{addCommSep(String(item?.creditAmount))}</span>;
       },
     },
-    {
-      title: t(CrediTransferColumns.STATUS),
-      key: CrediTransferColumns.STATUS,
-      align: 'center' as const,
-      render: (item: CreditTransfersInterface) => {
-        return (
-          <Tag color={getStatusColor(item.transferStatus as TransferStatus)}>
-            {t(item.transferStatus)}
-          </Tag>
-        );
-      },
-    },
+    ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
+      ? [
+          {
+            title: t(CrediTransferColumns.STATUS),
+            key: CrediTransferColumns.STATUS,
+            align: 'center' as const,
+            render: (item: CreditTransfersInterface) => {
+              return (
+                <Tag color={getStatusColor(item.transferStatus as TransferStatus)}>
+                  {t(item.transferStatus)}
+                </Tag>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
-  const onSearch = async () => {
-    if (search) {
-      setSearch(search?.toLowerCase());
+  const onSearch = async (value: string) => {
+    if (value) {
+      setSearch(value.toLowerCase());
+    } else {
+      setSearch('');
     }
   };
 
@@ -241,7 +249,7 @@ export const CreditTransfersTableComponent = (props: any) => {
           <div className="filter-section">
             <div className="search-bar">
               <Search
-                onPressEnter={onSearch}
+                onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                 placeholder={`${t('search')}`}
                 allowClear
                 onSearch={onSearch}

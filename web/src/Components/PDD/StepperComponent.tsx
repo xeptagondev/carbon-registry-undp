@@ -36,6 +36,7 @@ import { API_PATHS } from '../../Config/apiConfig';
 import Monitoring from './Monitoring';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { ROUTES } from '../../Config/uiRoutingConfig';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 const CMA_STEPS = {};
 
@@ -139,8 +140,9 @@ const StepperComponent = (props: any) => {
       if (state?.mode === FormMode?.CREATE) {
         form1.setFieldsValue({
           projectTitle: data?.title,
+          versionNumber: 1,
           projectProponent: data?.company?.name,
-          sectoralScope: data?.sectoralScope,
+          sectoralScope: INF_SECTORAL_SCOPE[data?.sectoralScope],
         });
         form4.setFieldsValue({
           projectActivityStartDate: moment(data?.startDate * 1000).format('YYYY-MM-DD'),
@@ -200,7 +202,18 @@ const StepperComponent = (props: any) => {
             const data = res?.data;
             setDocumentId(data?.refId);
 
-            const projectDetails = BasicInformationDataMapToFields(data.data?.projectDetails);
+            let projectDetails = BasicInformationDataMapToFields(data.data?.projectDetails);
+
+            if (state?.mode === FormMode.EDIT) {
+              const docVersions = state?.documents?.[DocumentEnum.PDD]?.version;
+              console.log('----------state-------', state);
+              const latestVersion = docVersions ? docVersions + 1 : 1;
+
+              projectDetails = {
+                ...projectDetails,
+                versionNumber: latestVersion,
+              };
+            }
             form1.setFieldsValue(projectDetails);
 
             const descripitonOfProjectActivity = descriptionOfProjectActivityDataMapToFields(

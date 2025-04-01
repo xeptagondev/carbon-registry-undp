@@ -11,6 +11,7 @@ import {
     TransactionReceipt,
     TransferTransaction,
     TokenBurnTransaction,
+    Hbar,
 } from '@hashgraph/sdk';
 import { ConfigService } from '@nestjs/config';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
@@ -127,24 +128,60 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
     async retireProjectNFT(
         tokenId: string,
         serial: number,
-        accountId: string,
-        privateKey: string,
-    ): Promise<any> {
-        const client = Client.forTestnet();
-        const operatorId = AccountId.fromString(accountId);
-        const operatorKey = PrivateKey.fromStringED25519(privateKey);
-        client.setOperator(operatorId, operatorKey);
+        userAccountId: string,
+        userPrivateKeyStr: string,
+        supplyKeyStr: string,
+        treasuryAccountId: string,
+    ): Promise<string> {
+        if (userAccountId !== treasuryAccountId) {
+            const userClient = Client.forTestnet().setOperator(
+                AccountId.fromString(userAccountId),
+                PrivateKey.fromStringED25519(userPrivateKeyStr),
+            );
+
+            const transferTx = await new TransferTransaction()
+                .addNftTransfer(
+                    tokenId,
+                    serial,
+                    userAccountId,
+                    treasuryAccountId,
+                )
+                .setMaxTransactionFee(new Hbar(5))
+                .freezeWith(userClient);
+
+            const transferSign = await transferTx.sign(
+                PrivateKey.fromStringED25519(userPrivateKeyStr),
+            );
+            const transferSubmit = await transferSign.execute(userClient);
+            const transferReceipt = await transferSubmit.getReceipt(userClient);
+
+            if (transferReceipt.status.toString() !== 'SUCCESS') {
+                throw new Error(
+                    `Failed to transfer NFT to treasury: ${transferReceipt.status}`,
+                );
+            }
+        }
+
+        const supplyClient = Client.forTestnet().setOperator(
+            AccountId.fromString(treasuryAccountId),
+            PrivateKey.fromStringED25519(supplyKeyStr),
+        );
 
         const burnTx = await new TokenBurnTransaction()
             .setTokenId(tokenId)
             .setSerials([serial])
-            .freezeWith(client);
+            .setMaxTransactionFee(new Hbar(5))
+            .freezeWith(supplyClient);
 
-        const burnSign = await burnTx.sign(operatorKey);
-        const burnSubmit = await burnSign.execute(client);
-        const receipt: TransactionReceipt = await burnSubmit.getReceipt(client);
+        const burnSign = await burnTx.sign(
+            PrivateKey.fromStringED25519(supplyKeyStr),
+        );
 
-        return receipt.status;
+        const burnSubmit = await burnSign.execute(supplyClient);
+        const burnReceipt: TransactionReceipt =
+            await burnSubmit.getReceipt(supplyClient);
+
+        return burnReceipt.status.toString();
     }
 
     onModuleDestroy() {

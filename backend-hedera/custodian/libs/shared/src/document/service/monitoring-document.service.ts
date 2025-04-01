@@ -94,7 +94,10 @@ export class MonitoringDocumentService extends DocumentService {
                 jwtData.userRole === RoleEnum.Admin
             )
         ) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to create Monitoring reports.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         // start transaction and save document
@@ -229,20 +232,41 @@ export class MonitoringDocumentService extends DocumentService {
 
             if (
                 lastActivity &&
-                lastActivity.state !==
-                    ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
+                (lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_UPLOADED ||
+                    lastActivity.state ===
+                        ActivityStateEnum.MONITORING_REPORT_VERIFIED)
             ) {
-                if (
-                    lastActivity.state ===
-                        ActivityStateEnum.MONITORING_REPORT_UPLOADED ||
-                    lastActivity.state ===
-                        ActivityStateEnum.MONITORING_REPORT_VERIFIED
-                ) {
-                    throw new HttpException(
-                        'Monitoring report already exists',
-                        HttpStatus.BAD_REQUEST,
+                throw new HttpException(
+                    'Monitoring report already exists',
+                    HttpStatus.BAD_REQUEST,
+                );
+            } else if (
+                lastActivity &&
+                lastActivity.state ===
+                    ActivityStateEnum.MONITORING_REPORT_REJECTED
+            ) {
+                lastActivity = await queryRunner.manager.save(
+                    plainToClass(ActivityEntity, {
+                        ...lastActivity,
+                        activityDocs: [],
+                        project: project,
+                        state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
+                    }),
+                );
+                const activityDoc =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.ACTIVITY_GRID,
+                        lastActivity?.refId,
+                        jwtData.email,
                     );
-                }
+
+                await this.guardianService.buttonActionRequest(
+                    ButtonNameEnum.ACTIVITY_MONITORING_REPORT_SUBMIT,
+                    ButtonActionEnum.SUBMIT,
+                    activityDoc,
+                    jwtData.email,
+                );
             } else {
                 lastActivity = await queryRunner.manager.save(
                     plainToClass(ActivityEntity, {
@@ -369,7 +393,10 @@ export class MonitoringDocumentService extends DocumentService {
                 OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
             jwtData.userRole !== RoleEnum.Admin
         ) {
-            throw new HttpException('Unauthroized', HttpStatus.UNAUTHORIZED);
+            throw new HttpException(
+                'You do not have permission to approve or reject Monitoring reports.',
+                HttpStatus.UNAUTHORIZED,
+            );
         }
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -422,7 +449,7 @@ export class MonitoringDocumentService extends DocumentService {
             // can only be made by DNA admin(s)
             if (!assigneeAdminEmails.includes(jwtData.email)) {
                 throw new HttpException(
-                    'Unauthorised',
+                    'Your organisation has been not assigned to approve or reject this Monitoring report.',
                     HttpStatus.UNAUTHORIZED,
                 );
             }

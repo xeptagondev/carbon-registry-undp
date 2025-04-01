@@ -98,23 +98,23 @@ export const getProjectProposalStage = (stage: ProjectProposalStage) => {
     case ProjectProposalStage.REJECTED:
       return 'error';
     case ProjectProposalStage.APPROVED:
-      return 'success';
+      return 'green';
     case ProjectProposalStage.PDD_SUBMITTED:
       return 'processing';
     case ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER:
       return 'orange';
     case ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER:
-      return 'success';
+      return 'lime';
     case ProjectProposalStage.PDD_APPROVED_BY_DNA:
-      return 'success';
+      return 'cyan';
     case ProjectProposalStage.PDD_REJECTED_BY_DNA:
       return 'error';
     case ProjectProposalStage.VALIDATION_REPORT_SUBMITTED:
       return 'default';
     case ProjectProposalStage.VALIDATION_REPORT_REJECTED:
-      return 'orange';
+      return 'volcano';
     case ProjectProposalStage.AUTHORISED:
-      return 'success';
+      return 'geekblue';
     default:
       return 'default';
   }

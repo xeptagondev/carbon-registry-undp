@@ -190,5 +190,6 @@
   "issuedCreditsTotalTooltip": "Displays the total number of issued credits. ",
   "transferredCreditsTotalTooltip": "Displays the total number of transferred credits. ",
   "retiredCreditsTotalTooltip": "Displays the total number of retired credits. ",
-  "totalCreditsByDateTooltip": "Displays the credit amounts for different statuses for a specific date."
+  "totalCreditsByDateTooltip": "Displays the credit amounts for different statuses for a specific date.",
+  "noPendingActions": "No Pending Tasks"
 }
