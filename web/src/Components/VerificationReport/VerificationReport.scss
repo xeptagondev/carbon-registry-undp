@@ -588,10 +588,18 @@
 .appendix-title {
   font-size: 18px;
   margin-top: 36px;
-  color: #3a3541cc;
-  i {
+  font-weight: 500;
+  color: #1c1b1bcc !important;
+
+  .i {
     color: rgba(58, 53, 65, 0.5);
   }
+}
+.appendix-sub-title {
+  font-size: 18px;
+  margin-top: 36px;
+  color: rgba(49, 45, 52, 0.5);
+  font-weight: 400;
 }
 
 .appendix-documents-reviewed-table {
