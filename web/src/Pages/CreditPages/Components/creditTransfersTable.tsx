@@ -235,11 +235,20 @@ export const CreditTransfersTableComponent = (props: any) => {
   }, []);
 
   useEffect(() => {
-    if (!isInitialRender.current) return;
+    if (isInitialRender.current) {
+      getQueryData();
+    }
+  }, [currentPage, pageSize]);
 
-    getQueryData();
-  }, [currentPage, pageSize, sortField, sortOrder, search]);
-
+  useEffect(() => {
+    if (isInitialRender.current) {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        getQueryData();
+      }
+    }
+  }, [sortField, sortOrder, search]);
   // MARK: Main JSX START
 
   return (
