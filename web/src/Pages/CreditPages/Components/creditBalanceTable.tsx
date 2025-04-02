@@ -375,16 +375,17 @@ export const CreditBalanceTableComponent = (props: any) => {
     if (isInitialRender.current) {
       getQueryData();
     }
-  }, [
-    currentPage,
-    pageSize,
-    sortField,
-    sortOrder,
-    search,
-    checkBoxOptions,
-    modalActionVisible,
-    modalResponseVisible,
-  ]);
+  }, [currentPage, pageSize]);
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        getQueryData();
+      }
+    }
+  }, [sortField, sortOrder, search, checkBoxOptions, modalActionVisible, modalResponseVisible]);
 
   const onFinishAction = async (
     reciveParty: any,
