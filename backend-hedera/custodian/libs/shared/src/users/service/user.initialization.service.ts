@@ -16,6 +16,9 @@ import { UtilService } from '@app/shared/util/service/util.service';
 
 import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
 import { UserService } from './user.service';
+import { UsersEntity } from '../entity/users.entity';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { TaskEnum } from '@app/shared/task/enum/task.enum';
 
 @Injectable()
 export class UserInitializationService implements OnModuleInit {
@@ -26,6 +29,10 @@ export class UserInitializationService implements OnModuleInit {
         private readonly userService: UserService,
         @InjectRepository(OrganizationEntity)
         private readonly organizationRepository: Repository<OrganizationEntity>,
+        @InjectRepository(TaskEntity)
+        private readonly taskRepository: Repository<TaskEntity>,
+        @InjectRepository(UsersEntity)
+        private readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(OrganizationTypeEntity)
         private readonly organizationTypeRepository: Repository<OrganizationTypeEntity>,
     ) {}
@@ -36,6 +43,16 @@ export class UserInitializationService implements OnModuleInit {
         // }
         if (this.configService.get('system.initOrgs') === 'true') {
             await this.createInitialOrganizations();
+        }
+        if (this.configService.get('system.initApiAdmin') === 'true') {
+            const asyncTask: TaskEntity = {
+                className: 'UserInitializationService',
+                functionName: 'createDnaApiAdmin',
+                args: [],
+                retryAttemps: 2,
+                state: TaskEnum.PENDING,
+            };
+            await this.taskRepository.save(asyncTask);
         }
     }
 
@@ -121,6 +138,51 @@ export class UserInitializationService implements OnModuleInit {
             this.logger.error(
                 'Error occurred while creating inital organizations',
             );
+            throw e;
+        }
+    }
+
+    async createDnaApiAdmin() {
+        try {
+            const isApiUserExist: UsersEntity =
+                await this.usersRepository.findOne({
+                    where: {
+                        isApiUser: true,
+                        email: this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+                        ),
+                    },
+                    relations: {
+                        organization: true,
+                    },
+                });
+
+            if (isApiUserExist) {
+                this.logger.log('API admin already exist');
+                return;
+            }
+
+            const user = new UsersDTO();
+
+            user.email = this.configService.get(
+                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+            );
+            user.name = 'API User';
+
+            user.password = this.configService.get(
+                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
+            );
+            user.isApiUser = true;
+            user.role = RoleEnum.Admin;
+
+            await this.userService.register(
+                user,
+                user.password,
+                UserStateConstant.ACTIVE,
+                undefined,
+            );
+        } catch (e) {
+            this.logger.error('Error occurred while creating api admin user');
             throw e;
         }
     }
