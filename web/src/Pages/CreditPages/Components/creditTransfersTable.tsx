@@ -259,7 +259,7 @@ export const CreditTransfersTableComponent = (props: any) => {
             <div className="search-bar">
               <Search
                 onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
-                placeholder={`${t('search')}`}
+                placeholder={`${t('searchByNameProjectName')}`}
                 allowClear
                 onChange={(e) => setSearch(e.target.value)}
                 style={{ width: 265 }}
