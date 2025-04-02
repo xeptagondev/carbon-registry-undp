@@ -83,7 +83,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
       far_doeAssesmentDate: moment(values?.far_doeAssesmentDate).startOf('day').unix(),
     };
 
-    console.log('---------validation onFinish-------------', tempVals);
+    //console.log('---------validation onFinish-------------', tempVals);
     handleValuesUpdate(tempVals);
   };
 
