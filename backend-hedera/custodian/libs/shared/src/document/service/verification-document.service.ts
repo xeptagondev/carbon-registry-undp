@@ -205,26 +205,6 @@ export class VerificationDocumentService extends DocumentService {
                 );
                 verificationData.appendix.appendix1Documents = docUrls;
             }
-            // if (
-            //     verificationData?.verificationOpinion?.signature1 &&
-            //     verificationData?.verificationOpinion?.signature1.length > 0
-            // ) {
-            //     await this.uploadDocuments(
-            //         verificationData?.verificationOpinion?.signature1,
-            //         AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
-            //         project.refId,
-            //     );
-            // }
-            // if (
-            //     verificationData?.verificationOpinion?.signature2 &&
-            //     verificationData?.verificationOpinion?.signature2.length > 0
-            // ) {
-            //     await this.uploadDocuments(
-            //         verificationData?.verificationOpinion?.signature2,
-            //         AdditionalDocType.VERIFICATION_REPORT_VERIFICATION_OPINION_SIGN_1,
-            //         project.refId,
-            //     );
-            // }
 
             const submittedUser: UsersEntity =
                 await queryRunner.manager.findOne(UsersEntity, {

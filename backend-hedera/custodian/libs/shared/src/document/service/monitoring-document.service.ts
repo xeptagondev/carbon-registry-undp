@@ -186,14 +186,7 @@ export class MonitoringDocumentService extends DocumentService {
             }
 
             const monitoringData = dto.data;
-            // console.log(
-            //     '------monitoring  appendix-----------',
-            //     monitoringData?.appendix?.a_uploadDoc,
-            // );
-            // console.log(
-            //     '-------monitoring baseline-----------',
-            //     monitoringData?.calcEmissionReductions?.ce_documentUpload,
-            // );
+
             if (
                 monitoringData?.appendix?.a_uploadDoc &&
                 monitoringData.appendix.a_uploadDoc.length > 0

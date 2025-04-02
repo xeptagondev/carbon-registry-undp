@@ -129,12 +129,8 @@ export class VrDocumentService extends DocumentService {
                 dto.projectRefId,
             );
 
-            //console.log('reached backend-----');
             const validationData = dto.data;
-            // console.log(
-            //     '--------------',
-            //     validationData?.appendix.appendix1Documents,
-            // );
+
             if (
                 validationData?.appendix?.appendix1Documents &&
                 validationData.appendix.appendix1Documents.length > 0
@@ -145,7 +141,6 @@ export class VrDocumentService extends DocumentService {
                     dto.projectRefId,
                 );
                 validationData.appendix.appendix1Documents = docUrls;
-                //console.log('------doc url---------', docUrls);
             }
 
             if (!lastPDD || lastPDD.state !== DocumentStateEnum.DNA_APPROVED) {
