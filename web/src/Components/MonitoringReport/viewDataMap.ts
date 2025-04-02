@@ -105,7 +105,7 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
 
   const tempVals = {
     ...vals,
-    ce_documentUpload: mapBase64ToFields([vals?.ce_documentUpload]),
+    ce_documentUpload: mapBase64ToFields(vals?.ce_documentUpload),
     emissionsPeriodStart: firstYearlyReductions?.startDate
       ? moment.unix(firstYearlyReductions?.startDate)
       : undefined,

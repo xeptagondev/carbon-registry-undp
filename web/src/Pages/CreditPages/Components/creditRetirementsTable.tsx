@@ -90,11 +90,11 @@ export const CreditRetirementsTableComponent = (props: any) => {
   const [sortField, setSortField] = useState<string>();
   const [indeterminate, setIndeterminate] = useState(false);
   const [checkAllBox, setCheckAllBox] = useState<boolean>(true);
-  const [checkBoxOptions, setCheckBoxOptions] = useState<any[]>([]);
   const checkBoxMenu = Object.keys(StatusOptions).map((k, index) => ({
     label: Object.values(StatusOptions)[index],
     value: Object.values(StatusOptions)[index],
   }));
+  const [checkBoxOptions, setCheckBoxOptions] = useState<any[]>(checkBoxMenu.map((e) => e.value));
   const [modalActionVisible, setModalActionVisible] = useState<boolean>(false);
   const [modalActionLoading, setModalActionLoading] = useState<boolean>(false);
   const [modalActionData, setModalActionData] = useState<{
@@ -440,11 +440,11 @@ export const CreditRetirementsTableComponent = (props: any) => {
               : ActionResponseType.PROCESSSED,
           icon:
             action === RetirementActionEnum.ACCEPT ? (
-              <Icon.Check2Circle color={COLOR_CONFIGS.SUCCESS_RESPONSE_COLOR} />
+              <Icon.CheckCircle color={COLOR_CONFIGS.SUCCESS_RESPONSE_COLOR} />
             ) : action === RetirementActionEnum.REJECT ? (
-              <Icon.Check2Circle color={COLOR_CONFIGS.PROCESSED_RESPONSE_COLOR} />
+              <Icon.CheckCircle color={COLOR_CONFIGS.PROCESSED_RESPONSE_COLOR} />
             ) : (
-              <Icon.Check2Circle color={COLOR_CONFIGS.PROCESSED_RESPONSE_COLOR} />
+              <Icon.CheckCircle color={COLOR_CONFIGS.PROCESSED_RESPONSE_COLOR} />
             ),
           title: t(
             action === RetirementActionEnum.ACCEPT
