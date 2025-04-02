@@ -16,20 +16,20 @@ export const basicInformationMapDataToFields = (vals: any) => {
 };
 
 export const projectActivityMapDataToFields = (vals: any) => {
-  console.log('--------vals---------', vals);
+  //console.log('--------vals---------', vals);
   if (vals === undefined) return;
 
   const firstLocation =
-    vals?.locationsOfProjectActivity && vals?.locationsOfProjectActivity?.length > 0
-      ? vals?.locationsOfProjectActivity.shift()
+    vals?.locationDetailsOfProjectActivity && vals?.locationDetailsOfProjectActivity?.length > 0
+      ? vals?.locationDetailsOfProjectActivity.shift()
       : undefined;
-
+  //console.log('------first location-----------', firstLocation);
   const tempVals = {
     ...vals,
     ...firstLocation,
     optionalImages: mapBase64ToFields(firstLocation?.additionalDocuments),
     extraLocations: (function () {
-      const locations = vals?.locationsOfProjectActivity;
+      const locations = vals?.locationDetailsOfProjectActivity;
       let tempExtraLocations: any[] = [];
       if (locations !== 0 && locations.length > 0) {
         tempExtraLocations = locations.map((location: any) => {

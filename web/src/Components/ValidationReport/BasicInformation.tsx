@@ -212,6 +212,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
       mandatarySectoralScopes: values?.mandatarySectoralScopes,
       annualAverageGHGReduction: values?.annualAverageGHGReduction,
       approverName: values?.approverName,
+      creditingPeriod: values?.creditingPeriod,
       creditingPeriodStart: moment(values?.creditingPeriodStart).startOf('day').unix(),
       creditingPeriodEnd: moment(values?.creditingPeriodEnd).startOf('day').unix(),
     };
