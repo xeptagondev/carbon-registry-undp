@@ -344,6 +344,17 @@ export abstract class DocumentService {
                 },
             });
 
+            if (query.documentType === DocumentEnum.INF) {
+                if (
+                    lastDoc?.project?.assignees &&
+                    lastDoc.project.assignees.length
+                ) {
+                    lastDoc.data.independentCertifiers =
+                        lastDoc.project.assignees.map(
+                            (assignee) => assignee.name,
+                        );
+                }
+            }
             return { data: lastDoc };
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
