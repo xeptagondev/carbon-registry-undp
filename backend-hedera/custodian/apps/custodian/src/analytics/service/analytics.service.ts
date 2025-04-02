@@ -144,7 +144,9 @@ export class AnalyticsService {
             },
         });
 
-        return combinedResults;
+        return combinedResults.sort((a, b) => {
+            return b.updatedDate - a.updatedDate;
+        });
     }
 
     async getProjectSummary(jwtData: JWTPayload) {
@@ -249,89 +251,92 @@ export class AnalyticsService {
 
         let pendingCount = 0;
         let rejectedCount = 0;
+        let authorisedCount = 0;
         let lastStatusUpdateTime: number = 0;
-        const seenProjects = new Set<string>();
-        const projectIdSetForFilter = new Set<string>();
+        // const seenProjects = new Set<string>();
+        // const projectIdSetForFilter = new Set<string>();
 
         for (const row of latestAudits) {
             const status = row.audit_logType;
-            const projectId = row.audit_projectId;
+            // const projectId = row.audit_projectId;
             const createdTime = Number(row.audit_createdTime);
 
-            seenProjects.add(projectId);
-            projectIdSetForFilter.add(projectId);
+            // seenProjects.add(projectId);
+            // projectIdSetForFilter.add(projectId);
             lastStatusUpdateTime = Math.max(lastStatusUpdateTime, createdTime);
 
             if (pendingStatuses.includes(status)) {
                 pendingCount++;
             } else if (rejectedStatuses.includes(status)) {
                 rejectedCount++;
+            } else if (ProjectAuditLogType.AUTHORISED === status) {
+                authorisedCount++;
             }
         }
 
-        const authorisedQb = this.auditRepository
-            .createQueryBuilder('audit')
-            .select('DISTINCT audit.projectId', 'projectId')
-            .innerJoin(
-                ProjectEntity,
-                'project',
-                'project.refId = audit.projectId',
-            )
-            .where('audit.logType = :authType', {
-                authType: ProjectAuditLogType.AUTHORISED,
-            });
+        // const authorisedQb = this.auditRepository
+        //     .createQueryBuilder('audit')
+        //     .select('DISTINCT audit.projectId', 'projectId')
+        //     .innerJoin(
+        //         ProjectEntity,
+        //         'project',
+        //         'project.refId = audit.projectId',
+        //     )
+        //     .where('audit.logType = :authType', {
+        //         authType: ProjectAuditLogType.AUTHORISED,
+        //     });
 
         // Apply same filters again
-        if (filters?.startDate) {
-            authorisedQb.andWhere('audit.createdTime >= :startDate', {
-                startDate: filters.startDate,
-            });
-        }
+        // if (filters?.startDate) {
+        //     authorisedQb.andWhere('audit.createdTime >= :startDate', {
+        //         startDate: filters.startDate,
+        //     });
+        // }
 
-        if (filters?.endDate) {
-            authorisedQb.andWhere('audit.createdTime <= :endDate', {
-                endDate: filters.endDate,
-            });
-        }
+        // if (filters?.endDate) {
+        //     authorisedQb.andWhere('audit.createdTime <= :endDate', {
+        //         endDate: filters.endDate,
+        //     });
+        // }
 
-        if (filters?.sector) {
-            authorisedQb.andWhere('project.sectoralScope = :sector', {
-                sector: filters.sector,
-            });
-        }
+        // if (filters?.sector) {
+        //     authorisedQb.andWhere('project.sectoralScope = :sector', {
+        //         sector: filters.sector,
+        //     });
+        // }
 
-        if (filters?.isMine) {
-            if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.PROJECT_DEVELOPER
-            ) {
-                authorisedQb.andWhere('project.organization.id = :orgId', {
-                    orgId: jwtData.organizationId,
-                });
-            } else if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-            ) {
-                authorisedQb.innerJoin(
-                    'project_assignees',
-                    'pa',
-                    'pa.project_id = project.id AND pa.organization_id = :orgId',
-                    { orgId: jwtData.organizationId },
-                );
-            }
-        }
+        // if (filters?.isMine) {
+        //     if (
+        //         jwtData.organizationRole ===
+        //         OrganizationTypeEnum.PROJECT_DEVELOPER
+        //     ) {
+        //         authorisedQb.andWhere('project.organization.id = :orgId', {
+        //             orgId: jwtData.organizationId,
+        //         });
+        //     } else if (
+        //         jwtData.organizationRole ===
+        //         OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+        //     ) {
+        //         authorisedQb.innerJoin(
+        //             'project_assignees',
+        //             'pa',
+        //             'pa.project_id = project.id AND pa.organization_id = :orgId',
+        //             { orgId: jwtData.organizationId },
+        //         );
+        //     }
+        // }
 
-        if (projectIdSetForFilter.size > 0) {
-            authorisedQb.andWhere('audit.projectId IN (:...ids)', {
-                ids: Array.from(projectIdSetForFilter),
-            });
-        }
+        // if (projectIdSetForFilter.size > 0) {
+        //     authorisedQb.andWhere('audit.projectId IN (:...ids)', {
+        //         ids: Array.from(projectIdSetForFilter),
+        //     });
+        // }
 
-        const authorisedProjects = await authorisedQb.getRawMany();
-        const authorisedCount = authorisedProjects.length;
+        // const authorisedProjects = await authorisedQb.getRawMany();
+        // const authorisedCount = authorisedProjects.length;
 
         return {
-            totalProjects: seenProjects.size,
+            totalProjects: authorisedCount + pendingCount + rejectedCount,
             authorisedCount,
             pendingCount,
             rejectedCount,
@@ -343,7 +348,7 @@ export class AnalyticsService {
         filters: ProjectDataRequestDTO,
         jwtData: JWTPayload,
     ) {
-        const nonAuthorisedLogTypes = [
+        const allLogTypes = [
             ProjectAuditLogType.PENDING,
             ProjectAuditLogType.REJECTED,
             ProjectAuditLogType.APPROVED,
@@ -354,10 +359,6 @@ export class AnalyticsService {
             ProjectAuditLogType.PDD_APPROVED_BY_DNA,
             ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
             ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
-        ];
-
-        const allLogTypes = [
-            ...nonAuthorisedLogTypes,
             ProjectAuditLogType.AUTHORISED,
         ];
 
@@ -382,7 +383,7 @@ export class AnalyticsService {
             .select('audit.logType', 'logType')
             .addSelect('COUNT(DISTINCT project.id)', 'count')
             .where('audit.logType IN (:...logTypes)', {
-                logTypes: nonAuthorisedLogTypes,
+                logTypes: allLogTypes,
             });
 
         if (filters?.startDate) {
@@ -424,56 +425,56 @@ export class AnalyticsService {
         latestStatusQb.groupBy('audit.logType');
         const latestResult = await latestStatusQb.getRawMany();
 
-        const authorisedQb = this.auditRepository
-            .createQueryBuilder('audit')
-            .select('DISTINCT audit.projectId', 'projectId')
-            .innerJoin(
-                ProjectEntity,
-                'project',
-                'project.refId = audit.projectId',
-            )
-            .where('audit.logType = :authType', {
-                authType: ProjectAuditLogType.AUTHORISED,
-            });
+        // const authorisedQb = this.auditRepository
+        //     .createQueryBuilder('audit')
+        //     .select('DISTINCT audit.projectId', 'projectId')
+        //     .innerJoin(
+        //         ProjectEntity,
+        //         'project',
+        //         'project.refId = audit.projectId',
+        //     )
+        //     .where('audit.logType = :authType', {
+        //         authType: ProjectAuditLogType.AUTHORISED,
+        //     });
 
-        if (filters?.startDate) {
-            authorisedQb.andWhere('audit.createdTime >= :startDate', {
-                startDate: filters.startDate,
-            });
-        }
-        if (filters?.endDate) {
-            authorisedQb.andWhere('audit.createdTime <= :endDate', {
-                endDate: filters.endDate,
-            });
-        }
-        if (filters?.sector) {
-            authorisedQb.andWhere('project.sectoralScope = :sector', {
-                sector: filters.sector,
-            });
-        }
-        if (filters?.isMine) {
-            if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.PROJECT_DEVELOPER
-            ) {
-                authorisedQb.andWhere('project.organization.id = :orgId', {
-                    orgId: jwtData.organizationId,
-                });
-            } else if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-            ) {
-                authorisedQb.innerJoin(
-                    'project_assignees',
-                    'pa',
-                    'pa.project_id = project.id AND pa.organization_id = :orgId',
-                    { orgId: jwtData.organizationId },
-                );
-            }
-        }
+        // if (filters?.startDate) {
+        //     authorisedQb.andWhere('audit.createdTime >= :startDate', {
+        //         startDate: filters.startDate,
+        //     });
+        // }
+        // if (filters?.endDate) {
+        //     authorisedQb.andWhere('audit.createdTime <= :endDate', {
+        //         endDate: filters.endDate,
+        //     });
+        // }
+        // if (filters?.sector) {
+        //     authorisedQb.andWhere('project.sectoralScope = :sector', {
+        //         sector: filters.sector,
+        //     });
+        // }
+        // if (filters?.isMine) {
+        //     if (
+        //         jwtData.organizationRole ===
+        //         OrganizationTypeEnum.PROJECT_DEVELOPER
+        //     ) {
+        //         authorisedQb.andWhere('project.organization.id = :orgId', {
+        //             orgId: jwtData.organizationId,
+        //         });
+        //     } else if (
+        //         jwtData.organizationRole ===
+        //         OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+        //     ) {
+        //         authorisedQb.innerJoin(
+        //             'project_assignees',
+        //             'pa',
+        //             'pa.project_id = project.id AND pa.organization_id = :orgId',
+        //             { orgId: jwtData.organizationId },
+        //         );
+        //     }
+        // }
 
-        const authorisedProjects = await authorisedQb.getRawMany();
-        const authorisedCount = authorisedProjects.length;
+        // const authorisedProjects = await authorisedQb.getRawMany();
+        // const authorisedCount = authorisedProjects.length;
 
         const formatted: Record<string, number> = {};
         allLogTypes.forEach((logType) => {
@@ -484,7 +485,7 @@ export class AnalyticsService {
             formatted[row.logType] = parseInt(row.count, 10);
         }
 
-        formatted[ProjectAuditLogType.AUTHORISED] = authorisedCount;
+        // formatted[ProjectAuditLogType.AUTHORISED] = authorisedCount;
 
         return formatted;
     }
