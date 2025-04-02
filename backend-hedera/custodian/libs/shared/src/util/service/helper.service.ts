@@ -146,6 +146,9 @@ export class HelperService {
                 'organization"."name',
                 'user"."name',
                 'user"."email',
+                'receiver"."name',
+                'creditBlock"."type',
+                'project"."title',
             ].includes(key)
         )
             return true;

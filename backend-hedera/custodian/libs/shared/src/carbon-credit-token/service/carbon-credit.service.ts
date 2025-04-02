@@ -602,7 +602,8 @@ export class CarbonCreditService {
         }
 
         if (query.filterAnd) {
-            for (const filter of query.filterAnd) {
+            for (let i = 0; i < query.filterAnd.length; i++) {
+                const filter = query.filterAnd[i];
                 if (
                     filter.key === 'creditBlock"."type' &&
                     filter.operation === 'in' &&
@@ -804,6 +805,22 @@ export class CarbonCreditService {
             qb.andWhere('sender.id = :orgId', { orgId });
         }
 
+        if (query.filterAnd) {
+            for (let i = 0; i < query.filterAnd.length; i++) {
+                const filter = query.filterAnd[i];
+                if (
+                    filter.key === 'creditTx"."status' &&
+                    filter.operation === 'in' &&
+                    Array.isArray(filter.value) &&
+                    !filter.value.length
+                ) {
+                    filter.value.push(CreditEventStatusEnum.COMPLETED);
+                    filter.value.push(CreditEventStatusEnum.CANCELLED);
+                    filter.value.push(CreditEventStatusEnum.PENDING);
+                    filter.value.push(CreditEventStatusEnum.REJECTED);
+                }
+            }
+        }
         const extraWhere = this.helperService.generateWhereSQL(query);
         if (extraWhere && extraWhere.trim() !== '') {
             qb.andWhere(extraWhere);
