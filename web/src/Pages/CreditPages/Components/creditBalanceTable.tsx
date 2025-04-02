@@ -461,7 +461,7 @@ export const CreditBalanceTableComponent = (props: any) => {
         className="table-actions-section"
       >
         {userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER && (
-          <Col lg={{ span: 15 }} md={{ span: 14 }}>
+          <Col lg={{ span: 13 }} md={{ span: 12 }}>
             <div className="action-bar">
               <Checkbox
                 className="all-check"
@@ -483,7 +483,7 @@ export const CreditBalanceTableComponent = (props: any) => {
             </div>
           </Col>
         )}
-        <Col lg={{ span: 9 }} md={{ span: 10 }}>
+        <Col lg={{ span: 11 }} md={{ span: 12 }}>
           <div className="filter-section">
             <div className="search-bar">
               <Search
@@ -491,7 +491,7 @@ export const CreditBalanceTableComponent = (props: any) => {
                 placeholder={`${t('searchByProjectOrOrg')}`}
                 allowClear
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ width: 265 }}
+                style={{ width: 285 }}
               />
             </div>
           </div>
