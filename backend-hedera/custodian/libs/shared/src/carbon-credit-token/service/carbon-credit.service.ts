@@ -784,6 +784,7 @@ export class CarbonCreditService {
             .leftJoinAndSelect('creditTx.project', 'project')
             .leftJoinAndSelect('creditTx.sender', 'sender')
             .leftJoinAndSelect('creditTx.receiver', 'receiver')
+            .leftJoinAndSelect('creditTx.country', 'country')
             .select([
                 'creditTx.id as id',
                 'creditTx.serialNumber as "serialNumber"',
@@ -791,6 +792,7 @@ export class CarbonCreditService {
                 'creditTx.createdDate as "createdDate"',
                 'creditTx.retirementType as "retirementType"',
                 'creditTx.status as status',
+                'country.name as "countryName"',
                 'project.id as "projectId"',
                 'project.title as "projectName"',
                 'sender.id as "senderId"',
@@ -1261,6 +1263,7 @@ export class CarbonCreditService {
                 type: CreditEventTypeEnum.RETIRED,
                 retirementType: retireRequest.retirementType,
                 status: CreditEventStatusEnum.PENDING,
+                country: retireRequest.country,
             });
 
             await queryRunner.manager.save(creditTransaction);
