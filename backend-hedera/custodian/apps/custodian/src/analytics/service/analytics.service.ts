@@ -144,6 +144,15 @@ export class AnalyticsService {
             },
         });
 
+        for (const project of combinedResults) {
+            if (project.activities?.length) {
+                project.activities.sort(
+                    (a, b) => b.updatedDate - a.updatedDate,
+                );
+                project.activities = [project.activities[0]];
+            }
+        }
+
         return combinedResults.sort((a, b) => {
             return b.updatedDate - a.updatedDate;
         });
