@@ -921,7 +921,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input disabled={disableFields} />
+                                <Input disabled={true} />
                               </Form.Item>
                             </div>
                             <div className="col-2">
@@ -959,7 +959,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                             },
                                           ]}
                                         >
-                                          <Input disabled={disableFields} />
+                                          <Input disabled={true} />
                                         </Form.Item>
 
                                         <Form.Item>
@@ -972,7 +972,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                             className="addMinusBtn"
                                             // block
                                             icon={<PlusOutlined />}
-                                            disabled={disableFields}
+                                            disabled={true}
                                           >
                                             {/* Add Participant */}
                                           </Button>
@@ -989,7 +989,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                               className="addMinusBtn"
                                               // block
                                               icon={<MinusOutlined />}
-                                              disabled={disableFields}
+                                              disabled={true}
                                             >
                                               {/* Minus Participant */}
                                             </Button>
@@ -1008,7 +1008,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                           <Col>
                             <Form.Item>
                               <Button
-                                disabled={disableFields}
+                                disabled={true}
                                 onClick={() => {
                                   // add();
                                   const temp = form.getFieldValue('projectParticipants');
@@ -1066,7 +1066,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input disabled={disableFields} />
+                                <Input disabled={true} />
                               </Form.Item>
                             </div>
                             <div className="col-2">
@@ -1090,7 +1090,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   },
                                 ]}
                               >
-                                <Input disabled={disableFields} />
+                                <Input disabled={true} />
                               </Form.Item>
                             </div>
                             <button onClick={add}>+</button>
