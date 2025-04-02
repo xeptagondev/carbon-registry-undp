@@ -261,7 +261,7 @@ export const CreditTransfersTableComponent = (props: any) => {
                 onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                 placeholder={`${t('search')}`}
                 allowClear
-                onSearch={onSearch}
+                onChange={(e) => setSearch(e.target.value)}
                 style={{ width: 265 }}
               />
             </div>
