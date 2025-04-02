@@ -119,7 +119,7 @@
   "q_leakagePlaceholder": "Quantify project emissions and/or removals providing sufficient information to allow the  reader to reproduce the calculation. This section shall include all formulae used and  description to calculate the project emissions applying actual values. Attach electronic  spreadsheets as an appendix or separate file to facilitate the verification of the results.",
   "q_projectEmissionsPlaceholder": "Quantify project emissions and/or removals providing sufficient information to allow the  reader to reproduce the calculation. This section shall include all formulae used and  description to calculate the project emissions applying actual values. Attach electronic  spreadsheets as an appendix or separate file to facilitate the verification of the results.",
   "a_appendix": "Appendix",
-  "a_uploadDoc": "Upload your additional documents here",
+  "a_uploadDoc": "Upload your images here(Optional)",
   "contactPerson": "Contact Person",
   "telephone": "Telephone",
   "fax": "Fax",
