@@ -120,7 +120,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     const filter: any[] = [];
     const filterOr: any[] = [];
 
-    if (checkBoxOptions && checkBoxOptions.length > 0) {
+    if (checkBoxOptions) {
       filter.push({
         key: 'creditTx"."status',
         operation: 'in',
@@ -402,20 +402,20 @@ export const CreditRetirementsTableComponent = (props: any) => {
   }, []);
 
   useEffect(() => {
-    if (!isInitialRender.current) return;
+    if (isInitialRender.current) {
+      getQueryData();
+    }
+  }, [currentPage, pageSize]);
 
-    getQueryData();
-  }, [
-    currentPage,
-    pageSize,
-    sortField,
-    sortOrder,
-    search,
-    checkBoxOptions,
-    modalActionVisible,
-    modalResponseVisible,
-  ]);
-
+  useEffect(() => {
+    if (isInitialRender.current) {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        getQueryData();
+      }
+    }
+  }, [sortField, sortOrder, search, checkBoxOptions, modalActionVisible, modalResponseVisible]);
   const onFinishAction = async (
     transactionId: any,
     action: RetirementActionEnum,
