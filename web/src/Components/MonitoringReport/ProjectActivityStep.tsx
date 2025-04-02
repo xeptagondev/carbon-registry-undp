@@ -100,75 +100,82 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
   };
 
   const onFinish = async (values: any) => {
-    // console.log('onFinish triggered');
-    // console.log('-----------temp Values before-------');
+    const projectActivityDetails = {
+      pa_monitoringPurpose: values?.pa_monitoringPurpose,
+      projectParticipants: values?.projectParticipants,
+      pa_methodology: values?.pa_methodology,
+      pa_creditingPeriodType: values?.pa_creditingPeriodType,
+      pa_projectCreditingPeriod: moment(values?.pa_projectCreditingPeriod).startOf('day').unix(),
+      pa_projectCreditingPeriodEndDate: moment(values?.pa_projectCreditingPeriodEndDate)
+        .startOf('day')
+        .unix(),
+      locationDetailsOfProjectActivity: await (async function () {
+        const tempList: any[] = [];
+        const firstObj = {
+          locationOfProjectActivity: values?.locationOfProjectActivity,
+          siteNo: values?.pa_siteNo,
+          province: values?.province,
+          district: values?.district,
+          city: values?.pa_city,
+          community: values?.community,
+          geographicalLocationCoordinates: values?.location,
+          additionalDocuments: await async function () {
+            const base64Docs: string[] = [];
 
-    // const firstObj = {
-    //   locationOfProjectActivity: values?.locationOfProjectActivity,
-    //   siteNo: values?.pa_siteNo,
-    //   province: values?.province,
-    //   district: values?.district,
-    //   city: values?.pa_city,
-    //   community: values?.community,
-    //   geographicalLocationCoordinates: values?.location,
-    //   uploadImages: await async function () {
-    //     const base64Docs: string[] = [];
+            if (values?.optionalImages && values?.optionalImages.length > 0) {
+              const docs = values.optionalImages;
+              for (let i = 0; i < docs.length; i++) {
+                if (docs[i]?.originFileObj === undefined) {
+                  base64Docs.push(docs[i]?.url);
+                } else {
+                  const temp = await getBase64(docs[i]?.originFileObj as RcFile);
+                  base64Docs.push(temp); // No need for Promise.resolve
+                }
+              }
+            }
 
-    //     if (values?.optionalImages && values?.optionalImages.length > 0) {
-    //       const docs = values.optionalImages;
-    //       for (let i = 0; i < docs.length; i++) {
-    //         if (docs[i]?.originFileObj === undefined) {
-    //           base64Docs.push(docs[i]?.url);
-    //         } else {
-    //           const temp = await getBase64(docs[i]?.originFileObj as RcFile);
-    //           base64Docs.push(temp); // No need for Promise.resolve
-    //         }
-    //       }
-    //     }
+            return base64Docs;
+          },
+        };
+        tempList.push(firstObj);
+        //console.log(firstObj);
 
-    //     return base64Docs;
-    //   },
-    // };
-    // tempList.push(firstObj);
-    // console.log(firstObj);
+        if (values?.extraLocations) {
+          for (const item of values.extraLocations) {
+            const tempObj = {
+              locationOfProjectActivity: item.locationOfProjectActivity, // Use item, not values
+              siteNo: item.siteNo,
+              province: item.province,
+              district: item.district,
+              city: item.city,
+              community: item.community,
+              geographicalLocationCoordinates: item.geographicalLocationCoordinates, // Use item, not values
+              additionalDocuments: await async function () {
+                const base64Docs: string[] = [];
 
-    const locationDetailsOfProjectActivity = await (async function () {
-      const tempList: any[] = [];
+                if (values?.optionalImages && values?.optionalImages.length > 0) {
+                  const docs = values.optionalImages;
+                  for (let i = 0; i < docs.length; i++) {
+                    if (docs[i]?.originFileObj === undefined) {
+                      base64Docs.push(docs[i]?.url);
+                    } else {
+                      const temp = await getBase64(docs[i]?.originFileObj as RcFile);
+                      base64Docs.push(temp); // No need for Promise.resolve
+                    }
+                  }
+                }
 
-      if (values?.extraLocations) {
-        for (const item of values.extraLocations) {
-          const tempObj = {
-            locationOfProjectActivity: item.locationOfProjectActivity, // Use item, not values
-            siteNo: item.siteNo,
-            province: item.province,
-            district: item.district,
-            city: item.city,
-            community: item.community,
-            geographicalLocationCoordinates: item.geographicalLocationCoordinates, // Use item, not values
-            pa_uploadImages: await fileUploadValueExtract(item?.pa_uploadImages, 'pa_uploadImages'),
-          };
-          tempList.push(tempObj);
+                return base64Docs;
+              },
+            };
+            tempList.push(tempObj);
+          }
         }
-      }
-      // console.log('Final tempList:', tempList);
-      return tempList;
-    })();
-
-    const tempValues: any = {
-      projectActivityDetails: {
-        pa_monitoringPurpose: values?.pa_monitoringPurpose,
-        locationOfProjectActivity: locationDetailsOfProjectActivity,
-        projectParticipants: values?.projectParticipants,
-        pa_methodology: values?.pa_methodology,
-        pa_creditingPeriodType: values?.pa_creditingPeriodType,
-        pa_projectCreditingPeriod: moment(values?.pa_projectCreditingPeriod).startOf('day').unix(),
-        pa_projectCreditingPeriodEndDate: moment(values?.pa_projectCreditingPeriodEndDate)
-          .startOf('day')
-          .unix(),
-      },
+        // console.log('Final tempList:', tempList);
+        return tempList;
+      })(),
     };
-    console.log(tempValues);
-    handleValuesUpdate(tempValues);
+    handleValuesUpdate(projectActivityDetails);
   };
 
   return (
@@ -215,6 +222,299 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                   <h3 className="form-section-title">{`${t(
                     'monitoringReport:projectActivityLocation'
                   )}`}</h3>
+
+                  <h4 className="list-item-title">Location 1</h4>
+                  <div className="form-section">
+                    <h4 className="form-section-title">{`${t(
+                      'validationReport:locationOfProjectActivity'
+                    )}`}</h4>
+
+                    <Row
+                      // justify={'space-between'}
+                      gutter={[40, 16]}
+                      style={{ borderRadius: '8px' }}
+                    >
+                      <Col xl={12} md={24}>
+                        <Form.Item
+                          label={t('validationReport:locationOfProjectActivity')}
+                          name="locationOfProjectActivity"
+                          rules={[
+                            {
+                              required: false,
+                              message: ``,
+                            },
+                            {
+                              validator: async (rule, value) => {
+                                if (
+                                  String(value).trim() === '' ||
+                                  String(value).trim() === undefined ||
+                                  value === null ||
+                                  value === undefined
+                                ) {
+                                  throw new Error(
+                                    `${t('validationReport:locationOfProjectActivity')} ${t(
+                                      'isRequired'
+                                    )}`
+                                  );
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <Input size="large" disabled />
+                        </Form.Item>
+
+                        <Form.Item
+                          label={t('validationReport:siteNo')}
+                          name="siteNo"
+                          rules={[
+                            {
+                              required: false,
+                              message: ``,
+                            },
+                            {
+                              validator: async (rule, value) => {
+                                if (
+                                  String(value).trim() === '' ||
+                                  String(value).trim() === undefined ||
+                                  value === null ||
+                                  value === undefined
+                                ) {
+                                  throw new Error(
+                                    `${t('validationReport:siteNo')} ${t('isRequired')}`
+                                  );
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <Input size="large" disabled />
+                        </Form.Item>
+
+                        <Form.Item
+                          label={t('validationReport:province')}
+                          name="province"
+                          rules={[
+                            {
+                              required: false,
+                              message: ``,
+                            },
+                            {
+                              validator: async (rule, value) => {
+                                if (
+                                  String(value).trim() === '' ||
+                                  String(value).trim() === undefined ||
+                                  value === null ||
+                                  value === undefined
+                                ) {
+                                  throw new Error(
+                                    `${t('validationReport:province')} ${t('isRequired')}`
+                                  );
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <Select
+                            size="large"
+                            disabled
+                            onChange={(value) => onProvinceSelect(value, 0)}
+                            // placeholder={t('validationReport:provincePlaceholder')}
+                            // disabled={disableFields}
+                          >
+                            {provinces.map((province: string, index: number) => (
+                              <Select.Option value={province} key={province + index}>
+                                {province}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                          label={t('validationReport:district')}
+                          name="district"
+                          rules={[
+                            {
+                              required: false,
+                              message: ``,
+                            },
+                            {
+                              validator: async (rule, value) => {
+                                if (
+                                  String(value).trim() === '' ||
+                                  String(value).trim() === undefined ||
+                                  value === null ||
+                                  value === undefined
+                                ) {
+                                  throw new Error(
+                                    `${t('validationReport:district')} ${t('isRequired')}`
+                                  );
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <Select
+                            size="large"
+                            disabled
+                            // placeholder={t('validationReport:districtPlaceholder')}
+                            onSelect={(value) => onDistrictSelect(value, 0)}
+                            // disabled={disableFields}
+                          >
+                            {districts[0]?.map((district: string, index: number) => (
+                              <Select.Option key={district + index} value={district}>
+                                {district}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                          label={t('validationReport:city')}
+                          name="city"
+                          rules={[
+                            {
+                              required: false,
+                              message: ``,
+                            },
+                            {
+                              validator: async (rule, value) => {
+                                if (
+                                  String(value).trim() === '' ||
+                                  String(value).trim() === undefined ||
+                                  value === null ||
+                                  value === undefined
+                                ) {
+                                  throw new Error(
+                                    `${t('validationReport:city')} ${t('isRequired')}`
+                                  );
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <Select
+                            size="large"
+                            // placeholder={t('validationReport:cityPlaceholder')}
+                            disabled
+                          >
+                            {cities[0]?.map((city: string, index) => (
+                              <Select.Option value={city} key={city + index}>
+                                {city}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                        <Form.Item
+                          label={t('validationReport:community')}
+                          name="community"
+                          rules={[
+                            {
+                              required: false,
+                              message: ``,
+                            },
+                            {
+                              validator: async (rule, value) => {
+                                if (
+                                  String(value).trim() === '' ||
+                                  String(value).trim() === undefined ||
+                                  value === null ||
+                                  value === undefined
+                                ) {
+                                  throw new Error(
+                                    `${t('validationReport:community')} ${t('isRequired')}`
+                                  );
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <Input size="large" disabled />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xl={12} md={24}>
+                        <Form.Item
+                          label={t('validationReport:setLocation')}
+                          name="geographicalLocationCoordinates"
+                          rules={[
+                            {
+                              required: false,
+                              message: ``,
+                            },
+                            {
+                              validator: async (rule, value) => {
+                                if (
+                                  String(value).trim() === '' ||
+                                  String(value).trim() === undefined ||
+                                  value === null ||
+                                  value === undefined
+                                ) {
+                                  throw new Error(
+                                    `${t('validationReport:location')} ${t('isRequired')}`
+                                  );
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <GetLocationMapComponent
+                            form={form}
+                            formItemName={'geographicalLocationCoordinates'}
+                            existingCordinate={form.getFieldValue(
+                              'geographicalLocationCoordinates'
+                            )}
+                            disabled
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xl={24} md={24}>
+                        <Form.Item
+                          label={t('validationReport:uploadImages')}
+                          name="optionalImages"
+                          valuePropName="fileList"
+                          getValueFromEvent={normFile}
+                          required={false}
+                          rules={[
+                            {
+                              validator: async (rule, file) => {
+                                if (file?.length > 0) {
+                                  if (file[0]?.size > maximumImageSize) {
+                                    // default size format of files would be in bytes -> 1MB = 1000000bytes
+                                    throw new Error(`${t('common:maxSizeVal')}`);
+                                  }
+                                }
+                              },
+                            },
+                          ]}
+                        >
+                          <Upload
+                            accept=".doc, .docx, .pdf, .png, .jpg"
+                            beforeUpload={(file: any) => {
+                              return false;
+                            }}
+                            className="design-upload-section"
+                            name="design"
+                            action="/upload.do"
+                            listType="picture"
+                            multiple={false}
+                            disabled={true}
+                            // maxCount={1}
+                          >
+                            <Button
+                              className="upload-doc"
+                              size="large"
+                              icon={<UploadOutlined />}
+                              disabled={true}
+                            >
+                              {t('validationReport:upload')}
+                            </Button>
+                          </Upload>
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
 
                   {/* ----------------------handle dynamic fields  ---------------------------*/}
                   <Form.List name="extraLocations">
@@ -496,7 +796,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                               <Col xl={24} md={24}>
                                 <Form.Item
                                   label={t('monitoringReport:pa_uploadImages')}
-                                  name={[name, 'uploadImages']}
+                                  name={[name, 'optionalImages']}
                                   valuePropName="fileList"
                                   getValueFromEvent={normFile}
                                   required={false}
