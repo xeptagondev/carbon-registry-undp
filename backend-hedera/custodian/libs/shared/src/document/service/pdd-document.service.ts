@@ -134,10 +134,7 @@ export class PddDocumentService extends DocumentService {
                 );
             }
             const pddData = dto.data;
-            // console.log(
-            //     '------------pdd-------------',
-            //     pddData?.appendix?.appendix2Documents,
-            // );
+
             const additionalDocumentFields = [
                 {
                     field: 'appendix2Documents',
