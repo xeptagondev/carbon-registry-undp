@@ -88,6 +88,7 @@ export default () => ({
     system: {
         initPolicy: process.env.INIT_POLICY_ENABLE || false,
         initOrgs: process.env.INIT_ORGS_ENABLE || false,
+        initApiAdmin: process.env.INIT_API_ADMIN || false,
     },
     organizations: {
         DNA: {
@@ -105,6 +106,8 @@ export default () => ({
             orgLogo: process.env.DNA_ROOT_ORGANIZATION_LOGO,
             orgHederaAccount: process.env.DNA_ORGANIZATION_HEDERA_ACCOUNT_ID,
             orgHederaKey: process.env.DNA_ORGANIZATION_HEDERA_ACCOUNT_KEY,
+            apiAdminEmail: process.env.API_USER_EMAIL,
+            apiAdminPwd: process.env.API_USER_PASSWORD,
         },
     },
     security: {

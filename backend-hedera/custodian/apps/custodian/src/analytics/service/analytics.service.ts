@@ -116,6 +116,9 @@ export class AnalyticsService {
                 this.projectRepository.find({
                     where: { projectProposalStage: In(statesList) },
                     order: { updatedDate: 'DESC' },
+                    relations: {
+                        activities: true,
+                    },
                 }),
                 this.projectRepository.find({
                     where: {
@@ -123,6 +126,9 @@ export class AnalyticsService {
                         activities: { state: In(activityStatesList) },
                     },
                     order: { updatedDate: 'DESC' },
+                    relations: {
+                        activities: true,
+                    },
                 }),
             ]);
 
@@ -152,6 +158,9 @@ export class AnalyticsService {
                         activities: null,
                     },
                     order: { updatedDate: 'DESC' },
+                    relations: {
+                        activities: true,
+                    },
                 }),
                 this.projectRepository.find({
                     where: {
@@ -160,6 +169,9 @@ export class AnalyticsService {
                         activities: { state: In(activityStatesList) },
                     },
                     order: { updatedDate: 'DESC' },
+                    relations: {
+                        activities: true,
+                    },
                 }),
             ]);
 
@@ -189,6 +201,9 @@ export class AnalyticsService {
                         assignees: { id: jwtData.organizationId },
                     },
                     order: { updatedDate: 'DESC' },
+                    relations: {
+                        activities: true,
+                    },
                 }),
                 this.projectRepository.find({
                     where: {
@@ -197,6 +212,9 @@ export class AnalyticsService {
                         assignees: { id: jwtData.organizationId },
                     },
                     order: { updatedDate: 'DESC' },
+                    relations: {
+                        activities: true,
+                    },
                 }),
             ]);
 
