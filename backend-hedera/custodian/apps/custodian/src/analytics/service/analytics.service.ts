@@ -89,137 +89,62 @@ export class AnalyticsService {
     }
 
     async getPendingActions(jwtData: JWTPayload) {
-        const combineAndSort = (
-            arr1: ProjectEntity[],
-            arr2: ProjectEntity[],
-        ) => {
-            const combined = [...arr1, ...arr2];
-
-            return combined.sort((a, b) => {
-                return b.updatedDate - a.updatedDate;
-            });
-        };
+        let statesList = [];
+        let activityStatesList = [];
         if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
         ) {
-            const statesList = [
+            statesList = [
                 ProjectProposalStage.PENDING,
                 ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER,
                 ProjectProposalStage.VALIDATION_REPORT_SUBMITTED,
             ];
-            const activityStatesList = [
+            activityStatesList = [
                 ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
             ];
-
-            const [results, activityResults] = await Promise.all([
-                this.projectRepository.find({
-                    where: { projectProposalStage: In(statesList) },
-                    order: { updatedDate: 'DESC' },
-                    relations: {
-                        activities: true,
-                    },
-                }),
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: ProjectProposalStage.AUTHORISED,
-                        activities: { state: In(activityStatesList) },
-                    },
-                    order: { updatedDate: 'DESC' },
-                    relations: {
-                        activities: true,
-                    },
-                }),
-            ]);
-
-            // Combine & sort by updatedAt (descending)
-            return combineAndSort(results, activityResults);
-        }
-
-        // 2) PROJECT_DEVELOPER
-        else if (
+        } else if (
             jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER
         ) {
-            const statesList = [
+            statesList = [
                 ProjectProposalStage.APPROVED,
                 ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER,
                 ProjectProposalStage.PDD_REJECTED_BY_DNA,
                 ProjectProposalStage.AUTHORISED,
             ];
-            const activityStatesList = [
-                ActivityStateEnum.MONITORING_REPORT_REJECTED,
-            ];
-
-            const [results, activityResults] = await Promise.all([
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: In(statesList),
-                        organization: { id: jwtData.organizationId },
-                        activities: null,
-                    },
-                    order: { updatedDate: 'DESC' },
-                    relations: {
-                        activities: true,
-                    },
-                }),
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: ProjectProposalStage.AUTHORISED,
-                        organization: { id: jwtData.organizationId },
-                        activities: { state: In(activityStatesList) },
-                    },
-                    order: { updatedDate: 'DESC' },
-                    relations: {
-                        activities: true,
-                    },
-                }),
-            ]);
-
-            return combineAndSort(results, activityResults);
-        }
-
-        // 3) INDEPENDENT_CERTIFIER
-        else if (
+            activityStatesList = [ActivityStateEnum.MONITORING_REPORT_REJECTED];
+        } else if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
-            const statesList = [
+            statesList = [
                 ProjectProposalStage.PDD_SUBMITTED,
                 ProjectProposalStage.PDD_APPROVED_BY_DNA,
                 ProjectProposalStage.VALIDATION_REPORT_REJECTED,
             ];
-            const activityStatesList = [
+            activityStatesList = [
                 ActivityStateEnum.MONITORING_REPORT_UPLOADED,
                 ActivityStateEnum.MONITORING_REPORT_VERIFIED,
                 ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
             ];
-
-            const [results, activityResults] = await Promise.all([
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: In(statesList),
-                        assignees: { id: jwtData.organizationId },
-                    },
-                    order: { updatedDate: 'DESC' },
-                    relations: {
-                        activities: true,
-                    },
-                }),
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: ProjectProposalStage.AUTHORISED,
-                        activities: { state: In(activityStatesList) },
-                        assignees: { id: jwtData.organizationId },
-                    },
-                    order: { updatedDate: 'DESC' },
-                    relations: {
-                        activities: true,
-                    },
-                }),
-            ]);
-
-            return combineAndSort(results, activityResults);
         }
+
+        const combinedResults = await this.projectRepository.find({
+            where: [
+                { projectProposalStage: In(statesList) },
+
+                {
+                    projectProposalStage: ProjectProposalStage.AUTHORISED,
+                    activities: { state: In(activityStatesList) },
+                },
+            ],
+            order: { updatedDate: 'DESC' },
+            relations: {
+                activities: true,
+            },
+        });
+
+        return combinedResults;
     }
 
     async getProjectSummary(jwtData: JWTPayload) {
@@ -252,6 +177,7 @@ export class AnalyticsService {
             ProjectAuditLogType.PDD_SUBMITTED,
             ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
             ProjectAuditLogType.PDD_APPROVED_BY_DNA,
+            ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
         ];
 
         const rejectedStatuses = [
@@ -421,7 +347,6 @@ export class AnalyticsService {
             ProjectAuditLogType.PENDING,
             ProjectAuditLogType.REJECTED,
             ProjectAuditLogType.APPROVED,
-            ProjectAuditLogType.NO_OBJECTION_LETTER_GENERATED,
             ProjectAuditLogType.PDD_SUBMITTED,
             ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
             ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
