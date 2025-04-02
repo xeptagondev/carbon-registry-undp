@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+    HttpException,
+    HttpStatus,
+    Injectable,
+    Logger,
+    OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -162,6 +168,35 @@ export class UserInitializationService implements OnModuleInit {
                 return;
             }
 
+            const dnaOrganization: OrganizationEntity =
+                await this.organizationRepository.findOne({
+                    where: {
+                        organizationType: {
+                            name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                        },
+                    },
+                });
+
+            const dnaRootUser: UsersEntity = await this.usersRepository.findOne(
+                {
+                    where: {
+                        guardianRole: {
+                            role: {
+                                name: RoleEnum.Root,
+                            },
+                        },
+                    },
+                },
+            );
+
+            if (!dnaOrganization || !dnaRootUser) {
+                this.logger.error('No DNA Organization or Root Exists');
+                throw new HttpException(
+                    'No DNA Organization Exists',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
             const user = new UsersDTO();
 
             user.email = this.configService.get(
@@ -179,7 +214,22 @@ export class UserInitializationService implements OnModuleInit {
                 user,
                 user.password,
                 UserStateConstant.ACTIVE,
-                undefined,
+                {
+                    email: this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
+                    ),
+                    organizationName: dnaOrganization.name,
+                    userName: dnaRootUser.name,
+                    userId: dnaRootUser.id,
+                    userRefId: dnaRootUser.refId,
+                    userRole: RoleEnum.Root,
+                    userState: true,
+                    organizationId: dnaOrganization.id,
+                    organizationRefId: dnaOrganization.refId,
+                    organizationRole:
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                    organizationState: OrganizationStateEnum.ACTIVE,
+                },
             );
         } catch (e) {
             this.logger.error('Error occurred while creating api admin user');

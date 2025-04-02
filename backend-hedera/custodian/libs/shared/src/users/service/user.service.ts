@@ -1262,6 +1262,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             value: null,
         });
 
+        query.filterAnd.push({
+            key: 'is_api_user',
+            operation: '=',
+            value: false,
+        });
+
         if (
             !(
                 requestUser.organizationRole ==
