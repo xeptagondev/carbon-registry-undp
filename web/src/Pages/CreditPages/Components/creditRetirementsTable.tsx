@@ -509,7 +509,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
                 onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                 placeholder={`${t('searchByNameProjectName')}`}
                 allowClear
-                onSearch={onSearch}
+                onChange={(e) => setSearch(e.target.value)}
                 style={{ width: 265 }}
               />
             </div>

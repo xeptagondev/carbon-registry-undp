@@ -24,6 +24,8 @@ export class UsersDTO extends SuperDTO<UsersEntity> {
     password: string;
     role: RoleEnum;
     isActive?: boolean;
+    @Unwrap()
+    isApiUser?: boolean = false;
     // @Unwrap({ name: 'organization' })
     company: OrganizationDto;
 }
