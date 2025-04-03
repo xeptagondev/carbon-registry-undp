@@ -119,7 +119,10 @@ export class AnalyticsService {
                 ProjectProposalStage.PDD_REJECTED_BY_DNA,
                 ProjectProposalStage.AUTHORISED,
             ];
-            activityStatesList = [ActivityStateEnum.MONITORING_REPORT_REJECTED];
+            activityStatesList = [
+                ActivityStateEnum.MONITORING_REPORT_REJECTED,
+                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
+            ];
             whereClause.push({
                 projectProposalStage: In(statesList),
                 organization: {
@@ -174,18 +177,32 @@ export class AnalyticsService {
             },
         });
 
+        const returnData = [];
         for (const project of combinedResults) {
             if (project.activities?.length) {
-                project.activities.sort(
+                project.activities = project.activities.sort(
                     (a, b) => b.updatedDate - a.updatedDate,
                 );
-                project.activities = [project.activities[0]];
+                project.activities = project.activities.filter((activity) =>
+                    activityStatesList.includes(activity?.state),
+                );
+
+                project.activities = project.activities.length
+                    ? [project.activities[0]]
+                    : [];
+                if (project.activities.length) {
+                    returnData.push(project);
+                }
+            } else {
+                returnData.push(project);
             }
         }
 
-        return combinedResults.sort((a, b) => {
-            return b.updatedDate - a.updatedDate;
-        });
+        return returnData.length
+            ? returnData.sort((a, b) => {
+                  return b.updatedDate - a.updatedDate;
+              })
+            : [];
     }
 
     async getProjectSummary(jwtData: JWTPayload) {
@@ -421,57 +438,6 @@ export class AnalyticsService {
         latestStatusQb.groupBy('audit.logType');
         const latestResult = await latestStatusQb.getRawMany();
 
-        // const authorisedQb = this.auditRepository
-        //     .createQueryBuilder('audit')
-        //     .select('DISTINCT audit.projectId', 'projectId')
-        //     .innerJoin(
-        //         ProjectEntity,
-        //         'project',
-        //         'project.refId = audit.projectId',
-        //     )
-        //     .where('audit.logType = :authType', {
-        //         authType: ProjectAuditLogType.AUTHORISED,
-        //     });
-
-        // if (filters?.startDate) {
-        //     authorisedQb.andWhere('audit.createdTime >= :startDate', {
-        //         startDate: filters.startDate,
-        //     });
-        // }
-        // if (filters?.endDate) {
-        //     authorisedQb.andWhere('audit.createdTime <= :endDate', {
-        //         endDate: filters.endDate,
-        //     });
-        // }
-        // if (filters?.sector) {
-        //     authorisedQb.andWhere('project.sectoralScope = :sector', {
-        //         sector: filters.sector,
-        //     });
-        // }
-        // if (filters?.isMine) {
-        //     if (
-        //         jwtData.organizationRole ===
-        //         OrganizationTypeEnum.PROJECT_DEVELOPER
-        //     ) {
-        //         authorisedQb.andWhere('project.organization.id = :orgId', {
-        //             orgId: jwtData.organizationId,
-        //         });
-        //     } else if (
-        //         jwtData.organizationRole ===
-        //         OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-        //     ) {
-        //         authorisedQb.innerJoin(
-        //             'project_assignees',
-        //             'pa',
-        //             'pa.project_id = project.id AND pa.organization_id = :orgId',
-        //             { orgId: jwtData.organizationId },
-        //         );
-        //     }
-        // }
-
-        // const authorisedProjects = await authorisedQb.getRawMany();
-        // const authorisedCount = authorisedProjects.length;
-
         const formatted: Record<string, number> = {};
         allLogTypes.forEach((logType) => {
             formatted[logType] = 0;
@@ -481,8 +447,6 @@ export class AnalyticsService {
             formatted[row.logType] = parseInt(row.count, 10);
         }
 
-        // formatted[ProjectAuditLogType.AUTHORISED] = authorisedCount;
-
         return formatted;
     }
 
@@ -490,8 +454,19 @@ export class AnalyticsService {
         filters: ProjectDataRequestDTO,
         jwtData: JWTPayload,
     ): Promise<Record<string, number>> {
+        const subQuery = this.auditRepository
+            .createQueryBuilder('sub_audit')
+            .select('sub_audit.projectId', 'projectId')
+            .addSelect('MAX(sub_audit.createdTime)', 'latestTime')
+            .groupBy('sub_audit.projectId');
+
         const qb = this.auditRepository
             .createQueryBuilder('audit')
+            .innerJoin(
+                `(${subQuery.getQuery()})`,
+                'latest',
+                'latest."projectId" = audit.projectId AND latest."latestTime" = audit.createdTime',
+            )
             .innerJoin(
                 ProjectEntity,
                 'project',
@@ -685,24 +660,24 @@ export class AnalyticsService {
         const [result] = await baseQb.getRawMany();
 
         return {
-            authorisedAmount: parseInt(result.authorisedAmount, 10),
-            lastAuthorisedTime: result.lastAuthorisedTime
-                ? Number(result.lastAuthorisedTime)
+            authorisedAmount: parseInt(result?.authorisedAmount, 10),
+            lastAuthorisedTime: result?.lastAuthorisedTime
+                ? Number(result?.lastAuthorisedTime)
                 : null,
 
-            issuedAmount: parseInt(result.issuedAmount, 10),
-            lastIssuedTime: result.lastIssuedTime
-                ? Number(result.lastIssuedTime)
+            issuedAmount: parseInt(result?.issuedAmount, 10),
+            lastIssuedTime: result?.lastIssuedTime
+                ? Number(result?.lastIssuedTime)
                 : null,
 
-            transferredAmount: parseInt(result.transferredAmount, 10),
-            lastTransferredTime: result.lastTransferredTime
-                ? Number(result.lastTransferredTime)
+            transferredAmount: parseInt(result?.transferredAmount, 10),
+            lastTransferredTime: result?.lastTransferredTime
+                ? Number(result?.lastTransferredTime)
                 : null,
 
-            retiredAmount: parseInt(result.retiredAmount, 10),
-            lastRetiredTime: result.lastRetiredTime
-                ? Number(result.lastRetiredTime)
+            retiredAmount: parseInt(result?.retiredAmount, 10),
+            lastRetiredTime: result?.lastRetiredTime
+                ? Number(result?.lastRetiredTime)
                 : null,
         };
     }
