@@ -61,6 +61,9 @@ export class UsersEntity {
     @Column({ type: 'boolean', default: true })
     isActive: boolean;
 
+    @Column({ name: 'is_api_user', type: 'boolean', default: false })
+    isApiUser: boolean;
+
     @Column({ type: 'bigint', nullable: true })
     createdTime: number;
 

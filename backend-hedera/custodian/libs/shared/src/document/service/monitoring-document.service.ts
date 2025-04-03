@@ -184,91 +184,33 @@ export class MonitoringDocumentService extends DocumentService {
                     HttpStatus.UNAUTHORIZED,
                 );
             }
+
             const monitoringData = dto.data;
 
             if (
-                monitoringData?.annexures?.optionalDocuments &&
-                monitoringData.annexures.optionalDocuments.length > 0
+                monitoringData?.appendix?.a_uploadDoc &&
+                monitoringData.appendix.a_uploadDoc.length > 0
             ) {
                 const docUrls = await this.uploadDocuments(
-                    monitoringData.annexures.optionalDocuments,
-                    AdditionalDocType.MONITORING_REPORT_ANNEXURES_OPTIONAL_DOCUMENT,
-                    project.refId,
+                    monitoringData.appendix.a_uploadDoc,
+                    AdditionalDocType.MONITORING_REPORT_APPENDIX_ADDITIONAL_DOC,
+                    dto.projectRefId,
                 );
-                monitoringData.annexures.optionalDocuments = docUrls;
+                monitoringData.appendix.a_uploadDoc = docUrls;
             }
 
             if (
-                monitoringData?.projectActivity?.projectActivityLocationsList &&
-                monitoringData.projectActivity.projectActivityLocationsList
-                    .length > 0
-            ) {
-                for (const location of monitoringData.projectActivity
-                    .projectActivityLocationsList) {
-                    if (
-                        location.optionalDocuments &&
-                        location.optionalDocuments.length > 0
-                    ) {
-                        location.optionalDocuments = await this.uploadDocuments(
-                            location.optionalDocuments,
-                            AdditionalDocType.MONITORING_REPORT_LOCATION_OF_PROJECT_ACTIVITY_OPTIONAL_DOCUMENT,
-                            project.refId,
-                        );
-                    }
-                }
-            }
-
-            if (
-                monitoringData?.quantifications?.optionalDocuments &&
-                monitoringData.quantifications.optionalDocuments.length > 0
+                monitoringData?.calcEmissionReductions?.ce_documentUpload &&
+                monitoringData.calcEmissionReductions.ce_documentUpload.length >
+                    0
             ) {
                 const docUrls = await this.uploadDocuments(
-                    monitoringData.quantifications.optionalDocuments,
-                    AdditionalDocType.MONITORING_REPORT_QUANTIFICATIONS_OPTIONAL_DOCUMENT,
-                    project.refId,
+                    monitoringData.calcEmissionReductions.ce_documentUpload,
+                    AdditionalDocType.MONITORING_REPORT_BASELINE_EMISSION_ADDITIONAL_DOC,
+                    dto.projectRefId,
                 );
-                monitoringData.quantifications.optionalDocuments = docUrls;
-            }
-
-            if (
-                lastActivity &&
-                lastActivity.state !==
-                    ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
-            ) {
-                if (
-                    lastActivity.state ===
-                        ActivityStateEnum.MONITORING_REPORT_UPLOADED ||
-                    lastActivity.state ===
-                        ActivityStateEnum.MONITORING_REPORT_VERIFIED
-                ) {
-                    throw new HttpException(
-                        'Monitoring report already exists',
-                        HttpStatus.BAD_REQUEST,
-                    );
-                }
-            } else {
-                lastActivity = await queryRunner.manager.save(
-                    plainToClass(ActivityEntity, {
-                        ...lastActivity,
-                        activityDocs: [],
-                        project: project,
-                        state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
-                    }),
-                );
-
-                const activitySchema: ActivitySchema = {
-                    refId: lastActivity.refId,
-                    project: project.refId,
-                };
-
-                await this.guardianService.saveDocument(
-                    jwtData.email,
-                    GUARDIAN_API.BLOCKS.CREATE_ACTIVITY,
-                    {
-                        document: activitySchema,
-                        ref: null,
-                    },
-                );
+                monitoringData.calcEmissionReductions.ce_documentUpload =
+                    docUrls;
             }
 
             if (
@@ -295,19 +237,19 @@ export class MonitoringDocumentService extends DocumentService {
                         state: ActivityStateEnum.MONITORING_REPORT_UPLOADED,
                     }),
                 );
-                // const activityDoc =
-                //     await this.guardianService.getGridDocumentUsingRefId(
-                //         GridTypeEnum.ACTIVITY_GRID,
-                //         lastActivity?.refId,
-                //         jwtData.email,
-                //     );
+                const activityDoc =
+                    await this.guardianService.getGridDocumentUsingRefId(
+                        GridTypeEnum.ACTIVITY_GRID,
+                        lastActivity?.refId,
+                        jwtData.email,
+                    );
 
-                // await this.guardianService.buttonActionRequest(
-                //     ButtonNameEnum.MO,
-                //     ButtonActionEnum.APPROVE,
-                //     activityDoc,
-                //     jwtData.email,
-                // );
+                await this.guardianService.buttonActionRequest(
+                    ButtonNameEnum.ACTIVITY_MONITORING_REPORT_SUBMIT,
+                    ButtonActionEnum.SUBMIT,
+                    activityDoc,
+                    jwtData.email,
+                );
             } else {
                 lastActivity = await queryRunner.manager.save(
                     plainToClass(ActivityEntity, {
