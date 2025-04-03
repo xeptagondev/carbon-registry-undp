@@ -91,6 +91,12 @@ export class AnalyticsService {
     async getPendingActions(jwtData: JWTPayload) {
         let statesList = [];
         let activityStatesList = [];
+        const whereClause = [];
+        whereClause.push({ projectProposalStage: In(statesList) });
+        whereClause.push({
+            projectProposalStage: ProjectProposalStage.AUTHORISED,
+            activities: { state: In(activityStatesList) },
+        });
         if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
@@ -113,6 +119,11 @@ export class AnalyticsService {
                 ProjectProposalStage.AUTHORISED,
             ];
             activityStatesList = [ActivityStateEnum.MONITORING_REPORT_REJECTED];
+            whereClause.push({
+                organization: {
+                    id: jwtData.organizationId,
+                },
+            });
         } else if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.INDEPENDENT_CERTIFIER
@@ -127,6 +138,11 @@ export class AnalyticsService {
                 ActivityStateEnum.MONITORING_REPORT_VERIFIED,
                 ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
             ];
+            whereClause.push({
+                assignees: {
+                    id: jwtData.organizationId,
+                },
+            });
         }
 
         const combinedResults = await this.projectRepository.find({
