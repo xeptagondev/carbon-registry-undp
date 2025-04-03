@@ -601,6 +601,35 @@ export class CarbonCreditService {
             qb.andWhere('receiver.id = :orgId', { orgId: user.organizationId });
         }
 
+        if (query.filterAnd) {
+            for (let i = 0; i < query.filterAnd.length; i++) {
+                const filter = query.filterAnd[i];
+                if (
+                    filter.key === 'creditBlock"."type' &&
+                    filter.operation === 'in' &&
+                    Array.isArray(filter.value) &&
+                    filter.value.length
+                ) {
+                    for (let i = 0; i < filter.value.length; i++) {
+                        const lowerVal = String(filter.value[i]).toLowerCase();
+                        if (lowerVal === 'issued') {
+                            filter.value[i] = 'Issued';
+                        } else if (lowerVal === 'received') {
+                            filter.value[i] = 'Transfered';
+                        }
+                    }
+                } else if (
+                    filter.key === 'creditBlock"."type' &&
+                    filter.operation === 'in' &&
+                    Array.isArray(filter.value) &&
+                    !filter.value.length
+                ) {
+                    filter.value.push('Issued');
+                    filter.value.push('Transfered');
+                }
+            }
+        }
+
         const whereSQL = this.helperService.generateWhereSQL(query);
         if (whereSQL && whereSQL.trim() !== '') {
             qb.andWhere(whereSQL);
@@ -755,6 +784,7 @@ export class CarbonCreditService {
             .leftJoinAndSelect('creditTx.project', 'project')
             .leftJoinAndSelect('creditTx.sender', 'sender')
             .leftJoinAndSelect('creditTx.receiver', 'receiver')
+            .leftJoinAndSelect('creditTx.country', 'country')
             .select([
                 'creditTx.id as id',
                 'creditTx.serialNumber as "serialNumber"',
@@ -762,6 +792,7 @@ export class CarbonCreditService {
                 'creditTx.createdDate as "createdDate"',
                 'creditTx.retirementType as "retirementType"',
                 'creditTx.status as status',
+                'country.name as "countryName"',
                 'project.id as "projectId"',
                 'project.title as "projectName"',
                 'sender.id as "senderId"',
@@ -776,6 +807,22 @@ export class CarbonCreditService {
             qb.andWhere('sender.id = :orgId', { orgId });
         }
 
+        if (query.filterAnd) {
+            for (let i = 0; i < query.filterAnd.length; i++) {
+                const filter = query.filterAnd[i];
+                if (
+                    filter.key === 'creditTx"."status' &&
+                    filter.operation === 'in' &&
+                    Array.isArray(filter.value) &&
+                    !filter.value.length
+                ) {
+                    filter.value.push(CreditEventStatusEnum.COMPLETED);
+                    filter.value.push(CreditEventStatusEnum.CANCELLED);
+                    filter.value.push(CreditEventStatusEnum.PENDING);
+                    filter.value.push(CreditEventStatusEnum.REJECTED);
+                }
+            }
+        }
         const extraWhere = this.helperService.generateWhereSQL(query);
         if (extraWhere && extraWhere.trim() !== '') {
             qb.andWhere(extraWhere);
@@ -1216,6 +1263,7 @@ export class CarbonCreditService {
                 type: CreditEventTypeEnum.RETIRED,
                 retirementType: retireRequest.retirementType,
                 status: CreditEventStatusEnum.PENDING,
+                country: retireRequest.country,
             });
 
             await queryRunner.manager.save(creditTransaction);

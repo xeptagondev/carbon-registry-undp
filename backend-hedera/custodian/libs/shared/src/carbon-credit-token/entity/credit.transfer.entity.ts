@@ -12,6 +12,7 @@ import { CreditRetirementTypeEmnum } from '../enum/credit.retirement.type.enum';
 import { ProjectEntity } from '@app/shared/project/entity/project.entity';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { CreditBlocksEntity } from './credit.blocks.entity';
+import { Country } from '@app/shared/location/entity/country.entity';
 
 @Entity()
 export class CreditTransactionsEntity {
@@ -63,6 +64,11 @@ export class CreditTransactionsEntity {
 
     @Column({ type: 'enum', enum: CreditRetirementTypeEmnum, nullable: true })
     retirementType: CreditRetirementTypeEmnum;
+
+    @ManyToOne(() => Country, (country) => country.alpha2, {
+        nullable: true,
+    })
+    country?: Country;
 
     @Column({ nullable: true, type: 'bigint' })
     createdDate?: number;

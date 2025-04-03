@@ -716,6 +716,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             userEntity.hederaAccount = userDto.hederaAccount;
             userEntity.stage = UserStageEnum.REGISTER;
             userEntity.isActive = isUserActive;
+            userEntity.isApiUser = userDto.isApiUser;
             userEntity.createdTime = new Date().getTime();
             userEntity.updatedTime = new Date().getTime();
 
@@ -1268,6 +1269,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             key: 'organizationType"."name',
             operation: 'IS NOT',
             value: null,
+        });
+
+        query.filterAnd.push({
+            key: 'is_api_user',
+            operation: '=',
+            value: false,
         });
 
         if (

@@ -89,126 +89,73 @@ export class AnalyticsService {
     }
 
     async getPendingActions(jwtData: JWTPayload) {
-        const combineAndSort = (
-            arr1: ProjectEntity[],
-            arr2: ProjectEntity[],
-        ) => {
-            const combined = [...arr1, ...arr2];
-
-            return combined.sort((a, b) => {
-                const dateA = a.updatedDate
-                    ? new Date(a.updatedDate).getTime()
-                    : -Infinity;
-                const dateB = b.updatedDate
-                    ? new Date(b.updatedDate).getTime()
-                    : -Infinity;
-
-                return dateB - dateA;
-            });
-        };
+        let statesList = [];
+        let activityStatesList = [];
         if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
         ) {
-            const statesList = [
+            statesList = [
                 ProjectProposalStage.PENDING,
                 ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER,
                 ProjectProposalStage.VALIDATION_REPORT_SUBMITTED,
             ];
-            const activityStatesList = [
+            activityStatesList = [
                 ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
             ];
-
-            const [results, activityResults] = await Promise.all([
-                this.projectRepository.find({
-                    where: { projectProposalStage: In(statesList) },
-                    order: { updatedDate: 'DESC' },
-                }),
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: ProjectProposalStage.AUTHORISED,
-                        activities: { state: In(activityStatesList) },
-                    },
-                    order: { updatedDate: 'DESC' },
-                }),
-            ]);
-
-            // Combine & sort by updatedAt (descending)
-            return combineAndSort(results, activityResults);
-        }
-
-        // 2) PROJECT_DEVELOPER
-        else if (
+        } else if (
             jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER
         ) {
-            const statesList = [
+            statesList = [
                 ProjectProposalStage.APPROVED,
                 ProjectProposalStage.PDD_REJECTED_BY_CERTIFIER,
                 ProjectProposalStage.PDD_REJECTED_BY_DNA,
                 ProjectProposalStage.AUTHORISED,
             ];
-            const activityStatesList = [
-                ActivityStateEnum.MONITORING_REPORT_REJECTED,
-            ];
-
-            const [results, activityResults] = await Promise.all([
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: In(statesList),
-                        organization: { id: jwtData.organizationId },
-                        activities: null,
-                    },
-                    order: { updatedDate: 'DESC' },
-                }),
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: ProjectProposalStage.AUTHORISED,
-                        organization: { id: jwtData.organizationId },
-                        activities: { state: In(activityStatesList) },
-                    },
-                    order: { updatedDate: 'DESC' },
-                }),
-            ]);
-
-            return combineAndSort(results, activityResults);
-        }
-
-        // 3) INDEPENDENT_CERTIFIER
-        else if (
+            activityStatesList = [ActivityStateEnum.MONITORING_REPORT_REJECTED];
+        } else if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.INDEPENDENT_CERTIFIER
         ) {
-            const statesList = [
+            statesList = [
                 ProjectProposalStage.PDD_SUBMITTED,
                 ProjectProposalStage.PDD_APPROVED_BY_DNA,
                 ProjectProposalStage.VALIDATION_REPORT_REJECTED,
             ];
-            const activityStatesList = [
+            activityStatesList = [
                 ActivityStateEnum.MONITORING_REPORT_UPLOADED,
                 ActivityStateEnum.MONITORING_REPORT_VERIFIED,
                 ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
             ];
-
-            const [results, activityResults] = await Promise.all([
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: In(statesList),
-                        assignees: { id: jwtData.organizationId },
-                    },
-                    order: { updatedDate: 'DESC' },
-                }),
-                this.projectRepository.find({
-                    where: {
-                        projectProposalStage: ProjectProposalStage.AUTHORISED,
-                        activities: { state: In(activityStatesList) },
-                        assignees: { id: jwtData.organizationId },
-                    },
-                    order: { updatedDate: 'DESC' },
-                }),
-            ]);
-
-            return combineAndSort(results, activityResults);
         }
+
+        const combinedResults = await this.projectRepository.find({
+            where: [
+                { projectProposalStage: In(statesList) },
+
+                {
+                    projectProposalStage: ProjectProposalStage.AUTHORISED,
+                    activities: { state: In(activityStatesList) },
+                },
+            ],
+            order: { updatedDate: 'DESC' },
+            relations: {
+                activities: true,
+            },
+        });
+
+        for (const project of combinedResults) {
+            if (project.activities?.length) {
+                project.activities.sort(
+                    (a, b) => b.updatedDate - a.updatedDate,
+                );
+                project.activities = [project.activities[0]];
+            }
+        }
+
+        return combinedResults.sort((a, b) => {
+            return b.updatedDate - a.updatedDate;
+        });
     }
 
     async getProjectSummary(jwtData: JWTPayload) {
@@ -241,6 +188,7 @@ export class AnalyticsService {
             ProjectAuditLogType.PDD_SUBMITTED,
             ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
             ProjectAuditLogType.PDD_APPROVED_BY_DNA,
+            ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
         ];
 
         const rejectedStatuses = [
@@ -250,10 +198,26 @@ export class AnalyticsService {
             ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
         ];
 
+        const allLogTypes = [
+            ProjectAuditLogType.PENDING,
+            ProjectAuditLogType.REJECTED,
+            ProjectAuditLogType.APPROVED,
+            ProjectAuditLogType.PDD_SUBMITTED,
+            ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_REJECTED_BY_DNA,
+            ProjectAuditLogType.PDD_APPROVED_BY_DNA,
+            ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
+            ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
+            ProjectAuditLogType.AUTHORISED,
+        ];
         const subQuery = this.auditRepository
             .createQueryBuilder('sub_audit')
             .select('sub_audit.projectId', 'projectId')
             .addSelect('MAX(sub_audit.createdTime)', 'latestTime')
+            .where('sub_audit.logType IN (:...logTypes)', {
+                logTypes: allLogTypes,
+            })
             .groupBy('sub_audit.projectId');
 
         const latestStatusQb = this.auditRepository
@@ -267,7 +231,10 @@ export class AnalyticsService {
                 ProjectEntity,
                 'project',
                 'project.refId = audit.projectId',
-            );
+            )
+            .where('audit.logType IN (:...logTypes)', {
+                logTypes: allLogTypes,
+            });
 
         if (filters?.startDate) {
             latestStatusQb.andWhere('audit.createdTime >= :startDate', {
@@ -312,89 +279,27 @@ export class AnalyticsService {
 
         let pendingCount = 0;
         let rejectedCount = 0;
+        let authorisedCount = 0;
         let lastStatusUpdateTime: number = 0;
-        const seenProjects = new Set<string>();
-        const projectIdSetForFilter = new Set<string>();
 
         for (const row of latestAudits) {
             const status = row.audit_logType;
-            const projectId = row.audit_projectId;
+
             const createdTime = Number(row.audit_createdTime);
 
-            seenProjects.add(projectId);
-            projectIdSetForFilter.add(projectId);
             lastStatusUpdateTime = Math.max(lastStatusUpdateTime, createdTime);
 
             if (pendingStatuses.includes(status)) {
                 pendingCount++;
             } else if (rejectedStatuses.includes(status)) {
                 rejectedCount++;
+            } else if (ProjectAuditLogType.AUTHORISED === status) {
+                authorisedCount++;
             }
         }
-
-        const authorisedQb = this.auditRepository
-            .createQueryBuilder('audit')
-            .select('DISTINCT audit.projectId', 'projectId')
-            .innerJoin(
-                ProjectEntity,
-                'project',
-                'project.refId = audit.projectId',
-            )
-            .where('audit.logType = :authType', {
-                authType: ProjectAuditLogType.AUTHORISED,
-            });
-
-        // Apply same filters again
-        if (filters?.startDate) {
-            authorisedQb.andWhere('audit.createdTime >= :startDate', {
-                startDate: filters.startDate,
-            });
-        }
-
-        if (filters?.endDate) {
-            authorisedQb.andWhere('audit.createdTime <= :endDate', {
-                endDate: filters.endDate,
-            });
-        }
-
-        if (filters?.sector) {
-            authorisedQb.andWhere('project.sectoralScope = :sector', {
-                sector: filters.sector,
-            });
-        }
-
-        if (filters?.isMine) {
-            if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.PROJECT_DEVELOPER
-            ) {
-                authorisedQb.andWhere('project.organization.id = :orgId', {
-                    orgId: jwtData.organizationId,
-                });
-            } else if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-            ) {
-                authorisedQb.innerJoin(
-                    'project_assignees',
-                    'pa',
-                    'pa.project_id = project.id AND pa.organization_id = :orgId',
-                    { orgId: jwtData.organizationId },
-                );
-            }
-        }
-
-        if (projectIdSetForFilter.size > 0) {
-            authorisedQb.andWhere('audit.projectId IN (:...ids)', {
-                ids: Array.from(projectIdSetForFilter),
-            });
-        }
-
-        const authorisedProjects = await authorisedQb.getRawMany();
-        const authorisedCount = authorisedProjects.length;
 
         return {
-            totalProjects: seenProjects.size,
+            totalProjects: authorisedCount + pendingCount + rejectedCount,
             authorisedCount,
             pendingCount,
             rejectedCount,
@@ -406,11 +311,10 @@ export class AnalyticsService {
         filters: ProjectDataRequestDTO,
         jwtData: JWTPayload,
     ) {
-        const nonAuthorisedLogTypes = [
+        const allLogTypes = [
             ProjectAuditLogType.PENDING,
             ProjectAuditLogType.REJECTED,
             ProjectAuditLogType.APPROVED,
-            ProjectAuditLogType.NO_OBJECTION_LETTER_GENERATED,
             ProjectAuditLogType.PDD_SUBMITTED,
             ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
             ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
@@ -418,10 +322,6 @@ export class AnalyticsService {
             ProjectAuditLogType.PDD_APPROVED_BY_DNA,
             ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
             ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
-        ];
-
-        const allLogTypes = [
-            ...nonAuthorisedLogTypes,
             ProjectAuditLogType.AUTHORISED,
         ];
 
@@ -429,6 +329,9 @@ export class AnalyticsService {
             .createQueryBuilder('sub_audit')
             .select('sub_audit.projectId', 'projectId')
             .addSelect('MAX(sub_audit.createdTime)', 'latestTime')
+            .where('sub_audit.logType IN (:...logTypes)', {
+                logTypes: allLogTypes,
+            })
             .groupBy('sub_audit.projectId');
 
         const latestStatusQb = this.auditRepository
@@ -446,7 +349,7 @@ export class AnalyticsService {
             .select('audit.logType', 'logType')
             .addSelect('COUNT(DISTINCT project.id)', 'count')
             .where('audit.logType IN (:...logTypes)', {
-                logTypes: nonAuthorisedLogTypes,
+                logTypes: allLogTypes,
             });
 
         if (filters?.startDate) {
@@ -488,56 +391,56 @@ export class AnalyticsService {
         latestStatusQb.groupBy('audit.logType');
         const latestResult = await latestStatusQb.getRawMany();
 
-        const authorisedQb = this.auditRepository
-            .createQueryBuilder('audit')
-            .select('DISTINCT audit.projectId', 'projectId')
-            .innerJoin(
-                ProjectEntity,
-                'project',
-                'project.refId = audit.projectId',
-            )
-            .where('audit.logType = :authType', {
-                authType: ProjectAuditLogType.AUTHORISED,
-            });
+        // const authorisedQb = this.auditRepository
+        //     .createQueryBuilder('audit')
+        //     .select('DISTINCT audit.projectId', 'projectId')
+        //     .innerJoin(
+        //         ProjectEntity,
+        //         'project',
+        //         'project.refId = audit.projectId',
+        //     )
+        //     .where('audit.logType = :authType', {
+        //         authType: ProjectAuditLogType.AUTHORISED,
+        //     });
 
-        if (filters?.startDate) {
-            authorisedQb.andWhere('audit.createdTime >= :startDate', {
-                startDate: filters.startDate,
-            });
-        }
-        if (filters?.endDate) {
-            authorisedQb.andWhere('audit.createdTime <= :endDate', {
-                endDate: filters.endDate,
-            });
-        }
-        if (filters?.sector) {
-            authorisedQb.andWhere('project.sectoralScope = :sector', {
-                sector: filters.sector,
-            });
-        }
-        if (filters?.isMine) {
-            if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.PROJECT_DEVELOPER
-            ) {
-                authorisedQb.andWhere('project.organization.id = :orgId', {
-                    orgId: jwtData.organizationId,
-                });
-            } else if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-            ) {
-                authorisedQb.innerJoin(
-                    'project_assignees',
-                    'pa',
-                    'pa.project_id = project.id AND pa.organization_id = :orgId',
-                    { orgId: jwtData.organizationId },
-                );
-            }
-        }
+        // if (filters?.startDate) {
+        //     authorisedQb.andWhere('audit.createdTime >= :startDate', {
+        //         startDate: filters.startDate,
+        //     });
+        // }
+        // if (filters?.endDate) {
+        //     authorisedQb.andWhere('audit.createdTime <= :endDate', {
+        //         endDate: filters.endDate,
+        //     });
+        // }
+        // if (filters?.sector) {
+        //     authorisedQb.andWhere('project.sectoralScope = :sector', {
+        //         sector: filters.sector,
+        //     });
+        // }
+        // if (filters?.isMine) {
+        //     if (
+        //         jwtData.organizationRole ===
+        //         OrganizationTypeEnum.PROJECT_DEVELOPER
+        //     ) {
+        //         authorisedQb.andWhere('project.organization.id = :orgId', {
+        //             orgId: jwtData.organizationId,
+        //         });
+        //     } else if (
+        //         jwtData.organizationRole ===
+        //         OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+        //     ) {
+        //         authorisedQb.innerJoin(
+        //             'project_assignees',
+        //             'pa',
+        //             'pa.project_id = project.id AND pa.organization_id = :orgId',
+        //             { orgId: jwtData.organizationId },
+        //         );
+        //     }
+        // }
 
-        const authorisedProjects = await authorisedQb.getRawMany();
-        const authorisedCount = authorisedProjects.length;
+        // const authorisedProjects = await authorisedQb.getRawMany();
+        // const authorisedCount = authorisedProjects.length;
 
         const formatted: Record<string, number> = {};
         allLogTypes.forEach((logType) => {
@@ -548,7 +451,7 @@ export class AnalyticsService {
             formatted[row.logType] = parseInt(row.count, 10);
         }
 
-        formatted[ProjectAuditLogType.AUTHORISED] = authorisedCount;
+        // formatted[ProjectAuditLogType.AUTHORISED] = authorisedCount;
 
         return formatted;
     }
