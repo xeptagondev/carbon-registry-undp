@@ -29,6 +29,7 @@ export class LocationService {
                 name: true,
                 alpha2: true,
             },
+            order: { name: 'ASC' },
         });
 
         return resp;
