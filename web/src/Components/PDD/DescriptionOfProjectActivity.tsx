@@ -351,7 +351,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
     handleValuesUpdate({ projectActivity: tempValues });
   };
 
-  console.log('---------form values------------', form.getFieldsValue());
+  //console.log('---------form values------------', form.getFieldsValue());
 
   return (
     <>
