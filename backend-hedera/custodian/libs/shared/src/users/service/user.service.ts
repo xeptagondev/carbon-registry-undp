@@ -62,6 +62,7 @@ import { GuardianStateEnum } from '@app/shared/guardian/enum/guardian-state.enum
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
+import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -916,6 +917,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         OrganizationTypeFormatEnum[userDto.company.companyRole],
                     home: this.configService.get('url'),
                 },
+                priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
             await this.mailService.sendMail(mailDTOOrg);
         }
@@ -937,6 +939,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 email: userDto.email,
                 tempPassword: decryptedPassword,
             },
+            priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
         };
         await this.mailService.sendMail(mailDTOUser);
     }
