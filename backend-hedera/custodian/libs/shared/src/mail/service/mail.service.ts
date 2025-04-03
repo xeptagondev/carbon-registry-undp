@@ -24,7 +24,7 @@ export class MailService {
             const { priority, ...mailOptions } = mailTemplate;
             if (priority === MailPriorityGroupsEnum.HIGH_PRIORITY) {
                 return await this.sendMailPayload(mailOptions);
-            } else if (priority === MailPriorityGroupsEnum.LOW_PRIORITY) {
+            } else {
                 let asyncTask: TaskEntity;
                 if (
                     this.configService.get('mail.isLowPriorityEnable') ===
