@@ -10,6 +10,7 @@ import {
 import { EventTypeEnum } from '../enum/event-type.enum';
 import { EventStateEnum } from '../enum/event-state.enum';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 
 @Entity()
 export class EventEntity {
@@ -39,6 +40,12 @@ export class EventEntity {
 
     @Column({ type: 'bigint' })
     lastUpdateTime?: number;
+
+    @Column({ type: String })
+    documentRefId: string;
+
+    @Column({ type: 'enum', enum: GridTypeEnum })
+    gridType: GridTypeEnum;
 
     @ManyToOne(() => TaskEntity, (task) => task.events, { nullable: true })
     @JoinColumn({ name: 'task_id', referencedColumnName: 'id' })
