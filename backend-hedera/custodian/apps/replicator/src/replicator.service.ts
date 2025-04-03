@@ -1,9 +1,12 @@
 /* eslint-disable no-constant-condition */
 import { EventEntity } from '@app/shared/event/entity/event.entity';
 import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
+import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
+import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
@@ -15,6 +18,8 @@ export class ReplicatorService implements OnModuleInit {
         private logger: InstantLogger,
         @InjectRepository(EventEntity)
         private eventRepository: Repository<EventEntity>,
+        private guardianService: GuardianService,
+        private configService: ConfigService,
     ) {}
     async onModuleInit() {
         while (true) {
@@ -34,8 +39,28 @@ export class ReplicatorService implements OnModuleInit {
                 for (let i = 0; i < pendingEvents?.length; i++) {
                     const event = pendingEvents[i];
                     const eventTask = event.task;
+                    const affectedTableName = event.affectedTableName;
                     // 3. Evaluate task status
                     if (eventTask.state === TaskEnum.COMPLETED) {
+                        const apiUser = this.configService.get('organizations.DNA.apiAdminEmail');
+
+                        const refreshToken = await this.guardianService.getRefreshToken(apiUser);
+
+                        try {
+                            await this.guardianService.accessToken(refreshToken);
+                        } catch(err) {
+                            // login the API user
+                            await this.guardianService.login(
+                                {
+                                    username: apiUser,
+                                    password: this.configService.get('organizations.DNA.apiAdminPwd'),
+                                }
+                            );
+                        }
+
+                        // call guardian functio nto get document
+                        const document = await this.guardianService.getGridDataUsingRefId(event.gridType, event.documentRefId, apiUser, true);
+                        
                         // // 3.2 If task has completed, validate the data
                         // // TODO: Call the guardian function checking event ID
                         // const res = await guardianService.verify(event.id); // return the eventIDs here
