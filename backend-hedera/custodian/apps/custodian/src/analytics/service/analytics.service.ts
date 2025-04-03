@@ -92,11 +92,7 @@ export class AnalyticsService {
         let statesList = [];
         let activityStatesList = [];
         const whereClause = [];
-        whereClause.push({ projectProposalStage: In(statesList) });
-        whereClause.push({
-            projectProposalStage: ProjectProposalStage.AUTHORISED,
-            activities: { state: In(activityStatesList) },
-        });
+
         if (
             jwtData.organizationRole ===
             OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
@@ -109,6 +105,11 @@ export class AnalyticsService {
             activityStatesList = [
                 ActivityStateEnum.VERIFICATION_REPORT_UPLOADED,
             ];
+            whereClause.push({ projectProposalStage: In(statesList) });
+            whereClause.push({
+                projectProposalStage: ProjectProposalStage.AUTHORISED,
+                activities: { state: In(activityStatesList) },
+            });
         } else if (
             jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER
         ) {
@@ -120,6 +121,16 @@ export class AnalyticsService {
             ];
             activityStatesList = [ActivityStateEnum.MONITORING_REPORT_REJECTED];
             whereClause.push({
+                projectProposalStage: In(statesList),
+                organization: {
+                    id: jwtData.organizationId,
+                },
+            });
+            whereClause.push({
+                projectProposalStage: ProjectProposalStage.AUTHORISED,
+                activities: {
+                    state: In(activityStatesList),
+                },
                 organization: {
                     id: jwtData.organizationId,
                 },
@@ -139,6 +150,16 @@ export class AnalyticsService {
                 ActivityStateEnum.VERIFICATION_REPORT_REJECTED,
             ];
             whereClause.push({
+                projectProposalStage: In(statesList),
+                assignees: {
+                    id: jwtData.organizationId,
+                },
+            });
+            whereClause.push({
+                projectProposalStage: ProjectProposalStage.AUTHORISED,
+                activities: {
+                    state: In(activityStatesList),
+                },
                 assignees: {
                     id: jwtData.organizationId,
                 },
@@ -146,14 +167,7 @@ export class AnalyticsService {
         }
 
         const combinedResults = await this.projectRepository.find({
-            where: [
-                { projectProposalStage: In(statesList) },
-
-                {
-                    projectProposalStage: ProjectProposalStage.AUTHORISED,
-                    activities: { state: In(activityStatesList) },
-                },
-            ],
+            where: whereClause,
             order: { updatedDate: 'DESC' },
             relations: {
                 activities: true,
