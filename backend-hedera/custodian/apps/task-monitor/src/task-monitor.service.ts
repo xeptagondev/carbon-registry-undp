@@ -4,6 +4,7 @@ import { OrganizationService } from '@app/shared/organization/service/organizati
 import { ProjectService } from '@app/shared/project/service/project.service';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
+import { UserInitializationService } from '@app/shared/users/service/user.initialization.service';
 import { UserService } from '@app/shared/users/service/user.service';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -22,6 +23,7 @@ export class TaskMonitorService implements OnModuleInit {
         private readonly organizationService: OrganizationService,
         private readonly projectService: ProjectService,
         private readonly guardianService: GuardianService,
+        private readonly userInitializationService: UserInitializationService,
     ) {
         this.serviceMap = {
             UserService: this.userService,
@@ -30,6 +32,7 @@ export class TaskMonitorService implements OnModuleInit {
             ProjectService: this.projectService,
             GuardianService: this.guardianService,
             CarbonCreditService: this.carbonCreditService,
+            UserInitializationService: this.userInitializationService,
         };
     }
 
