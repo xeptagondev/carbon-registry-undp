@@ -39,7 +39,6 @@ export class ReplicatorService implements OnModuleInit {
                 for (let i = 0; i < pendingEvents?.length; i++) {
                     const event = pendingEvents[i];
                     const eventTask = event.task;
-                    const affectedTableName = event.affectedTableName;
                     // 3. Evaluate task status
                     if (eventTask.state === TaskEnum.COMPLETED) {
                         const apiUser = this.configService.get('organizations.DNA.apiAdminEmail');
@@ -61,49 +60,45 @@ export class ReplicatorService implements OnModuleInit {
                         // call guardian functio nto get document
                         const document = await this.guardianService.getGridDataUsingRefId(event.gridType, event.documentRefId, apiUser, true);
                         
-                        // // 3.2 If task has completed, validate the data
-                        // // TODO: Call the guardian function checking event ID
-                        // const res = await guardianService.verify(event.id); // return the eventIDs here
-                        // // Update the event status if success and mark the record as verified
-                        // if (res) {
-                        //     // TODO: Check the eventID list
-                        //     const queryRunner =
-                        //         this.dataSource.createQueryRunner();
-                        //     await queryRunner.connect();
+                        // check if eventID is present in document eventID list
+                        if (document?.eventIDs?.includes(event.id)) {
+                            const queryRunner = this.dataSource.createQueryRunner();
+                            await queryRunner.connect();
 
-                        //     try {
-                        //         // Update the event as verified
-                        //         await queryRunner.manager.update(
-                        //             EventEntity,
-                        //             { id: event.id },
-                        //             plainToClass(EventEntity, {
-                        //                 status: EventStateEnum.VERIFIED,
-                        //             }),
-                        //         );
+                            try {
+                                // Update the event as verified
+                                await queryRunner.manager.update(
+                                    EventEntity,
+                                    { id: event.id },
+                                    plainToClass(EventEntity, {
+                                        status: EventStateEnum.VERIFIED,
+                                    }),
+                                );
 
-                        //         // TODO: Update the table record as verified data (if needed)
+                                // TODO: Update the table record as verified data (if needed)
 
-                        //         // Commit
-                        //         await queryRunner.commitTransaction();
-                        //     } catch (err) {
-                        //         await queryRunner.rollbackTransaction();
-                        //         this.logger.error(
-                        //             `[REPLICATOR]: Error while updating verified data. Event ID: ${event.id}`,
-                        //             err,
-                        //         );
-                        //     } finally {
-                        //         try {
-                        //             if (!queryRunner.isReleased) {
-                        //                 await queryRunner.release();
-                        //             }
-                        //         } catch (err) {
-                        //             this.logger.error(
-                        //                 `[REPLICATOR]: Error while releasing queryRunner. Event ID: ${event.id}`,
-                        //                 err,
-                        //             );
-                        //         }
-                        //     }
-                        // } // TODO: Add else if for if eventID does not exist in the record
+                                // Commit
+                                await queryRunner.commitTransaction();
+                            } catch (err) {
+                                await queryRunner.rollbackTransaction();
+                                this.logger.error(
+                                    `[REPLICATOR]: Error while updating verified data. Event ID: ${event.id}`,
+                                    err,
+                                );
+                            } finally {
+                                try {
+                                    if (!queryRunner.isReleased) {
+                                        await queryRunner.release();
+                                    }
+                                } catch (err) {
+                                    this.logger.error(
+                                        `[REPLICATOR]: Error while releasing queryRunner. Event ID: ${event.id}`,
+                                        err,
+                                    );
+                                }
+                            }
+                        }
+                        // TODO: Add else if for if eventID does not exist in the record
                     } else if (eventTask.state === TaskEnum.FAILED) {
                         // 3.2 If failed, rollback if required
                         if (event.rollbackOnFail) {
