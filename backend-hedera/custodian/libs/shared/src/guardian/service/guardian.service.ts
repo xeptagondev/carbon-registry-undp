@@ -24,6 +24,12 @@ import {
     TaskSetInterface,
     TaskResponseInterface,
 } from '../interface/guardian-async-task.interface';
+import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
+import { MailService } from '@app/shared/mail/service/mail.service';
+import { MailTemplateDTO } from '@app/shared/mail/dto/mail-template.dto';
+import { INSUFFICIENT_HBAR_BALANCE } from '@app/shared/mail/constant/mail-header.constant';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
 
 @Injectable()
 export class GuardianService {
@@ -31,6 +37,8 @@ export class GuardianService {
     constructor(
         private readonly configService: ConfigService,
         private readonly utilService: UtilService,
+        private readonly mailService: MailService,
+        private readonly hbarManagementService: HbarManagementService,
         @InjectRepository(UsersEntity)
         protected readonly usersRepository: Repository<UsersEntity>,
         private readonly logger: InstantLogger,
@@ -73,6 +81,43 @@ export class GuardianService {
                 `Exception in POST Request: ${ex.response?.data?.message || ex.message}`,
                 this.loggerContext,
             );
+        }
+    }
+
+    private async validateGuardianCall(
+        email: string,
+        thresholdValue: number = this.configService.get<number>(
+            'guardian.hbarThresholds.general',
+        ),
+    ) {
+        const user = await this.usersRepository.findOne({
+            where: {
+                email: email,
+            },
+            relations: {
+                organization: true,
+            },
+        });
+        const hbarBalance = Number(
+            await this.hbarManagementService.getBalance(user.hederaAccount),
+        );
+        let mailDto: MailTemplateDTO;
+        const errorMessage: string =
+            'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.';
+        if (hbarBalance < thresholdValue) {
+            const countryName: string = this.configService.get('country');
+            mailDto = {
+                subject: INSUFFICIENT_HBAR_BALANCE,
+                template: MailTemplateEnum.INSUFFICIENT_HBAR_BALANCE,
+                to: email,
+                context: {
+                    orgOrUserName: user.name,
+                    countryName: countryName,
+                },
+                priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
+            };
+            await this.mailService.sendMail(mailDto);
+            throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
         }
     }
 
@@ -298,6 +343,7 @@ export class GuardianService {
         payload: any,
     ): Promise<any> {
         try {
+            await this.validateGuardianCall(email);
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
@@ -328,6 +374,7 @@ export class GuardianService {
         payload: any,
     ): Promise<any> {
         try {
+            await this.validateGuardianCall(email);
             const block = await this.utilService.getBlocksByBlockName(
                 blockName,
                 this.configService.get('policy.id'),
@@ -732,6 +779,7 @@ export class GuardianService {
         payload: any,
     ): Promise<any> {
         try {
+            await this.validateGuardianCall(email);
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
@@ -759,6 +807,7 @@ export class GuardianService {
         remarks?: string,
     ): Promise<void> {
         try {
+            await this.validateGuardianCall(requestUserEmail);
             const block = await this.utilService.getBlocksByBlockName(
                 buttonBlockName,
                 this.configService.get('policy.id'),

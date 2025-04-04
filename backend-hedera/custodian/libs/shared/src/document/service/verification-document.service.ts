@@ -42,6 +42,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 // eslint-disable-next-line max-len
 import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
+import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
+import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -54,6 +56,7 @@ export class VerificationDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        hbarManagementService: HbarManagementService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
         private readonly serialNumberManagementService: SerialNumberManagementService,
@@ -65,6 +68,7 @@ export class VerificationDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            hbarManagementService,
             documentRepository,
             logger,
         );
@@ -413,6 +417,19 @@ export class VerificationDocumentService extends DocumentService {
                 const creditAmount = Number(
                     documentEntity?.data?.ghgProjectDescription
                         ?.totalNetEmissionReductions,
+                );
+
+                const transactionCost =
+                    await this.hbarManagementService.getTransactionCosts(
+                        TransactionType.TOKEN_MINT,
+                    );
+
+                await this.validateHbarBalanceBeforeAction(
+                    documentEntity.project.createdBy.email,
+                    queryRunner,
+                    transactionCost * creditAmount,
+                    `The associated PD does not have enough HBAR balance to complete the transaction.
+                 They've been notified — please try again shortly.`,
                 );
 
                 if (
