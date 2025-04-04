@@ -17,8 +17,8 @@ import { ProjectModule } from '@app/shared/project/project.module';
 import { TokenModule } from '@app/shared/token/token.module';
 import { UsersModule } from '@app/shared/users/users.module';
 import { UtilModule } from '@app/shared/util/util.module';
-import { VerificationModule } from '@app/shared/verification/verification.module';
 import { JwtModule } from '@nestjs/jwt';
+import { EventEntity } from '@app/shared/event/entity/event.entity';
 
 @Module({
     imports: [
@@ -33,7 +33,7 @@ import { JwtModule } from '@nestjs/jwt';
             useFactory: (configService: ConfigService) =>
                 ormConfig(configService),
         }),
-        // TypeOrmModule.forFeature([TaskEntity]),
+        TypeOrmModule.forFeature([EventEntity]),
         TaskModule,
         AuditModule,
         CarbonCreditTokenModule,
@@ -47,7 +47,6 @@ import { JwtModule } from '@nestjs/jwt';
         TokenModule,
         UsersModule,
         UtilModule,
-        VerificationModule,
         JwtModule,
     ],
     providers: [ReplicatorService],
