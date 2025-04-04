@@ -1,8 +1,10 @@
 /* eslint-disable no-constant-condition */
 import { EventEntity } from '@app/shared/event/entity/event.entity';
 import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
+import { EventTypeEnum } from '@app/shared/event/enum/event-type.enum';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -75,7 +77,7 @@ export class ReplicatorService implements OnModuleInit {
                                     }),
                                 );
 
-                                // TODO: Update the table record as verified data (if needed)
+                                // TODO: Update the task as verified
 
                                 // Commit
                                 await queryRunner.commitTransaction();
@@ -94,6 +96,79 @@ export class ReplicatorService implements OnModuleInit {
                                     this.logger.error(
                                         `[REPLICATOR]: Error while releasing queryRunner. Event ID: ${event.id}`,
                                         err,
+                                    );
+                                }
+                            }
+                        } else if (document || event.type === EventTypeEnum.CREATE) {
+                            // Mark the event as failed if the max duration has passed to verify data
+                            if (Date.now() > event.task.lastUpdateTime + (event.maxVerifyDurationSec * 1000)) {
+                                // update the task as failed and mark the event as failed or rolledback (if needed)
+                                const queryRunner = this.dataSource.createQueryRunner();
+                                await queryRunner.connect();
+
+                                try {
+                                    if (!event.rollbackOnFail) {
+                                        // Update the event failed if not rollbackonfail
+                                        await queryRunner.manager.update(
+                                            EventEntity,
+                                            { id: event.id },
+                                            plainToClass(EventEntity, {
+                                                status: EventStateEnum.FAILED,
+                                            }),
+                                        );
+                                    } else {
+                                        // Rollback the record (of table name) to previous state
+                                        await queryRunner.manager.update(
+                                            event.affectedTableName,
+                                            { id: event.affectedRecordId },
+                                            event.previousState,
+                                        );
+
+                                        // Update the event status to ROLLEDBACK
+                                        await queryRunner.manager.update(
+                                            EventEntity,
+                                            { id: event.id },
+                                            { status: EventStateEnum.ROLLEDBACK },
+                                        );
+                                    }
+
+                                    // Update the task as failed
+                                    await queryRunner.manager.update(
+                                        TaskEntity,
+                                        { id: event.task.id },
+                                        plainToClass(TaskEntity, { state: TaskEnum.FAILED })
+                                    )
+
+                                    // Commit
+                                    await queryRunner.commitTransaction();
+                                } catch (err) {
+                                    await queryRunner.rollbackTransaction();
+                                    this.logger.error(
+                                        `[REPLICATOR]: Error while updating verified data. Event ID: ${event.id}`,
+                                        err,
+                                    );
+                                } finally {
+                                    try {
+                                        if (!queryRunner.isReleased) {
+                                            await queryRunner.release();
+                                        }
+                                    } catch (err) {
+                                        this.logger.error(
+                                            `[REPLICATOR]: Error while releasing queryRunner. Event ID: ${event.id}`,
+                                            err,
+                                        );
+                                    }
+                                }
+
+                                if (event.rollbackOnFail) {
+                                    this.logger.log(
+                                        // eslint-disable-next-line max-len
+                                        `[REPLICATOR]: Verification failed. Rolledback data. Event ID: ${event.id}, Table: ${event.affectedTableName}, Record ID: ${event.affectedRecordId}`,
+                                    );
+                                } else {
+                                    this.logger.log(
+                                        // eslint-disable-next-line max-len
+                                        `[REPLICATOR]: Verification failed. Changed the task to FAILED. Event ID: ${event.id}, Table: ${event.affectedTableName}, Record ID: ${event.affectedRecordId}`,
                                     );
                                 }
                             }
@@ -120,10 +195,6 @@ export class ReplicatorService implements OnModuleInit {
                                     { status: EventStateEnum.ROLLEDBACK },
                                 );
 
-                                this.logger.log(
-                                    // eslint-disable-next-line max-len
-                                    `[REPLICATOR]: Rolledback data. Event ID: ${event.id}, Table: ${event.affectedTableName}, Record ID: ${event.affectedRecordId}`,
-                                );
                                 await queryRunner.commitTransaction();
                             } catch (err) {
                                 await queryRunner.rollbackTransaction();
@@ -143,6 +214,11 @@ export class ReplicatorService implements OnModuleInit {
                                     );
                                 }
                             }
+
+                            this.logger.log(
+                                // eslint-disable-next-line max-len
+                                `[REPLICATOR]: Rolledback data. Event ID: ${event.id}, Table: ${event.affectedTableName}, Record ID: ${event.affectedRecordId}`,
+                            );
                         } else {
                             // Mark as failed
                             await this.eventRepository.update(

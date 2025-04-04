@@ -41,6 +41,9 @@ export class EventEntity {
     @Column({ type: 'bigint' })
     lastUpdateTime?: number;
 
+    @Column({ type: 'bigint' })
+    maxVerifyDurationSec: number;
+
     @Column({ type: String })
     documentRefId: string;
 

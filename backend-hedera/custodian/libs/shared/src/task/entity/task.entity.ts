@@ -53,7 +53,7 @@ export class TaskEntity {
     previousTask?: TaskEntity = null;
 
     @OneToMany(() => EventEntity, (event) => event.task, { nullable: true })
-    events?: EventEntity;
+    events?: EventEntity[];
 
     @BeforeInsert()
     setInitialLastUpdateTime() {
