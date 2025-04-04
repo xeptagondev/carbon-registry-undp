@@ -84,7 +84,7 @@ export class TaskMonitorService implements OnModuleInit {
                     ) {
                         // if previous task still pending or unverified, skip
                         this.logger.log(
-                            `Cannot execute task ${task.id} because task ${previousTask.id} is not completed or unverified`,
+                            `[TASK MONITOR]: Cannot execute task ${task.id} because task ${previousTask.id} is not completed or unverified`,
                         );
                         continue;
                     } else if (
@@ -93,7 +93,7 @@ export class TaskMonitorService implements OnModuleInit {
                     ) {
                         // if previous task has failed, or an event is failed for prev task, mark the current task as failed and skip
                         this.logger.log(
-                            `Marking task ${task.id} as failed because task ${previousTask.id} has failed`,
+                            `[TASK MONITOR]: Marking task ${task.id} as failed because task ${previousTask.id} has failed`,
                         );
                         await this.taskRepository.update(
                             {
@@ -121,7 +121,7 @@ export class TaskMonitorService implements OnModuleInit {
                         );
                     } catch (err) {
                         this.logger.error(
-                            `Failed to complete task! ID: ${task.id}.\nError: ${err}`,
+                            `[TASK MONITOR]: Failed to complete task! ID: ${task.id}.\nError: ${err}`,
                         );
                         // 4. Update the state to FAILED if all attempts failed
                         if (task.attemptedCount >= task.retryAttemps - 1) {
@@ -146,7 +146,7 @@ export class TaskMonitorService implements OnModuleInit {
                 }
 
                 this.logger.log(
-                    'Pending task evaluation finished. Sleeping for 3mins',
+                    '[TASK MONITOR]: Pending task evaluation finished. Sleeping.',
                 );
                 // time out of 3 mins (1000 * 60 * 3)
                 const timeOutMins = 20000;
