@@ -2,7 +2,6 @@
 import { EventEntity } from '@app/shared/event/entity/event.entity';
 import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
 import { EventTypeEnum } from '@app/shared/event/enum/event-type.enum';
-import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
