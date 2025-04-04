@@ -25,6 +25,7 @@ import { UserService } from './user.service';
 import { UsersEntity } from '../entity/users.entity';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class UserInitializationService implements OnModuleInit {
@@ -51,13 +52,13 @@ export class UserInitializationService implements OnModuleInit {
             await this.createInitialOrganizations();
         }
         if (this.configService.get('system.initApiAdmin') === 'true') {
-            const asyncTask: TaskEntity = {
+            const asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'UserInitializationService',
                 functionName: 'createDnaApiAdmin',
                 args: [],
                 retryAttemps: 2,
                 state: TaskEnum.PENDING,
-            };
+            });
             await this.taskRepository.save(asyncTask);
         }
     }
