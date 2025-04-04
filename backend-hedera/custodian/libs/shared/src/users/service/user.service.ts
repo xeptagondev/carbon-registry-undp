@@ -1354,7 +1354,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                                 .leftJoinAndSelect('users.organization', 'organization')
                                 .leftJoin('organization.projects', 'project')
                                 .leftJoinAndSelect(
-                                    'organization.guardianRole',
+                                    'users.guardianRole',
                                     'guardianRole',
                                 )
                                 .leftJoinAndSelect(
