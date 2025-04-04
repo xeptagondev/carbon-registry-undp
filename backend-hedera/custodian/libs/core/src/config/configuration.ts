@@ -43,6 +43,8 @@ export default () => ({
             process.env.API_REFRESH_TOKEN_EXPIRE || '7200s',
     },
     mail: {
+        isEnable: process.env.IS_EMAIL_ENABLE || false,
+        isLowPriorityEnable: process.env.IS_LOW_PRIORITY_EMAIL_ENABLE || false,
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT),
         auth: {

@@ -31,9 +31,9 @@ Name,City,Country,District,DS Division,Latitude,Longitude,Language
 82100,Ambalantota,LK,Hambantota,Ambalantota,6.1225,81.0269,en
 82260,Angunakolapelessa,LK,Hambantota,Angunakolapelessa,6.1675,80.9458,en
 82400,Beliatta,LK,Hambantota,Beliatta,6.0481,80.7342,en
-40000,Delft,LK,Jaffna,Delft,9.5167,79.6833,en
+11700,Delft,LK,Jaffna,Delft,9.5167,79.6833,en
 40000,Jaffna,LK,Jaffna,Jaffna,9.6615,80.0255,en
-40000,Nallur,LK,Jaffna,Nallur,9.6750,80.0222,en
+42550,Nallur,LK,Jaffna,Nallur,9.6750,80.0222,en
 12200,Agalawatta,LK,Kalutara,Agalawatta,6.5333,80.1333,en
 12500,Bandaragama,LK,Kalutara,Bandaragama,6.7167,80.0000,en
 12070,Beruwala,LK,Kalutara,Beruwala,6.4781,79.9828,en
@@ -42,15 +42,14 @@ Name,City,Country,District,DS Division,Latitude,Longitude,Language
 20620,Doluwa,LK,Kandy,Doluwa,7.2000,80.6500,en
 71540,Aranayaka,LK,Kegalle,Aranayaka,7.1500,80.4500,en
 71350,Dehiovita,LK,Kegalle,Dehiovita,6.9500,80.2667,en
-43500,Kandavalai,LK,Kilinochchi,Kandavalai,9.5333,80.4000,en
+43000,Kandavalai,LK,Kilinochchi,Kandavalai,9.5333,80.4000,en
 43500,Karachchi,LK,Kilinochchi,Karachchi,9.4000,80.4000,en
-43500,Pachchilaipalli,LK,Kilinochchi,Pachchilaipalli,9.6000,80.3000,en
 60280,Alawwa,LK,Kurunegala,Alawwa,7.3167,80.2333,en
 60650,Ambanpola,LK,Kurunegala,Ambanpola,7.9000,80.2500,en
 60350,Bamunakotuwa,LK,Kurunegala,Bamunakotuwa,7.6000,80.3000,en
 41000,Madhu,LK,Mannar,Madhu,8.8500,80.2500,en
-41000,Mannar,LK,Mannar,Mannar,8.9833,79.9000,en
-41000,Manthai West,LK,Mannar,Manthai West,9.0000,79.8333,en
+41999,Mannar,LK,Mannar,Mannar,8.9833,79.9000,en
+71100,Manthai West,LK,Mannar,Manthai West,9.0000,79.8333,en
 21000,Ambanganga Korale,LK,Matale,Ambanganga Korale,7.5833,80.7500,en
 21100,Dambulla,LK,Matale,Dambulla,7.8600,80.6517,en
 21200,Galewela,LK,Matale,Galewela,7.7833,80.5833,en
@@ -59,9 +58,8 @@ Name,City,Country,District,DS Division,Latitude,Longitude,Language
 81160,Devinuwara,LK,Matara,Devinuwara,5.9333,80.5833,en
 91070,Badalkumbura,LK,Moneragala,Badalkumbura,6.9167,81.2333,en
 91500,Bibile,LK,Moneragala,Bibile,7.0333,81.2167,en
-42000,Manthai East,LK,Mullaitivu,Manthai East,9.0500,80.1667,en
 42000,Maritimepattu,LK,Mullaitivu,Maritimepattu,9.2667,80.7167,en
-42000,Oddusuddan,LK,Mullaitivu,Oddusuddan,9.1667,80.583
+4412065,Oddusuddan,LK,Mullaitivu,Oddusuddan,9.1667,80.583
 20668,Ambagamuwa,LK,Nuwara Eliya,Ambagamuwa,7.0000,80.6000,en
 20730,Hanguranketha,LK,Nuwara Eliya,Hanguranketha,7.1333,80.7667,en
 20560,Kothmale,LK,Nuwara Eliya,Kothmale,7.0833,80.6500,en
@@ -78,7 +76,7 @@ Name,City,Country,District,DS Division,Latitude,Longitude,Language
 31028,Morawewa,LK,Trincomalee,Morawewa,8.5833,81.1333,en  
 31260,Seruwila,LK,Trincomalee,Seruwila,8.3833,81.2833,en  
 31236,Echchilampattai,LK,Trincomalee,Echchilampattai,8.4167,81.4000,en
-43000,Vavuniya,LK,Vavuniya,Vavuniya,8.7514,80.4971,en
+43999,Vavuniya,LK,Vavuniya,Vavuniya,8.7514,80.4971,en
 43010,Nedunkeni,LK,Vavuniya,Nedunkeni,9.0167,80.6667,en
 43020,Cheddikulam,LK,Vavuniya,Cheddikulam,8.7167,80.2667,en
 43050,Omanthai,LK,Vavuniya,Omanthai,8.9000,80.4667,en

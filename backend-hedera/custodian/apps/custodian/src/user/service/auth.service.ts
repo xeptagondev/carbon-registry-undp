@@ -29,6 +29,7 @@ import { GenerateTokenDto } from '@app/shared/token/dto/generate-token.dto';
 import { PasswordResetDto } from '@app/shared/users/dto/password-reset.dto';
 import { ValidateTokenDto } from '@app/shared/token/dto/validate-token.dto';
 import { RequestTokenDto } from '@app/shared/token/dto/request-token.dto';
+import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
 
 @Injectable()
 export class AuthService {
@@ -318,6 +319,7 @@ export class AuthService {
                     remainingTime: formatRemainingTime(tokenValidTime),
                     pwdResetlink: `${this.configService.get('url')}/resetPassword/${token}`,
                 },
+                priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
             await this.mailService.sendMail(mailDTO);
 
