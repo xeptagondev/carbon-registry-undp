@@ -115,9 +115,9 @@ export class TaskMonitorService implements OnModuleInit {
                             {
                                 id: task.id,
                             },
-                            {
+                            plainToClass(TaskEntity, {
                                 state: TaskEnum.COMPLETED,
-                            },
+                            }),
                         );
                     } catch (err) {
                         this.logger.error(
