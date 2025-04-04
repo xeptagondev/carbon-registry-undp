@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { SuperService } from '@app/core/service/super.service';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
@@ -62,6 +62,8 @@ import { GuardianStateEnum } from '@app/shared/guardian/enum/guardian-state.enum
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
+import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
+import { CreditBlocksEntity } from '@app/shared/carbon-credit-token/entity/credit.blocks.entity';
 import { plainToClass } from 'class-transformer';
 
 @Injectable()
@@ -89,6 +91,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         private readonly organizationRepository: Repository<OrganizationEntity>,
         @InjectRepository(OrganizationTypeEntity)
         private readonly organizationTypeRepository: Repository<OrganizationTypeEntity>,
+        private readonly dataSource: DataSource,
     ) {
         super(usersRepository);
     }
@@ -925,6 +928,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         OrganizationTypeFormatEnum[userDto.company.companyRole],
                     home: this.configService.get('url'),
                 },
+                priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
             await this.mailService.sendMail(mailDTOOrg);
         }
@@ -946,6 +950,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 email: userDto.email,
                 tempPassword: decryptedPassword,
             },
+            priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
         };
         await this.mailService.sendMail(mailDTOUser);
     }
@@ -1341,19 +1346,51 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
     public async getUserProfile(requestUser: JWTPayload) {
         this.helperService.validateRequestUser(requestUser);
-        const userProfile = await this.usersRepository.findOne({
-            where: {
-                id: requestUser.userId,
-            },
-            relations: {
-                organization: {
-                    organizationType: true,
-                },
-                guardianRole: {
-                    role: true,
-                },
-            },
-        });
+        // const userProfile = await this.usersRepository.findOne({
+        //     where: {
+        //         id: requestUser.userId,
+        //     },
+        //     relations: {
+        //         organization: {
+        //             organizationType: true,
+        //         },
+        //         guardianRole: {
+        //             role: true,
+        //         },
+        //     },
+        // });
+        const userProfile = await this.usersRepository.createQueryBuilder('users')
+                                .leftJoinAndSelect('users.organization', 'organization')
+                                .leftJoin('organization.projects', 'project')
+                                .leftJoinAndSelect(
+                                    'users.guardianRole',
+                                    'guardianRole',
+                                )
+                                .leftJoinAndSelect(
+                                    'guardianRole.role',
+                                    'role',
+                                )
+                                .leftJoinAndSelect(
+                                    'organization.organizationType',
+                                    'organizationType',
+                                )
+                                .where('users.id = :userId', { userId: requestUser.userId })
+                                .loadRelationCountAndMap(
+                                    'organization.numberOfProjects',
+                                    'organization.projects',
+                                )
+                                .getOne();
+        // get credits
+        const receiverSum = await this.dataSource
+            .getRepository(CreditBlocksEntity)
+            .createQueryBuilder('creditBlock')
+            .leftJoin('creditBlock.receiver', 'receiver')
+            .where('receiver.id = :organizationId', { organizationId: userProfile.organization.id })
+            .select('COALESCE(SUM(creditBlock.creditAmount), 0)', 'recvSum')
+            .getRawOne();
+
+        userProfile.organization['creditBalance'] = Number(receiverSum.recvSum);
+
         return {
             user: this.mapNewQueryToOldQuery(userProfile),
             Organisation: this.orgaisationService.mapNewQueryToOldQuery(
