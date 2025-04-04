@@ -439,14 +439,14 @@ export class CarbonCreditService {
                 }
 
                 if (
-                    !creditBlock.reservedCreditAmount &&
-                    creditBlock.creditAmount == serialsToRetire.length
+                    !creditBlock.creditAmount &&
+                    creditBlock.reservedCreditAmount == serialsToRetire.length
                 ) {
                     const savedBlock = await queryRunner.manager.save(
                         plainToClass(CreditBlocksEntity, {
                             ...creditBlock,
                             receiver: dnaOrg,
-                            creditAmount: 0,
+                            reservedCreditAmount: 0,
                         }),
                     );
 
