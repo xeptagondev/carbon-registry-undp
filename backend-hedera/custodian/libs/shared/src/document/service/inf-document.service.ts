@@ -116,6 +116,9 @@ export class InfDocumentService extends DocumentService {
                 assignees = await queryRunner.manager.find(OrganizationEntity, {
                     where: {
                         refId: In(infData.independentCertifiers),
+                        organizationType: {
+                            name: OrganizationTypeEnum.INDEPENDENT_CERTIFIER,
+                        },
                         state: OrganizationStateEnum.ACTIVE,
                     },
                 });
