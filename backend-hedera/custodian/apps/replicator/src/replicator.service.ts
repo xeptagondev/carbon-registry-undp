@@ -11,7 +11,6 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { instanceToPlain, plainToClass } from 'class-transformer';
-import e from 'express';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
 
 @Injectable()
