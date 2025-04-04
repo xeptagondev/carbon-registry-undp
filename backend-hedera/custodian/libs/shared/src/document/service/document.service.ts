@@ -27,6 +27,9 @@ import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { FileHelperService } from '@app/shared/util/service/file-helper.service';
 import { AdditionalDocType } from '../enum/additional.document.type';
 import { plainToClass } from 'class-transformer';
+import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
+import { INSUFFICIENT_HBAR_BALANCE } from '@app/shared/mail/constant/mail-header.constant';
+import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
 
 @Injectable()
 export abstract class DocumentService {
@@ -37,9 +40,53 @@ export abstract class DocumentService {
         protected readonly auditService: AuditService,
         protected readonly guardianService: GuardianService,
         protected readonly fileHelperService: FileHelperService,
+        protected readonly hbarManagementService: HbarManagementService,
         protected readonly documentRepository: Repository<DocumentEntity>,
         protected readonly logger: InstantLogger,
     ) {}
+
+    protected async validateHbarBalanceBeforeAction(
+        email: string,
+        queryRunner: QueryRunner,
+        transactionCost: number,
+        // eslint-disable-next-line max-len
+        errorMessage: string = 'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.',
+    ) {
+        const userWithOrg = await queryRunner.manager
+            .getRepository(UsersEntity)
+            .createQueryBuilder('users')
+            .innerJoinAndSelect('users.organization', 'organization')
+            .where('users.email = :email', {
+                email: email,
+            })
+            .getOne();
+
+        const orgHbarBalance = Number(
+            await this.hbarManagementService.getBalance(
+                userWithOrg.organization.hederaAccountId,
+            ),
+        );
+
+        if (orgHbarBalance < transactionCost) {
+            const adminEmails = await this.getOrgAdminEmails(
+                [userWithOrg.organization.email],
+                queryRunner,
+            );
+            const countryName: string = this.configService.get('country');
+            const mailDto = {
+                subject: INSUFFICIENT_HBAR_BALANCE,
+                template: MailTemplateEnum.INSUFFICIENT_HBAR_BALANCE,
+                to: adminEmails,
+                context: {
+                    orgOrUserName: userWithOrg.organization.name,
+                    countryName: countryName,
+                },
+                priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
+            };
+            await this.mailService.sendMail(mailDto);
+            throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
+        }
+    }
 
     protected async uploadDocuments(
         documents: string[],
