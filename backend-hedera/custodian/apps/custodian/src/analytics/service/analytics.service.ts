@@ -119,10 +119,7 @@ export class AnalyticsService {
                 ProjectProposalStage.PDD_REJECTED_BY_DNA,
                 ProjectProposalStage.AUTHORISED,
             ];
-            activityStatesList = [
-                ActivityStateEnum.MONITORING_REPORT_REJECTED,
-                ActivityStateEnum.VERIFICATION_REPORT_VERIFIED,
-            ];
+            activityStatesList = [ActivityStateEnum.MONITORING_REPORT_REJECTED];
             whereClause.push({
                 projectProposalStage: In(statesList),
                 organization: {
