@@ -142,7 +142,7 @@ export class ReplicatorService implements OnModuleInit {
                                         await queryRunner.manager.update(
                                             EventEntity,
                                             { id: event.id },
-                                            { status: EventStateEnum.ROLLEDBACK },
+                                            plainToClass(EventEntity, { status: EventStateEnum.ROLLEDBACK }),
                                         );
                                     }
 
@@ -195,7 +195,7 @@ export class ReplicatorService implements OnModuleInit {
                                         await queryRunner.manager.update(
                                             EventEntity,
                                             { id: event.id },
-                                            { status: EventStateEnum.FAILED },
+                                            plainToClass(EventEntity, { status: EventStateEnum.FAILED }),
                                         );
 
                                         // Update the task as failed
@@ -266,7 +266,7 @@ export class ReplicatorService implements OnModuleInit {
                                 await queryRunner.manager.update(
                                     EventEntity,
                                     { id: event.id },
-                                    { status: EventStateEnum.ROLLEDBACK },
+                                    plainToClass(EventEntity, { status: EventStateEnum.ROLLEDBACK }),
                                 );
 
                                 await queryRunner.commitTransaction();
@@ -305,7 +305,7 @@ export class ReplicatorService implements OnModuleInit {
                             // Mark as failed
                             await this.eventRepository.update(
                                 { id: event.id },
-                                { status: EventStateEnum.FAILED },
+                                plainToClass(EventEntity, { status: EventStateEnum.FAILED }),
                             );
                         }
                     }
