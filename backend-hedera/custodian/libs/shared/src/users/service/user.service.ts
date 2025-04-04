@@ -1362,7 +1362,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                                     'role',
                                 )
                                 .leftJoinAndSelect(
-                                    'users.organizationType',
+                                    'organization.organizationType',
                                     'organizationType',
                                 )
                                 .where('users.id = :userId', { userId: requestUser.userId })
