@@ -36,6 +36,9 @@ export class TaskEntity {
     @Column({ default: 0 })
     attemptedCount?: number = 0;
 
+    @Column({ default: false, type: Boolean })
+    retryUntilSuccess?: boolean = false;
+
     @Column({ nullable: true, type: 'bigint' })
     lastUpdateTime?: number;
 
