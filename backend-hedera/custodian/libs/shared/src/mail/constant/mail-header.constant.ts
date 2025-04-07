@@ -65,3 +65,6 @@ export const VR_CREATE_HEADER: string = 'New Validation Report Submitted!';
 export const VR_APPROVE_HEADER: string = 'Validation Report Accepted!';
 
 export const VR_REJECT_HEADER: string = 'Validation Report Rejected!';
+
+export const INSUFFICIENT_HBAR_BALANCE: string =
+    'HBAR Balance Insufficient to Proceed with Transaction';

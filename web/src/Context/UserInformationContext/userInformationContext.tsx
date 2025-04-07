@@ -29,6 +29,9 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
       : process.env.STORYBOOK_USER_ROLE
       ? process.env.STORYBOOK_USER_ROLE
       : '',
+    userHederaAccount: localStorage.getItem('userHederaAccount')
+      ? (localStorage.getItem('userHederaAccount') as string)
+      : '',
     companyRole: localStorage.getItem('companyRole')
       ? (localStorage.getItem('companyRole') as string)
       : process.env.STORYBOOK_COMPANY_ROLE
@@ -54,6 +57,9 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
       : process.env.STORYBOOK_COMPANY_STATE
       ? parseInt(process.env.STORYBOOK_COMPANY_STATE)
       : 0,
+    organizationHederaAccount: localStorage.getItem('organizationHederaAccount')
+      ? (localStorage.getItem('organizationHederaAccount') as string)
+      : '',
     name: localStorage.getItem('name') || '',
   };
   const [userInfoState, setUserInfoState] = useState<UserProps>(initialUserProps);
@@ -63,11 +69,13 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
     const {
       id,
       userRole,
+      userHederaAccount,
       companyId,
       companyRole,
       companyLogo,
       companyName,
       companyState = state,
+      organizationHederaAccount,
       name,
     } = value;
     if (id) {
@@ -105,6 +113,15 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
     if (name) {
       setUserInfoState((prev) => ({ ...prev, name }));
       localStorage.setItem('name', name);
+    }
+
+    if (userHederaAccount) {
+      setUserInfoState((prev) => ({ ...prev, userHederaAccount }));
+      localStorage.setItem('userHederaAccount', userHederaAccount);
+    }
+    if (organizationHederaAccount) {
+      setUserInfoState((prev) => ({ ...prev, organizationHederaAccount }));
+      localStorage.setItem('organizationHederaAccount', organizationHederaAccount);
     }
 
     setUserInfoState((prev) => ({ ...prev, companyState }));
@@ -147,6 +164,8 @@ export const UserInformationContextProvider = ({ children }: React.PropsWithChil
     localStorage.removeItem('companyName');
     localStorage.removeItem('companyState');
     localStorage.removeItem('companyLogo');
+    localStorage.removeItem('userHederaAccount');
+    localStorage.removeItem('organizationHederaAccount');
     setUserInfoState(initialUserProps);
   };
 

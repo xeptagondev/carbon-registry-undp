@@ -1,4 +1,4 @@
-import { addCommSepRound } from '../../Definitions/Definitions/programme.definitions';
+import { thousandBasedFormatterWithDecimalPlaces } from '../../Utils/utilityHelper';
 
 //MARK: Projects by status - Details
 export const totalProgrammesOptions: any = {
@@ -169,7 +169,7 @@ export const retirementsByDateOptions: any = {
     },
   },
   dataLabels: {
-    enabled: true,
+    enabled: false,
     style: {
       fontSize: '12px',
       colors: ['#000'],
@@ -227,7 +227,8 @@ export const retirementsByDateOptions: any = {
     },
     labels: {
       formatter: (value: any) => {
-        return addCommSepRound(value);
+        const formattedValue = thousandBasedFormatterWithDecimalPlaces(1, value);
+        return `${formattedValue.number}${formattedValue.suffix}`;
       },
     },
   },
@@ -264,7 +265,7 @@ export const retirementsByDateOptions: any = {
     width: undefined,
     height: undefined,
     tooltipHoverFormatter: undefined,
-    customLegendItems: ['Retirements', 'Transfers'],
+    customLegendItems: [],
     offsetX: 0,
     offsetY: 0,
     labels: {
@@ -392,7 +393,8 @@ export const creditsByDateOptions: any = {
     },
     labels: {
       formatter: (value: any) => {
-        return addCommSepRound(value);
+        const formattedValue = thousandBasedFormatterWithDecimalPlaces(1, value);
+        return `${formattedValue.number}${formattedValue.suffix}`;
       },
     },
   },
@@ -563,8 +565,12 @@ export const optionSideBar: any = {
       horizontal: 2,
       vertical: 0,
     },
-    onItemClick: { toggleDataSeries: true },
-    onItemHover: { highlightDataSeries: true },
+    onItemClick: {
+      toggleDataSeries: false,
+    },
+    onItemHover: {
+      highlightDataSeries: true,
+    },
   },
   responsive: [
     {
@@ -579,12 +585,20 @@ export const optionSideBar: any = {
     },
   ],
   dataLabels: {
-    enabled: false,
+    enabled: true,
     formatter: function (val: any) {
       if (val >= 1000) {
-        return `${(val / 1000).toFixed(1)}k`; // Convert to 'k' format for values >= 1000
+        return `${(val / 1000).toFixed(1)}k`;
+      } else if (val === 0) {
+        return '';
       }
       return val;
+    },
+    style: {
+      fontSize: '10px',
+      fontFamily: 'Inter',
+      fontWeight: 400,
+      colors: ['#fff'],
     },
   },
 };

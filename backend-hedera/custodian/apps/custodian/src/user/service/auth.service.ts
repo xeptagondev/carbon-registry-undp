@@ -87,10 +87,12 @@ export class AuthService {
             user.refId,
             user.guardianRole.role.name,
             user.isActive,
+            user.hederaAccount,
             user.organization.id,
             user.organization.refId,
             organisationDetails.organizationType.name,
             organisationDetails.state,
+            organisationDetails.hederaAccountId,
         );
 
         return this.jwtService.signAsync(instanceToPlain(payload), {
@@ -189,6 +191,13 @@ export class AuthService {
             );
         }
 
+        if (user.isApiUser) {
+            throw new HttpException(
+                'Api Users are not permitted',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+
         const decryptedPassword = verifyPassword(
             user.password,
             loginDto.password,
@@ -259,11 +268,13 @@ export class AuthService {
                 role: user.guardianRole?.role?.name,
                 id: user.id,
                 name: user.name,
+                userHederaAccount: user.hederaAccount,
                 companyId: organization.id,
                 companyRole: organization.organizationType.name,
                 companyName: organization.name,
                 companyLogo: organization?.logo,
                 companyState: parseInt(organization.state),
+                organizationHederaAccount: organization.hederaAccountId,
             };
             return response;
         } else {

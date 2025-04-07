@@ -37,6 +37,7 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { AdditionalDocType } from '../enum/additional.document.type';
+import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 
 @Injectable()
 export class PddDocumentService extends DocumentService {
@@ -49,6 +50,7 @@ export class PddDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        hbarManagementService: HbarManagementService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
     ) {
@@ -59,6 +61,7 @@ export class PddDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            hbarManagementService,
             documentRepository,
             logger,
         );

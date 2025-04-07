@@ -1,3 +1,5 @@
+import { HederaNetworkType } from '@app/shared/hbar-management/types/hedera-networks.type';
+
 export default () => ({
     APP_ENV: process.env.APP_ENV || 'dev',
     qaToken: process.env.qaToken || 'qaToken',
@@ -57,12 +59,20 @@ export default () => ({
         templateDir: process.env.EMAIL_TEMPLATE_LOCATION,
     },
     guardian: {
+        hederaNetwork:
+            (process.env.HEDERA_NETWORK_TYPE as HederaNetworkType) || 'Testnet',
         url: process.env.GUARDIAN_URL || 'http://3.93.78.104:3000',
         task: {
             retrycount: parseInt(
                 process.env.GUARDIAN_TASK_RETRY_COUNT || '3',
                 10,
             ),
+        },
+        exchangeRateApi:
+            process.env.HBAR_EXCHANGE_RATE_API ||
+            'https://testnet.mirrornode.hedera.com/api/v1/network/exchangerate',
+        hbarThresholds: {
+            general: process.env.GENERAL_HBAR_THRESHOLD || 10,
         },
     },
     policy: {

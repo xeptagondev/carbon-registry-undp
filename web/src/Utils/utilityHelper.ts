@@ -1,5 +1,5 @@
 import { RcFile } from 'antd/lib/upload';
-import { getBase64 } from '../Definitions/Definitions/programme.definitions';
+import { addCommSep, getBase64 } from '../Definitions/Definitions/programme.definitions';
 
 export const calculateDifference = (startTimestamp: number, endTimestamp: number) => {
   const startDate = new Date(startTimestamp);
@@ -75,4 +75,38 @@ export const formatBytes = (bytes: number, decimals = 0) => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`;
+};
+
+export const thousandBasedFormatterWithDecimalPlaces = (decimalPlaces: number, num: number) => {
+  if (num) {
+    const decimalPlacesReplacer = Array(decimalPlaces).fill(0).join('');
+    const regex = new RegExp(`/\.${decimalPlacesReplacer}$/`);
+    const formattedNumber = {
+      number: num.toString(),
+      suffix: '',
+    };
+
+    if (num >= 1000000000) {
+      formattedNumber.suffix = 'B';
+      formattedNumber.number = (num / 1000000000).toFixed(decimalPlaces).replace(regex, '');
+    } else if (num >= 1000000) {
+      formattedNumber.suffix = 'M';
+      formattedNumber.number = (num / 1000000).toFixed(decimalPlaces).replace(regex, '');
+    } else if (num >= 1000) {
+      formattedNumber.suffix = 'K';
+      formattedNumber.number = (num / 1000).toFixed(decimalPlaces).replace(regex, '');
+    } else if (num > 0 && num < 1000) {
+      formattedNumber.suffix = '';
+      formattedNumber.number = addCommSep(num);
+    } else if (num === 0) {
+      formattedNumber.suffix = '';
+      formattedNumber.number = '0.00';
+    }
+    return formattedNumber;
+  } else {
+    return {
+      number: '0.00',
+      suffix: '',
+    };
+  }
 };
