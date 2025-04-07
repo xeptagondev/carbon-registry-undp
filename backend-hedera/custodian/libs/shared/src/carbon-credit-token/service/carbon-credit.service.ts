@@ -965,7 +965,7 @@ export class CarbonCreditService {
                 className: 'CarbonCreditService',
                 functionName: 'handleTransferJob',
                 args: [payload],
-                retryAttemps: 2,
+                retryAttemps: 1,
                 state: TaskEnum.PENDING,
             };
             await queryRunner.manager.save(TaskEntity, asyncTask);
@@ -1064,7 +1064,7 @@ export class CarbonCreditService {
                     className: 'CarbonCreditService',
                     functionName: 'handleRetirementJob',
                     args: [payload],
-                    retryAttemps: 2,
+                    retryAttemps: 1,
                     state: TaskEnum.PENDING,
                 };
                 await queryRunner.manager.save(TaskEntity, asyncTask);
