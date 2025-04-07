@@ -473,7 +473,7 @@ export class VerificationDocumentService extends DocumentService {
                 let alreadyIssued = Number(
                     documentEntity?.project?.creditIssued,
                 );
-                for (const data of documentEntity.data.ghgProjectDescription
+                for (const data of documentEntity?.data?.ghgProjectDescription
                     ?.estimatedNetEmissionReductions ?? []) {
                     const batchSerialNumber =
                         this.serialNumberManagementService.getCreditBlockSerialNumber(
@@ -505,7 +505,7 @@ export class VerificationDocumentService extends DocumentService {
                         className: 'CarbonCreditService',
                         functionName: 'handleMintJob',
                         args: [payload],
-                        retryAttemps: 2,
+                        retryAttemps: 1,
                         state: TaskEnum.PENDING,
                     };
 
