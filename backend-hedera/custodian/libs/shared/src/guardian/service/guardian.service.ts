@@ -113,6 +113,7 @@ export class GuardianService {
                 context: {
                     orgOrUserName: user.name,
                     countryName: countryName,
+                    accountNumber: user.hederaAccount,
                 },
                 priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };

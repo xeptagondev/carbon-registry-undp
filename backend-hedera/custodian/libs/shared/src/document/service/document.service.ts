@@ -80,6 +80,7 @@ export abstract class DocumentService {
                 context: {
                     orgOrUserName: userWithOrg.organization.name,
                     countryName: countryName,
+                    accountNumber: userWithOrg.organization.hederaAccountId,
                 },
                 priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
