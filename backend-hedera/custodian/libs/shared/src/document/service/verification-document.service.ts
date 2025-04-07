@@ -410,14 +410,17 @@ export class VerificationDocumentService extends DocumentService {
             );
 
             if (requestData.action === DocumentStateEnum.DNA_APPROVED) {
-                const creditAmount = Number(
-                    documentEntity?.data?.ghgProjectDescription
-                        ?.totalNetEmissionReductions,
-                );
+                let totalCreditAmount = 0;
+
+                for (const data of documentEntity.data.ghgProjectDescription
+                    ?.estimatedNetEmissionReductions ?? []) {
+                    totalCreditAmount += Number(data.netEmissionReductions);
+                }
 
                 if (
                     Number(documentEntity?.project?.creditEst) <
-                    Number(documentEntity?.project?.creditIssued) + creditAmount
+                    Number(documentEntity?.project?.creditIssued) +
+                        totalCreditAmount
                 ) {
                     throw new HttpException(
                         'Project has reached maximum allowed credit limit',
@@ -467,35 +470,49 @@ export class VerificationDocumentService extends DocumentService {
                     Buffer.from(documentEntity?.project?.refId, 'utf8'),
                 );
 
-                const batchSerialNumber =
-                    this.serialNumberManagementService.getCreditBlockSerialNumber(
-                        documentEntity?.project?.serialNumber,
-                        creditAmount,
-                        String(new Date().getFullYear()),
-                        Number(documentEntity?.project?.creditIssued),
-                    );
-                const payload: MintNFTJobPayload = {
-                    tokenId: documentEntity?.project?.tokenId,
-                    batchSerialNumber: batchSerialNumber,
-                    metadata,
-                    amount: creditAmount,
-                    accountId:
-                        documentEntity?.project?.organization?.hederaAccountId,
-                    privateKey:
-                        documentEntity?.project?.organization?.hederaAccountKey,
-                    projectId: documentEntity?.project?.refId,
-                    receiverId: documentEntity?.project?.organization?.id,
-                    userId: jwtData.userId,
-                };
+                let alreadyIssued = Number(
+                    documentEntity?.project?.creditIssued,
+                );
+                for (const data of documentEntity.data.ghgProjectDescription
+                    ?.estimatedNetEmissionReductions ?? []) {
+                    const batchSerialNumber =
+                        this.serialNumberManagementService.getCreditBlockSerialNumber(
+                            documentEntity?.project?.serialNumber,
+                            Number(data.netEmissionReductions),
+                            new Date(parseInt(data.endDate))
+                                .getFullYear()
+                                .toString(),
+                            alreadyIssued,
+                        );
 
-                const asyncTask: TaskEntity = {
-                    className: 'CarbonCreditService',
-                    functionName: 'handleMintJob',
-                    args: [payload],
-                    retryAttemps: 2,
-                    state: TaskEnum.PENDING,
-                };
-                await queryRunner.manager.save(TaskEntity, asyncTask);
+                    const payload: MintNFTJobPayload = {
+                        tokenId: documentEntity?.project?.tokenId,
+                        batchSerialNumber: batchSerialNumber,
+                        metadata,
+                        amount: Number(data.netEmissionReductions),
+                        accountId:
+                            documentEntity?.project?.organization
+                                ?.hederaAccountId,
+                        privateKey:
+                            documentEntity?.project?.organization
+                                ?.hederaAccountKey,
+                        projectId: documentEntity?.project?.refId,
+                        receiverId: documentEntity?.project?.organization?.id,
+                        userId: jwtData.userId,
+                    };
+
+                    const asyncTask: TaskEntity = {
+                        className: 'CarbonCreditService',
+                        functionName: 'handleMintJob',
+                        args: [payload],
+                        retryAttemps: 2,
+                        state: TaskEnum.PENDING,
+                    };
+
+                    await queryRunner.manager.save(TaskEntity, asyncTask);
+
+                    alreadyIssued += Number(data.netEmissionReductions);
+                }
 
                 const countryName = this.configService.get('country');
                 const subject = VERIFICATION_APPROVE_HEADER.replace(
