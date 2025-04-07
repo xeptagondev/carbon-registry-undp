@@ -204,7 +204,6 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
             >
               <Row className="row" gutter={[40, 16]}>
                 <Col xl={24} md={24}>
-                  {/* <div className="step-form-left-col"> */}
                   <Form.Item
                     label={`${t('monitoringReport:pa_monitoringPurpose')}`}
                     name="pa_monitoringPurpose"
@@ -221,661 +220,641 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                       // placeholder={`${t('monitoringReport:pa_monitoringObjectivePlaceholder')}`}
                     />
                   </Form.Item>
+                </Col>
+              </Row>
 
-                  {/* --------------------------------Location section------------------------- */}
-                  <>
-                    <h3 className="form-section-heading">{`${t(
-                      'monitoringReport:projectActivityLocation'
-                    )}`}</h3>
+              {/* --------------------------------Location section------------------------- */}
+              <>
+                <h3 className="form-section-heading">{`${t(
+                  'monitoringReport:projectActivityLocation'
+                )}`}</h3>
 
-                    <h4 className="list-item-title">Location 1</h4>
-                    <div className="form-section">
-                      <Row
-                        // justify={'space-between'}
-                        gutter={[40, 16]}
-                        style={{ borderRadius: '8px' }}
+                <h4 className="list-item-title">Location 1</h4>
+                <Row
+                  // justify={'space-between'}
+                  gutter={[40, 16]}
+                  style={{ borderRadius: '8px' }}
+                  className="form-section"
+                >
+                  <Col xl={12} md={24}>
+                    <Form.Item
+                      label={t('monitoringReport:locationOfProjectActivity')}
+                      name="locationOfProjectActivity"
+                      rules={[
+                        {
+                          required: true,
+                          message: ``,
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(
+                                `${t('monitoringReport:locationOfProjectActivity')} ${t(
+                                  'isRequired'
+                                )}`
+                              );
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <Input size="large" disabled />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('monitoringReport:siteNo')}
+                      name="siteNo"
+                      rules={[
+                        {
+                          required: true,
+                          message: ``,
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(`${t('monitoringReport:siteNo')} ${t('isRequired')}`);
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <Input size="large" disabled />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={t('monitoringReport:province')}
+                      name="province"
+                      rules={[
+                        {
+                          required: true,
+                          message: ``,
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(
+                                `${t('monitoringReport:province')} ${t('isRequired')}`
+                              );
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <Select
+                        size="large"
+                        disabled
+                        onChange={(value) => onProvinceSelect(value, 0)}
+                        // placeholder={t('validationReport:provincePlaceholder')}
+                        // disabled={disableFields}
                       >
-                        <Col xl={12} md={24}>
-                          <Form.Item
-                            label={t('monitoringReport:locationOfProjectActivity')}
-                            name="locationOfProjectActivity"
-                            rules={[
-                              {
-                                required: true,
-                                message: ``,
-                              },
-                              {
-                                validator: async (rule, value) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('monitoringReport:locationOfProjectActivity')} ${t(
-                                        'isRequired'
-                                      )}`
-                                    );
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <Input size="large" disabled />
-                          </Form.Item>
+                        {provinces.map((province: string, index: number) => (
+                          <Select.Option value={province} key={province + index}>
+                            {province}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
 
-                          <Form.Item
-                            label={t('monitoringReport:siteNo')}
-                            name="siteNo"
-                            rules={[
-                              {
-                                required: true,
-                                message: ``,
-                              },
-                              {
-                                validator: async (rule, value) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('monitoringReport:siteNo')} ${t('isRequired')}`
-                                    );
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <Input size="large" disabled />
-                          </Form.Item>
+                    <Form.Item
+                      label={t('monitoringReport:district')}
+                      name="district"
+                      rules={[
+                        {
+                          required: true,
+                          message: ``,
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(
+                                `${t('monitoringReport:district')} ${t('isRequired')}`
+                              );
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <Select
+                        size="large"
+                        disabled
+                        // placeholder={t('validationReport:districtPlaceholder')}
+                        onSelect={(value) => onDistrictSelect(value, 0)}
+                        // disabled={disableFields}
+                      >
+                        {districts[0]?.map((district: string, index: number) => (
+                          <Select.Option key={district + index} value={district}>
+                            {district}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
 
-                          <Form.Item
-                            label={t('monitoringReport:province')}
-                            name="province"
-                            rules={[
-                              {
-                                required: true,
-                                message: ``,
-                              },
-                              {
-                                validator: async (rule, value) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('monitoringReport:province')} ${t('isRequired')}`
-                                    );
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <Select
-                              size="large"
-                              disabled
-                              onChange={(value) => onProvinceSelect(value, 0)}
-                              // placeholder={t('validationReport:provincePlaceholder')}
-                              // disabled={disableFields}
-                            >
-                              {provinces.map((province: string, index: number) => (
-                                <Select.Option value={province} key={province + index}>
-                                  {province}
-                                </Select.Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
+                    <Form.Item
+                      label={t('monitoringReport:city')}
+                      name="city"
+                      rules={[
+                        {
+                          required: true,
+                          message: ``,
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(`${t('monitoringReport:city')} ${t('isRequired')}`);
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <Select
+                        size="large"
+                        // placeholder={t('validationReport:cityPlaceholder')}
+                        disabled
+                      >
+                        {cities[0]?.map((city: string, index) => (
+                          <Select.Option value={city} key={city + index}>
+                            {city}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      label={t('monitoringReport:community')}
+                      name="community"
+                      rules={[
+                        {
+                          required: true,
+                          message: ``,
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(
+                                `${t('monitoringReport:community')} ${t('isRequired')}`
+                              );
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <Input size="large" disabled />
+                    </Form.Item>
+                  </Col>
 
-                          <Form.Item
-                            label={t('monitoringReport:district')}
-                            name="district"
-                            rules={[
-                              {
-                                required: true,
-                                message: ``,
-                              },
-                              {
-                                validator: async (rule, value) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('monitoringReport:district')} ${t('isRequired')}`
-                                    );
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <Select
-                              size="large"
-                              disabled
-                              // placeholder={t('validationReport:districtPlaceholder')}
-                              onSelect={(value) => onDistrictSelect(value, 0)}
-                              // disabled={disableFields}
-                            >
-                              {districts[0]?.map((district: string, index: number) => (
-                                <Select.Option key={district + index} value={district}>
-                                  {district}
-                                </Select.Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
+                  <Col xl={12} md={24}>
+                    <Form.Item
+                      label={t('monitoringReport:setLocation')}
+                      name="geographicalLocationCoordinates"
+                      rules={[
+                        {
+                          required: true,
+                          message: ``,
+                        },
+                        {
+                          validator: async (rule, value) => {
+                            if (
+                              String(value).trim() === '' ||
+                              String(value).trim() === undefined ||
+                              value === null ||
+                              value === undefined
+                            ) {
+                              throw new Error(
+                                `${t('monitoringReport:location')} ${t('isRequired')}`
+                              );
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <GetLocationMapComponent
+                        form={form}
+                        formItemName={'geographicalLocationCoordinates'}
+                        existingCordinate={form.getFieldValue('geographicalLocationCoordinates')}
+                        disabled
+                      />
+                    </Form.Item>
+                  </Col>
 
-                          <Form.Item
-                            label={t('monitoringReport:city')}
-                            name="city"
-                            rules={[
-                              {
-                                required: true,
-                                message: ``,
-                              },
-                              {
-                                validator: async (rule, value) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('monitoringReport:city')} ${t('isRequired')}`
-                                    );
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <Select
-                              size="large"
-                              // placeholder={t('validationReport:cityPlaceholder')}
-                              disabled
-                            >
-                              {cities[0]?.map((city: string, index) => (
-                                <Select.Option value={city} key={city + index}>
-                                  {city}
-                                </Select.Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-                          <Form.Item
-                            label={t('monitoringReport:community')}
-                            name="community"
-                            rules={[
-                              {
-                                required: true,
-                                message: ``,
-                              },
-                              {
-                                validator: async (rule, value) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('monitoringReport:community')} ${t('isRequired')}`
-                                    );
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <Input size="large" disabled />
-                          </Form.Item>
-                        </Col>
+                  <Col xl={24} md={24}>
+                    <Form.Item
+                      label={t('monitoringReport:pa_uploadImages')}
+                      name="optionalImages"
+                      valuePropName="fileList"
+                      getValueFromEvent={normFile}
+                      required={false}
+                      rules={[
+                        {
+                          validator: async (rule, file) => {
+                            if (file?.length > 0) {
+                              if (file[0]?.size > maximumImageSize) {
+                                // default size format of files would be in bytes -> 1MB = 1000000bytes
+                                throw new Error(`${t('common:maxSizeVal')}`);
+                              }
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <Upload
+                        accept=".doc, .docx, .pdf, .png, .jpg"
+                        beforeUpload={(file: any) => {
+                          return false;
+                        }}
+                        className="design-upload-section"
+                        name="design"
+                        action="/upload.do"
+                        listType="picture"
+                        multiple={false}
+                        disabled={true}
+                        // maxCount={1}
+                      >
+                        <Button
+                          className="upload-doc"
+                          size="large"
+                          icon={<UploadOutlined />}
+                          disabled={true}
+                        >
+                          {t('monitoringReport:upload')}
+                        </Button>
+                      </Upload>
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-                        <Col xl={12} md={24}>
-                          <Form.Item
-                            label={t('monitoringReport:setLocation')}
-                            name="geographicalLocationCoordinates"
-                            rules={[
-                              {
-                                required: true,
-                                message: ``,
-                              },
-                              {
-                                validator: async (rule, value) => {
-                                  if (
-                                    String(value).trim() === '' ||
-                                    String(value).trim() === undefined ||
-                                    value === null ||
-                                    value === undefined
-                                  ) {
-                                    throw new Error(
-                                      `${t('monitoringReport:location')} ${t('isRequired')}`
-                                    );
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <GetLocationMapComponent
-                              form={form}
-                              formItemName={'geographicalLocationCoordinates'}
-                              existingCordinate={form.getFieldValue(
-                                'geographicalLocationCoordinates'
-                              )}
-                              disabled
-                            />
-                          </Form.Item>
-                        </Col>
-
-                        <Col xl={24} md={24}>
-                          <Form.Item
-                            label={t('monitoringReport:pa_uploadImages')}
-                            name="optionalImages"
-                            valuePropName="fileList"
-                            getValueFromEvent={normFile}
-                            required={false}
-                            rules={[
-                              {
-                                validator: async (rule, file) => {
-                                  if (file?.length > 0) {
-                                    if (file[0]?.size > maximumImageSize) {
-                                      // default size format of files would be in bytes -> 1MB = 1000000bytes
-                                      throw new Error(`${t('common:maxSizeVal')}`);
-                                    }
-                                  }
-                                },
-                              },
-                            ]}
-                          >
-                            <Upload
-                              accept=".doc, .docx, .pdf, .png, .jpg"
-                              beforeUpload={(file: any) => {
-                                return false;
-                              }}
-                              className="design-upload-section"
-                              name="design"
-                              action="/upload.do"
-                              listType="picture"
-                              multiple={false}
-                              disabled={true}
-                              // maxCount={1}
-                            >
-                              <Button
-                                className="upload-doc"
-                                size="large"
-                                icon={<UploadOutlined />}
-                                disabled={true}
-                              >
-                                {t('monitoringReport:upload')}
-                              </Button>
-                            </Upload>
-                          </Form.Item>
-                        </Col>
-                      </Row>
-                    </div>
-
-                    {/* ----------------------handle dynamic fields  ---------------------------*/}
-                    <Form.List name="extraLocations">
-                      {(fields, { add, remove }) => (
+                {/* ----------------------handle dynamic fields  ---------------------------*/}
+                <Form.List name="extraLocations">
+                  {(fields, { add, remove }) => (
+                    <>
+                      {fields.map(({ key, name, ...restField }) => (
                         <>
-                          {fields.map(({ key, name, ...restField }) => (
-                            <>
-                              <div className="form-list-actions">
-                                <h4 className="list-item-title">Location {name + 2}</h4>
-                                <Form.Item>
-                                  <Button
-                                    // type="dashed"
-                                    onClick={() => {
-                                      remove(name);
-                                      if (districts[name + 1]) {
-                                        delete districts[name + 1];
-                                      }
-                                      // if (dsDivisions[name + 1]) {
-                                      //   delete dsDivisions[name + 1];
-                                      // }
-                                      if (cities[name + 1]) {
-                                        delete cities[name + 1];
-                                      }
-                                    }}
-                                    size="large"
-                                    className="addMinusBtn"
-                                    // block
-                                    disabled={true}
-                                    icon={<MinusOutlined />}
-                                  >
-                                    {/* Remove Entity */}
-                                  </Button>
-                                </Form.Item>
-                              </div>
-
-                              <Row
-                                justify={'space-between'}
-                                gutter={[40, 16]}
-                                style={{ borderRadius: '8px' }}
-                                className="form-section"
-                              >
-                                <Col xl={12} md={24}>
-                                  <Form.Item
-                                    label={t('monitoringReport:locationOfProjectActivity')}
-                                    name={[name, 'locationOfProjectActivity']}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message: ``,
-                                      },
-                                      {
-                                        validator: async (rule, value) => {
-                                          if (
-                                            String(value).trim() === '' ||
-                                            String(value).trim() === undefined ||
-                                            value === null ||
-                                            value === undefined
-                                          ) {
-                                            throw new Error(
-                                              `${t(
-                                                'monitoringReport:locationOfProjectActivity'
-                                              )} ${t('isRequired')}`
-                                            );
-                                          }
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <Input size="large" disabled />
-                                  </Form.Item>
-
-                                  <Form.Item
-                                    label={t('monitoringReport:pa_siteNo')}
-                                    name={[name, 'siteNo']}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message: ``,
-                                      },
-                                      {
-                                        validator: async (rule, value) => {
-                                          if (
-                                            String(value).trim() === '' ||
-                                            String(value).trim() === undefined ||
-                                            value === null ||
-                                            value === undefined
-                                          ) {
-                                            throw new Error(
-                                              `${t('PDD:pa_siteNo')} ${t('isRequired')}`
-                                            );
-                                          }
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <Input size="large" disabled />
-                                  </Form.Item>
-
-                                  <Form.Item
-                                    label={t('monitoringReport:province')}
-                                    name={[name, 'province']}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message: ``,
-                                      },
-                                      {
-                                        validator: async (rule, value) => {
-                                          if (
-                                            String(value).trim() === '' ||
-                                            String(value).trim() === undefined ||
-                                            value === null ||
-                                            value === undefined
-                                          ) {
-                                            throw new Error(
-                                              `${t('monitoringReport:province')} ${t('isRequired')}`
-                                            );
-                                          }
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <Select
-                                      size="large"
-                                      onChange={(value) => onProvinceSelect(value, name + 1)}
-                                      // placeholder={t('PDD:provincePlaceholder')}
-                                      disabled
-                                    >
-                                      {provinces.map((province: string, index: number) => (
-                                        <Select.Option
-                                          value={province}
-                                          key={name + province + index}
-                                        >
-                                          {province}
-                                        </Select.Option>
-                                      ))}
-                                    </Select>
-                                  </Form.Item>
-
-                                  <Form.Item
-                                    label={t('monitoringReport:district')}
-                                    name={[name, 'district']}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message: ``,
-                                      },
-                                      {
-                                        validator: async (rule, value) => {
-                                          if (
-                                            String(value).trim() === '' ||
-                                            String(value).trim() === undefined ||
-                                            value === null ||
-                                            value === undefined
-                                          ) {
-                                            throw new Error(
-                                              `${t('monitoringReport:district')} ${t('isRequired')}`
-                                            );
-                                          }
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <Select
-                                      size="large"
-                                      // placeholder={t('PDD:districtPlaceholder')}
-                                      onSelect={(value) => onDistrictSelect(value, name + 1)}
-                                      disabled
-                                    >
-                                      {districts[name + 1]?.map(
-                                        (district: string, index: number) => (
-                                          <Select.Option
-                                            key={name + district + index}
-                                            value={district}
-                                          >
-                                            {district}
-                                          </Select.Option>
-                                        )
-                                      )}
-                                    </Select>
-                                  </Form.Item>
-
-                                  <Form.Item
-                                    label={t('monitoringReport:pa_city')}
-                                    name={[name, 'city']}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message: ``,
-                                      },
-                                      {
-                                        validator: async (rule, value) => {
-                                          if (
-                                            String(value).trim() === '' ||
-                                            String(value).trim() === undefined ||
-                                            value === null ||
-                                            value === undefined
-                                          ) {
-                                            throw new Error(
-                                              `${t('monitoringReport:pa_city')} ${t('isRequired')}`
-                                            );
-                                          }
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <Select
-                                      size="large"
-                                      // placeholder={t('PDD:cityPlaceholder')}
-                                      disabled
-                                    >
-                                      {cities[name + 1]?.map((city: string, index: number) => (
-                                        <Select.Option value={city} key={name + city + index}>
-                                          {city}
-                                        </Select.Option>
-                                      ))}
-                                    </Select>
-                                  </Form.Item>
-                                  <Form.Item
-                                    label={t('monitoringReport:community')}
-                                    name={[name, 'community']}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message: ``,
-                                      },
-                                      {
-                                        validator: async (rule, value) => {
-                                          if (
-                                            String(value).trim() === '' ||
-                                            String(value).trim() === undefined ||
-                                            value === null ||
-                                            value === undefined
-                                          ) {
-                                            throw new Error(
-                                              `${t('monitoringReport:community')} ${t(
-                                                'isRequired'
-                                              )}`
-                                            );
-                                          }
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <Input size="large" disabled />
-                                  </Form.Item>
-                                </Col>
-
-                                <Col xl={12} md={24}>
-                                  <Form.Item
-                                    label={t('monitoringReport:setLocation')}
-                                    name={[name, 'geographicalLocationCoordinates']}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message: ``,
-                                      },
-                                      {
-                                        validator: async (rule, value) => {
-                                          if (
-                                            String(value).trim() === '' ||
-                                            String(value).trim() === undefined ||
-                                            value === null ||
-                                            value === undefined
-                                          ) {
-                                            throw new Error(
-                                              `${t('monitoringReport:setLocation')} ${t(
-                                                'isRequired'
-                                              )}`
-                                            );
-                                          }
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <GetLocationMapComponent
-                                      form={form}
-                                      formItemName={[name, 'geographicalLocationCoordinates']}
-                                      listName="locationsDetails"
-                                      disabled={true}
-                                      existingCordinate={
-                                        form?.getFieldValue('extraLocations')[name]
-                                          ?.geographicalLocationCoordinates
-                                      }
-                                    />
-                                  </Form.Item>
-                                </Col>
-
-                                <Col xl={24} md={24}>
-                                  <Form.Item
-                                    label={t('monitoringReport:pa_uploadImages')}
-                                    name={[name, 'optionalImages']}
-                                    valuePropName="fileList"
-                                    getValueFromEvent={normFile}
-                                    required={false}
-                                    rules={[
-                                      {
-                                        validator: async (rule, file) => {
-                                          if (file?.length > 0) {
-                                            if (file[0]?.size > maximumImageSize) {
-                                              // default size format of files would be in bytes -> 1MB = 1000000bytes
-                                              throw new Error(`${t('common:maxSizeVal')}`);
-                                            }
-                                          }
-                                        },
-                                      },
-                                    ]}
-                                  >
-                                    <Upload
-                                      accept=".doc, .docx, .pdf, .png, .jpg"
-                                      beforeUpload={(file: any) => {
-                                        return false;
-                                      }}
-                                      className="design-upload-section"
-                                      name="design"
-                                      action="/upload.do"
-                                      listType="picture"
-                                      multiple={false}
-                                      disabled={true}
-                                      // maxCount={1}
-                                    >
-                                      <Button
-                                        className="upload-doc"
-                                        size="large"
-                                        icon={<UploadOutlined />}
-                                        disabled
-                                      >
-                                        Upload
-                                      </Button>
-                                    </Upload>
-                                  </Form.Item>
-                                </Col>
-                              </Row>
-                            </>
-                          ))}
-
                           <div className="form-list-actions">
+                            <h4 className="list-item-title">Location {name + 1}</h4>
                             <Form.Item>
                               <Button
                                 // type="dashed"
                                 onClick={() => {
-                                  add();
+                                  remove(name);
+                                  if (districts[name + 1]) {
+                                    delete districts[name + 1];
+                                  }
+                                  // if (dsDivisions[name + 1]) {
+                                  //   delete dsDivisions[name + 1];
+                                  // }
+                                  if (cities[name + 1]) {
+                                    delete cities[name + 1];
+                                  }
                                 }}
                                 size="large"
                                 className="addMinusBtn"
                                 // block
-                                icon={<PlusOutlined />}
                                 disabled={true}
+                                icon={<MinusOutlined />}
                               >
-                                {/* Add Entity */}
+                                {/* Remove Entity */}
                               </Button>
                             </Form.Item>
                           </div>
+
+                          <Row
+                            justify={'space-between'}
+                            gutter={[40, 16]}
+                            style={{ borderRadius: '8px' }}
+                            className="form-section"
+                          >
+                            <Col xl={12} md={24}>
+                              <Form.Item
+                                label={t('monitoringReport:locationOfProjectActivity')}
+                                name={[name, 'locationOfProjectActivity']}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: ``,
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('monitoringReport:locationOfProjectActivity')} ${t(
+                                            'isRequired'
+                                          )}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Input size="large" disabled />
+                              </Form.Item>
+
+                              <Form.Item
+                                label={t('monitoringReport:pa_siteNo')}
+                                name={[name, 'siteNo']}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: ``,
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(`${t('PDD:pa_siteNo')} ${t('isRequired')}`);
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Input size="large" disabled />
+                              </Form.Item>
+
+                              <Form.Item
+                                label={t('monitoringReport:province')}
+                                name={[name, 'province']}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: ``,
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('monitoringReport:province')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  onChange={(value) => onProvinceSelect(value, name + 1)}
+                                  // placeholder={t('PDD:provincePlaceholder')}
+                                  disabled
+                                >
+                                  {provinces.map((province: string, index: number) => (
+                                    <Select.Option value={province} key={name + province + index}>
+                                      {province}
+                                    </Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+
+                              <Form.Item
+                                label={t('monitoringReport:district')}
+                                name={[name, 'district']}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: ``,
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('monitoringReport:district')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  // placeholder={t('PDD:districtPlaceholder')}
+                                  onSelect={(value) => onDistrictSelect(value, name + 1)}
+                                  disabled
+                                >
+                                  {districts[name + 1]?.map((district: string, index: number) => (
+                                    <Select.Option key={name + district + index} value={district}>
+                                      {district}
+                                    </Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+
+                              <Form.Item
+                                label={t('monitoringReport:pa_city')}
+                                name={[name, 'city']}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: ``,
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('monitoringReport:pa_city')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  // placeholder={t('PDD:cityPlaceholder')}
+                                  disabled
+                                >
+                                  {cities[name + 1]?.map((city: string, index: number) => (
+                                    <Select.Option value={city} key={name + city + index}>
+                                      {city}
+                                    </Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+                              <Form.Item
+                                label={t('monitoringReport:community')}
+                                name={[name, 'community']}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: ``,
+                                  },
+                                  {
+                                    validator: async (rule, value) => {
+                                      if (
+                                        String(value).trim() === '' ||
+                                        String(value).trim() === undefined ||
+                                        value === null ||
+                                        value === undefined
+                                      ) {
+                                        throw new Error(
+                                          `${t('monitoringReport:community')} ${t('isRequired')}`
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Input size="large" disabled />
+                              </Form.Item>
+                            </Col>
+
+                            <Col xl={12} md={24}>
+                              <Form.Item
+                                label={t('monitoringReport:setLocation')}
+                                name={[name, 'geographicalLocationCoordinates']}
+                                // rules={[
+                                //   {
+                                //     required: true,
+                                //     message: ``,
+                                //   },
+                                //   {
+                                //     validator: async (rule, value) => {
+                                //       if (
+                                //         String(value).trim() === '' ||
+                                //         String(value).trim() === undefined ||
+                                //         value === null ||
+                                //         value === undefined
+                                //       ) {
+                                //         throw new Error(
+                                //           `${t('monitoringReport:setLocation')} ${t(
+                                //             'isRequired'
+                                //           )}`
+                                //         );
+                                //       }
+                                //     },
+                                //   },
+                                // ]}
+                              >
+                                <GetLocationMapComponent
+                                  form={form}
+                                  formItemName={[name, 'geographicalLocationCoordinates']}
+                                  listName="locationsDetails"
+                                  disabled={true}
+                                  existingCordinate={
+                                    form?.getFieldValue('extraLocations')[name]
+                                      ?.geographicalLocationCoordinates
+                                  }
+                                />
+                              </Form.Item>
+                            </Col>
+
+                            <Col xl={24} md={24}>
+                              <Form.Item
+                                label={t('monitoringReport:pa_uploadImages')}
+                                name={[name, 'uploadImages']}
+                                valuePropName="fileList"
+                                getValueFromEvent={normFile}
+                                required={false}
+                                rules={[
+                                  {
+                                    validator: async (rule, file) => {
+                                      if (file?.length > 0) {
+                                        if (file[0]?.size > maximumImageSize) {
+                                          // default size format of files would be in bytes -> 1MB = 1000000bytes
+                                          throw new Error(`${t('common:maxSizeVal')}`);
+                                        }
+                                      }
+                                    },
+                                  },
+                                ]}
+                              >
+                                <Upload
+                                  accept=".doc, .docx, .pdf, .png, .jpg"
+                                  beforeUpload={(file: any) => {
+                                    return false;
+                                  }}
+                                  className="design-upload-section"
+                                  name="design"
+                                  action="/upload.do"
+                                  listType="picture"
+                                  multiple={false}
+                                  disabled={true}
+                                  // maxCount={1}
+                                >
+                                  <Button
+                                    className="upload-doc"
+                                    size="large"
+                                    icon={<UploadOutlined />}
+                                    disabled
+                                  >
+                                    Upload
+                                  </Button>
+                                </Upload>
+                              </Form.Item>
+                            </Col>
+                          </Row>
                         </>
-                      )}
-                    </Form.List>
-                    {/* </div> */}
-                  </>
-                </Col>
-              </Row>
+                      ))}
+
+                      <div className="form-list-actions">
+                        <Form.Item>
+                          <Button
+                            // type="dashed"
+                            onClick={() => {
+                              add();
+                            }}
+                            size="large"
+                            className="addMinusBtn"
+                            // block
+                            icon={<PlusOutlined />}
+                            disabled={false}
+                          >
+                            {/* Add Entity */}
+                          </Button>
+                        </Form.Item>
+                      </div>
+                    </>
+                  )}
+                </Form.List>
+              </>
 
               {/* project participant table start */}
 
@@ -891,7 +870,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
 
                 <div className="data-body">
                   <Form.List name="projectParticipants">
-                    {(fields, { add, remove }) => (
+                    {(fields) => (
                       <>
                         {fields.map(({ key, name, ...restFields }) => (
                           <div className="row" key={key}>
