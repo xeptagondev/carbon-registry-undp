@@ -34,4 +34,5 @@ export enum MailTemplateEnum {
     VR_APPROVE_IC = './vrApproveIC',
     VR_REJECT_PD = './vrRejectPD',
     VR_REJECT_IC = './vrRejectIC',
+    INSUFFICIENT_HBAR_BALANCE = './insufficientHbarBalance',
 }

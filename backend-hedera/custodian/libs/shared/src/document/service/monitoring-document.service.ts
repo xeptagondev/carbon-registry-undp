@@ -43,6 +43,8 @@ import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.
 import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
+import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
+import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 
 @Injectable()
 export class MonitoringDocumentService extends DocumentService {
@@ -55,6 +57,7 @@ export class MonitoringDocumentService extends DocumentService {
         guardianService: GuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        hbarManagementService: HbarManagementService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
     ) {
@@ -65,6 +68,7 @@ export class MonitoringDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            hbarManagementService,
             documentRepository,
             logger,
         );
@@ -184,8 +188,26 @@ export class MonitoringDocumentService extends DocumentService {
                     HttpStatus.UNAUTHORIZED,
                 );
             }
-
             const monitoringData = dto.data;
+
+            let totalCreditAmount = 0;
+
+            for (const data of monitoringData.ghgProjectDescription
+                ?.estimatedNetEmissionReductions ?? []) {
+                totalCreditAmount += Number(data.netEmissionReductions);
+            }
+
+            const transactionCost =
+                await this.hbarManagementService.getTransactionCosts(
+                    TransactionType.TOKEN_MINT,
+                );
+
+            await this.validateHbarBalanceBeforeAction(
+                jwtData.email || project.createdBy.email,
+                queryRunner,
+                transactionCost * totalCreditAmount,
+                'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.',
+            );
 
             if (
                 monitoringData?.appendix?.a_uploadDoc &&
@@ -196,6 +218,7 @@ export class MonitoringDocumentService extends DocumentService {
                     AdditionalDocType.MONITORING_REPORT_APPENDIX_ADDITIONAL_DOC,
                     dto.projectRefId,
                 );
+                // eslint-disable-next-line camelcase
                 monitoringData.appendix.a_uploadDoc = docUrls;
             }
 
@@ -209,6 +232,7 @@ export class MonitoringDocumentService extends DocumentService {
                     AdditionalDocType.MONITORING_REPORT_BASELINE_EMISSION_ADDITIONAL_DOC,
                     dto.projectRefId,
                 );
+                // eslint-disable-next-line camelcase
                 monitoringData.calcEmissionReductions.ce_documentUpload =
                     docUrls;
             }
@@ -436,6 +460,21 @@ export class MonitoringDocumentService extends DocumentService {
                     HttpStatus.UNAUTHORIZED,
                 );
             }
+
+            const transactionCost =
+                await this.hbarManagementService.getTransactionCosts(
+                    TransactionType.TOKEN_MINT,
+                );
+
+            await this.validateHbarBalanceBeforeAction(
+                documentEntity.project.createdBy.email,
+                queryRunner,
+                transactionCost *
+                    documentEntity?.data.projectActivityDetails
+                        .bi_projectedGHGReductions,
+                `The associated PD does not have enough HBAR balance to complete the transaction.
+                 They've been notified — please try again shortly.`,
+            );
 
             documentEntity.state = requestData.action;
             documentEntity.remarks = requestData.remarks;

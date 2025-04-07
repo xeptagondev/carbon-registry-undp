@@ -42,6 +42,8 @@ import { DataResponseDto } from '@app/shared/util/dto/data.response.dto';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
+import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
+import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 
 @Injectable()
 export class InfDocumentService extends DocumentService {
@@ -54,6 +56,7 @@ export class InfDocumentService extends DocumentService {
         guardianService: GuardianService,
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         fileHelperService: FileHelperService,
+        hbarManagementService: HbarManagementService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
         logger: InstantLogger,
@@ -65,6 +68,7 @@ export class InfDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            hbarManagementService,
             documentRepository,
             logger,
         );
@@ -135,6 +139,20 @@ export class InfDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+
+            const tokenCreationCost =
+                await this.hbarManagementService.getTransactionCosts(
+                    TransactionType.TOKEN_CREATION,
+                );
+            const tokenAssociationCost =
+                await this.hbarManagementService.getTransactionCosts(
+                    TransactionType.TOKEN_ASSOCIATION,
+                );
+            await this.validateHbarBalanceBeforeAction(
+                createdBy.email,
+                queryRunner,
+                tokenCreationCost + tokenAssociationCost,
+            );
 
             const savedProject: ProjectEntity = await queryRunner.manager.save(
                 plainToClass(ProjectEntity, {

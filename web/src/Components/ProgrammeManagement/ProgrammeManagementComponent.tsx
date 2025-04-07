@@ -446,9 +446,11 @@ export const ProgrammeManagementComponent = (props: any) => {
   //   }
   // };
 
-  const onSearch = async () => {
-    if (searchText) {
-      setSearch(searchText?.toLowerCase());
+  const onSearch = async (value: string) => {
+    if (value) {
+      setSearch(value.toLowerCase());
+    } else {
+      setSearch('');
     }
   };
 
@@ -591,14 +593,10 @@ export const ProgrammeManagementComponent = (props: any) => {
             <div className="filter-section">
               <div className="search-bar">
                 <Search
-                  onPressEnter={onSearch}
+                  onPressEnter={(e) => onSearch((e.target as HTMLInputElement).value)}
                   placeholder={`${t('projectList:searchByName')}`}
                   allowClear
-                  onChange={(e) => {}}
-                  onSearch={(value: string) => {
-                    console.log('----------value-----------', value);
-                    setSearch(value);
-                  }}
+                  onChange={(e) => setSearch(e.target.value)}
                   style={{ width: 265 }}
                 />
               </div>
