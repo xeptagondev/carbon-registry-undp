@@ -429,7 +429,7 @@ export class VerificationDocumentService extends DocumentService {
                 await this.validateHbarBalanceBeforeAction(
                     documentEntity.project.createdBy.email,
                     queryRunner,
-                    transactionCost * creditAmount,
+                    transactionCost * totalCreditAmount,
                     `The associated PD does not have enough HBAR balance to complete the transaction.
                  They've been notified — please try again shortly.`,
                 );
