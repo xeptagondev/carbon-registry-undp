@@ -1,5 +1,6 @@
-import moment from 'moment';
-import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import moment from "moment";
+import { mapBase64ToFields } from "../../Utils/mapBase64ToFields";
+import { toMoment } from "../../Utils/convertTime";
 
 export const basicInformationMapDataToFields = (vals: any) => {
   console.log('--------bi------------', vals);
@@ -107,10 +108,10 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
     ...vals,
     ce_documentUpload: mapBase64ToFields(vals?.ce_documentUpload),
     emissionsPeriodStart: firstYearlyReductions?.startDate
-      ? moment.unix(firstYearlyReductions?.startDate)
+      ? toMoment(firstYearlyReductions?.startDate)
       : undefined,
     emissionsPeriodEnd: firstYearlyReductions?.endDate
-      ? moment.unix(firstYearlyReductions?.endDate)
+      ? toMoment(firstYearlyReductions?.endDate)
       : undefined,
     baselineEmissionReductions: String(firstYearlyReductions?.baselineEmissionReductions),
     projectEmissionReductions: String(firstYearlyReductions?.projectEmissionReductions),
@@ -123,12 +124,27 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
         tempExtraReductions = yearlyReductions.map((reductions: any) => {
           return {
             emissionsPeriodStart: reductions?.startDate
-              ? moment.unix(reductions?.startDate)
+              ? toMoment(reductions?.startDate)
               : undefined,
+<<<<<<< HEAD
             emissionsPeriodEnd: reductions?.endDate ? moment.unix(reductions?.endDate) : undefined,
             baselineEmissionReductions: String(reductions?.baselineEmissionReductions),
             projectEmissionReductions: String(reductions?.projectEmissionReductions),
             leakageEmissionReductions: String(reductions?.leakageEmissionReductions),
+=======
+            emissionsPeriodEnd: reductions?.endDate
+              ? toMoment(reductions?.endDate)
+              : undefined,
+            baselineEmissionReductions: String(
+              reductions?.baselineEmissionReductions
+            ),
+            projectEmissionReductions: String(
+              reductions?.projectEmissionReductions
+            ),
+            leakageEmissionReductions: String(
+              reductions?.leakageEmissionReductions
+            ),
+>>>>>>> b88034a3 (FE: convert seconds to ms)
             netEmissionReductions: String(reductions?.netEmissionReductions),
           };
         });
