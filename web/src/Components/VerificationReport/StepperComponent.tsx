@@ -40,9 +40,10 @@ import {
   verificationFindingsMapDataToFields,
   verificationOpinionMapDataToFields,
   verificationTeamsMapDataToFields,
-} from './viewDataMap';
-import { Loading } from '../Loading/loading';
-import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
+} from "./viewDataMap";
+import { Loading } from "../Loading/loading";
+import { INF_SECTORAL_SCOPE } from "../AddNewProgramme/ProgrammeCreationComponent";
+import { toMoment } from "../../Utils/convertTime";
 
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
@@ -205,8 +206,10 @@ const StepperComponent = (props: VerificationStepProps) => {
         estimatedNetEmissionReductions: emReduction.map((item: any) => {
           return {
             ...item,
-            startDate: item?.startDate ? moment.unix(item?.startDate) : undefined,
-            endDate: item?.endDate ? moment.unix(item?.endDate) : undefined,
+            startDate: item?.startDate
+              ? toMoment(item?.startDate)
+              : undefined,
+            endDate: item?.endDate ? toMoment(item?.endDate) : undefined,
           };
         }),
         totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
