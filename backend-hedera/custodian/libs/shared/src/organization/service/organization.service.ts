@@ -498,7 +498,6 @@ export class OrganizationService extends SuperService<
                             },
                             {
                                 isActive: UserStateConstant.ACTIVE,
-                                stage: UserStageEnum.APPROVE_USER,
                             },
                         )
                         // eslint-disable-next-line @typescript-eslint/no-unused-vars
