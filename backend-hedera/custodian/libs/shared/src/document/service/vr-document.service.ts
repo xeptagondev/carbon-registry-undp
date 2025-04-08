@@ -39,7 +39,8 @@ import { plainToClass } from 'class-transformer';
 // eslint-disable-next-line max-len
 import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
 import { AdditionalDocType } from '../enum/additional.document.type';
-import doc from 'pdfkit';
+import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
+import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
@@ -54,6 +55,7 @@ export class VrDocumentService extends DocumentService {
         private readonly carbonCreditGuardianService: CarbonCreditGuardianService,
         fileHelperService: FileHelperService,
         logger: InstantLogger,
+        hbarManagementService: HbarManagementService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
         private readonly serialNumberManagementService: SerialNumberManagementService,
@@ -65,6 +67,7 @@ export class VrDocumentService extends DocumentService {
             auditService,
             guardianService,
             fileHelperService,
+            hbarManagementService,
             documentRepository,
             logger,
         );
@@ -386,6 +389,23 @@ export class VrDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+
+            const tokenCreationCost =
+                await this.hbarManagementService.getTransactionCosts(
+                    TransactionType.TOKEN_CREATION,
+                );
+            const tokenAssociationCost =
+                await this.hbarManagementService.getTransactionCosts(
+                    TransactionType.TOKEN_ASSOCIATION,
+                );
+
+            await this.validateHbarBalanceBeforeAction(
+                documentEntity.project.createdBy.email,
+                queryRunner,
+                tokenCreationCost + tokenAssociationCost,
+                `The associated PD does not have enough HBAR balance to complete the transaction.
+                 They've been notified — please try again shortly.`,
+            );
 
             /*
                      2. VR state change

@@ -23,6 +23,7 @@ import { CarbonCreditTokenModule } from './carbon-credit-token/carbon-credit-tok
 import { TaskModule } from './task/task.module';
 import { SerialNumberManagementModule } from './serial-number-management/serial-number-management.module';
 import { EventModule } from './event/event.module';
+import { HbarManagementModule } from './hbar-management/hbar-management.module';
 
 @Module({
     providers: [SharedService],
@@ -50,6 +51,7 @@ import { EventModule } from './event/event.module';
         CarbonCreditTokenModule,
         TaskModule,
         SerialNumberManagementModule,
+        HbarManagementModule,
         EventModule,
     ],
 })

@@ -52,6 +52,11 @@ DNA_ROOT_ORGANIZATION_LOGO='https://carbon-common-uni.s3.amazonaws.com/profile_i
 API_USER_EMAIL=<API_USER_EMAIL>
 API_USER_PASSWORD=<API_USER_PASSWORD>
 
+# Hedera Configurations
+HEDERA_NETWORK_TYPE='Testnet'
+HBAR_EXCHANGE_RATE_API='https://testnet.mirrornode.hedera.com/api/v1/network/exchangerate'
+GENERAL_HBAR_THRESHOLD=10
+
 # Task Configurations
 GUARDIAN_TASK_RETRY_COUNT=3
  
