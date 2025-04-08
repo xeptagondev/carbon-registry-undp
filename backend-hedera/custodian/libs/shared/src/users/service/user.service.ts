@@ -238,8 +238,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async checkForUserDuplicates(email: string, hederaAccount: string) {
-        const existingUser = await this.usersRepository.findOne({
+    async checkForUserDuplicates(
+        queryRunner: QueryRunner,
+        email: string,
+        hederaAccount: string,
+    ) {
+        const existingUser = await queryRunner.manager.findOne(UsersEntity, {
             where: [{ email: email }, { hederaAccount: hederaAccount }],
         });
 
@@ -262,12 +266,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         defaultPass: string = '',
         isUserActive: boolean,
         requestUser?: JWTPayload,
+        taskEntityId?: number,
     ): Promise<HTTPResponseDto> {
         return await this.validationsAndDataBaseSave(
             userDto,
             defaultPass,
             isUserActive,
             requestUser,
+            taskEntityId,
         );
     }
 
@@ -278,6 +284,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         defaultPass = '',
         isUserActive: boolean,
         requestUser?: JWTPayload,
+        taskEntityId?: number,
     ): Promise<any> {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -372,6 +379,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
 
             await this.checkForUserDuplicates(
+                queryRunner,
                 userDto.email,
                 userDto.hederaAccount,
             );
@@ -392,10 +400,22 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             user = await queryRunner.manager.save(UsersEntity, userEntity);
 
-            const submittedUser = await queryRunner.manager.findOneBy(
-                UsersEntity,
-                { id: requestUser.userId },
-            );
+            let prevTask: TaskEntity = null;
+            if (taskEntityId) {
+                prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                    id: taskEntityId,
+                });
+            }
+
+            let submittedUser: UsersEntity = null;
+            if (requestUser) {
+                submittedUser = await queryRunner.manager.findOneBy(
+                    UsersEntity,
+                    {
+                        id: requestUser.userId,
+                    },
+                );
+            }
 
             let asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'UserService',
@@ -406,6 +426,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 retryUntilSuccess: true,
                 millisBetweenAttempts: 3000,
                 submittedUser: submittedUser,
+                previousTask: prevTask,
             });
             asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
 
@@ -437,10 +458,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             await queryRunner.commitTransaction();
         } catch (err) {
             await queryRunner.rollbackTransaction();
-            throw new HttpException(
-                'Failed to save user',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
         }
@@ -1174,6 +1192,21 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 previousTask: prevTask,
             });
             asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            if (this.configService.get('system.initApiAdmin') === 'true') {
+                const asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                    className: 'UserInitializationService',
+                    functionName: 'createDnaApiAdmin',
+                    args: [],
+                    retryAttemps: 3,
+                    state: TaskEnum.PENDING,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                    previousTask: asyncTask,
+                });
+
+                await queryRunner.manager.save(TaskEntity, asyncTaskTwo);
+            }
 
             await queryRunner.commitTransaction();
         } catch (err) {

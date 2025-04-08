@@ -73,7 +73,15 @@
       "entryFile": "main",
       "sourceRoot": "apps/replicator/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/replicator/tsconfig.app.json"
+        "deleteOutDir": true,
+        "tsConfigPath": "apps/replicator/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "../../../libs/shared/src/i18n/**/*",
+            "watchAssets": true,
+            "outDir": "dist/apps/replicator"
+          }
+        ]
       }
     }
   },

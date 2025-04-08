@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { Repository } from 'typeorm';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class MailService {
@@ -30,21 +31,21 @@ export class MailService {
                     this.configService.get('mail.isLowPriorityEnable') ===
                     'true'
                 ) {
-                    asyncTask = {
+                    asyncTask = plainToClass(TaskEntity, {
                         className: 'MailService',
                         functionName: 'sendMailPayload',
                         args: [mailOptions],
                         retryAttemps: 2,
                         state: TaskEnum.PENDING,
-                    };
+                    });
                 } else {
-                    asyncTask = {
+                    asyncTask = plainToClass(TaskEntity, {
                         className: 'MailService',
                         functionName: 'sendMailPayload',
                         args: [mailOptions],
                         retryAttemps: 2,
                         state: TaskEnum.COMPLETED,
-                    };
+                    });
                 }
                 await this.taskRepository.save(asyncTask);
                 return;
