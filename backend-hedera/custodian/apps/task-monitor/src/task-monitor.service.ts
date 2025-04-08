@@ -50,7 +50,10 @@ export class TaskMonitorService implements OnModuleInit {
                 const pendingWork: TaskEntity[] = await this.taskRepository
                     .createQueryBuilder('task')
                     .leftJoinAndSelect('task.previousTask', 'previousTask')
-                    .leftJoinAndSelect('previousTask.events', 'previousTaskEvents')
+                    .leftJoinAndSelect(
+                        'previousTask.events',
+                        'previousTaskEvents',
+                    )
                     .where('task.state = :state', { state: TaskEnum.PENDING })
                     .andWhere(
                         'task.lastUpdateTime + task.millisBetweenAttempts < :currentTime',
@@ -71,9 +74,12 @@ export class TaskMonitorService implements OnModuleInit {
                     let prevTaskUnverified = true;
 
                     // check if any event has failed or rolledback
-                    for (let i = 0; i < previousTask.events?.length; i++) {
+                    for (let i = 0; i < previousTask?.events?.length; i++) {
                         const event = previousTask.events[i];
-                        if (event.status === EventStateEnum.FAILED || event.status === EventStateEnum.ROLLEDBACK) {
+                        if (
+                            event.status === EventStateEnum.FAILED ||
+                            event.status === EventStateEnum.ROLLEDBACK
+                        ) {
                             eventFailed = true;
                         } else if (event.status !== EventStateEnum.PENDING) {
                             prevTaskUnverified = false;
@@ -83,7 +89,8 @@ export class TaskMonitorService implements OnModuleInit {
                     // check whether the previous task is completed and verified
                     if (
                         previousTask &&
-                        (previousTask.state === TaskEnum.PENDING || prevTaskUnverified)
+                        (previousTask.state === TaskEnum.PENDING ||
+                            prevTaskUnverified)
                     ) {
                         // if previous task still pending or unverified, skip
                         this.logger.log(
@@ -127,7 +134,10 @@ export class TaskMonitorService implements OnModuleInit {
                             `[TASK MONITOR]: Failed to complete task! ID: ${task.id}.\nError: ${err}`,
                         );
                         // 4. Update the state to FAILED if all attempts failed
-                        if (!task.retryUntilSuccess && task.attemptedCount >= task.retryAttemps - 1) {
+                        if (
+                            !task.retryUntilSuccess &&
+                            task.attemptedCount >= task.retryAttemps - 1
+                        ) {
                             await this.taskRepository.update(
                                 {
                                     id: task.id,

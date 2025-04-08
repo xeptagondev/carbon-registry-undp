@@ -9,7 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
 import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationTypeEntity } from '@app/shared/organization-type/entity/organization-type.entity';
@@ -32,6 +32,7 @@ export class UserInitializationService implements OnModuleInit {
     private readonly logger = new Logger(UserInitializationService.name);
     constructor(
         private readonly configService: ConfigService,
+        private readonly dataSource: DataSource,
         private readonly utilService: UtilService,
         private readonly userService: UserService,
         @InjectRepository(OrganizationEntity)
@@ -48,18 +49,33 @@ export class UserInitializationService implements OnModuleInit {
         // if (this.configService.get('system.initPolicy') === 'true') {
         //     await this.utilService.fetchPolicyBlocks();
         // }
-        if (this.configService.get('system.initOrgs') === 'true') {
-            await this.createInitialOrganizations();
-        }
-        if (this.configService.get('system.initApiAdmin') === 'true') {
-            const asyncTask: TaskEntity = plainToClass(TaskEntity, {
-                className: 'UserInitializationService',
-                functionName: 'createDnaApiAdmin',
-                args: [],
-                retryAttemps: 2,
-                state: TaskEnum.PENDING,
-            });
-            await this.taskRepository.save(asyncTask);
+
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+
+            let asyncTask: TaskEntity = null;
+            if (this.configService.get('system.initOrgs') === 'true') {
+                asyncTask = plainToClass(TaskEntity, {
+                    className: 'UserInitializationService',
+                    functionName: 'createInitialOrganizations',
+                    args: [],
+                    retryAttemps: 3,
+                    state: TaskEnum.PENDING,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                });
+                await queryRunner.manager.save(TaskEntity, asyncTask);
+            }
+
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error('Error occurred while initial Users');
+            throw err;
+        } finally {
+            await this.userService.releaseQueryRunner(queryRunner);
         }
     }
 
