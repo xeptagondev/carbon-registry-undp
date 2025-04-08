@@ -147,4 +147,7 @@ export const API_PATHS = {
   REJECT_VALIDATION: 'programmeSl/validation/reject',
   APPROVE_VALIDATION: 'programmeSl/validation/approve',
   POPUP_ACTION: (endpoint: string) => `programme/${endpoint}`,
+  //HBAR Management
+  ORGANIZATION_HBAR_BALANCE: 'hbar-management/orgBalance',
+  USER_HBAR_BALANCE: 'hbar-management/userBalance',
 };

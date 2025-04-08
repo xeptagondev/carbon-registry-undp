@@ -1,11 +1,13 @@
 export type UserProps = {
   id: number;
   userRole: string;
+  userHederaAccount: string;
   companyId: number;
   companyRole: string;
   companyLogo: string;
   companyName: string;
   companyState: number;
+  organizationHederaAccount: string;
   name: string;
 };
 

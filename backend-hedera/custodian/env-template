@@ -21,6 +21,8 @@ EMAIL_PORT=587
 EMAIL_ID=<EMAIL_ID>
 EMAIL_PASS=<EMAIL_PASS>
 EMAIL_SEND_ADDRESS=<SEND_EMAIL_ADDRESS>
+IS_EMAIL_ENABLE=true  # Enable Email Sending
+IS_LOW_PRIORITY_EMAIL_ENABLE=true # Enable Low Priority Emails
  
 # Policy Configurations
 POLICY_ID=<POLICY_ID>
@@ -49,6 +51,11 @@ DNA_ROOT_ORGANIZATION_ADDRESS='DNA Organization, Address'
 DNA_ROOT_ORGANIZATION_LOGO='https://carbon-common-uni.s3.amazonaws.com/profile_images%2F228_1736221366674.png'
 API_USER_EMAIL=<API_USER_EMAIL>
 API_USER_PASSWORD=<API_USER_PASSWORD>
+
+# Hedera Configurations
+HEDERA_NETWORK_TYPE='Testnet'
+HBAR_EXCHANGE_RATE_API='https://testnet.mirrornode.hedera.com/api/v1/network/exchangerate'
+GENERAL_HBAR_THRESHOLD=10
 
 # Task Configurations
 GUARDIAN_TASK_RETRY_COUNT=3

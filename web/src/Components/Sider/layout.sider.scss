@@ -1,5 +1,11 @@
 @import '../../Styles/variables.scss';
 
+.ant-tooltip-placement-top,
+.ant-tooltip-placement-topLeft,
+.ant-tooltip-placement-topRight {
+  padding-bottom: 0px !important;
+}
+
 .layout-sider-container {
   background-color: $background-color;
   height: 100vh;
@@ -36,6 +42,12 @@
     font-size: 25px;
     margin-left: 10px;
     margin-right: 10px;
+  }
+
+  .hedera-balance {
+    position: absolute;
+    bottom: 15px;
+    width: 100%;
   }
 
   .layout-sider-menu-container {

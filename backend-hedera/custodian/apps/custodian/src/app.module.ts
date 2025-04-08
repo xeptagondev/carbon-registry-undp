@@ -18,6 +18,7 @@ import { ProjectAppModule } from './project/project.module';
 import { UserAppModule } from './user/user.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { TokensModule } from './tokens/tokens.module';
+import { HbarManagementAppModule } from './hbar-management/hbar-management.module';
 
 @Module({
     imports: [
@@ -43,6 +44,7 @@ import { TokensModule } from './tokens/tokens.module';
         DocumentAppModule,
         AnalyticsModule,
         TokensModule,
+        HbarManagementAppModule,
     ],
     controllers: [AppController],
     providers: [AppService],

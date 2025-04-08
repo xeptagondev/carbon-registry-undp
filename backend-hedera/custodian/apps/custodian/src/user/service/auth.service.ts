@@ -29,6 +29,7 @@ import { GenerateTokenDto } from '@app/shared/token/dto/generate-token.dto';
 import { PasswordResetDto } from '@app/shared/users/dto/password-reset.dto';
 import { ValidateTokenDto } from '@app/shared/token/dto/validate-token.dto';
 import { RequestTokenDto } from '@app/shared/token/dto/request-token.dto';
+import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
 
 @Injectable()
 export class AuthService {
@@ -86,10 +87,12 @@ export class AuthService {
             user.refId,
             user.guardianRole.role.name,
             user.isActive,
+            user.hederaAccount,
             user.organization.id,
             user.organization.refId,
             organisationDetails.organizationType.name,
             organisationDetails.state,
+            organisationDetails.hederaAccountId,
         );
 
         return this.jwtService.signAsync(instanceToPlain(payload), {
@@ -188,6 +191,13 @@ export class AuthService {
             );
         }
 
+        if (user.isApiUser) {
+            throw new HttpException(
+                'Api Users are not permitted',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+
         const decryptedPassword = verifyPassword(
             user.password,
             loginDto.password,
@@ -258,11 +268,13 @@ export class AuthService {
                 role: user.guardianRole?.role?.name,
                 id: user.id,
                 name: user.name,
+                userHederaAccount: user.hederaAccount,
                 companyId: organization.id,
                 companyRole: organization.organizationType.name,
                 companyName: organization.name,
                 companyLogo: organization?.logo,
                 companyState: parseInt(organization.state),
+                organizationHederaAccount: organization.hederaAccountId,
             };
             return response;
         } else {
@@ -318,6 +330,7 @@ export class AuthService {
                     remainingTime: formatRemainingTime(tokenValidTime),
                     pwdResetlink: `${this.configService.get('url')}/resetPassword/${token}`,
                 },
+                priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
             await this.mailService.sendMail(mailDTO);
 
