@@ -68,7 +68,7 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
           userInfoState,
           DocType.MONITORING_REPORT,
           activity,
-          documents
+          { ...documents, ...activity.documents }
         );
 
         // monitoringPermissions.push(tempMonitoringReportPermissions as IPermissionsState);
@@ -77,7 +77,7 @@ const VerificationPhaseForms = (props: IVerificationPhaseForms) => {
           userInfoState,
           DocType.VERIFICATION_REPORT,
           activity,
-          documents
+          { ...documents, ...activity.documents }
         );
 
         // verificationPermissions.push(tempVerificationReportPermissions as IPermissionsState);
