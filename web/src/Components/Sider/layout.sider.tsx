@@ -271,7 +271,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
           <span style={{ marginLeft: 10, fontWeight: 500 }}>{t('hbarCreditsBalance')}</span>
         </Row>
         <Row
-          style={{ marginLeft: 23, marginBottom: 10 }}
+          style={{ marginLeft: 30, marginBottom: 10, paddingRight: 10 }}
           justify={'space-between'}
           align={'middle'}
         >
@@ -286,7 +286,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
           </span>
         </Row>
         <Row
-          style={{ marginLeft: 23, marginBottom: 10 }}
+          style={{ marginLeft: 30, marginBottom: 10, paddingRight: 10 }}
           justify={'space-between'}
           align={'middle'}
         >
