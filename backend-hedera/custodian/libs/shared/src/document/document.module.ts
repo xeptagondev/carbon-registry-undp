@@ -18,6 +18,7 @@ import { VrDocumentService } from './service/vr-document.service';
 import { MonitoringDocumentService } from './service/monitoring-document.service';
 import { VerificationDocumentService } from './service/verification-document.service';
 import { SerialNumberManagementModule } from '../serial-number-management/serial-number-management.module';
+import { HbarManagementModule } from '../hbar-management/hbar-management.module';
 
 @Module({
     imports: [
@@ -36,6 +37,7 @@ import { SerialNumberManagementModule } from '../serial-number-management/serial
         UtilModule,
         CarbonCreditTokenModule,
         SerialNumberManagementModule,
+        HbarManagementModule,
     ],
     providers: [
         InfDocumentService,

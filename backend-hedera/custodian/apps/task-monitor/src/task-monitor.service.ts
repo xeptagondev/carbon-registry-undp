@@ -1,5 +1,6 @@
 import { CarbonCreditService } from '@app/shared/carbon-credit-token/service/carbon-credit.service';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
+import { MailService } from '@app/shared/mail/service/mail.service';
 import { OrganizationService } from '@app/shared/organization/service/organization.service';
 import { ProjectService } from '@app/shared/project/service/project.service';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
@@ -19,6 +20,7 @@ export class TaskMonitorService implements OnModuleInit {
         @InjectRepository(TaskEntity)
         private readonly taskRepository: Repository<TaskEntity>,
         private readonly userService: UserService,
+        private readonly mailService: MailService,
         private readonly carbonCreditService: CarbonCreditService,
         private readonly organizationService: OrganizationService,
         private readonly projectService: ProjectService,
@@ -27,6 +29,7 @@ export class TaskMonitorService implements OnModuleInit {
     ) {
         this.serviceMap = {
             UserService: this.userService,
+            MailService: this.mailService,
             // DocumentService: this.documentService,
             OrganizationService: this.organizationService,
             ProjectService: this.projectService,

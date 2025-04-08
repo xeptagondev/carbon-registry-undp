@@ -9,9 +9,11 @@ export class JWTPayload {
         public userRefId: string,
         public userRole: string,
         public userState: boolean,
+        public userHederaAccId: string,
         public organizationId: number,
         public organizationRefId: string,
         public organizationRole: string,
         public organizationState: OrganizationStateEnum,
+        public organizationHederaAccId: string,
     ) {}
 }

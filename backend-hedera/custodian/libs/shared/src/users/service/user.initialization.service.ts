@@ -224,11 +224,13 @@ export class UserInitializationService implements OnModuleInit {
                     userRefId: dnaRootUser.refId,
                     userRole: RoleEnum.Root,
                     userState: true,
+                    userHederaAccId: dnaRootUser.hederaAccount,
                     organizationId: dnaOrganization.id,
                     organizationRefId: dnaOrganization.refId,
                     organizationRole:
                         OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
                     organizationState: OrganizationStateEnum.ACTIVE,
+                    organizationHederaAccId: dnaOrganization.hederaAccountId,
                 },
             );
         } catch (e) {

@@ -66,11 +66,13 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
         setUserInfo({
           id: response.data.id,
           userRole: response.data.role,
+          userHederaAccount: response.data.userHederaAccount,
           companyId: response.data.companyId,
           companyRole: response.data.companyRole,
           companyLogo: response.data.companyLogo,
           companyName: response.data.companyName,
           companyState: response.data.companyState,
+          organizationHederaAccount: response.data.organizationHederaAccount,
           name: response.data.name,
         });
         removeToken();
