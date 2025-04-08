@@ -8,7 +8,7 @@
     "role": "Role",
     "phoneNo": "Phone Number",
     "taxId": "VAT Registration #",
-    "paymentId" : "Registration Payment ID",
+    "paymentId": "Registration Payment ID",
     "website": "Website",
     "address": "Address",
     "id": "id",
@@ -31,5 +31,8 @@
     "passwordResetSuccess": "The password has been reset successfully",
     "userDeletionSuccess": "The user has been deleted successfully",
     "ministerName": "Name of the Minister",
-    "sectoralScope": "Sectoral Scope"
+    "sectoralScope": "Sectoral Scope",
+    "hbarCredits": "HBAR Credits",
+    "organizationRemaining": "Organisation Remaining HBAR Credits",
+    "userRemaining": "User Remaining HBAR Credits"
 }

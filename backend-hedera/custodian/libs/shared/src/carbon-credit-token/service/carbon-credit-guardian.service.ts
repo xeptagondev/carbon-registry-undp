@@ -88,17 +88,44 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
         const treasuryPrivateKey = PrivateKey.fromStringED25519(privateKey);
         client.setOperator(treasuryAccountId, treasuryPrivateKey);
 
-        const metadataArray: Uint8Array[] = Array(amount).fill(metadata);
+        const serials: any[] = [];
+        const batchSize = 10;
 
-        const mintTx = await new TokenMintTransaction()
-            .setTokenId(tokenId)
-            .setMetadata(metadataArray)
-            .freezeWith(client);
+        for (let i = 0; i < amount; i += batchSize) {
+            const currentBatchSize = Math.min(batchSize, amount - i);
+            const metadataArray: Uint8Array[] =
+                Array(currentBatchSize).fill(metadata);
 
-        const mintSign = await mintTx.sign(treasuryPrivateKey);
-        const mintSubmit = await mintSign.execute(client);
-        const receipt: TransactionReceipt = await mintSubmit.getReceipt(client);
-        return receipt.serials;
+            try {
+                const mintTx = await new TokenMintTransaction()
+                    .setTokenId(tokenId)
+                    .setMetadata(metadataArray)
+                    .freezeWith(client);
+
+                const mintSign = await mintTx.sign(treasuryPrivateKey);
+                const mintSubmit = await mintSign.execute(client);
+                const receipt: TransactionReceipt =
+                    await mintSubmit.getReceipt(client);
+
+                if (receipt.serials) {
+                    serials.push(...receipt.serials);
+                }
+
+                console.log(
+                    `Minted ${currentBatchSize} NFTs, total minted so far: ${serials.length}`,
+                );
+            } catch (error) {
+                console.error(
+                    `Failed to mint batch starting from ${i + 1}:`,
+                    error.message,
+                );
+                throw new Error(
+                    `Minting failed for batch starting from ${i + 1}: ${error.message}`,
+                );
+            }
+        }
+
+        return serials;
     }
 
     async transferProjectNFT(
