@@ -827,8 +827,8 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         rules={[
                           {
                             validator: async (rule, file) => {
-                              if (file?.length > 0) {
-                                if (file[0]?.size > maximumImageSize) {
+                              for (let i = 0; i < file?.length; i++) {
+                                if (file[i]?.size > maximumImageSize) {
                                   // default size format of files would be in bytes -> 1MB = 1000000bytes
                                   throw new Error(`${t('common:maxSizeVal')}`);
                                 }
@@ -1191,8 +1191,8 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                   rules={[
                                     {
                                       validator: async (rule, file) => {
-                                        if (file?.length > 0) {
-                                          if (file[0]?.size > maximumImageSize) {
+                                        for (let i = 0; i < file?.length; i++) {
+                                          if (file[i]?.size > maximumImageSize) {
                                             // default size format of files would be in bytes -> 1MB = 1000000bytes
                                             throw new Error(`${t('common:maxSizeVal')}`);
                                           }
