@@ -1,6 +1,6 @@
-import moment from "moment";
-import { mapBase64ToFields } from "../../Utils/mapBase64ToFields";
-import { toMoment } from "../../Utils/convertTime";
+import moment from 'moment';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import { toMoment } from '../../Utils/convertTime';
 
 export const basicInformationMapDataToFields = (vals: any) => {
   console.log('--------bi------------', vals);
@@ -126,18 +126,10 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
             emissionsPeriodStart: reductions?.startDate
               ? toMoment(reductions?.startDate)
               : undefined,
-            emissionsPeriodEnd: reductions?.endDate
-              ? toMoment(reductions?.endDate)
-              : undefined,
-            baselineEmissionReductions: String(
-              reductions?.baselineEmissionReductions
-            ),
-            projectEmissionReductions: String(
-              reductions?.projectEmissionReductions
-            ),
-            leakageEmissionReductions: String(
-              reductions?.leakageEmissionReductions
-            ),
+            emissionsPeriodEnd: reductions?.endDate ? toMoment(reductions?.endDate) : undefined,
+            baselineEmissionReductions: String(reductions?.baselineEmissionReductions),
+            projectEmissionReductions: String(reductions?.projectEmissionReductions),
+            leakageEmissionReductions: String(reductions?.leakageEmissionReductions),
             netEmissionReductions: String(reductions?.netEmissionReductions),
           };
         });
