@@ -35,7 +35,7 @@ import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 import { SectoralScope } from '../../Definitions/Enums/sectoralScope.enum';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
-import ConfirmSubmitSVG from '../../Assets/DialogIcons/ConfirmSubmit.svg';
+import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
