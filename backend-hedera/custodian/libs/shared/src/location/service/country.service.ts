@@ -17,6 +17,10 @@ export class CountryService {
         return this.countryRepo.save(country);
     }
 
+    async insertCountryList(countries: Country[]) {
+        return this.countryRepo.save(countries);
+    }
+
     async isValidCountry(alpha2: string) {
         return (
             (await this.countryRepo.findOneBy({

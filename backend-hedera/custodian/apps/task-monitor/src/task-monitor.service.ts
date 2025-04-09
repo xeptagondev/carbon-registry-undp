@@ -73,6 +73,10 @@ export class TaskMonitorService implements OnModuleInit {
                     let eventFailed = false;
                     let prevTaskUnverified = true;
 
+                    if(previousTask && !(previousTask.events && previousTask.events.length > 0)) {
+                        prevTaskUnverified = false;
+                    }
+
                     // check if any event has failed or rolledback
                     for (let i = 0; i < previousTask?.events?.length; i++) {
                         const event = previousTask.events[i];

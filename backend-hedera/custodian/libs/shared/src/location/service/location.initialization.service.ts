@@ -46,15 +46,17 @@ export class LocationInitializerService implements OnModuleInit {
             const countryData = fs.readFileSync('countries.json', 'utf8');
             const jsonCountryData = JSON.parse(countryData);
 
+            const countryList = [];
             jsonCountryData.forEach(async (countryItem) => {
                 if (countryItem['UN Member States'] === 'x') {
                     const country = new Country();
                     country.alpha2 = countryItem['ISO-alpha2 Code'];
                     country.alpha3 = countryItem['ISO-alpha3 Code'];
                     country.name = countryItem['English short'];
-                    await this.countryService.insertCountry(country);
+                    countryList.push(country);
                 }
             });
+            await this.countryService.insertCountryList(countryList);
 
             console.log('Location data initialization completed.');
         } catch (error) {

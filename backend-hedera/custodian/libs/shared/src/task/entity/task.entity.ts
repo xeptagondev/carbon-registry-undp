@@ -37,7 +37,7 @@ export class TaskEntity {
     attemptedCount?: number = 0;
 
     @Column({ default: false, type: Boolean })
-    retryUntilSuccess?: boolean = false;
+    retryUntilSuccess?: boolean;
 
     @Column({ nullable: true, type: 'bigint' })
     lastUpdateTime?: number;
@@ -53,7 +53,7 @@ export class TaskEntity {
 
     @OneToOne(() => TaskEntity, { nullable: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'previous_task_id', referencedColumnName: 'id' })
-    previousTask?: TaskEntity = null;
+    previousTask?: TaskEntity;
 
     @OneToMany(() => EventEntity, (event) => event.task, { nullable: true })
     events?: EventEntity[];
