@@ -126,12 +126,6 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
             emissionsPeriodStart: reductions?.startDate
               ? toMoment(reductions?.startDate)
               : undefined,
-<<<<<<< HEAD
-            emissionsPeriodEnd: reductions?.endDate ? moment.unix(reductions?.endDate) : undefined,
-            baselineEmissionReductions: String(reductions?.baselineEmissionReductions),
-            projectEmissionReductions: String(reductions?.projectEmissionReductions),
-            leakageEmissionReductions: String(reductions?.leakageEmissionReductions),
-=======
             emissionsPeriodEnd: reductions?.endDate
               ? toMoment(reductions?.endDate)
               : undefined,
@@ -144,7 +138,6 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
             leakageEmissionReductions: String(
               reductions?.leakageEmissionReductions
             ),
->>>>>>> b88034a3 (FE: convert seconds to ms)
             netEmissionReductions: String(reductions?.netEmissionReductions),
           };
         });
