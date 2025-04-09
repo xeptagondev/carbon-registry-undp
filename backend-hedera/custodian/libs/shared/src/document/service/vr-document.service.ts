@@ -300,6 +300,13 @@ export class VrDocumentService extends DocumentService {
         }
     }
 
+    authorizeDate(date = new Date()) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(-2);
+        return `${day}${month}${year}`;
+    }
+
     async verify(requestData: DocumentActionDTO, jwtData: JWTPayload) {
         this.logger.log(
             `Request received to verify Validation report from ${jwtData.userName}`,
@@ -509,12 +516,17 @@ export class VrDocumentService extends DocumentService {
                     this.serialNumberManagementService.getProjectSerialNumber(
                         existingProject.id,
                     );
+                const authorizationId = `${this.authorizeDate()}
+                ${this.configService.get('countryCode')}
+                ${existingProject.id}`;
+
                 const updatedProject = plainToClass(ProjectEntity, {
                     ...existingProject,
                     tokenId: tokenId,
                     creditEst: creditAmount,
                     authoroiseLetterUrl: authoroiseLetterUrl,
                     serialNumber: serialNumber,
+                    authorizationId: authorizationId,
                 });
 
                 await queryRunner.manager.save(updatedProject);

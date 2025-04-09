@@ -158,6 +158,7 @@ export class InfDocumentService extends DocumentService {
                 plainToClass(ProjectEntity, {
                     title: infData.title,
                     projectProposalStage: ProjectProposalStage.PENDING,
+                    sector: infData.sector,
                     sectoralScope: infData.sectoralScope,
                     createdBy: createdBy,
                     organization: org,
