@@ -32,7 +32,7 @@
     "userDeletionSuccess": "The user has been deleted successfully",
     "ministerName": "Name of the Minister",
     "sectoralScope": "Sectoral Scope",
-    "hbarCredits": "HBAR Credits",
-    "organizationRemaining": "Organisation Remaining HBAR Credits",
-    "userRemaining": "User Remaining HBAR Credits"
+    "hbarCredits": "HBAR Balance",
+    "organizationRemaining": "Organisation Remaining HBAR Balance",
+    "userRemaining": "User Remaining HBAR Balance"
 }
