@@ -286,6 +286,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         requestUser?: JWTPayload,
         taskEntityId?: number,
     ): Promise<any> {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} Started.`,
+            this.loggerContext,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -456,7 +460,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -465,6 +478,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     async guardianRegisterUser(user: UsersEntity) {
+        this.logger.log(
+            `Step: ${UserStageEnum.GUARDIAN_REGISTER_USER} for ${user.email} Started.`,
+            this.loggerContext,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -492,7 +509,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             });
 
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_REGISTER_USER} for ${user.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_REGISTER_USER} for ${user.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -506,6 +532,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive?: boolean,
         requestUser?: JWTPayload,
     ) {
+        this.logger.log(
+            `Step: ${UserStageEnum.USER_HEDERA_ACC_GEN} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -554,7 +584,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.USER_HEDERA_ACC_GEN} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.USER_HEDERA_ACC_GEN} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -569,6 +608,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive?: boolean,
         requestUser?: JWTPayload,
     ): Promise<any> {
+        this.logger.log(
+            `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
         let hederaAccResult: any;
 
         if (!(userDto.hederaAccount && userDto.hederaKey)) {
@@ -712,7 +755,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
 
             await queryRunner.commitTransaction();
-        } catch (er) {
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(
                 'Failed to save user',
@@ -724,6 +776,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     async guardianAssignPolicy(userDto: UsersDTO, updateTaskId: string) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_ASSIGN_POLICY} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -748,7 +804,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             await this.guardianService.assignPolicyToUser(userDto.email, true);
 
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_ASSIGN_POLICY} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_ASSIGN_POLICY} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -757,6 +822,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     async guardianCreateGroupType(userDto: UsersDTO) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Started.`,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -791,7 +859,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 );
             }
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -805,6 +882,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive?: boolean,
         requestUser?: JWTPayload,
     ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.ORGANIZATION_HEDERA_ACC_GEN} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -855,7 +936,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.ORGANIZATION_HEDERA_ACC_GEN} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.ORGANIZATION_HEDERA_ACC_GEN} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -870,6 +960,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive?: boolean,
         requestUser?: JWTPayload,
     ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_ORGANIZATION_SAVE} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
         let hederaAccResult: any;
 
         if (
@@ -1011,7 +1105,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_ORGANIZATION_SAVE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_ORGANIZATION_SAVE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -1028,6 +1131,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive?: boolean,
         requestUser?: JWTPayload,
     ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_USER_CREATE} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -1130,7 +1237,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
 
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_USER_CREATE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_USER_CREATE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -1144,6 +1260,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive?: boolean,
         requestUser?: JWTPayload,
     ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_APPROVE_ORGANIZATION} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -1209,7 +1329,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             }
 
             await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_APPROVE_ORGANIZATION} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_APPROVE_ORGANIZATION} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -1218,6 +1347,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     async emailSedning(userDto: UsersDTO, isUserActive: boolean) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.EMAIL_SENDING} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -1238,8 +1371,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 userDto.email,
                 UserStageEnum.COMPLETED,
             );
+            this.logger.log(
+                `Step: ${UserStageEnum.COMPLETED} for user ${userDto.email}`,
+                this.loggerContext,
+            );
             await queryRunner.commitTransaction();
         } catch (err) {
+            this.logger.error(
+                `Step: ${UserStageEnum.EMAIL_SENDING} for ${userDto.email} Occured Error. ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
             await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
