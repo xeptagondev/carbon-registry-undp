@@ -1,4 +1,4 @@
-import moment from "moment";
+import moment from 'moment';
 
 export function toMoment(unixTimestamp: number) {
   // Check if it's in seconds (10 digits) and convert
