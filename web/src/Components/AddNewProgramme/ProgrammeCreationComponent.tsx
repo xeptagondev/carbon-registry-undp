@@ -28,18 +28,19 @@ import PhoneInput, {
   formatPhoneNumber,
   formatPhoneNumberIntl,
   isPossiblePhoneNumber,
-} from 'react-phone-number-input';
-import InfDocumentInformation from './infDocumentInfo';
-import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
-import { API_PATHS } from '../../Config/apiConfig';
-import { ROUTES } from '../../Config/uiRoutingConfig';
-import { SectoralScope } from '../../Definitions/Enums/sectoralScope.enum';
-import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
-import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
-import { DocumentEnum } from '../../Definitions/Enums/document.enum';
-import { FormMode } from '../../Definitions/Enums/formMode.enum';
-import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
-import validator from 'validator';
+} from "react-phone-number-input";
+import InfDocumentInformation from "./infDocumentInfo";
+import { CompanyRole } from "../../Definitions/Enums/company.role.enum";
+import { API_PATHS } from "../../Config/apiConfig";
+import { ROUTES } from "../../Config/uiRoutingConfig";
+import { SectoralScope } from "../../Definitions/Enums/sectoralScope.enum";
+import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
+import ConfirmSubmitSVG from "../../Assets/DialogIcons/ConfirmSubmit.svg";
+import { DocumentEnum } from "../../Definitions/Enums/document.enum";
+import { FormMode } from "../../Definitions/Enums/formMode.enum";
+import { mapBase64ToFields } from "../../Utils/mapBase64ToFields";
+import validator from "validator";
+import { toMoment } from "../../Utils/convertTime";
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -337,7 +338,7 @@ export const ProgrammeCreationComponent = (props: any) => {
               briefProjectDescription: data.projectDescription,
               optionalDocuments: mapBase64ToFields(data?.additionalDocuments),
               projectLocation: data.geographicalLocationCoordinates,
-              startTime: moment.unix(data?.startDate),
+              startTime: toMoment(data?.startDate),
             };
             form.setFieldsValue(viewData);
           }
