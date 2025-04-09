@@ -64,7 +64,7 @@ import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
 import { CreditBlocksEntity } from '@app/shared/carbon-credit-token/entity/credit.blocks.entity';
-import { plainToClass } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
 import { EventEntity } from '@app/shared/event/entity/event.entity';
 import { EventTypeEnum } from '@app/shared/event/enum/event-type.enum';
 import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
@@ -455,6 +455,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 TaskEntity,
                 { id: asyncTaskTwo.id },
                 plainToClass(TaskEntity, {
+                    previousTask: asyncTask,
                     args: [userDto, asyncTaskTwo.id, isUserActive, requestUser],
                 }),
             );
@@ -465,12 +466,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -500,13 +501,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 decryptedPassword,
             );
 
-            await this.guardianService.login({
-                username: user.email,
-                password: decryptPayload(
-                    user.password,
-                    this.configService.get<string>('security.pwdSecret'),
-                )?.password,
-            });
+            await this.guardianService.login(
+                {
+                    username: user.email,
+                    password: decryptPayload(
+                        user.password,
+                        this.configService.get<string>('security.pwdSecret'),
+                    )?.password,
+                },
+                queryRunner,
+            );
 
             await queryRunner.commitTransaction();
             this.logger.log(
@@ -514,12 +518,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_REGISTER_USER} for ${user.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -573,6 +577,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 TaskEntity,
                 { id: asyncTask.id },
                 plainToClass(TaskEntity, {
+                    previousTask: prevTask,
                     args: [
                         userDto,
                         asyncTask.id,
@@ -589,12 +594,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.USER_HEDERA_ACC_GEN} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -639,7 +644,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 UserStageEnum.GUARDIAN_CONFIG_UPDATE,
             );
 
-            await this.usersRepository.update(
+            await queryRunner.manager.update( 
+                UsersEntity,
                 { email: userDto.email },
                 {
                     hederaAccount: userDto.hederaAccount
@@ -655,16 +661,17 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     ? userDto.hederaAccount
                     : hederaAccResult?.id,
                 userDto.hederaKey ? userDto.hederaKey : hederaAccResult?.key,
+                queryRunner,
             );
 
             const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
                 id: taskEntityId,
             });
 
-            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+            let asyncTask: TaskEntity = plainToInstance(TaskEntity, {
                 className: 'UserService',
                 functionName: 'guardianAssignPolicy',
-                args: [userDto, updateTaskId, isUserActive, requestUser],
+                args: [userDto, updateTaskId.taskId],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
                 retryUntilSuccess: true,
@@ -674,7 +681,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
 
             if (userDto.company) {
-                let asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                let asyncTaskTwo: TaskEntity = plainToInstance(TaskEntity, {
                     className: 'UserService',
                     functionName: 'guardianCreateGroupType',
                     args: [userDto],
@@ -689,7 +696,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     asyncTaskTwo,
                 );
 
-                let asyncTaskThree: TaskEntity = plainToClass(TaskEntity, {
+                let asyncTaskThree: TaskEntity = plainToInstance(TaskEntity, {
                     className: 'UserService',
                     functionName: 'orgHederaAccGen',
                     args: [],
@@ -709,6 +716,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     TaskEntity,
                     { id: asyncTaskThree.id },
                     plainToClass(TaskEntity, {
+                        previousTask: asyncTaskTwo,
                         args: [
                             userDto,
                             asyncTaskThree.id,
@@ -722,7 +730,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     OrganizationEntity,
                     { email: userDto.company.email },
                 );
-                let asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                let asyncTaskTwo: TaskEntity = plainToInstance(TaskEntity, {
                     className: 'UserService',
                     functionName: 'guardianUserCreate',
                     args: [],
@@ -740,7 +748,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await queryRunner.manager.update(
                     TaskEntity,
                     { id: asyncTaskTwo.id },
-                    plainToClass(TaskEntity, {
+                    plainToInstance(TaskEntity, {
+                        previousTask: asyncTask,
                         args: [
                             userDto,
                             org.id,
@@ -760,12 +769,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(
                 'Failed to save user',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -801,7 +810,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
             }
-            await this.guardianService.assignPolicyToUser(userDto.email, true);
+            await this.guardianService.assignPolicyToUser(userDto.email, true, queryRunner);
 
             await queryRunner.commitTransaction();
             this.logger.log(
@@ -809,12 +818,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_ASSIGN_POLICY} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -856,6 +865,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         group: userDto.company.companyRole,
                         label: userDto.company.name,
                     },
+                    queryRunner,
                 );
             }
             await queryRunner.commitTransaction();
@@ -864,12 +874,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
-            );
-            await queryRunner.rollbackTransaction();
+            ); 
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -925,10 +935,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 TaskEntity,
                 { id: asyncTask.id },
                 plainToClass(TaskEntity, {
+                    previousTask: prevTask,
                     args: [
                         userDto,
                         accGenTaskId,
-                        taskEntityId,
+                        asyncTask.id,
                         isUserActive,
                         requestUser,
                     ],
@@ -941,12 +952,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.ORGANIZATION_HEDERA_ACC_GEN} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -1068,6 +1079,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         },
                         ref: null,
                     },
+                    queryRunner,
                 );
 
             const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
@@ -1092,6 +1104,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 TaskEntity,
                 { id: asyncTask.id },
                 plainToClass(TaskEntity, {
+                    previousTask: prevTask,
                     args: [
                         userDto,
                         organisation.id,
@@ -1110,12 +1123,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_ORGANIZATION_SAVE} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -1204,6 +1217,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     TaskEntity,
                     { id: asyncTask.id },
                     plainToClass(TaskEntity, {
+                        previousTask: prevTask,
                         args: [
                             userDto,
                             asyncTask.id,
@@ -1242,12 +1256,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_USER_CREATE} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -1334,12 +1348,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 this.loggerContext,
             );
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_APPROVE_ORGANIZATION} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -1377,11 +1391,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             await queryRunner.commitTransaction();
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.EMAIL_SENDING} for ${userDto.email} Occured Error. ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -1421,9 +1435,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         eventId: number,
         queryRunner: QueryRunner = null,
     ): Promise<void> {
+        let isRelease = false;
         if (!queryRunner) {
             queryRunner = this.dataSource.createQueryRunner();
             await queryRunner.connect();
+            isRelease = true;
         }
         try {
             if (!queryRunner) {
@@ -1480,17 +1496,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     },
                     ref: null,
                 },
+                queryRunner,
             );
 
-            if (!queryRunner) {
+            if (isRelease) {
                 await queryRunner.commitTransaction();
             }
         } catch (err) {
-            if (!queryRunner) {
+            if (isRelease) {
                 await queryRunner.rollbackTransaction();
             }
         } finally {
-            if (!queryRunner) {
+            if (isRelease) {
                 await this.releaseQueryRunner(queryRunner);
             }
         }
@@ -1502,9 +1519,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         reqUser?: JWTPayload,
         queryRunner: QueryRunner = null,
     ): Promise<any> {
+        let isRelease = false;
         if (!queryRunner) {
             queryRunner = this.dataSource.createQueryRunner();
             await queryRunner.connect();
+            isRelease = true;
         }
         try {
             if (!queryRunner) {
@@ -1564,6 +1583,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 {
                     invitation: inviteResponse.invitation,
                 },
+                queryRunner,
             );
 
             await this.guardianService.saveDocument(
@@ -1584,17 +1604,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     },
                     ref: null,
                 },
+                queryRunner,
             );
 
-            if (!queryRunner) {
+            if (isRelease) {
                 await queryRunner.commitTransaction();
             }
         } catch (e) {
-            if (!queryRunner) {
+            if (isRelease) {
                 await queryRunner.rollbackTransaction();
             }
         } finally {
-            if (!queryRunner) {
+            if (isRelease) {
                 await this.releaseQueryRunner(queryRunner);
             }
         }
@@ -1605,14 +1626,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         queryRunner: QueryRunner = null,
         isUserActive: boolean = UserStateConstant.DEACTIVE,
     ): Promise<void> {
-        if (!queryRunner) {
-            queryRunner = this.dataSource.createQueryRunner();
-            await queryRunner.connect();
-        }
         const countryName = this.configService.get('country');
-        const user = await queryRunner.manager.findOneBy(UsersEntity, {
-            email: userDto.email,
-        });
+        let user = null;
+        if (queryRunner) {
+            user = await queryRunner.manager.findOneBy(UsersEntity, {
+                email: userDto.email,
+            });
+        } else {
+            user = await this.usersRepository.findOneBy({
+                email: userDto.email,
+            });
+        }
+        
         const decryptedPassword = decryptPayload(
             user.password,
             this.configService.get<string>('security.pwdSecret'),
@@ -1635,7 +1660,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 },
                 priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
-            await this.mailService.sendMail(mailDTOOrg);
+            await this.mailService.sendMail(mailDTOOrg, queryRunner);
         }
 
         const mailDTOUser: MailTemplateDTO = {
@@ -1657,14 +1682,15 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             },
             priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
         };
-        await this.mailService.sendMail(mailDTOUser);
+        await this.mailService.sendMail(mailDTOUser, queryRunner);
     }
 
-    private async registerProcessSave(
+    async registerProcessSave(
         queryRunner: QueryRunner,
         email: string,
         status: UserStageEnum,
     ): Promise<void> {
+        this.logger.log('registerProcessSave')
         await queryRunner.manager.update(
             UsersEntity,
             { email: email },
@@ -1673,6 +1699,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 stage: status,
             }),
         );
+        this.logger.log('registerProcessSave end')
     }
 
     private async decryptPassword(user: UsersEntity): Promise<string> {

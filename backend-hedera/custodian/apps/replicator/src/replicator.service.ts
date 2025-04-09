@@ -309,7 +309,7 @@ export class ReplicatorService implements OnModuleInit {
                     }
                 }
             } catch (err) {
-                this.logger.error('Error in replcator', err);
+                this.logger.error('Error in replcator', JSON.stringify(err));
             }
         }
     }

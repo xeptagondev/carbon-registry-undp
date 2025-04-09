@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
 import { GUARDIAN_ERROR } from '../constant/guardian-error.constant';
 import { GUARDIAN_API } from '../constant/guardian-api-blocks.contant';
@@ -86,6 +86,7 @@ export class GuardianService {
 
     private async validateGuardianCall(
         email: string,
+        queryRunner: QueryRunner = null,
         thresholdValue: number = this.configService.get<number>(
             'guardian.hbarThresholds.general',
         ),
@@ -117,7 +118,7 @@ export class GuardianService {
                 },
                 priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
-            await this.mailService.sendMail(mailDto);
+            await this.mailService.sendMail(mailDto, queryRunner);
             throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
         }
     }
@@ -272,11 +273,20 @@ export class GuardianService {
         parentDid: string,
         hederaAccount: string,
         hederaKey: string,
+        queryRunner: QueryRunner = null,
     ): Promise<TaskSetInterface> {
         try {
-            const user = await this.usersRepository.findOneBy({
-                email: email,
-            });
+            let user = null;
+            if (queryRunner) {
+                user = await queryRunner.manager.findOneBy(UsersEntity, {
+                    email: email,
+                });
+            } else {
+                user = await this.usersRepository.findOneBy({
+                    email: email,
+                });
+            }
+            
             const url = `${this.buildGuardianUrl(GUARDIAN_API.PROFILE_UPDATE)}/${email}`;
             const token = await this.getAccessToken(user.refreshToken);
             const response = await axios.put(
@@ -309,6 +319,7 @@ export class GuardianService {
     public async assignPolicyToUser(
         email: string,
         assign: boolean = true,
+        queryRunner: QueryRunner = null,
     ): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
@@ -318,7 +329,7 @@ export class GuardianService {
             const userLoginResponse = await this.login({
                 username: this.configService.get('sru.username'),
                 password: this.configService.get('sru.password'),
-            });
+            }, queryRunner);
 
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
@@ -342,16 +353,20 @@ export class GuardianService {
         hashedPass: string,
         blockId: string,
         payload: any,
+        queryRunner: QueryRunner = null,
     ): Promise<any> {
         try {
-            await this.validateGuardianCall(email);
+            await this.validateGuardianCall(email, queryRunner);
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
-            const userLoginResponse = await this.login({
-                username: email,
-                password: hashedPass,
-            });
+            const userLoginResponse = await this.login(
+                {
+                    username: email,
+                    password: hashedPass,
+                }, 
+                queryRunner
+            );
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
             );
@@ -373,9 +388,10 @@ export class GuardianService {
         email: string,
         blockName: string,
         payload: any,
+        queryRunner: QueryRunner = null,
     ): Promise<any> {
         try {
-            await this.validateGuardianCall(email);
+            await this.validateGuardianCall(email, queryRunner);
             const block = await this.utilService.getBlocksByBlockName(
                 blockName,
                 this.configService.get('policy.id'),
@@ -906,7 +922,7 @@ export class GuardianService {
             await this.getGuardianError(error, 'approve');
         }
     }
-    public async login(loginDto: LoginDto): Promise<any> {
+    public async login(loginDto: LoginDto, queryRunner: QueryRunner = null): Promise<any> {
         try {
             const response = await axios.post(
                 `${this.configService.get('guardian.url')}${GUARDIAN_API.LOGIN}`,
@@ -917,12 +933,23 @@ export class GuardianService {
                 const message: string = `User: ${loginDto.username} has logged into the system.`;
 
                 try {
-                    await this.usersRepository.update(
-                        {
-                            email: loginDto.username,
-                        },
-                        { refreshToken: response?.data?.refreshToken },
-                    );
+                    if (queryRunner) {
+                        await queryRunner.manager.update(
+                            UsersEntity,
+                            {
+                                email: loginDto.username,
+                            },
+                            { refreshToken: response?.data?.refreshToken },
+                        );
+                    } else {
+                        await this.usersRepository.update(
+                            {
+                                email: loginDto.username,
+                            },
+                            { refreshToken: response?.data?.refreshToken },
+                        );
+                    }
+                    
 
                     return response.data;
                 } catch (error) {

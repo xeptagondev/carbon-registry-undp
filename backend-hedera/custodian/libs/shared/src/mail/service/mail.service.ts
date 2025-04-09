@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailPriorityGroupsEnum } from '../enum/mail-priority.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { plainToClass } from 'class-transformer';
 
@@ -20,7 +20,7 @@ export class MailService {
         private readonly taskRepository: Repository<TaskEntity>,
     ) {}
 
-    async sendMail(mailTemplate: MailTemplateDTO): Promise<any> {
+    async sendMail(mailTemplate: MailTemplateDTO, queryRunner: QueryRunner = null): Promise<any> {
         try {
             const { priority, ...mailOptions } = mailTemplate;
             if (priority === MailPriorityGroupsEnum.HIGH_PRIORITY) {
@@ -47,7 +47,12 @@ export class MailService {
                         state: TaskEnum.COMPLETED,
                     });
                 }
-                await this.taskRepository.save(asyncTask);
+                if (queryRunner) {
+                    await queryRunner.manager.save(TaskEntity, asyncTask);
+                } else {
+                    await this.taskRepository.save(asyncTask);
+                }
+                
                 return;
             }
         } catch (err) {
