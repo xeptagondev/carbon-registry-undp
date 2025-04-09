@@ -285,7 +285,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         isUserActive: boolean,
         requestUser?: JWTPayload,
         taskEntityId?: number,
-    ): Promise<any> {
+    ): Promise<HTTPResponseDto> {
         this.logger.log(
             `Step: For ${userDto.email} ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} Started.`,
             this.loggerContext,
@@ -464,6 +464,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 `Step: ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} for ${userDto.email} Finished.`,
                 this.loggerContext,
             );
+            return {
+                statusCode: HttpStatus.OK,
+                message: userDto.company
+                    ? 'Successfully added task to create organization with admin user'
+                    : 'Successfully added task to create the user',
+            };
         } catch (err) {
             this.logger.error(
                 `Step: ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} for ${userDto.email} Occured Error.
@@ -1390,14 +1396,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
     // --------------- Helpers --------------------
 
-    private async hederaAccGenerate(userDTO: UsersDTO): Promise<string> {
+    async hederaAccGenerate(userDTO: UsersDTO): Promise<string> {
         const accGenTaskId = await this.guardianService.generateHederaAccount(
             userDTO.email,
         );
         return accGenTaskId.taskId;
     }
 
-    private async verifyGuardianAsyncTask(
+    async verifyGuardianAsyncTask(
         userDTO: UsersDTO,
         taskId: string,
     ): Promise<any> {
@@ -1416,7 +1422,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         return getAsyncTask;
     }
 
-    private async addOrgAdmin(
+    async addOrgAdmin(
         userDto: UsersDTO,
         eventId: number,
         queryRunner: QueryRunner = null,
@@ -1496,7 +1502,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    private async addNewUserViaInvite(
+    async addNewUserViaInvite(
         userDto: UsersDTO,
         eventId: number,
         reqUser?: JWTPayload,
@@ -1600,7 +1606,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    private async sendRegistrationEmails(
+    async sendRegistrationEmails(
         userDto: UsersDTO,
         queryRunner: QueryRunner = null,
         isUserActive: boolean = UserStateConstant.DEACTIVE,
@@ -1660,7 +1666,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         await this.mailService.sendMail(mailDTOUser);
     }
 
-    private async registerProcessSave(
+    async registerProcessSave(
         queryRunner: QueryRunner,
         email: string,
         status: UserStageEnum,
@@ -1675,7 +1681,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         );
     }
 
-    private async decryptPassword(user: UsersEntity): Promise<string> {
+    async decryptPassword(user: UsersEntity): Promise<string> {
         return decryptPayload(
             user.password,
             this.configService.get<string>('security.pwdSecret'),
