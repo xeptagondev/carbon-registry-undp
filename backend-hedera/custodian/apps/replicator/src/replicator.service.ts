@@ -45,7 +45,7 @@ export class ReplicatorService implements OnModuleInit {
                         const apiUser = this.configService.get('organizations.DNA.apiAdminEmail');
 
                         const refreshToken = await this.guardianService.getRefreshToken(apiUser);
-                        
+
                         try {
                             await this.guardianService.accessToken(refreshToken);
                         } catch(err) {
@@ -54,15 +54,17 @@ export class ReplicatorService implements OnModuleInit {
                                 {
                                     username: apiUser,
                                     password: this.configService.get('organizations.DNA.apiAdminPwd'),
-                                }
+                                },
                             );
                         }
 
                         // call guardian functio nto get document
                         const document = await this.guardianService.getGridDataUsingRefId(event.gridType, event.documentRefId, apiUser, true);
                         
+                        // this.logger.log(`DOCUMENT: ${JSON.stringify(document)}}`)
+
                         // check if eventID is present in document eventID list
-                        if (document?.eventIDs?.includes(event.id)) {
+                        if (document?.eventIds?.includes(event.id)) {
                             const queryRunner = this.dataSource.createQueryRunner();
                             await queryRunner.connect();
 
@@ -317,7 +319,7 @@ export class ReplicatorService implements OnModuleInit {
                     }
                 }
             } catch (err) {
-                this.logger.error('Error in replcator', JSON.stringify(err));
+                this.logger.error(`Error in replcator: ${err}\nstacktrace: ${err.stack}`);
             }
         }
     }
