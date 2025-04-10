@@ -31,6 +31,14 @@ import { CreditTransactionsEntity } from '../entity/credit.transfer.entity';
 // eslint-disable-next-line max-len
 import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
 import { CreditRetirementTypeEmnum } from '../enum/credit.retirement.type.enum';
+import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
+import { MailTemplateEnum } from '@app/shared/mail/enum/mail-template.enum';
+import { INSUFFICIENT_HBAR_BALANCE } from '@app/shared/mail/constant/mail-header.constant';
+import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
+import { UsersEntity } from '@app/shared/users/entity/users.entity';
+import { MailService } from '@app/shared/mail/service/mail.service';
+import { ConfigService } from '@nestjs/config';
+import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 
 @Injectable()
 export class CarbonCreditService {
@@ -40,8 +48,83 @@ export class CarbonCreditService {
         private readonly helperService: HelperService,
         private readonly carbonCreditGuardianService: CarbonCreditGuardianService,
         private readonly serialNumberManagementService: SerialNumberManagementService,
+        private readonly hbarManagementService: HbarManagementService,
+        private readonly mailService: MailService,
+        private readonly configService: ConfigService,
         private readonly logger: InstantLogger,
     ) {}
+
+    protected async validateHbarBalanceBeforeAction(
+        email: string,
+        queryRunner: QueryRunner,
+        transactionCost: number,
+        // eslint-disable-next-line max-len
+        errorMessage: string = 'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.',
+    ) {
+        const userWithOrg = await queryRunner.manager
+            .getRepository(UsersEntity)
+            .createQueryBuilder('users')
+            .innerJoinAndSelect('users.organization', 'organization')
+            .where('users.email = :email', {
+                email: email,
+            })
+            .getOne();
+
+        const orgHbarBalance = Number(
+            await this.hbarManagementService.getBalance(
+                userWithOrg.organization.hederaAccountId,
+            ),
+        );
+
+        if (orgHbarBalance < transactionCost) {
+            const adminEmails = await this.getOrgAdminEmails(
+                [userWithOrg.organization.email],
+                queryRunner,
+            );
+            const countryName: string = this.configService.get('country');
+            const mailDto = {
+                subject: INSUFFICIENT_HBAR_BALANCE,
+                template: MailTemplateEnum.INSUFFICIENT_HBAR_BALANCE,
+                to: adminEmails,
+                context: {
+                    orgOrUserName: userWithOrg.organization.name,
+                    countryName: countryName,
+                    accountNumber: userWithOrg.organization.hederaAccountId,
+                },
+                priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
+            };
+            await this.mailService.sendMail(mailDto);
+            throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
+        }
+    }
+
+    async getOrgAdminEmails(orgEmails: string[], queryRunner: QueryRunner) {
+        const orgsWithAdmins = await queryRunner.manager
+            .getRepository(OrganizationEntity)
+            .createQueryBuilder('organization')
+            .innerJoinAndSelect('organization.users', 'users')
+            .innerJoinAndSelect('users.guardianRole', 'guardianRole')
+            .innerJoinAndSelect('guardianRole.role', 'role')
+            .where('organization.email IN (:...orgEmails)', {
+                orgEmails,
+            })
+            .andWhere('role.name = :roleName', {
+                roleName: RoleEnum.Admin,
+            })
+            .getMany();
+
+        const assigneeEmails: string[] = [];
+
+        for (let i = 0; i < orgsWithAdmins.length; i++) {
+            const org = orgsWithAdmins[i];
+            const admins = org.users;
+            for (let j = 0; j < admins.length; j++) {
+                assigneeEmails.push(admins[j].email);
+            }
+        }
+
+        return assigneeEmails;
+    }
 
     async handleMintJob(job: MintNFTJobPayload) {
         const {
@@ -876,6 +959,16 @@ export class CarbonCreditService {
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
+            const transactionCost =
+                await this.hbarManagementService.getTransactionCosts(
+                    TransactionType.TOKEN_TRANSFER,
+                );
+            await this.validateHbarBalanceBeforeAction(
+                user.email,
+                queryRunner,
+                transactionCost * Number(transferDto.amount),
+            );
+
             const creditBlock = await queryRunner.manager.findOne(
                 CreditBlocksEntity,
                 {
@@ -1029,6 +1122,21 @@ export class CarbonCreditService {
             }
             if (!retireRequest?.project) {
                 throw new Error('Project not found');
+            }
+
+            if (retireAction.action === RetirementActionEnum.ACCEPT) {
+                const transactionCost =
+                    await this.hbarManagementService.getTransactionCosts(
+                        TransactionType.TOKEN_BURN,
+                    );
+
+                await this.validateHbarBalanceBeforeAction(
+                    retireRequest.sender.email,
+                    queryRunner,
+                    transactionCost * Number(retireRequest.creditAmount),
+                    `The associated PD does not have enough HBAR balance to complete the transaction.
+                    They've been notified — please try again shortly.`,
+                );
             }
 
             const creditBlock = await queryRunner.manager.findOne(
@@ -1212,6 +1320,15 @@ export class CarbonCreditService {
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
+            const transactionCost =
+                await this.hbarManagementService.getTransactionCosts(
+                    TransactionType.TOKEN_BURN,
+                );
+            await this.validateHbarBalanceBeforeAction(
+                user.email,
+                queryRunner,
+                transactionCost * Number(retireRequest.amount),
+            );
             const creditBlock = await queryRunner.manager.findOne(
                 CreditBlocksEntity,
                 {
