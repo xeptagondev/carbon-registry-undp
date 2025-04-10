@@ -1696,7 +1696,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         email: string,
         status: UserStageEnum,
     ): Promise<void> {
-        this.logger.log('registerProcessSave')
         await queryRunner.manager.update(
             UsersEntity,
             { email: email },
@@ -1705,7 +1704,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 stage: status,
             }),
         );
-        this.logger.log('registerProcessSave end')
     }
 
     async decryptPassword(user: UsersEntity): Promise<string> {
