@@ -650,7 +650,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 UserStageEnum.GUARDIAN_CONFIG_UPDATE,
             );
 
-            await queryRunner.manager.update( 
+            await queryRunner.manager.update(
                 UsersEntity,
                 { email: userDto.email },
                 {
@@ -816,7 +816,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
             }
-            await this.guardianService.assignPolicyToUser(userDto.email, true, queryRunner);
+            await this.guardianService.assignPolicyToUser(
+                userDto.email,
+                true,
+                queryRunner,
+            );
 
             await queryRunner.commitTransaction();
             this.logger.log(
@@ -885,7 +889,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 `Step: ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Occured Error.
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
-            ); 
+            );
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
@@ -1249,6 +1253,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     retryUntilSuccess: true,
                     millisBetweenAttempts: 3000,
                     previousTask: prevTask,
+                    events: [events],
                 });
                 asyncTask = await queryRunner.manager.save(
                     TaskEntity,
@@ -1643,7 +1648,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 email: userDto.email,
             });
         }
-        
+
         const decryptedPassword = decryptPayload(
             user.password,
             this.configService.get<string>('security.pwdSecret'),
