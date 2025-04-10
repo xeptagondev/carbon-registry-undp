@@ -466,8 +466,11 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                   </Col>
 
                   <Col xl={24} md={24}>
+                    <div className="custom-label-monitoring">
+                      {t('monitoringReport:pa_uploadImages')}
+                    </div>
                     <Form.Item
-                      label={t('monitoringReport:pa_uploadImages')}
+                      //label={t('monitoringReport:pa_uploadImages')}
                       name="optionalImages"
                       valuePropName="fileList"
                       getValueFromEvent={normFile}
@@ -490,7 +493,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         beforeUpload={(file: any) => {
                           return false;
                         }}
-                        className="design-upload-section"
+                        className="design-upload-section-monitoring"
                         name="design"
                         action="/upload.do"
                         listType="picture"
@@ -787,8 +790,12 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                             </Col>
 
                             <Col xl={24} md={24}>
+                              <div className="custom-label-monitoring">
+                                {t('monitoringReport:pa_uploadImages')}
+                              </div>
+
                               <Form.Item
-                                label={t('monitoringReport:pa_uploadImages')}
+                                //label={t('monitoringReport:pa_uploadImages')}
                                 name={[name, 'uploadImages']}
                                 valuePropName="fileList"
                                 getValueFromEvent={normFile}
@@ -811,7 +818,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                                   beforeUpload={(file: any) => {
                                     return false;
                                   }}
-                                  className="design-upload-section"
+                                  className="design-upload-section-monitoring"
                                   name="design"
                                   action="/upload.do"
                                   listType="picture"
