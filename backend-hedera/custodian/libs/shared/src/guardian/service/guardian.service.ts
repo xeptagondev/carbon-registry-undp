@@ -150,6 +150,9 @@ export class GuardianService {
     }
 
     async accessToken(refreshToken: string) {
+        if (!refreshToken) {
+            throw Error('Refresh token is null');
+        }
         const accessTokenResponse = await axios.post(
             `${this.configService.get('guardian.url')}${GUARDIAN_API.ACCESS_TOKEN}`,
             {
