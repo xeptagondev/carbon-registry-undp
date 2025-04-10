@@ -163,8 +163,8 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
           const tempYearlyReductions: any = [];
 
           const firstReduction = {
-            startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
-            endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
+            startDate: moment(values?.emissionsPeriodStart).startOf('month').valueOf(),
+            endDate: moment(values?.emissionsPeriodEnd).endOf('month').valueOf(),
             baselineEmissionReductions: Number(values?.baselineEmissionReductions),
             projectEmissionReductions: Number(values?.projectEmissionReductions),
             leakageEmissionReductions: Number(values?.leakageEmissionReductions),
@@ -176,8 +176,8 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
           if (values?.extraEmissionReductions) {
             values.extraEmissionReductions.forEach((item: any) => {
               const tempObj = {
-                startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
-                endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
+                startDate: moment(item?.emissionsPeriodStart).startOf('month').valueOf(),
+                endDate: moment(item?.emissionsPeriodEnd).endOf('month').valueOf(),
                 baselineEmissionReductions: Number(item?.baselineEmissionReductions),
                 projectEmissionReductions: Number(item?.projectEmissionReductions),
                 leakageEmissionReductions: Number(item?.leakageEmissionReductions),

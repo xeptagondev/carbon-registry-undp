@@ -40,6 +40,7 @@ import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 import validator from 'validator';
+import { toMoment } from '../../Utils/convertTime';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -337,7 +338,7 @@ export const ProgrammeCreationComponent = (props: any) => {
               briefProjectDescription: data.projectDescription,
               optionalDocuments: mapBase64ToFields(data?.additionalDocuments),
               projectLocation: data.geographicalLocationCoordinates,
-              startTime: moment.unix(data?.startDate),
+              startTime: toMoment(data?.startDate),
             };
             form.setFieldsValue(viewData);
           }
