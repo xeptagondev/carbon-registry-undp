@@ -45,7 +45,7 @@ export class ReplicatorService implements OnModuleInit {
                         const apiUser = this.configService.get('organizations.DNA.apiAdminEmail');
 
                         const refreshToken = await this.guardianService.getRefreshToken(apiUser);
-
+                        
                         try {
                             await this.guardianService.accessToken(refreshToken);
                         } catch(err) {
@@ -67,6 +67,7 @@ export class ReplicatorService implements OnModuleInit {
                             await queryRunner.connect();
 
                             try {
+                                await queryRunner.startTransaction();
                                 // Update the event as verified
                                 await queryRunner.manager.update(
                                     EventEntity,
@@ -77,6 +78,10 @@ export class ReplicatorService implements OnModuleInit {
                                 );
 
                                 // TODO: Update the task as verified
+
+                                this.logger.log(
+                                    `[REPLICATOR]: Verified event successfully. Event ID: ${event.id}`,
+                                );
 
                                 // Commit
                                 await queryRunner.commitTransaction();
@@ -106,6 +111,7 @@ export class ReplicatorService implements OnModuleInit {
                                 await queryRunner.connect();
 
                                 try {
+                                    await queryRunner.startTransaction();
                                     if (!event.rollbackOnFail) {
                                         // Update the event failed if not rollbackonfail
                                         await queryRunner.manager.update(
@@ -189,6 +195,7 @@ export class ReplicatorService implements OnModuleInit {
                                     const queryRunner = this.dataSource.createQueryRunner();
                                     await queryRunner.connect();
                                     try {
+                                        await queryRunner.startTransaction();
                                         // Update the event status to ROLLEDBACK
                                         await queryRunner.manager.update(
                                             EventEntity,
@@ -239,6 +246,7 @@ export class ReplicatorService implements OnModuleInit {
                                 this.dataSource.createQueryRunner();
                             await queryRunner.connect();
                             try {
+                                await queryRunner.startTransaction();
 
                                 if (event.type === EventTypeEnum.CREATE) {
                                     // Rollback the record (of table name) to previous state
