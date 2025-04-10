@@ -668,8 +668,9 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                     </Col>
 
                     <Col xl={24} md={24}>
+                      <div className="custom-label-pdd">{t('PDD:uploadImages')}</div>
                       <Form.Item
-                        label={t('PDD:uploadImages')}
+                        //label={t('PDD:uploadImages')}
                         name="optionalImages"
                         valuePropName="fileList"
                         getValueFromEvent={normFile}
@@ -693,7 +694,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                           beforeUpload={(file: any) => {
                             return false;
                           }}
-                          className="design-upload-section"
+                          className="design-upload-section-pdd"
                           name="design"
                           action="/upload.do"
                           listType="picture"
@@ -1024,8 +1025,11 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                               </Col>
 
                               <Col xl={24} md={24}>
+                                <div className="custom-label-pdd">
+                                  {t('addProgramme:documentUpload')}
+                                </div>
                                 <Form.Item
-                                  label={t('PDD:uploadImages')}
+                                  //label={t('PDD:uploadImages')}
                                   name={[name, 'optionalImages']}
                                   valuePropName="fileList"
                                   getValueFromEvent={normFile}
@@ -1049,7 +1053,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                     beforeUpload={(file: any) => {
                                       return false;
                                     }}
-                                    className="design-upload-section"
+                                    className="design-upload-section-pdd"
                                     name="design"
                                     action="/upload.do"
                                     listType="picture"
