@@ -205,6 +205,14 @@ export class GuardianService {
                         taskResponse = response.data;
                         if (taskResponse?.result) {
                             return taskResponse.result;
+                        } else if (
+                            taskResponse?.error?.message &&
+                            typeof taskResponse?.error?.message === 'string' &&
+                            taskResponse?.error?.message.includes(
+                                'already exists',
+                            )
+                        ) {
+                            return true;
                         }
                     }
                 } catch (error) {
@@ -289,7 +297,7 @@ export class GuardianService {
                     email: email,
                 });
             }
-            
+
             const url = `${this.buildGuardianUrl(GUARDIAN_API.PROFILE_UPDATE)}/${email}`;
             const token = await this.getAccessToken(user.refreshToken);
             const response = await axios.put(
@@ -329,10 +337,13 @@ export class GuardianService {
                 `${GUARDIAN_API.POLICY_ASSIGN_ONE}/${email}${GUARDIAN_API.POLICY_ASSIGN_TWO}`,
             );
 
-            const userLoginResponse = await this.login({
-                username: this.configService.get('sru.username'),
-                password: this.configService.get('sru.password'),
-            }, queryRunner);
+            const userLoginResponse = await this.login(
+                {
+                    username: this.configService.get('sru.username'),
+                    password: this.configService.get('sru.password'),
+                },
+                queryRunner,
+            );
 
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
@@ -367,8 +378,8 @@ export class GuardianService {
                 {
                     username: email,
                     password: hashedPass,
-                }, 
-                queryRunner
+                },
+                queryRunner,
             );
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
@@ -925,7 +936,10 @@ export class GuardianService {
             await this.getGuardianError(error, 'approve');
         }
     }
-    public async login(loginDto: LoginDto, queryRunner: QueryRunner = null): Promise<any> {
+    public async login(
+        loginDto: LoginDto,
+        queryRunner: QueryRunner = null,
+    ): Promise<any> {
         try {
             const response = await axios.post(
                 `${this.configService.get('guardian.url')}${GUARDIAN_API.LOGIN}`,
@@ -952,7 +966,6 @@ export class GuardianService {
                             { refreshToken: response?.data?.refreshToken },
                         );
                     }
-                    
 
                     return response.data;
                 } catch (error) {
