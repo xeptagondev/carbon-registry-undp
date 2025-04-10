@@ -405,8 +405,11 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                       <TextArea rows={4} disabled={true} />
                     </Form.Item> */}
 
+                    <div className="custom-label-monitoring">
+                      {t('monitoringReport:ce_documentUpload')}
+                    </div>
                     <Form.Item
-                      label={t('monitoringReport:ce_documentUpload')}
+                      //label={t('monitoringReport:ce_documentUpload')}
                       name="ce_documentUpload"
                       valuePropName="fileList"
                       getValueFromEvent={normFile}
@@ -414,8 +417,8 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                       rules={[
                         {
                           validator: async (rule, file) => {
-                            if (file?.length > 0) {
-                              if (file[0]?.size > maximumImageSize) {
+                            for (let i = 0; i < file?.length; i++) {
+                              if (file[i]?.size > maximumImageSize) {
                                 // default size format of files would be in bytes -> 1MB = 1000000bytes
                                 throw new Error(`${t('common:maxSizeVal')}`);
                               }
@@ -429,7 +432,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                         beforeUpload={(file: any) => {
                           return false;
                         }}
-                        className="design-upload-section"
+                        className="design-upload-section-monitoring"
                         name="design"
                         action="/upload.do"
                         listType="picture"
