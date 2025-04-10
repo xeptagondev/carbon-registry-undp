@@ -734,7 +734,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             } else {
                 const org = await queryRunner.manager.findOneBy(
                     OrganizationEntity,
-                    { email: userDto.company.email },
+                    { id: requestUser.organizationId },
                 );
                 let asyncTaskTwo: TaskEntity = plainToInstance(TaskEntity, {
                     className: 'UserService',
@@ -778,7 +778,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Occured Error.
-                ${JSON.stringify(err)}`,
+                ${err}\nstacktrace: ${err.stack}`,
                 this.loggerContext,
             );
             throw new HttpException(
@@ -827,7 +827,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             await queryRunner.rollbackTransaction();
             this.logger.error(
                 `Step: ${UserStageEnum.GUARDIAN_ASSIGN_POLICY} for ${userDto.email} Occured Error.
-                ${JSON.stringify(err)}`,
+                ${err}\nstacktrace: ${err.stack}`,
                 this.loggerContext,
             );
             throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
