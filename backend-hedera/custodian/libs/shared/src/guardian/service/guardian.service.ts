@@ -984,7 +984,6 @@ export class GuardianService {
                     HttpStatus.UNAUTHORIZED,
                 );
             }
-            return response.data;
         } catch (error) {
             await this.getGuardianError(error, 'login');
         }
