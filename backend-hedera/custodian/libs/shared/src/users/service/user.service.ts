@@ -731,7 +731,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 );
                 let asyncTaskTwo: TaskEntity = plainToInstance(TaskEntity, {
                     className: 'UserService',
-                    functionName: 'guardianUserCreate',
+                    functionName: 'guardianCreateGroupType',
                     args: [],
                     state: TaskEnum.PENDING,
                     retryAttemps: 3,
@@ -749,15 +749,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     { id: asyncTaskTwo.id },
                     plainToInstance(TaskEntity, {
                         previousTask: asyncTask,
-                        args: [
-                            userDto,
-                            org.id,
-                            org.group,
-                            true,
-                            asyncTaskTwo.id,
-                            true,
-                            requestUser,
-                        ],
+                        args: [userDto, requestUser, taskEntityId],
                     }),
                 );
             }
@@ -834,7 +826,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async guardianCreateGroupType(userDto: UsersDTO) {
+    async guardianCreateGroupType(
+        userDto: UsersDTO,
+        reqUser?: JWTPayload,
+        taskEntityId?: number,
+    ) {
         this.logger.log(
             `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Started.`,
         );
@@ -871,6 +867,101 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         label: userDto.company.name,
                     },
                     queryRunner,
+                );
+            } else {
+                await this.loginToGuardian(reqUser.email, queryRunner);
+
+                const prevTask = await queryRunner.manager.findOneBy(
+                    TaskEntity,
+                    { id: taskEntityId },
+                );
+
+                const user = await queryRunner.manager.findOneBy(UsersEntity, {
+                    email: userDto.email,
+                });
+
+                const org: OrganizationEntity =
+                    await queryRunner.manager.findOne(OrganizationEntity, {
+                        where: {
+                            id: reqUser?.organizationId,
+                        },
+                        relations: {
+                            organizationType: true,
+                        },
+                    });
+
+                const guardianRole = await this.getGuardianRole(
+                    queryRunner,
+                    org?.organizationType?.id,
+                    userDto.role,
+                );
+
+                const inviteBlock = await this.utilService.getBlocksByBlockName(
+                    GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
+                    this.configService.get('policy.id'),
+                );
+
+                const inviteResponse =
+                    await this.guardianService.createInvitation(
+                        reqUser?.email,
+                        inviteBlock?.blockId,
+                        {
+                            action: 'invite',
+                            group: org.group,
+                            role: guardianRole.name,
+                        },
+                    );
+
+                // 2. Submit the generated invitation for user creation
+                const groupTypeBlock =
+                    await this.utilService.getBlocksByBlockName(
+                        GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
+                        this.configService.get('policy.id'),
+                    );
+
+                await this.guardianService.createGroupType(
+                    userDto.email,
+                    decryptPayload(
+                        user.password,
+                        this.configService.get<string>('security.pwdSecret'),
+                    )?.password,
+                    groupTypeBlock?.blockId,
+                    {
+                        invitation: inviteResponse.invitation,
+                    },
+                    queryRunner,
+                );
+
+                let asyncTask: TaskEntity = plainToInstance(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'guardianUserCreate',
+                    args: [],
+                    state: TaskEnum.PENDING,
+                    retryAttemps: 3,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                    previousTask: prevTask,
+                });
+                asyncTask = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTask,
+                );
+
+                await queryRunner.manager.update(
+                    TaskEntity,
+                    { id: asyncTask.id },
+                    plainToInstance(TaskEntity, {
+                        previousTask: asyncTask,
+                        args: [
+                            userDto,
+                            org.id,
+                            org.group,
+                            true,
+                            asyncTask.id,
+                            true,
+                            reqUser,
+                        ],
+                    }),
                 );
             }
 
@@ -1276,7 +1367,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 await this.loginToGuardian(userDto.email, queryRunner);
                 await this.loginToGuardian(requestUser.email, queryRunner);
 
-                await this.addNewUserViaInvite(
+                await this.saveNewUser(
                     userDto,
                     events.id,
                     requestUser,
@@ -1738,7 +1829,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async addNewUserViaInvite(
+    async saveNewUser(
         userDto: UsersDTO,
         eventId: number,
         reqUser?: JWTPayload,
@@ -1777,39 +1868,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             await this.updateUser(queryRunner, userDto, org, guardianRole);
-
-            const inviteBlock = await this.utilService.getBlocksByBlockName(
-                GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
-                this.configService.get('policy.id'),
-            );
-
-            const inviteResponse = await this.guardianService.createInvitation(
-                reqUser?.email,
-                inviteBlock?.blockId,
-                {
-                    action: 'invite',
-                    group: org.group,
-                    role: guardianRole.name,
-                },
-            );
-
-            // 2. Submit the generated invitation for user creation
-            const groupTypeBlock = await this.utilService.getBlocksByBlockName(
-                GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
-                this.configService.get('policy.id'),
-            );
-            await this.guardianService.createGroupType(
-                userDto.email,
-                decryptPayload(
-                    user.password,
-                    this.configService.get<string>('security.pwdSecret'),
-                )?.password,
-                groupTypeBlock?.blockId,
-                {
-                    invitation: inviteResponse.invitation,
-                },
-                queryRunner,
-            );
 
             await this.guardianService.saveDocument(
                 userDto.email,
