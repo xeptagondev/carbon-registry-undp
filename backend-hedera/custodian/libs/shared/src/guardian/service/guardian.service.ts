@@ -103,10 +103,12 @@ export class GuardianService {
         const hbarBalance = Number(
             await this.hbarManagementService.getBalance(user.hederaAccount),
         );
+
         let mailDto: MailTemplateDTO;
         const errorMessage: string =
             'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.';
         if (hbarBalance < thresholdValue) {
+            this.logger.log(`Account ID: ${user.hederaAccount}, HBAR balance: ${hbarBalance}, threshold: ${thresholdValue}`);
             const countryName: string = this.configService.get('country');
             mailDto = {
                 subject: INSUFFICIENT_HBAR_BALANCE,
