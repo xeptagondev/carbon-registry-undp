@@ -1613,7 +1613,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async loginToGuardian(email, queryRunner: QueryRunner) {
+    async loginToGuardian(email: string, queryRunner: QueryRunner) {
         const user = await queryRunner.manager.findOneBy(UsersEntity, {
             email: email,
         });
@@ -1730,6 +1730,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             if (isRelease) {
                 await queryRunner.rollbackTransaction();
             }
+            throw err;
         } finally {
             if (isRelease) {
                 await this.releaseQueryRunner(queryRunner);
@@ -1838,6 +1839,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             if (isRelease) {
                 await queryRunner.rollbackTransaction();
             }
+            throw e;
         } finally {
             if (isRelease) {
                 await this.releaseQueryRunner(queryRunner);
