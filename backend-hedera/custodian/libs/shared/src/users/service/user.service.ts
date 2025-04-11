@@ -725,10 +725,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     }),
                 );
             } else {
-                const org = await queryRunner.manager.findOneBy(
-                    OrganizationEntity,
-                    { id: requestUser.organizationId },
-                );
                 let asyncTaskTwo: TaskEntity = plainToInstance(TaskEntity, {
                     className: 'UserService',
                     functionName: 'guardianCreateGroupType',
@@ -749,7 +745,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     { id: asyncTaskTwo.id },
                     plainToInstance(TaskEntity, {
                         previousTask: asyncTask,
-                        args: [userDto, requestUser, taskEntityId],
+                        args: [userDto, requestUser, asyncTaskTwo.id],
                     }),
                 );
             }
