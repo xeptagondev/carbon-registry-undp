@@ -947,7 +947,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     TaskEntity,
                     { id: asyncTask.id },
                     plainToInstance(TaskEntity, {
-                        previousTask: asyncTask,
+                        previousTask: prevTask,
                         args: [
                             userDto,
                             org.id,
