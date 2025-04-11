@@ -408,6 +408,11 @@ export class OrganizationService extends SuperService<
             .createQueryBuilder('organization')
             .leftJoin('organization.organizationType', 'organizationType')
             .addSelect(['organizationType'])
+            .leftJoin('organization.projects', 'project')
+            .loadRelationCountAndMap(
+                'organization.numberOfProjects',
+                'organization.projects',
+            )
             .where(this.helperService.generateWhereSQL(query))
             .orderBy(
                 query?.sort?.key && `"${query?.sort?.key}"`,
