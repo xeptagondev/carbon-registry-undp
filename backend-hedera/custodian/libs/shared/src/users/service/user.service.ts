@@ -507,16 +507,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 decryptedPassword,
             );
 
-            await this.guardianService.login(
-                {
-                    username: user.email,
-                    password: decryptPayload(
-                        user.password,
-                        this.configService.get<string>('security.pwdSecret'),
-                    )?.password,
-                },
-                queryRunner,
-            );
+            await this.loginToGuardian(user.email, queryRunner);
 
             await queryRunner.commitTransaction();
             this.logger.log(
@@ -550,6 +541,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         await queryRunner.connect();
         try {
             await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
 
             await this.registerProcessSave(
                 queryRunner,
@@ -623,26 +615,27 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Started.`,
             this.loggerContext,
         );
-        let hederaAccResult: any;
-
-        if (!(userDto.hederaAccount && userDto.hederaKey)) {
-            hederaAccResult = await this.verifyGuardianAsyncTask(
-                userDto,
-                accGenTaskId,
-            );
-            if (!hederaAccResult) {
-                throw new HttpException(
-                    'Hedera Account Generation Failed',
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                );
-            }
-        }
-
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
+
+            let hederaAccResult: any;
+
+            if (!(userDto.hederaAccount && userDto.hederaKey)) {
+                hederaAccResult = await this.verifyGuardianAsyncTask(
+                    userDto,
+                    accGenTaskId,
+                );
+                if (!hederaAccResult) {
+                    throw new HttpException(
+                        'Hedera Account Generation Failed',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                }
+            }
 
             await this.registerProcessSave(
                 queryRunner,
@@ -799,6 +792,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         await queryRunner.connect();
         try {
             await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
 
             await this.registerProcessSave(
                 queryRunner,
@@ -848,6 +842,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         await queryRunner.connect();
         try {
             await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
 
             await this.registerProcessSave(
                 queryRunner,
@@ -878,6 +873,169 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     queryRunner,
                 );
             }
+
+            const isApiUserExist: UsersEntity =
+                await this.usersRepository.findOne({
+                    where: {
+                        isApiUser: true,
+                        email: this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+                        ),
+                    },
+                    relations: {
+                        organization: true,
+                    },
+                });
+
+            if (!isApiUserExist) {
+                this.logger.warn(
+                    'API user not exist starting API user onboarding..',
+                    this.loggerContext,
+                );
+                const dnaOrganization: OrganizationEntity =
+                    await queryRunner.manager.findOne(OrganizationEntity, {
+                        where: {
+                            organizationType: {
+                                name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                            },
+                        },
+                    });
+
+                const dnaRootUser: UsersEntity =
+                    await queryRunner.manager.findOne(UsersEntity, {
+                        where: {
+                            guardianRole: {
+                                role: {
+                                    name: RoleEnum.Root,
+                                },
+                            },
+                        },
+                    });
+
+                if (!dnaOrganization || !dnaRootUser) {
+                    this.logger.error('No DNA Organization or Root Exists');
+                    throw new HttpException(
+                        'No DNA Organization Exists',
+                        HttpStatus.UNAUTHORIZED,
+                    );
+                }
+
+                this.logger.log('API admin creation Began');
+
+                const encryptedPassword = encryptPayload(
+                    {
+                        password: this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
+                        ),
+                    },
+                    this.configService.get<string>('security.pwdSecret'),
+                );
+
+                const userEntity = new UsersEntity();
+                userEntity.email = this.configService.get(
+                    `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+                );
+                userEntity.name = 'API User';
+                userEntity.password = encryptedPassword;
+                userEntity.stage = UserStageEnum.VALIDATIONS_N_DATABASE_SAVE;
+                userEntity.isActive = true;
+                userEntity.isApiUser = true;
+                userEntity.createdTime = new Date().getTime();
+                userEntity.updatedTime = new Date().getTime();
+                userEntity.organization = dnaOrganization;
+
+                const user = await queryRunner.manager.save(
+                    UsersEntity,
+                    userEntity,
+                );
+
+                const guardianRole = await this.getGuardianRole(
+                    queryRunner,
+                    dnaOrganization.organizationType.id,
+                    userDto.role,
+                );
+
+                await this.updateUser(
+                    queryRunner,
+                    userDto,
+                    dnaOrganization,
+                    guardianRole,
+                );
+
+                let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'guardianRegisterUser',
+                    args: [user],
+                    retryAttemps: 3,
+                    state: TaskEnum.PENDING,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                });
+                asyncTask = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTask,
+                );
+
+                let asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'userHederaAccGen',
+                    args: [],
+                    retryAttemps: 3,
+                    state: TaskEnum.PENDING,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                });
+                asyncTaskTwo = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTaskTwo,
+                );
+
+                const apiUserDto = new UsersDTO();
+
+                apiUserDto.email = this.configService.get(
+                    `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+                );
+                apiUserDto.name = 'API User';
+
+                apiUserDto.password = this.configService.get(
+                    `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
+                );
+                apiUserDto.isApiUser = true;
+                apiUserDto.role = RoleEnum.Admin;
+
+                await queryRunner.manager.update(
+                    TaskEntity,
+                    { id: asyncTaskTwo.id },
+                    plainToClass(TaskEntity, {
+                        previousTask: asyncTask,
+                        args: [
+                            apiUserDto,
+                            asyncTaskTwo.id,
+                            true,
+                            {
+                                email: this.configService.get(
+                                    `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
+                                ),
+                                organizationName: dnaOrganization.name,
+                                userName: dnaRootUser.name,
+                                userId: dnaRootUser.id,
+                                userRefId: dnaRootUser.refId,
+                                userRole: RoleEnum.Root,
+                                userState: true,
+                                userHederaAccId: dnaRootUser.hederaAccount,
+                                organizationId: dnaOrganization.id,
+                                organizationRefId: dnaOrganization.refId,
+                                organizationRole:
+                                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                                organizationState: OrganizationStateEnum.ACTIVE,
+                                organizationHederaAccId:
+                                    dnaOrganization.hederaAccountId,
+                            },
+                        ],
+                    }),
+                );
+            }
+
             await queryRunner.commitTransaction();
             this.logger.log(
                 `Step: ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Finished.`,
@@ -910,6 +1068,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         await queryRunner.connect();
         try {
             await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
 
             await this.registerProcessSave(
                 queryRunner,
@@ -985,31 +1144,33 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_ORGANIZATION_SAVE} for ${userDto.email} Started.`,
             this.loggerContext,
         );
-        let hederaAccResult: any;
-
-        if (
-            !(
-                userDto.company.hederaAccountId &&
-                userDto.company.hederaAccountKey
-            )
-        ) {
-            hederaAccResult = await this.verifyGuardianAsyncTask(
-                userDto,
-                accGenTaskId,
-            );
-            if (!hederaAccResult) {
-                throw new HttpException(
-                    'Hedera Account Generation Failed',
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                );
-            }
-        }
 
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
+
+            let hederaAccResult: any;
+
+            if (
+                !(
+                    userDto.company.hederaAccountId &&
+                    userDto.company.hederaAccountKey
+                )
+            ) {
+                hederaAccResult = await this.verifyGuardianAsyncTask(
+                    userDto,
+                    accGenTaskId,
+                );
+                if (!hederaAccResult) {
+                    throw new HttpException(
+                        'Hedera Account Generation Failed',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                }
+            }
 
             await queryRunner.manager.update(
                 OrganizationEntity,
@@ -1237,6 +1398,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     }),
                 );
             } else {
+                await this.loginToGuardian(userDto.email, queryRunner);
+                await this.loginToGuardian(requestUser.email, queryRunner);
+
                 await this.addNewUserViaInvite(
                     userDto,
                     events.id,
@@ -1314,6 +1478,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     (requestUser?.userRole === RoleEnum.Admin ||
                         requestUser?.userRole === RoleEnum.Root)
                 ) {
+                    await this.loginToGuardian(requestUser?.email, queryRunner);
+
                     await this.orgaisationService.approve(
                         requestUser?.email,
                         orgEntity.id,
@@ -1337,21 +1503,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 previousTask: prevTask,
             });
             asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
-
-            if (this.configService.get('system.initApiAdmin') === 'true') {
-                const asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
-                    className: 'UserInitializationService',
-                    functionName: 'createDnaApiAdmin',
-                    args: [],
-                    retryAttemps: 3,
-                    state: TaskEnum.PENDING,
-                    retryUntilSuccess: true,
-                    millisBetweenAttempts: 3000,
-                    previousTask: asyncTask,
-                });
-
-                await queryRunner.manager.save(TaskEntity, asyncTaskTwo);
-            }
 
             await queryRunner.commitTransaction();
             this.logger.log(
@@ -1414,6 +1565,21 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     // --------------- Helpers --------------------
+
+    async loginToGuardian(email, queryRunner: QueryRunner) {
+        const user = await queryRunner.manager.findOneBy(UsersEntity, {
+            email: email,
+        });
+        const decryptedPassword = await this.decryptPassword(user);
+        try {
+            await this.guardianService.accessToken(user?.refreshToken);
+        } catch (err) {
+            await this.guardianService.login(
+                { username: email, password: decryptedPassword },
+                queryRunner,
+            );
+        }
+    }
 
     async hederaAccGenerate(userDTO: UsersDTO): Promise<string> {
         const accGenTaskId = await this.guardianService.generateHederaAccount(
@@ -1598,7 +1764,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
 
             await this.guardianService.saveDocument(
-                reqUser.email,
+                userDto.email,
                 GUARDIAN_API.BLOCKS.CREATE_USER,
                 {
                     document: {
