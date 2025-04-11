@@ -959,29 +959,25 @@ export class GuardianService {
 
             if (response?.status == HttpStatus.OK) {
                 const message: string = `User: ${loginDto.username} has logged into the system.`;
-
-                try {
-                    if (queryRunner) {
-                        await queryRunner.manager.update(
-                            UsersEntity,
-                            {
-                                email: loginDto.username,
-                            },
-                            { refreshToken: response?.data?.refreshToken },
-                        );
-                    } else {
-                        await this.usersRepository.update(
-                            {
-                                email: loginDto.username,
-                            },
-                            { refreshToken: response?.data?.refreshToken },
-                        );
-                    }
-
-                    return response.data;
-                } catch (error) {
-                    console.error(`Failed to add log: "${message}"`, error);
+                if (queryRunner) {
+                    await queryRunner.manager.update(
+                        UsersEntity,
+                        {
+                            email: loginDto.username,
+                        },
+                        { refreshToken: response?.data?.refreshToken },
+                    );
+                } else {
+                    await this.usersRepository.update(
+                        {
+                            email: loginDto.username,
+                        },
+                        { refreshToken: response?.data?.refreshToken },
+                    );
                 }
+
+                return response.data;
+
             } else {
                 throw new HttpException(
                     'Guardian User Login Failed',
