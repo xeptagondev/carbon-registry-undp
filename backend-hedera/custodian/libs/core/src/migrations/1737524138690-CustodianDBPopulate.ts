@@ -95,7 +95,7 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 '0000000', \
                 'Registry user', \
                 '${process.env.STANDARD_REGISTRY_PASSWORD}', \
-                '0.0.5143903', \
+                '${process.env.STANDARD_REGISTRY_HEDERA_ACCOUNT}', \
                 '0112456789', \
                 NULL, \
                 NULL \
