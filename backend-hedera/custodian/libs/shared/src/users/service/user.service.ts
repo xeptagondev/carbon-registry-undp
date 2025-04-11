@@ -888,97 +888,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 });
 
             if (!isApiUserExist) {
-                this.logger.warn(
-                    'API user not exist starting API user onboarding..',
-                    this.loggerContext,
-                );
-                const dnaOrganization: OrganizationEntity =
-                    await queryRunner.manager.findOne(OrganizationEntity, {
-                        where: {
-                            organizationType: {
-                                name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
-                            },
-                        },
-                    });
-
-                const dnaRootUser: UsersEntity =
-                    await queryRunner.manager.findOne(UsersEntity, {
-                        where: {
-                            guardianRole: {
-                                role: {
-                                    name: RoleEnum.Root,
-                                },
-                            },
-                        },
-                    });
-
-                if (!dnaOrganization || !dnaRootUser) {
-                    this.logger.error('No DNA Organization or Root Exists');
-                    throw new HttpException(
-                        'No DNA Organization Exists',
-                        HttpStatus.UNAUTHORIZED,
-                    );
-                }
-
-                this.logger.log('API admin creation Began');
-
-                const encryptedPassword = encryptPayload(
-                    {
-                        password: this.configService.get(
-                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
-                        ),
-                    },
-                    this.configService.get<string>('security.pwdSecret'),
-                );
-
-                const userEntity = new UsersEntity();
-                userEntity.email = this.configService.get(
-                    `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
-                );
-                userEntity.name = 'API User';
-                userEntity.password = encryptedPassword;
-                userEntity.stage = UserStageEnum.VALIDATIONS_N_DATABASE_SAVE;
-                userEntity.isActive = true;
-                userEntity.isApiUser = true;
-                userEntity.createdTime = new Date().getTime();
-                userEntity.updatedTime = new Date().getTime();
-                userEntity.organization = dnaOrganization;
-
-                const user = await queryRunner.manager.save(
-                    UsersEntity,
-                    userEntity,
-                );
-
-                const guardianRole = await this.getGuardianRole(
-                    queryRunner,
-                    dnaOrganization.organizationType.id,
-                    userDto.role,
-                );
-
-                await this.updateUser(
-                    queryRunner,
-                    userDto,
-                    dnaOrganization,
-                    guardianRole,
-                );
-
-                let asyncTask: TaskEntity = plainToClass(TaskEntity, {
-                    className: 'UserService',
-                    functionName: 'guardianRegisterUser',
-                    args: [user],
-                    retryAttemps: 3,
-                    state: TaskEnum.PENDING,
-                    retryUntilSuccess: true,
-                    millisBetweenAttempts: 3000,
-                });
-                asyncTask = await queryRunner.manager.save(
-                    TaskEntity,
-                    asyncTask,
-                );
-
                 let asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
                     className: 'UserService',
-                    functionName: 'userHederaAccGen',
+                    functionName: 'createApiUser',
                     args: [],
                     retryAttemps: 3,
                     state: TaskEnum.PENDING,
@@ -990,48 +902,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     asyncTaskTwo,
                 );
 
-                const apiUserDto = new UsersDTO();
-
-                apiUserDto.email = this.configService.get(
-                    `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
-                );
-                apiUserDto.name = 'API User';
-
-                apiUserDto.password = this.configService.get(
-                    `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
-                );
-                apiUserDto.isApiUser = true;
-                apiUserDto.role = RoleEnum.Admin;
-
                 await queryRunner.manager.update(
                     TaskEntity,
                     { id: asyncTaskTwo.id },
                     plainToClass(TaskEntity, {
-                        previousTask: asyncTask,
-                        args: [
-                            apiUserDto,
-                            asyncTaskTwo.id,
-                            true,
-                            {
-                                email: this.configService.get(
-                                    `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
-                                ),
-                                organizationName: dnaOrganization.name,
-                                userName: dnaRootUser.name,
-                                userId: dnaRootUser.id,
-                                userRefId: dnaRootUser.refId,
-                                userRole: RoleEnum.Root,
-                                userState: true,
-                                userHederaAccId: dnaRootUser.hederaAccount,
-                                organizationId: dnaOrganization.id,
-                                organizationRefId: dnaOrganization.refId,
-                                organizationRole:
-                                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
-                                organizationState: OrganizationStateEnum.ACTIVE,
-                                organizationHederaAccId:
-                                    dnaOrganization.hederaAccountId,
-                            },
-                        ],
+                        args: [asyncTaskTwo.id],
                     }),
                 );
             }
@@ -1565,6 +1440,175 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     // --------------- Helpers --------------------
+
+    async createApiUser(taskEntityId: number) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            this.logger.warn(
+                'API user not exist starting API user onboarding..',
+                this.loggerContext,
+            );
+            const dnaOrganization: OrganizationEntity =
+                await queryRunner.manager.findOne(OrganizationEntity, {
+                    where: {
+                        organizationType: {
+                            name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                        },
+                    },
+                });
+
+            const dnaRootUser: UsersEntity = await queryRunner.manager.findOne(
+                UsersEntity,
+                {
+                    where: {
+                        email: this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
+                        ),
+                    },
+                },
+            );
+
+            if (!dnaOrganization || !dnaRootUser) {
+                this.logger.error('No DNA Organization or Root Exists');
+                throw new HttpException(
+                    'No DNA Organization Exists',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
+            this.logger.log('API admin creation Began');
+
+            const encryptedPassword = encryptPayload(
+                {
+                    password: this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
+                    ),
+                },
+                this.configService.get<string>('security.pwdSecret'),
+            );
+
+            const apiUserDto = new UsersDTO();
+
+            apiUserDto.email = this.configService.get(
+                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+            );
+            apiUserDto.name = 'API User';
+
+            apiUserDto.password = this.configService.get(
+                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
+            );
+            apiUserDto.isApiUser = true;
+            apiUserDto.role = RoleEnum.Admin;
+
+            const userEntity = new UsersEntity();
+            userEntity.email = this.configService.get(
+                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+            );
+            userEntity.name = apiUserDto.name;
+            userEntity.password = encryptedPassword;
+            userEntity.stage = UserStageEnum.VALIDATIONS_N_DATABASE_SAVE;
+            userEntity.isActive = apiUserDto.isApiUser;
+            userEntity.isApiUser = true;
+            userEntity.createdTime = new Date().getTime();
+            userEntity.updatedTime = new Date().getTime();
+            userEntity.organization = dnaOrganization;
+
+            const user = await queryRunner.manager.save(
+                UsersEntity,
+                userEntity,
+            );
+
+            const guardianRole = await this.getGuardianRole(
+                queryRunner,
+                dnaOrganization.organizationType.id,
+                apiUserDto.role,
+            );
+
+            await this.updateUser(
+                queryRunner,
+                apiUserDto,
+                dnaOrganization,
+                guardianRole,
+            );
+
+            const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                id: taskEntityId,
+            });
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianRegisterUser',
+                args: [user],
+                retryAttemps: 3,
+                state: TaskEnum.PENDING,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: prevTask,
+            });
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            let asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'userHederaAccGen',
+                args: [],
+                retryAttemps: 3,
+                state: TaskEnum.PENDING,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: asyncTask,
+            });
+
+            asyncTaskTwo = await queryRunner.manager.save(
+                TaskEntity,
+                asyncTaskTwo,
+            );
+
+            await queryRunner.manager.update(
+                TaskEntity,
+                { id: asyncTaskTwo.id },
+                plainToClass(TaskEntity, {
+                    previousTask: asyncTask,
+                    args: [
+                        apiUserDto,
+                        asyncTaskTwo.id,
+                        true,
+                        {
+                            email: this.configService.get(
+                                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
+                            ),
+                            organizationName: dnaOrganization.name,
+                            userName: dnaRootUser.name,
+                            userId: dnaRootUser.id,
+                            userRefId: dnaRootUser.refId,
+                            userRole: RoleEnum.Root,
+                            userState: true,
+                            userHederaAccId: dnaRootUser.hederaAccount,
+                            organizationId: dnaOrganization.id,
+                            organizationRefId: dnaOrganization.refId,
+                            organizationRole:
+                                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                            organizationState: OrganizationStateEnum.ACTIVE,
+                            organizationHederaAccId:
+                                dnaOrganization.hederaAccountId,
+                        },
+                    ],
+                }),
+            );
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `API User Creation Occured Error.
+                ${err}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
 
     async loginToGuardian(email, queryRunner: QueryRunner) {
         const user = await queryRunner.manager.findOneBy(UsersEntity, {

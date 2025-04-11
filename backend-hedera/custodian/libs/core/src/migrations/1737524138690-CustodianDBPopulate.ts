@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable max-len */
 /* eslint-disable quotes */
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
@@ -95,8 +97,8 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 '0000000', \
                 'Registry user', \
                 '${process.env.STANDARD_REGISTRY_PASSWORD}', \
-                '${process.env.STANDARD_REGISTRY_HEDERA_ACCOUNT}', \
                 '0112456789', \
+                '${process.env.STANDARD_REGISTRY_HEDERA_ACCOUNT}', \
                 NULL, \
                 NULL \
             );`,
