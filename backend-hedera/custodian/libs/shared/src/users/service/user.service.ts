@@ -1457,6 +1457,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
                         },
                     },
+                    relations: {
+                        organizationType: true,
+                    },
                 });
 
             const dnaRootUser: UsersEntity = await queryRunner.manager.findOne(
