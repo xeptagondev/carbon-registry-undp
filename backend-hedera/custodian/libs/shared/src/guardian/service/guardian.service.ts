@@ -86,6 +86,7 @@ export class GuardianService {
 
     private async validateGuardianCall(
         email: string,
+        isEmailDisable: boolean = false,
         queryRunner: QueryRunner = null,
         thresholdValue: number = this.configService.get<number>(
             'guardian.hbarThresholds.general',
@@ -118,7 +119,9 @@ export class GuardianService {
                 },
                 priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
-            await this.mailService.sendMail(mailDto, queryRunner);
+            if (!isEmailDisable) {
+                await this.mailService.sendMail(mailDto, queryRunner);
+            }
             throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
         }
     }
@@ -255,6 +258,12 @@ export class GuardianService {
         email: string,
     ): Promise<TaskSetInterface> {
         try {
+            await this.validateGuardianCall(
+                this.configService.get('sru.username'),
+                true,
+                null,
+                120,
+            );
             const url = this.buildGuardianUrl(
                 GUARDIAN_API.GENERATE_HEDERA_ACCOUNT,
             );
@@ -370,7 +379,7 @@ export class GuardianService {
         queryRunner: QueryRunner = null,
     ): Promise<any> {
         try {
-            await this.validateGuardianCall(email, queryRunner);
+            await this.validateGuardianCall(email, false, queryRunner);
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
@@ -405,7 +414,7 @@ export class GuardianService {
         queryRunner: QueryRunner = null,
     ): Promise<any> {
         try {
-            await this.validateGuardianCall(email, queryRunner);
+            await this.validateGuardianCall(email, false, queryRunner);
             const block = await this.utilService.getBlocksByBlockName(
                 blockName,
                 this.configService.get('policy.id'),
