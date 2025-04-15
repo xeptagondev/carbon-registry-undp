@@ -31,7 +31,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
       const netGHGEmissions =
         baselineEmissionReductionsVal - projectEmissionReductionsVal - leakageEmissionReductionsVal;
 
-      if (netGHGEmissions < 0) {
+      if (netGHGEmissions <= 0) {
         form.setFields([
           {
             name: 'netEmissionReductions',
@@ -62,7 +62,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
         listVals[index].netEmissionReductions = netGHGEmissions;
 
-        if (netGHGEmissions < 0) {
+        if (netGHGEmissions <= 0) {
           form.setFields([
             {
               name: ['extraEmissionReductions', index, 'netEmissionReductions'],

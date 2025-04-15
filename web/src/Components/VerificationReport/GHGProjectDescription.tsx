@@ -10,7 +10,7 @@ import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 import NetEmissionReduction from '../Common/NetEmissonReduction';
 
 export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
-  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields } =
+  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields, maxNetGHGReduction } =
     props;
 
   useEffect(() => {
@@ -112,6 +112,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                   t={t}
                   projectCategory={null}
                   disabled={disableFields}
+                  maxNetGHGReduction={maxNetGHGReduction}
                 ></NetEmissionReduction>
               </>
 

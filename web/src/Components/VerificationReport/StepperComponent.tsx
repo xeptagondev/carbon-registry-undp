@@ -78,6 +78,8 @@ const StepperComponent = (props: VerificationStepProps) => {
   const [certificationStatementForm] = useForm();
   const [appendixForm] = useForm();
 
+  const [maxNetGHGReduction, setMaxNetGHGReduction] = useState<number>();
+
   const [values, setValues] = useState({
     projectRefId: id,
     name: 'verification',
@@ -180,6 +182,13 @@ const StepperComponent = (props: VerificationStepProps) => {
     const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
 
     if (programmeData && pddData && validationData && monitoringData) {
+      const tempNetGHGEmisisionReduction =
+        validationData?.ghgProjectDescription?.totalNetEmissionReductions;
+
+      console.log('-----------temp netGHG---------', tempNetGHGEmisisionReduction);
+
+      setMaxNetGHGReduction(Number(tempNetGHGEmisisionReduction));
+
       const docVersions = state?.documents?.[DocumentEnum.VERIFICATION as any]?.version;
       console.log('------------docVersions-----------', docVersions);
       console.log('--------state---------', state);
@@ -653,6 +662,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           prev={prev}
           disableFields={disableFields}
           // countries={countries}
+          maxNetGHGReduction={maxNetGHGReduction}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
