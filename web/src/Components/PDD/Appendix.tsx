@@ -617,8 +617,10 @@ const Step08 = (props: CustomStepsProps) => {
               >
                 <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
+
+              <div className="custom-label-pdd">{t('PDD:uploadDocsAppendix')}</div>
               <Form.Item
-                label={t('PDD:uploadDocsAppendix')}
+                //label={t('PDD:uploadDocsAppendix')}
                 name="appendix2Documents"
                 valuePropName="fileList"
                 getValueFromEvent={normFile}
@@ -627,8 +629,8 @@ const Step08 = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, file) => {
                       if (disableFields) return;
-                      if (file?.length > 0) {
-                        if (file[0]?.size > maximumImageSize) {
+                      for (let i = 0; i < file?.length; i++) {
+                        if (file[i]?.size > maximumImageSize) {
                           // default size format of files would be in bytes -> 1MB = 1000000bytes
                           throw new Error(`${t('common:maxSizeVal')}`);
                         }
@@ -642,7 +644,7 @@ const Step08 = (props: CustomStepsProps) => {
                   beforeUpload={(file: any) => {
                     return false;
                   }}
-                  className="design-upload-section"
+                  className="design-upload-section-pdd"
                   name="design"
                   action="/upload.do"
                   listType="picture"
@@ -691,8 +693,9 @@ const Step08 = (props: CustomStepsProps) => {
               >
                 <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
+              <div className="custom-label-pdd">{t('PDD:uploadDocsAppendix')}</div>
               <Form.Item
-                label={t('PDD:uploadDocsAppendix')}
+                //label={t('PDD:uploadDocsAppendix')}
                 name="appendix3Documents"
                 valuePropName="fileList"
                 getValueFromEvent={normFile}
@@ -701,8 +704,8 @@ const Step08 = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, file) => {
                       if (disableFields) return;
-                      if (file?.length > 0) {
-                        if (file[0]?.size > maximumImageSize) {
+                      for (let i = 0; i < file?.length; i++) {
+                        if (file[i]?.size > maximumImageSize) {
                           // default size format of files would be in bytes -> 1MB = 1000000bytes
                           throw new Error(`${t('common:maxSizeVal')}`);
                         }
@@ -716,7 +719,7 @@ const Step08 = (props: CustomStepsProps) => {
                   beforeUpload={(file: any) => {
                     return false;
                   }}
-                  className="design-upload-section"
+                  className="design-upload-section-pdd"
                   name="design"
                   action="/upload.do"
                   listType="picture"
@@ -766,8 +769,9 @@ const Step08 = (props: CustomStepsProps) => {
                 <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
 
+              <div className="custom-label-pdd">{t('PDD:uploadDocsAppendix')}</div>
               <Form.Item
-                label={t('PDD:uploadDocsAppendix')}
+                //label={t('PDD:uploadDocsAppendix')}
                 name="appendix4Documents"
                 valuePropName="fileList"
                 getValueFromEvent={normFile}
@@ -776,8 +780,8 @@ const Step08 = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, file) => {
                       if (disableFields) return;
-                      if (file?.length > 0) {
-                        if (file[0]?.size > maximumImageSize) {
+                      for (let i = 0; i < file?.length; i++) {
+                        if (file[i]?.size > maximumImageSize) {
                           // default size format of files would be in bytes -> 1MB = 1000000bytes
                           throw new Error(`${t('common:maxSizeVal')}`);
                         }
@@ -791,7 +795,7 @@ const Step08 = (props: CustomStepsProps) => {
                   beforeUpload={(file: any) => {
                     return false;
                   }}
-                  className="design-upload-section"
+                  className="design-upload-section-pdd"
                   name="design"
                   action="/upload.do"
                   listType="picture"
@@ -841,9 +845,9 @@ const Step08 = (props: CustomStepsProps) => {
               >
                 <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
-
+              <div className="custom-label-pdd">{t('PDD:uploadDocsAppendix')}</div>
               <Form.Item
-                label={t('PDD:uploadDocsAppendix')}
+                //label={t('PDD:uploadDocsAppendix')}
                 name="appendix5Documents"
                 valuePropName="fileList"
                 getValueFromEvent={normFile}
@@ -852,8 +856,8 @@ const Step08 = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, file) => {
                       if (disableFields) return;
-                      if (file?.length > 0) {
-                        if (file[0]?.size > maximumImageSize) {
+                      for (let i = 0; i < file?.length; i++) {
+                        if (file[i]?.size > maximumImageSize) {
                           // default size format of files would be in bytes -> 1MB = 1000000bytes
                           throw new Error(`${t('common:maxSizeVal')}`);
                         }
@@ -867,7 +871,7 @@ const Step08 = (props: CustomStepsProps) => {
                   beforeUpload={(file: any) => {
                     return false;
                   }}
-                  className="design-upload-section"
+                  className="design-upload-section-pdd"
                   name="design"
                   action="/upload.do"
                   listType="picture"
@@ -918,8 +922,9 @@ const Step08 = (props: CustomStepsProps) => {
                 <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
 
+              <div className="custom-label-pdd">{t('PDD:uploadDocsAppendix')}</div>
               <Form.Item
-                label={t('PDD:uploadDocsAppendix')}
+                //label={t('PDD:uploadDocsAppendix')}
                 name="appendix6Documents"
                 valuePropName="fileList"
                 getValueFromEvent={normFile}
@@ -928,8 +933,8 @@ const Step08 = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, file) => {
                       if (disableFields) return;
-                      if (file?.length > 0) {
-                        if (file[0]?.size > maximumImageSize) {
+                      for (let i = 0; i < file?.length; i++) {
+                        if (file[i]?.size > maximumImageSize) {
                           // default size format of files would be in bytes -> 1MB = 1000000bytes
                           throw new Error(`${t('common:maxSizeVal')}`);
                         }
@@ -943,7 +948,7 @@ const Step08 = (props: CustomStepsProps) => {
                   beforeUpload={(file: any) => {
                     return false;
                   }}
-                  className="design-upload-section"
+                  className="design-upload-section-pdd"
                   name="design"
                   action="/upload.do"
                   listType="picture"
@@ -994,8 +999,9 @@ const Step08 = (props: CustomStepsProps) => {
                 <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
 
+              <div className="custom-label-pdd">{t('PDD:uploadDocsAppendix')}</div>
               <Form.Item
-                label={t('PDD:uploadDocsAppendix')}
+                //label={t('PDD:uploadDocsAppendix')}
                 name="appendix7Documents"
                 valuePropName="fileList"
                 getValueFromEvent={normFile}
@@ -1004,8 +1010,8 @@ const Step08 = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, file) => {
                       if (disableFields) return;
-                      if (file?.length > 0) {
-                        if (file[0]?.size > maximumImageSize) {
+                      for (let i = 0; i < file?.length; i++) {
+                        if (file[i]?.size > maximumImageSize) {
                           // default size format of files would be in bytes -> 1MB = 1000000bytes
                           throw new Error(`${t('common:maxSizeVal')}`);
                         }
@@ -1019,7 +1025,7 @@ const Step08 = (props: CustomStepsProps) => {
                   beforeUpload={(file: any) => {
                     return false;
                   }}
-                  className="design-upload-section"
+                  className="design-upload-section-pdd"
                   name="design"
                   action="/upload.do"
                   listType="picture"
