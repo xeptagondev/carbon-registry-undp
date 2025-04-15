@@ -4,6 +4,7 @@ import moment from 'moment';
 import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
 import { useState } from 'react';
 import { ProjectCategory } from '../../Definitions/Enums/slRegistryEnum';
+import { toMoment } from '../../Utils/convertTime';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   baselineEmissionReductions: 'avgBaselineEmissionReductions',
@@ -14,7 +15,7 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
 };
 
 const NetEmissionReduction = (props: any) => {
-  const { form, t, existingEmission, projectCategory, disabled } = props;
+  const { form, t, existingEmission, projectCategory, disabled, maxNetGHGReduction } = props;
 
   console.log('--------disabled-----------', disabled);
 
@@ -61,7 +62,7 @@ const NetEmissionReduction = (props: any) => {
 
         listVals[index].netEmissionReductions = netGHGEmissions;
 
-        if (netGHGEmissions < 0) {
+        if (netGHGEmissions <= 0) {
           form.setFields([
             {
               name: ['estimatedNetEmissionReductions', index, 'netEmissionReductions'],
@@ -93,6 +94,23 @@ const NetEmissionReduction = (props: any) => {
           tempTotal += Number(item[category]);
         }
       });
+    }
+
+    console.log('----------netGHG reduction', maxNetGHGReduction);
+    if (maxNetGHGReduction && tempTotal >= maxNetGHGReduction) {
+      form.setFields([
+        {
+          name: 'totalNetEmissionReductions',
+          errors: [`Total Net Emission Reduction cannot exceed ${maxNetGHGReduction}`],
+        },
+      ]);
+    } else {
+      form.setFields([
+        {
+          name: 'totalNetEmissionReductions',
+          errors: [``],
+        },
+      ]);
     }
 
     const creditingYears = Number(form.getFieldValue('totalNumberOfCreditingYears') || 0);
@@ -153,8 +171,20 @@ const NetEmissionReduction = (props: any) => {
     }
   };
 
-  const onPeriodEndChange = (value: any, fieldCounts: number) => {
-    form.setFieldValue('totalNumberOfCreditingYears', fieldCounts);
+  const onPeriodChange = () => {
+    const reductions = form.getFieldValue('estimatedNetEmissionReductions');
+    let totalCreditingYears = 0;
+
+    reductions.forEach((reduction: any) => {
+      const start = toMoment(reduction.startDate)?.startOf('month');
+      const end = toMoment(reduction.endDate)?.endOf('month');
+
+      if (start && end) {
+        const diff = moment.duration(end.diff(start));
+        totalCreditingYears += Math.floor(diff.asMonths() + 1) / 12;
+      }
+    });
+    form.setFieldValue('totalNumberOfCreditingYears', Number(totalCreditingYears).toFixed(2));
   };
 
   return (
@@ -193,7 +223,13 @@ const NetEmissionReduction = (props: any) => {
                 <>
                   <Row justify={'space-between'} align={'middle'} className="mg-top-1">
                     <Col md={6} xl={6} className="col1">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                      >
                         <Form.Item
                           label={``}
                           name={[name, 'startDate']}
@@ -223,6 +259,7 @@ const NetEmissionReduction = (props: any) => {
                             picker="month"
                             format="YYYY MMM"
                             disabled={disabled}
+                            onChange={(_value) => onPeriodChange()}
                           />
                         </Form.Item>
                         <span style={{ marginBottom: 23 }}>to</span>
@@ -255,8 +292,12 @@ const NetEmissionReduction = (props: any) => {
                                 if (selectedDate.year() !== startDate.year()) {
                                   throw new Error('End date also should be in the same year!');
                                 }
-                                // const duration = moment.duration(selectedDate.diff(startDate));
 
+                                const duration = moment.duration(selectedDate.diff(startDate));
+
+                                if (duration.asDays() < 0) {
+                                  throw new Error('End date cannot be before Start date!');
+                                }
                                 // const isOneYear = Math.round(duration.asMonths()) === 12;
 
                                 // if (!isOneYear) {
@@ -271,22 +312,7 @@ const NetEmissionReduction = (props: any) => {
                             placeholder="End Date"
                             picker="month"
                             format="YYYY MMM"
-                            onChange={(value) => onPeriodEndChange(value, fields.length)}
-                            disabledDate={(currentDate: any) => {
-                              if (
-                                currentDate &&
-                                form.getFieldValue('estimatedNetEmissionReductions')[name]
-                              ) {
-                                return (
-                                  currentDate <
-                                  moment(
-                                    form.getFieldValue('estimatedNetEmissionReductions')[name]
-                                      .emissionsPeriodStart
-                                  ).startOf('month')
-                                );
-                              }
-                              return false;
-                            }}
+                            onChange={(_value) => onPeriodChange()}
                             disabled={disabled}
                           />
                         </Form.Item>
@@ -317,7 +343,8 @@ const NetEmissionReduction = (props: any) => {
                           },
                         ]}
                       >
-                        <InputNumber
+                        <Input
+                          type="number"
                           size="large"
                           className="full-width-form-item"
                           onChange={(value) => {
@@ -356,7 +383,8 @@ const NetEmissionReduction = (props: any) => {
                           },
                         ]}
                       >
-                        <InputNumber
+                        <Input
+                          type="number"
                           size="large"
                           className="full-width-form-item"
                           onChange={(value) => {
@@ -395,7 +423,8 @@ const NetEmissionReduction = (props: any) => {
                           },
                         ]}
                       >
-                        <InputNumber
+                        <Input
+                          type="number"
                           size="large"
                           className="full-width-form-item"
                           onChange={(value) => {
@@ -437,7 +466,12 @@ const NetEmissionReduction = (props: any) => {
                           },
                         ]}
                       >
-                        <InputNumber size="large" disabled className="full-width-form-item" />
+                        <Input
+                          type="number"
+                          size="large"
+                          disabled
+                          className="full-width-form-item"
+                        />
                       </Form.Item>
                     </Col>
                     {projectCategory === ProjectCategory.AFOLU && (
@@ -465,7 +499,8 @@ const NetEmissionReduction = (props: any) => {
                             },
                           ]}
                         >
-                          <InputNumber
+                          <Input
+                            type="number"
                             className="full-width-form-item"
                             size="large"
                             onChange={(value) => {
@@ -494,7 +529,7 @@ const NetEmissionReduction = (props: any) => {
                             onClick={() => {
                               // reduceTotalCreditingYears()
                               remove(name);
-                              onPeriodEndChange(null, fields.length - 1);
+                              onPeriodChange();
                               calculateTotalEmissions(
                                 null,
                                 'projectEmissionReductions',
