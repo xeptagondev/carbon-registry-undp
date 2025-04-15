@@ -7,6 +7,7 @@ import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithT
 import NetEmissionReduction from '../Common/NetEmissonReduction';
 import moment from 'moment';
 import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
+import { toMoment } from '../../Utils/convertTime';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   baselineEmissionReductions: 'avgBaselineEmissionReductions',
@@ -30,7 +31,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
       const netGHGEmissions =
         baselineEmissionReductionsVal - projectEmissionReductionsVal - leakageEmissionReductionsVal;
 
-      if (netGHGEmissions < 0) {
+      if (netGHGEmissions <= 0) {
         form.setFields([
           {
             name: 'netEmissionReductions',
@@ -61,7 +62,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
         listVals[index].netEmissionReductions = netGHGEmissions;
 
-        if (netGHGEmissions < 0) {
+        if (netGHGEmissions <= 0) {
           form.setFields([
             {
               name: ['extraEmissionReductions', index, 'netEmissionReductions'],
@@ -120,14 +121,35 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
     CalculateNetTotalEmissions();
   };
 
-  const onPeriodEndChange = (value: any, fieldCounts: number) => {
-    let totalCreditingYears = form.getFieldValue('totalCreditingYears') || 0;
-    if (value && totalCreditingYears < fieldCounts) {
-      totalCreditingYears += 1;
-    } else if (value === null && totalCreditingYears !== 0) {
-      totalCreditingYears -= 1;
+  const onPeriodChange = (value: any, fieldCounts: number) => {
+    const reductions = form.getFieldValue('extraEmissionReductions');
+    let totalCreditingYears = 0;
+
+    const firstReductionStartDate = toMoment(form.getFieldValue('emissionsPeriodStart'))?.startOf(
+      'month'
+    );
+    const firstReductionEndDate = toMoment(form.getFieldValue('emissionsPeriodEnd'))?.endOf(
+      'month'
+    );
+
+    if (firstReductionStartDate && firstReductionEndDate) {
+      const diff = moment.duration(firstReductionEndDate.diff(firstReductionStartDate));
+      totalCreditingYears += Math.floor(diff.asMonths() + 1) / 12;
     }
-    form.setFieldValue('totalCreditingYears', totalCreditingYears);
+
+    reductions?.forEach((reduction: any) => {
+      const start = toMoment(reduction?.emissionsPeriodStart)?.startOf('month');
+      const end = toMoment(reduction?.emissionsPeriodEnd)?.endOf('month');
+
+      if (start && end) {
+        const diff = moment.duration(end.diff(start));
+        totalCreditingYears += Math.floor(diff.asMonths() + 1) / 12;
+      }
+    });
+
+    console.log('--------totalYears------', Number(totalCreditingYears).toFixed(2));
+
+    form.setFieldValue('totalCreditingYears', Number(totalCreditingYears).toFixed(2));
     calculateNetGHGEmissions(value);
     calculateTotalEmissions(value, 'baselineEmissionReductions', 'totalBaselineEmissionReductions');
     calculateTotalEmissions(value, 'projectEmissionReductions', 'totalProjectEmissionReductions');
@@ -1789,13 +1811,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                 if (selectedDate.year() !== startDate.year()) {
                                   throw new Error('End date also should be in the same year!');
                                 }
-                                // const duration = moment.duration(selectedDate.diff(startDate));
+                                const duration = moment.duration(selectedDate.diff(startDate));
 
-                                // const isOneYear = Math.round(duration.asMonths()) === 12;
-
-                                // if (!isOneYear) {
-                                //   throw new Error('Duration should be a year');
-                                // }
+                                if (duration.asDays() < 0) {
+                                  throw new Error('End date cannot be before Start date!');
+                                }
                               },
                             },
                           ]}
@@ -1805,12 +1825,8 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             placeholder="End Date"
                             picker="month"
                             format="YYYY MMM"
-                            onChange={(value) => onPeriodEndChange(value, 1)}
+                            onChange={(value) => onPeriodChange(value, 1)}
                             disabled={disableFields}
-                            disabledDate={(currentDate: any) =>
-                              currentDate <
-                              moment(form.getFieldValue('emissionsPeriodStart')).startOf('month')
-                            }
                           />
                         </Form.Item>
                       </Col>
@@ -2066,20 +2082,20 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           ).startOf('month');
                                           const selectedDate = moment(value).endOf('month');
 
-                                          if (selectedDate.year !== startDate.year) {
+                                          if (selectedDate.year() !== startDate.year()) {
                                             throw new Error(
                                               'End date also should be in the same year!'
                                             );
                                           }
-                                          // const duration = moment.duration(
-                                          //   selectedDate.diff(startDate)
-                                          // );
+                                          const duration = moment.duration(
+                                            selectedDate.diff(startDate)
+                                          );
 
-                                          // const isOneYear = Math.round(duration.asMonths()) === 12;
-
-                                          // if (!isOneYear) {
-                                          //   throw new Error('Duration should be a year');
-                                          // }
+                                          if (duration.asDays() < 0) {
+                                            throw new Error(
+                                              'End date cannot be before Start date!'
+                                            );
+                                          }
                                         },
                                       },
                                     ]}
@@ -2090,16 +2106,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                       placeholder="End Date"
                                       picker="month"
                                       format="YYYY MMM"
-                                      onChange={(value) =>
-                                        onPeriodEndChange(value, fields.length + 1)
-                                      }
-                                      disabledDate={(currentDate: any) =>
-                                        currentDate <
-                                        moment(
-                                          form.getFieldValue('extraEmissionReductions')[name]
-                                            .emissionsPeriodStart
-                                        ).startOf('month')
-                                      }
+                                      onChange={(value) => onPeriodChange(value, fields.length + 1)}
                                     />
                                   </Form.Item>
                                 </Col>
@@ -2287,7 +2294,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                       onClick={() => {
                                         // reduceTotalCreditingYears()
                                         remove(name);
-                                        onPeriodEndChange(null, fields.length + 1);
+                                        onPeriodChange(null, fields.length + 1);
                                         calculateTotalEmissions(
                                           null,
                                           'projectEmissionReductions',

@@ -10,6 +10,7 @@ import moment from 'moment';
 import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
 import { RcFile } from 'antd/lib/upload';
 import { CustomStepsProps } from './StepProps';
+import { toMoment } from '../../Utils/convertTime';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   baselineEmissionReductions: 'avgBaselineEmissionReductions',
@@ -19,7 +20,17 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
 };
 
 export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
+  const {
+    t,
+    current,
+    form,
+    formMode,
+    next,
+    prev,
+    handleValuesUpdate,
+    disableFields,
+    maxNetGHGReduction,
+  } = props;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -43,7 +54,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
       const netGHGEmissions =
         baselineEmissionReductionsVal - projectEmissionReductionsVal - leakageEmissionReductionsVal;
 
-      if (netGHGEmissions < 0) {
+      if (netGHGEmissions <= 0) {
         form.setFields([
           {
             name: 'netEmissionReductions',
@@ -74,7 +85,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
 
         listVals[index].netEmissionReductions = netGHGEmissions;
 
-        if (netGHGEmissions < 0) {
+        if (netGHGEmissions <= 0) {
           form.setFields([
             {
               name: ['extraEmissionReductions', index, 'netEmissionReductions'],
@@ -109,6 +120,27 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
     }
     const creditingYears = Number(form.getFieldValue('totalCreditingYears') || 0);
     form.setFieldValue(categoryToAdd, String(tempTotal));
+
+    console.log('---------maxNetGHGReduction---------', maxNetGHGReduction, tempTotal);
+
+    console.log('-----maxNetGHGReduction---------', maxNetGHGReduction);
+
+    if (maxNetGHGReduction && tempTotal >= maxNetGHGReduction) {
+      form.setFields([
+        {
+          name: 'totalNetEmissionReductions',
+          errors: [`Total Net Emission Reduction cannot exceed ${maxNetGHGReduction}`],
+        },
+      ]);
+    } else {
+      form.setFields([
+        {
+          name: 'totalNetEmissionReductions',
+          errors: [``],
+        },
+      ]);
+    }
+
     const avgTempTotal =
       creditingYears > 0 ? formatNumberWithDecimalPlaces(tempTotal / creditingYears) : 0;
     form.setFieldValue(EMISSION_CATEGORY_AVG_MAP[category], avgTempTotal);
@@ -133,14 +165,36 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
     CalculateNetTotalEmissions();
   };
 
-  const onPeriodEndChange = (value: any, fieldCounts: number) => {
-    let totalCreditingYears = form.getFieldValue('totalCreditingYears') || 0;
-    if (value && totalCreditingYears < fieldCounts) {
-      totalCreditingYears += 1;
-    } else if (value === null && totalCreditingYears !== 0) {
-      totalCreditingYears -= 1;
+  const onPeriodChange = (value: any) => {
+    const reductions = form.getFieldValue('extraEmissionReductions');
+    let totalCreditingYears = 0;
+
+    const firstReductionStartDate = toMoment(form.getFieldValue('emissionsPeriodStart'))?.startOf(
+      'month'
+    );
+    const firstReductionEndDate = toMoment(form.getFieldValue('emissionsPeriodEnd'))?.endOf(
+      'month'
+    );
+
+    if (firstReductionStartDate && firstReductionEndDate) {
+      const diff = moment.duration(firstReductionEndDate.diff(firstReductionStartDate));
+      totalCreditingYears += Math.floor(diff.asMonths() + 1) / 12;
     }
-    form.setFieldValue('totalCreditingYears', totalCreditingYears);
+
+    reductions?.forEach((reduction: any) => {
+      const start = toMoment(reduction?.emissionsPeriodStart)?.startOf('month');
+      const end = toMoment(reduction?.emissionsPeriodEnd)?.endOf('month');
+
+      if (start && end) {
+        const diff = moment.duration(end.diff(start));
+        totalCreditingYears += Math.floor(diff.asMonths() + 1) / 12;
+      }
+    });
+
+    console.log('--------totalYears------', Number(totalCreditingYears).toFixed(2));
+
+    form.setFieldValue('totalCreditingYears', Number(totalCreditingYears).toFixed(2));
+
     calculateNetGHGEmissions(value);
     calculateTotalEmissions(value, 'baselineEmissionReductions', 'totalBaselineEmissionReductions');
     calculateTotalEmissions(value, 'projectEmissionReductions', 'totalProjectEmissionReductions');
@@ -208,159 +262,6 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
       },
     };
     handleValuesUpdate(tempValues);
-    //     titleAndReference: values?.titleAndReferenceOfMethodology,
-    //     applicability: values?.applicabilityOfMethodology,
-    //     // baselineScenario: values?.baselineScenario,
-    //     // additionality: values?.additionality,
-    //     descriptionOfBaselineScenario: values?.descriptionOfBaselineScenario,
-    //     demonstrationOfAdditionality: values?.demonstrationOfAdditionality,
-    //     exAnteCalculationOfEmissionReduction: values?.exAnteCalculationOfEmissionReduction,
-    //     emissionReductionEstimation: values?.emissionReductionEstimation,
-    //     monitoringPlan: values?.monitoringPlan,
-    //     dataAndParametersExAnte: {
-    //       parameter: values?.parameter,
-    //       unit: values?.unit,
-    //       description: values?.description,
-    //       dataSource: values?.dataSource,
-    //       descriptionOfMeasurementMethods: values?.descriptionOfMeasurementMethods,
-    //       purpose: values?.purpose,
-    //       comments: values?.comments,
-    //     },
-    //     dataAndParametersMonitored: {
-    //       monitoringParameter: values?.monitoringParameter,
-    //       monitoringUnit: values?.monitoringUnit,
-    //       unit: values?.unit,
-    //       monitoringDescription: values?.monitoringDescription,
-    //       data_parameterDescription: values?.data_parameterDescription,
-    //       monitoringSource: values?.monitoringSource,
-    //       monitoringMeasurementMethods: values?.monitoringMeasurementMethods,
-    //       monitoringFrequency: values?.monitoringFrequency,
-    //       monitoringValueApplied: values?.monitoringValueApplied,
-    //       monitoringEquipment: values?.monitoringEquipment,
-    //       monitoringQAProcedures: values?.monitoringQAProcedures,
-    //       monitoringPurpose: values?.monitoringPurpose,
-    //       monitoringCalculation: values?.monitoringCalculation,
-    //       monitoringComments: values?.monitoringComments,
-    //     },
-    //     samplingPlan: values?.samplingPlan,
-    //     otherElementsOfMonitoringPlan: values?.otherElementsOfMonitoringPlan,
-    //     methodologyDeviations: values?.methodologyDeviations,
-    //     projectBoundary: (function () {
-    //       const tempVal: any = {};
-
-    //       const tempbaseline = [];
-    //       const firstBaseline = {
-    //         source: values?.baselineSource,
-    //         isCO2Included: values?.baselineIsCO2Included,
-    //         co2Justification: values?.baselineco2Justification,
-    //         isCH4Included: values?.baselineIsCH4Included,
-    //         ch4Justification: values?.baselinech4Justification,
-    //         isN2OIncluded: values?.baselineIsN2OIncluded,
-    //         n2oJustification: values?.baselinen2oJustification,
-    //         isOtherIncluded: values?.baselineIsOtherIncluded,
-    //         otherJustification: values?.baselineotherJustification,
-    //       };
-
-    //       tempbaseline.push(firstBaseline);
-
-    //       if (values?.extraBaseline) {
-    //         values.extraBaseline.forEach((item: any) => {
-    //           const tempObj: any = {
-    //             source: item?.source,
-    //             isCO2Included: item?.isCO2Included,
-    //             co2Justification: item?.co2Justification,
-    //             isCH4Included: item?.isCH4Included,
-    //             ch4Justification: item?.ch4Justification,
-    //             isN2OIncluded: item?.isN2OIncluded,
-    //             n2oJustification: item?.n2oJustification,
-    //             isOtherIncluded: item?.isOtherIncluded,
-    //             otherJustification: item?.otherJustification,
-    //           };
-    //           tempbaseline.push(tempObj);
-    //         });
-    //       }
-
-    //       const tempProject: any = [];
-    //       const firstProject = {
-    //         source: values?.projectSource,
-    //         isCO2Included: values?.projectIsCO2Included,
-    //         co2Justification: values?.projectco2Justification,
-    //         isCH4Included: values?.projectIsCH4Included,
-    //         ch4Justification: values?.projectch4Justification,
-    //         isN2OIncluded: values?.projectIsN2OIncluded,
-    //         n2oJustification: values?.projectn2oJustification,
-    //         isOtherIncluded: values?.projectIsOtherIncluded,
-    //         otherJustification: values?.projectotherJustification,
-    //       };
-    //       tempProject.push(firstProject);
-    //       if (values.extraProject) {
-    //         values.extraProject.forEach((item: any) => {
-    //           const tempObj: any = {
-    //             source: item?.source,
-    //             isCO2Included: item?.isCO2Included,
-    //             co2Justification: item?.co2Justification,
-    //             isCH4Included: item?.isCH4Included,
-    //             ch4Justification: item?.ch4Justification,
-    //             isN2OIncluded: item?.isN2OIncluded,
-    //             n2oJustification: item?.n2oJustification,
-    //             isOtherIncluded: item?.isOtherIncluded,
-    //             otherJustification: item?.otherJustification,
-    //           };
-    //           tempProject.push(tempObj);
-    //         });
-    //       }
-
-    //       tempVal.baseline = tempbaseline;
-    //       tempVal.project = tempProject;
-
-    //       return tempVal;
-    //     })(),
-    //     netGHGEmissionReductions: (function () {
-    //       const tempGHG: any = {
-    //         description: values?.netGHGEmissionReductionsAndRemovals,
-    //       };
-
-    //       const tempYearlyReductions: any = [];
-
-    //       const firstReduction = {
-    //         startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
-    //         endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
-    //         baselineEmissionReductions: Number(values?.baselineEmissionReductions),
-    //         projectEmissionReductions: Number(values?.projectEmissionReductions),
-    //         leakageEmissionReductions: Number(values?.leakageEmissionReductions),
-    //         netEmissionReductions: Number(values?.netEmissionReductions),
-    //       };
-
-    //       tempYearlyReductions.push(firstReduction);
-
-    //       if (values?.extraEmissionReductions) {
-    //         values.extraEmissionReductions.forEach((item: any) => {
-    //           const tempObj = {
-    //             startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
-    //             endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
-    //             baselineEmissionReductions: Number(item?.baselineEmissionReductions),
-    //             projectEmissionReductions: Number(item?.projectEmissionReductions),
-    //             leakageEmissionReductions: Number(item?.leakageEmissionReductions),
-    //             netEmissionReductions: Number(item?.netEmissionReductions),
-    //           };
-
-    //           tempYearlyReductions.push(tempObj);
-    //         });
-    //       }
-    //       tempGHG.yearlyGHGEmissionReductions = tempYearlyReductions;
-    //       tempGHG.totalBaselineEmissionReductions = Number(values?.totalBaselineEmissionReductions);
-    //       tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
-    //       tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
-    //       tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
-    //       tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
-    //       tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
-    //       tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
-    //       tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);
-    //       tempGHG.avgNetEmissionReductions = Number(values?.avgNetEmissionReductions);
-
-    //       return tempGHG;
-    //     })(),
-    //   handleValuesUpdate({ applicationOfMethodology: tempValues });
   };
 
   return (
@@ -538,6 +439,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                     placeholder="Start Date"
                                     picker="month"
                                     format="YYYY MMM"
+                                    onChange={(value) => onPeriodChange(value)}
                                     disabled={disableFields}
                                     // disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                                   />
@@ -567,19 +469,19 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                           form.getFieldValue('emissionsPeriodStart')
                                         ).startOf('month');
                                         const selectedDate = moment(value).endOf('month');
-                                        // const duration = moment.duration(
-                                        //   selectedDate.diff(startDate)
-                                        // );
 
-                                        // const isOneYear = Math.round(duration.asMonths()) === 12;
-
-                                        // if (!isOneYear) {
-                                        //   throw new Error('Duration should be a year');
-                                        // }
                                         if (selectedDate.year() !== startDate.year()) {
                                           throw new Error(
                                             'End date also should be in the same year!'
                                           );
+                                        }
+
+                                        const duration = moment.duration(
+                                          selectedDate.diff(startDate)
+                                        );
+
+                                        if (duration.asDays() < 0) {
+                                          throw new Error('End date cannot be before Start date!');
                                         }
                                       },
                                     },
@@ -590,14 +492,8 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                     placeholder="End Date"
                                     picker="month"
                                     format="YYYY MMM"
-                                    onChange={(value) => onPeriodEndChange(value, 1)}
+                                    onChange={(value) => onPeriodChange(value)}
                                     disabled={disableFields}
-                                    disabledDate={(currentDate: any) =>
-                                      currentDate <
-                                      moment(form.getFieldValue('emissionsPeriodStart')).startOf(
-                                        'month'
-                                      )
-                                    }
                                   />
                                 </Form.Item>
                               </Col>
@@ -864,16 +760,23 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                                       name
                                                     ].emissionsPeriodStart
                                                   ).startOf('month');
+
                                                   const selectedDate = moment(value).endOf('month');
+
+                                                  if (selectedDate.year() !== startDate.year()) {
+                                                    throw new Error(
+                                                      'End date also should be in the same year!'
+                                                    );
+                                                  }
+
                                                   const duration = moment.duration(
                                                     selectedDate.diff(startDate)
                                                   );
 
-                                                  const isOneYear =
-                                                    Math.round(duration.asMonths()) === 12;
-
-                                                  if (!isOneYear) {
-                                                    throw new Error('Duration should be a year');
+                                                  if (duration.asDays() < 0) {
+                                                    throw new Error(
+                                                      'End date cannot be before Start date!'
+                                                    );
                                                   }
                                                 },
                                               },
@@ -885,17 +788,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                               placeholder="End Date"
                                               picker="month"
                                               format="YYYY MMM"
-                                              onChange={(value) =>
-                                                onPeriodEndChange(value, fields.length + 1)
-                                              }
-                                              disabledDate={(currentDate: any) =>
-                                                currentDate <
-                                                moment(
-                                                  form.getFieldValue('extraEmissionReductions')[
-                                                    name
-                                                  ].emissionsPeriodStart
-                                                ).startOf('month')
-                                              }
+                                              onChange={(value) => onPeriodChange(value)}
                                             />
                                           </Form.Item>
                                         </Col>
@@ -1118,12 +1011,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                               onClick={() => {
                                                 // reduceTotalCreditingYears()
                                                 remove(name);
-                                                onPeriodEndChange(null, fields.length + 1);
-                                                calculateTotalEmissions(
-                                                  null,
-                                                  'projectEmissionReductions',
-                                                  'totalProjectEmissionReductions'
-                                                );
+                                                onPeriodChange(null);
                                                 calculateTotalEmissions(
                                                   null,
                                                   'baselineEmissionReductions',

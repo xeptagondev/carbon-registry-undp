@@ -53,6 +53,8 @@ const StepperComponent = (props: CustomStepsProps) => {
   const [documentStatus, setDocumentStatus] = useState('');
   const [documentId, setDocumentId] = useState<string>();
 
+  const [maxNetGHGReduction, setMaxNetGHGReduction] = useState<number>();
+
   const [basicInformationForm] = useForm();
   const [projectActivityForm] = useForm();
   const [implementationStatusForm] = useForm();
@@ -162,6 +164,12 @@ const StepperComponent = (props: CustomStepsProps) => {
     }
 
     if (programmeData && pddData && validationData) {
+      const tempNetGHGEmisisionReduction =
+        validationData?.ghgProjectDescription?.totalNetEmissionReductions;
+
+      console.log('-----------tempNetGHG---------', tempNetGHGEmisisionReduction);
+      setMaxNetGHGReduction(Number(tempNetGHGEmisisionReduction));
+
       const docVersions = state?.documents?.[DocumentEnum.MONITORING as any]?.version;
       const latestVersion = docVersions ? docVersions + 1 : 1;
       basicInformationForm.setFieldsValue({
@@ -195,7 +203,7 @@ const StepperComponent = (props: CustomStepsProps) => {
           ?.slice(1)
           ?.map((location: any) => ({
             ...location,
-            optionalImages: mapBase64ToFields(location?.additionalDocuments),
+            uploadImages: mapBase64ToFields(location?.additionalDocuments),
           })),
       });
     }
@@ -480,6 +488,7 @@ const StepperComponent = (props: CustomStepsProps) => {
           prev={prev}
           // projectCategory={projectCategory}
           handleValuesUpdate={handleValuesUpdate}
+          maxNetGHGReduction={maxNetGHGReduction}
         />
       ),
     },
