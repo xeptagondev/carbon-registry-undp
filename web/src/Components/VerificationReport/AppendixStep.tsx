@@ -121,17 +121,17 @@ export const AppendixStep = (props: VerificationStepProps) => {
         }
       } catch (error: any) {
         console.log('--------------error----------------', error);
-        if (error?.status === 401) {
+        if (error?.status === 500) {
           message.open({
             type: 'error',
-            content: error.message,
+            content: t('common:somethingWentWrong'),
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
         } else {
           message.open({
             type: 'error',
-            content: t('common:somethingWentWrong'),
+            content: error.message,
             duration: 4,
             style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
           });
@@ -290,8 +290,11 @@ export const AppendixStep = (props: VerificationStepProps) => {
                         <TextArea rows={6} disabled={disableFields} />
                       </Form.Item>
 
+                      <div className="custom-upload-verification">
+                        {t('verificationReport:appendix1Documents')}
+                      </div>
                       <Form.Item
-                        label={t('verificationReport:appendix1Documents')}
+                        //label={t('verificationReport:appendix1Documents')}
                         name="appendix1Documents"
                         valuePropName="fileList"
                         getValueFromEvent={normFile}
@@ -300,8 +303,8 @@ export const AppendixStep = (props: VerificationStepProps) => {
                           {
                             validator: async (rule, file) => {
                               // if (disableFields) return;
-                              if (file?.length > 0) {
-                                if (file[0]?.size > maximumImageSize) {
+                              for (let i = 0; i < file?.length; i++) {
+                                if (file[i]?.size > maximumImageSize) {
                                   // default size format of files would be in bytes -> 1MB = 1000000bytes
                                   throw new Error(`${t('common:maxSizeVal')}`);
                                 }
@@ -315,7 +318,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                           beforeUpload={(file: any) => {
                             return false;
                           }}
-                          className="design-upload-section"
+                          className="design-upload-section-verification"
                           name="design"
                           action="/upload.do"
                           listType="picture"
