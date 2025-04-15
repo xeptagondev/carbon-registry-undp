@@ -2327,66 +2327,52 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         requestUser: JWTPayload,
     ): Promise<HTTPResponseDto> {
         this.helperService.validateRequestUser(requestUser);
-
-        const userDetails = await this.usersRepository.findOneBy({
-            id: userUpdateDto.id,
-        });
-
-        if (!userDetails) {
-            throw new HttpException(
-                'No visible user found',
-                HttpStatus.NOT_FOUND,
-            );
-        }
-
-        const userVcDocument =
-            await this.guardianService.getGridDocumentUsingRefId(
-                GridTypeEnum.USER_GRID,
-                userDetails.refId,
-                requestUser.email,
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            const userDetails = await queryRunner.manager.findOneBy(
+                UsersEntity,
+                {
+                    id: userUpdateDto.id,
+                },
             );
 
-        const userData: UserSchemaDtos = new UserSchemaDtos(
-            userVcDocument.document.credentialSubject[0],
-        );
+            if (!userDetails) {
+                throw new HttpException(
+                    'No visible user found',
+                    HttpStatus.NOT_FOUND,
+                );
+            }
 
-        if (
-            userUpdateDto.name == userData?.name &&
-            userUpdateDto.phoneNo == userData?.phoneNumber
-        ) {
-            const response: HTTPResponseDto = {
-                statusCode: HttpStatus.OK,
-                message: 'The user account has been updated successfully',
-            };
+            if (
+                userUpdateDto.name == userDetails?.name &&
+                userUpdateDto.phoneNo == userDetails?.phoneNumber
+            ) {
+                const response: HTTPResponseDto = {
+                    statusCode: HttpStatus.OK,
+                    message: 'The user account has been updated successfully',
+                };
 
-            return response;
-        }
+                return response;
+            }
 
-        userData.name = userUpdateDto.name;
-        userData.phoneNumber = userUpdateDto.phoneNo
-            ? userUpdateDto.phoneNo
-            : userData?.phoneNumber
-              ? userData?.phoneNumber
-              : undefined;
+            let events: EventEntity = plainToClass(EventEntity, {
+                type: EventTypeEnum.UPDATE,
+                status: EventStateEnum.PENDING,
+                affectedTableName: 'UsersEntity',
+                previousState: userDetails,
+                affectedRecordId: userDetails.id,
+                rollbackOnFail: true,
+                maxVerifyDurationSec: 120,
+                documentRefId: userDetails.refId,
+                gridType: GridTypeEnum.USER_GRID,
+            });
 
-        const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
+            events = await queryRunner.manager.save(EventEntity, events);
 
-        if (userVcDocument.option.status !== GuardianStateEnum.REVOKED) {
-            await this.guardianService.buttonActionRequest(
-                ButtonNameEnum.USER_REVOKE,
-                ButtonActionEnum.SUBMIT,
-                userVcDocument,
-                requestUser.email,
-            );
-        }
-
-        await this.guardianService.saveDocument(requestUser.email, blockName, {
-            document: { ...userData },
-            ref: null,
-        });
-
-        const result = await this.usersRepository
-            .update(
+            await queryRunner.manager.update(
+                UsersEntity,
                 {
                     id: userUpdateDto.id,
                 },
@@ -2396,26 +2382,81 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         ? userUpdateDto.phoneNo
                         : userDetails.phoneNumber,
                 },
-            )
-            .catch((err: any) => {
-                throw new HttpException(
-                    'User update failed. Please try again',
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                );
+            );
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianUpdateUserDetails',
+                args: [userDetails, userUpdateDto, requestUser, events.id],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: false,
+                millisBetweenAttempts: 3000,
+                events: [events],
             });
 
-        if (result.affected > 0) {
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            await queryRunner.commitTransaction();
+
             const response: HTTPResponseDto = {
                 statusCode: HttpStatus.OK,
-                message: 'The user account has been updated successfully',
+                message: 'The user account update has been initiated',
             };
 
             return response;
-        } else {
-            throw new HttpException(
-                'User update failed. Please try again',
-                HttpStatus.INTERNAL_SERVER_ERROR,
+        } catch (e) {
+            await queryRunner.rollbackTransaction();
+            throw new HttpException(e, HttpStatus.BAD_REQUEST);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async guardianUpdateUserDetails(
+        userDetails: UsersEntity,
+        userUpdateDto: UserUpdateDto,
+        requestUser: JWTPayload,
+        eventId: number,
+    ) {
+        try {
+            const userVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.USER_GRID,
+                    userDetails.refId,
+                    requestUser.email,
+                );
+
+            const userData: UserSchemaDtos = new UserSchemaDtos(
+                userVcDocument.document.credentialSubject[0],
             );
+
+            userData.name = userUpdateDto.name;
+            userData.phoneNumber = userUpdateDto.phoneNo
+                ? userUpdateDto.phoneNo
+                : userDetails?.phoneNumber
+                  ? userDetails?.phoneNumber
+                  : undefined;
+            userData.eventIds = [eventId, ...(userData.eventIds || [])];
+            const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.USER_REVOKE,
+                ButtonActionEnum.SUBMIT,
+                userVcDocument,
+                requestUser.email,
+            );
+
+            await this.guardianService.saveDocument(
+                requestUser.email,
+                blockName,
+                {
+                    document: { ...userData },
+                    ref: null,
+                },
+            );
+        } catch (err) {
+            throw new HttpException(err, HttpStatus.BAD_REQUEST);
         }
     }
 
