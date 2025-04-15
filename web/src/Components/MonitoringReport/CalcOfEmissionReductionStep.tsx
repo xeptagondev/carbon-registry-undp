@@ -20,7 +20,17 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
 };
 
 export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
-  const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
+  const {
+    t,
+    current,
+    form,
+    formMode,
+    next,
+    prev,
+    handleValuesUpdate,
+    disableFields,
+    maxNetGHGReduction,
+  } = props;
   const maximumImageSize = process.env.REACT_APP_MAXIMUM_FILE_SIZE
     ? parseInt(process.env.REACT_APP_MAXIMUM_FILE_SIZE)
     : 5000000;
@@ -44,7 +54,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
       const netGHGEmissions =
         baselineEmissionReductionsVal - projectEmissionReductionsVal - leakageEmissionReductionsVal;
 
-      if (netGHGEmissions < 0) {
+      if (netGHGEmissions <= 0) {
         form.setFields([
           {
             name: 'netEmissionReductions',
@@ -75,7 +85,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
 
         listVals[index].netEmissionReductions = netGHGEmissions;
 
-        if (netGHGEmissions < 0) {
+        if (netGHGEmissions <= 0) {
           form.setFields([
             {
               name: ['extraEmissionReductions', index, 'netEmissionReductions'],
@@ -110,6 +120,27 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
     }
     const creditingYears = Number(form.getFieldValue('totalCreditingYears') || 0);
     form.setFieldValue(categoryToAdd, String(tempTotal));
+
+    console.log('---------maxNetGHGReduction---------', maxNetGHGReduction, tempTotal);
+
+    console.log('-----maxNetGHGReduction---------', maxNetGHGReduction);
+
+    if (maxNetGHGReduction && tempTotal >= maxNetGHGReduction) {
+      form.setFields([
+        {
+          name: 'totalNetEmissionReductions',
+          errors: [`Total Net Emission Reduction cannot exceed ${maxNetGHGReduction}`],
+        },
+      ]);
+    } else {
+      form.setFields([
+        {
+          name: 'totalNetEmissionReductions',
+          errors: [``],
+        },
+      ]);
+    }
+
     const avgTempTotal =
       creditingYears > 0 ? formatNumberWithDecimalPlaces(tempTotal / creditingYears) : 0;
     form.setFieldValue(EMISSION_CATEGORY_AVG_MAP[category], avgTempTotal);
