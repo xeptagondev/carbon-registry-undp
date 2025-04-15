@@ -1,29 +1,29 @@
-import { Steps, message } from "antd";
-import { useEffect, useRef, useState } from "react";
-import "./ValidationReport.scss";
+import { Steps, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import './ValidationReport.scss';
 // import './SLCFMonitoringReportComponent.scss';
 
-import { useForm } from "antd/lib/form/Form";
-import { useConnection } from "../../Context/ConnectionContext/connectionContext";
+import { useForm } from 'antd/lib/form/Form';
+import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 
-import moment from "moment";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import moment from 'moment';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import ValidationMethodology from "./ValidationMethodology";
-import ValidationOpinion from "./ValidationOpinion";
-import ValidationReportAppendix from "./ValidationReportAppendix";
+import ValidationMethodology from './ValidationMethodology';
+import ValidationOpinion from './ValidationOpinion';
+import ValidationReportAppendix from './ValidationReportAppendix';
 
-import { FormMode } from "../../Definitions/Enums/formMode.enum";
-import { API_PATHS } from "../../Config/apiConfig";
-import { ROUTES } from "../../Config/uiRoutingConfig";
-import BasicInformation from "./BasicInformation";
-import ExecutiveSummary from "./ExecutiveSummary";
-import InternalQualityControl from "./InternalQualityControl";
-import GHGProjectDescription from "./GHGProjectDescription";
-import MeansOfValidation from "./MeansOfValidation";
-import ValidationFindings from "./ValidationFindings";
-import { DocumentEnum } from "../../Definitions/Enums/document.enum";
-import { Loading } from "../Loading/loading";
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import { API_PATHS } from '../../Config/apiConfig';
+import { ROUTES } from '../../Config/uiRoutingConfig';
+import BasicInformation from './BasicInformation';
+import ExecutiveSummary from './ExecutiveSummary';
+import InternalQualityControl from './InternalQualityControl';
+import GHGProjectDescription from './GHGProjectDescription';
+import MeansOfValidation from './MeansOfValidation';
+import ValidationFindings from './ValidationFindings';
+import { DocumentEnum } from '../../Definitions/Enums/document.enum';
+import { Loading } from '../Loading/loading';
 import {
   basicInformationMapDataToFields,
   executiveSummaryMapDataToFields,
@@ -34,19 +34,19 @@ import {
   validationMethodologyMapDataToFields,
   validationOpinionMapDataToFields,
   validationReportAppendixMapDataToFields,
-} from "./viewDataMap";
-import { mapBase64ToFields } from "../../Utils/mapBase64ToFields";
-import { INF_SECTORAL_SCOPE } from "../AddNewProgramme/ProgrammeCreationComponent";
+} from './viewDataMap';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 
 export enum ProcessSteps {
-  VR_PROJECT_DETAILS = "VR_PROJECT_DETAILS",
-  VR_INTRODUCTION = "VR_INTRODUCTION",
-  VR_GHG_PROJECT_DESCRIPTION = "VR_GHG_PROJECT_DESCRIPTION",
-  VR_VALIDATION_METHODOLOGY = "VR_VALIDATION_METHODOLOGY",
-  VR_VALIDATION_PROCESS = "VR_VALIDATION_PROCESS",
-  VR_VALIDATION_OPINION = "VR_VALIDATION_OPINION",
-  VR_REFERENCE = "VR_REFERENCE",
-  VR_APPENDIX = "VR_APPENDIX",
+  VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
+  VR_INTRODUCTION = 'VR_INTRODUCTION',
+  VR_GHG_PROJECT_DESCRIPTION = 'VR_GHG_PROJECT_DESCRIPTION',
+  VR_VALIDATION_METHODOLOGY = 'VR_VALIDATION_METHODOLOGY',
+  VR_VALIDATION_PROCESS = 'VR_VALIDATION_PROCESS',
+  VR_VALIDATION_OPINION = 'VR_VALIDATION_OPINION',
+  VR_REFERENCE = 'VR_REFERENCE',
+  VR_APPENDIX = 'VR_APPENDIX',
 }
 
 const StepperComponent = (props: any) => {
@@ -60,10 +60,10 @@ const StepperComponent = (props: any) => {
   const navigationLocation = useLocation();
   const scrollSection = useRef({} as any);
   const { state } = useLocation();
-  console.log("----------state-------------", state);
+  console.log('----------state-------------', state);
   const isEdit = true;
-  const countryName = import.meta.env.VITE_APP_COUNTRY_NAME || "CountryX";
-  const registryName = import.meta.env.VITE_APP_COUNTRY_NAME || "RegistryX";
+  const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
+  const registryName = process.env.REACT_APP_COUNTRY_NAME || 'RegistryX';
 
   const [documentId, setDocumentId] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -76,7 +76,7 @@ const StepperComponent = (props: any) => {
   const [existingFormValues, setExistingFormValues] = useState({
     projectRefId: id,
     documentType: DocumentEnum.VALIDATION,
-    name: "Validation",
+    name: 'Validation',
     data: {},
   });
 
@@ -87,8 +87,8 @@ const StepperComponent = (props: any) => {
   const scrollToDiv = () => {
     if (scrollSection.current) {
       scrollSection.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
+        behavior: 'smooth',
+        block: 'start',
       });
     }
   };
@@ -106,23 +106,23 @@ const StepperComponent = (props: any) => {
 
     try {
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
-      console.log("res", res);
-      if (res?.statusText === "SUCCESS") {
+      console.log('res', res);
+      if (res?.statusText === 'SUCCESS') {
         message.open({
-          type: "success",
-          content: "Validation report has been submitted successfully",
+          type: 'success',
+          content: 'Validation report has been submitted successfully',
           duration: 4,
-          style: { textAlign: "right", marginRight: 15, marginTop: 10 },
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
         });
         navigateToDetailsPage();
       }
     } catch (error: any) {
-      console.log("----------error----------", error);
+      console.log('----------error----------', error);
       message.open({
-        type: "error",
-        content: "Something went wrong",
+        type: 'error',
+        content: 'Something went wrong',
         duration: 4,
-        style: { textAlign: "right", marginRight: 15, marginTop: 10 },
+        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
       });
     } finally {
       setLoading(false);
@@ -130,10 +130,7 @@ const StepperComponent = (props: any) => {
   };
 
   const next = () => {
-    if (
-      current === 8 &&
-      (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY)
-    ) {
+    if (current === 8 && (state?.mode === FormMode.VIEW || state?.mode === FormMode.VERIFY)) {
       navigateToDetailsPage();
       return;
     }
@@ -152,7 +149,7 @@ const StepperComponent = (props: any) => {
   };
 
   const [countries, setCountries] = useState<[]>([]);
-  const [projectCategory, setProjectCategory] = useState<string>("");
+  const [projectCategory, setProjectCategory] = useState<string>('');
 
   const [form1] = useForm();
   const [form2] = useForm();
@@ -175,17 +172,14 @@ const StepperComponent = (props: any) => {
       const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, {
         programmeId: programId,
       });
-      if (programmeResponse?.statusText === "SUCCESS") {
+      if (programmeResponse?.statusText === 'SUCCESS') {
         programmeData = programmeResponse?.data;
-        console.log(
-          "-----------------Programme Data-----------------",
-          programmeData
-        );
+        console.log('-----------------Programme Data-----------------', programmeData);
       } else {
-        console.log("Error: Programme API did not return SUCCESS status");
+        console.log('Error: Programme API did not return SUCCESS status');
       }
     } catch (error) {
-      console.log("Error fetching programme data:", error);
+      console.log('Error fetching programme data:', error);
     }
 
     try {
@@ -194,114 +188,88 @@ const StepperComponent = (props: any) => {
         refId: state?.documents?.PDD?.refId,
         documentType: DocumentEnum.PDD,
       });
-      console.log(
-        "-----------------PDD Response-----------------",
-        pddResponse
-      );
-      if (pddResponse?.statusText === "SUCCESS") {
+      console.log('-----------------PDD Response-----------------', pddResponse);
+      if (pddResponse?.statusText === 'SUCCESS') {
         pddData = pddResponse?.data;
       } else {
-        console.log("Error: PDD API did not return SUCCESS status");
+        console.log('Error: PDD API did not return SUCCESS status');
       }
     } catch (error) {
-      console.log("Error fetching PDD data:", error);
+      console.log('Error fetching PDD data:', error);
     }
 
     if (programmeData && pddData) {
-      const docVersions =
-        state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
+      const docVersions = state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
       const latestVersion = docVersions ? docVersions + 1 : 1;
 
       form1.setFieldsValue({
         titleOfTheProjectActivity: programmeData?.title,
-        mandatarySectoralScopes:
-          INF_SECTORAL_SCOPE[programmeData?.sectoralScope],
+        mandatarySectoralScopes: INF_SECTORAL_SCOPE[programmeData?.sectoralScope],
         projectDeveloper: programmeData?.projectParticipant,
         versionNumberPDD: pddData?.data?.projectDetails?.versionNumber,
         hostParty: pddData?.data?.projectDetails?.hostParty,
         versionNumberValidationReport: latestVersion,
-        creditingPeriod:
-          pddData?.data?.startDateCreditingPeriod
-            ?.projectCreditingPeriodDuration,
+        creditingPeriod: pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodDuration,
         creditingPeriodStart: pddData?.data?.startDateCreditingPeriod
           ?.projectCreditingPeriodStartDate
-          ? moment.unix(
-              pddData?.data?.startDateCreditingPeriod
-                ?.projectCreditingPeriodStartDate
-            )
+          ? moment.unix(pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodStartDate)
           : null,
-        creditingPeriodEnd: pddData?.data?.startDateCreditingPeriod
-          ?.projectCreditingPeriodEndDate
-          ? moment.unix(
-              pddData?.data?.startDateCreditingPeriod
-                ?.projectCreditingPeriodEndDate
-            )
+        creditingPeriodEnd: pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate
+          ? moment.unix(pddData?.data?.startDateCreditingPeriod?.projectCreditingPeriodEndDate)
           : null,
-        locationOfProjectActivity: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.locationOfProjectActivity,
+        locationOfProjectActivity:
+          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
+            ?.locationOfProjectActivity,
         siteNo: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.siteNo,
-        province:
-          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
-            ?.province,
-        district:
-          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
-            ?.district,
-        city: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
-          ?.city,
-        community:
-          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
-            ?.community,
+        province: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.province,
+        district: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.district,
+        city: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.city,
+        community: pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.community,
         geographicalLocationCoordinates:
           pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
             ?.geographicalLocationCoordinates,
         optionalImages: mapBase64ToFields(
-          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]
-            ?.additionalDocuments
+          pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
         ),
-        extraLocations:
-          pddData?.data?.projectActivity?.locationsOfProjectActivity
-            ?.slice(1)
-            ?.map((location: any) => ({
-              ...location,
-              optionalImages: mapBase64ToFields(location?.additionalDocuments),
-            })),
+        extraLocations: pddData?.data?.projectActivity?.locationsOfProjectActivity
+          ?.slice(1)
+          ?.map((location: any) => ({
+            ...location,
+            optionalImages: mapBase64ToFields(location?.additionalDocuments),
+          })),
       });
 
       const netGHGEmissionReductions =
         pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions;
       let totalNumberOfCreditingYears = 0;
 
-      netGHGEmissionReductions?.yearlyGHGEmissionReductions.forEach(
-        (emissionData: any) => {
-          const startDate = moment.unix(emissionData.startDate);
-          const endDate = moment.unix(emissionData.endDate);
+      netGHGEmissionReductions?.yearlyGHGEmissionReductions.forEach((emissionData: any) => {
+        const startDate = moment.unix(emissionData.startDate);
+        const endDate = moment.unix(emissionData.endDate);
 
-          const duration = moment.duration(endDate.diff(startDate));
+        const duration = moment.duration(endDate.diff(startDate));
 
-          totalNumberOfCreditingYears += Math.floor(duration.asMonths()) / 12;
-        }
-      );
+        totalNumberOfCreditingYears += Math.floor(duration.asMonths()) / 12;
+      });
       form2.setFieldsValue({
-        estimatedNetEmissionReductions:
-          netGHGEmissionReductions.yearlyGHGEmissionReductions?.map(
-            (emissionData: any) => ({
-              startDate: moment.unix(emissionData.startDate),
-              endDate: moment.unix(emissionData.endDate),
-            })
-          ),
+        estimatedNetEmissionReductions: netGHGEmissionReductions.yearlyGHGEmissionReductions?.map(
+          (emissionData: any) => ({
+            startDate: moment.unix(emissionData.startDate),
+            endDate: moment.unix(emissionData.endDate),
+          })
+        ),
         totalNumberOfCreditingYears: totalNumberOfCreditingYears,
         baselineEmissionReductions: 0,
-        baselineEmissions:
-          pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
-            (loc: any) => ({ location: loc.locationOfProjectActivity })
-          ),
+        baselineEmissions: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
+          (loc: any) => ({ location: loc.locationOfProjectActivity })
+        ),
       });
       form5.setFieldsValue({
-        onSiteInspection:
-          pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
-            (loc: any) => ({
-              siteLocation: loc.locationOfProjectActivity,
-            })
-          ),
+        onSiteInspection: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
+          (loc: any) => ({
+            siteLocation: loc.locationOfProjectActivity,
+          })
+        ),
       });
     }
 
@@ -354,19 +322,16 @@ const StepperComponent = (props: any) => {
             documentType: DocumentEnum.VALIDATION,
           });
 
-          if (res?.statusText === "SUCCESS") {
+          if (res?.statusText === 'SUCCESS') {
             const data = res?.data;
             setDocumentId(data?.refId);
             console.log(
-              "---------validation------------",
+              '---------validation------------',
               data?.data,
               data?.data?.basicInformation
             );
-            let basicInformation = basicInformationMapDataToFields(
-              data.data?.basicInformation
-            );
-            const docVersions =
-              state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
+            let basicInformation = basicInformationMapDataToFields(data.data?.basicInformation);
+            const docVersions = state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
             const latestVersion = docVersions ? docVersions + 1 : 1;
             if (state?.mode === FormMode.EDIT) {
               basicInformation = {
@@ -381,9 +346,7 @@ const StepperComponent = (props: any) => {
             );
             form2.setFieldsValue(ghgProjectDescription);
 
-            const executiveSummary = executiveSummaryMapDataToFields(
-              data.data?.executiveSummary
-            );
+            const executiveSummary = executiveSummaryMapDataToFields(data.data?.executiveSummary);
             form3.setFieldsValue(executiveSummary);
 
             const validationMethdology = validationMethodologyMapDataToFields(
@@ -401,10 +364,9 @@ const StepperComponent = (props: any) => {
             );
             form6.setFieldsValue(validationFindings);
 
-            const internalQualityControl =
-              internalQualityControlMapDataToFields(
-                data.data?.internalQualityControl
-              );
+            const internalQualityControl = internalQualityControlMapDataToFields(
+              data.data?.internalQualityControl
+            );
             form7.setFieldsValue(internalQualityControl);
 
             const validationOpinion = validationOpinionMapDataToFields(
@@ -412,14 +374,12 @@ const StepperComponent = (props: any) => {
             );
             form8.setFieldsValue(validationOpinion);
 
-            const appendix = validationReportAppendixMapDataToFields(
-              data.data?.appendix
-            );
-            console.log("---------appendix-----------", appendix);
+            const appendix = validationReportAppendixMapDataToFields(data.data?.appendix);
+            console.log('---------appendix-----------', appendix);
             form9.setFieldsValue(appendix);
           }
         } catch (error) {
-          console.log("error", error);
+          console.log('error', error);
         } finally {
           setLoading(false);
         }
@@ -432,11 +392,8 @@ const StepperComponent = (props: any) => {
   const steps = [
     {
       title: (
-        <div
-          ref={scrollSection}
-          className="stepper-title-container project-detail-title"
-        >
-          <div className="title">{t("validationReport:form01Title")}</div>
+        <div ref={scrollSection} className="stepper-title-container project-detail-title">
+          <div className="title">{t('validationReport:form01Title')}</div>
         </div>
       ),
       description: (
@@ -458,7 +415,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           {/* <div className="step-count">01</div> */}
-          <div className="title">{t("validationReport:form02Title")}</div>
+          <div className="title">{t('validationReport:form02Title')}</div>
         </div>
       ),
       description: (
@@ -480,7 +437,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">01</div>
-          <div className="title">{t("validationReport:form03Title")}</div>
+          <div className="title">{t('validationReport:form03Title')}</div>
         </div>
       ),
       description: (
@@ -501,7 +458,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">02</div>
-          <div className="title">{t("validationReport:form04Title")}</div>
+          <div className="title">{t('validationReport:form04Title')}</div>
         </div>
       ),
       description: (
@@ -522,7 +479,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">03</div>
-          <div className="title">{t("validationReport:form05Title")}</div>
+          <div className="title">{t('validationReport:form05Title')}</div>
         </div>
       ),
       description: (
@@ -544,7 +501,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">04</div>
-          <div className="title">{t("validationReport:form06Title")}</div>
+          <div className="title">{t('validationReport:form06Title')}</div>
         </div>
       ),
       description: (
@@ -566,7 +523,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">05</div>
-          <div className="title">{t("validationReport:form07Title")}</div>
+          <div className="title">{t('validationReport:form07Title')}</div>
         </div>
       ),
       description: (
@@ -587,7 +544,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">06</div>
-          <div className="title">{t("validationReport:form08Title")}</div>
+          <div className="title">{t('validationReport:form08Title')}</div>
         </div>
       ),
       description: (
@@ -618,7 +575,7 @@ const StepperComponent = (props: any) => {
       title: (
         <div className="stepper-title-container">
           <div className="step-count">07</div>
-          <div className="title">{t("validationReport:form09Title")}</div>
+          <div className="title">{t('validationReport:form09Title')}</div>
         </div>
       ),
       description: (

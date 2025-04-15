@@ -1,26 +1,23 @@
-import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd";
-import { CustomStepsProps } from "./StepProps";
-import { t } from "i18next";
-import TextArea from "antd/lib/input/TextArea";
-import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
-import LabelWithTooltip, {
-  TooltipPostion,
-} from "../LabelWithTooltip/LabelWithTooltip";
-import NetEmissionReduction from "../Common/NetEmissonReduction";
-import moment from "moment";
-import { formatNumberWithDecimalPlaces } from "../../Utils/utilityHelper";
-import { toMoment } from "../../Utils/convertTime";
+import { Button, Col, DatePicker, Form, Input, Row, Select } from 'antd';
+import { CustomStepsProps } from './StepProps';
+import { t } from 'i18next';
+import TextArea from 'antd/lib/input/TextArea';
+import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
+import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
+import NetEmissionReduction from '../Common/NetEmissonReduction';
+import moment from 'moment';
+import { formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
+import { toMoment } from '../../Utils/convertTime';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
-  baselineEmissionReductions: "avgBaselineEmissionReductions",
-  projectEmissionReductions: "avgProjectEmissionReductions",
-  leakageEmissionReductions: "avgLeakageEmissionReductions",
-  netEmissionReductions: "avgNetEmissionReductions",
+  baselineEmissionReductions: 'avgBaselineEmissionReductions',
+  projectEmissionReductions: 'avgProjectEmissionReductions',
+  leakageEmissionReductions: 'avgLeakageEmissionReductions',
+  netEmissionReductions: 'avgNetEmissionReductions',
 };
 
 const ApplicationOfMethodology = (props: CustomStepsProps) => {
-  const { next, prev, form, current, handleValuesUpdate, disableFields } =
-    props;
+  const { next, prev, form, current, handleValuesUpdate, disableFields } = props;
 
   const calculateNetGHGEmissions = (value?: any, index?: number) => {
     let baselineEmissionReductionsVal = 0;
@@ -28,49 +25,35 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
     let leakageEmissionReductionsVal = 0;
 
     if (index === undefined) {
-      baselineEmissionReductionsVal = Number(
-        form.getFieldValue("baselineEmissionReductions") || 0
-      );
-      projectEmissionReductionsVal = Number(
-        form.getFieldValue("projectEmissionReductions") || 0
-      );
-      leakageEmissionReductionsVal = Number(
-        form.getFieldValue("leakageEmissionReductions") || 0
-      );
+      baselineEmissionReductionsVal = Number(form.getFieldValue('baselineEmissionReductions') || 0);
+      projectEmissionReductionsVal = Number(form.getFieldValue('projectEmissionReductions') || 0);
+      leakageEmissionReductionsVal = Number(form.getFieldValue('leakageEmissionReductions') || 0);
       const netGHGEmissions =
-        baselineEmissionReductionsVal -
-        projectEmissionReductionsVal -
-        leakageEmissionReductionsVal;
+        baselineEmissionReductionsVal - projectEmissionReductionsVal - leakageEmissionReductionsVal;
 
       if (netGHGEmissions < 0) {
         form.setFields([
           {
-            name: "netEmissionReductions",
-            errors: [`${t("PDD:shouldHavePositive")}`],
+            name: 'netEmissionReductions',
+            errors: [`${t('PDD:shouldHavePositive')}`],
           },
         ]);
       } else {
         form.setFields([
           {
-            name: "netEmissionReductions",
+            name: 'netEmissionReductions',
             errors: [],
           },
         ]);
       }
-      form.setFieldValue("netEmissionReductions", String(netGHGEmissions));
+      form.setFieldValue('netEmissionReductions', String(netGHGEmissions));
     } else {
-      const listVals = form.getFieldValue("extraEmissionReductions");
+      const listVals = form.getFieldValue('extraEmissionReductions');
 
       if (listVals[index] !== undefined) {
-        baselineEmissionReductionsVal = Number(
-          listVals[index].baselineEmissionReductions || 0
-        );
-        projectEmissionReductionsVal = Number(
-          listVals[index].projectEmissionReductions || 0
-        );
-        leakageEmissionReductionsVal = Number(
-          listVals[index].leakageEmissionReductions || 0
-        );
+        baselineEmissionReductionsVal = Number(listVals[index].baselineEmissionReductions || 0);
+        projectEmissionReductionsVal = Number(listVals[index].projectEmissionReductions || 0);
+        leakageEmissionReductionsVal = Number(listVals[index].leakageEmissionReductions || 0);
 
         const netGHGEmissions =
           baselineEmissionReductionsVal -
@@ -82,29 +65,29 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         if (netGHGEmissions < 0) {
           form.setFields([
             {
-              name: ["extraEmissionReductions", index, "netEmissionReductions"],
-              errors: [`${t("PDD:shouldHavePositive")}`],
+              name: ['extraEmissionReductions', index, 'netEmissionReductions'],
+              errors: [`${t('PDD:shouldHavePositive')}`],
             },
           ]);
         } else {
           form.setFields([
             {
-              name: ["extraEmissionReductions", index, "netEmissionReductions"],
+              name: ['extraEmissionReductions', index, 'netEmissionReductions'],
               errors: [],
             },
           ]);
         }
 
-        form.setFieldValue("extraEmissionReductions", listVals);
+        form.setFieldValue('extraEmissionReductions', listVals);
       }
     }
   };
 
   const CalculateNetTotalEmissions = () => {
-    const category = "netEmissionReductions";
-    const categoryToAdd = "totalNetEmissionReductions";
+    const category = 'netEmissionReductions';
+    const categoryToAdd = 'totalNetEmissionReductions';
     let tempTotal = Number(form.getFieldValue(category) || 0);
-    const listVals = form.getFieldValue("extraEmissionReductions");
+    const listVals = form.getFieldValue('extraEmissionReductions');
     if (listVals !== undefined && listVals[0] !== undefined) {
       listVals.forEach((item: any) => {
         if (item[category]) {
@@ -112,24 +95,16 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         }
       });
     }
-    const creditingYears = Number(
-      form.getFieldValue("totalCreditingYears") || 0
-    );
+    const creditingYears = Number(form.getFieldValue('totalCreditingYears') || 0);
     form.setFieldValue(categoryToAdd, String(tempTotal));
     const avgTempTotal =
-      creditingYears > 0
-        ? formatNumberWithDecimalPlaces(tempTotal / creditingYears)
-        : 0;
+      creditingYears > 0 ? formatNumberWithDecimalPlaces(tempTotal / creditingYears) : 0;
     form.setFieldValue(EMISSION_CATEGORY_AVG_MAP[category], avgTempTotal);
   };
 
-  const calculateTotalEmissions = (
-    value: any,
-    category: string,
-    categoryToAdd: string
-  ) => {
+  const calculateTotalEmissions = (value: any, category: string, categoryToAdd: string) => {
     let tempTotal = Number(form.getFieldValue(category) || 0);
-    const listVals = form.getFieldValue("extraEmissionReductions");
+    const listVals = form.getFieldValue('extraEmissionReductions');
     if (listVals !== undefined && listVals[0] !== undefined) {
       listVals.forEach((item: any) => {
         if (item[category]) {
@@ -137,40 +112,34 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         }
       });
     }
-    const creditingYears = Number(
-      form.getFieldValue("totalCreditingYears") || 0
-    );
+    const creditingYears = Number(form.getFieldValue('totalCreditingYears') || 0);
     form.setFieldValue(categoryToAdd, String(tempTotal));
     const total =
-      creditingYears > 0
-        ? formatNumberWithDecimalPlaces(tempTotal / creditingYears)
-        : 0;
+      creditingYears > 0 ? formatNumberWithDecimalPlaces(tempTotal / creditingYears) : 0;
     form.setFieldValue(EMISSION_CATEGORY_AVG_MAP[category], total);
 
     CalculateNetTotalEmissions();
   };
 
   const onPeriodChange = (value: any, fieldCounts: number) => {
-    const reductions = form.getFieldValue("extraEmissionReductions");
+    const reductions = form.getFieldValue('extraEmissionReductions');
     let totalCreditingYears = 0;
 
-    const firstReductionStartDate = toMoment(
-      form.getFieldValue("emissionsPeriodStart")
-    )?.startOf("month");
-    const firstReductionEndDate = toMoment(
-      form.getFieldValue("emissionsPeriodEnd")
-    )?.endOf("month");
+    const firstReductionStartDate = toMoment(form.getFieldValue('emissionsPeriodStart'))?.startOf(
+      'month'
+    );
+    const firstReductionEndDate = toMoment(form.getFieldValue('emissionsPeriodEnd'))?.endOf(
+      'month'
+    );
 
     if (firstReductionStartDate && firstReductionEndDate) {
-      const diff = moment.duration(
-        firstReductionEndDate.diff(firstReductionStartDate)
-      );
+      const diff = moment.duration(firstReductionEndDate.diff(firstReductionStartDate));
       totalCreditingYears += Math.floor(diff.asMonths() + 1) / 12;
     }
 
     reductions?.forEach((reduction: any) => {
-      const start = toMoment(reduction?.emissionsPeriodStart)?.startOf("month");
-      const end = toMoment(reduction?.emissionsPeriodEnd)?.endOf("month");
+      const start = toMoment(reduction?.emissionsPeriodStart)?.startOf('month');
+      const end = toMoment(reduction?.emissionsPeriodEnd)?.endOf('month');
 
       if (start && end) {
         const diff = moment.duration(end.diff(start));
@@ -178,31 +147,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
       }
     });
 
-    console.log(
-      "--------totalYears------",
-      Number(totalCreditingYears).toFixed(2)
-    );
+    console.log('--------totalYears------', Number(totalCreditingYears).toFixed(2));
 
-    form.setFieldValue(
-      "totalCreditingYears",
-      Number(totalCreditingYears).toFixed(2)
-    );
+    form.setFieldValue('totalCreditingYears', Number(totalCreditingYears).toFixed(2));
     calculateNetGHGEmissions(value);
-    calculateTotalEmissions(
-      value,
-      "baselineEmissionReductions",
-      "totalBaselineEmissionReductions"
-    );
-    calculateTotalEmissions(
-      value,
-      "projectEmissionReductions",
-      "totalProjectEmissionReductions"
-    );
-    calculateTotalEmissions(
-      value,
-      "leakageEmissionReductions",
-      "totalLeakageEmissionReductions"
-    );
+    calculateTotalEmissions(value, 'baselineEmissionReductions', 'totalBaselineEmissionReductions');
+    calculateTotalEmissions(value, 'projectEmissionReductions', 'totalProjectEmissionReductions');
+    calculateTotalEmissions(value, 'leakageEmissionReductions', 'totalLeakageEmissionReductions');
   };
 
   const onFinish = (values: any) => {
@@ -213,8 +164,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
       // additionality: values?.additionality,
       descriptionOfBaselineScenario: values?.descriptionOfBaselineScenario,
       demonstrationOfAdditionality: values?.demonstrationOfAdditionality,
-      exAnteCalculationOfEmissionReduction:
-        values?.exAnteCalculationOfEmissionReduction,
+      exAnteCalculationOfEmissionReduction: values?.exAnteCalculationOfEmissionReduction,
       emissionReductionEstimation: values?.emissionReductionEstimation,
       monitoringPlan: values?.monitoringPlan,
       dataAndParametersExAnte: {
@@ -222,8 +172,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         unit: values?.unit,
         description: values?.description,
         source: values?.source,
-        descriptionOfMeasurementMethods:
-          values?.descriptionOfMeasurementMethods,
+        descriptionOfMeasurementMethods: values?.descriptionOfMeasurementMethods,
         purpose: values?.purpose,
         comments: values?.comments,
       },
@@ -325,13 +274,9 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         const tempYearlyReductions: any = [];
 
         const firstReduction = {
-          startDate: moment(values?.emissionsPeriodStart)
-            .startOf("month")
-            .unix(),
-          endDate: moment(values?.emissionsPeriodEnd).endOf("month").unix(),
-          baselineEmissionReductions: Number(
-            values?.baselineEmissionReductions
-          ),
+          startDate: moment(values?.emissionsPeriodStart).startOf('month').unix(),
+          endDate: moment(values?.emissionsPeriodEnd).endOf('month').unix(),
+          baselineEmissionReductions: Number(values?.baselineEmissionReductions),
           projectEmissionReductions: Number(values?.projectEmissionReductions),
           leakageEmissionReductions: Number(values?.leakageEmissionReductions),
           netEmissionReductions: Number(values?.netEmissionReductions),
@@ -342,19 +287,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         if (values?.extraEmissionReductions) {
           values.extraEmissionReductions.forEach((item: any) => {
             const tempObj = {
-              startDate: moment(item?.emissionsPeriodStart)
-                .startOf("month")
-                .unix(),
-              endDate: moment(item?.emissionsPeriodEnd).endOf("month").unix(),
-              baselineEmissionReductions: Number(
-                item?.baselineEmissionReductions
-              ),
-              projectEmissionReductions: Number(
-                item?.projectEmissionReductions
-              ),
-              leakageEmissionReductions: Number(
-                item?.leakageEmissionReductions
-              ),
+              startDate: moment(item?.emissionsPeriodStart).startOf('month').unix(),
+              endDate: moment(item?.emissionsPeriodEnd).endOf('month').unix(),
+              baselineEmissionReductions: Number(item?.baselineEmissionReductions),
+              projectEmissionReductions: Number(item?.projectEmissionReductions),
+              leakageEmissionReductions: Number(item?.leakageEmissionReductions),
               netEmissionReductions: Number(item?.netEmissionReductions),
             };
 
@@ -362,31 +299,15 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
           });
         }
         tempGHG.yearlyGHGEmissionReductions = tempYearlyReductions;
-        tempGHG.totalBaselineEmissionReductions = Number(
-          values?.totalBaselineEmissionReductions
-        );
-        tempGHG.totalProjectEmissionReductions = Number(
-          values?.totalProjectEmissionReductions
-        );
-        tempGHG.totalLeakageEmissionReductions = Number(
-          values?.totalLeakageEmissionReductions
-        );
-        tempGHG.totalNetEmissionReductions = Number(
-          values?.totalNetEmissionReductions
-        );
+        tempGHG.totalBaselineEmissionReductions = Number(values?.totalBaselineEmissionReductions);
+        tempGHG.totalProjectEmissionReductions = Number(values?.totalProjectEmissionReductions);
+        tempGHG.totalLeakageEmissionReductions = Number(values?.totalLeakageEmissionReductions);
+        tempGHG.totalNetEmissionReductions = Number(values?.totalNetEmissionReductions);
         tempGHG.totalNumberOfCredingYears = Number(values?.totalCreditingYears);
-        tempGHG.avgBaselineEmissionReductions = Number(
-          values?.avgBaselineEmissionReductions
-        );
-        tempGHG.avgProjectEmissionReductions = Number(
-          values?.avgProjectEmissionReductions
-        );
-        tempGHG.avgLeakageEmissionReductions = Number(
-          values?.avgLeakageEmissionReductions
-        );
-        tempGHG.avgNetEmissionReductions = Number(
-          values?.avgNetEmissionReductions
-        );
+        tempGHG.avgBaselineEmissionReductions = Number(values?.avgBaselineEmissionReductions);
+        tempGHG.avgProjectEmissionReductions = Number(values?.avgProjectEmissionReductions);
+        tempGHG.avgLeakageEmissionReductions = Number(values?.avgLeakageEmissionReductions);
+        tempGHG.avgNetEmissionReductions = Number(values?.avgNetEmissionReductions);
 
         return tempGHG;
       })(),
@@ -415,7 +336,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
             >
               <Form.Item
                 className='className="full-width-form-item'
-                label={`${t("PDD:titleAndReferenceOfMethodology")}`}
+                label={`${t('PDD:titleAndReferenceOfMethodology')}`}
                 name="titleAndReferenceOfMethodology"
                 rules={[
                   {
@@ -425,15 +346,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, value) => {
                       if (
-                        String(value).trim() === "" ||
+                        String(value).trim() === '' ||
                         String(value).trim() === undefined ||
                         value === null ||
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t("PDD:titleAndReferenceOfMethodology")} ${t(
-                            "isRequired"
-                          )}`
+                          `${t('PDD:titleAndReferenceOfMethodology')} ${t('isRequired')}`
                         );
                       }
                     },
@@ -448,7 +367,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               </Form.Item>
               <Form.Item
                 className='className="full-width-form-item'
-                label={`${t("PDD:applicabilityOfMethodology")}`}
+                label={`${t('PDD:applicabilityOfMethodology')}`}
                 name="applicabilityOfMethodology"
                 rules={[
                   {
@@ -458,15 +377,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, value) => {
                       if (
-                        String(value).trim() === "" ||
+                        String(value).trim() === '' ||
                         String(value).trim() === undefined ||
                         value === null ||
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t("PDD:applicabilityOfMethodology")} ${t(
-                            "isRequired"
-                          )}`
+                          `${t('PDD:applicabilityOfMethodology')} ${t('isRequired')}`
                         );
                       }
                     },
@@ -482,9 +399,9 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               {/* Gases Included Start */}
               {/* <h4 className='form-section-heading'>${t('PDD:gasEmissionsTable')}</h4> */}
               <LabelWithTooltip
-                label={`${t("PDD:gasEmissionsTable")}`}
+                label={`${t('PDD:gasEmissionsTable')}`}
                 required={true}
-                labelStyles={{ fontSize: "16px", fontWeight: "500" }}
+                labelStyles={{ fontSize: '16px', fontWeight: '500' }}
               />
               <div className="gases-included-container">
                 <div className="table">
@@ -509,12 +426,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -541,14 +458,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             rules={[
                               {
                                 required: true,
-                                message: `${t("PDD:required")}`,
+                                message: `${t('PDD:required')}`,
                               },
                             ]}
                           >
-                            <Select
-                              disabled={disableFields}
-                              placeholder="Select"
-                            >
+                            <Select disabled={disableFields} placeholder="Select">
                               <Select.Option value={true}>Yes</Select.Option>
                               <Select.Option value={false}>No</Select.Option>
                             </Select>
@@ -563,21 +477,18 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
                             ]}
                           >
-                            <Select
-                              disabled={disableFields}
-                              placeholder="Select"
-                            >
+                            <Select disabled={disableFields} placeholder="Select">
                               <Select.Option value={true}>Yes</Select.Option>
                               <Select.Option value={false}>No</Select.Option>
                             </Select>
@@ -587,14 +498,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             rules={[
                               {
                                 required: true,
-                                message: `${t("PDD:required")}`,
+                                message: `${t('PDD:required')}`,
                               },
                             ]}
                           >
-                            <Select
-                              disabled={disableFields}
-                              placeholder="Select"
-                            >
+                            <Select disabled={disableFields} placeholder="Select">
                               <Select.Option value={true}>Yes</Select.Option>
                               <Select.Option value={false}>No</Select.Option>
                             </Select>
@@ -604,14 +512,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             rules={[
                               {
                                 required: true,
-                                message: `${t("PDD:required")}`,
+                                message: `${t('PDD:required')}`,
                               },
                             ]}
                           >
-                            <Select
-                              disabled={disableFields}
-                              placeholder="Select"
-                            >
+                            <Select disabled={disableFields} placeholder="Select">
                               <Select.Option value={true}>Yes</Select.Option>
                               <Select.Option value={false}>No</Select.Option>
                             </Select>
@@ -628,12 +533,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -651,12 +556,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -674,12 +579,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -697,12 +602,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -724,7 +629,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                   <div className="data-row">
                                     <div className="col1 data-col">
                                       <Form.Item
-                                        name={[name, "source"]}
+                                        name={[name, 'source']}
                                         rules={[
                                           {
                                             required: true,
@@ -733,24 +638,18 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
                                         ]}
                                       >
-                                        <TextArea
-                                          rows={9}
-                                          disabled={disableFields}
-                                        />
+                                        <TextArea rows={9} disabled={disableFields} />
                                       </Form.Item>
                                     </div>
                                     <div className="col2 data-col">
@@ -767,93 +666,65 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                     </div>
                                     <div className="col3 data-col">
                                       <Form.Item
-                                        name={[name, "isCO2Included"]}
+                                        name={[name, 'isCO2Included']}
                                         rules={[
                                           {
                                             required: true,
-                                            message: `${t("PDD:required")}`,
+                                            message: `${t('PDD:required')}`,
                                           },
                                         ]}
                                       >
-                                        <Select
-                                          disabled={disableFields}
-                                          placeholder="Select"
-                                        >
-                                          <Select.Option value={true}>
-                                            Yes
-                                          </Select.Option>
-                                          <Select.Option value={false}>
-                                            No
-                                          </Select.Option>
+                                        <Select disabled={disableFields} placeholder="Select">
+                                          <Select.Option value={true}>Yes</Select.Option>
+                                          <Select.Option value={false}>No</Select.Option>
                                         </Select>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "isCH4Included"]}
+                                        name={[name, 'isCH4Included']}
                                         rules={[
                                           {
                                             required: true,
-                                            message: `${t("PDD:required")}`,
+                                            message: `${t('PDD:required')}`,
                                           },
                                         ]}
                                       >
-                                        <Select
-                                          disabled={disableFields}
-                                          placeholder="Select"
-                                        >
-                                          <Select.Option value={true}>
-                                            Yes
-                                          </Select.Option>
-                                          <Select.Option value={false}>
-                                            No
-                                          </Select.Option>
+                                        <Select disabled={disableFields} placeholder="Select">
+                                          <Select.Option value={true}>Yes</Select.Option>
+                                          <Select.Option value={false}>No</Select.Option>
                                         </Select>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "isN2OIncluded"]}
+                                        name={[name, 'isN2OIncluded']}
                                         rules={[
                                           {
                                             required: true,
-                                            message: `${t("PDD:required")}`,
+                                            message: `${t('PDD:required')}`,
                                           },
                                         ]}
                                       >
-                                        <Select
-                                          disabled={disableFields}
-                                          placeholder="Select"
-                                        >
-                                          <Select.Option value={true}>
-                                            Yes
-                                          </Select.Option>
-                                          <Select.Option value={false}>
-                                            No
-                                          </Select.Option>
+                                        <Select disabled={disableFields} placeholder="Select">
+                                          <Select.Option value={true}>Yes</Select.Option>
+                                          <Select.Option value={false}>No</Select.Option>
                                         </Select>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "isOtherIncluded"]}
+                                        name={[name, 'isOtherIncluded']}
                                         rules={[
                                           {
                                             required: true,
-                                            message: `${t("PDD:required")}`,
+                                            message: `${t('PDD:required')}`,
                                           },
                                         ]}
                                       >
-                                        <Select
-                                          disabled={disableFields}
-                                          placeholder="Select"
-                                        >
-                                          <Select.Option value={true}>
-                                            Yes
-                                          </Select.Option>
-                                          <Select.Option value={false}>
-                                            No
-                                          </Select.Option>
+                                        <Select disabled={disableFields} placeholder="Select">
+                                          <Select.Option value={true}>Yes</Select.Option>
+                                          <Select.Option value={false}>No</Select.Option>
                                         </Select>
                                       </Form.Item>
                                     </div>
                                     <div className="col4 data-col">
                                       <Form.Item
-                                        name={[name, "co2Justification"]}
+                                        name={[name, 'co2Justification']}
                                         rules={[
                                           {
                                             required: true,
@@ -862,15 +733,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
@@ -879,7 +747,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         <Input disabled={disableFields}></Input>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "ch4Justification"]}
+                                        name={[name, 'ch4Justification']}
                                         rules={[
                                           {
                                             required: true,
@@ -888,15 +756,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
@@ -905,7 +770,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         <Input disabled={disableFields}></Input>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "n2oJustification"]}
+                                        name={[name, 'n2oJustification']}
                                         rules={[
                                           {
                                             required: true,
@@ -914,15 +779,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
@@ -931,7 +793,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         <Input disabled={disableFields}></Input>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "otherJustification"]}
+                                        name={[name, 'otherJustification']}
                                         rules={[
                                           {
                                             required: true,
@@ -940,15 +802,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
@@ -987,7 +846,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                 disabled={disableFields}
                                 // block
                                 icon={<PlusOutlined />}
-                                style={{ marginLeft: "10px" }}
+                                style={{ marginLeft: '10px' }}
                               >
                                 {/* Add Entity */}
                               </Button>
@@ -1013,12 +872,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -1045,14 +904,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             rules={[
                               {
                                 required: true,
-                                message: `${t("PDD:required")}`,
+                                message: `${t('PDD:required')}`,
                               },
                             ]}
                           >
-                            <Select
-                              disabled={disableFields}
-                              placeholder="Select"
-                            >
+                            <Select disabled={disableFields} placeholder="Select">
                               <Select.Option value={true}>Yes</Select.Option>
                               <Select.Option value={false}>No</Select.Option>
                             </Select>
@@ -1062,14 +918,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             rules={[
                               {
                                 required: true,
-                                message: `${t("PDD:required")}`,
+                                message: `${t('PDD:required')}`,
                               },
                             ]}
                           >
-                            <Select
-                              disabled={disableFields}
-                              placeholder="Select"
-                            >
+                            <Select disabled={disableFields} placeholder="Select">
                               <Select.Option value={true}>Yes</Select.Option>
                               <Select.Option value={false}>No</Select.Option>
                             </Select>
@@ -1079,14 +932,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             rules={[
                               {
                                 required: true,
-                                message: `${t("PDD:required")}`,
+                                message: `${t('PDD:required')}`,
                               },
                             ]}
                           >
-                            <Select
-                              disabled={disableFields}
-                              placeholder="Select"
-                            >
+                            <Select disabled={disableFields} placeholder="Select">
                               <Select.Option value={true}>Yes</Select.Option>
                               <Select.Option value={false}>No</Select.Option>
                             </Select>
@@ -1096,14 +946,11 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             rules={[
                               {
                                 required: true,
-                                message: `${t("PDD:required")}`,
+                                message: `${t('PDD:required')}`,
                               },
                             ]}
                           >
-                            <Select
-                              disabled={disableFields}
-                              placeholder="Select"
-                            >
+                            <Select disabled={disableFields} placeholder="Select">
                               <Select.Option value={true}>Yes</Select.Option>
                               <Select.Option value={false}>No</Select.Option>
                             </Select>
@@ -1120,12 +967,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -1143,12 +990,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -1166,12 +1013,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -1189,12 +1036,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               {
                                 validator: async (rule, value) => {
                                   if (
-                                    String(value).trim() === "" ||
+                                    String(value).trim() === '' ||
                                     String(value).trim() === undefined ||
                                     value === null ||
                                     value === undefined
                                   ) {
-                                    throw new Error(`${t("PDD:required")}`);
+                                    throw new Error(`${t('PDD:required')}`);
                                   }
                                 },
                               },
@@ -1216,7 +1063,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                   <div className="data-row">
                                     <div className="col1 data-col">
                                       <Form.Item
-                                        name={[name, "source"]}
+                                        name={[name, 'source']}
                                         rules={[
                                           {
                                             required: true,
@@ -1225,24 +1072,18 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
                                         ]}
                                       >
-                                        <TextArea
-                                          rows={9}
-                                          disabled={disableFields}
-                                        />
+                                        <TextArea rows={9} disabled={disableFields} />
                                       </Form.Item>
                                     </div>
                                     <div className="col2 data-col">
@@ -1259,53 +1100,39 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                     </div>
                                     <div className="col3 data-col">
                                       <Form.Item
-                                        name={[name, "isCO2Included"]}
+                                        name={[name, 'isCO2Included']}
                                         rules={[
                                           {
                                             required: true,
-                                            message: `${t("PDD:required")}`,
+                                            message: `${t('PDD:required')}`,
                                           },
                                         ]}
                                       >
-                                        <Select
-                                          disabled={disableFields}
-                                          placeholder="Select"
-                                        >
-                                          <Select.Option value={true}>
-                                            Yes
-                                          </Select.Option>
-                                          <Select.Option value={false}>
-                                            No
-                                          </Select.Option>
+                                        <Select disabled={disableFields} placeholder="Select">
+                                          <Select.Option value={true}>Yes</Select.Option>
+                                          <Select.Option value={false}>No</Select.Option>
                                         </Select>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "isCH4Included"]}
+                                        name={[name, 'isCH4Included']}
                                         rules={[
                                           {
                                             required: true,
-                                            message: `${t("PDD:required")}`,
+                                            message: `${t('PDD:required')}`,
                                           },
                                         ]}
                                       >
-                                        <Select
-                                          disabled={disableFields}
-                                          placeholder="Select"
-                                        >
-                                          <Select.Option value={true}>
-                                            Yes
-                                          </Select.Option>
-                                          <Select.Option value={false}>
-                                            No
-                                          </Select.Option>
+                                        <Select disabled={disableFields} placeholder="Select">
+                                          <Select.Option value={true}>Yes</Select.Option>
+                                          <Select.Option value={false}>No</Select.Option>
                                         </Select>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "isN2OIncluded"]}
+                                        name={[name, 'isN2OIncluded']}
                                         rules={[
                                           {
                                             required: true,
-                                            message: `${t("PDD:required")}`,
+                                            message: `${t('PDD:required')}`,
                                           },
                                         ]}
                                       >
@@ -1313,20 +1140,16 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           disabled={disableFields}
                                           // placeholder="Select"
                                         >
-                                          <Select.Option value={true}>
-                                            Yes
-                                          </Select.Option>
-                                          <Select.Option value={false}>
-                                            No
-                                          </Select.Option>
+                                          <Select.Option value={true}>Yes</Select.Option>
+                                          <Select.Option value={false}>No</Select.Option>
                                         </Select>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "isOtherIncluded"]}
+                                        name={[name, 'isOtherIncluded']}
                                         rules={[
                                           {
                                             required: true,
-                                            message: `${t("PDD:required")}`,
+                                            message: `${t('PDD:required')}`,
                                           },
                                         ]}
                                       >
@@ -1334,18 +1157,14 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           disabled={disableFields}
                                           // placeholder="Select"
                                         >
-                                          <Select.Option value={true}>
-                                            Yes
-                                          </Select.Option>
-                                          <Select.Option value={false}>
-                                            No
-                                          </Select.Option>
+                                          <Select.Option value={true}>Yes</Select.Option>
+                                          <Select.Option value={false}>No</Select.Option>
                                         </Select>
                                       </Form.Item>
                                     </div>
                                     <div className="col4 data-col">
                                       <Form.Item
-                                        name={[name, "co2Justification"]}
+                                        name={[name, 'co2Justification']}
                                         rules={[
                                           {
                                             required: true,
@@ -1354,15 +1173,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
@@ -1371,7 +1187,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         <Input disabled={disableFields}></Input>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "ch4Justification"]}
+                                        name={[name, 'ch4Justification']}
                                         rules={[
                                           {
                                             required: true,
@@ -1380,15 +1196,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
@@ -1397,7 +1210,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         <Input disabled={disableFields}></Input>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "n2oJustification"]}
+                                        name={[name, 'n2oJustification']}
                                         rules={[
                                           {
                                             required: true,
@@ -1406,15 +1219,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
@@ -1423,7 +1233,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         <Input disabled={disableFields}></Input>
                                       </Form.Item>
                                       <Form.Item
-                                        name={[name, "otherJustification"]}
+                                        name={[name, 'otherJustification']}
                                         rules={[
                                           {
                                             required: true,
@@ -1432,15 +1242,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                           {
                                             validator: async (rule, value) => {
                                               if (
-                                                String(value).trim() === "" ||
-                                                String(value).trim() ===
-                                                  undefined ||
+                                                String(value).trim() === '' ||
+                                                String(value).trim() === undefined ||
                                                 value === null ||
                                                 value === undefined
                                               ) {
-                                                throw new Error(
-                                                  `${t("PDD:required")}`
-                                                );
+                                                throw new Error(`${t('PDD:required')}`);
                                               }
                                             },
                                           },
@@ -1482,7 +1289,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                 size="middle"
                                 className="addMinusBtn"
                                 disabled={disableFields}
-                                style={{ marginLeft: "10px" }}
+                                style={{ marginLeft: '10px' }}
                                 // block
                                 icon={<PlusOutlined />}
                               >
@@ -1502,7 +1309,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                 <Col xl={12} md={24}>
                   <Form.Item
                     // className='className="full-width-form-item'
-                    label={`${t("PDD:descriptionOfBaselineScenario")}`}
+                    label={`${t('PDD:descriptionOfBaselineScenario')}`}
                     name="descriptionOfBaselineScenario"
                     rules={[
                       {
@@ -1512,15 +1319,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                       {
                         validator: async (rule, value) => {
                           if (
-                            String(value).trim() === "" ||
+                            String(value).trim() === '' ||
                             String(value).trim() === undefined ||
                             value === null ||
                             value === undefined
                           ) {
                             throw new Error(
-                              `${t("PDD:descriptionOfBaselineScenario")} ${t(
-                                "isRequired"
-                              )}`
+                              `${t('PDD:descriptionOfBaselineScenario')} ${t('isRequired')}`
                             );
                           }
                         },
@@ -1538,7 +1343,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                 <Col xl={12} md={24}>
                   <Form.Item
                     // className='className="full-width-form-item'
-                    label={`${t("PDD:demonstrationOfAdditionality")}`}
+                    label={`${t('PDD:demonstrationOfAdditionality')}`}
                     name="demonstrationOfAdditionality"
                     rules={[
                       {
@@ -1548,15 +1353,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                       {
                         validator: async (rule, value) => {
                           if (
-                            String(value).trim() === "" ||
+                            String(value).trim() === '' ||
                             String(value).trim() === undefined ||
                             value === null ||
                             value === undefined
                           ) {
                             throw new Error(
-                              `${t("PDD:demonstrationOfAdditionality")} ${t(
-                                "isRequired"
-                              )}`
+                              `${t('PDD:demonstrationOfAdditionality')} ${t('isRequired')}`
                             );
                           }
                         },
@@ -1573,7 +1376,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               </Row>
               <Form.Item
                 className='className="full-width-form-item'
-                label={`${t("PDD:emissionReductionEstimation")}`}
+                label={`${t('PDD:emissionReductionEstimation')}`}
                 name="emissionReductionEstimation"
                 rules={[
                   {
@@ -1583,15 +1386,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, value) => {
                       if (
-                        String(value).trim() === "" ||
+                        String(value).trim() === '' ||
                         String(value).trim() === undefined ||
                         value === null ||
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t("PDD:emissionReductionEstimation")} ${t(
-                            "isRequired"
-                          )}`
+                          `${t('PDD:emissionReductionEstimation')} ${t('isRequired')}`
                         );
                       }
                     },
@@ -1602,7 +1403,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               </Form.Item>
               <Form.Item
                 className='className="full-width-form-item'
-                label={`${t("PDD:explanationOfEmissionMethodologicalChoices")}`}
+                label={`${t('PDD:explanationOfEmissionMethodologicalChoices')}`}
                 name="explanationOfEmissionMethodologicalChoices"
                 rules={[
                   {
@@ -1612,15 +1413,15 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, value) => {
                       if (
-                        String(value).trim() === "" ||
+                        String(value).trim() === '' ||
                         String(value).trim() === undefined ||
                         value === null ||
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t(
-                            "PDD:explanationOfEmissionMethodologicalChoices"
-                          )} ${t("isRequired")}`
+                          `${t('PDD:explanationOfEmissionMethodologicalChoices')} ${t(
+                            'isRequired'
+                          )}`
                         );
                       }
                     },
@@ -1635,13 +1436,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                 <LabelWithTooltip
                   label="Data and parameters fixed ex ante"
                   required={true}
-                  labelStyles={{ fontSize: "16px", fontWeight: "500" }}
+                  labelStyles={{ fontSize: '16px', fontWeight: '500' }}
                 />
                 <div className="form-section">
-                  <Row justify={"space-between"} gutter={[40, 16]}>
+                  <Row justify={'space-between'} gutter={[40, 16]}>
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t("PDD:data_parameter")}
+                        label={t('PDD:data_parameter')}
                         name="parameter"
                         rules={[
                           {
@@ -1651,16 +1452,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:data_parameter")} ${t(
-                                    "isRequired"
-                                  )}`
-                                );
+                                throw new Error(`${t('PDD:data_parameter')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1672,7 +1469,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t("PDD:unit")}
+                        label={t('PDD:unit')}
                         name="unit"
                         rules={[
                           {
@@ -1682,14 +1479,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:unit")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:unit')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1705,7 +1500,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t("PDD:description")}
+                        label={t('PDD:description')}
                         name="description"
                         rules={[
                           {
@@ -1715,14 +1510,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:description")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:description')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1739,7 +1532,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t("PDD:dataSource")}
+                        label={t('PDD:dataSource')}
                         name="source"
                         rules={[
                           {
@@ -1749,14 +1542,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:dataSource")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:dataSource')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1773,7 +1564,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t("PDD:descriptionOfMeasurementMethods")}
+                        label={t('PDD:descriptionOfMeasurementMethods')}
                         name="descriptionOfMeasurementMethods"
                         rules={[
                           {
@@ -1783,15 +1574,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t(
-                                    "PDD:descriptionOfMeasurementMethods"
-                                  )} ${t("isRequired")}`
+                                  `${t('PDD:descriptionOfMeasurementMethods')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -1809,7 +1598,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t("PDD:valueApplied")}
+                        label={t('PDD:valueApplied')}
                         name="monitoringValueApplied"
                         rules={[
                           {
@@ -1819,14 +1608,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:valueApplied")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:valueApplied')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -1844,7 +1631,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                     <Col xl={24} md={24}>
                       <div className="step-form-right-col">
                         <Form.Item
-                          label={t("PDD:purpose")}
+                          label={t('PDD:purpose')}
                           name="purpose"
                           rules={[
                             {
@@ -1854,14 +1641,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(
-                                    `${t("PDD:purpose")} ${t("isRequired")}`
-                                  );
+                                  throw new Error(`${t('PDD:purpose')} ${t('isRequired')}`);
                                 }
                               },
                             },
@@ -1874,7 +1659,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t("PDD:comments")}
+                        label={t('PDD:comments')}
                         name="comments"
                         rules={[
                           {
@@ -1884,24 +1669,18 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:comments")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:comments')} ${t('isRequired')}`);
                               }
                             },
                           },
                         ]}
                       >
-                        <TextArea
-                          rows={4}
-                          size="large"
-                          disabled={disableFields}
-                        />
+                        <TextArea rows={4} size="large" disabled={disableFields} />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -1911,7 +1690,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               <Form.Item
                 className="full-width-form-item"
                 name="exAnteCalculationOfEmissionReduction"
-                label={`${t("PDD:exAnteCalculationOfEmissionReduction")}`}
+                label={`${t('PDD:exAnteCalculationOfEmissionReduction')}`}
                 rules={[
                   {
                     required: true,
@@ -1920,15 +1699,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, value) => {
                       if (
-                        String(value).trim() === "" ||
+                        String(value).trim() === '' ||
                         String(value).trim() === undefined ||
                         value === null ||
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t("PDD:exAnteCalculationOfEmissionReduction")} ${t(
-                            "isRequired"
-                          )}`
+                          `${t('PDD:exAnteCalculationOfEmissionReduction')} ${t('isRequired')}`
                         );
                       }
                     },
@@ -1941,16 +1718,16 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               {/* need to update this */}
               <>
                 <LabelWithTooltip
-                  label={t("PDD:netEmmissionsTitle")}
+                  label={t('PDD:netEmmissionsTitle')}
                   required={false}
                   labelStyles={{
-                    fontSize: "16px",
-                    fontWeight: "500",
+                    fontSize: '16px',
+                    fontWeight: '500',
                   }}
                 />
                 <>
                   <div className="estimated-emmissions-table-form">
-                    <Row className="header" justify={"space-between"}>
+                    <Row className="header" justify={'space-between'}>
                       <Col md={6} xl={6}>
                         Year
                       </Col>
@@ -1964,15 +1741,14 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         Estimated Leakage Emissions (tCO₂e)
                       </Col>
                       <Col md={3} xl={3}>
-                        Estimated Net GHG Emission Reductions Or Removals
-                        (tCO₂e)
+                        Estimated Net GHG Emission Reductions Or Removals (tCO₂e)
                       </Col>
                       <Col md={2} xl={2}>
-                        {" "}
+                        {' '}
                       </Col>
                     </Row>
 
-                    <Row justify={"space-between"} align={"middle"}>
+                    <Row justify={'space-between'} align={'middle'}>
                       <Col md={6} xl={6} className="col1">
                         <Form.Item
                           label={``}
@@ -1981,17 +1757,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           rules={[
                             {
                               required: true,
-                              message: "",
+                              message: '',
                             },
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
                               },
                             },
@@ -2014,38 +1790,31 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           rules={[
                             {
                               required: true,
-                              message: "",
+                              message: '',
                             },
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 const startDate = moment(
-                                  form.getFieldValue("emissionsPeriodStart")
-                                ).startOf("month");
-                                const selectedDate =
-                                  moment(value).endOf("month");
+                                  form.getFieldValue('emissionsPeriodStart')
+                                ).startOf('month');
+                                const selectedDate = moment(value).endOf('month');
 
                                 if (selectedDate.year() !== startDate.year()) {
-                                  throw new Error(
-                                    "End date also should be in the same year!"
-                                  );
+                                  throw new Error('End date also should be in the same year!');
                                 }
-                                const duration = moment.duration(
-                                  selectedDate.diff(startDate)
-                                );
+                                const duration = moment.duration(selectedDate.diff(startDate));
 
                                 if (duration.asDays() < 0) {
-                                  throw new Error(
-                                    "End date cannot be before Start date!"
-                                  );
+                                  throw new Error('End date cannot be before Start date!');
                                 }
                               },
                             },
@@ -2072,19 +1841,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 } else if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 } else if (Number(value) < 0) {
                                   return Promise.reject(
-                                    new Error(`${t("PDD:shouldHavePositive")}`)
+                                    new Error(`${t('PDD:shouldHavePositive')}`)
                                   );
                                 }
 
@@ -2100,14 +1867,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               calculateNetGHGEmissions(value);
                               calculateTotalEmissions(
                                 value,
-                                "baselineEmissionReductions",
-                                "totalBaselineEmissionReductions"
+                                'baselineEmissionReductions',
+                                'totalBaselineEmissionReductions'
                               );
                             }}
                             step="1"
                             onKeyDown={(e) =>
-                              (e.key === "." || e.key === ",") &&
-                              e.preventDefault()
+                              (e.key === '.' || e.key === ',') && e.preventDefault()
                             }
                           />
                         </Form.Item>
@@ -2123,19 +1889,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 } else if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 } else if (Number(value) < 0) {
                                   return Promise.reject(
-                                    new Error(`${t("PDD:shouldHavePositive")}`)
+                                    new Error(`${t('PDD:shouldHavePositive')}`)
                                   );
                                 }
 
@@ -2151,14 +1915,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               calculateNetGHGEmissions(value);
                               calculateTotalEmissions(
                                 value,
-                                "projectEmissionReductions",
-                                "totalProjectEmissionReductions"
+                                'projectEmissionReductions',
+                                'totalProjectEmissionReductions'
                               );
                             }}
                             step="1"
                             onKeyDown={(e) =>
-                              (e.key === "." || e.key === ",") &&
-                              e.preventDefault()
+                              (e.key === '.' || e.key === ',') && e.preventDefault()
                             }
                           />
                         </Form.Item>
@@ -2174,19 +1937,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 } else if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 } else if (Number(value) < 0) {
                                   return Promise.reject(
-                                    new Error(`${t("PDD:shouldHavePositive")}`)
+                                    new Error(`${t('PDD:shouldHavePositive')}`)
                                   );
                                 }
 
@@ -2202,14 +1963,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                               calculateNetGHGEmissions(value);
                               calculateTotalEmissions(
                                 value,
-                                "leakageEmissionReductions",
-                                "totalLeakageEmissionReductions"
+                                'leakageEmissionReductions',
+                                'totalLeakageEmissionReductions'
                               );
                             }}
                             step="1"
                             onKeyDown={(e) =>
-                              (e.key === "." || e.key === ",") &&
-                              e.preventDefault()
+                              (e.key === '.' || e.key === ',') && e.preventDefault()
                             }
                           />
                         </Form.Item>
@@ -2225,19 +1985,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 } else if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 } else if (Number(value) < 0) {
                                   return Promise.reject(
-                                    new Error(`${t("PDD:shouldHavePositive")}`)
+                                    new Error(`${t('PDD:shouldHavePositive')}`)
                                   );
                                 }
 
@@ -2248,15 +2006,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         >
                           <Input
                             type="number"
-                            onChange={(value) =>
-                              calculateNetGHGEmissions(value)
-                            }
+                            onChange={(value) => calculateNetGHGEmissions(value)}
                             disabled
                           />
                         </Form.Item>
                       </Col>
                       <Col md={2} xl={2}>
-                        {" "}
+                        {' '}
                       </Col>
                     </Row>
 
@@ -2265,29 +2021,26 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         <>
                           {fields.map(({ key, name, ...restField }) => (
                             <>
-                              <Row justify={"space-between"} align={"middle"}>
+                              <Row justify={'space-between'} align={'middle'}>
                                 <Col md={6} xl={6} className="col1">
                                   <Form.Item
                                     label={``}
-                                    name={[name, "emissionsPeriodStart"]}
+                                    name={[name, 'emissionsPeriodStart']}
                                     className="datepicker"
                                     rules={[
                                       {
                                         required: true,
-                                        message: "",
+                                        message: '',
                                       },
                                       {
                                         validator: async (rule, value) => {
                                           if (
-                                            String(value).trim() === "" ||
-                                            String(value).trim() ===
-                                              undefined ||
+                                            String(value).trim() === '' ||
+                                            String(value).trim() === undefined ||
                                             value === null ||
                                             value === undefined
                                           ) {
-                                            throw new Error(
-                                              `${t("PDD:required")}`
-                                            );
+                                            throw new Error(`${t('PDD:required')}`);
                                           }
                                         },
                                       },
@@ -2305,41 +2058,33 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                   <p>to</p>
                                   <Form.Item
                                     label={``}
-                                    name={[name, "emissionsPeriodEnd"]}
+                                    name={[name, 'emissionsPeriodEnd']}
                                     className="datepicker"
                                     rules={[
                                       {
                                         required: true,
-                                        message: "",
+                                        message: '',
                                       },
                                       {
                                         validator: async (rule, value) => {
                                           if (
-                                            String(value).trim() === "" ||
-                                            String(value).trim() ===
-                                              undefined ||
+                                            String(value).trim() === '' ||
+                                            String(value).trim() === undefined ||
                                             value === null ||
                                             value === undefined
                                           ) {
-                                            throw new Error(
-                                              `${t("PDD:required")}`
-                                            );
+                                            throw new Error(`${t('PDD:required')}`);
                                           }
 
                                           const startDate = moment(
-                                            form.getFieldValue(
-                                              "extraEmissionReductions"
-                                            )[name].emissionsPeriodStart
-                                          ).startOf("month");
-                                          const selectedDate =
-                                            moment(value).endOf("month");
+                                            form.getFieldValue('extraEmissionReductions')[name]
+                                              .emissionsPeriodStart
+                                          ).startOf('month');
+                                          const selectedDate = moment(value).endOf('month');
 
-                                          if (
-                                            selectedDate.year() !==
-                                            startDate.year()
-                                          ) {
+                                          if (selectedDate.year() !== startDate.year()) {
                                             throw new Error(
-                                              "End date also should be in the same year!"
+                                              'End date also should be in the same year!'
                                             );
                                           }
                                           const duration = moment.duration(
@@ -2348,7 +2093,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                                           if (duration.asDays() < 0) {
                                             throw new Error(
-                                              "End date cannot be before Start date!"
+                                              'End date cannot be before Start date!'
                                             );
                                           }
                                         },
@@ -2361,15 +2106,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                       placeholder="End Date"
                                       picker="month"
                                       format="YYYY MMM"
-                                      onChange={(value) =>
-                                        onPeriodChange(value, fields.length + 1)
-                                      }
+                                      onChange={(value) => onPeriodChange(value, fields.length + 1)}
                                     />
                                   </Form.Item>
                                 </Col>
                                 <Col md={3} xl={3}>
                                   <Form.Item
-                                    name={[name, "baselineEmissionReductions"]}
+                                    name={[name, 'baselineEmissionReductions']}
                                     rules={[
                                       {
                                         required: true,
@@ -2378,24 +2121,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                       {
                                         validator: async (rule, value) => {
                                           if (
-                                            String(value).trim() === "" ||
-                                            String(value).trim() ===
-                                              undefined ||
+                                            String(value).trim() === '' ||
+                                            String(value).trim() === undefined ||
                                             value === null ||
                                             value === undefined
                                           ) {
-                                            throw new Error(
-                                              `${t("PDD:required")}`
-                                            );
+                                            throw new Error(`${t('PDD:required')}`);
                                           } else if (isNaN(value)) {
-                                            return Promise.reject(
-                                              new Error("Should be a number")
-                                            );
+                                            return Promise.reject(new Error('Should be a number'));
                                           } else if (Number(value) < 0) {
                                             return Promise.reject(
-                                              new Error(
-                                                `${t("PDD:shouldHavePositive")}`
-                                              )
+                                              new Error(`${t('PDD:shouldHavePositive')}`)
                                             );
                                           }
 
@@ -2411,21 +2147,20 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         calculateNetGHGEmissions(value, name);
                                         calculateTotalEmissions(
                                           value,
-                                          "baselineEmissionReductions",
-                                          "totalBaselineEmissionReductions"
+                                          'baselineEmissionReductions',
+                                          'totalBaselineEmissionReductions'
                                         );
                                       }}
                                       step="1"
                                       onKeyDown={(e) =>
-                                        (e.key === "." || e.key === ",") &&
-                                        e.preventDefault()
+                                        (e.key === '.' || e.key === ',') && e.preventDefault()
                                       }
                                     />
                                   </Form.Item>
                                 </Col>
                                 <Col md={3} xl={3}>
                                   <Form.Item
-                                    name={[name, "projectEmissionReductions"]}
+                                    name={[name, 'projectEmissionReductions']}
                                     rules={[
                                       {
                                         required: true,
@@ -2434,24 +2169,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                       {
                                         validator: async (rule, value) => {
                                           if (
-                                            String(value).trim() === "" ||
-                                            String(value).trim() ===
-                                              undefined ||
+                                            String(value).trim() === '' ||
+                                            String(value).trim() === undefined ||
                                             value === null ||
                                             value === undefined
                                           ) {
-                                            throw new Error(
-                                              `${t("PDD:required")}`
-                                            );
+                                            throw new Error(`${t('PDD:required')}`);
                                           } else if (isNaN(value)) {
-                                            return Promise.reject(
-                                              new Error("Should be a number")
-                                            );
+                                            return Promise.reject(new Error('Should be a number'));
                                           } else if (Number(value) < 0) {
                                             return Promise.reject(
-                                              new Error(
-                                                `${t("PDD:shouldHavePositive")}`
-                                              )
+                                              new Error(`${t('PDD:shouldHavePositive')}`)
                                             );
                                           }
 
@@ -2467,21 +2195,20 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         calculateNetGHGEmissions(value, name);
                                         calculateTotalEmissions(
                                           value,
-                                          "projectEmissionReductions",
-                                          "totalProjectEmissionReductions"
+                                          'projectEmissionReductions',
+                                          'totalProjectEmissionReductions'
                                         );
                                       }}
                                       step="1"
                                       onKeyDown={(e) =>
-                                        (e.key === "." || e.key === ",") &&
-                                        e.preventDefault()
+                                        (e.key === '.' || e.key === ',') && e.preventDefault()
                                       }
                                     />
                                   </Form.Item>
                                 </Col>
                                 <Col md={3} xl={3}>
                                   <Form.Item
-                                    name={[name, "leakageEmissionReductions"]}
+                                    name={[name, 'leakageEmissionReductions']}
                                     rules={[
                                       {
                                         required: true,
@@ -2490,24 +2217,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                       {
                                         validator: async (rule, value) => {
                                           if (
-                                            String(value).trim() === "" ||
-                                            String(value).trim() ===
-                                              undefined ||
+                                            String(value).trim() === '' ||
+                                            String(value).trim() === undefined ||
                                             value === null ||
                                             value === undefined
                                           ) {
-                                            throw new Error(
-                                              `${t("PDD:required")}`
-                                            );
+                                            throw new Error(`${t('PDD:required')}`);
                                           } else if (isNaN(value)) {
-                                            return Promise.reject(
-                                              new Error("Should be a number")
-                                            );
+                                            return Promise.reject(new Error('Should be a number'));
                                           } else if (Number(value) < 0) {
                                             return Promise.reject(
-                                              new Error(
-                                                `${t("PDD:shouldHavePositive")}`
-                                              )
+                                              new Error(`${t('PDD:shouldHavePositive')}`)
                                             );
                                           }
 
@@ -2523,21 +2243,20 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         calculateNetGHGEmissions(value, name);
                                         calculateTotalEmissions(
                                           value,
-                                          "leakageEmissionReductions",
-                                          "totalLeakageEmissionReductions"
+                                          'leakageEmissionReductions',
+                                          'totalLeakageEmissionReductions'
                                         );
                                       }}
                                       step="1"
                                       onKeyDown={(e) =>
-                                        (e.key === "." || e.key === ",") &&
-                                        e.preventDefault()
+                                        (e.key === '.' || e.key === ',') && e.preventDefault()
                                       }
                                     />
                                   </Form.Item>
                                 </Col>
                                 <Col md={3} xl={3}>
                                   <Form.Item
-                                    name={[name, "netEmissionReductions"]}
+                                    name={[name, 'netEmissionReductions']}
                                     rules={[
                                       {
                                         required: true,
@@ -2546,24 +2265,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                       {
                                         validator: async (rule, value) => {
                                           if (
-                                            String(value).trim() === "" ||
-                                            String(value).trim() ===
-                                              undefined ||
+                                            String(value).trim() === '' ||
+                                            String(value).trim() === undefined ||
                                             value === null ||
                                             value === undefined
                                           ) {
-                                            throw new Error(
-                                              `${t("PDD:required")}`
-                                            );
+                                            throw new Error(`${t('PDD:required')}`);
                                           } else if (isNaN(value)) {
-                                            return Promise.reject(
-                                              new Error("Should be a number")
-                                            );
+                                            return Promise.reject(new Error('Should be a number'));
                                           } else if (Number(value) < 0) {
                                             return Promise.reject(
-                                              new Error(
-                                                `${t("PDD:shouldHavePositive")}`
-                                              )
+                                              new Error(`${t('PDD:shouldHavePositive')}`)
                                             );
                                           }
 
@@ -2585,18 +2297,18 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                                         onPeriodChange(null, fields.length + 1);
                                         calculateTotalEmissions(
                                           null,
-                                          "projectEmissionReductions",
-                                          "totalProjectEmissionReductions"
+                                          'projectEmissionReductions',
+                                          'totalProjectEmissionReductions'
                                         );
                                         calculateTotalEmissions(
                                           null,
-                                          "baselineEmissionReductions",
-                                          "totalBaselineEmissionReductions"
+                                          'baselineEmissionReductions',
+                                          'totalBaselineEmissionReductions'
                                         );
                                         calculateTotalEmissions(
                                           null,
-                                          "leakageEmissionReductions",
-                                          "totalLeakageEmissionReductions"
+                                          'leakageEmissionReductions',
+                                          'totalLeakageEmissionReductions'
                                         );
                                       }}
                                       size="small"
@@ -2634,7 +2346,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     {/* Emmissions calculations */}
                     {/* calc Row 1 start */}
-                    <Row justify={"space-between"} align={"top"}>
+                    <Row justify={'space-between'} align={'top'}>
                       <Col md={6} xl={6}>
                         Total
                       </Col>
@@ -2649,19 +2361,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2683,19 +2393,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2717,19 +2425,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2751,19 +2457,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2775,13 +2479,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         </Form.Item>
                       </Col>
                       <Col md={2} xl={2}>
-                        {" "}
+                        {' '}
                       </Col>
                     </Row>
                     {/* calc Row 1 end */}
 
                     {/* calc row 2 start */}
-                    <Row justify={"space-between"} align={"top"}>
+                    <Row justify={'space-between'} align={'top'}>
                       <Col md={6} xl={6}>
                         Total number of crediting years
                       </Col>
@@ -2796,19 +2500,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2820,22 +2522,22 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         </Form.Item>
                       </Col>
                       <Col md={3} xl={3}>
-                        {" "}
+                        {' '}
                       </Col>
                       <Col md={3} xl={3}>
-                        {" "}
+                        {' '}
                       </Col>
                       <Col md={3} xl={3}>
-                        {" "}
+                        {' '}
                       </Col>
                       <Col md={2} xl={2}>
-                        {" "}
+                        {' '}
                       </Col>
                     </Row>
                     {/* calc row 2 end */}
 
                     {/* calc row 3 start */}
-                    <Row justify={"space-between"} align={"top"}>
+                    <Row justify={'space-between'} align={'top'}>
                       <Col md={6} xl={6}>
                         Annual average over the crediting period
                       </Col>
@@ -2850,19 +2552,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2884,19 +2584,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2918,19 +2616,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2952,19 +2648,17 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(`${t("PDD:required")}`);
+                                  throw new Error(`${t('PDD:required')}`);
                                 }
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(
-                                    new Error("Should be a number")
-                                  );
+                                  return Promise.reject(new Error('Should be a number'));
                                 }
 
                                 return Promise.resolve();
@@ -2976,7 +2670,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                         </Form.Item>
                       </Col>
                       <Col md={2} xl={2} className="total-cols">
-                        {" "}
+                        {' '}
                       </Col>
                     </Row>
                     {/* calc row 3 end */}
@@ -2987,7 +2681,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               <Form.Item
                 className="full-width-form-item"
                 name="monitoringPlan"
-                label={`${t("PDD:monitoringPlan")}`}
+                label={`${t('PDD:monitoringPlan')}`}
                 rules={[
                   {
                     required: true,
@@ -2996,14 +2690,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, value) => {
                       if (
-                        String(value).trim() === "" ||
+                        String(value).trim() === '' ||
                         String(value).trim() === undefined ||
                         value === null ||
                         value === undefined
                       ) {
-                        throw new Error(
-                          `${t("PDD:monitoringPlan")} ${t("isRequired")}`
-                        );
+                        throw new Error(`${t('PDD:monitoringPlan')} ${t('isRequired')}`);
                       }
                     },
                   },
@@ -3013,14 +2705,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               </Form.Item>
               {/* data and parameters monitored start */}
               <>
-                <h4 className="form-section-heading">{`${t(
-                  "PDD:dataAndParametersMonitored"
-                )}`}</h4>
+                <h4 className="form-section-heading">{`${t('PDD:dataAndParametersMonitored')}`}</h4>
                 <div className="form-section">
-                  <Row justify={"space-between"} gutter={[40, 16]}>
+                  <Row justify={'space-between'} gutter={[40, 16]}>
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t("PDD:data_parameter")}
+                        label={t('PDD:data_parameter')}
                         name="monitoringParameter"
                         rules={[
                           {
@@ -3030,16 +2720,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:data_parameter")} ${t(
-                                    "isRequired"
-                                  )}`
-                                );
+                                throw new Error(`${t('PDD:data_parameter')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -3051,7 +2737,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col xl={12} md={24}>
                       <Form.Item
-                        label={t("PDD:unit")}
+                        label={t('PDD:unit')}
                         name="monitoringUnit"
                         rules={[
                           {
@@ -3061,14 +2747,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:unit")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:unit')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -3084,7 +2768,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t("PDD:description")}
+                        label={t('PDD:description')}
                         name="monitoringDescription"
                         rules={[
                           {
@@ -3094,14 +2778,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:description")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:description')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -3118,7 +2800,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t("PDD:dataSource")}
+                        label={t('PDD:dataSource')}
                         name="monitoringSource"
                         rules={[
                           {
@@ -3128,14 +2810,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:dataSource")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:dataSource')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -3152,7 +2832,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={24}>
                       <Form.Item
-                        label={t("PDD:measurementMethodDescription")}
+                        label={t('PDD:measurementMethodDescription')}
                         name="monitoringMeasurementMethods"
                         rules={[
                           {
@@ -3162,15 +2842,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t("PDD:measurementMethodDescription")} ${t(
-                                    "isRequired"
-                                  )}`
+                                  `${t('PDD:measurementMethodDescription')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -3188,7 +2866,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col md={24} xl={12}>
                       <Form.Item
-                        label={t("PDD:monitoringFrequency")}
+                        label={t('PDD:monitoringFrequency')}
                         name="monitoringFrequency"
                         rules={[
                           {
@@ -3198,15 +2876,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t("PDD:monitoringFrequency")} ${t(
-                                    "isRequired"
-                                  )}`
+                                  `${t('PDD:monitoringFrequency')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -3224,7 +2900,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t("PDD:valueApplied")}
+                        label={t('PDD:valueApplied')}
                         name="monitoringValueApplied"
                         rules={[
                           {
@@ -3234,14 +2910,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:valueApplied")} ${t("isRequired")}`
-                                );
+                                throw new Error(`${t('PDD:valueApplied')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -3258,7 +2932,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t("PDD:monitoringEquipment")}
+                        label={t('PDD:monitoringEquipment')}
                         name="monitoringEquipment"
                         rules={[
                           {
@@ -3268,15 +2942,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t("PDD:monitoringEquipment")} ${t(
-                                    "isRequired"
-                                  )}`
+                                  `${t('PDD:monitoringEquipment')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -3294,7 +2966,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t("PDD:monitoringQAProcedures")}
+                        label={t('PDD:monitoringQAProcedures')}
                         name="monitoringQAProcedures"
                         rules={[
                           {
@@ -3304,15 +2976,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t("PDD:monitoringQAProcedures")} ${t(
-                                    "isRequired"
-                                  )}`
+                                  `${t('PDD:monitoringQAProcedures')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -3331,7 +3001,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                     <Col xl={24} md={24}>
                       <>
                         <LabelWithTooltip
-                          label={t("PDD:purpose")}
+                          label={t('PDD:purpose')}
                           required={true}
                           // tooltipContent={
                           //   <div className="tooltip">
@@ -3356,31 +3026,25 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                             {
                               validator: async (rule, value) => {
                                 if (
-                                  String(value).trim() === "" ||
+                                  String(value).trim() === '' ||
                                   String(value).trim() === undefined ||
                                   value === null ||
                                   value === undefined
                                 ) {
-                                  throw new Error(
-                                    `${t("PDD:purpose")} ${t("isRequired")}`
-                                  );
+                                  throw new Error(`${t('PDD:purpose')} ${t('isRequired')}`);
                                 }
                               },
                             },
                           ]}
                         >
-                          <TextArea
-                            rows={4}
-                            size="large"
-                            disabled={disableFields}
-                          />
+                          <TextArea rows={4} size="large" disabled={disableFields} />
                         </Form.Item>
                       </>
                     </Col>
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t("PDD:calculationMethod")}
+                        label={t('PDD:calculationMethod')}
                         name="monitoringCalculation"
                         rules={[
                           {
@@ -3390,16 +3054,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(
-                                  `${t("PDD:calculationMethod")} ${t(
-                                    "isRequired"
-                                  )}`
-                                );
+                                throw new Error(`${t('PDD:calculationMethod')} ${t('isRequired')}`);
                               }
                             },
                           },
@@ -3416,7 +3076,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
 
                     <Col xl={24} md={24}>
                       <Form.Item
-                        label={t("PDD:monitoringComments")}
+                        label={t('PDD:monitoringComments')}
                         name="monitoringComments"
                         rules={[
                           {
@@ -3426,15 +3086,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t("PDD:monitoringComments")} ${t(
-                                    "isRequired"
-                                  )}`
+                                  `${t('PDD:monitoringComments')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -3457,7 +3115,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               <Form.Item
                 className="full-width-form-item"
                 name="samplingPlan"
-                label={`${t("PDD:samplingPlan")}`}
+                label={`${t('PDD:samplingPlan')}`}
                 rules={[
                   {
                     required: true,
@@ -3466,14 +3124,12 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, value) => {
                       if (
-                        String(value).trim() === "" ||
+                        String(value).trim() === '' ||
                         String(value).trim() === undefined ||
                         value === null ||
                         value === undefined
                       ) {
-                        throw new Error(
-                          `${t("PDD:samplingPlan")} ${t("isRequired")}`
-                        );
+                        throw new Error(`${t('PDD:samplingPlan')} ${t('isRequired')}`);
                       }
                     },
                   },
@@ -3484,7 +3140,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               <Form.Item
                 className="full-width-form-item"
                 name="otherElementsOfMonitoringPlan"
-                label={`${t("PDD:otherElementsOfMonitoringPlan")}`}
+                label={`${t('PDD:otherElementsOfMonitoringPlan')}`}
                 rules={[
                   {
                     required: true,
@@ -3493,15 +3149,13 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
                   {
                     validator: async (rule, value) => {
                       if (
-                        String(value).trim() === "" ||
+                        String(value).trim() === '' ||
                         String(value).trim() === undefined ||
                         value === null ||
                         value === undefined
                       ) {
                         throw new Error(
-                          `${t("PDD:otherElementsOfMonitoringPlan")} ${t(
-                            "isRequired"
-                          )}`
+                          `${t('PDD:otherElementsOfMonitoringPlan')} ${t('isRequired')}`
                         );
                       }
                     },
@@ -3510,22 +3164,22 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
               >
                 <TextArea rows={4} disabled={disableFields} />
               </Form.Item>
-              <Row justify={"end"} className="step-actions-end">
-                <Button danger size={"large"} onClick={prev}>
-                  {t("PDD:prev")}
+              <Row justify={'end'} className="step-actions-end">
+                <Button danger size={'large'} onClick={prev}>
+                  {t('PDD:prev')}
                 </Button>
                 {disableFields ? (
                   <Button type="primary" onClick={next}>
-                    {t("PDD:next")}
+                    {t('PDD:next')}
                   </Button>
                 ) : (
                   <Button
                     type="primary"
-                    size={"large"}
-                    htmlType={"submit"}
+                    size={'large'}
+                    htmlType={'submit'}
                     // onClick={next}
                   >
-                    {t("PDD:next")}
+                    {t('PDD:next')}
                   </Button>
                 )}
               </Row>

@@ -191,13 +191,12 @@ const StepperComponent = (props: CustomStepsProps) => {
         optionalImages: mapBase64ToFields(
           pddData?.data?.projectActivity?.locationsOfProjectActivity?.[0]?.additionalDocuments
         ),
-        extraLocations:
-          pddData?.data?.projectActivity?.locationsOfProjectActivity
-            ?.slice(1)
-            ?.map((location: any) => ({
-              ...location,
-              uploadImages: mapBase64ToFields(location?.additionalDocuments),
-            })),
+        extraLocations: pddData?.data?.projectActivity?.locationsOfProjectActivity
+          ?.slice(1)
+          ?.map((location: any) => ({
+            ...location,
+            uploadImages: mapBase64ToFields(location?.additionalDocuments),
+          })),
       });
     }
     setLoading(false);
