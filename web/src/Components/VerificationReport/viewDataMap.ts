@@ -1,14 +1,7 @@
-<<<<<<< HEAD
-import moment from 'moment';
-import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
-import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
-import { toMoment } from '../../Utils/convertTime';
-=======
 import moment from "moment";
 import { mapBase64ToFields } from "../../Utils/mapBase64ToFields";
 import { INF_SECTORAL_SCOPE } from "../AddNewProgramme/ProgrammeCreationComponent";
 import { toMoment } from "../../Utils/convertTime";
->>>>>>> aa152da3 (converted verification report ghg table to times to ms)
 
 export const basicInformationMapDataToView = (vals: any) => {
   if (vals === undefined) return;
