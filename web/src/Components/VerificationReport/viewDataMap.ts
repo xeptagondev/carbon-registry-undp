@@ -1,7 +1,7 @@
-import moment from "moment";
-import { mapBase64ToFields } from "../../Utils/mapBase64ToFields";
-import { INF_SECTORAL_SCOPE } from "../AddNewProgramme/ProgrammeCreationComponent";
-import { toMoment } from "../../Utils/convertTime";
+import moment from 'moment';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
+import { toMoment } from '../../Utils/convertTime';
 
 export const basicInformationMapDataToView = (vals: any) => {
   if (vals === undefined) return;
@@ -23,15 +23,13 @@ export const ghgProjectDescriptionMapDataToFields = (vals: any) => {
 
   const tempVals = {
     ...vals,
-    estimatedNetEmissionReductions: vals?.estimatedNetEmissionReductions.map(
-      (item: any) => {
-        return {
-          ...item,
-          startDate: item?.startDate ? toMoment(item?.startDate) : undefined,
-          endDate: item?.endDate ? toMoment(item?.endDate) : undefined,
-        };
-      }
-    ),
+    estimatedNetEmissionReductions: vals?.estimatedNetEmissionReductions.map((item: any) => {
+      return {
+        ...item,
+        startDate: item?.startDate ? toMoment(item?.startDate) : undefined,
+        endDate: item?.endDate ? toMoment(item?.endDate) : undefined,
+      };
+    }),
   };
 
   return tempVals;

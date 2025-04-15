@@ -1,21 +1,16 @@
 //import { UploadOutlined } from '@ant-design/icons';
-import { Button, Col, Form, Input, Row, Upload, DatePicker } from "antd";
-import TextArea from "antd/lib/input/TextArea";
-import { FormMode } from "../../Definitions/Enums/formMode.enum";
-import LabelWithTooltip, {
-  TooltipPostion,
-} from "../LabelWithTooltip/LabelWithTooltip";
-import { MinusOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
-import NetEmissionReduction from "../Common/NetEmissonReduction";
-import {
-  fileUploadValueExtract,
-  formatNumberWithDecimalPlaces,
-} from "../../Utils/utilityHelper";
-import moment from "moment";
-import { getBase64 } from "../../Definitions/Definitions/programme.definitions";
-import { RcFile } from "antd/lib/upload";
-import { CustomStepsProps } from "./StepProps";
-import { toMoment } from "../../Utils/convertTime";
+import { Button, Col, Form, Input, Row, Upload, DatePicker } from 'antd';
+import TextArea from 'antd/lib/input/TextArea';
+import { FormMode } from '../../Definitions/Enums/formMode.enum';
+import LabelWithTooltip, { TooltipPostion } from '../LabelWithTooltip/LabelWithTooltip';
+import { MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import NetEmissionReduction from '../Common/NetEmissonReduction';
+import { fileUploadValueExtract, formatNumberWithDecimalPlaces } from '../../Utils/utilityHelper';
+import moment from 'moment';
+import { getBase64 } from '../../Definitions/Definitions/programme.definitions';
+import { RcFile } from 'antd/lib/upload';
+import { CustomStepsProps } from './StepProps';
+import { toMoment } from '../../Utils/convertTime';
 
 const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
   baselineEmissionReductions: 'avgBaselineEmissionReductions',
@@ -140,26 +135,24 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
   };
 
   const onPeriodChange = (value: any) => {
-    const reductions = form.getFieldValue("extraEmissionReductions");
+    const reductions = form.getFieldValue('extraEmissionReductions');
     let totalCreditingYears = 0;
 
-    const firstReductionStartDate = toMoment(
-      form.getFieldValue("emissionsPeriodStart")
-    )?.startOf("month");
-    const firstReductionEndDate = toMoment(
-      form.getFieldValue("emissionsPeriodEnd")
-    )?.endOf("month");
+    const firstReductionStartDate = toMoment(form.getFieldValue('emissionsPeriodStart'))?.startOf(
+      'month'
+    );
+    const firstReductionEndDate = toMoment(form.getFieldValue('emissionsPeriodEnd'))?.endOf(
+      'month'
+    );
 
     if (firstReductionStartDate && firstReductionEndDate) {
-      const diff = moment.duration(
-        firstReductionEndDate.diff(firstReductionStartDate)
-      );
+      const diff = moment.duration(firstReductionEndDate.diff(firstReductionStartDate));
       totalCreditingYears += Math.floor(diff.asMonths() + 1) / 12;
     }
 
     reductions?.forEach((reduction: any) => {
-      const start = toMoment(reduction?.emissionsPeriodStart)?.startOf("month");
-      const end = toMoment(reduction?.emissionsPeriodEnd)?.endOf("month");
+      const start = toMoment(reduction?.emissionsPeriodStart)?.startOf('month');
+      const end = toMoment(reduction?.emissionsPeriodEnd)?.endOf('month');
 
       if (start && end) {
         const diff = moment.duration(end.diff(start));
@@ -167,15 +160,9 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
       }
     });
 
-    console.log(
-      "--------totalYears------",
-      Number(totalCreditingYears).toFixed(2)
-    );
+    console.log('--------totalYears------', Number(totalCreditingYears).toFixed(2));
 
-    form.setFieldValue(
-      "totalCreditingYears",
-      Number(totalCreditingYears).toFixed(2)
-    );
+    form.setFieldValue('totalCreditingYears', Number(totalCreditingYears).toFixed(2));
 
     calculateNetGHGEmissions(value);
     calculateTotalEmissions(value, 'baselineEmissionReductions', 'totalBaselineEmissionReductions');
@@ -199,21 +186,11 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
           const tempYearlyReductions: any = [];
 
           const firstReduction = {
-            startDate: moment(values?.emissionsPeriodStart)
-              .startOf("month")
-              .valueOf(),
-            endDate: moment(values?.emissionsPeriodEnd)
-              .endOf("month")
-              .valueOf(),
-            baselineEmissionReductions: Number(
-              values?.baselineEmissionReductions
-            ),
-            projectEmissionReductions: Number(
-              values?.projectEmissionReductions
-            ),
-            leakageEmissionReductions: Number(
-              values?.leakageEmissionReductions
-            ),
+            startDate: moment(values?.emissionsPeriodStart).startOf('month').valueOf(),
+            endDate: moment(values?.emissionsPeriodEnd).endOf('month').valueOf(),
+            baselineEmissionReductions: Number(values?.baselineEmissionReductions),
+            projectEmissionReductions: Number(values?.projectEmissionReductions),
+            leakageEmissionReductions: Number(values?.leakageEmissionReductions),
             netEmissionReductions: Number(values?.netEmissionReductions),
           };
 
@@ -222,21 +199,11 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
           if (values?.extraEmissionReductions) {
             values.extraEmissionReductions.forEach((item: any) => {
               const tempObj = {
-                startDate: moment(item?.emissionsPeriodStart)
-                  .startOf("month")
-                  .valueOf(),
-                endDate: moment(item?.emissionsPeriodEnd)
-                  .endOf("month")
-                  .valueOf(),
-                baselineEmissionReductions: Number(
-                  item?.baselineEmissionReductions
-                ),
-                projectEmissionReductions: Number(
-                  item?.projectEmissionReductions
-                ),
-                leakageEmissionReductions: Number(
-                  item?.leakageEmissionReductions
-                ),
+                startDate: moment(item?.emissionsPeriodStart).startOf('month').valueOf(),
+                endDate: moment(item?.emissionsPeriodEnd).endOf('month').valueOf(),
+                baselineEmissionReductions: Number(item?.baselineEmissionReductions),
+                projectEmissionReductions: Number(item?.projectEmissionReductions),
+                leakageEmissionReductions: Number(item?.leakageEmissionReductions),
                 netEmissionReductions: Number(item?.netEmissionReductions),
               };
 
@@ -468,19 +435,13 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                         }
 
                                         const startDate = moment(
-                                          form.getFieldValue(
-                                            "emissionsPeriodStart"
-                                          )
-                                        ).startOf("month");
-                                        const selectedDate =
-                                          moment(value).endOf("month");
+                                          form.getFieldValue('emissionsPeriodStart')
+                                        ).startOf('month');
+                                        const selectedDate = moment(value).endOf('month');
 
-                                        if (
-                                          selectedDate.year() !==
-                                          startDate.year()
-                                        ) {
+                                        if (selectedDate.year() !== startDate.year()) {
                                           throw new Error(
-                                            "End date also should be in the same year!"
+                                            'End date also should be in the same year!'
                                           );
                                         }
 
@@ -489,9 +450,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                         );
 
                                         if (duration.asDays() < 0) {
-                                          throw new Error(
-                                            "End date cannot be before Start date!"
-                                          );
+                                          throw new Error('End date cannot be before Start date!');
                                         }
                                       },
                                     },
@@ -766,35 +725,26 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                                   }
 
                                                   const startDate = moment(
-                                                    form.getFieldValue(
-                                                      "extraEmissionReductions"
-                                                    )[name].emissionsPeriodStart
-                                                  ).startOf("month");
+                                                    form.getFieldValue('extraEmissionReductions')[
+                                                      name
+                                                    ].emissionsPeriodStart
+                                                  ).startOf('month');
 
-                                                  const selectedDate =
-                                                    moment(value).endOf(
-                                                      "month"
-                                                    );
+                                                  const selectedDate = moment(value).endOf('month');
 
-                                                  if (
-                                                    selectedDate.year() !==
-                                                    startDate.year()
-                                                  ) {
+                                                  if (selectedDate.year() !== startDate.year()) {
                                                     throw new Error(
-                                                      "End date also should be in the same year!"
+                                                      'End date also should be in the same year!'
                                                     );
                                                   }
 
-                                                  const duration =
-                                                    moment.duration(
-                                                      selectedDate.diff(
-                                                        startDate
-                                                      )
-                                                    );
+                                                  const duration = moment.duration(
+                                                    selectedDate.diff(startDate)
+                                                  );
 
                                                   if (duration.asDays() < 0) {
                                                     throw new Error(
-                                                      "End date cannot be before Start date!"
+                                                      'End date cannot be before Start date!'
                                                     );
                                                   }
                                                 },
@@ -807,9 +757,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                               placeholder="End Date"
                                               picker="month"
                                               format="YYYY MMM"
-                                              onChange={(value) =>
-                                                onPeriodChange(value)
-                                              }
+                                              onChange={(value) => onPeriodChange(value)}
                                             />
                                           </Form.Item>
                                         </Col>

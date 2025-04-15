@@ -503,7 +503,7 @@ const NetEmissionReduction = (props: any) => {
                             onClick={() => {
                               // reduceTotalCreditingYears()
                               remove(name);
-                              onPeriodChange(null, fields.length - 1);
+                              onPeriodChange();
                               calculateTotalEmissions(
                                 null,
                                 'projectEmissionReductions',
