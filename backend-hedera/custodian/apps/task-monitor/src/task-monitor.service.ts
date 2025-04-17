@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { CarbonCreditService } from '@app/shared/carbon-credit-token/service/carbon-credit.service';
 import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
@@ -73,7 +74,10 @@ export class TaskMonitorService implements OnModuleInit {
                     let eventFailed = false;
                     let prevTaskUnverified = true;
 
-                    if(previousTask && !(previousTask.events && previousTask.events.length > 0)) {
+                    if (
+                        previousTask &&
+                        !(previousTask.events && previousTask.events.length > 0)
+                    ) {
                         prevTaskUnverified = false;
                     }
 
