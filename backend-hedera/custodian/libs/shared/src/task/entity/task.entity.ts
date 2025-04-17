@@ -34,7 +34,7 @@ export class TaskEntity {
     retryAttemps?: number = 2;
 
     @Column({ default: 0 })
-    attemptedCount?: number = 0;
+    attemptedCount?: number;
 
     @Column({ default: false, type: Boolean })
     retryUntilSuccess?: boolean;
