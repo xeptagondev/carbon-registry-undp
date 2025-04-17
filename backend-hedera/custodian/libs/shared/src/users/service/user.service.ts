@@ -2377,19 +2377,24 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 return response;
             }
 
-            let events: EventEntity = plainToClass(EventEntity, {
-                type: EventTypeEnum.UPDATE,
-                status: EventStateEnum.PENDING,
-                affectedTableName: 'UsersEntity',
-                previousState: userDetails,
-                affectedRecordId: userDetails.id,
-                rollbackOnFail: true,
-                maxVerifyDurationSec: 120,
-                documentRefId: userDetails.refId,
-                gridType: GridTypeEnum.USER_GRID,
-            });
+            const userVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.USER_GRID,
+                    userDetails.refId,
+                    requestUser.email,
+                );
 
-            events = await queryRunner.manager.save(EventEntity, events);
+            if (
+                !userVcDocument ||
+                !userVcDocument.document ||
+                !userVcDocument.document.credentialSubject ||
+                userVcDocument.document.credentialSubject.length === 0
+            ) {
+                throw new HttpException(
+                    'User grid not found',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
 
             await queryRunner.manager.update(
                 UsersEntity,
@@ -2406,16 +2411,55 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             let asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'UserService',
-                functionName: 'guardianUpdateUserDetails',
-                args: [userUpdateDto, requestUser, events.id],
+                functionName: 'guardianUserRevoke',
+                args: [userDetails.refId, requestUser],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+            });
+
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            const userData: UserSchemaDtos = new UserSchemaDtos(
+                userVcDocument.document.credentialSubject[0],
+            );
+
+            let events: EventEntity = plainToClass(EventEntity, {
+                type: EventTypeEnum.UPDATE,
+                status: EventStateEnum.PENDING,
+                affectedTableName: 'UsersEntity',
+                previousState: userDetails,
+                affectedRecordId: userDetails.id,
+                rollbackOnFail: true,
+                maxVerifyDurationSec: 120,
+                documentRefId: userDetails.refId,
+                gridType: GridTypeEnum.USER_GRID,
+            });
+
+            events = await queryRunner.manager.save(EventEntity, events);
+
+            userData.name = userUpdateDto.name;
+            userData.phoneNumber = userUpdateDto.phoneNo
+                ? userUpdateDto.phoneNo
+                : userDetails?.phoneNumber
+                  ? userDetails?.phoneNumber
+                  : undefined;
+            userData.eventIds = [events.id, ...(userData.eventIds || [])];
+
+            const asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianUpdateUserSaveDocument',
+                args: [userData, userDetails.id, requestUser],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
                 retryUntilSuccess: false,
                 millisBetweenAttempts: 3000,
+                previousTask: asyncTask,
                 events: [events],
             });
 
-            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+            await queryRunner.manager.save(TaskEntity, asyncTaskTwo);
 
             await queryRunner.commitTransaction();
 
@@ -2433,10 +2477,42 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async guardianUpdateUserDetails(
-        userUpdateDto: UserUpdateDto,
+    async guardianUserRevoke(userRefId: string, requestUser: JWTPayload) {
+        try {
+            const userVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.USER_GRID,
+                    userRefId,
+                    requestUser.email,
+                );
+
+            if (
+                !userVcDocument ||
+                !userVcDocument.document ||
+                !userVcDocument.document.credentialSubject ||
+                userVcDocument.document.credentialSubject.length === 0
+            ) {
+                throw new HttpException(
+                    'User grid not found',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.USER_REVOKE,
+                ButtonActionEnum.SUBMIT,
+                userVcDocument,
+                requestUser.email,
+            );
+        } catch (err) {
+            throw new HttpException(err, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async guardianUpdateUserSaveDocument(
+        userData: UserSchemaDtos,
+        userId: number,
         requestUser: JWTPayload,
-        eventId: number,
     ) {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -2446,7 +2522,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             const userDetails = await queryRunner.manager.findOneBy(
                 UsersEntity,
                 {
-                    id: userUpdateDto.id,
+                    id: userId,
                 },
             );
 
@@ -2464,25 +2540,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     requestUser.email,
                 );
 
-            const userData: UserSchemaDtos = new UserSchemaDtos(
-                userVcDocument.document.credentialSubject[0],
-            );
+            if (userVcDocument) {
+                throw new HttpException(
+                    'User document is not revoked',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
 
-            userData.name = userUpdateDto.name;
-            userData.phoneNumber = userUpdateDto.phoneNo
-                ? userUpdateDto.phoneNo
-                : userDetails?.phoneNumber
-                  ? userDetails?.phoneNumber
-                  : undefined;
-            userData.eventIds = [eventId, ...(userData.eventIds || [])];
             const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
-
-            await this.guardianService.buttonActionRequest(
-                ButtonNameEnum.USER_REVOKE,
-                ButtonActionEnum.SUBMIT,
-                userVcDocument,
-                requestUser.email,
-            );
 
             await this.guardianService.saveDocument(
                 requestUser.email,
@@ -2493,6 +2558,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 },
                 queryRunner,
             );
+
             await queryRunner.commitTransaction();
         } catch (err) {
             await queryRunner.rollbackTransaction();
