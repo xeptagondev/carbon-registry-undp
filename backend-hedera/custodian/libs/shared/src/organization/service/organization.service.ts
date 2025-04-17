@@ -827,11 +827,15 @@ export class OrganizationService extends SuperService<
                 user.email,
             );
 
-            await this.guardianService.saveDocument(user.email, blockName, {
-                document: { ...organizationData },
-                ref: null,
+            await this.guardianService.saveDocument(
+                user.email,
+                blockName,
+                {
+                    document: { ...organizationData },
+                    ref: null,
+                },
                 queryRunner,
-            });
+            );
 
             const updatedOrganizationVcDocument =
                 await this.guardianService.getGridDocumentUsingRefId(
