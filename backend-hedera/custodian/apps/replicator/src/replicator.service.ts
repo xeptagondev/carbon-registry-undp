@@ -297,6 +297,9 @@ export class ReplicatorService implements OnModuleInit {
                                     );
                                 } else {
                                     // Rollback the record (of table name) to previous state
+                                    // this.logger.log(
+                                    //     `UPDATE ${event.affectedTableName} SET state: ${JSON.stringify(event.previousState)} WHERE id=${event.affectedRecordId}}`,
+                                    // );
                                     await queryRunner.manager.update(
                                         event.affectedTableName,
                                         { id: event.affectedRecordId },
@@ -317,8 +320,7 @@ export class ReplicatorService implements OnModuleInit {
                             } catch (err) {
                                 await queryRunner.rollbackTransaction();
                                 this.logger.error(
-                                    `[REPLICATOR]: Error while rollingback data. Event ID: ${event.id}`,
-                                    err,
+                                    `[REPLICATOR]: Error while rollingback data. Event ID: ${event.id}. Error: ${err}`,
                                 );
                             } finally {
                                 try {
