@@ -722,20 +722,6 @@ export class OrganizationService extends SuperService<
 
             asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
 
-            const organizationData: OrganizationSchemaDtos =
-                new OrganizationSchemaDtos(
-                    organizationVcDocument.document.credentialSubject[0],
-                );
-
-            if (
-                user.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER ||
-                user.organizationRole ===
-                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-            ) {
-                organizationData.paymentId = dto.paymentId;
-            }
-
             const rollBackOrg = await queryRunner.manager.findOne(
                 OrganizationEntity,
                 {
@@ -757,6 +743,11 @@ export class OrganizationService extends SuperService<
 
             events = await queryRunner.manager.save(EventEntity, events);
 
+            const organizationData: OrganizationSchemaDtos =
+                new OrganizationSchemaDtos(
+                    organizationVcDocument.document.credentialSubject[0],
+                );
+
             organizationData.name = dto.name;
             organizationData.email = dto.email;
             organizationData.phoneNumber = dto.phoneNo;
@@ -771,10 +762,19 @@ export class OrganizationService extends SuperService<
                 ...(organizationData.eventIds || []),
             ];
 
+            if (
+                user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER ||
+                user.organizationRole ===
+                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                organizationData.paymentId = dto.paymentId;
+            }
+
             const asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
                 className: 'OrganizationService',
                 functionName: 'guardianUpdateSaveDocument',
-                args: [organizationData, orgId, user],
+                args: [],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
                 retryUntilSuccess: false,
@@ -782,6 +782,8 @@ export class OrganizationService extends SuperService<
                 events: [events],
                 previousTask: asyncTask,
             });
+
+            asyncTaskTwo.args = [organizationData, orgId, user];
 
             await queryRunner.manager.save(TaskEntity, asyncTaskTwo);
 
@@ -794,6 +796,7 @@ export class OrganizationService extends SuperService<
             );
         } catch (e) {
             await queryRunner.rollbackTransaction();
+            this.logger.error(`Error: ${e} \n Stacktrace: ${e.stack}`);
             throw new HttpException(e, HttpStatus.BAD_REQUEST);
         } finally {
             if (!queryRunner.isReleased) {
@@ -867,6 +870,7 @@ export class OrganizationService extends SuperService<
                     GridTypeEnum.ORGANIZATION_GRID,
                     orgEnt.refId,
                     user.email,
+                    true,
                 );
 
             if (organizationVcDocument) {
