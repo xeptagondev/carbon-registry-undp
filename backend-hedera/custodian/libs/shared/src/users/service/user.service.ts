@@ -2421,10 +2421,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
 
-            const userData: UserSchemaDtos = new UserSchemaDtos(
-                userVcDocument.document.credentialSubject[0],
-            );
-
             let events: EventEntity = plainToClass(EventEntity, {
                 type: EventTypeEnum.UPDATE,
                 status: EventStateEnum.PENDING,
@@ -2439,6 +2435,10 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             events = await queryRunner.manager.save(EventEntity, events);
 
+            const userData: UserSchemaDtos = new UserSchemaDtos(
+                userVcDocument.document.credentialSubject[0],
+            );
+
             userData.name = userUpdateDto.name;
             userData.phoneNumber = userUpdateDto.phoneNo
                 ? userUpdateDto.phoneNo
@@ -2450,7 +2450,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             const asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
                 className: 'UserService',
                 functionName: 'guardianUpdateUserSaveDocument',
-                args: [userData, userDetails.id, requestUser],
+                args: [],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
                 retryUntilSuccess: false,
@@ -2458,6 +2458,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 previousTask: asyncTask,
                 events: [events],
             });
+
+            asyncTaskTwo.args = [userData, userDetails.id, requestUser];
 
             await queryRunner.manager.save(TaskEntity, asyncTaskTwo);
 
@@ -2538,6 +2540,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     GridTypeEnum.USER_GRID,
                     userDetails.refId,
                     requestUser.email,
+                    true,
                 );
 
             if (userVcDocument) {

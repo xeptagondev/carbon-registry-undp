@@ -108,7 +108,9 @@ export class GuardianService {
         const errorMessage: string =
             'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.';
         if (hbarBalance < thresholdValue) {
-            this.logger.log(`Account ID: ${user.hederaAccount}, HBAR balance: ${hbarBalance}, threshold: ${thresholdValue}`);
+            this.logger.log(
+                `Account ID: ${user.hederaAccount}, HBAR balance: ${hbarBalance}, threshold: ${thresholdValue}`,
+            );
             const countryName: string = this.configService.get('country');
             mailDto = {
                 subject: INSUFFICIENT_HBAR_BALANCE,
@@ -713,6 +715,7 @@ export class GuardianService {
         grid: GridTypeEnum,
         refId: string,
         email: string,
+        alreadyRevoked: boolean = false,
     ): Promise<any> {
         const gridApis = this.getGridApi(grid);
         const token = await this.getAuthenticatedUserToken(email);
@@ -736,7 +739,7 @@ export class GuardianService {
                 (response: any) =>
                     response?.document?.credentialSubject[0]?.refId === refId,
             );
-            if (!fullVCDocument) {
+            if (!fullVCDocument && !alreadyRevoked) {
                 throw new Error('No document found for the given refId');
             }
 
@@ -977,7 +980,6 @@ export class GuardianService {
                 }
 
                 return response.data;
-
             } else {
                 throw new HttpException(
                     'Guardian User Login Failed',
