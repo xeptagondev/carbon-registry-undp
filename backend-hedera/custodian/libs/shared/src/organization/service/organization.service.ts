@@ -406,9 +406,9 @@ export class OrganizationService extends SuperService<
 
         const [entities, total] = await this.organizationRepository
             .createQueryBuilder('organization')
+            .select('organization')
             .leftJoin('organization.organizationType', 'organizationType')
             .addSelect(['organizationType'])
-            .leftJoin('organization.projects', 'project')
             .loadRelationCountAndMap(
                 'organization.numberOfProjects',
                 'organization.projects',
