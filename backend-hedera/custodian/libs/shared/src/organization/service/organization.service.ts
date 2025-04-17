@@ -649,6 +649,25 @@ export class OrganizationService extends SuperService<
                 );
             }
 
+            const organizationVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgEnt.refId,
+                    user.email,
+                );
+
+            if (
+                !organizationVcDocument ||
+                !organizationVcDocument.document ||
+                !organizationVcDocument.document.credentialSubject ||
+                organizationVcDocument.document.credentialSubject.length === 0
+            ) {
+                throw new HttpException(
+                    'Organization grid not found',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+
             if (dto.logo && this.helperService.isBase64(dto.logo)) {
                 const response: any = await this.fileHandler.uploadFile(
                     `profile_images/${orgEnt.id}_${new Date().getTime()}.png`,
@@ -685,6 +704,38 @@ export class OrganizationService extends SuperService<
                 editData.paymentId = dto.paymentId;
             }
 
+            await queryRunner.manager.update(
+                OrganizationEntity,
+                { id: orgEnt.id },
+                editData,
+            );
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'OrganizationService',
+                functionName: 'guardianOrganizationRevoke',
+                args: [orgEnt.refId, user],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+            });
+
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            const organizationData: OrganizationSchemaDtos =
+                new OrganizationSchemaDtos(
+                    organizationVcDocument.document.credentialSubject[0],
+                );
+
+            if (
+                user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER ||
+                user.organizationRole ===
+                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                organizationData.paymentId = dto.paymentId;
+            }
+
             const rollBackOrg = await queryRunner.manager.findOne(
                 OrganizationEntity,
                 {
@@ -706,24 +757,33 @@ export class OrganizationService extends SuperService<
 
             events = await queryRunner.manager.save(EventEntity, events);
 
-            await queryRunner.manager.update(
-                OrganizationEntity,
-                { id: orgEnt.id },
-                editData,
-            );
+            organizationData.name = dto.name;
+            organizationData.email = dto.email;
+            organizationData.phoneNumber = dto.phoneNo;
+            organizationData.website = dto.website;
+            organizationData.faxNumber = dto.faxNo;
+            organizationData.logo = dto.logo;
+            organizationData.provinces = dto.provinces;
+            organizationData.address = dto.address;
+            organizationData.updatedTime = new Date().getTime();
+            organizationData.eventIds = [
+                events.id,
+                ...(organizationData.eventIds || []),
+            ];
 
-            const asyncTask: TaskEntity = plainToClass(TaskEntity, {
+            const asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
                 className: 'OrganizationService',
-                functionName: 'guardianUpdate',
-                args: [dto, orgId, user, events.id],
+                functionName: 'guardianUpdateSaveDocument',
+                args: [organizationData, orgId, user],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
                 retryUntilSuccess: false,
                 millisBetweenAttempts: 3000,
                 events: [events],
+                previousTask: asyncTask,
             });
 
-            await queryRunner.manager.save(TaskEntity, asyncTask);
+            await queryRunner.manager.save(TaskEntity, asyncTaskTwo);
 
             await queryRunner.commitTransaction();
             return new DataResponseDto(
@@ -749,38 +809,12 @@ export class OrganizationService extends SuperService<
         }
     }
 
-    async guardianUpdate(
-        dto: any,
-        orgId: number,
-        user: JWTPayload,
-        eventId: number,
-    ) {
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
+    async guardianOrganizationRevoke(orgRefId: string, user: JWTPayload) {
         try {
-            await queryRunner.startTransaction();
-            const orgEnt = await queryRunner.manager.findOne(
-                OrganizationEntity,
-                {
-                    where: { id: orgId },
-                    relations: {
-                        organizationType: true,
-                        users: true,
-                    },
-                },
-            );
-
-            if (!orgEnt) {
-                throw new HttpException(
-                    'Organisation not found',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-
             const organizationVcDocument =
                 await this.guardianService.getGridDocumentUsingRefId(
                     GridTypeEnum.ORGANIZATION_GRID,
-                    orgEnt.refId,
+                    orgRefId,
                     user.email,
                 );
 
@@ -796,43 +830,55 @@ export class OrganizationService extends SuperService<
                 );
             }
 
-            const organizationData: OrganizationSchemaDtos =
-                new OrganizationSchemaDtos(
-                    organizationVcDocument.document.credentialSubject[0],
-                );
-
-            organizationData.name = dto.name;
-            organizationData.email = dto.email;
-            organizationData.phoneNumber = dto.phoneNo;
-            organizationData.website = dto.website;
-            organizationData.faxNumber = dto.faxNo;
-            organizationData.logo = dto.logo;
-            organizationData.provinces = dto.provinces;
-            organizationData.address = dto.address;
-            organizationData.updatedTime = new Date().getTime();
-            organizationData.eventIds = [
-                eventId,
-                ...(organizationData.eventIds || []),
-            ];
-            if (
-                user.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER ||
-                user.organizationRole ===
-                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-            ) {
-                organizationData.paymentId = dto.paymentId;
-            }
-
-            const blockName = orgEnt.organizationType.multiple
-                ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
-                : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
-
             await this.guardianService.buttonActionRequest(
                 ButtonNameEnum.ORGANIZATION_REVOKE,
                 ButtonActionEnum.SUBMIT,
                 organizationVcDocument,
                 user.email,
             );
+        } catch (err) {
+            throw new HttpException(err, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async guardianUpdateSaveDocument(
+        organizationData: OrganizationSchemaDtos,
+        orgId: number,
+        user: JWTPayload,
+    ) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+
+            const orgEnt = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: orgId },
+                    relations: {
+                        organizationType: true,
+                        users: true,
+                    },
+                },
+            );
+
+            const organizationVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgEnt.refId,
+                    user.email,
+                );
+
+            if (organizationVcDocument) {
+                throw new HttpException(
+                    'Organization document is not revoked',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            const blockName = orgEnt.organizationType.multiple
+                ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
+                : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
 
             await this.guardianService.saveDocument(
                 user.email,
