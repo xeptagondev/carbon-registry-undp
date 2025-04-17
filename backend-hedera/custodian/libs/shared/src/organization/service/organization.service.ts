@@ -685,11 +685,18 @@ export class OrganizationService extends SuperService<
                 editData.paymentId = dto.paymentId;
             }
 
+            const rollBackOrg = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: orgId },
+                },
+            );
+
             let events: EventEntity = plainToClass(EventEntity, {
                 type: EventTypeEnum.UPDATE,
                 status: EventStateEnum.PENDING,
                 affectedTableName: 'OrganizationEntity',
-                previousState: orgEnt,
+                previousState: rollBackOrg,
                 affectedRecordId: orgEnt.id,
                 rollbackOnFail: true,
                 maxVerifyDurationSec: 120,
