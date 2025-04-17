@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable no-constant-condition */
 import { EventEntity } from '@app/shared/event/entity/event.entity';
 import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
@@ -42,30 +43,42 @@ export class ReplicatorService implements OnModuleInit {
                     const eventTask = event.task;
                     // 3. Evaluate task status
                     if (eventTask.state === TaskEnum.COMPLETED) {
-                        const apiUser = this.configService.get('organizations.DNA.apiAdminEmail');
+                        const apiUser = this.configService.get(
+                            'organizations.DNA.apiAdminEmail',
+                        );
 
-                        const refreshToken = await this.guardianService.getRefreshToken(apiUser);
+                        const refreshToken =
+                            await this.guardianService.getRefreshToken(apiUser);
 
                         try {
-                            await this.guardianService.accessToken(refreshToken);
-                        } catch(err) {
-                            // login the API user
-                            await this.guardianService.login(
-                                {
-                                    username: apiUser,
-                                    password: this.configService.get('organizations.DNA.apiAdminPwd'),
-                                },
+                            await this.guardianService.accessToken(
+                                refreshToken,
                             );
+                        } catch (err) {
+                            // login the API user
+                            await this.guardianService.login({
+                                username: apiUser,
+                                password: this.configService.get(
+                                    'organizations.DNA.apiAdminPwd',
+                                ),
+                            });
                         }
 
                         // call guardian functio nto get document
-                        const document = await this.guardianService.getGridDataUsingRefId(event.gridType, event.documentRefId, apiUser, true);
-                        
+                        const document =
+                            await this.guardianService.getGridDataUsingRefId(
+                                event.gridType,
+                                event.documentRefId,
+                                apiUser,
+                                true,
+                            );
+
                         // this.logger.log(`DOCUMENT: ${JSON.stringify(document)}}`)
 
                         // check if eventID is present in document eventID list
                         if (document?.eventIds?.includes(event.id)) {
-                            const queryRunner = this.dataSource.createQueryRunner();
+                            const queryRunner =
+                                this.dataSource.createQueryRunner();
                             await queryRunner.connect();
 
                             try {
@@ -105,11 +118,19 @@ export class ReplicatorService implements OnModuleInit {
                                     );
                                 }
                             }
-                        } else if (document || event.type === EventTypeEnum.CREATE) {
+                        } else if (
+                            document ||
+                            event.type === EventTypeEnum.CREATE
+                        ) {
                             // Mark the event as failed if the max duration has passed to verify data
-                            if (Date.now() > event.task.lastUpdateTime + (event.maxVerifyDurationSec * 1000)) {
+                            if (
+                                Date.now() >
+                                event.task.lastUpdateTime +
+                                    event.maxVerifyDurationSec * 1000
+                            ) {
                                 // update the task as failed and mark the event as failed or rolledback (if needed)
-                                const queryRunner = this.dataSource.createQueryRunner();
+                                const queryRunner =
+                                    this.dataSource.createQueryRunner();
                                 await queryRunner.connect();
 
                                 try {
@@ -124,12 +145,17 @@ export class ReplicatorService implements OnModuleInit {
                                             }),
                                         );
                                     } else {
-                                        if (event.type === EventTypeEnum.CREATE) {
+                                        if (
+                                            event.type === EventTypeEnum.CREATE
+                                        ) {
                                             // Rollback the record (of table name) to previous state
-                                            const delData = await queryRunner.manager.delete(
-                                                event.affectedTableName,
-                                                { id: event.affectedRecordId },
-                                            );
+                                            const delData =
+                                                await queryRunner.manager.delete(
+                                                    event.affectedTableName,
+                                                    {
+                                                        id: event.affectedRecordId,
+                                                    },
+                                                );
 
                                             this.logger.log(
                                                 // eslint-disable-next-line max-len
@@ -143,12 +169,14 @@ export class ReplicatorService implements OnModuleInit {
                                                 event.previousState,
                                             );
                                         }
-                                        
+
                                         // Update the event status to ROLLEDBACK
                                         await queryRunner.manager.update(
                                             EventEntity,
                                             { id: event.id },
-                                            plainToClass(EventEntity, { status: EventStateEnum.ROLLEDBACK }),
+                                            plainToClass(EventEntity, {
+                                                status: EventStateEnum.ROLLEDBACK,
+                                            }),
                                         );
                                     }
 
@@ -156,8 +184,10 @@ export class ReplicatorService implements OnModuleInit {
                                     await queryRunner.manager.update(
                                         TaskEntity,
                                         { id: event.task.id },
-                                        plainToClass(TaskEntity, { state: TaskEnum.FAILED })
-                                    )
+                                        plainToClass(TaskEntity, {
+                                            state: TaskEnum.FAILED,
+                                        }),
+                                    );
 
                                     // Commit
                                     await queryRunner.commitTransaction();
@@ -192,9 +222,9 @@ export class ReplicatorService implements OnModuleInit {
                                             `[REPLICATOR]: Verification failed. Rolledback data. Event ID: ${event.id}, Table: ${event.affectedTableName}, Record ID: ${event.affectedRecordId}`,
                                         );
                                     }
-                                    
                                 } else {
-                                    const queryRunner = this.dataSource.createQueryRunner();
+                                    const queryRunner =
+                                        this.dataSource.createQueryRunner();
                                     await queryRunner.connect();
                                     try {
                                         await queryRunner.startTransaction();
@@ -202,15 +232,19 @@ export class ReplicatorService implements OnModuleInit {
                                         await queryRunner.manager.update(
                                             EventEntity,
                                             { id: event.id },
-                                            plainToClass(EventEntity, { status: EventStateEnum.FAILED }),
+                                            plainToClass(EventEntity, {
+                                                status: EventStateEnum.FAILED,
+                                            }),
                                         );
 
                                         // Update the task as failed
                                         await queryRunner.manager.update(
                                             TaskEntity,
                                             { id: event.task.id },
-                                            plainToClass(TaskEntity, { state: TaskEnum.FAILED })
-                                        )
+                                            plainToClass(TaskEntity, {
+                                                state: TaskEnum.FAILED,
+                                            }),
+                                        );
 
                                         this.logger.log(
                                             // eslint-disable-next-line max-len
@@ -218,7 +252,7 @@ export class ReplicatorService implements OnModuleInit {
                                         );
 
                                         await queryRunner.commitTransaction();
-                                    } catch(err) {
+                                    } catch (err) {
                                         await queryRunner.rollbackTransaction();
                                         this.logger.error(
                                             `[REPLICATOR]: Error while updating task to FAILED. Event ID: ${event.id}, Task ID: ${event.task.id}`,
@@ -236,7 +270,6 @@ export class ReplicatorService implements OnModuleInit {
                                             );
                                         }
                                     }
-                                    
                                 }
                             }
                         }
@@ -252,10 +285,11 @@ export class ReplicatorService implements OnModuleInit {
 
                                 if (event.type === EventTypeEnum.CREATE) {
                                     // Rollback the record (of table name) to previous state
-                                    const delData = await queryRunner.manager.delete(
-                                        event.affectedTableName,
-                                        { id: event.affectedRecordId },
-                                    );
+                                    const delData =
+                                        await queryRunner.manager.delete(
+                                            event.affectedTableName,
+                                            { id: event.affectedRecordId },
+                                        );
 
                                     this.logger.log(
                                         // eslint-disable-next-line max-len
@@ -274,7 +308,9 @@ export class ReplicatorService implements OnModuleInit {
                                 await queryRunner.manager.update(
                                     EventEntity,
                                     { id: event.id },
-                                    plainToClass(EventEntity, { status: EventStateEnum.ROLLEDBACK }),
+                                    plainToClass(EventEntity, {
+                                        status: EventStateEnum.ROLLEDBACK,
+                                    }),
                                 );
 
                                 await queryRunner.commitTransaction();
@@ -308,18 +344,21 @@ export class ReplicatorService implements OnModuleInit {
                                     `[REPLICATOR]: Rolledback data. Event ID: ${event.id}, Table: ${event.affectedTableName}, Record ID: ${event.affectedRecordId}`,
                                 );
                             }
-
                         } else {
                             // Mark as failed
                             await this.eventRepository.update(
                                 { id: event.id },
-                                plainToClass(EventEntity, { status: EventStateEnum.FAILED }),
+                                plainToClass(EventEntity, {
+                                    status: EventStateEnum.FAILED,
+                                }),
                             );
                         }
                     }
                 }
             } catch (err) {
-                this.logger.error(`Error in replcator: ${err}\nstacktrace: ${err.stack}`);
+                this.logger.error(
+                    `Error in replcator: ${err}\nstacktrace: ${err.stack}`,
+                );
             }
         }
     }
