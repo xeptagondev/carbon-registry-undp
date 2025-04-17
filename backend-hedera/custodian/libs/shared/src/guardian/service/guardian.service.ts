@@ -84,7 +84,7 @@ export class GuardianService {
         }
     }
 
-    private async validateGuardianCall(
+    public async validateGuardianCall(
         email: string,
         isEmailDisable: boolean = false,
         queryRunner: QueryRunner = null,

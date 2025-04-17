@@ -296,6 +296,21 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         try {
             await queryRunner.startTransaction();
 
+            await this.guardianService.validateGuardianCall(
+                this.configService.get('sru.username'),
+                true,
+                null,
+                120,
+            );
+
+            if (requestUser) {
+                await this.guardianService.validateGuardianCall(
+                    requestUser.email,
+                    false,
+                    queryRunner,
+                );
+            }
+
             let user: UsersEntity;
 
             user = await queryRunner.manager.findOneBy(UsersEntity, {
@@ -2331,6 +2346,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         await queryRunner.connect();
         try {
             await queryRunner.startTransaction();
+            await this.guardianService.validateGuardianCall(
+                requestUser.email,
+                false,
+                queryRunner,
+            );
             const userDetails = await queryRunner.manager.findOneBy(
                 UsersEntity,
                 {
@@ -2387,7 +2407,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             let asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'UserService',
                 functionName: 'guardianUpdateUserDetails',
-                args: [userDetails, userUpdateDto, requestUser, events.id],
+                args: [userUpdateDto, requestUser, events.id],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
                 retryUntilSuccess: false,
@@ -2414,12 +2434,29 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     async guardianUpdateUserDetails(
-        userDetails: UsersEntity,
         userUpdateDto: UserUpdateDto,
         requestUser: JWTPayload,
         eventId: number,
     ) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
         try {
+            await queryRunner.startTransaction();
+
+            const userDetails = await queryRunner.manager.findOneBy(
+                UsersEntity,
+                {
+                    id: userUpdateDto.id,
+                },
+            );
+
+            if (!userDetails) {
+                throw new HttpException(
+                    'User not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
             const userVcDocument =
                 await this.guardianService.getGridDocumentUsingRefId(
                     GridTypeEnum.USER_GRID,
@@ -2454,9 +2491,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     document: { ...userData },
                     ref: null,
                 },
+                queryRunner,
             );
+            await queryRunner.commitTransaction();
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.BAD_REQUEST);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 

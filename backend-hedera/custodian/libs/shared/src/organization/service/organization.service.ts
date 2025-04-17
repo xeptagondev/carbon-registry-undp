@@ -615,6 +615,12 @@ export class OrganizationService extends SuperService<
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
+            await queryRunner.startTransaction();
+            await this.guardianService.validateGuardianCall(
+                user.email,
+                false,
+                queryRunner,
+            );
             const orgId = dto.companyId;
 
             // Check if the user is of the same organization
@@ -702,7 +708,7 @@ export class OrganizationService extends SuperService<
             const asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'OrganizationService',
                 functionName: 'guardianUpdate',
-                args: [dto, orgEnt, user, events.id],
+                args: [dto, orgId, user, events.id],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
                 retryUntilSuccess: false,
@@ -738,11 +744,32 @@ export class OrganizationService extends SuperService<
 
     async guardianUpdate(
         dto: any,
-        orgEnt: OrganizationEntity,
+        orgId: number,
         user: JWTPayload,
         eventId: number,
     ) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
         try {
+            await queryRunner.startTransaction();
+            const orgEnt = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: orgId },
+                    relations: {
+                        organizationType: true,
+                        users: true,
+                    },
+                },
+            );
+
+            if (!orgEnt) {
+                throw new HttpException(
+                    'Organisation not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
             const organizationVcDocument =
                 await this.guardianService.getGridDocumentUsingRefId(
                     GridTypeEnum.ORGANIZATION_GRID,
@@ -803,6 +830,7 @@ export class OrganizationService extends SuperService<
             await this.guardianService.saveDocument(user.email, blockName, {
                 document: { ...organizationData },
                 ref: null,
+                queryRunner,
             });
 
             const updatedOrganizationVcDocument =
@@ -820,8 +848,21 @@ export class OrganizationService extends SuperService<
                     user.email,
                 );
             }
+            await queryRunner.commitTransaction();
         } catch (err) {
+            await queryRunner.rollbackTransaction();
             throw new HttpException(err, HttpStatus.BAD_REQUEST);
+        } finally {
+            if (!queryRunner.isReleased) {
+                try {
+                    await queryRunner.release();
+                } catch (e) {
+                    this.logger.error(
+                        'Error occurred while releasing query runner',
+                        e,
+                    );
+                }
+            }
         }
     }
 
