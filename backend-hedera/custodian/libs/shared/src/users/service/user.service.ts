@@ -493,7 +493,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                err.message || 'Internal server error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         } finally {
             await this.releaseQueryRunner(queryRunner);
         }
@@ -2471,9 +2477,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             };
 
             return response;
-        } catch (e) {
+        } catch (err) {
             await queryRunner.rollbackTransaction();
-            throw new HttpException(e, HttpStatus.BAD_REQUEST);
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                err.message || 'Internal server error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         } finally {
             await this.releaseQueryRunner(queryRunner);
         }
