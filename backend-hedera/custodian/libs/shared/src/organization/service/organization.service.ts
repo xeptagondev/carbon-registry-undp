@@ -794,10 +794,16 @@ export class OrganizationService extends SuperService<
                     where: { id: orgEnt.id },
                 }),
             );
-        } catch (e) {
+        } catch (err) {
             await queryRunner.rollbackTransaction();
-            this.logger.error(`Error: ${e} \n Stacktrace: ${e.stack}`);
-            throw new HttpException(e, HttpStatus.BAD_REQUEST);
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                err.message || 'Internal server error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         } finally {
             if (!queryRunner.isReleased) {
                 try {
