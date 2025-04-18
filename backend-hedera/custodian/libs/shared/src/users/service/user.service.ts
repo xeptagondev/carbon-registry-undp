@@ -296,12 +296,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         try {
             await queryRunner.startTransaction();
 
-            await this.guardianService.validateGuardianCall(
-                this.configService.get('sru.username'),
-                true,
-                null,
-                120,
-            );
+            if (!userDto.hederaAccount && !userDto.hederaKey) {
+                await this.guardianService.validateGuardianCall(
+                    this.configService.get('sru.username'),
+                    true,
+                    null,
+                    userDto.company ? 240 : 120,
+                );
+            }
 
             if (requestUser) {
                 await this.guardianService.validateGuardianCall(
