@@ -421,6 +421,31 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             user = await queryRunner.manager.save(UsersEntity, userEntity);
 
+            const org: OrganizationEntity = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: {
+                        id: organization.id,
+                    },
+                    relations: {
+                        organizationType: true,
+                    },
+                },
+            );
+
+            const guardianRole = await this.getGuardianRole(
+                queryRunner,
+                org?.organizationType?.id,
+                userDto.role,
+            );
+
+            await this.updateUser(
+                queryRunner,
+                userDto,
+                organization,
+                guardianRole,
+            );
+
             let prevTask: TaskEntity = null;
             if (taskEntityId) {
                 prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
@@ -1790,28 +1815,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 },
             );
 
-            const orgType = await queryRunner.manager.findOne(
-                OrganizationTypeEntity,
-                {
-                    where: {
-                        name: userDto?.company?.companyRole,
-                    },
-                },
-            );
-
-            const guardianRole = await this.getGuardianRole(
-                queryRunner,
-                orgType.id,
-                userDto.role,
-            );
-
-            await this.updateUser(
-                queryRunner,
-                userDto,
-                orgEntity,
-                guardianRole,
-            );
-
             await this.guardianService.saveDocument(
                 userDto.email,
                 GUARDIAN_API.BLOCKS.CREATE_USER,
@@ -1879,14 +1882,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     },
                 },
             );
-
-            const guardianRole = await this.getGuardianRole(
-                queryRunner,
-                org?.organizationType?.id,
-                userDto.role,
-            );
-
-            await this.updateUser(queryRunner, userDto, org, guardianRole);
 
             await this.guardianService.saveDocument(
                 userDto.email,
