@@ -1395,7 +1395,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
                 let asyncTask: TaskEntity = plainToClass(TaskEntity, {
                     className: 'UserService',
-                    functionName: 'emailSedning',
+                    functionName: 'emailSending',
                     args: [userDto, isUserActive],
                     state: TaskEnum.PENDING,
                     retryAttemps: 3,
@@ -1479,7 +1479,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             let asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'UserService',
-                functionName: 'emailSedning',
+                functionName: 'emailSending',
                 args: [userDto, isUserActive],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
@@ -1507,7 +1507,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async emailSedning(userDto: UsersDTO, isUserActive: boolean) {
+    async emailSending(userDto: UsersDTO, isUserActive: boolean) {
         this.logger.log(
             `Step: For ${userDto.email} ${UserStageEnum.EMAIL_SENDING} for ${userDto.email} Started.`,
             this.loggerContext,
