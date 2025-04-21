@@ -518,13 +518,14 @@ export class VerificationDocumentService extends DocumentService {
                         userId: jwtData.userId,
                     };
 
-                    const asyncTask: TaskEntity = {
+                    const asyncTask: TaskEntity = plainToClass(TaskEntity, {
                         className: 'CarbonCreditService',
                         functionName: 'handleMintJob',
                         args: [payload],
                         retryAttemps: 1,
                         state: TaskEnum.PENDING,
-                    };
+                    });
+
 
                     await queryRunner.manager.save(TaskEntity, asyncTask);
 
