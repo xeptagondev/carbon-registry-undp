@@ -44,6 +44,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export class InfDocumentService extends DocumentService {
@@ -57,6 +58,7 @@ export class InfDocumentService extends DocumentService {
         private readonly objectionLetterGenerateService: ObjectionLetterGenerateService,
         fileHelperService: FileHelperService,
         hbarManagementService: HbarManagementService,
+        utilService: UtilService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
         logger: InstantLogger,
@@ -69,6 +71,7 @@ export class InfDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             hbarManagementService,
+            utilService,
             documentRepository,
             logger,
         );
@@ -97,6 +100,31 @@ export class InfDocumentService extends DocumentService {
 
         try {
             await queryRunner.startTransaction();
+
+            // Verify the action is allowed
+            if (
+                !(await this.utilService.isVerified(
+                    'OrganizationEntity',
+                    jwtData.organizationId,
+                ))
+            ) {
+                throw new HttpException(
+                    'Organisation not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
+
+            if (
+                !(await this.utilService.isVerified(
+                    'UsersEntity',
+                    jwtData.userId,
+                ))
+            ) {
+                throw new HttpException(
+                    'User not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
 
             const infData = dto.data;
             const createdBy: UsersEntity = await queryRunner.manager.findOne(
@@ -343,6 +371,14 @@ export class InfDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                documentEntity.refId,
+                jwtData,
+                queryRunner,
+            );
+
             const dnaAdminEmails = (await this.getDNAAdmins(queryRunner)).map(
                 (user) => user.email,
             );
