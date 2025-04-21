@@ -26,11 +26,11 @@ export class EventEntity {
     @Column({ type: 'json', nullable: true })
     previousState?: any;
 
-    @Column({ type: String, nullable: true })
-    affectedTableName?: string;
+    @Column({ type: String })
+    affectedTableName: string;
 
-    @Column({ type: Number, nullable: true })
-    affectedRecordId?: number;
+    @Column({ type: Number })
+    affectedRecordId: number;
 
     @Column({ type: Boolean, default: false })
     rollbackOnFail: boolean;

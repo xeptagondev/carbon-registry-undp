@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { EventEntity } from '@app/shared/event/entity/event.entity';
+import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class UtilService {
@@ -16,6 +19,7 @@ export class UtilService {
         private readonly policyBlocksRepository: Repository<PolicyBlocksEntity>,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
+        private readonly dataSource: DataSource,
         private readonly configService: ConfigService,
     ) {}
     private tagToIdMap: Record<string, string> = {};
@@ -156,5 +160,25 @@ export class UtilService {
         } catch (_) {
             throw new Error('Failed to execute getBlocksByBlockName');
         }
+    }
+
+    public async isVerified(
+        tableName: string,
+        recordId: number,
+    ): Promise<boolean> {
+        const events: EventEntity[] = await this.dataSource
+            .createEntityManager()
+            .find(EventEntity, {
+                where: {
+                    affectedTableName: tableName,
+                    affectedRecordId: recordId,
+                    status: EventStateEnum.PENDING,
+                },
+            });
+
+        if (events?.length > 0) {
+            return false;
+        }
+        return true;
     }
 }
