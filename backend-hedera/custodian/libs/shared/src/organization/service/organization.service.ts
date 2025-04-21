@@ -2,16 +2,12 @@
 import { SuperService } from '@app/core/service/super.service';
 import { FileHandlerInterface } from '@app/shared/file-handler/filehandler.interface';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
-import {
-    OrganizationSchemaDtos,
-    UserSchemaDtos,
-} from '@app/shared/guardian/dto/guardian-schema.dto';
+import { OrganizationSchemaDtos } from '@app/shared/guardian/dto/guardian-schema.dto';
 import {
     ButtonActionEnum,
     ButtonNameEnum,
 } from '@app/shared/guardian/enum/button-type.enum';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
-import { GuardianStateEnum } from '@app/shared/guardian/enum/guardian-state.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import {
     ORG_DEACTIVATE_HEADER,
@@ -30,7 +26,6 @@ import { RoleEnum } from '@app/shared/role/enum/role.enum';
 import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
 import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
-import { UserStageEnum } from '@app/shared/users/enum/user.stage.enum';
 import { DataExportCompanyDto } from '@app/shared/util/dto/data.export.company.dto';
 import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataListResponseDto } from '@app/shared/util/dto/data.list.response.dto';
@@ -43,11 +38,16 @@ import { UtilService } from '@app/shared/util/service/util.service';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindOptionsWhere, In, Not, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, Not, Repository } from 'typeorm';
 import { GetOrganizationsRequest } from '../dto/organizations-request.dto';
-import { GetOrganizationsResponse } from '../dto/organizations-response.dto';
 import { IDNameResponse } from '@app/shared/util/dto/id-name.response.dto';
 import { CreditBlocksEntity } from '@app/shared/carbon-credit-token/entity/credit.blocks.entity';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { plainToClass } from 'class-transformer';
+import { TaskEnum } from '@app/shared/task/enum/task.enum';
+import { EventEntity } from '@app/shared/event/entity/event.entity';
+import { EventTypeEnum } from '@app/shared/event/enum/event-type.enum';
+import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
 
 @Injectable()
 export class OrganizationService extends SuperService<
@@ -327,6 +327,7 @@ export class OrganizationService extends SuperService<
 
     async getOrganizationsByType(
         dto: Partial<OrganizationDto>,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         requestUser: JWTPayload,
     ): Promise<DataListResponseDto> {
         const filterWithCompanyStatesIn: OrganizationStateEnum[] = [
@@ -503,7 +504,6 @@ export class OrganizationService extends SuperService<
                             },
                             {
                                 isActive: UserStateConstant.ACTIVE,
-                                stage: UserStageEnum.APPROVE_USER,
                             },
                         )
                         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -616,147 +616,326 @@ export class OrganizationService extends SuperService<
     }
 
     async update(dto: any, user: JWTPayload): Promise<any> {
-        const orgId = dto.companyId;
-
-        // console.log(dto.companyId, user.organizationId);
-
-        // Check if the user is of the same organization
-        if (orgId != user.organizationId) {
-            throw new HttpException('Unauthorised', HttpStatus.UNAUTHORIZED);
-        }
-
-        const orgEnt = await this.organizationRepository.findOne({
-            where: { id: orgId },
-            relations: {
-                organizationType: true,
-                users: true,
-            },
-        });
-
-        if (!orgEnt) {
-            throw new HttpException(
-                'Organisation not found',
-                HttpStatus.BAD_REQUEST,
+        this.helperService.validateRequestUser(user);
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            await this.guardianService.validateGuardianCall(
+                user.email,
+                false,
+                queryRunner,
             );
-        }
+            const orgId = dto.companyId;
 
-        if (dto.logo && this.helperService.isBase64(dto.logo)) {
-            const response: any = await this.fileHandler.uploadFile(
-                `profile_images/${orgEnt.id}_${new Date().getTime()}.png`,
-                dto.logo,
-            );
-            if (response) {
-                dto.logo = response;
-            } else {
+            // Check if the user is of the same organization
+            if (orgId != user.organizationId) {
                 throw new HttpException(
-                    'Error while uploading company logo',
+                    'Unauthorised',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
+            const orgEnt = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: orgId },
+                    relations: {
+                        organizationType: true,
+                        users: true,
+                    },
+                },
+            );
+
+            if (!orgEnt) {
+                throw new HttpException(
+                    'Organisation not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const organizationVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgEnt.refId,
+                    user.email,
+                );
+
+            if (
+                !organizationVcDocument ||
+                !organizationVcDocument.document ||
+                !organizationVcDocument.document.credentialSubject ||
+                organizationVcDocument.document.credentialSubject.length === 0
+            ) {
+                throw new HttpException(
+                    'Organization grid not found',
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
             }
-        }
-        const editData: Partial<OrganizationEntity> = {
-            name: dto.name,
-            email: dto.email,
-            phoneNumber: dto.phoneNo,
-            website: dto.website,
-            faxNumber: dto.faxNo,
-            logo: dto.logo,
-            provinces: dto.provinces,
-            address: dto.address,
-            updatedTime: new Date().getTime(),
-        };
 
-        const organizationVcDocument =
-            await this.guardianService.getGridDocumentUsingRefId(
-                GridTypeEnum.ORGANIZATION_GRID,
-                orgEnt.refId,
-                user.email,
+            if (dto.logo && this.helperService.isBase64(dto.logo)) {
+                const response: any = await this.fileHandler.uploadFile(
+                    `profile_images/${orgEnt.id}_${new Date().getTime()}.png`,
+                    dto.logo,
+                );
+                if (response) {
+                    dto.logo = response;
+                } else {
+                    throw new HttpException(
+                        'Error while uploading company logo',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                }
+            }
+
+            const editData: Partial<OrganizationEntity> = {
+                name: dto.name,
+                email: dto.email,
+                phoneNumber: dto.phoneNo,
+                website: dto.website,
+                faxNumber: dto.faxNo,
+                logo: dto.logo,
+                provinces: dto.provinces,
+                address: dto.address,
+                updatedTime: new Date().getTime(),
+            };
+
+            if (
+                user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER ||
+                user.organizationRole ===
+                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                editData.paymentId = dto.paymentId;
+            }
+
+            await queryRunner.manager.update(
+                OrganizationEntity,
+                { id: orgEnt.id },
+                editData,
             );
 
-        if (
-            !organizationVcDocument ||
-            !organizationVcDocument.document ||
-            !organizationVcDocument.document.credentialSubject ||
-            organizationVcDocument.document.credentialSubject.length === 0
-        ) {
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'OrganizationService',
+                functionName: 'guardianOrganizationRevoke',
+                args: [orgEnt.refId, user],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+            });
+
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            const rollBackOrg = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: orgId },
+                },
+            );
+
+            let events: EventEntity = plainToClass(EventEntity, {
+                type: EventTypeEnum.UPDATE,
+                status: EventStateEnum.PENDING,
+                affectedTableName: 'OrganizationEntity',
+                previousState: rollBackOrg,
+                affectedRecordId: orgEnt.id,
+                rollbackOnFail: true,
+                maxVerifyDurationSec: 120,
+                documentRefId: orgEnt.refId,
+                gridType: GridTypeEnum.ORGANIZATION_GRID,
+            });
+
+            events = await queryRunner.manager.save(EventEntity, events);
+
+            const organizationData: OrganizationSchemaDtos =
+                new OrganizationSchemaDtos(
+                    organizationVcDocument.document.credentialSubject[0],
+                );
+
+            organizationData.name = dto.name;
+            organizationData.email = dto.email;
+            organizationData.phoneNumber = dto.phoneNo;
+            organizationData.website = dto.website;
+            organizationData.faxNumber = dto.faxNo;
+            organizationData.logo = dto.logo;
+            organizationData.provinces = dto.provinces;
+            organizationData.address = dto.address;
+            organizationData.updatedTime = new Date().getTime();
+            organizationData.eventIds = [
+                events.id,
+                ...(organizationData.eventIds || []),
+            ];
+
+            if (
+                user.organizationRole ===
+                    OrganizationTypeEnum.PROJECT_DEVELOPER ||
+                user.organizationRole ===
+                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                organizationData.paymentId = dto.paymentId;
+            }
+
+            const asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                className: 'OrganizationService',
+                functionName: 'guardianUpdateSaveDocument',
+                args: [],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: false,
+                millisBetweenAttempts: 3000,
+                events: [events],
+                previousTask: asyncTask,
+            });
+
+            asyncTaskTwo.args = [organizationData, orgId, user];
+
+            await queryRunner.manager.save(TaskEntity, asyncTaskTwo);
+
+            await queryRunner.commitTransaction();
+            return new DataResponseDto(
+                HttpStatus.OK,
+                await this.organizationRepository.findOne({
+                    where: { id: orgEnt.id },
+                }),
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
             throw new HttpException(
-                'Organization grid not found',
+                err.message || 'Internal server error',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            if (!queryRunner.isReleased) {
+                try {
+                    await queryRunner.release();
+                } catch (e) {
+                    this.logger.error(
+                        'Error occurred while releasing query runner',
+                        e,
+                    );
+                }
+            }
         }
+    }
 
-        const organizationData: OrganizationSchemaDtos =
-            new OrganizationSchemaDtos(
-                organizationVcDocument.document.credentialSubject[0],
-            );
+    async guardianOrganizationRevoke(orgRefId: string, user: JWTPayload) {
+        try {
+            const organizationVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgRefId,
+                    user.email,
+                );
 
-        organizationData.name = dto.name;
-        organizationData.email = dto.email;
-        organizationData.phoneNumber = dto.phoneNo;
-        organizationData.website = dto.website;
-        organizationData.faxNumber = dto.faxNo;
-        organizationData.logo = dto.logo;
-        organizationData.provinces = dto.provinces;
-        organizationData.address = dto.address;
-        organizationData.updatedTime = new Date().getTime();
+            if (
+                !organizationVcDocument ||
+                !organizationVcDocument.document ||
+                !organizationVcDocument.document.credentialSubject ||
+                organizationVcDocument.document.credentialSubject.length === 0
+            ) {
+                throw new HttpException(
+                    'Organization grid not found',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
 
-        if (
-            user.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER ||
-            user.organizationRole === OrganizationTypeEnum.INDEPENDENT_CERTIFIER
-        ) {
-            editData.paymentId = dto.paymentId;
-            organizationData.paymentId = dto.paymentId;
-        }
-
-        const blockName = orgEnt.organizationType.multiple
-            ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
-            : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
-
-        if (
-            organizationVcDocument.option.status !== GuardianStateEnum.REVOKED
-        ) {
             await this.guardianService.buttonActionRequest(
                 ButtonNameEnum.ORGANIZATION_REVOKE,
                 ButtonActionEnum.SUBMIT,
                 organizationVcDocument,
                 user.email,
             );
+        } catch (err) {
+            throw new HttpException(err, HttpStatus.BAD_REQUEST);
         }
+    }
 
-        await this.guardianService.saveDocument(user.email, blockName, {
-            document: { ...organizationData },
-            ref: null,
-        });
+    async guardianUpdateSaveDocument(
+        organizationData: OrganizationSchemaDtos,
+        orgId: number,
+        user: JWTPayload,
+    ) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
 
-        const updatedOrganizationVcDocument =
-            await this.guardianService.getGridDocumentUsingRefId(
-                GridTypeEnum.ORGANIZATION_GRID,
-                orgEnt.refId,
-                user.email,
+            const orgEnt = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: orgId },
+                    relations: {
+                        organizationType: true,
+                        users: true,
+                    },
+                },
             );
 
-        if (orgEnt.organizationType.multiple) {
-            await this.guardianService.buttonActionRequest(
-                ButtonNameEnum.ORGANIZATION_ACTIVE_REJECT,
-                ButtonActionEnum.APPROVE,
-                updatedOrganizationVcDocument,
+            const organizationVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgEnt.refId,
+                    user.email,
+                    true,
+                );
+
+            if (organizationVcDocument) {
+                throw new HttpException(
+                    'Organization document is not revoked',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            const blockName = orgEnt.organizationType.multiple
+                ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
+                : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
+
+            await this.guardianService.saveDocument(
                 user.email,
+                blockName,
+                {
+                    document: { ...organizationData },
+                    ref: null,
+                },
+                queryRunner,
             );
+
+            const updatedOrganizationVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.ORGANIZATION_GRID,
+                    orgEnt.refId,
+                    user.email,
+                );
+
+            if (orgEnt.organizationType.multiple) {
+                await this.guardianService.buttonActionRequest(
+                    ButtonNameEnum.ORGANIZATION_ACTIVE_REJECT,
+                    ButtonActionEnum.APPROVE,
+                    updatedOrganizationVcDocument,
+                    user.email,
+                );
+            }
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw new HttpException(err, HttpStatus.BAD_REQUEST);
+        } finally {
+            if (!queryRunner.isReleased) {
+                try {
+                    await queryRunner.release();
+                } catch (e) {
+                    this.logger.error(
+                        'Error occurred while releasing query runner',
+                        e,
+                    );
+                }
+            }
         }
-
-        const updatedOrgDataForUser: OrganizationSchemaDtos =
-            new OrganizationSchemaDtos(
-                updatedOrganizationVcDocument.document.credentialSubject[0],
-            );
-
-        await this.organizationRepository.update({ id: orgEnt.id }, editData);
-
-        return new DataResponseDto(
-            HttpStatus.OK,
-            await this.organizationRepository.findOne({
-                where: { id: orgEnt.id },
-            }),
-        );
     }
 
     async updateStatus(

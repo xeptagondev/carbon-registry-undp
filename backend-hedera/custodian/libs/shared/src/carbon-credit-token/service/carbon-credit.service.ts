@@ -1054,13 +1054,13 @@ export class CarbonCreditService {
                 userId: user.userId,
             };
 
-            const asyncTask: TaskEntity = {
+            const asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'CarbonCreditService',
                 functionName: 'handleTransferJob',
                 args: [payload],
                 retryAttemps: 1,
                 state: TaskEnum.PENDING,
-            };
+            });
             await queryRunner.manager.save(TaskEntity, asyncTask);
             await queryRunner.commitTransaction();
             return new DataResponseDto(
@@ -1168,13 +1168,13 @@ export class CarbonCreditService {
                     remarks: retireAction.remarks,
                     userId: user.userId,
                 };
-                const asyncTask: TaskEntity = {
+                const asyncTask: TaskEntity = plainToClass(TaskEntity, {
                     className: 'CarbonCreditService',
                     functionName: 'handleRetirementJob',
                     args: [payload],
                     retryAttemps: 1,
                     state: TaskEnum.PENDING,
-                };
+                });
                 await queryRunner.manager.save(TaskEntity, asyncTask);
             } else if (retireAction.action === RetirementActionEnum.CANCEL) {
                 this.logger.log(

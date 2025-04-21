@@ -22,6 +22,7 @@ import { LocationModule } from './location/location.module';
 import { CarbonCreditTokenModule } from './carbon-credit-token/carbon-credit-token.module';
 import { TaskModule } from './task/task.module';
 import { SerialNumberManagementModule } from './serial-number-management/serial-number-management.module';
+import { EventModule } from './event/event.module';
 import { HbarManagementModule } from './hbar-management/hbar-management.module';
 
 @Module({
@@ -51,6 +52,7 @@ import { HbarManagementModule } from './hbar-management/hbar-management.module';
         TaskModule,
         SerialNumberManagementModule,
         HbarManagementModule,
+        EventModule,
     ],
 })
 export class SharedModule {}
