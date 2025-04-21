@@ -38,6 +38,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { AdditionalDocType } from '../enum/additional.document.type';
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export class PddDocumentService extends DocumentService {
@@ -51,6 +52,7 @@ export class PddDocumentService extends DocumentService {
         fileHelperService: FileHelperService,
         logger: InstantLogger,
         hbarManagementService: HbarManagementService,
+        utilService: UtilService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
     ) {
@@ -62,6 +64,7 @@ export class PddDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             hbarManagementService,
+            utilService,
             documentRepository,
             logger,
         );
@@ -136,6 +139,14 @@ export class PddDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                lastINF.refId,
+                jwtData,
+                queryRunner,
+            );
+
             const pddData = dto.data;
 
             const additionalDocumentFields = [
@@ -351,6 +362,14 @@ export class PddDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                documentEntity.refId,
+                jwtData,
+                queryRunner,
+            );
+
             const assigneeOrgEmails: string[] =
                 documentEntity?.project?.assignees.map((user) => user.email);
 
