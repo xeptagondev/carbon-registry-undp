@@ -296,12 +296,14 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         try {
             await queryRunner.startTransaction();
 
-            await this.guardianService.validateGuardianCall(
-                this.configService.get('sru.username'),
-                true,
-                null,
-                120,
-            );
+            if (!userDto.hederaAccount && !userDto.hederaKey) {
+                await this.guardianService.validateGuardianCall(
+                    this.configService.get('sru.username'),
+                    true,
+                    null,
+                    userDto.company ? 240 : 120,
+                );
+            }
 
             if (requestUser) {
                 await this.guardianService.validateGuardianCall(
@@ -493,7 +495,13 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 ${JSON.stringify(err)}`,
                 this.loggerContext,
             );
-            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                err.message || 'Internal server error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         } finally {
             await this.releaseQueryRunner(queryRunner);
         }
@@ -1387,7 +1395,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
                 let asyncTask: TaskEntity = plainToClass(TaskEntity, {
                     className: 'UserService',
-                    functionName: 'emailSedning',
+                    functionName: 'emailSending',
                     args: [userDto, isUserActive],
                     state: TaskEnum.PENDING,
                     retryAttemps: 3,
@@ -1471,7 +1479,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             let asyncTask: TaskEntity = plainToClass(TaskEntity, {
                 className: 'UserService',
-                functionName: 'emailSedning',
+                functionName: 'emailSending',
                 args: [userDto, isUserActive],
                 state: TaskEnum.PENDING,
                 retryAttemps: 3,
@@ -1499,7 +1507,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async emailSedning(userDto: UsersDTO, isUserActive: boolean) {
+    async emailSending(userDto: UsersDTO, isUserActive: boolean) {
         this.logger.log(
             `Step: For ${userDto.email} ${UserStageEnum.EMAIL_SENDING} for ${userDto.email} Started.`,
             this.loggerContext,
@@ -2471,9 +2479,16 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             };
 
             return response;
-        } catch (e) {
+        } catch (err) {
             await queryRunner.rollbackTransaction();
-            throw new HttpException(e, HttpStatus.BAD_REQUEST);
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                err.message || 'Internal server error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         } finally {
             await this.releaseQueryRunner(queryRunner);
         }

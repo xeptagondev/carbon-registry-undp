@@ -142,6 +142,10 @@ export class GuardianService {
                 error.response.status,
             );
         } else {
+            this.logger.error(`Error: ${error} \n Stacktrace: ${error.stack}`);
+            if (error instanceof HttpException) {
+                throw error;
+            }
             throw new HttpException(
                 GUARDIAN_ERROR[HttpStatus.INTERNAL_SERVER_ERROR],
                 HttpStatus.INTERNAL_SERVER_ERROR,

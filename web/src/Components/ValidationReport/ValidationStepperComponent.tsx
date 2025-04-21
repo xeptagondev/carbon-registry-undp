@@ -118,12 +118,21 @@ const StepperComponent = (props: any) => {
       }
     } catch (error: any) {
       console.log('----------error----------', error);
-      message.open({
-        type: 'error',
-        content: 'Something went wrong',
-        duration: 4,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
+      if (error?.status === 500) {
+        message.open({
+          type: 'error',
+          content: t('common:somethingWentWrong'),
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } else {
+        message.open({
+          type: 'error',
+          content: error.message,
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      }
     } finally {
       setLoading(false);
     }

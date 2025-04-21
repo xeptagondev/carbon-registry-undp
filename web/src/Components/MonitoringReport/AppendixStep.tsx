@@ -91,13 +91,22 @@ export const AnnexureStep = (props: CustomStepsProps) => {
             next();
           }
         }
-      } catch (error) {
-        message.open({
-          type: 'error',
-          content: t('common:somethingWentWrong'),
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
+      } catch (error: any) {
+        if (error?.status === 500) {
+          message.open({
+            type: 'error',
+            content: t('common:somethingWentWrong'),
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+        } else {
+          message.open({
+            type: 'error',
+            content: error.message,
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+        }
       } finally {
         if (handleLoading) {
           handleLoading(false);
@@ -131,13 +140,22 @@ export const AnnexureStep = (props: CustomStepsProps) => {
             next();
           }
         }
-      } catch (error) {
-        message.open({
-          type: 'error',
-          content: t('common:somethingWentWrong'),
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
+      } catch (error: any) {
+        if (error?.status === 500) {
+          message.open({
+            type: 'error',
+            content: t('common:somethingWentWrong'),
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+        } else {
+          message.open({
+            type: 'error',
+            content: error.message,
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+        }
       } finally {
         if (handleLoading) {
           handleLoading(false);
