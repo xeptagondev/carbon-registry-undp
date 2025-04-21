@@ -541,7 +541,11 @@ export class OrganizationService extends SuperService<
                 }),
             );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
+        } catch (err) {
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
             throw new HttpException(
                 'Error occurred while approving the organization',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -584,9 +588,15 @@ export class OrganizationService extends SuperService<
                     email,
                     organizationApproveDto.remarks,
                 );
-            } catch (e) {
-                console.log(e);
-                throw e;
+            } catch (err) {
+                this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+                if (err instanceof HttpException) {
+                    throw err;
+                }
+                throw new HttpException(
+                    'Error occurred while rejecting the organization',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
             }
 
             await this.organizationRepository.update(
@@ -604,9 +614,15 @@ export class OrganizationService extends SuperService<
                     where: { id: orgEntity.id },
                 }),
             );
-        } catch (e) {
-            console.log(e);
-            throw e;
+        } catch (err) {
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                'Error occurred while rejecting the organization',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
