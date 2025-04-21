@@ -645,6 +645,13 @@ export class OrganizationService extends SuperService<
                 },
             );
 
+            const rollBackOrg = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: orgId },
+                },
+            );
+
             if (!orgEnt) {
                 throw new HttpException(
                     'Organisation not found',
@@ -736,13 +743,6 @@ export class OrganizationService extends SuperService<
             });
 
             asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
-
-            const rollBackOrg = await queryRunner.manager.findOne(
-                OrganizationEntity,
-                {
-                    where: { id: orgId },
-                },
-            );
 
             let events: EventEntity = plainToClass(EventEntity, {
                 type: EventTypeEnum.UPDATE,
