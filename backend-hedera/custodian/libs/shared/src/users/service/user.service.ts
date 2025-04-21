@@ -2265,7 +2265,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         passwordUpdateDto: PasswordUpdateDto,
         requestUser: JWTPayload,
     ) {
+        // Verify the action is allowed
         this.helperService.validateRequestUser(requestUser);
+        await this.utilService.verifyRequestUser(requestUser);
 
         const userDetails = await this.usersRepository.findOneBy({
             email: requestUser.email,
@@ -2370,6 +2372,20 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 throw new HttpException(
                     'No visible user found',
                     HttpStatus.NOT_FOUND,
+                );
+            }
+
+            // Verify the action is allowed
+            await this.utilService.verifyRequestUser(requestUser);
+            if (
+                !(await this.utilService.isVerified(
+                    'UsersEntity',
+                    userDetails.id,
+                ))
+            ) {
+                throw new HttpException(
+                    'User not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
                 );
             }
 
@@ -2590,7 +2606,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         userId: number,
         requestUser: JWTPayload,
     ): Promise<HTTPResponseDto> {
+        // Verify the action is allowed
         this.helperService.validateRequestUser(requestUser);
+        await this.utilService.verifyRequestUser(requestUser);
         const actionUserDetails = await this.usersRepository.findOne({
             where: { id: requestUser.userId },
             relations: {

@@ -4,9 +4,10 @@ import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
 import { PolicyBlocksEntity } from '@app/shared/policy-block/entity/policy-blocks.entity';
 import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
@@ -179,6 +180,29 @@ export class UtilService {
         if (events?.length > 0) {
             return false;
         }
+        return true;
+    }
+
+    public async verifyRequestUser(requestUser: JWTPayload): Promise<boolean> {
+        if (
+            !(await this.isVerified(
+                'OrganizationEntity',
+                requestUser.organizationId,
+            ))
+        ) {
+            throw new HttpException(
+                'Organisation not verified',
+                HttpStatus.NOT_ACCEPTABLE,
+            );
+        }
+
+        if (!(await this.isVerified('UsersEntity', requestUser.userId))) {
+            throw new HttpException(
+                'User not verified',
+                HttpStatus.NOT_ACCEPTABLE,
+            );
+        }
+
         return true;
     }
 }

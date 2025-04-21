@@ -611,7 +611,10 @@ export class OrganizationService extends SuperService<
     }
 
     async update(dto: any, user: JWTPayload): Promise<any> {
+        // Verify the action is allowed
         this.helperService.validateRequestUser(user);
+        await this.utilService.verifyRequestUser(user);
+
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -646,6 +649,18 @@ export class OrganizationService extends SuperService<
                 throw new HttpException(
                     'Organisation not found',
                     HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            if (
+                !(await this.utilService.isVerified(
+                    'OrganizationEntity',
+                    orgEnt.id,
+                ))
+            ) {
+                throw new HttpException(
+                    'Organisation not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
                 );
             }
 
@@ -959,6 +974,9 @@ export class OrganizationService extends SuperService<
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
+
+        // Verify the action is allowed
+        await this.utilService.verifyRequestUser(requestData);
 
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
