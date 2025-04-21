@@ -564,12 +564,9 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
               </div>
               {/* Technical reviewer table end */}
 
-              <Row
-                justify={"end"}
-                className="step-actions-end mg-top-2 mg-bottom-2"
-              >
-                <Button danger size={"large"} disabled={false} onClick={prev}>
-                  {t("validationReport:prev")}
+              <Row justify={'end'} className="step-actions-end mg-top-2 mg-bottom-2">
+                <Button danger size={'large'} disabled={false} onClick={prev}>
+                  {t('validationReport:prev')}
                 </Button>
                 {disableFields ? (
                   <Button type="primary" size={'large'} disabled={false} onClick={next}>
