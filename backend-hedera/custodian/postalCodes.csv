@@ -1,97 +1,84 @@
 Name,City,Country,District,DS Division,Latitude,Longitude,Language
-32280,Addalachchenai,LK,Ampara,Addalachchenai,7.2239,81.8366,en
+100,Colombo 1 (Fort),LK,Colombo,Colombo 1 (Fort),6.9271,79.8612,en
+200,Colombo 2 (Slave Island),LK,Colombo,Colombo 2 (Slave Island),6.9271,79.8612,en
+300,Colombo 3 (Kollupitiya),LK,Colombo,Colombo 3 (Kollupitiya),6.9271,79.8612,en
+400,Colombo 4 (Bambalapitiya),LK,Colombo,Colombo 4 (Bambalapitiya),6.9271,79.8612,en
+500,Colombo 5 (Havelock Town),LK,Colombo,Colombo 5 (Havelock Town),6.9271,79.8612,en
+600,Colombo 6 (Wellawatte),LK,Colombo,Colombo 6 (Wellawatte),6.9271,79.8612,en
+700,Colombo 7 (Cinnamon Gardens),LK,Colombo,Colombo 7 (Cinnamon Gardens),6.9271,79.8612,en
+800,Colombo 8 (Borella),LK,Colombo,Colombo 8 (Borella),6.9271,79.8612,en
+900,Colombo 9 (Dematagoda),LK,Colombo,Colombo 9 (Dematagoda),6.9271,79.8612,en
+1000,Colombo 10 (Maradana),LK,Colombo,Colombo 10 (Maradana),6.9271,79.8612,en
+1100,Colombo 11 (Pettah),LK,Colombo,Colombo 11 (Pettah),6.9271,79.8612,en
+1200,Colombo 12 (Hulftsdorp),LK,Colombo,Colombo 12 (Hulftsdorp),6.9271,79.8612,en
+1300,Colombo 13 (Kotahena),LK,Colombo,Colombo 13 (Kotahena),6.9271,79.8612,en
+1400,Colombo 14 (Grandpass),LK,Colombo,Colombo 14 (Grandpass),6.9271,79.8612,en
+1500,Colombo 15 (Mutwal),LK,Colombo,Colombo 15 (Mutwal),6.9271,79.8612,en
+10350,Dehiwala,LK,Colombo,Dehiwala,6.8444,79.8650,en
+10370,Mount Lavinia,LK,Colombo,Mount Lavinia,6.8283,79.8630,en
+10400,Moratuwa,LK,Colombo,Moratuwa,6.7730,79.8815,en
+10390,Ratmalana,LK,Colombo,Ratmalana,6.8194,79.8802,en
+11000,Gampaha,LK,Gampaha,Gampaha,7.0902,79.9940,en
+11500,Negombo,LK,Gampaha,Negombo,7.2083,79.8358,en
+12000,Kalutara,LK,Kalutara,Kalutara,6.5831,79.9607,en
+12400,Horana,LK,Kalutara,Horana,6.7167,80.0667,en
+20000,Kandy,LK,Kandy,Kandy,7.2906,80.6337,en
+20400,Peradeniya,LK,Kandy,Peradeniya,7.2627,80.5981,en
+20500,Gampola,LK,Kandy,Gampola,7.1646,80.5706,en
+20300,Kadugannawa,LK,Kandy,Kadugannawa,7.2546,80.5239,en
+20180,Digana,LK,Kandy,Digana,7.3005,80.7558,en
+21000,Matale,LK,Matale,Matale,7.4675,80.6234,en
+21100,Dambulla,LK,Matale,Dambulla,7.8717,80.6520,en
+21200,Galewela,LK,Matale,Galewela,7.7833,80.5667,en
+21300,Ukuwela,LK,Matale,Ukuwela,7.4167,80.6833,en
+22200,Nuwara Eliya,LK,Nuwara Eliya,Nuwara Eliya,6.9708,80.7829,en
+22000,Hatton,LK,Nuwara Eliya,Hatton,6.8994,80.5934,en
+22100,Talawakele,LK,Nuwara Eliya,Talawakele,6.9340,80.6692,en
+20680,Ginigathhena,LK,Nuwara Eliya,Ginigathhena,6.9633,80.5333,en
+32000,Ampara,LK,Ampara,Ampara,7.2964,81.6745,en
+32300,Kalmunai,LK,Ampara,Kalmunai,7.4167,81.8167,en
 32400,Akkaraipattu,LK,Ampara,Akkaraipattu,7.2167,81.8500,en
-32000,Ampara,LK,Ampara,Ampara,7.2910,81.6724,en
-60730,Galnewa,LK,Anuradhapura,Galnewa,8.0667,80.3667,en
-50490,Galenbindunuwewa,LK,Anuradhapura,Galenbindunuwewa,8.3833,80.6167,en
-50450,Horowpothana,LK,Anuradhapura,Horowpothana,8.7500,80.8833,en
-90000,Badulla,LK,Badulla,Badulla,6.9930,81.0550,en
-90100,Bandarawela,LK,Badulla,Bandarawela,6.8294,80.9872,en
-90090,Ella,LK,Badulla,Ella,6.8667,81.0500,en
-30300,Eravur Pattu,LK,Batticaloa,Eravur Pattu,7.7667,81.6000,en
-30100,Kattankudy,LK,Batticaloa,Kattankudy,7.6833,81.7000,en
-30200,Koralai Pattu,LK,Batticaloa,Koralai Pattu,7.9167,81.5333,en
-00100,Colombo,LK,Colombo,Colombo,6.9271,79.8612,en
-10350,Dehiwala,LK,Colombo,Dehiwala,6.8705,79.9753,en
-10400,Moratuwa,LK,Colombo,Moratuwa,6.7602,79.9873,en
-10310,Kesbewa,LK,Colombo,Kesbewa,6.8323,79.9674,en
-10100,Kotte,LK,Colombo,Kotte,6.9272,79.9582,en
-10250,Nugegoda,LK,Colombo,Nugegoda,6.9272,79.9754,en
-10370,Mount Lavinia,LK,Colombo,Mount Lavinia,6.8687,79.9721,en
-11300,Wattala,LK,Colombo,Wattala,6.9736,79.9810,en
-10300,Piliyandala,LK,Colombo,Piliyandala,6.8371,79.9609,en
-10120,Battaramulla,LK,Colombo,Battaramulla,6.9272,79.9811,en
-10200,Homagama,LK,Colombo,Homagama,6.8400,80.0028,en
-80100,Akmeemana,LK,Galle,Akmeemana,6.0531,80.2103,en
-80300,Ambalangoda,LK,Galle,Ambalangoda,6.2359,80.0535,en
-80200,Baddegama,LK,Galle,Baddegama,6.1833,80.1333,en
-11100,Attanagalla,LK,Gampaha,Attanagalla,7.1500,80.1000,en
-11600,Biyagama,LK,Gampaha,Biyagama,6.9333,79.9500,en
-11250,Divulapitiya,LK,Gampaha,Divulapitiya,7.2500,80.0333,en
-82100,Ambalantota,LK,Hambantota,Ambalantota,6.1225,81.0269,en
-82260,Angunakolapelessa,LK,Hambantota,Angunakolapelessa,6.1675,80.9458,en
-82400,Beliatta,LK,Hambantota,Beliatta,6.0481,80.7342,en
-11700,Delft,LK,Jaffna,Delft,9.5167,79.6833,en
-40000,Jaffna,LK,Jaffna,Jaffna,9.6615,80.0255,en
-42550,Nallur,LK,Jaffna,Nallur,9.6750,80.0222,en
-12200,Agalawatta,LK,Kalutara,Agalawatta,6.5333,80.1333,en
-12500,Bandaragama,LK,Kalutara,Bandaragama,6.7167,80.0000,en
-12070,Beruwala,LK,Kalutara,Beruwala,6.4781,79.9828,en
-20850,Akurana,LK,Kandy,Akurana,7.3667,80.6000,en
-20630,Delthota,LK,Kandy,Delthota,7.1833,80.7000,en
-20620,Doluwa,LK,Kandy,Doluwa,7.2000,80.6500,en
-71540,Aranayaka,LK,Kegalle,Aranayaka,7.1500,80.4500,en
-71350,Dehiovita,LK,Kegalle,Dehiovita,6.9500,80.2667,en
-43000,Kandavalai,LK,Kilinochchi,Kandavalai,9.5333,80.4000,en
-43500,Karachchi,LK,Kilinochchi,Karachchi,9.4000,80.4000,en
-60280,Alawwa,LK,Kurunegala,Alawwa,7.3167,80.2333,en
-60650,Ambanpola,LK,Kurunegala,Ambanpola,7.9000,80.2500,en
-60350,Bamunakotuwa,LK,Kurunegala,Bamunakotuwa,7.6000,80.3000,en
-41000,Madhu,LK,Mannar,Madhu,8.8500,80.2500,en
-41999,Mannar,LK,Mannar,Mannar,8.9833,79.9000,en
-71100,Manthai West,LK,Mannar,Manthai West,9.0000,79.8333,en
-21000,Ambanganga Korale,LK,Matale,Ambanganga Korale,7.5833,80.7500,en
-21100,Dambulla,LK,Matale,Dambulla,7.8600,80.6517,en
-21200,Galewela,LK,Matale,Galewela,7.7833,80.5833,en
-81400,Akuressa,LK,Matara,Akuressa,6.1000,80.4500,en
-81450,Athuraliya,LK,Matara,Athuraliya,6.0667,80.5000,en
-81160,Devinuwara,LK,Matara,Devinuwara,5.9333,80.5833,en
-91070,Badalkumbura,LK,Moneragala,Badalkumbura,6.9167,81.2333,en
-91500,Bibile,LK,Moneragala,Bibile,7.0333,81.2167,en
-42000,Maritimepattu,LK,Mullaitivu,Maritimepattu,9.2667,80.7167,en
-4412065,Oddusuddan,LK,Mullaitivu,Oddusuddan,9.1667,80.583
-20668,Ambagamuwa,LK,Nuwara Eliya,Ambagamuwa,7.0000,80.6000,en
-20730,Hanguranketha,LK,Nuwara Eliya,Hanguranketha,7.1333,80.7667,en
-20560,Kothmale,LK,Nuwara Eliya,Kothmale,7.0833,80.6500,en
-51000,Dimbulagala,LK,Polonnaruwa,Dimbulagala,7.8500,81.1333,en
+32200,Sammanthurai,LK,Ampara,Sammanthurai,7.3667,81.8333,en
+30000,Batticaloa,LK,Batticaloa,Batticaloa,7.7102,81.6924,en
+30100,Kattankudy,LK,Batticaloa,Kattankudy,7.6833,81.7333,en
+30300,Eravur,LK,Batticaloa,Eravur,7.7667,81.6000,en
+30400,Valachchenai,LK,Batticaloa,Valachchenai,7.8994,81.5661,en
+31000,Trincomalee,LK,Trincomalee,Trincomalee,8.5760,81.2330,en
+31100,Kinniya,LK,Trincomalee,Kinniya,8.4833,81.1833,en
+31200,Muttur,LK,Trincomalee,Muttur,8.4500,81.2667,en
+50000,Anuradhapura,LK,Anuradhapura,Anuradhapura,8.3114,80.4037,en
+50300,Mihintale,LK,Anuradhapura,Mihintale,8.3752,80.5070,en
+50100,Kekirawa,LK,Anuradhapura,Kekirawa,8.0356,80.5950,en
+51000,Polonnaruwa,LK,Polonnaruwa,Polonnaruwa,7.9403,81.0188,en
 51400,Hingurakgoda,LK,Polonnaruwa,Hingurakgoda,8.0500,80.9500,en
-61000,Chilaw,LK,Puttalam,Chilaw,7.5758,79.7956,en
-31000,Trincomalee,LK,Trincomalee,Trincomalee,8.5711,81.2335,en  
-31100,Kinniya,LK,Trincomalee,Kinniya,8.4981,81.1779,en  
-31300,Kantale,LK,Trincomalee,Kantale,8.3683,81.0281,en  
-31200,Muttur,LK,Trincomalee,Muttur,8.4667,81.2833,en  
-31010,Nilaveli,LK,Trincomalee,Nilaveli,8.6764,81.1945,en  
-31014,Kuchchaveli,LK,Trincomalee,Kuchchaveli,8.8146,81.0990,en  
-31026,Gomarankadawala,LK,Trincomalee,Gomarankadawala,8.5833,81.0000,en  
-31028,Morawewa,LK,Trincomalee,Morawewa,8.5833,81.1333,en  
-31260,Seruwila,LK,Trincomalee,Seruwila,8.3833,81.2833,en  
-31236,Echchilampattai,LK,Trincomalee,Echchilampattai,8.4167,81.4000,en
-43999,Vavuniya,LK,Vavuniya,Vavuniya,8.7514,80.4971,en
-43010,Nedunkeni,LK,Vavuniya,Nedunkeni,9.0167,80.6667,en
-43020,Cheddikulam,LK,Vavuniya,Cheddikulam,8.7167,80.2667,en
-43050,Omanthai,LK,Vavuniya,Omanthai,8.9000,80.4667,en
-61500,Anamaduwa,LK,Puttalam,Anamaduwa,7.8786,80.0080,en
-60243,Arachchikattuwa,LK,Puttalam,Arachchikattuwa,7.5833,79.8167,en
-51258,Elahera,LK,Polonnaruwa,Elahera,7.7167,80.8167,en
-91100,Buttala,LK,Moneragala,Buttala,6.7608,81.2488,en
-71230,Bulathkohupitiya,LK,Kegalle,Bulathkohupitiya,7.1032,80.3344,en
+51500,Medirigiriya,LK,Polonnaruwa,Medirigiriya,8.1833,80.9167,en
+60000,Kurunegala,LK,Kurunegala,Kurunegala,7.4863,80.3621,en
+60200,Kuliyapitiya,LK,Kurunegala,Kuliyapitiya,7.4667,80.0333,en
+60160,Pannala,LK,Kurunegala,Pannala,7.3833,80.0333,en
+61300,Puttalam,LK,Puttalam,Puttalam,8.0333,79.8333,en
+61200,Chilaw,LK,Puttalam,Chilaw,7.5833,79.8000,en
+61170,Wennappuwa,LK,Puttalam,Wennappuwa,7.3000,79.8500,en
+40000,Jaffna,LK,Jaffna,Jaffna,9.6685,80.0074,en
+40500,Point Pedro,LK,Jaffna,Point Pedro,9.8167,80.2333,en
+41000,Mannar,LK,Mannar,Mannar,8.9833,79.9000,en
+41012,Pesalai,LK,Mannar,Pesalai,9.0500,79.7333,en
+42000,Mullaitivu,LK,Mullaitivu,Mullaitivu,9.2674,80.8128,en
+42400,Puthukudiyiruppu,LK,Mullaitivu,Puthukudiyiruppu,9.3833,80.7667,en
+43000,Vavuniya,LK,Vavuniya,Vavuniya,8.7500,80.5000,en
+43052,Omanthai,LK,Vavuniya,Omanthai,8.8500,80.4667,en
+44000,Kilinochchi,LK,Kilinochchi,Kilinochchi,9.4000,80.4000,en
+44300,Paranthan,LK,Kilinochchi,Paranthan,9.4333,80.4167,en
+71000,Kegalle,LK,Kegalle,Kegalle,7.2514,80.3464,en
+71600,Warakapola,LK,Kegalle,Warakapola,7.1500,80.2500,en
 70000,Ratnapura,LK,Ratnapura,Ratnapura,6.6828,80.3992,en
-70200,Embilipitiya,LK,Ratnapura,Embilipitiya,6.3366,80.8486,en
-70100,Balangoda,LK,Ratnapura,Balangoda,6.6635,80.7045,en
-70070,Pelmadulla,LK,Ratnapura,Pelmadulla,6.6031,80.5530,en
-70500,Kuruwita,LK,Ratnapura,Kuruwita,6.8000,80.3600,en
-70600,Eheliyagoda,LK,Ratnapura,Eheliyagoda,6.8833,80.2000,en
-70160,Godakawela,LK,Ratnapura,Godakawela,6.5333,80.5833,en
-70450,Kalawana,LK,Ratnapura,Kalawana,6.5333,80.4000,en
-70550,Nivitigala,LK,Ratnapura,Nivitigala,6.3667,80.6000,en
-70400,Opanayaka,LK,Ratnapura,Opanayaka,6.4167,80.3667,en
+70100,Balangoda,LK,Ratnapura,Balangoda,6.6470,80.7042,en
+80000,Galle,LK,Galle,Galle,6.0535,80.2210,en
+80300,Ambalangoda,LK,Galle,Ambalangoda,6.2394,80.0533,en
+81000,Matara,LK,Matara,Matara,5.9485,80.5353,en
+81700,Weligama,LK,Matara,Weligama,5.9736,80.4292,en
+82000,Hambantota,LK,Hambantota,Hambantota,6.1240,81.1185,en
+82200,Tangalle,LK,Hambantota,Tangalle,6.0228,80.7916,en
+90000,Badulla,LK,Badulla,Badulla,6.9896,81.0552,en
+90100,Bandarawela,LK,Badulla,Bandarawela,6.8316,80.9936,en
+91000,Monaragala,LK,Monaragala,Monaragala,6.8804,81.3509,en
+91200,Wellawaya,LK,Monaragala,Wellawaya,6.7351,81.1015,en

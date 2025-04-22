@@ -40,6 +40,7 @@ import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 import validator from 'validator';
+import { toMoment } from '../../Utils/convertTime';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -73,6 +74,7 @@ export const PURPOSE_CREDIT_DEVELOPMENT: { [key: string]: string } = {
 
 const INF_SECTOR: { [key: string]: string } = {
   ENERGY: 'Energy',
+  AGRICULTURE: 'Agriculture',
   HEALTH: 'Health',
   EDUCATION: 'Education',
   TRANSPORT: 'Transport',
@@ -80,25 +82,41 @@ const INF_SECTOR: { [key: string]: string } = {
   HOSPITALITY: 'Hospitality',
   FORESTRY: 'Forestry',
   WASTE: 'Waste',
+  OTHER: 'Other',
 };
 
 export const INF_SECTORAL_SCOPE: { [key: string]: string } = {
-  ENERGY_INDUSTRIES: 'Energy Industries (Renewable)',
+  ENERGY_INDUSTRIES: 'Energy Industries (Renewable – / Non-Renewable Sources) ',
   ENERGY_DISTRIBUTION: 'Energy Distribution',
   ENERGY_DEMAND: 'Energy Demand',
+  AGRICULTURE: 'Agriculture',
+  AFFORESTATION_AND_REFORESTATION: 'Afforestation and Reforestation',
   MANUFACTURING_INDUSTRIES: 'Manufacturing Industries',
   CHEMICAL_INDUSTRIES: 'Chemical Industries',
-  CONSTRUCTION: 'Construction',
-  TRANSPORT: 'Transport',
-  MINING_MINERAL_PRODUCTION: 'Mining/Mineral Production',
   METAL_PRODUCTION: 'Metal Production',
-  FUGITIVE_EMISSIONS_FUELS: 'Fugitive Emissions from fuels',
+  TRANSPORT: 'Transport',
+  WASTE_FROM_FUELS: 'Fugitive Emissions from Fuels (Solid, Oil and Gas) ',
+  WASTE_HANDLING_AND_DISPOSAL: 'Waste Handling and Disposal',
+  CONSTRUCTION: 'Construction',
+  MINING_MINERAL_PRODUCTION: 'Mining/Mineral Production',
   FUGITIVE_EMISSIONS_PRODUCTION:
     'Fugitive Emissions from Production and Consumption of Halocarbons and Sulphur Hexafluoride',
   SOLVENT_USE: 'Solvent Use',
-  WASTE_HANDLING_AND_DISPOSAL: 'Waste Handling and Disposal',
-  AFFORESTATION_AND_REFORESTATION: 'Afforestation and Reforestation',
-  AGRICULTURE: 'Agriculture',
+};
+
+const SECTOR_TO_SCOPES_MAP: { [key: string]: string[] } = {
+  ENERGY: ['ENERGY_INDUSTRIES', 'ENERGY_DISTRIBUTION', 'ENERGY_DEMAND'],
+  AGRICULTURE: ['AGRICULTURE'],
+  FORESTRY: ['AFFORESTATION_AND_REFORESTATION'],
+  MANUFACTURING: ['MANUFACTURING_INDUSTRIES', 'CHEMICAL_INDUSTRIES', 'METAL_PRODUCTION'],
+  TRANSPORT: ['TRANSPORT'],
+  WASTE: ['WASTE_HANDLING_AND_DISPOSAL', 'WASTE_FROM_FUELS'],
+  OTHER: [
+    'CONSTRUCTION',
+    'MINING_MINERAL_PRODUCTION',
+    'FUGITIVE_EMISSIONS_PRODUCTION',
+    'SOLVENT_USE',
+  ],
 };
 
 export const ProgrammeCreationComponent = (props: any) => {
@@ -127,7 +145,7 @@ export const ProgrammeCreationComponent = (props: any) => {
   const [countries, setCountries] = useState<[]>([]);
   const [isCountryListLoading, setIsCountryListLoading] = useState(false);
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
-
+  const [selectedSector, setSelectedSector] = useState<string>();
   const [formValues, setFormValues] = useState<any>(undefined);
   const [showDialog, setShowDialog] = useState<boolean>(false);
 
@@ -315,6 +333,11 @@ export const ProgrammeCreationComponent = (props: any) => {
     return e?.fileList;
   };
 
+  const hasValidScopes =
+    selectedSector &&
+    Array.isArray(SECTOR_TO_SCOPES_MAP[selectedSector]) &&
+    SECTOR_TO_SCOPES_MAP[selectedSector].length > 0;
+
   const t = translator.t;
 
   useEffect(() => {
@@ -337,7 +360,7 @@ export const ProgrammeCreationComponent = (props: any) => {
               briefProjectDescription: data.projectDescription,
               optionalDocuments: mapBase64ToFields(data?.additionalDocuments),
               projectLocation: data.geographicalLocationCoordinates,
-              startTime: moment.unix(data?.startDate),
+              startTime: toMoment(data?.startDate),
             };
             form.setFieldsValue(viewData);
           }
@@ -365,6 +388,7 @@ export const ProgrammeCreationComponent = (props: any) => {
 
     const body: any = {
       title: values?.title,
+      sector: values?.sector,
       sectoralScope: values?.sectoralScope,
       province: values?.province || 'test',
       district: values?.district || 'test',
@@ -402,6 +426,7 @@ export const ProgrammeCreationComponent = (props: any) => {
           ...body,
         },
       };
+      console.log('-------------temp vals INF-----------', tempValues);
       const res = await post(API_PATHS.ADD_DOCUMENT, tempValues);
       if (res?.statusText === 'SUCCESS') {
         message.open({
@@ -520,7 +545,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Input size="large" disabled={disableFields} />
                               </Form.Item>
 
-                              {/* <Form.Item
+                              <Form.Item
                                 label={t('addProgramme:sector')}
                                 name="sector"
                                 rules={[
@@ -547,12 +572,22 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Select
                                   size="large"
                                   placeholder={t('addProgramme:sectorPlaceholder')}
+                                  disabled={disableFields}
+                                  onChange={(value) => {
+                                    setSelectedSector(value);
+                                    const hasScopes = SECTOR_TO_SCOPES_MAP[value]?.length > 0;
+                                    form.setFieldsValue({
+                                      sectoralScope: hasScopes ? undefined : 'N/A',
+                                    });
+                                  }}
                                 >
                                   {Object.keys(INF_SECTOR).map((key) => (
-                                    <Select.Option value={key}>{INF_SECTOR[key]}</Select.Option>
+                                    <Select.Option key={key} value={key}>
+                                      {INF_SECTOR[key]}
+                                    </Select.Option>
                                   ))}
                                 </Select>
-                              </Form.Item> */}
+                              </Form.Item>
 
                               <Form.Item
                                 label={t('addProgramme:sectoralScope')}
@@ -581,13 +616,15 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 <Select
                                   size="large"
                                   placeholder={t('addProgramme:sectoralScopePlaceholder')}
-                                  disabled={disableFields}
+                                  disabled={disableFields || !hasValidScopes}
                                 >
-                                  {Object.keys(INF_SECTORAL_SCOPE).map((key) => (
-                                    <Select.Option value={key}>
-                                      {INF_SECTORAL_SCOPE[key]}
-                                    </Select.Option>
-                                  ))}
+                                  {(hasValidScopes ? SECTOR_TO_SCOPES_MAP[selectedSector] : []).map(
+                                    (key) => (
+                                      <Select.Option key={key} value={key}>
+                                        {INF_SECTORAL_SCOPE[key]}
+                                      </Select.Option>
+                                    )
+                                  )}
                                 </Select>
                               </Form.Item>
 
@@ -1138,8 +1175,9 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 />
                               </Form.Item>
 
+                              <div className="custom-label">{t('addProgramme:documentUpload')}</div>
                               <Form.Item
-                                label={t('addProgramme:documentUpload')}
+                                // label={t('addProgramme:documentUpload')}
                                 name="optionalDocuments"
                                 valuePropName="fileList"
                                 getValueFromEvent={normFile}
@@ -1147,15 +1185,15 @@ export const ProgrammeCreationComponent = (props: any) => {
                                 rules={[
                                   {
                                     validator: async (rule, file) => {
-                                      if (file?.length > 0) {
+                                      for (let i = 0; i < file?.length; i++) {
                                         if (
                                           !isValidateFileType(
-                                            file[0]?.type,
+                                            file[i]?.type,
                                             DocType.ENVIRONMENTAL_IMPACT_ASSESSMENT
                                           )
                                         ) {
                                           throw new Error(`${t('addProgramme:invalidFileFormat')}`);
-                                        } else if (file[0]?.size > maximumImageSize) {
+                                        } else if (file[i]?.size > maximumImageSize) {
                                           // default size format of files would be in bytes -> 1MB = 1000000bytes
                                           throw new Error(`${t('common:maxSizeVal')}`);
                                         }
@@ -1169,7 +1207,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   beforeUpload={(file: any) => {
                                     return false;
                                   }}
-                                  className="design-upload-section"
+                                  className="design-upload-section-inf"
                                   name="design"
                                   action="/upload.do"
                                   listType="picture"

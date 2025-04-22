@@ -43,6 +43,7 @@ import {
 } from './viewDataMap';
 import { Loading } from '../Loading/loading';
 import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
+import { toMoment } from '../../Utils/convertTime';
 
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
@@ -76,6 +77,8 @@ const StepperComponent = (props: VerificationStepProps) => {
   const [verificationOpinionForm] = useForm();
   const [certificationStatementForm] = useForm();
   const [appendixForm] = useForm();
+
+  const [maxNetGHGReduction, setMaxNetGHGReduction] = useState<number>();
 
   const [values, setValues] = useState({
     projectRefId: id,
@@ -179,6 +182,13 @@ const StepperComponent = (props: VerificationStepProps) => {
     const emReduction = netEmReductions?.yearlyGHGEmissionReductions;
 
     if (programmeData && pddData && validationData && monitoringData) {
+      const tempNetGHGEmisisionReduction =
+        validationData?.ghgProjectDescription?.totalNetEmissionReductions;
+
+      console.log('-----------temp netGHG---------', tempNetGHGEmisisionReduction);
+
+      setMaxNetGHGReduction(Number(tempNetGHGEmisisionReduction));
+
       const docVersions = state?.documents?.[DocumentEnum.VERIFICATION as any]?.version;
       console.log('------------docVersions-----------', docVersions);
       console.log('--------state---------', state);
@@ -205,8 +215,8 @@ const StepperComponent = (props: VerificationStepProps) => {
         estimatedNetEmissionReductions: emReduction.map((item: any) => {
           return {
             ...item,
-            startDate: item?.startDate ? moment.unix(item?.startDate) : undefined,
-            endDate: item?.endDate ? moment.unix(item?.endDate) : undefined,
+            startDate: item?.startDate ? toMoment(item?.startDate) : undefined,
+            endDate: item?.endDate ? toMoment(item?.endDate) : undefined,
           };
         }),
         totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
@@ -652,6 +662,7 @@ const StepperComponent = (props: VerificationStepProps) => {
           prev={prev}
           disableFields={disableFields}
           // countries={countries}
+          maxNetGHGReduction={maxNetGHGReduction}
           handleValuesUpdate={handleValuesUpdate}
         />
       ),
