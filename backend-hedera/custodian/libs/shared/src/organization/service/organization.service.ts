@@ -461,6 +461,25 @@ export class OrganizationService extends SuperService<
                     email,
                 );
 
+            if (!pendingDocument) {
+                throw new HttpException(
+                    'Organisation Document not Found',
+                    HttpStatus.NOT_FOUND,
+                );
+            }
+
+            if (
+                !(await this.utilService.isVerified(
+                    'OrganizationEntity',
+                    orgEntity.id,
+                ))
+            ) {
+                throw new HttpException(
+                    'Organisation not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
+
             await this.guardianService.buttonActionRequest(
                 ButtonNameEnum.ORGANIZATION_ACTIVE_REJECT,
                 ButtonActionEnum.APPROVE,
@@ -580,6 +599,25 @@ export class OrganizationService extends SuperService<
                         orgEntity.refId,
                         email,
                     );
+
+                if (!pendingDocument) {
+                    throw new HttpException(
+                        'Organisation Document not Found',
+                        HttpStatus.NOT_FOUND,
+                    );
+                }
+
+                if (
+                    !(await this.utilService.isVerified(
+                        'OrganizationEntity',
+                        orgEntity.id,
+                    ))
+                ) {
+                    throw new HttpException(
+                        'Organisation not verified',
+                        HttpStatus.NOT_ACCEPTABLE,
+                    );
+                }
 
                 await this.guardianService.buttonActionRequest(
                     ButtonNameEnum.ORGANIZATION_ACTIVE_REJECT,
