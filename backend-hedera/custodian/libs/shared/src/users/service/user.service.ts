@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { SuperService } from '@app/core/service/super.service';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
@@ -64,6 +64,10 @@ import { TaskEnum } from '@app/shared/task/enum/task.enum';
 import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
 import { CreditBlocksEntity } from '@app/shared/carbon-credit-token/entity/credit.blocks.entity';
+import { plainToClass, plainToInstance } from 'class-transformer';
+import { EventEntity } from '@app/shared/event/entity/event.entity';
+import { EventTypeEnum } from '@app/shared/event/enum/event-type.enum';
+import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -80,16 +84,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         private readonly logger: InstantLogger,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
-        @InjectRepository(TaskEntity)
-        private readonly taskRepository: Repository<TaskEntity>,
-        @InjectRepository(GuardianRoleEntity)
-        private readonly guardianRoleRepository: Repository<GuardianRoleEntity>,
-        @InjectRepository(RoleEntity)
-        private readonly roleRepository: Repository<RoleEntity>,
-        @InjectRepository(OrganizationEntity)
-        private readonly organizationRepository: Repository<OrganizationEntity>,
-        @InjectRepository(OrganizationTypeEntity)
-        private readonly organizationTypeRepository: Repository<OrganizationTypeEntity>,
         private readonly dataSource: DataSource,
     ) {
         super(usersRepository);
@@ -163,65 +157,68 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
     }
 
     async updateUser(
+        queryRunner: QueryRunner,
         userDTO: UsersDTO,
         orgEntity: OrganizationEntity,
         guardRole: GuardianRoleEntity,
     ): Promise<boolean> {
-        await this.usersRepository.update(
+        await queryRunner.manager.update(
+            UsersEntity,
             {
                 email: userDTO.email,
             },
-            {
+            plainToClass(UsersEntity, {
                 updatedTime: new Date().getTime(),
                 organization: orgEntity,
                 guardianRole: guardRole,
-            },
+            }),
         );
 
         return true;
     }
 
-    private async getGuardianRole(orgTypeId: number, userRole: string) {
+    private async getGuardianRole(
+        queryRunner: QueryRunner,
+        orgTypeId: number,
+        userRole: string,
+    ) {
         const orgType: OrganizationTypeEntity =
-            await this.organizationTypeRepository.findOneBy({
+            await queryRunner.manager.findOneBy(OrganizationTypeEntity, {
                 id: orgTypeId,
             });
 
-        const role: RoleEntity = await this.roleRepository.findOneBy({
-            name: userRole,
-        });
+        const role: RoleEntity = await queryRunner.manager.findOneBy(
+            RoleEntity,
+            {
+                name: userRole,
+            },
+        );
 
         // get guardian role
         const guardRole: GuardianRoleEntity =
-            await this.guardianRoleRepository.findOneBy({
+            await queryRunner.manager.findOneBy(GuardianRoleEntity, {
                 organizationType: orgType,
                 role: role,
             });
         return guardRole;
     }
 
-    private async findUser(email: string) {
-        const user: UsersEntity = await this.usersRepository.findOne({
-            where: {
-                email: email,
-            },
-        });
-
-        return user;
-    }
-
-    async checkForOrganizationDuplicates(
+    async checkOrgDuplicates(
+        queryRunner: QueryRunner,
         email: string,
         taxId: string,
         paymentId: string,
     ) {
-        const existingOrganization = await this.organizationRepository.findOne({
-            where: [
-                { email: email },
-                { taxId: taxId },
-                { paymentId: paymentId },
-            ],
-        });
+        const existingOrganization = await queryRunner.manager.findOne(
+            OrganizationEntity,
+            {
+                where: [
+                    { email: email },
+                    { taxId: taxId },
+                    { paymentId: paymentId },
+                ],
+            },
+        );
 
         if (existingOrganization) {
             let errorMessage = 'This organisation already exists';
@@ -241,8 +238,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
-    async checkForUserDuplicates(email: string, hederaAccount: string) {
-        const existingUser = await this.usersRepository.findOne({
+    async checkForUserDuplicates(
+        queryRunner: QueryRunner,
+        email: string,
+        hederaAccount: string,
+    ) {
+        const existingUser = await queryRunner.manager.findOne(UsersEntity, {
             where: [{ email: email }, { hederaAccount: hederaAccount }],
         });
 
@@ -265,440 +266,143 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         defaultPass: string = '',
         isUserActive: boolean,
         requestUser?: JWTPayload,
+        taskEntityId?: number,
     ): Promise<HTTPResponseDto> {
-        const user = await this.findUser(userDto.email);
-        if (user) {
-            await this.guardianService.login({
-                username: userDto.email,
-                password: decryptPayload(
-                    user.password,
-                    this.configService.get<string>('security.pwdSecret'),
-                )?.password,
-            });
-        }
-        return this.registerUserFlow(
+        return await this.validationsAndDataBaseSave(
             userDto,
-            user?.stage || UserStageEnum.REGISTER,
             defaultPass,
             isUserActive,
             requestUser,
+            taskEntityId,
         );
     }
 
-    public async registerUserFlow(
+    // --------------- User Registration Main Steps ---------------------------
+
+    async validationsAndDataBaseSave(
         userDto: UsersDTO,
-        currentStage: UserStageEnum | string,
         defaultPass = '',
         isUserActive: boolean,
         requestUser?: JWTPayload,
+        taskEntityId?: number,
     ): Promise<HTTPResponseDto> {
-        this.utilService.setTagToIdMap();
         this.logger.log(
-            `Received a request for email ${userDto.email} at stage ${currentStage}`,
+            `Step: For ${userDto.email} ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} Started.`,
             this.loggerContext,
         );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
 
-        while (!(currentStage == UserStageEnum.COMPLETED)) {
-            try {
-                switch (currentStage) {
-                    case UserStageEnum.REGISTER: {
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.REGISTER} started`,
-                            this.loggerContext,
-                        );
-                        const existing = await this.startUserRegistration(
-                            userDto,
-                            defaultPass,
-                            isUserActive,
-                        );
-                        await this.guardianService.login({
-                            username: userDto.email,
-                            password: decryptPayload(
-                                existing.password,
-                                this.configService.get<string>(
-                                    'security.pwdSecret',
-                                ),
-                            )?.password,
-                        });
+        try {
+            await queryRunner.startTransaction();
 
-                        await this.registerProcessSave(
-                            userDto,
-                            UserStageEnum.ASSIGN_REGISTRY,
-                        );
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.REGISTER} completed; 
-                             next step: ${UserStageEnum.ASSIGN_REGISTRY}`,
-                            this.loggerContext,
-                        );
-                        currentStage = existing.stage
-                            ? existing.stage
-                            : UserStageEnum.ASSIGN_REGISTRY;
-                        break;
-                    }
-                    case UserStageEnum.ASSIGN_REGISTRY: {
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.ASSIGN_REGISTRY} started`,
-                            this.loggerContext,
-                        );
-
-                        // Check if Hedera account exists; if not, generate it
-                        if (!userDto.hederaAccount && !userDto.hederaKey) {
-                            const accGenTaskId =
-                                await this.guardianService.generateHederaAccount(
-                                    userDto.email,
-                                );
-                            const hederaAccResult =
-                                await this.guardianService.fetchAsyncTaskResponse(
-                                    accGenTaskId.taskId,
-                                    userDto.email,
-                                );
-
-                            // If no immediate result, add task and return
-                            if (!hederaAccResult) {
-                                const asyncTask: TaskEntity = {
-                                    className: 'UserService',
-                                    functionName: 'updateGuardianUserConfig',
-                                    args: [
-                                        userDto,
-                                        requestUser,
-                                        isUserActive,
-                                        accGenTaskId.taskId,
-                                        undefined,
-                                    ],
-                                    retryAttemps: 2,
-                                    state: TaskEnum.PENDING,
-                                };
-                                await this.taskRepository.save(asyncTask);
-                                return {
-                                    statusCode: HttpStatus.OK,
-                                    message: userDto.company
-                                        ? 'Successfully added task to create organization with admin user'
-                                        : 'Successfully added task to create the user',
-                                };
-                            } else {
-                                const nextStage =
-                                    await this.updateGuardianUserConfig(
-                                        userDto,
-                                        requestUser,
-                                        isUserActive,
-                                        undefined,
-                                        hederaAccResult,
-                                    );
-                                if (
-                                    nextStage === UserStageEnum.ASSIGN_REGISTRY
-                                ) {
-                                    return {
-                                        statusCode: HttpStatus.OK,
-                                        message: userDto.company
-                                            ? 'Successfully added task to create organization with admin user'
-                                            : 'Successfully added task to create the user',
-                                    };
-                                } else if (
-                                    nextStage === UserStageEnum.ASSIGN_POLICY
-                                ) {
-                                    currentStage = UserStageEnum.ASSIGN_POLICY;
-                                }
-                            }
-                        } else {
-                            const nextStage =
-                                await this.updateGuardianUserConfig(
-                                    userDto,
-                                    requestUser,
-                                    isUserActive,
-                                    undefined,
-                                    undefined,
-                                );
-                            if (nextStage === UserStageEnum.ASSIGN_REGISTRY) {
-                                return {
-                                    statusCode: HttpStatus.OK,
-                                    message: userDto.company
-                                        ? 'Successfully added task to create organization with admin user'
-                                        : 'Successfully added task to create the user',
-                                };
-                            } else if (
-                                nextStage === UserStageEnum.ASSIGN_POLICY
-                            ) {
-                                currentStage = UserStageEnum.ASSIGN_POLICY;
-                            }
-                        }
-
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.ASSIGN_REGISTRY} completed; 
-                             next step: ${UserStageEnum.ASSIGN_POLICY}`,
-                            this.loggerContext,
-                        );
-                        break;
-                    }
-
-                    case UserStageEnum.ASSIGN_POLICY: {
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.ASSIGN_POLICY} started`,
-                            this.loggerContext,
-                        );
-                        await this.guardianService.assignPolicyToUser(
-                            userDto.email,
-                            true,
-                        );
-                        await this.registerProcessSave(
-                            userDto,
-                            UserStageEnum.CREATE_GROUP_TYPE,
-                        );
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.ASSIGN_POLICY} completed;
-                             next step: ${UserStageEnum.CREATE_GROUP_TYPE}`,
-                            this.loggerContext,
-                        );
-                        currentStage = UserStageEnum.CREATE_GROUP_TYPE;
-                        break;
-                    }
-
-                    case UserStageEnum.CREATE_GROUP_TYPE: {
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.CREATE_GROUP_TYPE} started`,
-                            this.loggerContext,
-                        );
-                        const existing = await this.findUser(userDto.email);
-                        const decryptedPassword = decryptPayload(
-                            existing.password,
-                            this.configService.get<string>(
-                                'security.pwdSecret',
-                            ),
-                        )?.password;
-
-                        if (userDto.company) {
-                            await this.checkForOrganizationDuplicates(
-                                userDto.company.email,
-                                userDto.company.taxId,
-                                userDto.company.paymentId,
-                            );
-                            const groupTypeBlock =
-                                await this.utilService.getBlocksByBlockName(
-                                    GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
-                                    this.configService.get('policy.id'),
-                                );
-                            await this.guardianService.createGroupType(
-                                userDto.email,
-                                decryptedPassword,
-                                groupTypeBlock?.blockId,
-                                {
-                                    group: userDto.company.companyRole,
-                                    label: userDto.company.name,
-                                },
-                            );
-                        }
-                        await this.registerProcessSave(
-                            userDto,
-                            UserStageEnum.CREATE_GROUP,
-                        );
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.CREATE_GROUP_TYPE} completed; 
-                            next step: ${UserStageEnum.CREATE_GROUP}`,
-                            this.loggerContext,
-                        );
-                        currentStage = UserStageEnum.CREATE_GROUP;
-                        break;
-                    }
-
-                    case UserStageEnum.CREATE_GROUP: {
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.CREATE_GROUP} started`,
-                            this.loggerContext,
-                        );
-                        if (userDto.company) {
-                            if (
-                                !userDto?.company?.hederaAccountId &&
-                                !userDto?.company?.hederaAccountKey
-                            ) {
-                                const accGenTaskId =
-                                    await this.guardianService.generateHederaAccount(
-                                        userDto.email,
-                                    );
-                                const hederaAccResult =
-                                    await this.guardianService.fetchAsyncTaskResponse(
-                                        accGenTaskId.taskId,
-                                        userDto.email,
-                                    );
-
-                                // If no immediate result, add task and return
-                                if (!hederaAccResult) {
-                                    const asyncTask: TaskEntity = {
-                                        className: 'UserService',
-                                        functionName: 'hederaOrgAccountStatus',
-                                        args: [
-                                            accGenTaskId.taskId,
-                                            userDto,
-                                            isUserActive,
-                                            requestUser,
-                                        ],
-                                        retryAttemps: 2,
-                                        state: TaskEnum.PENDING,
-                                    };
-                                    await this.taskRepository.save(asyncTask);
-                                    return {
-                                        statusCode: HttpStatus.OK,
-                                        message: userDto.company
-                                            ? 'Successfully added task to create organization with admin user'
-                                            : 'Successfully added task to create the user',
-                                    };
-                                } else {
-                                    await this.registerOrganizationInGuardian(
-                                        userDto,
-                                        isUserActive,
-                                        hederaAccResult,
-                                        false,
-                                        requestUser,
-                                    );
-                                }
-                            } else {
-                                await this.registerOrganizationInGuardian(
-                                    userDto,
-                                    isUserActive,
-                                    undefined,
-                                    false,
-                                    requestUser,
-                                );
-                            }
-                        }
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.CREATE_GROUP} completed; 
-                             next step: ${UserStageEnum.CREATE_USER}`,
-                            this.loggerContext,
-                        );
-                        currentStage = UserStageEnum.CREATE_USER;
-                        break;
-                    }
-
-                    case UserStageEnum.CREATE_USER: {
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.CREATE_USER} started`,
-                            this.loggerContext,
-                        );
-                        if (userDto.company) {
-                            await this.finalizeOrganizationUser(userDto);
-                        } else {
-                            await this.inviteNewUser(userDto, requestUser);
-                        }
-                        if (isUserActive) {
-                            await this.registerProcessSave(
-                                userDto,
-                                UserStageEnum.APPROVE_USER,
-                            );
-                            this.logger.log(
-                                `Registration step ${UserStageEnum.CREATE_USER} completed; 
-                                 next step: ${UserStageEnum.APPROVE_USER}`,
-                                this.loggerContext,
-                            );
-                            currentStage = UserStageEnum.APPROVE_USER;
-                        } else {
-                            await this.sendRegistrationEmails(userDto, false);
-                            await this.registerProcessSave(
-                                userDto,
-                                UserStageEnum.COMPLETED,
-                            );
-                            this.logger.log(
-                                `Registration step ${UserStageEnum.CREATE_USER} completed; 
-                                 next step: ${UserStageEnum.COMPLETED}`,
-                                this.loggerContext,
-                            );
-                            currentStage = UserStageEnum.COMPLETED;
-                        }
-
-                        break;
-                    }
-
-                    case UserStageEnum.APPROVE_USER: {
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.APPROVE_USER} started`,
-                            this.loggerContext,
-                        );
-                        if (userDto.company) {
-                            const orgEntity =
-                                await this.organizationRepository.findOne({
-                                    where: { email: userDto.company.email },
-                                });
-                            if (
-                                requestUser?.organizationRole ===
-                                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
-                                (requestUser?.userRole === RoleEnum.Admin ||
-                                    requestUser?.userRole === RoleEnum.Root)
-                            ) {
-                                await this.orgaisationService.approve(
-                                    requestUser?.email,
-                                    orgEntity.id,
-                                    { remarks: '' },
-                                );
-                            }
-                        }
-
-                        await this.sendRegistrationEmails(userDto, true);
-                        await this.registerProcessSave(
-                            userDto,
-                            UserStageEnum.COMPLETED,
-                        );
-                        this.logger.log(
-                            `Registration step ${UserStageEnum.APPROVE_USER} completed; flow finished.`,
-                            this.loggerContext,
-                        );
-                        currentStage = UserStageEnum.COMPLETED;
-                        break;
-                    }
-
-                    default:
-                        throw new Error(
-                            `Unknown registration stage: ${currentStage}`,
-                        );
-                }
-            } catch (error) {
-                this.logger.error(
-                    `Error at stage ${currentStage}: ${error.message}`,
-                );
-                throw new HttpException(
-                    `Registration failed at stage ${currentStage}: ${error.message}`,
-                    HttpStatus.INTERNAL_SERVER_ERROR,
+            if (!userDto.hederaAccount && !userDto.hederaKey) {
+                await this.guardianService.validateGuardianCall(
+                    this.configService.get('sru.username'),
+                    true,
+                    null,
+                    userDto.company ? 240 : 120,
                 );
             }
-        }
-        return {
-            statusCode: HttpStatus.OK,
-            message: userDto.company
-                ? 'Successfully created organization with admin user'
-                : 'Successfully created the user',
-        };
-    }
 
-    private async startUserRegistration(
-        userDto: UsersDTO,
-        defaultPass = '',
-        isUserActive: boolean,
-    ): Promise<UsersEntity> {
-        const existing = await this.findUser(userDto.email);
+            if (requestUser) {
+                await this.guardianService.validateGuardianCall(
+                    requestUser.email,
+                    false,
+                    queryRunner,
+                );
+            }
 
-        // If user is already at COMPLETED stage, block re-registration
-        if (existing && existing.stage === UserStageEnum.COMPLETED) {
-            throw new HttpException(
-                `Account creation failed: The email ${userDto.email} is already registered.`,
-                HttpStatus.FORBIDDEN,
+            let user: UsersEntity;
+
+            user = await queryRunner.manager.findOneBy(UsersEntity, {
+                email: userDto.email,
+            });
+
+            // If user is already at COMPLETED stage, block re-registration
+            if (user) {
+                throw new HttpException(
+                    `Account creation failed: The email ${userDto.email} is already registered.`,
+                    HttpStatus.FORBIDDEN,
+                );
+            }
+
+            const decryptedPassword = defaultPass || generatePassword(8);
+            const encryptedPassword = encryptPayload(
+                { password: decryptedPassword },
+                this.configService.get<string>('security.pwdSecret'),
             );
-        }
 
-        const decryptedPassword = defaultPass || generatePassword(8);
-        const encryptedPassword = encryptPayload(
-            { password: decryptedPassword },
-            this.configService.get<string>('security.pwdSecret'),
-        );
-
-        // If no local user record, register new user in Guardian
-        if (!existing) {
             // Check duplicates before Guardian signup
+            let organization: OrganizationEntity;
+            if (userDto.company) {
+                await this.checkOrgDuplicates(
+                    queryRunner,
+                    userDto.company.email,
+                    userDto.company.taxId,
+                    userDto.company.paymentId,
+                );
+
+                const orgCreateTime = new Date().getTime();
+                // Create organization in Guardian
+                const orgType = await queryRunner.manager.findOne(
+                    OrganizationTypeEntity,
+                    {
+                        where: { name: userDto?.company?.companyRole },
+                    },
+                );
+
+                const orgEntity = new OrganizationEntity();
+                orgEntity.name = userDto.company.name;
+                orgEntity.organizationType = orgType;
+                orgEntity.email = userDto?.company?.email;
+                orgEntity.taxId = userDto?.company?.taxId;
+                orgEntity.state = OrganizationStateEnum.PENDING;
+                orgEntity.hederaAccountId = userDto?.company?.hederaAccountId;
+                orgEntity.hederaAccountKey = userDto?.company?.hederaAccountKey;
+                orgEntity.phoneNumber = userDto?.company?.phoneNo;
+                orgEntity.paymentId = userDto?.company?.paymentId;
+                orgEntity.faxNumber = userDto?.company?.faxNo;
+                orgEntity.provinces = userDto?.company?.provinces;
+                orgEntity.website = userDto?.company?.website;
+                orgEntity.address = userDto?.company?.address;
+                orgEntity.createdTime = orgCreateTime;
+                orgEntity.updatedTime = new Date().getTime();
+
+                // iii. Save organization
+                organization = await queryRunner.manager.save(
+                    OrganizationEntity,
+                    orgEntity,
+                );
+
+                if (
+                    userDto?.company?.logo &&
+                    this.helperService.isBase64(userDto.company.logo)
+                ) {
+                    const response: any = await this.fileHandler.uploadFile(
+                        `profile_images/${organization.refId}_${new Date().getTime()}.png`,
+                        userDto.company.logo,
+                    );
+                    orgEntity.logo = response;
+                }
+
+                organization = await queryRunner.manager.save(
+                    OrganizationEntity,
+                    orgEntity,
+                );
+            } else {
+                organization = await queryRunner.manager.findOneBy(
+                    OrganizationEntity,
+                    {
+                        id: requestUser.organizationId,
+                    },
+                );
+            }
+
             await this.checkForUserDuplicates(
+                queryRunner,
                 userDto.email,
                 userDto.hederaAccount,
-            );
-
-            // Guardian registration
-            await this.guardianService.registerUser(
-                userDto.email,
-                decryptedPassword,
             );
 
             // Save user locally
@@ -708,197 +412,1530 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             userEntity.password = encryptedPassword;
             userEntity.phoneNumber = userDto.phoneNo;
             userEntity.hederaAccount = userDto.hederaAccount;
-            userEntity.stage = UserStageEnum.REGISTER;
+            userEntity.stage = UserStageEnum.VALIDATIONS_N_DATABASE_SAVE;
             userEntity.isActive = isUserActive;
             userEntity.isApiUser = userDto.isApiUser;
             userEntity.createdTime = new Date().getTime();
             userEntity.updatedTime = new Date().getTime();
+            userEntity.organization = organization;
 
-            return this.usersRepository.save(userEntity);
-        }
-        return existing;
-    }
+            user = await queryRunner.manager.save(UsersEntity, userEntity);
 
-    private async hederaOrgAccountStatus(
-        accGenTaskId: string,
-        userDto: UsersDTO,
-        isUserActive: boolean,
-        requestUser: JWTPayload,
-    ) {
-        const hederaAccResult =
-            await this.guardianService.fetchAsyncTaskResponse(
-                accGenTaskId,
-                userDto.email,
+            const org: OrganizationEntity = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: {
+                        id: organization.id,
+                    },
+                    relations: {
+                        organizationType: true,
+                    },
+                },
             );
-        if (!hederaAccResult) {
+
+            const guardianRole = await this.getGuardianRole(
+                queryRunner,
+                org?.organizationType?.id,
+                userDto.role,
+            );
+
+            await this.updateUser(
+                queryRunner,
+                userDto,
+                organization,
+                guardianRole,
+            );
+
+            let prevTask: TaskEntity = null;
+            if (taskEntityId) {
+                prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                    id: taskEntityId,
+                });
+            }
+
+            let submittedUser: UsersEntity = null;
+            if (requestUser) {
+                submittedUser = await queryRunner.manager.findOneBy(
+                    UsersEntity,
+                    {
+                        id: requestUser.userId,
+                    },
+                );
+            }
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianRegisterUser',
+                args: [user],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                submittedUser: submittedUser,
+                previousTask: prevTask,
+            });
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            let asyncTaskTwo = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'userHederaAccGen',
+                args: [],
+                state: TaskEnum.PENDING,
+                retryAttemps: 2,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                submittedUser: submittedUser,
+                previousTask: asyncTask,
+            });
+
+            asyncTaskTwo = await queryRunner.manager.save(
+                TaskEntity,
+                asyncTaskTwo,
+            );
+
+            await queryRunner.manager.update(
+                TaskEntity,
+                { id: asyncTaskTwo.id },
+                plainToClass(TaskEntity, {
+                    previousTask: asyncTask,
+                    args: [userDto, asyncTaskTwo.id, isUserActive, requestUser],
+                }),
+            );
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+            return {
+                statusCode: HttpStatus.OK,
+                message: userDto.company
+                    ? 'Successfully added task to create organization with admin user'
+                    : 'Successfully added task to create the user',
+            };
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.VALIDATIONS_N_DATABASE_SAVE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            if (err instanceof HttpException) {
+                throw err;
+            }
             throw new HttpException(
-                'Hedera Account Generation Failed',
+                err.message || 'Internal server error',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
-        return await this.registerOrganizationInGuardian(
-            userDto,
-            isUserActive,
-            hederaAccResult,
-            true,
-            requestUser,
-        );
     }
 
-    private async registerOrganizationInGuardian(
-        userDto: UsersDTO,
-        isUserActive: boolean,
-        hederaAccResult?: any,
-        isTask?: boolean,
-        requestUser?: JWTPayload,
-    ): Promise<void> {
-        const orgCreateTime = new Date().getTime();
-        // Create organization in Guardian
-        const orgType = await this.organizationTypeRepository.findOne({
-            where: { name: userDto?.company?.companyRole },
-        });
+    async guardianRegisterUser(user: UsersEntity) {
+        this.logger.log(
+            `Step: ${UserStageEnum.GUARDIAN_REGISTER_USER} for ${user.email} Started.`,
+            this.loggerContext,
+        );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
 
-        const orgEntity = new OrganizationEntity();
-        orgEntity.name = userDto.company.name;
-        orgEntity.organizationType = orgType;
-        orgEntity.email = userDto?.company?.email;
-        orgEntity.taxId = userDto?.company?.taxId;
-        orgEntity.state = OrganizationStateEnum.PENDING;
-        orgEntity.hederaAccountId =
-            userDto?.company?.hederaAccountId || hederaAccResult?.id;
-        orgEntity.hederaAccountKey =
-            userDto?.company?.hederaAccountKey || hederaAccResult?.key;
-        orgEntity.phoneNumber = userDto?.company?.phoneNo;
-        orgEntity.paymentId = userDto?.company?.paymentId;
-        orgEntity.faxNumber = userDto?.company?.faxNo;
-        orgEntity.provinces = userDto?.company?.provinces;
-        orgEntity.website = userDto?.company?.website;
-        orgEntity.address = userDto?.company?.address;
-        orgEntity.createdTime = orgCreateTime;
-        orgEntity.updatedTime = new Date().getTime();
-
-        // iii. Save organization
-        const savedOrg = await this.organizationRepository.save(orgEntity);
-        if (
-            userDto?.company?.logo &&
-            this.helperService.isBase64(userDto.company.logo)
-        ) {
-            const response: any = await this.fileHandler.uploadFile(
-                `profile_images/${savedOrg.refId}_${new Date().getTime()}.png`,
-                userDto.company.logo,
+            await this.registerProcessSave(
+                queryRunner,
+                user.email,
+                UserStageEnum.GUARDIAN_REGISTER_USER,
             );
-            if (response) {
-                userDto.company.logo = response;
+
+            const decryptedPassword = await this.decryptPassword(user);
+
+            await this.guardianService.registerUser(
+                user.email,
+                decryptedPassword,
+            );
+
+            await this.loginToGuardian(user.email, queryRunner);
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_REGISTER_USER} for ${user.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_REGISTER_USER} for ${user.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async userHederaAccGen(
+        userDto: UsersDTO,
+        taskEntityId: number,
+        isUserActive?: boolean,
+        requestUser?: JWTPayload,
+    ) {
+        this.logger.log(
+            `Step: ${UserStageEnum.USER_HEDERA_ACC_GEN} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
+
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.USER_HEDERA_ACC_GEN,
+            );
+
+            let accGenTaskId: string;
+            if (!userDto.hederaAccount && !userDto.hederaKey) {
+                accGenTaskId = await this.hederaAccGenerate(userDto);
+            }
+
+            const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                id: taskEntityId,
+            });
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianConfigUpdate',
+                args: [],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: prevTask,
+                // events: [events],
+            });
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            await queryRunner.manager.update(
+                TaskEntity,
+                { id: asyncTask.id },
+                plainToClass(TaskEntity, {
+                    previousTask: prevTask,
+                    args: [
+                        userDto,
+                        asyncTask.id,
+                        accGenTaskId,
+                        isUserActive,
+                        requestUser,
+                    ],
+                }),
+            );
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.USER_HEDERA_ACC_GEN} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.USER_HEDERA_ACC_GEN} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async guardianConfigUpdate(
+        userDto: UsersDTO,
+        taskEntityId: number,
+        accGenTaskId?: string,
+        isUserActive?: boolean,
+        requestUser?: JWTPayload,
+    ): Promise<any> {
+        this.logger.log(
+            `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
+
+            let hederaAccResult: any;
+
+            if (!(userDto.hederaAccount && userDto.hederaKey)) {
+                hederaAccResult = await this.verifyGuardianAsyncTask(
+                    userDto,
+                    accGenTaskId,
+                );
+                if (!hederaAccResult) {
+                    throw new HttpException(
+                        'Hedera Account Generation Failed',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                }
+            }
+
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.GUARDIAN_CONFIG_UPDATE,
+            );
+
+            await queryRunner.manager.update(
+                UsersEntity,
+                { email: userDto.email },
+                {
+                    hederaAccount: userDto.hederaAccount
+                        ? userDto.hederaAccount
+                        : hederaAccResult?.id,
+                },
+            );
+
+            const updateTaskId = await this.guardianService.updateUserProfile(
+                userDto.email,
+                this.configService.get('sru.did'),
+                userDto.hederaAccount
+                    ? userDto.hederaAccount
+                    : hederaAccResult?.id,
+                userDto.hederaKey ? userDto.hederaKey : hederaAccResult?.key,
+                queryRunner,
+            );
+
+            const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                id: taskEntityId,
+            });
+
+            let asyncTask: TaskEntity = plainToInstance(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianAssignPolicy',
+                args: [userDto, updateTaskId.taskId],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: prevTask,
+            });
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            if (userDto.company) {
+                let asyncTaskTwo: TaskEntity = plainToInstance(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'guardianCreateGroupType',
+                    args: [userDto],
+                    state: TaskEnum.PENDING,
+                    retryAttemps: 3,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                    previousTask: asyncTask,
+                });
+                asyncTaskTwo = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTaskTwo,
+                );
+
+                let asyncTaskThree: TaskEntity = plainToInstance(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'orgHederaAccGen',
+                    args: [],
+                    state: TaskEnum.PENDING,
+                    retryAttemps: 3,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                    previousTask: asyncTaskTwo,
+                });
+
+                asyncTaskThree = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTaskThree,
+                );
+
+                await queryRunner.manager.update(
+                    TaskEntity,
+                    { id: asyncTaskThree.id },
+                    plainToClass(TaskEntity, {
+                        previousTask: asyncTaskTwo,
+                        args: [
+                            userDto,
+                            asyncTaskThree.id,
+                            isUserActive,
+                            requestUser,
+                        ],
+                    }),
+                );
             } else {
+                let asyncTaskTwo: TaskEntity = plainToInstance(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'guardianCreateGroupType',
+                    args: [],
+                    state: TaskEnum.PENDING,
+                    retryAttemps: 3,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                    previousTask: asyncTask,
+                });
+                asyncTaskTwo = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTaskTwo,
+                );
+
+                await queryRunner.manager.update(
+                    TaskEntity,
+                    { id: asyncTaskTwo.id },
+                    plainToInstance(TaskEntity, {
+                        previousTask: asyncTask,
+                        args: [userDto, requestUser, asyncTaskTwo.id],
+                    }),
+                );
+            }
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_CONFIG_UPDATE} for ${userDto.email} Occured Error.
+                ${err}\nstacktrace: ${err.stack}`,
+                this.loggerContext,
+            );
+            throw new HttpException(
+                'Failed to save user',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async guardianAssignPolicy(userDto: UsersDTO, updateTaskId: string) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_ASSIGN_POLICY} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
+
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.GUARDIAN_ASSIGN_POLICY,
+            );
+
+            const updateAccResult = await this.verifyGuardianAsyncTask(
+                userDto,
+                updateTaskId,
+            );
+            if (!updateAccResult) {
                 throw new HttpException(
-                    'Error while uploading company logo',
+                    'Account Config Update Failed',
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
             }
+            await this.guardianService.assignPolicyToUser(
+                userDto.email,
+                true,
+                queryRunner,
+            );
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_ASSIGN_POLICY} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_ASSIGN_POLICY} for ${userDto.email} Occured Error.
+                ${err}\nstacktrace: ${err.stack}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
+    }
 
-        const blockName = orgType.multiple
-            ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
-            : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
-        const createOrganizationResponse =
-            await this.guardianService.saveDocument(userDto.email, blockName, {
-                document: {
-                    name: userDto.company.name,
-                    role: userDto.company.companyRole,
-                    email: userDto.company.email,
-                    taxId: userDto.company.taxId,
-                    phoneNumber: userDto.company.phoneNo,
-                    paymentId: userDto.company.paymentId,
-                    faxNumber: userDto.company.faxNo,
-                    provinces: userDto.company.provinces,
-                    website: userDto.company.website,
-                    address: userDto.company.address,
-                    logo: userDto.company.logo,
-                    createdTime: Number(orgCreateTime),
-                    updatedTime: Number(new Date().getTime()),
-                    refId: savedOrg.refId,
-                },
-                ref: null,
-            });
-
-        // const payload = await this.guardianService.createPayload(
-        // createOrganizationResponse,
-        // userDto.company.companyRole,
-        // );
-        await this.organizationRepository.update(
-            { id: savedOrg.id },
-            {
-                state: orgType.multiple
-                    ? OrganizationStateEnum.PENDING
-                    : OrganizationStateEnum.ACTIVE,
-                group: createOrganizationResponse.group,
-                logo: userDto.company.logo,
-                updatedTime: new Date().getTime(),
-            },
+    async guardianCreateGroupType(
+        userDto: UsersDTO,
+        reqUser?: JWTPayload,
+        taskEntityId?: number,
+    ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Started.`,
         );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
 
-        if (isTask) {
-            const user = await this.findUser(userDto.email);
-            if (user.stage == UserStageEnum.CREATE_GROUP) {
-                this.logger.log(
-                    `Registration step ${UserStageEnum.CREATE_GROUP} completed; 
-                     next step: ${UserStageEnum.CREATE_USER}`,
-                    this.loggerContext,
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE,
+            );
+
+            if (userDto.company) {
+                const groupTypeBlock =
+                    await this.utilService.getBlocksByBlockName(
+                        GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
+                        this.configService.get('policy.id'),
+                    );
+
+                const user = await queryRunner.manager.findOne(UsersEntity, {
+                    where: { email: userDto.email },
+                });
+
+                const decryptedPassword = await this.decryptPassword(user);
+                await this.guardianService.createGroupType(
+                    userDto.email,
+                    decryptedPassword,
+                    groupTypeBlock?.blockId,
+                    {
+                        group: userDto.company.companyRole,
+                        label: userDto.company.name,
+                    },
+                    queryRunner,
                 );
-                await this.registerProcessSave(
-                    userDto,
-                    UserStageEnum.CREATE_USER,
+            } else {
+                await this.loginToGuardian(reqUser.email, queryRunner);
+
+                const prevTask = await queryRunner.manager.findOneBy(
+                    TaskEntity,
+                    { id: taskEntityId },
+                );
+
+                const user = await queryRunner.manager.findOneBy(UsersEntity, {
+                    email: userDto.email,
+                });
+
+                const org: OrganizationEntity =
+                    await queryRunner.manager.findOne(OrganizationEntity, {
+                        where: {
+                            id: reqUser?.organizationId,
+                        },
+                        relations: {
+                            organizationType: true,
+                        },
+                    });
+
+                const guardianRole = await this.getGuardianRole(
+                    queryRunner,
+                    org?.organizationType?.id,
+                    userDto.role,
+                );
+
+                const inviteBlock = await this.utilService.getBlocksByBlockName(
+                    GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
+                    this.configService.get('policy.id'),
+                );
+
+                const inviteResponse =
+                    await this.guardianService.createInvitation(
+                        reqUser?.email,
+                        inviteBlock?.blockId,
+                        {
+                            action: 'invite',
+                            group: org.group,
+                            role: guardianRole.name,
+                        },
+                    );
+
+                // 2. Submit the generated invitation for user creation
+                const groupTypeBlock =
+                    await this.utilService.getBlocksByBlockName(
+                        GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
+                        this.configService.get('policy.id'),
+                    );
+
+                await this.guardianService.createGroupType(
+                    userDto.email,
+                    decryptPayload(
+                        user.password,
+                        this.configService.get<string>('security.pwdSecret'),
+                    )?.password,
+                    groupTypeBlock?.blockId,
+                    {
+                        invitation: inviteResponse.invitation,
+                    },
+                    queryRunner,
+                );
+
+                let asyncTask: TaskEntity = plainToInstance(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'guardianUserCreate',
+                    args: [],
+                    state: TaskEnum.PENDING,
+                    retryAttemps: 3,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                    previousTask: prevTask,
+                });
+                asyncTask = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTask,
+                );
+
+                await queryRunner.manager.update(
+                    TaskEntity,
+                    { id: asyncTask.id },
+                    plainToInstance(TaskEntity, {
+                        previousTask: prevTask,
+                        args: [
+                            userDto,
+                            org.id,
+                            org.group,
+                            true,
+                            asyncTask.id,
+                            true,
+                            reqUser,
+                        ],
+                    }),
                 );
             }
-            await this.register(userDto, '', isUserActive, requestUser);
+
+            const isApiUserExist: UsersEntity =
+                await this.usersRepository.findOne({
+                    where: {
+                        isApiUser: true,
+                        email: this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+                        ),
+                    },
+                    relations: {
+                        organization: true,
+                    },
+                });
+
+            if (!isApiUserExist) {
+                let asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'createApiUser',
+                    args: [],
+                    retryAttemps: 3,
+                    state: TaskEnum.PENDING,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                });
+                asyncTaskTwo = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTaskTwo,
+                );
+
+                await queryRunner.manager.update(
+                    TaskEntity,
+                    { id: asyncTaskTwo.id },
+                    plainToClass(TaskEntity, {
+                        args: [asyncTaskTwo.id],
+                    }),
+                );
+            }
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_CREATE_GROUP_TYPE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
-    private async finalizeOrganizationUser(userDto: UsersDTO): Promise<void> {
-        const user = await this.findUser(userDto.email);
-        const orgEntity = await this.organizationRepository.findOne({
-            where: { email: userDto.company.email },
-        });
-
-        await this.guardianService.saveDocument(
-            userDto.email,
-            GUARDIAN_API.BLOCKS.CREATE_USER,
-            {
-                document: {
-                    name: userDto.name,
-                    role: userDto.role,
-                    email: userDto.email,
-                    phoneNumber: userDto.phoneNo,
-                    hederaAccount: user?.hederaAccount,
-                    refId: user.refId,
-                    createdTime: Number(user.createdTime),
-                    updatedTime: Number(new Date().getTime()),
-                    organization: orgEntity.refId,
-                },
-                ref: null,
-            },
+    async orgHederaAccGen(
+        userDto: UsersDTO,
+        taskEntityId: number,
+        isUserActive?: boolean,
+        requestUser?: JWTPayload,
+    ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.ORGANIZATION_HEDERA_ACC_GEN} for ${userDto.email} Started.`,
+            this.loggerContext,
         );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
 
-        const orgType = await this.organizationTypeRepository.findOne({
-            where: {
-                name: userDto?.company?.companyRole,
-            },
-        });
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.ORGANIZATION_HEDERA_ACC_GEN,
+            );
+            let accGenTaskId: string;
 
-        const guardianRole = await this.getGuardianRole(
-            orgType.id,
-            userDto.role,
-        );
+            if (
+                !userDto.company.hederaAccountId &&
+                !userDto.company.hederaAccountKey
+            ) {
+                accGenTaskId = await this.hederaAccGenerate(userDto);
+            }
 
-        await this.updateUser(userDto, orgEntity, guardianRole);
+            const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                id: taskEntityId,
+            });
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianOrganizationSave',
+                args: [],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: prevTask,
+            });
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            await queryRunner.manager.update(
+                TaskEntity,
+                { id: asyncTask.id },
+                plainToClass(TaskEntity, {
+                    previousTask: prevTask,
+                    args: [
+                        userDto,
+                        accGenTaskId,
+                        asyncTask.id,
+                        isUserActive,
+                        requestUser,
+                    ],
+                }),
+            );
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.ORGANIZATION_HEDERA_ACC_GEN} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.ORGANIZATION_HEDERA_ACC_GEN} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
     }
 
-    private async sendRegistrationEmails(
+    async guardianOrganizationSave(
         userDto: UsersDTO,
+        accGenTaskId: string,
+        taskEntityId: number,
+        isUserActive?: boolean,
+        requestUser?: JWTPayload,
+    ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_ORGANIZATION_SAVE} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
+
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            await queryRunner.startTransaction();
+            await this.loginToGuardian(userDto.email, queryRunner);
+
+            let hederaAccResult: any;
+
+            if (
+                !(
+                    userDto.company.hederaAccountId &&
+                    userDto.company.hederaAccountKey
+                )
+            ) {
+                hederaAccResult = await this.verifyGuardianAsyncTask(
+                    userDto,
+                    accGenTaskId,
+                );
+                if (!hederaAccResult) {
+                    throw new HttpException(
+                        'Hedera Account Generation Failed',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                }
+            }
+
+            await queryRunner.manager.update(
+                OrganizationEntity,
+                { email: userDto.company.email },
+                plainToClass(OrganizationEntity, {
+                    hederaAccountId: userDto.company.hederaAccountId
+                        ? userDto.company.hederaAccountId
+                        : hederaAccResult?.id,
+                    hederaAccountKey: userDto.company.hederaAccountKey
+                        ? userDto.company.hederaAccountKey
+                        : hederaAccResult?.key,
+                }),
+            );
+
+            const organisation = await queryRunner.manager.findOneBy(
+                OrganizationEntity,
+                {
+                    email: userDto.company.email,
+                },
+            );
+
+            let events: EventEntity = plainToClass(EventEntity, {
+                type: EventTypeEnum.CREATE,
+                status: EventStateEnum.PENDING,
+                affectedTableName: 'OrganizationEntity',
+                affectedRecordId: organisation.id,
+                rollbackOnFail: false,
+                maxVerifyDurationSec: 120,
+                documentRefId: organisation.refId,
+                gridType: GridTypeEnum.ORGANIZATION_GRID,
+            });
+
+            events = await queryRunner.manager.save(EventEntity, events);
+
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.GUARDIAN_ORGANIZATION_SAVE,
+            );
+
+            const orgType = await queryRunner.manager.findOne(
+                OrganizationTypeEntity,
+                {
+                    where: { name: userDto?.company?.companyRole },
+                },
+            );
+
+            const organization = await queryRunner.manager.findOneBy(
+                OrganizationEntity,
+                { email: userDto.company.email },
+            );
+
+            const blockName = orgType.multiple
+                ? GUARDIAN_API.BLOCKS.CREATE_MULTIPLE_ORGANIZATION
+                : GUARDIAN_API.BLOCKS.CREATE_SINGLE_ORGANIZATION;
+            const createOrganizationResponse =
+                await this.guardianService.saveDocument(
+                    userDto.email,
+                    blockName,
+                    {
+                        document: {
+                            name: userDto.company.name,
+                            role: userDto.company.companyRole,
+                            email: userDto.company.email,
+                            taxId: userDto.company.taxId,
+                            phoneNumber: userDto.company.phoneNo,
+                            paymentId: userDto.company.paymentId,
+                            faxNumber: userDto.company.faxNo,
+                            provinces: userDto.company.provinces,
+                            website: userDto.company.website,
+                            address: userDto.company.address,
+                            logo: userDto.company.logo,
+                            createdTime: Number(organization.createdTime),
+                            updatedTime: Number(new Date().getTime()),
+                            refId: organization.refId,
+                            eventIds: [events.id],
+                        },
+                        ref: null,
+                    },
+                    queryRunner,
+                );
+
+            const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                id: taskEntityId,
+            });
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianUserCreate',
+                args: [],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: prevTask,
+                events: [events],
+            });
+
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            await queryRunner.manager.update(
+                TaskEntity,
+                { id: asyncTask.id },
+                plainToClass(TaskEntity, {
+                    previousTask: prevTask,
+                    args: [
+                        userDto,
+                        organisation.id,
+                        createOrganizationResponse.group,
+                        orgType.multiple,
+                        asyncTask.id,
+                        isUserActive,
+                        requestUser,
+                    ],
+                }),
+            );
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_ORGANIZATION_SAVE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_ORGANIZATION_SAVE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async guardianUserCreate(
+        userDto: UsersDTO,
+        orgId: number,
+        orgGroup: string,
+        isMultiple: boolean,
+        taskEntityId: number,
+        isUserActive?: boolean,
+        requestUser?: JWTPayload,
+    ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_USER_CREATE} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            await queryRunner.startTransaction();
+
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.GUARDIAN_USER_CREATE,
+            );
+
+            if (userDto.company) {
+                await queryRunner.manager.update(
+                    OrganizationEntity,
+                    { id: orgId },
+                    plainToClass(OrganizationEntity, {
+                        state: isMultiple
+                            ? OrganizationStateEnum.PENDING
+                            : OrganizationStateEnum.ACTIVE,
+                        group: orgGroup,
+                    }),
+                );
+            }
+
+            const user = await queryRunner.manager.findOneBy(UsersEntity, {
+                email: userDto.email,
+            });
+
+            let events: EventEntity = plainToClass(EventEntity, {
+                type: EventTypeEnum.CREATE,
+                status: EventStateEnum.PENDING,
+                affectedTableName: 'UsersEntity',
+                affectedRecordId: user.id,
+                rollbackOnFail: false,
+                maxVerifyDurationSec: 120,
+                documentRefId: user.refId,
+                gridType: GridTypeEnum.USER_GRID,
+            });
+
+            events = await queryRunner.manager.save(EventEntity, events);
+
+            const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                id: taskEntityId,
+            });
+
+            if (userDto.company) {
+                await this.addOrgAdmin(userDto, events.id, queryRunner);
+
+                let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'guardianApproveOrg',
+                    args: [],
+                    state: TaskEnum.PENDING,
+                    retryAttemps: 3,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                    previousTask: prevTask,
+                    events: [events],
+                });
+                asyncTask = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTask,
+                );
+
+                await queryRunner.manager.update(
+                    TaskEntity,
+                    { id: asyncTask.id },
+                    plainToClass(TaskEntity, {
+                        previousTask: prevTask,
+                        args: [
+                            userDto,
+                            asyncTask.id,
+                            isUserActive,
+                            requestUser,
+                        ],
+                    }),
+                );
+            } else {
+                await this.loginToGuardian(userDto.email, queryRunner);
+                await this.loginToGuardian(requestUser.email, queryRunner);
+
+                await this.saveNewUser(
+                    userDto,
+                    events.id,
+                    requestUser,
+                    queryRunner,
+                );
+
+                let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                    className: 'UserService',
+                    functionName: 'emailSending',
+                    args: [userDto, isUserActive],
+                    state: TaskEnum.PENDING,
+                    retryAttemps: 3,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
+                    previousTask: prevTask,
+                    events: [events],
+                });
+                asyncTask = await queryRunner.manager.save(
+                    TaskEntity,
+                    asyncTask,
+                );
+            }
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_USER_CREATE} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_USER_CREATE} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async guardianApproveOrg(
+        userDto: UsersDTO,
+        taskEntityId: number,
+        isUserActive?: boolean,
+        requestUser?: JWTPayload,
+    ) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.GUARDIAN_APPROVE_ORGANIZATION} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            await queryRunner.startTransaction();
+
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.GUARDIAN_APPROVE_ORGANIZATION,
+            );
+
+            if (userDto.company) {
+                const orgEntity = await queryRunner.manager.findOne(
+                    OrganizationEntity,
+                    {
+                        where: { email: userDto.company.email },
+                    },
+                );
+                if (
+                    requestUser?.organizationRole ===
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                    (requestUser?.userRole === RoleEnum.Admin ||
+                        requestUser?.userRole === RoleEnum.Root)
+                ) {
+                    await this.loginToGuardian(requestUser?.email, queryRunner);
+
+                    await this.orgaisationService.approve(
+                        requestUser?.email,
+                        orgEntity.id,
+                        { remarks: '' },
+                    );
+                }
+            }
+
+            const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                id: taskEntityId,
+            });
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'emailSending',
+                args: [userDto, isUserActive],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: prevTask,
+            });
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            await queryRunner.commitTransaction();
+            this.logger.log(
+                `Step: ${UserStageEnum.GUARDIAN_APPROVE_ORGANIZATION} for ${userDto.email} Finished.`,
+                this.loggerContext,
+            );
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.GUARDIAN_APPROVE_ORGANIZATION} for ${userDto.email} Occured Error.
+                ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async emailSending(userDto: UsersDTO, isUserActive: boolean) {
+        this.logger.log(
+            `Step: For ${userDto.email} ${UserStageEnum.EMAIL_SENDING} for ${userDto.email} Started.`,
+            this.loggerContext,
+        );
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            await queryRunner.startTransaction();
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.EMAIL_SENDING,
+            );
+            await this.sendRegistrationEmails(
+                userDto,
+                queryRunner,
+                isUserActive,
+            );
+            await this.registerProcessSave(
+                queryRunner,
+                userDto.email,
+                UserStageEnum.COMPLETED,
+            );
+            this.logger.log(
+                `Step: ${UserStageEnum.COMPLETED} for user ${userDto.email}`,
+                this.loggerContext,
+            );
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `Step: ${UserStageEnum.EMAIL_SENDING} for ${userDto.email} Occured Error. ${JSON.stringify(err)}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    // --------------- Helpers --------------------
+
+    async createApiUser(taskEntityId: number) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            this.logger.warn(
+                'API user not exist starting API user onboarding..',
+                this.loggerContext,
+            );
+            const dnaOrganization: OrganizationEntity =
+                await queryRunner.manager.findOne(OrganizationEntity, {
+                    where: {
+                        organizationType: {
+                            name: OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                        },
+                    },
+                    relations: {
+                        organizationType: true,
+                    },
+                });
+
+            const dnaRootUser: UsersEntity = await queryRunner.manager.findOne(
+                UsersEntity,
+                {
+                    where: {
+                        email: this.configService.get(
+                            `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
+                        ),
+                    },
+                },
+            );
+
+            if (!dnaOrganization || !dnaRootUser) {
+                this.logger.error('No DNA Organization or Root Exists');
+                throw new HttpException(
+                    'No DNA Organization Exists',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
+            this.logger.log('API admin creation Began');
+
+            const encryptedPassword = encryptPayload(
+                {
+                    password: this.configService.get(
+                        `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
+                    ),
+                },
+                this.configService.get<string>('security.pwdSecret'),
+            );
+
+            const apiUserDto = new UsersDTO();
+
+            apiUserDto.email = this.configService.get(
+                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+            );
+            apiUserDto.name = 'API User';
+
+            apiUserDto.password = this.configService.get(
+                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminPwd`,
+            );
+            apiUserDto.isApiUser = true;
+            apiUserDto.role = RoleEnum.Admin;
+
+            const userEntity = new UsersEntity();
+            userEntity.email = this.configService.get(
+                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.apiAdminEmail`,
+            );
+            userEntity.name = apiUserDto.name;
+            userEntity.password = encryptedPassword;
+            userEntity.stage = UserStageEnum.VALIDATIONS_N_DATABASE_SAVE;
+            userEntity.isActive = apiUserDto.isApiUser;
+            userEntity.isApiUser = true;
+            userEntity.createdTime = new Date().getTime();
+            userEntity.updatedTime = new Date().getTime();
+            userEntity.organization = dnaOrganization;
+
+            const user = await queryRunner.manager.save(
+                UsersEntity,
+                userEntity,
+            );
+
+            const guardianRole = await this.getGuardianRole(
+                queryRunner,
+                dnaOrganization.organizationType.id,
+                apiUserDto.role,
+            );
+
+            await this.updateUser(
+                queryRunner,
+                apiUserDto,
+                dnaOrganization,
+                guardianRole,
+            );
+
+            const prevTask = await queryRunner.manager.findOneBy(TaskEntity, {
+                id: taskEntityId,
+            });
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianRegisterUser',
+                args: [user],
+                retryAttemps: 3,
+                state: TaskEnum.PENDING,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: prevTask,
+            });
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            let asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'userHederaAccGen',
+                args: [],
+                retryAttemps: 3,
+                state: TaskEnum.PENDING,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
+                previousTask: asyncTask,
+            });
+
+            asyncTaskTwo = await queryRunner.manager.save(
+                TaskEntity,
+                asyncTaskTwo,
+            );
+
+            await queryRunner.manager.update(
+                TaskEntity,
+                { id: asyncTaskTwo.id },
+                plainToClass(TaskEntity, {
+                    previousTask: asyncTask,
+                    args: [
+                        apiUserDto,
+                        asyncTaskTwo.id,
+                        true,
+                        {
+                            email: this.configService.get(
+                                `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.email`,
+                            ),
+                            organizationName: dnaOrganization.name,
+                            userName: dnaRootUser.name,
+                            userId: dnaRootUser.id,
+                            userRefId: dnaRootUser.refId,
+                            userRole: RoleEnum.Root,
+                            userState: true,
+                            userHederaAccId: dnaRootUser.hederaAccount,
+                            organizationId: dnaOrganization.id,
+                            organizationRefId: dnaOrganization.refId,
+                            organizationRole:
+                                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY,
+                            organizationState: OrganizationStateEnum.ACTIVE,
+                            organizationHederaAccId:
+                                dnaOrganization.hederaAccountId,
+                        },
+                    ],
+                }),
+            );
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(
+                `API User Creation Occured Error.
+                ${err}`,
+                this.loggerContext,
+            );
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async loginToGuardian(email: string, queryRunner: QueryRunner) {
+        const user = await queryRunner.manager.findOneBy(UsersEntity, {
+            email: email,
+        });
+        const decryptedPassword = await this.decryptPassword(user);
+        try {
+            await this.guardianService.accessToken(user?.refreshToken);
+        } catch (err) {
+            await this.guardianService.login(
+                { username: email, password: decryptedPassword },
+                queryRunner,
+            );
+        }
+    }
+
+    async hederaAccGenerate(userDTO: UsersDTO): Promise<string> {
+        const accGenTaskId = await this.guardianService.generateHederaAccount(
+            userDTO.email,
+        );
+        return accGenTaskId.taskId;
+    }
+
+    async verifyGuardianAsyncTask(
+        userDTO: UsersDTO,
+        taskId: string,
+    ): Promise<any> {
+        const getAsyncTask = await this.guardianService.fetchAsyncTaskResponse(
+            taskId,
+            userDTO.email,
+        );
+
+        if (!getAsyncTask) {
+            throw new HttpException(
+                `Guardian task: ${taskId} failed`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+
+        return getAsyncTask;
+    }
+
+    async addOrgAdmin(
+        userDto: UsersDTO,
+        eventId: number,
+        queryRunner: QueryRunner = null,
+    ): Promise<void> {
+        let isRelease = false;
+        if (!queryRunner) {
+            queryRunner = this.dataSource.createQueryRunner();
+            await queryRunner.connect();
+            isRelease = true;
+        }
+        try {
+            if (!queryRunner) {
+                await queryRunner.startTransaction();
+            }
+            const user = await queryRunner.manager.findOneBy(UsersEntity, {
+                email: userDto.email,
+            });
+
+            const orgEntity = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { email: userDto.company.email },
+                },
+            );
+
+            await this.guardianService.saveDocument(
+                userDto.email,
+                GUARDIAN_API.BLOCKS.CREATE_USER,
+                {
+                    document: {
+                        name: userDto.name,
+                        role: userDto.role,
+                        email: userDto.email,
+                        phoneNumber: userDto.phoneNo,
+                        hederaAccount: user?.hederaAccount,
+                        refId: user.refId,
+                        createdTime: Number(user.createdTime),
+                        updatedTime: Number(new Date().getTime()),
+                        organization: orgEntity.refId,
+                        eventIds: [eventId],
+                    },
+                    ref: null,
+                },
+                queryRunner,
+            );
+
+            if (isRelease) {
+                await queryRunner.commitTransaction();
+            }
+        } catch (err) {
+            if (isRelease) {
+                await queryRunner.rollbackTransaction();
+            }
+            throw err;
+        } finally {
+            if (isRelease) {
+                await this.releaseQueryRunner(queryRunner);
+            }
+        }
+    }
+
+    async saveNewUser(
+        userDto: UsersDTO,
+        eventId: number,
+        reqUser?: JWTPayload,
+        queryRunner: QueryRunner = null,
+    ): Promise<any> {
+        let isRelease = false;
+        if (!queryRunner) {
+            queryRunner = this.dataSource.createQueryRunner();
+            await queryRunner.connect();
+            isRelease = true;
+        }
+        try {
+            if (!queryRunner) {
+                await queryRunner.startTransaction();
+            }
+            const user = await queryRunner.manager.findOneBy(UsersEntity, {
+                email: userDto.email,
+            });
+
+            const org: OrganizationEntity = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: {
+                        id: reqUser?.organizationId,
+                    },
+                    relations: {
+                        organizationType: true,
+                    },
+                },
+            );
+
+            await this.guardianService.saveDocument(
+                userDto.email,
+                GUARDIAN_API.BLOCKS.CREATE_USER,
+                {
+                    document: {
+                        name: userDto.name,
+                        role: userDto.role,
+                        email: userDto.email,
+                        phoneNumber: userDto.phoneNo,
+                        hederaAccount: user.hederaAccount,
+                        refId: user.refId,
+                        createdTime: Number(user.createdTime),
+                        updatedTime: Number(new Date().getTime()),
+                        organization: org.refId,
+                        eventIds: [eventId],
+                    },
+                    ref: null,
+                },
+                queryRunner,
+            );
+
+            if (isRelease) {
+                await queryRunner.commitTransaction();
+            }
+        } catch (e) {
+            if (isRelease) {
+                await queryRunner.rollbackTransaction();
+            }
+            throw e;
+        } finally {
+            if (isRelease) {
+                await this.releaseQueryRunner(queryRunner);
+            }
+        }
+    }
+
+    async sendRegistrationEmails(
+        userDto: UsersDTO,
+        queryRunner: QueryRunner = null,
         isUserActive: boolean = UserStateConstant.DEACTIVE,
     ): Promise<void> {
         const countryName = this.configService.get('country');
-        const user = await this.findUser(userDto.email);
+        let user = null;
+        if (queryRunner) {
+            user = await queryRunner.manager.findOneBy(UsersEntity, {
+                email: userDto.email,
+            });
+        } else {
+            user = await this.usersRepository.findOneBy({
+                email: userDto.email,
+            });
+        }
+
         const decryptedPassword = decryptPayload(
             user.password,
             this.configService.get<string>('security.pwdSecret'),
@@ -921,7 +1958,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 },
                 priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
-            await this.mailService.sendMail(mailDTOOrg);
+            await this.mailService.sendMail(mailDTOOrg, queryRunner);
         }
 
         const mailDTOUser: MailTemplateDTO = {
@@ -943,197 +1980,29 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             },
             priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
         };
-        await this.mailService.sendMail(mailDTOUser);
+        await this.mailService.sendMail(mailDTOUser, queryRunner);
     }
 
-    async updateGuardianUserConfig(
-        userDto: UsersDTO,
-        requestUser: JWTPayload,
-        isUserActive: boolean,
-        accGenTaskId?: string,
-        hederaAccResult?: any,
-    ): Promise<UserStageEnum> {
-        if (!hederaAccResult && !(userDto.hederaAccount || userDto.hederaKey)) {
-            hederaAccResult = await this.guardianService.fetchAsyncTaskResponse(
-                accGenTaskId,
-                userDto.email,
-            );
-            if (!hederaAccResult) {
-                throw new HttpException(
-                    'Hedera Account Generation Failed',
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                );
-            }
-        }
-
-        await this.usersRepository.update(
-            { email: userDto.email },
-            {
-                hederaAccount: userDto.hederaAccount
-                    ? userDto.hederaAccount
-                    : hederaAccResult?.id,
-            },
-        );
-
-        // Update user profile with the parent (SRU)
-        const updateTaskId = await this.guardianService.updateUserProfile(
-            userDto.email,
-            this.configService.get('sru.did'),
-            userDto.hederaAccount ? userDto.hederaAccount : hederaAccResult?.id,
-            userDto.hederaKey ? userDto.hederaKey : hederaAccResult?.key,
-        );
-
-        const isAccountUpdated =
-            await this.guardianService.fetchAsyncTaskResponse(
-                updateTaskId.taskId,
-                userDto.email,
-            );
-        if (!isAccountUpdated) {
-            const asyncTask: TaskEntity = {
-                className: 'UserService',
-                functionName: 'checkGuardianUserUpdate',
-                args: [userDto, isUserActive, requestUser, updateTaskId.taskId],
-                retryAttemps: 3,
-                state: TaskEnum.PENDING,
-            };
-            await this.taskRepository.save(asyncTask);
-            return UserStageEnum.ASSIGN_REGISTRY;
-        }
-        this.logger.log(
-            `Registration step ${UserStageEnum.ASSIGN_REGISTRY} completed; 
-             next step: ${UserStageEnum.ASSIGN_POLICY}`,
-            this.loggerContext,
-        );
-        await this.registerProcessSave(userDto, UserStageEnum.ASSIGN_POLICY);
-        return UserStageEnum.ASSIGN_POLICY;
-    }
-
-    async checkGuardianUserUpdate(
-        userDto: UsersDTO,
-        isUserActive: boolean,
-        requestUser: JWTPayload,
-        taskId: string,
-    ) {
-        const isAccountUpdated =
-            await this.guardianService.fetchAsyncTaskResponse(
-                taskId,
-                userDto.email,
-            );
-        if (!isAccountUpdated) {
-            throw new HttpException(
-                'Update Guardian User Config Failed',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-        // Check before executing task if user already Completed
-        const user = await this.findUser(userDto.email);
-        if (user.stage == UserStageEnum.ASSIGN_REGISTRY) {
-            this.logger.log(
-                `Registration step ${UserStageEnum.ASSIGN_REGISTRY} completed; 
-                 next step: ${UserStageEnum.ASSIGN_POLICY}`,
-                this.loggerContext,
-            );
-            await this.registerProcessSave(
-                userDto,
-                UserStageEnum.ASSIGN_POLICY,
-            );
-        }
-        await this.register(userDto, '', isUserActive, requestUser);
-    }
-
-    private async inviteNewUser(
-        userDto: UsersDTO,
-        reqUser?: JWTPayload,
-    ): Promise<boolean> {
-        try {
-            // 1. Generate an invite for the given role
-            const user = await this.findUser(userDto.email);
-
-            const org: OrganizationEntity =
-                await this.organizationRepository.findOne({
-                    where: {
-                        id: reqUser?.organizationId,
-                    },
-                    relations: {
-                        organizationType: true,
-                    },
-                });
-            const guardianRole = await this.getGuardianRole(
-                org?.organizationType?.id,
-                userDto.role,
-            );
-            const inviteBlock = await this.utilService.getBlocksByBlockName(
-                GUARDIAN_API.BLOCKS.USER_CREATE_INVITE,
-                this.configService.get('policy.id'),
-            );
-            const inviteResponse = await this.guardianService.createInvitation(
-                reqUser?.email,
-                inviteBlock?.blockId,
-                {
-                    action: 'invite',
-                    group: org.group,
-                    role: guardianRole.name,
-                },
-            );
-
-            // 2. Submit the generated invitation for user creation
-            const groupTypeBlock = await this.utilService.getBlocksByBlockName(
-                GUARDIAN_API.BLOCKS.CREATE_GROUP_TYPE,
-                this.configService.get('policy.id'),
-            );
-            await this.guardianService.createGroupType(
-                userDto.email,
-                decryptPayload(
-                    user.password,
-                    this.configService.get<string>('security.pwdSecret'),
-                )?.password,
-                groupTypeBlock?.blockId,
-                {
-                    invitation: inviteResponse.invitation,
-                },
-            );
-
-            await this.guardianService.saveDocument(
-                reqUser.email,
-                GUARDIAN_API.BLOCKS.CREATE_USER,
-                {
-                    document: {
-                        name: userDto.name,
-                        role: userDto.role,
-                        email: userDto.email,
-                        phoneNumber: userDto.phoneNo,
-                        hederaAccount: user.hederaAccount,
-                        refId: user.refId,
-                        createdTime: Number(user.createdTime),
-                        updatedTime: Number(new Date().getTime()),
-                        organization: org.refId,
-                    },
-                    ref: null,
-                },
-            );
-
-            await this.updateUser(userDto, org, guardianRole);
-
-            return true;
-        } catch (e) {
-            throw new HttpException(
-                'Error occurred while adding the user',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
-
-    private async registerProcessSave(
-        userDto: UsersDTO,
+    async registerProcessSave(
+        queryRunner: QueryRunner,
+        email: string,
         status: UserStageEnum,
     ): Promise<void> {
-        await this.usersRepository.update(
-            { email: userDto.email },
-            {
+        await queryRunner.manager.update(
+            UsersEntity,
+            { email: email },
+            plainToClass(UsersEntity, {
                 updatedTime: new Date().getTime(),
                 stage: status,
-            },
+            }),
         );
+    }
+
+    async decryptPassword(user: UsersEntity): Promise<string> {
+        return decryptPayload(
+            user.password,
+            this.configService.get<string>('security.pwdSecret'),
+        )?.password;
     }
 
     async download(queryData: DataExportQueryDto) {
@@ -1350,33 +2219,30 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         //         },
         //     },
         // });
-        const userProfile = await this.usersRepository.createQueryBuilder('users')
-                                .leftJoinAndSelect('users.organization', 'organization')
-                                .leftJoin('organization.projects', 'project')
-                                .leftJoinAndSelect(
-                                    'users.guardianRole',
-                                    'guardianRole',
-                                )
-                                .leftJoinAndSelect(
-                                    'guardianRole.role',
-                                    'role',
-                                )
-                                .leftJoinAndSelect(
-                                    'organization.organizationType',
-                                    'organizationType',
-                                )
-                                .where('users.id = :userId', { userId: requestUser.userId })
-                                .loadRelationCountAndMap(
-                                    'organization.numberOfProjects',
-                                    'organization.projects',
-                                )
-                                .getOne();
+        const userProfile = await this.usersRepository
+            .createQueryBuilder('users')
+            .leftJoinAndSelect('users.organization', 'organization')
+            .leftJoin('organization.projects', 'project')
+            .leftJoinAndSelect('users.guardianRole', 'guardianRole')
+            .leftJoinAndSelect('guardianRole.role', 'role')
+            .leftJoinAndSelect(
+                'organization.organizationType',
+                'organizationType',
+            )
+            .where('users.id = :userId', { userId: requestUser.userId })
+            .loadRelationCountAndMap(
+                'organization.numberOfProjects',
+                'organization.projects',
+            )
+            .getOne();
         // get credits
         const receiverSum = await this.dataSource
             .getRepository(CreditBlocksEntity)
             .createQueryBuilder('creditBlock')
             .leftJoin('creditBlock.receiver', 'receiver')
-            .where('receiver.id = :organizationId', { organizationId: userProfile.organization.id })
+            .where('receiver.id = :organizationId', {
+                organizationId: userProfile.organization.id,
+            })
             .select('COALESCE(SUM(creditBlock.creditAmount), 0)', 'recvSum')
             .getRawOne();
 
@@ -1394,7 +2260,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         passwordUpdateDto: PasswordUpdateDto,
         requestUser: JWTPayload,
     ) {
+        // Verify the action is allowed
         this.helperService.validateRequestUser(requestUser);
+        await this.utilService.verifyRequestUser(requestUser);
 
         const userDetails = await this.usersRepository.findOneBy({
             email: requestUser.email,
@@ -1479,66 +2347,76 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         requestUser: JWTPayload,
     ): Promise<HTTPResponseDto> {
         this.helperService.validateRequestUser(requestUser);
-
-        const userDetails = await this.usersRepository.findOneBy({
-            id: userUpdateDto.id,
-        });
-
-        if (!userDetails) {
-            throw new HttpException(
-                'No visible user found',
-                HttpStatus.NOT_FOUND,
-            );
-        }
-
-        const userVcDocument =
-            await this.guardianService.getGridDocumentUsingRefId(
-                GridTypeEnum.USER_GRID,
-                userDetails.refId,
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            await this.guardianService.validateGuardianCall(
                 requestUser.email,
+                false,
+                queryRunner,
+            );
+            const userDetails = await queryRunner.manager.findOneBy(
+                UsersEntity,
+                {
+                    id: userUpdateDto.id,
+                },
             );
 
-        const userData: UserSchemaDtos = new UserSchemaDtos(
-            userVcDocument.document.credentialSubject[0],
-        );
+            if (!userDetails) {
+                throw new HttpException(
+                    'No visible user found',
+                    HttpStatus.NOT_FOUND,
+                );
+            }
 
-        if (
-            userUpdateDto.name == userData?.name &&
-            userUpdateDto.phoneNo == userData?.phoneNumber
-        ) {
-            const response: HTTPResponseDto = {
-                statusCode: HttpStatus.OK,
-                message: 'The user account has been updated successfully',
-            };
+            // Verify the action is allowed
+            await this.utilService.verifyRequestUser(requestUser);
+            if (
+                !(await this.utilService.isVerified(
+                    'UsersEntity',
+                    userDetails.id,
+                ))
+            ) {
+                throw new HttpException(
+                    'User not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
 
-            return response;
-        }
+            if (
+                userUpdateDto.name == userDetails?.name &&
+                userUpdateDto.phoneNo == userDetails?.phoneNumber
+            ) {
+                const response: HTTPResponseDto = {
+                    statusCode: HttpStatus.OK,
+                    message: 'The user account has been updated successfully',
+                };
 
-        userData.name = userUpdateDto.name;
-        userData.phoneNumber = userUpdateDto.phoneNo
-            ? userUpdateDto.phoneNo
-            : userData?.phoneNumber
-              ? userData?.phoneNumber
-              : undefined;
+                return response;
+            }
 
-        const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
+            const userVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.USER_GRID,
+                    userDetails.refId,
+                    requestUser.email,
+                );
 
-        if (userVcDocument.option.status !== GuardianStateEnum.REVOKED) {
-            await this.guardianService.buttonActionRequest(
-                ButtonNameEnum.USER_REVOKE,
-                ButtonActionEnum.SUBMIT,
-                userVcDocument,
-                requestUser.email,
-            );
-        }
+            if (
+                !userVcDocument ||
+                !userVcDocument.document ||
+                !userVcDocument.document.credentialSubject ||
+                userVcDocument.document.credentialSubject.length === 0
+            ) {
+                throw new HttpException(
+                    'User grid not found',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
 
-        await this.guardianService.saveDocument(requestUser.email, blockName, {
-            document: { ...userData },
-            ref: null,
-        });
-
-        const result = await this.usersRepository
-            .update(
+            await queryRunner.manager.update(
+                UsersEntity,
                 {
                     id: userUpdateDto.id,
                 },
@@ -1548,26 +2426,174 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                         ? userUpdateDto.phoneNo
                         : userDetails.phoneNumber,
                 },
-            )
-            .catch((err: any) => {
-                throw new HttpException(
-                    'User update failed. Please try again',
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                );
+            );
+
+            let asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianUserRevoke',
+                args: [userDetails.refId, requestUser],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: true,
+                millisBetweenAttempts: 3000,
             });
 
-        if (result.affected > 0) {
+            asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
+
+            let events: EventEntity = plainToClass(EventEntity, {
+                type: EventTypeEnum.UPDATE,
+                status: EventStateEnum.PENDING,
+                affectedTableName: 'UsersEntity',
+                previousState: userDetails,
+                affectedRecordId: userDetails.id,
+                rollbackOnFail: true,
+                maxVerifyDurationSec: 120,
+                documentRefId: userDetails.refId,
+                gridType: GridTypeEnum.USER_GRID,
+            });
+
+            events = await queryRunner.manager.save(EventEntity, events);
+
+            const userData: UserSchemaDtos = new UserSchemaDtos(
+                userVcDocument.document.credentialSubject[0],
+            );
+
+            userData.name = userUpdateDto.name;
+            userData.phoneNumber = userUpdateDto.phoneNo
+                ? userUpdateDto.phoneNo
+                : userDetails?.phoneNumber
+                  ? userDetails?.phoneNumber
+                  : undefined;
+            userData.eventIds = [events.id, ...(userData.eventIds || [])];
+
+            const asyncTaskTwo: TaskEntity = plainToClass(TaskEntity, {
+                className: 'UserService',
+                functionName: 'guardianUpdateUserSaveDocument',
+                args: [],
+                state: TaskEnum.PENDING,
+                retryAttemps: 3,
+                retryUntilSuccess: false,
+                millisBetweenAttempts: 3000,
+                previousTask: asyncTask,
+                events: [events],
+            });
+
+            asyncTaskTwo.args = [userData, userDetails.id, requestUser];
+
+            await queryRunner.manager.save(TaskEntity, asyncTaskTwo);
+
+            await queryRunner.commitTransaction();
+
             const response: HTTPResponseDto = {
                 statusCode: HttpStatus.OK,
-                message: 'The user account has been updated successfully',
+                message: 'The user account update has been initiated',
             };
 
             return response;
-        } else {
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
             throw new HttpException(
-                'User update failed. Please try again',
+                err.message || 'Internal server error',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    async guardianUserRevoke(userRefId: string, requestUser: JWTPayload) {
+        try {
+            const userVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.USER_GRID,
+                    userRefId,
+                    requestUser.email,
+                );
+
+            if (
+                !userVcDocument ||
+                !userVcDocument.document ||
+                !userVcDocument.document.credentialSubject ||
+                userVcDocument.document.credentialSubject.length === 0
+            ) {
+                throw new HttpException(
+                    'User grid not found',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            await this.guardianService.buttonActionRequest(
+                ButtonNameEnum.USER_REVOKE,
+                ButtonActionEnum.SUBMIT,
+                userVcDocument,
+                requestUser.email,
+            );
+        } catch (err) {
+            throw new HttpException(err, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async guardianUpdateUserSaveDocument(
+        userData: UserSchemaDtos,
+        userId: number,
+        requestUser: JWTPayload,
+    ) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+
+            const userDetails = await queryRunner.manager.findOneBy(
+                UsersEntity,
+                {
+                    id: userId,
+                },
+            );
+
+            if (!userDetails) {
+                throw new HttpException(
+                    'User not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            const userVcDocument =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.USER_GRID,
+                    userDetails.refId,
+                    requestUser.email,
+                    true,
+                );
+
+            if (userVcDocument) {
+                throw new HttpException(
+                    'User document is not revoked',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
+
+            await this.guardianService.saveDocument(
+                requestUser.email,
+                blockName,
+                {
+                    document: { ...userData },
+                    ref: null,
+                },
+                queryRunner,
+            );
+
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw new HttpException(err, HttpStatus.BAD_REQUEST);
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
         }
     }
 
@@ -1575,7 +2601,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         userId: number,
         requestUser: JWTPayload,
     ): Promise<HTTPResponseDto> {
+        // Verify the action is allowed
         this.helperService.validateRequestUser(requestUser);
+        await this.utilService.verifyRequestUser(requestUser);
         const actionUserDetails = await this.usersRepository.findOne({
             where: { id: requestUser.userId },
             relations: {
@@ -1752,5 +2780,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 },
             },
         });
+    }
+
+    async releaseQueryRunner(queryRunner: QueryRunner) {
+        if (!queryRunner.isReleased) {
+            try {
+                await queryRunner.release();
+            } catch (e) {
+                this.logger.error(
+                    'Error occurred while releasing query runner',
+                    e,
+                );
+            }
+        }
     }
 }

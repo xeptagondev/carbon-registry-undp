@@ -6,12 +6,13 @@ import axios from 'axios';
 import { MirrorExchangeRateInterface } from '../interface/mirror-exchange-rate.interface';
 import { ConfigService } from '@nestjs/config';
 import { HederaNetworkTypeEnum } from '../enum/hedera-network-type.enum';
+import { InstantLogger } from '@app/shared/util/service/instant.logger.service';
 
 @Injectable()
 export class HbarManagementService {
     private readonly client: Client;
 
-    constructor(private readonly configService: ConfigService) {}
+    constructor(private readonly configService: ConfigService, private readonly logger: InstantLogger) {}
 
     async getBalance(accountId: string): Promise<string> {
         try {
@@ -32,6 +33,7 @@ export class HbarManagementService {
             return balance.hbars.toString().trim().replace('ℏ', '');
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
+            this.logger.error(`Balance error: ${error}\nstacktrace: ${error.stack}`)
             return '0';
         }
     }

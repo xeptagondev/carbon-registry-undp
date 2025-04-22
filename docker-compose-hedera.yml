@@ -56,6 +56,21 @@ services:
     deploy:
       replicas: 1
 
+  replicator:
+    build:
+      context: .
+      dockerfile: ./backend-hedera/custodian/Dockerfile
+    command: ["yarn", "start:replicator-prod"]
+    env_file:
+      - backend-hedera/custodian/.env
+    depends_on:
+      hedera_db:
+        condition: service_healthy
+    volumes:
+      - filestore:/usr/src/app/public
+    deploy:
+      replicas: 1
+
   web:
     build:
       context: .
