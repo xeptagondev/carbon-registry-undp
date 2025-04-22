@@ -10,8 +10,18 @@ import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 import NetEmissionReduction from '../Common/NetEmissonReduction';
 
 export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
-  const { t, current, form, formMode, next, countries, prev, handleValuesUpdate, disableFields, maxNetGHGReduction } =
-    props;
+  const {
+    t,
+    current,
+    form,
+    formMode,
+    next,
+    countries,
+    prev,
+    handleValuesUpdate,
+    disableFields,
+    maxNetGHGReduction,
+  } = props;
 
   useEffect(() => {
     if (formMode === FormMode.CREATE) {
