@@ -12,4 +12,5 @@ export interface TaskResponseInterface {
     taskId: string;
     statuses: any;
     result?: any;
+    error?: any;
 }

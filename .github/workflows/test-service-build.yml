@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'guardian-dev'
+      - 'guardian-dev*'
     paths:
       - backend-hedera/**
       - .github/workflows/test-service*

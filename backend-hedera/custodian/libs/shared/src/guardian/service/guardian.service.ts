@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
 import { LoginDto } from '@app/shared/users/dto/login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { GuardianPwChangeDto } from '../dto/guardian-pw-change.dto';
 import { GUARDIAN_ERROR } from '../constant/guardian-error.constant';
 import { GUARDIAN_API } from '../constant/guardian-api-blocks.contant';
@@ -84,8 +84,10 @@ export class GuardianService {
         }
     }
 
-    private async validateGuardianCall(
+    public async validateGuardianCall(
         email: string,
+        isEmailDisable: boolean = false,
+        queryRunner: QueryRunner = null,
         thresholdValue: number = this.configService.get<number>(
             'guardian.hbarThresholds.general',
         ),
@@ -101,10 +103,14 @@ export class GuardianService {
         const hbarBalance = Number(
             await this.hbarManagementService.getBalance(user.hederaAccount),
         );
+
         let mailDto: MailTemplateDTO;
         const errorMessage: string =
             'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.';
         if (hbarBalance < thresholdValue) {
+            this.logger.log(
+                `Account ID: ${user.hederaAccount}, HBAR balance: ${hbarBalance}, threshold: ${thresholdValue}`,
+            );
             const countryName: string = this.configService.get('country');
             mailDto = {
                 subject: INSUFFICIENT_HBAR_BALANCE,
@@ -117,7 +123,9 @@ export class GuardianService {
                 },
                 priority: MailPriorityGroupsEnum.HIGH_PRIORITY,
             };
-            await this.mailService.sendMail(mailDto);
+            if (!isEmailDisable) {
+                await this.mailService.sendMail(mailDto, queryRunner);
+            }
             throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
         }
     }
@@ -134,6 +142,10 @@ export class GuardianService {
                 error.response.status,
             );
         } else {
+            this.logger.error(`Error: ${error} \n Stacktrace: ${error.stack}`);
+            if (error instanceof HttpException) {
+                throw error;
+            }
             throw new HttpException(
                 GUARDIAN_ERROR[HttpStatus.INTERNAL_SERVER_ERROR],
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -149,6 +161,9 @@ export class GuardianService {
     }
 
     async accessToken(refreshToken: string) {
+        if (!refreshToken) {
+            throw Error('Refresh token is null');
+        }
         const accessTokenResponse = await axios.post(
             `${this.configService.get('guardian.url')}${GUARDIAN_API.ACCESS_TOKEN}`,
             {
@@ -201,6 +216,14 @@ export class GuardianService {
                         taskResponse = response.data;
                         if (taskResponse?.result) {
                             return taskResponse.result;
+                        } else if (
+                            taskResponse?.error?.message &&
+                            typeof taskResponse?.error?.message === 'string' &&
+                            taskResponse?.error?.message.includes(
+                                'already exists',
+                            )
+                        ) {
+                            return true;
                         }
                     }
                 } catch (error) {
@@ -243,6 +266,12 @@ export class GuardianService {
         email: string,
     ): Promise<TaskSetInterface> {
         try {
+            await this.validateGuardianCall(
+                this.configService.get('sru.username'),
+                true,
+                null,
+                120,
+            );
             const url = this.buildGuardianUrl(
                 GUARDIAN_API.GENERATE_HEDERA_ACCOUNT,
             );
@@ -272,11 +301,20 @@ export class GuardianService {
         parentDid: string,
         hederaAccount: string,
         hederaKey: string,
+        queryRunner: QueryRunner = null,
     ): Promise<TaskSetInterface> {
         try {
-            const user = await this.usersRepository.findOneBy({
-                email: email,
-            });
+            let user = null;
+            if (queryRunner) {
+                user = await queryRunner.manager.findOneBy(UsersEntity, {
+                    email: email,
+                });
+            } else {
+                user = await this.usersRepository.findOneBy({
+                    email: email,
+                });
+            }
+
             const url = `${this.buildGuardianUrl(GUARDIAN_API.PROFILE_UPDATE)}/${email}`;
             const token = await this.getAccessToken(user.refreshToken);
             const response = await axios.put(
@@ -309,16 +347,20 @@ export class GuardianService {
     public async assignPolicyToUser(
         email: string,
         assign: boolean = true,
+        queryRunner: QueryRunner = null,
     ): Promise<any> {
         try {
             const url = this.buildGuardianUrl(
                 `${GUARDIAN_API.POLICY_ASSIGN_ONE}/${email}${GUARDIAN_API.POLICY_ASSIGN_TWO}`,
             );
 
-            const userLoginResponse = await this.login({
-                username: this.configService.get('sru.username'),
-                password: this.configService.get('sru.password'),
-            });
+            const userLoginResponse = await this.login(
+                {
+                    username: this.configService.get('sru.username'),
+                    password: this.configService.get('sru.password'),
+                },
+                queryRunner,
+            );
 
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
@@ -342,16 +384,20 @@ export class GuardianService {
         hashedPass: string,
         blockId: string,
         payload: any,
+        queryRunner: QueryRunner = null,
     ): Promise<any> {
         try {
-            await this.validateGuardianCall(email);
+            await this.validateGuardianCall(email, false, queryRunner);
             const url = this.buildGuardianUrl(
                 `/api/v1/policies/${this.configService.get('policy.id')}/blocks/${blockId}`,
             );
-            const userLoginResponse = await this.login({
-                username: email,
-                password: hashedPass,
-            });
+            const userLoginResponse = await this.login(
+                {
+                    username: email,
+                    password: hashedPass,
+                },
+                queryRunner,
+            );
             const token = await this.getAccessToken(
                 userLoginResponse.refreshToken,
             );
@@ -373,9 +419,10 @@ export class GuardianService {
         email: string,
         blockName: string,
         payload: any,
+        queryRunner: QueryRunner = null,
     ): Promise<any> {
         try {
-            await this.validateGuardianCall(email);
+            await this.validateGuardianCall(email, false, queryRunner);
             const block = await this.utilService.getBlocksByBlockName(
                 blockName,
                 this.configService.get('policy.id'),
@@ -672,6 +719,7 @@ export class GuardianService {
         grid: GridTypeEnum,
         refId: string,
         email: string,
+        alreadyRevoked: boolean = false,
     ): Promise<any> {
         const gridApis = this.getGridApi(grid);
         const token = await this.getAuthenticatedUserToken(email);
@@ -695,7 +743,7 @@ export class GuardianService {
                 (response: any) =>
                     response?.document?.credentialSubject[0]?.refId === refId,
             );
-            if (!fullVCDocument) {
+            if (!fullVCDocument && !alreadyRevoked) {
                 throw new Error('No document found for the given refId');
             }
 
@@ -906,7 +954,10 @@ export class GuardianService {
             await this.getGuardianError(error, 'approve');
         }
     }
-    public async login(loginDto: LoginDto): Promise<any> {
+    public async login(
+        loginDto: LoginDto,
+        queryRunner: QueryRunner = null,
+    ): Promise<any> {
         try {
             const response = await axios.post(
                 `${this.configService.get('guardian.url')}${GUARDIAN_API.LOGIN}`,
@@ -915,26 +966,30 @@ export class GuardianService {
 
             if (response?.status == HttpStatus.OK) {
                 const message: string = `User: ${loginDto.username} has logged into the system.`;
-
-                try {
+                if (queryRunner) {
+                    await queryRunner.manager.update(
+                        UsersEntity,
+                        {
+                            email: loginDto.username,
+                        },
+                        { refreshToken: response?.data?.refreshToken },
+                    );
+                } else {
                     await this.usersRepository.update(
                         {
                             email: loginDto.username,
                         },
                         { refreshToken: response?.data?.refreshToken },
                     );
-
-                    return response.data;
-                } catch (error) {
-                    console.error(`Failed to add log: "${message}"`, error);
                 }
+
+                return response.data;
             } else {
                 throw new HttpException(
                     'Guardian User Login Failed',
                     HttpStatus.UNAUTHORIZED,
                 );
             }
-            return response.data;
         } catch (error) {
             await this.getGuardianError(error, 'login');
         }

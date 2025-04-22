@@ -29,7 +29,9 @@ export class AuthGuardService implements CanActivate {
     private async validateHttpRequest(request: Request): Promise<boolean> {
         const token = this.extractTokenFromHeader(request);
         if (!token) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException(
+                'Your session has expired. Please log in again to continue.',
+            );
         }
         return this.validateToken(token, request);
     }
@@ -45,7 +47,9 @@ export class AuthGuardService implements CanActivate {
             requestOrClient['user'] = payload;
             return true;
         } catch {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException(
+                'Your session has expired. Please log in again to continue.',
+            );
         }
     }
 

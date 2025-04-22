@@ -1,7 +1,7 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { CustodianDBPopulate1737524138690 } from '../migrations/1737524138690-CustodianDBPopulate';
 import { ConfigService } from '@nestjs/config';
-import { UpdateEntities1742383129238 } from '../migrations/1742383129238-UpdateEntities';
+// import { UpdateEntities1742383129238 } from '../migrations/1742383129238-UpdateEntities';
 
 const ormConfig = (configService: ConfigService): TypeOrmModuleOptions => ({
     type: 'postgres',

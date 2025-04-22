@@ -1,4 +1,4 @@
-import { ProjectSectorEnum } from '@app/shared/project/enum/project.sector.enum';
+import { ProjectSectorScopeEnum } from '@app/shared/project/enum/project.sector.scope.enum';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsOptional } from 'class-validator';
 
@@ -23,8 +23,8 @@ export class ProjectDataRequestDTO {
     endDate?: number;
 
     @ApiProperty({
-        enum: ProjectSectorEnum,
+        enum: ProjectSectorScopeEnum,
     })
     @IsOptional()
-    sector?: ProjectSectorEnum;
+    sector?: ProjectSectorScopeEnum;
 }

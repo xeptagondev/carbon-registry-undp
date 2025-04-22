@@ -30,6 +30,7 @@ import { PasswordResetDto } from '@app/shared/users/dto/password-reset.dto';
 import { ValidateTokenDto } from '@app/shared/token/dto/validate-token.dto';
 import { RequestTokenDto } from '@app/shared/token/dto/request-token.dto';
 import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +40,7 @@ export class AuthService {
         private readonly jwtService: JwtService,
         private readonly tokenService: TokenService,
         private readonly mailService: MailService,
+        private readonly utilService: UtilService,
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
         @InjectRepository(OrganizationEntity)
@@ -181,6 +183,25 @@ export class AuthService {
             throw new HttpException(
                 'Invalid credentials. Please check your username and password and try again.',
                 HttpStatus.UNAUTHORIZED,
+            );
+        }
+
+        if (!(await this.utilService.isVerified('UsersEntity', user.id))) {
+            throw new HttpException(
+                'User not verified',
+                HttpStatus.NOT_ACCEPTABLE,
+            );
+        }
+
+        if (
+            !(await this.utilService.isVerified(
+                'OrganizationEntity',
+                user.organization.id,
+            ))
+        ) {
+            throw new HttpException(
+                'Organisation not verified',
+                HttpStatus.NOT_ACCEPTABLE,
             );
         }
 

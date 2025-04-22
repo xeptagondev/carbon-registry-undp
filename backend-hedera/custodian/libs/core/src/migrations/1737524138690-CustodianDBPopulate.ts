@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable max-len */
 /* eslint-disable quotes */
 import { OrganizationTypeEnum } from '@app/shared/organization-type/enum/organization-type.enum';
 import { RoleEnum } from '@app/shared/role/enum/role.enum';
@@ -47,32 +49,32 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}')\
             ), \
             ( \
-                'DOE_ADMIN', \
+                'IC_ADMIN', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Admin}'), \
                 (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.INDEPENDENT_CERTIFIER}')\
             ), \
             ( \
-                'DOE_MANAGER', \
+                'IC_MANAGER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Manager}'), \
                 (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.INDEPENDENT_CERTIFIER}')\
             ), \
             ( \
-                'DOE_VIEWER', \
+                'IC_VIEWER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.ViewOnly}'), \
                 (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.INDEPENDENT_CERTIFIER}')\
             ), \
             ( \
-                'PP_ADMIN', \
+                'PD_ADMIN', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Admin}'), \
                 (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_DEVELOPER}')\
             ), \
             ( \
-                'PP_MANAGER', \
+                'PD_MANAGER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.Manager}'), \
                 (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_DEVELOPER}')\
             ), \
             ( \
-                'PP_VIEWER', \
+                'PD_VIEWER', \
                 (SELECT id FROM role_entity WHERE name='${RoleEnum.ViewOnly}'), \
                 (SELECT id FROM organization_type_entity WHERE name='${OrganizationTypeEnum.PROJECT_DEVELOPER}')\
             );`,
@@ -95,8 +97,8 @@ export class CustodianDBPopulate1737524138690 implements MigrationInterface {
                 '0000000', \
                 'Registry user', \
                 '${process.env.STANDARD_REGISTRY_PASSWORD}', \
-                '0.0.5143903', \
                 '0112456789', \
+                '${process.env.STANDARD_REGISTRY_HEDERA_ACCOUNT}', \
                 NULL, \
                 NULL \
             );`,
