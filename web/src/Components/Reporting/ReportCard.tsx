@@ -1,7 +1,7 @@
-import { Button, Col, Row, Table } from "antd";
-import "./ReportingComponent.scss";
-import { DownloadOutlined, UploadOutlined } from "@ant-design/icons";
-import { REPORT_TYPES } from "./reportTypes";
+import { Button, Col, Row, Table } from 'antd';
+import './ReportingComponent.scss';
+import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { REPORT_TYPES } from './reportTypes';
 
 interface IReportCard {
   title: string;
@@ -19,11 +19,7 @@ interface IReportCard {
     pageSize: number;
     pageSizeOptions: number[];
   };
-  handlePaginationChange: (
-    page: number,
-    pageSize: number,
-    reportType: REPORT_TYPES
-  ) => void;
+  handlePaginationChange: (page: number, pageSize: number, reportType: REPORT_TYPES) => void;
 }
 
 const ReportCard = (props: IReportCard) => {
@@ -42,12 +38,7 @@ const ReportCard = (props: IReportCard) => {
 
   return (
     <div className="report-card">
-      <Row
-        gutter={20}
-        justify={"space-between"}
-        align={"middle"}
-        className="header-row"
-      >
+      <Row gutter={20} justify={'space-between'} align={'middle'} className="header-row">
         <Col>
           <p className="title">{title}</p>
         </Col>
@@ -91,8 +82,8 @@ const ReportCard = (props: IReportCard) => {
           scroll={{ x: 1000 }}
           pagination={{
             ...pagination,
-            style: { textAlign: "center" },
-            position: ["bottomLeft"],
+            style: { textAlign: 'center' },
+            position: ['bottomLeft'],
             showSizeChanger: true,
           }}
           bordered={true}
