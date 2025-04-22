@@ -48,7 +48,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
   const [selectedYear, setSelectedYear] = useState<any>();
 
   const checkIfAnyReportIsSelected = () => {
-    let isReportSelected = Object.values(selectedReports).some(Boolean);
+    const isReportSelected = Object.values(selectedReports).some(Boolean);
     console.log('---------isReportSelected---------', isReportSelected);
     return isReportSelected;
   };
@@ -90,7 +90,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
               }))
             }
           >
-            {Object.keys(REPORT_TYPES).map((type: keyof typeof REPORT_TYPES) => (
+            {Object.keys(REPORT_TYPES).map((type: any) => (
               <Select.Option value={type}>{t(`reporting:${type}`)}</Select.Option>
             ))}
           </Select>
@@ -107,8 +107,8 @@ const ReportingComponent = (props: { translator: i18n }) => {
           handlePaginationChange={handlePaginationInfoChange}
           pagination={{
             total: 10,
-            current: paginationInfo[REPORT_TYPES.ACTIONS].page || 1,
-            pageSize: paginationInfo[REPORT_TYPES.ACTIONS].pageSize || 1,
+            current: paginationInfo[REPORT_TYPES.ACTIONS]?.page || 1,
+            pageSize: paginationInfo[REPORT_TYPES.ACTIONS]?.pageSize || 1,
             pageSizeOptions: [10, 20, 30],
           }}
           data={[]}
@@ -127,8 +127,8 @@ const ReportingComponent = (props: { translator: i18n }) => {
           handlePaginationChange={handlePaginationInfoChange}
           pagination={{
             total: 10,
-            current: paginationInfo[REPORT_TYPES.HOLDINGS].page || 1,
-            pageSize: paginationInfo[REPORT_TYPES.HOLDINGS].pageSize || 1,
+            current: paginationInfo[REPORT_TYPES.HOLDINGS]?.page || 1,
+            pageSize: paginationInfo[REPORT_TYPES.HOLDINGS]?.pageSize || 1,
             pageSizeOptions: [10, 20, 30],
           }}
           data={[]}

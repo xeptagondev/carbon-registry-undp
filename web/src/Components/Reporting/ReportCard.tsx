@@ -88,7 +88,9 @@ const ReportCard = (props: IReportCard) => {
           }}
           bordered={true}
           onChange={(value) => {
-            handlePaginationChange(value?.current, value?.pageSize, reportType);
+            if (value?.current && value?.pageSize) {
+              handlePaginationChange(value?.current, value?.pageSize, reportType);
+            }
           }}
         />
       </div>
