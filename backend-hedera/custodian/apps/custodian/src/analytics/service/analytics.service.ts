@@ -15,7 +15,7 @@ import {
 import { ProjectDataRequestDTO } from '../dto/project-data-request.dto';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
-import { ProjectSectorEnum } from '@app/shared/project/enum/project.sector.enum';
+import { ProjectSectorScopeEnum } from '@app/shared/project/enum/project.sector.scope.enum';
 
 @Injectable()
 export class AnalyticsService {
@@ -515,14 +515,14 @@ export class AnalyticsService {
         const result = await qb.getRawMany();
 
         const response: Record<string, number> = {};
-        for (const sectorKey in ProjectSectorEnum) {
-            const sectorName = ProjectSectorEnum[sectorKey];
+        for (const sectorKey in ProjectSectorScopeEnum) {
+            const sectorName = ProjectSectorScopeEnum[sectorKey];
             response[sectorName] = 0;
         }
 
         for (const row of result) {
             const sector = row.sector ?? 'Unknown';
-            response[ProjectSectorEnum[sector]] = parseInt(row.count, 10);
+            response[ProjectSectorScopeEnum[sector]] = parseInt(row.count, 10);
         }
 
         return response;
