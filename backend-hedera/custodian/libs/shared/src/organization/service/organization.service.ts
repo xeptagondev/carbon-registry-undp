@@ -541,7 +541,11 @@ export class OrganizationService extends SuperService<
                 }),
             );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
+        } catch (err) {
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
             throw new HttpException(
                 'Error occurred while approving the organization',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -584,9 +588,15 @@ export class OrganizationService extends SuperService<
                     email,
                     organizationApproveDto.remarks,
                 );
-            } catch (e) {
-                console.log(e);
-                throw e;
+            } catch (err) {
+                this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+                if (err instanceof HttpException) {
+                    throw err;
+                }
+                throw new HttpException(
+                    'Error occurred while rejecting the organization',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
             }
 
             await this.organizationRepository.update(
@@ -604,14 +614,23 @@ export class OrganizationService extends SuperService<
                     where: { id: orgEntity.id },
                 }),
             );
-        } catch (e) {
-            console.log(e);
-            throw e;
+        } catch (err) {
+            this.logger.error(`Error: ${err} \n Stacktrace: ${err.stack}`);
+            if (err instanceof HttpException) {
+                throw err;
+            }
+            throw new HttpException(
+                'Error occurred while rejecting the organization',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
     async update(dto: any, user: JWTPayload): Promise<any> {
+        // Verify the action is allowed
         this.helperService.validateRequestUser(user);
+        await this.utilService.verifyRequestUser(user);
+
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -642,10 +661,29 @@ export class OrganizationService extends SuperService<
                 },
             );
 
+            const rollBackOrg = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: orgId },
+                },
+            );
+
             if (!orgEnt) {
                 throw new HttpException(
                     'Organisation not found',
                     HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            if (
+                !(await this.utilService.isVerified(
+                    'OrganizationEntity',
+                    orgEnt.id,
+                ))
+            ) {
+                throw new HttpException(
+                    'Organisation not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
                 );
             }
 
@@ -721,13 +759,6 @@ export class OrganizationService extends SuperService<
             });
 
             asyncTask = await queryRunner.manager.save(TaskEntity, asyncTask);
-
-            const rollBackOrg = await queryRunner.manager.findOne(
-                OrganizationEntity,
-                {
-                    where: { id: orgId },
-                },
-            );
 
             let events: EventEntity = plainToClass(EventEntity, {
                 type: EventTypeEnum.UPDATE,
@@ -959,6 +990,9 @@ export class OrganizationService extends SuperService<
         ) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
+
+        // Verify the action is allowed
+        await this.utilService.verifyRequestUser(requestData);
 
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();

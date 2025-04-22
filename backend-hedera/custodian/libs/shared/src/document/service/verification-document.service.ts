@@ -44,6 +44,7 @@ import { plainToClass } from 'class-transformer';
 import { SerialNumberManagementService } from '@app/shared/serial-number-management/service/serial-number-management.service';
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -57,6 +58,7 @@ export class VerificationDocumentService extends DocumentService {
         fileHelperService: FileHelperService,
         logger: InstantLogger,
         hbarManagementService: HbarManagementService,
+        utilService: UtilService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
         private readonly serialNumberManagementService: SerialNumberManagementService,
@@ -69,6 +71,7 @@ export class VerificationDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             hbarManagementService,
+            utilService,
             documentRepository,
             logger,
         );
@@ -139,6 +142,13 @@ export class VerificationDocumentService extends DocumentService {
                     HttpStatus.CONFLICT,
                 );
             }
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                lastMonitoring.refId,
+                jwtData,
+                queryRunner,
+            );
 
             const project: ProjectEntity = await queryRunner.manager.findOne(
                 ProjectEntity,
@@ -381,6 +391,14 @@ export class VerificationDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                documentEntity.refId,
+                jwtData,
+                queryRunner,
+            );
+
             // Previous state has to be pending
             if (documentEntity.state !== DocumentStateEnum.PENDING) {
                 throw new HttpException(
@@ -525,7 +543,6 @@ export class VerificationDocumentService extends DocumentService {
                         retryAttemps: 1,
                         state: TaskEnum.PENDING,
                     });
-
 
                     await queryRunner.manager.save(TaskEntity, asyncTask);
 
