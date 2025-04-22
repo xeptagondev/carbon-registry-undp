@@ -8,6 +8,8 @@ import { TokenAssociateEntity } from './entity/token-associate.entity';
 import { CreditBlocksEntity } from './entity/credit.blocks.entity';
 import { CreditTransactionsEntity } from './entity/credit.transfer.entity';
 import { SerialNumberManagementModule } from '../serial-number-management/serial-number-management.module';
+import { HbarManagementModule } from '../hbar-management/hbar-management.module';
+import { MailModule } from '../mail/mail.module';
 @Module({
     imports: [
         UtilModule,
@@ -17,6 +19,8 @@ import { SerialNumberManagementModule } from '../serial-number-management/serial
             CreditBlocksEntity,
             CreditTransactionsEntity,
         ]),
+        HbarManagementModule,
+        MailModule,
     ],
     providers: [CarbonCreditService, CarbonCreditGuardianService],
     exports: [CarbonCreditGuardianService, CarbonCreditService],

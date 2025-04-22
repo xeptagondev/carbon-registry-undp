@@ -818,8 +818,9 @@ const BasicInformation = (props: ValidationStepsProps) => {
                     </Col>
 
                     <Col xl={24} md={24}>
+                      <div className="custom-label-pdd">{t('validationReport:uploadImages')}</div>
                       <Form.Item
-                        label={t('validationReport:uploadImages')}
+                        //label={t('validationReport:uploadImages')}
                         name="optionalImages"
                         valuePropName="fileList"
                         getValueFromEvent={normFile}
@@ -827,8 +828,8 @@ const BasicInformation = (props: ValidationStepsProps) => {
                         rules={[
                           {
                             validator: async (rule, file) => {
-                              if (file?.length > 0) {
-                                if (file[0]?.size > maximumImageSize) {
+                              for (let i = 0; i < file?.length; i++) {
+                                if (file[i]?.size > maximumImageSize) {
                                   // default size format of files would be in bytes -> 1MB = 1000000bytes
                                   throw new Error(`${t('common:maxSizeVal')}`);
                                 }
@@ -842,7 +843,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
                           beforeUpload={(file: any) => {
                             return false;
                           }}
-                          className="design-upload-section"
+                          className="design-upload-section-validation"
                           name="design"
                           action="/upload.do"
                           listType="picture"
@@ -1182,8 +1183,11 @@ const BasicInformation = (props: ValidationStepsProps) => {
                               </Col>
 
                               <Col xl={24} md={24}>
+                                <div className="custom-label-validation">
+                                  {t('validationReport:uploadImages')}
+                                </div>
                                 <Form.Item
-                                  label={t('validationReport:uploadImages')}
+                                  //label={t('validationReport:uploadImages')}
                                   name={[name, 'optionalImages']}
                                   valuePropName="fileList"
                                   getValueFromEvent={normFile}
@@ -1191,8 +1195,8 @@ const BasicInformation = (props: ValidationStepsProps) => {
                                   rules={[
                                     {
                                       validator: async (rule, file) => {
-                                        if (file?.length > 0) {
-                                          if (file[0]?.size > maximumImageSize) {
+                                        for (let i = 0; i < file?.length; i++) {
+                                          if (file[i]?.size > maximumImageSize) {
                                             // default size format of files would be in bytes -> 1MB = 1000000bytes
                                             throw new Error(`${t('common:maxSizeVal')}`);
                                           }

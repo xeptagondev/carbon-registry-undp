@@ -407,8 +407,13 @@ export class OrganizationService extends SuperService<
 
         const [entities, total] = await this.organizationRepository
             .createQueryBuilder('organization')
+            .select('organization')
             .leftJoin('organization.organizationType', 'organizationType')
             .addSelect(['organizationType'])
+            .loadRelationCountAndMap(
+                'organization.numberOfProjects',
+                'organization.projects',
+            )
             .where(this.helperService.generateWhereSQL(query))
             .orderBy(
                 query?.sort?.key && `"${query?.sort?.key}"`,
