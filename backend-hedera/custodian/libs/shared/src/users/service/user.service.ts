@@ -68,6 +68,7 @@ import { plainToClass, plainToInstance } from 'class-transformer';
 import { EventEntity } from '@app/shared/event/entity/event.entity';
 import { EventTypeEnum } from '@app/shared/event/enum/event-type.enum';
 import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
+import { createPrivateKey } from 'crypto';
 
 @Injectable()
 export class UserService extends SuperService<UsersEntity, UsersDTO> {
@@ -260,6 +261,42 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         }
     }
 
+    private validateHederaCredentials(
+        accountId: string,
+        privateKeyHex: string,
+        entity: 'User' | 'Organisation',
+    ): void {
+        const ACCOUNT_ID_REGEX = /^\d+\.\d+\.\d+$/;
+        const ED25519_PRIV_DER =
+            /^302e020100300506032b657004220420[a-fA-F0-9]{64}$/;
+        if (!ACCOUNT_ID_REGEX.test(accountId)) {
+            throw new HttpException(
+                `Invalid ${entity} Hedera account ID: ${accountId}`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        if (!ED25519_PRIV_DER.test(privateKeyHex)) {
+            throw new HttpException(
+                `Invalid ${entity} Hedera private key format`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            createPrivateKey({
+                key: Buffer.from(privateKeyHex, 'hex'),
+                format: 'der',
+                type: 'pkcs8',
+            });
+        } catch {
+            throw new HttpException(
+                `${entity} Hedera key is not a valid Ed25519 private key`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+    }
+
     // User/Organization Registration Flow
     public async register(
         userDto: UsersDTO,
@@ -296,12 +333,48 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         try {
             await queryRunner.startTransaction();
 
-            if (!userDto.hederaAccount && !userDto.hederaKey) {
+            if (userDto.company) {
+                const { hederaAccount, hederaKey } = userDto.company;
+                if (hederaAccount || hederaKey) {
+                    if (!hederaAccount || !hederaKey) {
+                        throw new HttpException(
+                            'Both Organisation Hedera account ID and key must be provided together',
+                            HttpStatus.BAD_REQUEST,
+                        );
+                    }
+                    this.validateHederaCredentials(
+                        hederaAccount,
+                        hederaKey,
+                        'Organisation',
+                    );
+                } else {
+                    await this.guardianService.validateGuardianCall(
+                        this.configService.get('sru.username'),
+                        true,
+                        null,
+                        240,
+                    );
+                }
+            }
+
+            if (userDto.hederaAccount || userDto.hederaKey) {
+                if (!userDto.hederaAccount || !userDto.hederaKey) {
+                    throw new HttpException(
+                        'Both User Hedera account ID and key must be provided together',
+                        HttpStatus.BAD_REQUEST,
+                    );
+                }
+                this.validateHederaCredentials(
+                    userDto.hederaAccount,
+                    userDto.hederaKey,
+                    'User',
+                );
+            } else {
                 await this.guardianService.validateGuardianCall(
                     this.configService.get('sru.username'),
                     true,
                     null,
-                    userDto.company ? 240 : 120,
+                    120,
                 );
             }
 
@@ -358,8 +431,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 orgEntity.email = userDto?.company?.email;
                 orgEntity.taxId = userDto?.company?.taxId;
                 orgEntity.state = OrganizationStateEnum.PENDING;
-                orgEntity.hederaAccountId = userDto?.company?.hederaAccountId;
-                orgEntity.hederaAccountKey = userDto?.company?.hederaAccountKey;
+                orgEntity.hederaAccountId = userDto?.company?.hederaAccount;
+                orgEntity.hederaAccountKey = userDto?.company?.hederaKey;
                 orgEntity.phoneNumber = userDto?.company?.phoneNo;
                 orgEntity.paymentId = userDto?.company?.paymentId;
                 orgEntity.faxNumber = userDto?.company?.faxNo;
@@ -1087,10 +1160,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             );
             let accGenTaskId: string;
 
-            if (
-                !userDto.company.hederaAccountId &&
-                !userDto.company.hederaAccountKey
-            ) {
+            if (!userDto.company.hederaAccount && !userDto.company.hederaKey) {
                 accGenTaskId = await this.hederaAccGenerate(userDto);
             }
 
@@ -1164,12 +1234,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
 
             let hederaAccResult: any;
 
-            if (
-                !(
-                    userDto.company.hederaAccountId &&
-                    userDto.company.hederaAccountKey
-                )
-            ) {
+            if (!(userDto.company.hederaAccount && userDto.company.hederaKey)) {
                 hederaAccResult = await this.verifyGuardianAsyncTask(
                     userDto,
                     accGenTaskId,
@@ -1186,11 +1251,11 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 OrganizationEntity,
                 { email: userDto.company.email },
                 plainToClass(OrganizationEntity, {
-                    hederaAccountId: userDto.company.hederaAccountId
-                        ? userDto.company.hederaAccountId
+                    hederaAccountId: userDto.company.hederaAccount
+                        ? userDto.company.hederaAccount
                         : hederaAccResult?.id,
-                    hederaAccountKey: userDto.company.hederaAccountKey
-                        ? userDto.company.hederaAccountKey
+                    hederaAccountKey: userDto.company.hederaKey
+                        ? userDto.company.hederaKey
                         : hederaAccResult?.key,
                 }),
             );

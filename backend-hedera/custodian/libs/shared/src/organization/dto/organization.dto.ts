@@ -40,11 +40,11 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
 
     @Unwrap()
     @IsOptional()
-    hederaAccountId?: string;
+    hederaAccount?: string;
 
     @Unwrap()
     @IsOptional()
-    hederaAccountKey?: string;
+    hederaKey?: string;
 
     faxNo?: string;
 
