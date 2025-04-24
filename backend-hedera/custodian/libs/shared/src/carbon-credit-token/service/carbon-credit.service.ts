@@ -60,14 +60,18 @@ export class CarbonCreditService {
         transactionCost: number,
         // eslint-disable-next-line max-len
         errorMessage: string = 'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.',
+        orgEmail?: string,
     ) {
+        const paramEmail = orgEmail ?? email;
+        const whereClause = orgEmail
+            ? 'organization.email = :email'
+            : 'users.email       = :email';
+
         const userWithOrg = await queryRunner.manager
             .getRepository(UsersEntity)
             .createQueryBuilder('users')
             .innerJoinAndSelect('users.organization', 'organization')
-            .where('users.email = :email', {
-                email: email,
-            })
+            .where(whereClause, { email: paramEmail })
             .getOne();
 
         const orgHbarBalance = Number(
@@ -1127,15 +1131,19 @@ export class CarbonCreditService {
             if (retireAction.action === RetirementActionEnum.ACCEPT) {
                 const transactionCost =
                     await this.hbarManagementService.getTransactionCosts(
-                        TransactionType.TOKEN_BURN,
+                        retireRequest.retirementType ===
+                            CreditRetirementTypeEmnum.CROSS_BORDER_TRANSACTIONS
+                            ? TransactionType.TOKEN_TRANSFER
+                            : TransactionType.TOKEN_BURN,
                     );
 
                 await this.validateHbarBalanceBeforeAction(
-                    retireRequest.sender.email,
+                    undefined,
                     queryRunner,
                     transactionCost * Number(retireRequest.creditAmount),
                     `The associated PD does not have enough HBAR balance to complete the transaction.
                     They've been notified — please try again shortly.`,
+                    retireRequest.sender.email,
                 );
             }
 
