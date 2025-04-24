@@ -23,13 +23,14 @@ export const ghgProjectDescriptionMapDataToFields = (vals: any) => {
 
   const tempVals = {
     ...vals,
-    estimatedNetEmissionReductions: vals?.estimatedNetEmissionReductions.map((item: any) => {
-      return {
-        ...item,
-        startDate: item?.startDate ? toMoment(item?.startDate) : undefined,
-        endDate: item?.endDate ? toMoment(item?.endDate) : undefined,
-      };
-    }),
+    estimatedNetEmissionReductions: vals?.estimatedNetEmissionReductions.map(
+      (item: any) => {
+        return {
+          ...item,
+          vintage: item?.vintage ? toMoment(item?.vintage) : undefined,
+        };
+      }
+    ),
   };
 
   return tempVals;

@@ -107,12 +107,7 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
   const tempVals = {
     ...vals,
     ce_documentUpload: mapBase64ToFields(vals?.ce_documentUpload),
-    emissionsPeriodStart: firstYearlyReductions?.startDate
-      ? toMoment(firstYearlyReductions?.startDate)
-      : undefined,
-    emissionsPeriodEnd: firstYearlyReductions?.endDate
-      ? toMoment(firstYearlyReductions?.endDate)
-      : undefined,
+    vintage: firstYearlyReductions?.vintage ? toMoment(firstYearlyReductions?.vintage) : undefined,
     baselineEmissionReductions: String(firstYearlyReductions?.baselineEmissionReductions),
     projectEmissionReductions: String(firstYearlyReductions?.projectEmissionReductions),
     leakageEmissionReductions: String(firstYearlyReductions?.leakageEmissionReductions),
@@ -123,10 +118,7 @@ export const calcEmissionReductionMapDataToFields = (vals: any) => {
       if (yearlyReductions !== undefined && yearlyReductions?.length > 0) {
         tempExtraReductions = yearlyReductions.map((reductions: any) => {
           return {
-            emissionsPeriodStart: reductions?.startDate
-              ? toMoment(reductions?.startDate)
-              : undefined,
-            emissionsPeriodEnd: reductions?.endDate ? toMoment(reductions?.endDate) : undefined,
+            vintage: reductions?.vintage ? toMoment(reductions?.vintage) : undefined,
             baselineEmissionReductions: String(reductions?.baselineEmissionReductions),
             projectEmissionReductions: String(reductions?.projectEmissionReductions),
             leakageEmissionReductions: String(reductions?.leakageEmissionReductions),
