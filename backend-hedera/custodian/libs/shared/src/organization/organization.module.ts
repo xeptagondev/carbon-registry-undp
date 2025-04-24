@@ -10,6 +10,7 @@ import { UtilModule } from '../util/util.module';
 import { GuardianModule } from '../guardian/guardian.module';
 import { FileHandlerModule } from '../file-handler/file-handler.module';
 import { CreditBlocksEntity } from '../carbon-credit-token/entity/credit.blocks.entity';
+import { EventEntity } from '../event/entity/event.entity';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { CreditBlocksEntity } from '../carbon-credit-token/entity/credit.blocks.
             OrganizationEntity,
             UsersEntity,
             CreditBlocksEntity,
+            EventEntity,
         ]),
         AuditModule,
         JwtModule,
