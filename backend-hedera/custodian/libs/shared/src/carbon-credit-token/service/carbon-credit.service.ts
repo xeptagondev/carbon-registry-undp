@@ -1283,9 +1283,12 @@ export class CarbonCreditService {
             );
         } catch (error) {
             this.logger.error(
-                `Error processing retire action: ${error.message}`,
+                `Error processing retire action: ${error.message} \nStacktrace: ${error.stack}`,
             );
             await queryRunner.rollbackTransaction();
+            if (error instanceof HttpException) {
+                throw error;
+            }
             throw new HttpException(
                 'Error processing retire request',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1404,7 +1407,13 @@ export class CarbonCreditService {
             );
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
+            this.logger.error(
+                `Error processing retire request: ${error.message} \nStacktrace: ${error.stack}`,
+            );
             await queryRunner.rollbackTransaction();
+            if (error instanceof HttpException) {
+                throw error;
+            }
             throw new HttpException(
                 'Error occurred while retiring tokens',
                 HttpStatus.INTERNAL_SERVER_ERROR,
