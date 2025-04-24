@@ -281,8 +281,9 @@ export class GuardianService {
             const response = await this.guardianHttpGet(url, token);
 
             if (response.status !== HttpStatus.ACCEPTED) {
-                throw new Error(
+                throw new HttpException(
                     `Failed to generate Hedera account for user: ${email}`,
+                    HttpStatus.EXPECTATION_FAILED,
                 );
             }
 
@@ -602,7 +603,10 @@ export class GuardianService {
                     response?.document?.credentialSubject[0]?.refId == refId,
             );
             if (!fullVCDocument) {
-                throw new Error('No document found for the given refId');
+                throw new HttpException(
+                    'No document found for the given refId',
+                    HttpStatus.NOT_FOUND,
+                );
             }
 
             return fullVCDocument.document?.credentialSubject[0];
@@ -744,7 +748,10 @@ export class GuardianService {
                     response?.document?.credentialSubject[0]?.refId === refId,
             );
             if (!fullVCDocument && !alreadyRevoked) {
-                throw new Error('No document found for the given refId');
+                throw new HttpException(
+                    'No document found for the given refId',
+                    HttpStatus.NOT_FOUND,
+                );
             }
 
             return fullVCDocument;
@@ -786,7 +793,10 @@ export class GuardianService {
                     response?.document?.credentialSubject[0]?.refId === refId,
             );
             if (!fullVCDocument) {
-                throw new Error('No document found for the given refId');
+                throw new HttpException(
+                    'No document found for the given refId',
+                    HttpStatus.NOT_FOUND,
+                );
             }
 
             return fullVCDocument?.history;
