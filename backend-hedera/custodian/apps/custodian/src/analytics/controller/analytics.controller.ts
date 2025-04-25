@@ -72,6 +72,17 @@ export class AnalyticsController {
         );
     }
     @UseGuards(AuthGuardService)
+    @Post('getProjectCountBySectorScope')
+    async getProjectCountBySectorScope(
+        @Body() filters: ProjectDataRequestDTO,
+        @Request() req,
+    ) {
+        return await this.analyticsService.getProjectCountBySectorScope(
+            filters,
+            req.user,
+        );
+    }
+    @UseGuards(AuthGuardService)
     @Post('getCreditSummary')
     async getCreditSummary(
         @Body() filters: ProjectDataRequestDTO,

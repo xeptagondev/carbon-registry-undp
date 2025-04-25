@@ -16,6 +16,7 @@ import { ProjectDataRequestDTO } from '../dto/project-data-request.dto';
 import { AuditEntity } from '@app/shared/audit/entity/audit.entity';
 import { ProjectAuditLogType } from '@app/shared/audit/enum/project.audit.log.type.enum';
 import { ProjectSectorScopeEnum } from '@app/shared/project/enum/project.sector.scope.enum';
+import { ProjectSectorEnum } from '@app/shared/project/enum/project.sector.enum';
 
 @Injectable()
 export class AnalyticsService {
@@ -39,7 +40,7 @@ export class AnalyticsService {
 
             // add sector filter
             if (filters.sector) {
-                where.sectoralScope = filters.sector;
+                where.sector = filters.sector;
             }
 
             // add isMine filter
@@ -293,7 +294,7 @@ export class AnalyticsService {
         }
 
         if (filters?.sector) {
-            latestStatusQb.andWhere('project.sectoralScope = :sector', {
+            latestStatusQb.andWhere('project.sector = :sector', {
                 sector: filters.sector,
             });
         }
@@ -407,7 +408,7 @@ export class AnalyticsService {
             });
         }
         if (filters?.sector) {
-            latestStatusQb.andWhere('project.sectoralScope = :sector', {
+            latestStatusQb.andWhere('project.sector = :sector', {
                 sector: filters.sector,
             });
         }
@@ -469,8 +470,89 @@ export class AnalyticsService {
                 'project',
                 'project.refId = audit.projectId',
             )
-            .select('project.sectoralScope', 'sector')
+            .select('project.sector', 'sector')
             .addSelect('COUNT(DISTINCT project.id)', 'count')
+            .groupBy('project.sector');
+
+        if (filters?.startDate) {
+            qb.andWhere('audit.createdTime >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+
+        if (filters?.endDate) {
+            qb.andWhere('audit.createdTime <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
+
+        if (filters?.sector) {
+            qb.andWhere('project.sector = :sector', {
+                sector: filters.sector,
+            });
+        }
+
+        if (filters?.isMine) {
+            if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.PROJECT_DEVELOPER
+            ) {
+                qb.andWhere('project.organization.id = :orgId', {
+                    orgId: jwtData.organizationId,
+                });
+            } else if (
+                jwtData.organizationRole ===
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+            ) {
+                qb.innerJoin(
+                    'project_assignees',
+                    'pa',
+                    'pa.project_id = project.id AND pa.organization_id = :orgId',
+                    { orgId: jwtData.organizationId },
+                );
+            }
+        }
+
+        const result = await qb.getRawMany();
+
+        const response: Record<string, number> = {};
+        for (const sectorKey in ProjectSectorEnum) {
+            const sectorName = ProjectSectorEnum[sectorKey];
+            response[sectorName] = 0;
+        }
+
+        for (const row of result) {
+            const sector = row.sector ?? 'Unknown';
+            response[ProjectSectorEnum[sector]] = parseInt(row.count, 10);
+        }
+
+        return response;
+    }
+
+    async getProjectCountBySectorScope(
+        filters: ProjectDataRequestDTO,
+        jwtData: JWTPayload,
+    ): Promise<Record<string, number>> {
+        const subQuery = this.auditRepository
+            .createQueryBuilder('sub_audit')
+            .select('sub_audit.projectId', 'projectId')
+            .addSelect('MAX(sub_audit.createdTime)', 'latestTime')
+            .groupBy('sub_audit.projectId');
+
+        const qb = this.auditRepository
+            .createQueryBuilder('audit')
+            .innerJoin(
+                `(${subQuery.getQuery()})`,
+                'latest',
+                'latest."projectId" = audit.projectId AND latest."latestTime" = audit.createdTime',
+            )
+            .innerJoin(
+                ProjectEntity,
+                'project',
+                'project.refId = audit.projectId',
+            )
+            .select('project.sectoralScope', 'sector')
+            .addSelect('COUNT(DISTINCT project.refId)', 'count')
             .groupBy('project.sectoralScope');
 
         if (filters?.startDate) {
@@ -486,7 +568,7 @@ export class AnalyticsService {
         }
 
         if (filters?.sector) {
-            qb.andWhere('project.sectoralScope = :sector', {
+            qb.andWhere('project.sector = :sector', {
                 sector: filters.sector,
             });
         }
@@ -630,7 +712,7 @@ export class AnalyticsService {
         }
 
         if (filters?.sector) {
-            baseQb.andWhere('project.sectoralScope = :sector', {
+            baseQb.andWhere('project.sector = :sector', {
                 sector: filters.sector,
             });
         }
@@ -730,7 +812,7 @@ export class AnalyticsService {
         }
 
         if (filters?.sector) {
-            qb.andWhere('project.sectoralScope = :sector', {
+            qb.andWhere('project.sector = :sector', {
                 sector: filters.sector,
             });
         }
