@@ -155,6 +155,7 @@ export class ProjectService {
         mappedProject.authorizationId = project.authorizationId;
         mappedProject.sector = project.sector;
         mappedProject.serialNo = project.serialNumber;
+        mappedProject.createdTime = project.createdDate;
         mappedProject.title = project.title;
         mappedProject.tokenId = project.tokenId;
         mappedProject.creditEst = project.creditEst;
