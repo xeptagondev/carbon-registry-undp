@@ -1172,6 +1172,8 @@ export class OrganizationService extends SuperService<
             where.id = Not(requestData.organizationId);
         }
 
+        where.state = OrganizationStateEnum.ACTIVE;
+
         const res = await this.organizationRepository.find({
             where: where,
         });
