@@ -280,20 +280,20 @@ export const ProgrammeManagementComponent = (props: any) => {
         return <span>{item ? item : t('projectList:na')}</span>;
       },
     },
-    // {
-    //   title: t('projectList:projectCreatedDate'),
-    //   dataIndex: 'createdTime',
-    //   key: ProgrammeManagementSlColumns.projectCreatedDate,
-    //   align: 'center' as const,
-    //   render: (item: any) => {
-    //     console.log('-----------item-----------', item);
-    //     return (
-    //       <>
-    //         {toMoment(Number(item)) ? toMoment(Number(item))?.format('YYYY/MM/DD HH:mm:ss') : '-'}
-    //       </>
-    //     );
-    //   },
-    // },
+    {
+      title: t('projectList:projectCreatedDate'),
+      dataIndex: 'createdTime',
+      key: ProgrammeManagementSlColumns.projectCreatedDate,
+      align: 'center' as const,
+      render: (item: any) => {
+        console.log('-----------item-----------', item);
+        return (
+          <>
+            {toMoment(Number(item)) ? toMoment(Number(item))?.format('YYYY/MM/DD HH:mm:ss') : '-'}
+          </>
+        );
+      },
+    },
     {
       title: t(''),
       width: 6,
