@@ -180,9 +180,28 @@ export class OrganizationService extends SuperService<
             .select('COALESCE(SUM(creditBlock.creditAmount), 0)', 'recvSum')
             .getRawOne();
 
+        // get if unverified
+        const pendingEvents = await this.dataSource
+            .createEntityManager()
+            .find(EventEntity, {
+                where: {
+                    affectedTableName: 'OrganizationEntity',
+                    affectedRecordId: organizationId,
+                    status: EventStateEnum.PENDING,
+                },
+            });
+
+        let isVerified = true;
+        if (pendingEvents?.length > 0) {
+            isVerified = false;
+        }
+
         organizationDetails['creditBalance'] = Number(receiverSum.recvSum);
 
-        return this.mapNewQueryToOldQuery(organizationDetails);
+        const res = this.mapNewQueryToOldQuery(organizationDetails);
+        res['isVerified'] = isVerified;
+
+        return res;
     }
 
     private prepareCompanyDataForExport(companies: any) {

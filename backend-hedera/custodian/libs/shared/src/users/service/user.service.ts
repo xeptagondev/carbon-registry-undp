@@ -2311,10 +2311,29 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             .select('COALESCE(SUM(creditBlock.creditAmount), 0)', 'recvSum')
             .getRawOne();
 
+        // get if unverified
+        const pendingEvents = await this.dataSource
+            .createEntityManager()
+            .find(EventEntity, {
+                where: {
+                    affectedTableName: 'UsersEntity',
+                    affectedRecordId: requestUser.userId,
+                    status: EventStateEnum.PENDING,
+                },
+            });
+
+        let isVerified = true;
+        if (pendingEvents?.length > 0) {
+            isVerified = false;
+        }
+
         userProfile.organization['creditBalance'] = Number(receiverSum.recvSum);
 
+        const user = this.mapNewQueryToOldQuery(userProfile);
+        user['isVerified'] = isVerified;
+
         return {
-            user: this.mapNewQueryToOldQuery(userProfile),
+            user: user,
             Organisation: this.orgaisationService.mapNewQueryToOldQuery(
                 userProfile?.organization,
             ),
