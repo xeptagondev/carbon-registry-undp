@@ -41,6 +41,7 @@ import { SerialNumberManagementService } from '@app/shared/serial-number-managem
 import { AdditionalDocType } from '../enum/additional.document.type';
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
@@ -56,6 +57,7 @@ export class VrDocumentService extends DocumentService {
         fileHelperService: FileHelperService,
         logger: InstantLogger,
         hbarManagementService: HbarManagementService,
+        utilService: UtilService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
         private readonly serialNumberManagementService: SerialNumberManagementService,
@@ -68,6 +70,7 @@ export class VrDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             hbarManagementService,
+            utilService,
             documentRepository,
             logger,
         );
@@ -130,6 +133,13 @@ export class VrDocumentService extends DocumentService {
                 queryRunner,
                 DocumentEnum.PDD,
                 dto.projectRefId,
+            );
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                lastPDD.refId,
+                jwtData,
+                queryRunner,
             );
 
             const validationData = dto.data;
@@ -300,6 +310,13 @@ export class VrDocumentService extends DocumentService {
         }
     }
 
+    authorizeDate(date = new Date()) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(-2);
+        return `${day}${month}${year}`;
+    }
+
     async verify(requestData: DocumentActionDTO, jwtData: JWTPayload) {
         this.logger.log(
             `Request received to verify Validation report from ${jwtData.userName}`,
@@ -337,6 +354,14 @@ export class VrDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                documentEntity.refId,
+                jwtData,
+                queryRunner,
+            );
+
             const dnaAdminEmails = (await this.getDNAAdmins(queryRunner)).map(
                 (user) => user.email,
             );
@@ -509,12 +534,17 @@ export class VrDocumentService extends DocumentService {
                     this.serialNumberManagementService.getProjectSerialNumber(
                         existingProject.id,
                     );
+                const authorizationId = `${this.authorizeDate()}
+                ${this.configService.get('countryCode')}
+                ${existingProject.id}`;
+
                 const updatedProject = plainToClass(ProjectEntity, {
                     ...existingProject,
                     tokenId: tokenId,
                     creditEst: creditAmount,
                     authoroiseLetterUrl: authoroiseLetterUrl,
                     serialNumber: serialNumber,
+                    authorizationId: authorizationId,
                 });
 
                 await queryRunner.manager.save(updatedProject);

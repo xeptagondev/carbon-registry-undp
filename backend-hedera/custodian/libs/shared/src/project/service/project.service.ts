@@ -152,6 +152,8 @@ export class ProjectService {
         mappedProject.authoroiseLetterUrl = project.authoroiseLetterUrl;
         mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
         mappedProject.sectoralScope = project.sectoralScope;
+        mappedProject.authorizationId = project.authorizationId;
+        mappedProject.sector = project.sector;
         mappedProject.serialNo = project.serialNumber;
         mappedProject.title = project.title;
         mappedProject.tokenId = project.tokenId;

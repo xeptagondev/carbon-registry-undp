@@ -32,6 +32,16 @@ export class ProjectEntity {
     @Column({
         nullable: true,
     })
+    authorizationId?: string;
+
+    @Column({
+        nullable: true,
+    })
+    sector: string;
+
+    @Column({
+        nullable: true,
+    })
     sectoralScope: string;
 
     @OneToMany(

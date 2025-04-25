@@ -30,6 +30,7 @@ import { plainToClass } from 'class-transformer';
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 import { INSUFFICIENT_HBAR_BALANCE } from '@app/shared/mail/constant/mail-header.constant';
 import { MailPriorityGroupsEnum } from '@app/shared/mail/enum/mail-priority.enum';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export abstract class DocumentService {
@@ -41,6 +42,7 @@ export abstract class DocumentService {
         protected readonly guardianService: GuardianService,
         protected readonly fileHelperService: FileHelperService,
         protected readonly hbarManagementService: HbarManagementService,
+        protected readonly utilService: UtilService,
         protected readonly documentRepository: Repository<DocumentEntity>,
         protected readonly logger: InstantLogger,
     ) {}
@@ -86,6 +88,100 @@ export abstract class DocumentService {
             };
             await this.mailService.sendMail(mailDto);
             throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
+        }
+    }
+
+    protected async validateDocumentEvent(
+        documentRefId: string,
+        jwtData: JWTPayload,
+        queryRunner: QueryRunner,
+    ): Promise<boolean> {
+        try {
+            const document = await queryRunner.manager.findOne(DocumentEntity, {
+                where: {
+                    refId: documentRefId,
+                },
+                relations: {
+                    activity: true,
+                    project: true,
+                },
+            });
+
+            if (!document) {
+                throw new HttpException(
+                    'Document not found',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            if (
+                !(await this.utilService.isVerified(
+                    'OrganizationEntity',
+                    jwtData.organizationId,
+                ))
+            ) {
+                throw new HttpException(
+                    'Organisation not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
+
+            if (
+                !(await this.utilService.isVerified(
+                    'UsersEntity',
+                    jwtData.userId,
+                ))
+            ) {
+                throw new HttpException(
+                    'User not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
+
+            if (
+                !(await this.utilService.isVerified(
+                    'ProjectEntity',
+                    document.project.id,
+                ))
+            ) {
+                throw new HttpException(
+                    'Project not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
+
+            if (
+                document.activity &&
+                !(await this.utilService.isVerified(
+                    'ActivityEntity',
+                    document.activity.id,
+                ))
+            ) {
+                throw new HttpException(
+                    'Activity not verified',
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
+
+            if (
+                !(await this.utilService.isVerified(
+                    'DocumentEntity',
+                    document.id,
+                ))
+            ) {
+                throw new HttpException(
+                    `Related Document (RefId:${document.refId}) not verified`,
+                    HttpStatus.NOT_ACCEPTABLE,
+                );
+            }
+
+            return true;
+        } catch (err) {
+            this.logger.error(`Error: ${err} \nStacktrace: ${err.stack}`);
+            throw new HttpException(
+                'Failed to verify',
+                HttpStatus.NOT_ACCEPTABLE,
+            );
         }
     }
 
