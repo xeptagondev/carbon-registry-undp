@@ -118,11 +118,11 @@ export class UserInitializationService implements OnModuleInit {
                     orgDto.logo = this.configService.get(
                         `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgLogo`,
                     );
-                    orgDto.hederaAccountId =
+                    orgDto.hederaAccount =
                         this.configService.get(
                             `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgHederaAccount`,
                         ) || undefined;
-                    orgDto.hederaAccountKey =
+                    orgDto.hederaKey =
                         this.configService.get(
                             `organizations.${OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY}.orgHederaKey`,
                         ) || undefined;

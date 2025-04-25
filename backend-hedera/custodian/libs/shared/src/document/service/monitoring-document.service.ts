@@ -45,6 +45,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
+import { UtilService } from '@app/shared/util/service/util.service';
 
 @Injectable()
 export class MonitoringDocumentService extends DocumentService {
@@ -58,6 +59,7 @@ export class MonitoringDocumentService extends DocumentService {
         fileHelperService: FileHelperService,
         logger: InstantLogger,
         hbarManagementService: HbarManagementService,
+        utilService: UtilService,
         @InjectRepository(DocumentEntity)
         documentRepository: Repository<DocumentEntity>,
     ) {
@@ -69,6 +71,7 @@ export class MonitoringDocumentService extends DocumentService {
             guardianService,
             fileHelperService,
             hbarManagementService,
+            utilService,
             documentRepository,
             logger,
         );
@@ -137,6 +140,14 @@ export class MonitoringDocumentService extends DocumentService {
                     HttpStatus.CONFLICT,
                 );
             }
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                lastVR.refId,
+                jwtData,
+                queryRunner,
+            );
+
             if (
                 lastActivity &&
                 !(
@@ -437,6 +448,14 @@ export class MonitoringDocumentService extends DocumentService {
                     HttpStatus.BAD_REQUEST,
                 );
             }
+
+            // Verify the action is allowed
+            await this.validateDocumentEvent(
+                documentEntity.refId,
+                jwtData,
+                queryRunner,
+            );
+
             const assigneeOrgEmails: string[] =
                 documentEntity.project.assignees.map((user) => user.email);
 
