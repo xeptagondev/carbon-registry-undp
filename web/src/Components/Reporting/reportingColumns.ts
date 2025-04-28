@@ -1,15 +1,18 @@
+import { toMoment } from '../../Utils/convertTime';
+import { INF_SECTOR, INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
+
 export const getActionsReportColumns = (t: any) => [
   {
     title: t('reporting:recordId'),
-    dataIndex: 'recordId',
-    key: 'recordId',
-    width: 800,
+    dataIndex: 'artical6RecordId',
+    key: 'artical6RecordId',
+    // width: 200,
   },
   {
     title: t('reporting:cooperativeApproach'),
     dataIndex: 'cooperativeApproach',
     key: 'cooperativeApproach',
-    width: 200,
+    // width: 200,
   },
   {
     title: t('reporting:itmo'),
@@ -29,13 +32,13 @@ export const getActionsReportColumns = (t: any) => [
           },
           {
             title: t('reporting:underlyingUnitBlockStartId'),
-            dataIndex: 'underlyingUnitBlockStartId',
-            key: 'underlyingUnitBlockStartId',
+            dataIndex: 'creditBlockStartId',
+            key: 'creditBlockStartId',
           },
           {
             title: t('reporting:underlyingUnitLastBlockId'),
-            dataIndex: 'underlyingUnitLastBlockId',
-            key: 'underlyingUnitLastBlockId',
+            dataIndex: 'creditBlockEndId',
+            key: 'creditBlockEndId',
           },
         ],
       },
@@ -49,13 +52,13 @@ export const getActionsReportColumns = (t: any) => [
           },
           {
             title: t('reporting:quantity'),
-            dataIndex: 'quantity',
-            key: 'quantity',
+            dataIndex: 'quantityInMetric',
+            key: 'quantityInMetric',
           },
           {
             title: t('reporting:quantity2'),
-            dataIndex: 'quantity',
-            key: 'quantity',
+            dataIndex: 'creditAmount',
+            key: 'creditAmount',
           },
           {
             title: t('reporting:conversionFactor'),
@@ -69,8 +72,8 @@ export const getActionsReportColumns = (t: any) => [
         children: [
           {
             title: t('reporting:firstTransferParty'),
-            dataIndex: 'firstTransferParty',
-            key: 'firstTransferParty',
+            dataIndex: 'firstTransferingParty',
+            key: 'firstTransferingParty',
           },
           {
             title: t('reporting:vintage'),
@@ -81,11 +84,17 @@ export const getActionsReportColumns = (t: any) => [
             title: t('reporting:sector'),
             dataIndex: 'sector',
             key: 'sector',
+            render: (item: any) => {
+              return INF_SECTOR[item];
+            },
           },
           {
             title: t('reporting:activityType'),
-            dataIndex: 'activityType',
-            key: 'activityType',
+            dataIndex: 'sectoralScope',
+            key: 'sectoralScope',
+            render: (item: any) => {
+              return INF_SECTORAL_SCOPE[item];
+            },
           },
         ],
       },
@@ -96,23 +105,29 @@ export const getActionsReportColumns = (t: any) => [
     children: [
       {
         title: t('reporting:dateOfAuthorization'),
-        dataIndex: 'dateOfAuthorization',
-        key: 'dateOfAuthorization',
+        dataIndex: 'projectAuthorizationTime',
+        key: 'projectAuthorizationTime',
+        render: (item: any) => {
+          return toMoment(Number(item))?.format('DD-MM-YY');
+        },
+        //
       },
+
       {
         title: t('reporting:authorizationId'),
         dataIndex: 'authorizationId',
         key: 'authorizationId',
       },
+
       {
         title: t('reporting:authorizationPurposes'),
-        dataIndex: 'authorizationPurposes',
-        key: 'authorizationPurposes',
+        dataIndex: 'purposeForAuthorization',
+        key: 'purposeForAuthorization',
       },
       {
         title: t('reporting:oimpAuthorized'),
-        dataIndex: 'oimpAuthorized',
-        key: 'oimpAuthorized',
+        dataIndex: 'OIMP',
+        key: 'OIMP',
       },
     ],
   },
@@ -132,8 +147,12 @@ export const getActionsReportColumns = (t: any) => [
         children: [
           {
             title: t('reporting:actionDate'),
-            dataIndex: 'actionDate',
-            key: 'actionDate',
+            dataIndex: 'actionTime',
+            key: 'actionTime',
+            render: (item: any) => {
+              return toMoment(Number(item))?.format('DD-MM-YY');
+            },
+            //
           },
           {
             title: t('reporting:actionType'),
@@ -142,8 +161,8 @@ export const getActionsReportColumns = (t: any) => [
           },
           {
             title: t('reporting:transferParty'),
-            dataIndex: 'transferParty',
-            key: 'transferParty',
+            dataIndex: 'transferingParty',
+            key: 'transferingParty',
           },
           {
             title: t('reporting:aquiringParty'),
@@ -152,13 +171,13 @@ export const getActionsReportColumns = (t: any) => [
           },
           {
             title: t('reporting:purposesForCancellation'),
-            dataIndex: 'purposesForCancellation',
-            key: 'purposesForCancellation',
+            dataIndex: 'purposeForCancellation',
+            key: 'purposeForCancellation',
           },
           {
             title: t('reporting:usingParticipating'),
-            dataIndex: 'usingParticipating',
-            key: 'usingParticipating',
+            dataIndex: 'actionBy',
+            key: 'actionBy', //
           },
         ],
       },
@@ -166,24 +185,26 @@ export const getActionsReportColumns = (t: any) => [
   },
   {
     title: t('reporting:firstTransfer'),
-    dataIndex: 'firstTransfer',
-    key: 'firstTransfer',
+    dataIndex: 'firstTransferingParty',
+    key: 'firstTransferingParty',
   },
 ];
 
 export const getHoldingsReportColumns = (t: any) => [
   {
     title: t('reporting:recordId'),
-    dataIndex: 'recordId',
-    key: 'recordId',
+    dataIndex: 'artical6RecordId',
+    key: 'artical6RecordId',
     // width: 200,
   },
+
   {
     title: t('reporting:cooperativeApproach'),
     dataIndex: 'cooperativeApproach',
     key: 'cooperativeApproach',
     // width: 200,
   },
+
   {
     title: t('reporting:itmo'),
     children: [
@@ -202,16 +223,18 @@ export const getHoldingsReportColumns = (t: any) => [
           },
           {
             title: t('reporting:underlyingUnitBlockStartId'),
-            dataIndex: 'underlyingUnitBlockStartId',
-            key: 'underlyingUnitBlockStartId',
+            dataIndex: 'creditBlockStartId',
+            key: 'creditBlockStartId',
           },
+
           {
             title: t('reporting:underlyingUnitLastBlockId'),
-            dataIndex: 'underlyingUnitLastBlockId',
-            key: 'underlyingUnitLastBlockId',
+            dataIndex: 'creditBlockEndId',
+            key: 'creditBlockEndId',
           },
         ],
       },
+
       {
         title: t('reporting:metricAndQuantity'),
         children: [
@@ -222,13 +245,13 @@ export const getHoldingsReportColumns = (t: any) => [
           },
           {
             title: t('reporting:quantity'),
-            dataIndex: 'quantity',
-            key: 'quantity',
+            dataIndex: 'quantityInMetric',
+            key: 'quantityInMetric',
           },
           {
             title: t('reporting:quantity2'),
-            dataIndex: 'quantity',
-            key: 'quantity',
+            dataIndex: 'creditAmount',
+            key: 'creditAmount',
           },
           {
             title: t('reporting:conversionFactor'),
@@ -242,8 +265,8 @@ export const getHoldingsReportColumns = (t: any) => [
         children: [
           {
             title: t('reporting:firstTransferParty'),
-            dataIndex: 'firstTransferParty',
-            key: 'firstTransferParty',
+            dataIndex: 'firstTransferingParty',
+            key: 'firstTransferingParty',
           },
           {
             title: t('reporting:vintage'),
@@ -254,11 +277,17 @@ export const getHoldingsReportColumns = (t: any) => [
             title: t('reporting:sector'),
             dataIndex: 'sector',
             key: 'sector',
+            render: (item: any) => {
+              return INF_SECTOR[item];
+            },
           },
           {
             title: t('reporting:activityType'),
-            dataIndex: 'activityType',
-            key: 'activityType',
+            dataIndex: 'sectoralScope',
+            key: 'sectoralScope',
+            render: (item: any) => {
+              return INF_SECTORAL_SCOPE[item];
+            },
           },
         ],
       },
@@ -269,8 +298,11 @@ export const getHoldingsReportColumns = (t: any) => [
     children: [
       {
         title: t('reporting:dateOfAuthorization'),
-        dataIndex: 'dateOfAuthorization',
-        key: 'dateOfAuthorization',
+        dataIndex: 'projectAuthorizationTime',
+        key: 'projectAuthorizationTime',
+        render: (item: any) => {
+          return toMoment(Number(item))?.format('DD-MM-YY');
+        },
       },
       {
         title: t('reporting:authorizationId'),
@@ -279,13 +311,13 @@ export const getHoldingsReportColumns = (t: any) => [
       },
       {
         title: t('reporting:authorizationPurposes'),
-        dataIndex: 'authorizationPurposes',
-        key: 'authorizationPurposes',
+        dataIndex: 'purposeForAuthorization',
+        key: 'purposeForAuthorization',
       },
       {
         title: t('reporting:oimpAuthorized'),
-        dataIndex: 'oimpAuthorized',
-        key: 'oimpAuthorized',
+        dataIndex: 'OIMP',
+        key: 'OIMP',
       },
     ],
   },
@@ -297,7 +329,7 @@ export const getHoldingsReportColumns = (t: any) => [
   },
   {
     title: t('reporting:firstTransfer'),
-    dataIndex: 'firstTransfer',
-    key: 'firstTransfer',
+    dataIndex: 'firstTransferingParty',
+    key: 'firstTransferingParty',
   },
 ];
