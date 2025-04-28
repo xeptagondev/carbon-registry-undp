@@ -383,13 +383,7 @@ export class AefReportManagementService {
         startRow: number,
         outputFileName: string,
     ) {
-        const templatePath = path.resolve(
-            __dirname,
-            'shared',
-            'src',
-            'templates',
-            templateName,
-        );
+        const templatePath = path.resolve(__dirname, 'templates', templateName);
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.readFile(templatePath);
 
