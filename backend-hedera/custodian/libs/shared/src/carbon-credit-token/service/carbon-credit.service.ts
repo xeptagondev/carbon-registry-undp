@@ -39,6 +39,7 @@ import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { MailService } from '@app/shared/mail/service/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
+import { AefReportManagementService } from '@app/shared/aef-report-management/aef-report-management.service';
 
 @Injectable()
 export class CarbonCreditService {
@@ -52,6 +53,7 @@ export class CarbonCreditService {
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
         private readonly logger: InstantLogger,
+        private readonly aefReportManagementService: AefReportManagementService,
     ) {}
 
     protected async validateHbarBalanceBeforeAction(
@@ -525,6 +527,8 @@ export class CarbonCreditService {
                     }
                 }
 
+                let transaction;
+
                 if (
                     !creditBlock.creditAmount &&
                     creditBlock.reservedCreditAmount == serialsToRetire.length
@@ -537,7 +541,7 @@ export class CarbonCreditService {
                         }),
                     );
 
-                    await queryRunner.manager.save(
+                    transaction = await queryRunner.manager.save(
                         plainToClass(CreditTransactionsEntity, {
                             ...retireRequest,
                             serialNumber: savedBlock.serialNumber,
@@ -561,7 +565,7 @@ export class CarbonCreditService {
                         }),
                     );
 
-                    await queryRunner.manager.save(
+                    transaction = await queryRunner.manager.save(
                         plainToClass(CreditTransactionsEntity, {
                             ...retireRequest,
                             serialNumber: secondSerialNumber,
@@ -585,6 +589,12 @@ export class CarbonCreditService {
                     );
                 }
 
+                await this.aefReportManagementService.handleAefRecord(
+                    CreditEventTypeEnum.RETIRED,
+                    creditBlock,
+                    queryRunner,
+                    transaction,
+                );
                 const log = new AuditEntity();
                 log.projectId = project.refId;
                 log.logType = ProjectAuditLogType.RETIRE_APPROVED;
@@ -1474,6 +1484,11 @@ export class CarbonCreditService {
             status: CreditEventStatusEnum.COMPLETED,
         });
         await queryRunner.manager.save(creditTransaction);
+        await this.aefReportManagementService.handleAefRecord(
+            CreditEventTypeEnum.ISSUED,
+            creditBlock,
+            queryRunner,
+        );
     }
 
     async transferCredit(
@@ -1500,11 +1515,12 @@ export class CarbonCreditService {
             throw new Error('Project or Organizations not found');
         }
 
+        let creditBlock;
         if (
             !transferingBlock.reservedCreditAmount &&
             transferingBlock.creditAmount === amount
         ) {
-            const creditBlock = plainToClass(CreditBlocksEntity, {
+            creditBlock = plainToClass(CreditBlocksEntity, {
                 ...transferingBlock,
                 sender,
                 receiver,
@@ -1541,7 +1557,7 @@ export class CarbonCreditService {
                 }),
             );
 
-            const creditBlock = plainToClass(CreditBlocksEntity, {
+            creditBlock = plainToClass(CreditBlocksEntity, {
                 serialNumber: secondSerialNumber,
                 creditAmount: amount,
                 project,
@@ -1567,6 +1583,12 @@ export class CarbonCreditService {
 
             await queryRunner.manager.save(creditTransaction);
         }
+
+        await this.aefReportManagementService.handleAefRecord(
+            CreditEventTypeEnum.TRANSFERED,
+            creditBlock,
+            queryRunner,
+        );
     }
 
     async releaseQueryRunner(queryRunner: QueryRunner, fn?: string) {

@@ -10,10 +10,12 @@ import { CreditTransactionsEntity } from './entity/credit.transfer.entity';
 import { SerialNumberManagementModule } from '../serial-number-management/serial-number-management.module';
 import { HbarManagementModule } from '../hbar-management/hbar-management.module';
 import { MailModule } from '../mail/mail.module';
+import { AefReportManagementModule } from '../aef-report-management/aef-report-management.module';
 @Module({
     imports: [
         UtilModule,
         SerialNumberManagementModule,
+        AefReportManagementModule,
         TypeOrmModule.forFeature([
             TokenAssociateEntity,
             CreditBlocksEntity,
