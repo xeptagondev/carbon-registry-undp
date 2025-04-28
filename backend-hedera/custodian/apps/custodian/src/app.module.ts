@@ -20,6 +20,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { TokensModule } from './tokens/tokens.module';
 import { HbarManagementAppModule } from './hbar-management/hbar-management.module';
 import { AefReportManagementModule } from '@app/shared/aef-report-management/aef-report-management.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
     imports: [
@@ -41,6 +42,7 @@ import { AefReportManagementModule } from '@app/shared/aef-report-management/aef
         MailModule,
         UserAppModule,
         ProjectAppModule,
+        ReportsModule,
         LocationAppModule,
         DocumentAppModule,
         AnalyticsModule,
