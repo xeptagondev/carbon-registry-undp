@@ -5,7 +5,7 @@ import { DatePicker, Empty, Row, Select } from 'antd';
 import moment from 'moment';
 import ReportCard from './ReportCard';
 import { getActionsReportColumns, getHoldingsReportColumns } from './reportingColumns';
-import { REPORT_TYPES } from './reportTypes';
+import { ReportTypes } from './reportTypes';
 
 const ReportingComponent = (props: { translator: i18n }) => {
   const { translator } = props;
@@ -13,27 +13,27 @@ const ReportingComponent = (props: { translator: i18n }) => {
   const t = translator.t;
 
   const [selectedReports, setSelectedReports] = useState<{
-    [REPORT_TYPES.ACTIONS]: boolean;
-    [REPORT_TYPES.HOLDINGS]: boolean;
+    [ReportTypes.ACTIONS]: boolean;
+    [ReportTypes.HOLDINGS]: boolean;
   }>({
-    [REPORT_TYPES.ACTIONS]: false,
-    [REPORT_TYPES.HOLDINGS]: false,
+    [ReportTypes.ACTIONS]: false,
+    [ReportTypes.HOLDINGS]: false,
   });
 
   const [paginationInfo, setPaginationInfo] = useState<
-    Partial<Record<keyof typeof REPORT_TYPES, { page: number; pageSize: number }>>
+    Partial<Record<keyof typeof ReportTypes, { page: number; pageSize: number }>>
   >({
-    [REPORT_TYPES.ACTIONS]: {
+    [ReportTypes.ACTIONS]: {
       page: 0,
       pageSize: 10,
     },
-    [REPORT_TYPES.HOLDINGS]: {
+    [ReportTypes.HOLDINGS]: {
       page: 0,
       pageSize: 10,
     },
   });
 
-  const handlePaginationInfoChange = (page: number, pageSize: number, reportType: REPORT_TYPES) => {
+  const handlePaginationInfoChange = (page: number, pageSize: number, reportType: ReportTypes) => {
     setPaginationInfo((prev) => ({
       ...prev,
       [reportType]: {
@@ -90,25 +90,25 @@ const ReportingComponent = (props: { translator: i18n }) => {
               }))
             }
           >
-            {Object.keys(REPORT_TYPES).map((type: any) => (
+            {Object.keys(ReportTypes).map((type: any) => (
               <Select.Option value={type}>{t(`reporting:${type}`)}</Select.Option>
             ))}
           </Select>
         </Row>
       </div>
 
-      {selectedReports[REPORT_TYPES.ACTIONS] && (
+      {selectedReports[ReportTypes.ACTIONS] && (
         <ReportCard
           title={'Actions Report'}
-          reportType={REPORT_TYPES.ACTIONS}
+          reportType={ReportTypes.ACTIONS}
           host={'Sri lanka'}
           year="2025"
           columns={getActionsReportColumns(t)}
           handlePaginationChange={handlePaginationInfoChange}
           pagination={{
             total: 10,
-            current: paginationInfo[REPORT_TYPES.ACTIONS]?.page || 1,
-            pageSize: paginationInfo[REPORT_TYPES.ACTIONS]?.pageSize || 1,
+            current: paginationInfo[ReportTypes.ACTIONS]?.page || 1,
+            pageSize: paginationInfo[ReportTypes.ACTIONS]?.pageSize || 1,
             pageSizeOptions: [10, 20, 30],
           }}
           data={[]}
@@ -117,18 +117,18 @@ const ReportingComponent = (props: { translator: i18n }) => {
         />
       )}
 
-      {selectedReports[REPORT_TYPES.HOLDINGS] && (
+      {selectedReports[ReportTypes.HOLDINGS] && (
         <ReportCard
           title={'Holdings Report'}
-          reportType={REPORT_TYPES.ACTIONS}
+          reportType={ReportTypes.ACTIONS}
           host={'Sri lanka'}
           year="2025"
           columns={getHoldingsReportColumns(t)}
           handlePaginationChange={handlePaginationInfoChange}
           pagination={{
             total: 10,
-            current: paginationInfo[REPORT_TYPES.HOLDINGS]?.page || 1,
-            pageSize: paginationInfo[REPORT_TYPES.HOLDINGS]?.pageSize || 1,
+            current: paginationInfo[ReportTypes.HOLDINGS]?.page || 1,
+            pageSize: paginationInfo[ReportTypes.HOLDINGS]?.pageSize || 1,
             pageSizeOptions: [10, 20, 30],
           }}
           data={[]}
