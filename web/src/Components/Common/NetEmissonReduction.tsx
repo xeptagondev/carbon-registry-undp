@@ -135,7 +135,7 @@ const NetEmissionReduction = (props: any) => {
       if (!currentVal) {
         return total;
       }
-      return total + (currentVal[category] || 0);
+      return total + (Number(currentVal[category]) || 0);
     }, 0);
 
     const creditingYears = Number(form.getFieldValue('totalNumberOfCreditingYears') || 0);
@@ -328,15 +328,21 @@ const NetEmissionReduction = (props: any) => {
                             message: `${t('common:required')}`,
                           },
                           {
+                            pattern: /^-?\d+$/,
+                            message: 'Should be an integer',
+                          },
+                          {
                             validator(rule, value) {
                               if (!value) {
                                 return Promise.resolve();
                               }
 
                               // eslint-disable-next-line no-restricted-globals
-                              if (isNaN(value)) {
-                                return Promise.reject(new Error('Should be a number'));
-                              }
+                              // if (Number(value) % 1 !== 0) {
+                              //   return Promise.reject(
+                              //     new Error("Should be an integer")
+                              //   );
+                              // }
 
                               return Promise.resolve();
                             },
@@ -368,23 +374,30 @@ const NetEmissionReduction = (props: any) => {
                             message: `${t('common:required')}`,
                           },
                           {
+                            pattern: /^-?\d+$/,
+                            message: 'Should be an integer',
+                          },
+                          {
                             validator(rule, value) {
                               if (!value) {
                                 return Promise.resolve();
                               }
 
                               // eslint-disable-next-line no-restricted-globals
-                              if (isNaN(value)) {
-                                return Promise.reject(new Error('Should be a number'));
-                              }
+                              // if (isNaN(value)) {
+                              //   return Promise.reject(
+                              //     new Error("Should be an integer")
+                              //   );
+                              // }
 
                               return Promise.resolve();
                             },
                           },
                         ]}
                       >
-                        <Input
+                        <InputNumber
                           type="number"
+                          precision={0}
                           size="large"
                           className="full-width-form-item"
                           onChange={(value) => {
@@ -408,23 +421,30 @@ const NetEmissionReduction = (props: any) => {
                             message: `${t('common:required')}`,
                           },
                           {
+                            pattern: /^-?\d+$/,
+                            message: 'Should be an integer',
+                          },
+                          {
                             validator(rule, value) {
                               if (!value) {
                                 return Promise.resolve();
                               }
 
                               // eslint-disable-next-line no-restricted-globals
-                              if (isNaN(value)) {
-                                return Promise.reject(new Error('Should be a number'));
-                              }
+                              // if (isNaN(value)) {
+                              //   return Promise.reject(
+                              //     new Error("Should be an integer")
+                              //   );
+                              // }
 
                               return Promise.resolve();
                             },
                           },
                         ]}
                       >
-                        <Input
+                        <InputNumber
                           type="number"
+                          precision={0}
                           size="large"
                           className="full-width-form-item"
                           onChange={(value) => {
@@ -452,7 +472,7 @@ const NetEmissionReduction = (props: any) => {
                               if (!value) {
                                 return Promise.resolve();
                               } else if (isNaN(value)) {
-                                return Promise.reject(new Error('Should be a number'));
+                                return Promise.reject(new Error('Should be an integer'));
                               } else if (Number(value) < 0) {
                                 return Promise.reject(
                                   new Error(
@@ -466,8 +486,9 @@ const NetEmissionReduction = (props: any) => {
                           },
                         ]}
                       >
-                        <Input
+                        <InputNumber
                           type="number"
+                          precision={0}
                           size="large"
                           disabled
                           className="full-width-form-item"
@@ -491,7 +512,7 @@ const NetEmissionReduction = (props: any) => {
 
                                 // eslint-disable-next-line no-restricted-globals
                                 if (isNaN(value)) {
-                                  return Promise.reject(new Error('Should be a number'));
+                                  return Promise.reject(new Error('Should be an integer'));
                                 }
 
                                 return Promise.resolve();
@@ -499,8 +520,9 @@ const NetEmissionReduction = (props: any) => {
                             },
                           ]}
                         >
-                          <Input
+                          <InputNumber
                             type="number"
+                            precision={0}
                             className="full-width-form-item"
                             size="large"
                             onChange={(value) => {
@@ -606,7 +628,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -633,7 +655,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -660,7 +682,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -687,7 +709,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -716,7 +738,7 @@ const NetEmissionReduction = (props: any) => {
 
                       // eslint-disable-next-line no-restricted-globals
                       if (isNaN(value)) {
-                        return Promise.reject(new Error('Should be a number'));
+                        return Promise.reject(new Error('Should be an integer'));
                       }
 
                       return Promise.resolve();
@@ -754,7 +776,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -805,7 +827,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -832,7 +854,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -859,7 +881,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -886,7 +908,7 @@ const NetEmissionReduction = (props: any) => {
 
                     // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
-                      return Promise.reject(new Error('Should be a number'));
+                      return Promise.reject(new Error('Should be an integer'));
                     }
 
                     return Promise.resolve();
@@ -914,7 +936,7 @@ const NetEmissionReduction = (props: any) => {
 
                       // eslint-disable-next-line no-restricted-globals
                       if (isNaN(value)) {
-                        return Promise.reject(new Error('Should be a number'));
+                        return Promise.reject(new Error('Should be an integer'));
                       }
 
                       return Promise.resolve();

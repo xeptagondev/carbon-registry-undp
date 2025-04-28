@@ -118,12 +118,21 @@ const StepperComponent = (props: any) => {
       }
     } catch (error: any) {
       console.log('----------error----------', error);
-      message.open({
-        type: 'error',
-        content: 'Something went wrong',
-        duration: 4,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
+      if (error?.status === 500) {
+        message.open({
+          type: 'error',
+          content: t('common:somethingWentWrong'),
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } else {
+        message.open({
+          type: 'error',
+          content: error.message,
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -169,12 +178,10 @@ const StepperComponent = (props: any) => {
 
     try {
       // Fetch Programme Data
-      const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, {
-        programmeId: programId,
-      });
+      const programmeResponse = await post(API_PATHS.PROGRAMME_BY_ID, { programmeId: programId });
       if (programmeResponse?.statusText === 'SUCCESS') {
         programmeData = programmeResponse?.data;
-        console.log('-----------------Programme Data-----------------', programmeData);
+        //console.log('-----------------Programme Data-----------------', programmeData);
       } else {
         console.log('Error: Programme API did not return SUCCESS status');
       }
@@ -188,7 +195,7 @@ const StepperComponent = (props: any) => {
         refId: state?.documents?.PDD?.refId,
         documentType: DocumentEnum.PDD,
       });
-      console.log('-----------------PDD Response-----------------', pddResponse);
+      //console.log('-----------------PDD Response-----------------', pddResponse);
       if (pddResponse?.statusText === 'SUCCESS') {
         pddData = pddResponse?.data;
       } else {
@@ -201,7 +208,6 @@ const StepperComponent = (props: any) => {
     if (programmeData && pddData) {
       const docVersions = state?.documents?.[DocumentEnum.VALIDATION as any]?.version;
       const latestVersion = docVersions ? docVersions + 1 : 1;
-
       form1.setFieldsValue({
         titleOfTheProjectActivity: programmeData?.title,
         mandatarySectoralScopes: INF_SECTORAL_SCOPE[programmeData?.sectoralScope],
@@ -239,26 +245,15 @@ const StepperComponent = (props: any) => {
           })),
       });
 
-      const netGHGEmissionReductions =
-        pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions;
-      let totalNumberOfCreditingYears = 0;
-
-      netGHGEmissionReductions?.yearlyGHGEmissionReductions.forEach((emissionData: any) => {
-        const startDate = moment.unix(emissionData.startDate);
-        const endDate = moment.unix(emissionData.endDate);
-
-        const duration = moment.duration(endDate.diff(startDate));
-
-        totalNumberOfCreditingYears += Math.floor(duration.asMonths()) / 12;
-      });
       form2.setFieldsValue({
-        estimatedNetEmissionReductions: netGHGEmissionReductions.yearlyGHGEmissionReductions?.map(
-          (emissionData: any) => ({
-            startDate: moment.unix(emissionData.startDate),
-            endDate: moment.unix(emissionData.endDate),
-          })
-        ),
-        totalNumberOfCreditingYears: netGHGEmissionReductions?.totalNumberOfCredingYears,
+        estimatedNetEmissionReductions:
+          pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions?.yearlyGHGEmissionReductions?.map(
+            (emissionData: any) => ({
+              startDate: moment.unix(emissionData.startDate),
+              endDate: moment.unix(emissionData.endDate),
+            })
+          ),
+        totalNumberOfCreditingYears: 1,
         baselineEmissionReductions: 0,
         baselineEmissions: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
           (loc: any) => ({ location: loc.locationOfProjectActivity })
