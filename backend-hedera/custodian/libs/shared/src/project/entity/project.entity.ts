@@ -34,6 +34,9 @@ export class ProjectEntity {
     })
     authorizationId?: string;
 
+    @Column({ nullable: true, type: 'bigint' })
+    projectAuthorizationTime?: number;
+
     @Column({
         nullable: true,
     })

@@ -19,6 +19,7 @@ import { UserAppModule } from './user/user.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { TokensModule } from './tokens/tokens.module';
 import { HbarManagementAppModule } from './hbar-management/hbar-management.module';
+import { AefReportManagementModule } from '@app/shared/aef-report-management/aef-report-management.module';
 
 @Module({
     imports: [
@@ -45,6 +46,7 @@ import { HbarManagementAppModule } from './hbar-management/hbar-management.modul
         AnalyticsModule,
         TokensModule,
         HbarManagementAppModule,
+        AefReportManagementModule,
     ],
     controllers: [AppController],
     providers: [AppService],

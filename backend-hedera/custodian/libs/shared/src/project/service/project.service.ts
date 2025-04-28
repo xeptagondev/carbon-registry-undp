@@ -153,6 +153,8 @@ export class ProjectService {
         mappedProject.noObjectionLetterUrl = project.noObjectionLetterUrl;
         mappedProject.sectoralScope = project.sectoralScope;
         mappedProject.authorizationId = project.authorizationId;
+        mappedProject.projectAuthorizationTime =
+            project.projectAuthorizationTime;
         mappedProject.sector = project.sector;
         mappedProject.serialNo = project.serialNumber;
         mappedProject.createdTime = project.createdDate;
