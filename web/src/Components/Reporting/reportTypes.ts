@@ -1,4 +1,4 @@
-export enum REPORT_TYPES  {
-    ACTIONS = "ACTIONS",
-    HOLDINGS = "HOLDINGS",
-  };
+export enum ReportTypes {
+  ACTIONS = 'ACTIONS',
+  HOLDINGS = 'HOLDINGS',
+}

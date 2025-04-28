@@ -1,11 +1,11 @@
 import { Button, Col, Row, Table } from 'antd';
 import './ReportingComponent.scss';
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
-import { REPORT_TYPES } from './reportTypes';
+import { ReportTypes } from './reportTypes';
 
 interface IReportCard {
   title: string;
-  reportType: REPORT_TYPES;
+  reportType: ReportTypes;
   host: string;
   year: string | number;
   totalRecords?: number;
@@ -19,7 +19,7 @@ interface IReportCard {
     pageSize: number;
     pageSizeOptions: number[];
   };
-  handlePaginationChange: (page: number, pageSize: number, reportType: REPORT_TYPES) => void;
+  handlePaginationChange: (page: number, pageSize: number, reportType: ReportTypes) => void;
 }
 
 const ReportCard = (props: IReportCard) => {
