@@ -425,7 +425,8 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                       return disableYears(
                                         currentDate,
                                         form,
-                                        'extraEmissionReductions'
+                                        "extraEmissionReductions", 
+                                        true,
                                       );
                                     }}
                                     // disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
@@ -671,7 +672,8 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                                 return disableYears(
                                                   currentDate,
                                                   form,
-                                                  'extraEmissionReductions'
+                                                  "extraEmissionReductions",
+                                                  true
                                                 );
                                               }}
                                             />
