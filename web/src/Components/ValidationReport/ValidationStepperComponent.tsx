@@ -98,9 +98,9 @@ const StepperComponent = (props: any) => {
     setLoading(true);
 
     const tempValues = {
-      ...existingFormValues,
+      ...structuredClone(existingFormValues),
       data: {
-        ...existingFormValues.data,
+        ...structuredClone(existingFormValues.data),
         appendix: appendixVals,
       },
     };
@@ -287,8 +287,8 @@ const StepperComponent = (props: any) => {
     console.log('---------values--------', val);
     setExistingFormValues((prevVal: any) => {
       const tempContent = {
-        ...prevVal.data,
-        ...val,
+        ...structuredClone(prevVal.data),
+        ...structuredClone(val),
       };
       return { ...prevVal, data: tempContent };
     });
