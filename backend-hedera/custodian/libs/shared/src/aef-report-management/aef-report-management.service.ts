@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { EntityManager, QueryRunner, Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import * as fs from 'fs';
-import * as ExcelJS from 'exceljs';
 import * as path from 'path';
+import * as ExcelJS from 'exceljs';
 import * as moment from 'moment';
 import { HelperService } from '../util/service/helper.service';
 import { SerialNumberManagementService } from '../serial-number-management/service/serial-number-management.service';
@@ -13,7 +13,6 @@ import { AefActionsTableEntity } from './entity/aef.actions.table.entity';
 import { FileHandlerInterface } from '../file-handler/filehandler.interface';
 import { CreditBlocksEntity } from '../carbon-credit-token/entity/credit.blocks.entity';
 import { CreditEventTypeEnum } from '../carbon-credit-token/enum/credit.event.type.enum';
-import { ProjectService } from '../project/service/project.service';
 import { plainToClass } from 'class-transformer';
 import { AefActionTypeEnum } from './enum/aef.action.type.enum';
 import { QueryDto } from '../util/dto/query.dto';
@@ -28,7 +27,6 @@ import { DataExportActions } from './dto/data.export.actions.dto';
 import { DataExportDto } from './dto/data.export.dto';
 import { AefExportDto } from './dto/aef.export.dto';
 import { CreditRetirementTypeEmnum } from '../carbon-credit-token/enum/credit.retirement.type.enum';
-import { RetirementActionEnum } from '../carbon-credit-token/dto/retirement.action.enum';
 import { ProjectEntity } from '../project/entity/project.entity';
 @Injectable()
 export class AefReportManagementService {
