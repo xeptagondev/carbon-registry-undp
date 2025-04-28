@@ -12,8 +12,6 @@ import RegistryDashboard from './Pages/Dashboard/registry/registrydashboard';
 import AddNewCompany from './Pages/Company/addNewCompany';
 import CompanyManagement from './Pages/CompanyManagement/companyManagement';
 // import ProgrammeManagement from './Pages/Old_ProgrammeManagement/programmeManagement';
-import ProgrammeView from './Pages/ProgrammeView/programmeView';
-import i18next from 'i18next';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import CreditTransfers from './Pages/Transfers/creditTransfers';
 import Homepage from './Pages/Homepage/homepage';
@@ -26,7 +24,6 @@ import UserProfile from './Pages/UserProfile/UserProfile';
 import CompanyProfile from './Pages/CompanyProfile/companyProfile';
 import { AbilityContext } from './Casl/Can';
 import { defineAbility, updateUserAbility } from './Casl/ability';
-import { message } from 'antd';
 import InvestmentManagement from './Pages/InvestmentManagement/investmentManagement';
 import AddInvestmentComponent from './Pages/InvestmentManagement/investmentCreation';
 import NdcActionManagement from './Pages/NdcActionManagement/ndcActionManagement';
@@ -59,11 +56,12 @@ import ProgrammeManagement from './Pages/ProgrammeManagement/programmeManagement
 import { CreditBalancePage } from './Pages/CreditPages/creditBalancePage';
 import { CreditTransfersPage } from './Pages/CreditPages/creditTransfersPage';
 import { CreditRetirementsPage } from './Pages/CreditPages/creditRetirementsPage';
+import Reports from './Pages/Reports/Reports';
 
 const App = () => {
+  const { t } = useTranslation(['common']);
   const ability = defineAbility();
   const enableRegistration = process.env.REACT_APP_ENABLE_REGISTRATION || 'true';
-  const { i18n, t } = useTranslation(['common']);
 
   if (
     localStorage.getItem('companyId') &&
@@ -213,6 +211,9 @@ const App = () => {
                     element={<CustomLayout selectedKey="userManagement/viewAll" />}
                   >
                     <Route path="view" element={<UserProfile />} />
+                  </Route>
+                  <Route path="/reports" element={<CustomLayout selectedKey="reports" />}>
+                    <Route path="" element={<Reports />} />
                   </Route>
                   <Route
                     path="/companyProfile"

@@ -23,6 +23,7 @@ import { COLOR_CONFIGS } from '../../Config/colorConfigs';
 import { thousandBasedFormatterWithDecimalPlaces } from '../../Utils/utilityHelper';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { API_PATHS } from '../../Config/apiConfig';
+import { Role } from '../../Definitions/Enums/role.enum';
 
 const { Sider } = Layout;
 
@@ -74,6 +75,13 @@ const LayoutSider = (props: LayoutSiderProps) => {
     getItem(t('nav:companies'), 'companyManagement/viewAll', <ShopOutlined />),
     getItem(t('nav:users'), 'userManagement/viewAll', <UserOutlined />),
   ];
+
+  if (
+    userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+    (userInfoState?.userRole === Role.Admin || userInfoState?.userRole === Role.Root)
+  ) {
+    items.splice(3, 0, getItem(t('nav:reports'), 'reports', <Icon.ClipboardData />));
+  }
 
   if (
     userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
