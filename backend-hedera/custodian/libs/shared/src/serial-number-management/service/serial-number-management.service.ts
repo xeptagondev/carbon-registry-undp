@@ -95,7 +95,7 @@ export class SerialNumberManagementService {
         return Number(serailNumber.split(sep)[5]);
     }
 
-    private getVintage(serailNumber: string): string {
+    public getVintage(serailNumber: string): string {
         const sep = this.configService.get('serialNumber.seperator');
         return serailNumber.split(sep)[6];
     }
@@ -110,5 +110,29 @@ export class SerialNumberManagementService {
         const sep = this.configService.get('serialNumber.seperator');
         const parts = serialNumber.split(sep);
         return parts.slice(0, 5).join(sep);
+    }
+
+    public getBlockStartId(serialNumber: string) {
+        const projectSerialNumberPrefix =
+            this.getProjectSerailNumberPerfix(serialNumber);
+        const vintage = this.getVintage(serialNumber);
+        const blockStart = this.getBlockStart(serialNumber);
+        const sep = this.configService.get('serialNumber.seperator');
+        return (
+            projectSerialNumberPrefix +
+            `${sep}${blockStart}${sep}${blockStart}${sep}${vintage}`
+        );
+    }
+
+    public getBlockEndId(serialNumber: string) {
+        const projectSerialNumberPrefix =
+            this.getProjectSerailNumberPerfix(serialNumber);
+        const vintage = this.getVintage(serialNumber);
+        const blockEnd = this.getBlockEnd(serialNumber);
+        const sep = this.configService.get('serialNumber.seperator');
+        return (
+            projectSerialNumberPrefix +
+            `${sep}${blockEnd}${sep}${blockEnd}${sep}${vintage}`
+        );
     }
 }

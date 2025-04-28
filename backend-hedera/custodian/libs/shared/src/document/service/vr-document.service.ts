@@ -545,6 +545,7 @@ export class VrDocumentService extends DocumentService {
                     authoroiseLetterUrl: authoroiseLetterUrl,
                     serialNumber: serialNumber,
                     authorizationId: authorizationId,
+                    projectAuthorizationTime: new Date().getTime(),
                 });
 
                 await queryRunner.manager.save(updatedProject);
