@@ -120,6 +120,7 @@ export const GHGProjectDescriptionStep = (props: VerificationStepProps) => {
                   projectCategory={null}
                   disabled={disableFields}
                   maxNetGHGReduction={maxNetGHGReduction}
+                  disableFutureYears={true}
                 ></NetEmissionReduction>
               </>
 

@@ -17,7 +17,15 @@ const EMISSION_CATEGORY_AVG_MAP: { [key: string]: string } = {
 };
 
 const NetEmissionReduction = (props: any) => {
-  const { form, t, existingEmission, projectCategory, disabled, maxNetGHGReduction } = props;
+  const {
+    form,
+    t,
+    existingEmission,
+    projectCategory,
+    disabled,
+    maxNetGHGReduction,
+    disableFutureYears,
+  } = props;
 
   console.log('--------disabled-----------', disabled);
 
@@ -259,7 +267,8 @@ const NetEmissionReduction = (props: any) => {
                               return disableYears(
                                 currentDate,
                                 form,
-                                'estimatedNetEmissionReductions'
+                                "estimatedNetEmissionReductions",
+                                disableFutureYears
                               );
                             }}
                             onChange={(value) => onPeriodChange(value, name + 1)}
