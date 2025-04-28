@@ -927,7 +927,11 @@ export class CarbonCreditService {
 
         let sortColumn = 'creditTx.createdDate';
         if (query?.sort?.key) {
-            sortColumn = 'creditTx.' + query.sort.key;
+            if(query.sort.key=="status"){
+                sortColumn = 'creditTx.' + query.sort.key+"::text";
+            }else{
+                sortColumn = 'creditTx.' + query.sort.key;
+            }
         }
         const sortOrder: 'ASC' | 'DESC' =
             query?.sort?.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
