@@ -150,4 +150,6 @@ export const API_PATHS = {
   //HBAR Management
   ORGANIZATION_HBAR_BALANCE: 'hbar-management/orgBalance',
   USER_HBAR_BALANCE: 'hbar-management/userBalance',
+  QUERY_AEF_RECORDS: `reportsManagement/queryAefRecords`,
+  DOWNLOAD_AEF_RECORDS: `reportsManagement/downloadAefReport`,
 };
