@@ -34,10 +34,10 @@ import {
   validationMethodologyMapDataToFields,
   validationOpinionMapDataToFields,
   validationReportAppendixMapDataToFields,
-} from "./viewDataMap";
-import { mapBase64ToFields } from "../../Utils/mapBase64ToFields";
-import { INF_SECTORAL_SCOPE } from "../AddNewProgramme/ProgrammeCreationComponent";
-import { toMoment } from "../../Utils/convertTime";
+} from './viewDataMap';
+import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
+import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
+import { toMoment } from '../../Utils/convertTime';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -248,7 +248,7 @@ const StepperComponent = (props: any) => {
 
       const netGHGEmissionReductions =
         pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions;
-     
+
       form2.setFieldsValue({
         estimatedNetEmissionReductions:
           pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions?.yearlyGHGEmissionReductions?.map(
@@ -284,7 +284,7 @@ const StepperComponent = (props: any) => {
   // };
 
   const handleValuesUpdate = (val: any) => {
-    console.log("---------values--------", val);
+    console.log('---------values--------', val);
     setExistingFormValues((prevVal: any) => {
       const tempContent = {
         ...prevVal.data,
