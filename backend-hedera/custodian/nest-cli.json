@@ -14,6 +14,7 @@
             },
             {
                 "include": "../../../libs/shared/src/templates/**/*",
+                "watchAssets": true,
                 "outDir": "dist/apps/custodian"
             }
         ]
@@ -53,6 +54,7 @@
                     },
                     {
                         "include": "../../../libs/shared/src/templates/**/*",
+                        "watchAssets": true,
                         "outDir": "dist/apps/custodian"
                     }
                 ]
