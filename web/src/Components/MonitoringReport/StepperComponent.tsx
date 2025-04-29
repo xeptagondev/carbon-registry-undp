@@ -36,6 +36,7 @@ import {
 } from './viewDataMap';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
+import { safeClone } from '../../Utils/deepCopy';
 
 const StepperComponent = (props: CustomStepsProps) => {
   const navigate = useNavigate();
@@ -309,9 +310,9 @@ const StepperComponent = (props: CustomStepsProps) => {
       console.log('----form vals-----', appendixVals);
       setLoading(true);
       const tempValues = {
-        ...structuredClone(values),
+        ...safeClone(values),
         data: {
-          ...structuredClone(values.data),
+          ...safeClone(values.data),
           appendix: appendixVals,
         },
       };

@@ -16,3 +16,33 @@ export function deepCopy(obj: any) {
 
   return copy;
 }
+
+export function safeClone(obj: any) {
+  const seen = new WeakSet();
+
+  function internalClone(value: any) : any {
+    if (typeof value !== 'object' || value === null) {
+      return value; // primitives
+    }
+
+    if (seen.has(value)) {
+      // Circular reference detected — remove it
+      return undefined;
+    }
+    seen.add(value);
+
+    if (Array.isArray(value)) {
+      return value.map(internalClone);
+    }
+
+    const newObj: any = {};
+    for (const key in value) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        newObj[key] = internalClone(value[key]);
+      }
+    }
+    return newObj;
+  }
+
+  return internalClone(obj);
+}
