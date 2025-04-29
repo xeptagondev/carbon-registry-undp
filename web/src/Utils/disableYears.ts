@@ -1,9 +1,14 @@
 import { FormInstance } from 'antd';
 import moment from 'moment';
 
-export const disableYears = (currentDate: any, form: FormInstance, key: string, disableFutureYears = false) => {
-  const vintageMap: any = {}
-  const vintage = form.getFieldValue("vintage");
+export const disableYears = (
+  currentDate: any,
+  form: FormInstance,
+  key: string,
+  disableFutureYears = false
+) => {
+  const vintageMap: any = {};
+  const vintage = form.getFieldValue('vintage');
 
   let disableYearsVal = false;
 
@@ -27,7 +32,7 @@ export const disableYears = (currentDate: any, form: FormInstance, key: string, 
   }
 
   if (disableFutureYears && currentDate > moment().endOf('year')) {
-    disableYearsVal = true
+    disableYearsVal = true;
   }
   return disableYearsVal;
 };
