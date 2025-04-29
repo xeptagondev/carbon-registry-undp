@@ -173,7 +173,7 @@ const StepperComponent = (props: CustomStepsProps) => {
       const docVersions = state?.documents?.[DocumentEnum.MONITORING as any]?.version;
       const latestVersion = docVersions ? docVersions + 1 : 1;
       basicInformationForm.setFieldsValue({
-        bi_sectoralScope: INF_SECTORAL_SCOPE[programmeData?.sectoralScope],
+        bi_sectoralScope: INF_SECTORAL_SCOPE[programmeData?.sectoralScope] || 'N/A',
         bi_projectTitle: validationData?.basicInformation?.titleOfTheProjectActivity,
         bi_applicablePDDVersionNo: validationData?.basicInformation?.versionNumberPDD,
         bi_projectDeveloper: programmeData?.projectParticipant,

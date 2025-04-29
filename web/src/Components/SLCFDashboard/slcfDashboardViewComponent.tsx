@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-shadow */
 import { useEffect, useState } from 'react';
 import { Button, Col, DatePicker, Row, Tooltip, message, Select } from 'antd';
 import './dashboard.scss';
@@ -15,6 +16,7 @@ import {
   creditsByDateOptions,
   optionSideBar,
   retirementsByDateOptions,
+  sectorPieChartOptions,
   totalProgrammesOptions,
 } from './slcfChartOptions';
 import { ProgrammeRejectAndTransferComponent } from './programmeRejectAndTransferComponent';
@@ -32,6 +34,8 @@ import { OverallMineButtons } from '../../Definitions/Enums/overallMineButton.en
 import { ProjectEntityResponse } from '../../Definitions/InterfacesAndType/dashboard.interface';
 import { ProjectSectorEnum } from '../../Definitions/Enums/projectSector.enum';
 import { PendingActionsComponent } from './pendingActionsComponent';
+import { SectorPieChart } from './SectorPieChart';
+import { SECTOR_TO_SCOPES_MAP } from '../AddNewProgramme/ProgrammeCreationComponent';
 const { RangePicker } = DatePicker;
 
 export const SLCFDashboardComponent = (props: any) => {
@@ -55,19 +59,32 @@ export const SLCFDashboardComponent = (props: any) => {
     authorisedCount: number;
     pendingCount: number;
     rejectedCount: number;
-  }>({ totalProjects: 0, authorisedCount: 0, pendingCount: 0, rejectedCount: 0 });
+  }>({
+    totalProjects: 0,
+    authorisedCount: 0,
+    pendingCount: 0,
+    rejectedCount: 0,
+  });
+
   const [projectsByStatusDetail, setProjectsByStatusDetail] = useState<any[]>([
     {
       name: 'Project',
       data: [],
     },
   ]);
-  const [projectCountBySector, setProjectCountBySector] = useState<any>([
+
+  const [projectCountBySector, setProjectCountBySector] = useState<any>({
+    name: 'Project',
+    data: [],
+  });
+
+  const [projectCountBySectoralScope, setProjectCountBySectoralScope] = useState<any>([
     {
       name: 'Project',
       data: [],
     },
   ]);
+
   const [creditSummary, setCreditSummary] = useState<{
     authorisedAmount: number;
     issuedAmount: number;
@@ -137,6 +154,8 @@ export const SLCFDashboardComponent = (props: any) => {
   const [loadingProjectsByStatusDetail, setLoadingProjectsByStatusDetail] =
     useState<boolean>(false);
   const [loadingProjectCountBySector, setLoadingProjectCountBySector] = useState<boolean>(false);
+  const [loadingProjectCountBySectoralScope, setLoadingProjectCountBySectoralScope] =
+    useState<boolean>(false);
   const [loadingCreditSummary, setLoadingCreditSummary] = useState<boolean>(false);
   const [loadingCreditsSummaryByDate, setLoadingCreditsSummaryByDate] = useState<boolean>(false);
 
@@ -148,17 +167,21 @@ export const SLCFDashboardComponent = (props: any) => {
     Date.parse(String(moment().subtract('13', 'days').startOf('day')))
   );
   const [endTime, setEndTime] = useState<number>(Date.parse(String(moment().endOf('day'))));
-  const [sectoralScope, setSectoralScope] = useState<ProjectSectorEnum>();
+  const [sector, setSector] = useState<ProjectSectorEnum>();
 
   // Chart Components Width
   const [statusBarchartWidth, setStatusBarChartWidth] = useState(
-    window.innerWidth > 1600 ? '370%' : '300%'
+    window.innerWidth > 1600 ? '300%' : '200%'
   );
   const [scopeBarchartWidth, setScopeBarChartWidth] = useState(
     window.innerWidth > 1600 ? '270%' : '220%'
   );
   const [creditChartsWidth, setCreditChartsWidth] = useState(
     window.innerWidth > 1600 ? '510%' : '390%'
+  );
+
+  const [sectorPieChartWidth, setSectorPieChartWidth] = useState(
+    window?.innerWidth > 1600 ? '150%' : '90%'
   );
 
   const getPendingActions = async () => {
@@ -262,10 +285,26 @@ export const SLCFDashboardComponent = (props: any) => {
       });
       if (response && response.data) {
         const projectStatusWithColor = [
-          { key: 'PENDING', name: 'Pending', statusColor: 'rgba(22, 177, 255, 1)' },
-          { key: 'REJECTED', name: 'Rejected', statusColor: 'rgba(255, 99, 97, 1)' },
-          { key: 'APPROVED', name: 'Approved', statusColor: 'rgba(22, 177, 255, 1)' },
-          { key: 'PDD_SUBMITTED', name: 'PDD Submitted', statusColor: 'rgba(22, 177, 255, 1)' },
+          {
+            key: 'PENDING',
+            name: 'Pending',
+            statusColor: 'rgba(22, 177, 255, 1)',
+          },
+          {
+            key: 'REJECTED',
+            name: 'Rejected',
+            statusColor: 'rgba(255, 99, 97, 1)',
+          },
+          {
+            key: 'APPROVED',
+            name: 'Approved',
+            statusColor: 'rgba(22, 177, 255, 1)',
+          },
+          {
+            key: 'PDD_SUBMITTED',
+            name: 'PDD Submitted',
+            statusColor: 'rgba(22, 177, 255, 1)',
+          },
           {
             key: 'PDD_REJECTED_BY_CERTIFIER',
             name: 'PDD Rejected by Certifier',
@@ -296,7 +335,11 @@ export const SLCFDashboardComponent = (props: any) => {
             name: 'Validation Report Rejected',
             statusColor: 'rgba(255, 99, 97, 1)',
           },
-          { key: 'AUTHORISED', name: 'Authorised', statusColor: 'rgba(22, 200, 199, 1)' },
+          {
+            key: 'AUTHORISED',
+            name: 'Authorised',
+            statusColor: 'rgba(22, 200, 199, 1)',
+          },
         ];
 
         const statusCount: number[] = [];
@@ -353,65 +396,60 @@ export const SLCFDashboardComponent = (props: any) => {
       if (response && response.data) {
         const sectorWithColor = [
           {
-            key: 'Energy Industries (Renewable)',
-            name: 'Energy Industries (Renewable)',
-            statusColor: 'rgba(85, 107, 47, 1)',
+            key: 'ENERGY',
+            name: 'Energy',
+            statusColor: 'rgba(42, 47, 150, 1)',
           },
           {
-            key: 'Energy Distribution',
-            name: 'Energy Distribution',
-            statusColor: 'rgba(230, 126, 34, 1)',
-          },
-          { key: 'Energy Demand', name: 'Energy Demand', statusColor: 'rgba(72, 150, 254, 1)' },
-          {
-            key: 'Manufacturing Industries',
-            name: 'Manufacturing Industries',
-            statusColor: 'rgba(142, 68, 173, 1)',
+            key: 'AGRICULTURE',
+            name: 'Agriculture',
+            statusColor: 'rgba(93, 39, 107, 1)',
           },
           {
-            key: 'Chemical Industries',
-            name: 'Chemical Industries',
-            statusColor: 'rgba(211, 84, 0, 1)',
+            key: 'HEALTH',
+            name: 'Health',
+            statusColor: 'rgba(128, 103, 4, 1)',
           },
-          { key: 'Construction', name: 'Construction', statusColor: 'rgba(141, 110, 99, 1)' },
-          { key: 'Transport', name: 'Transport', statusColor: 'rgba(46, 139, 87, 1)' },
           {
-            key: 'Mining/Mineral Production',
-            name: 'Mining/Mineral Production',
+            key: 'TRANSPORT',
+            name: 'Transport',
+            statusColor: 'rgba(205, 129, 224, 1)',
+          },
+          {
+            key: 'EDUCATION',
+            name: 'Education',
+            statusColor: 'rgba(140, 113, 108, 1)',
+          },
+          {
+            key: 'MANUFACTURING',
+            name: 'Manufacturing',
+            statusColor: 'rgba(249, 203, 51, 1)',
+          },
+          {
+            key: 'HOSPITALITY',
+            name: 'Hospitality',
+            statusColor: 'rgba(49, 115, 115, 1)',
+          },
+          {
+            key: 'FORESTRY',
+            name: 'Forestry',
             statusColor: 'rgba(127, 140, 141, 1)',
           },
           {
-            key: 'Metal Production',
-            name: 'Metal Production',
-            statusColor: 'rgba(93, 109, 126, 1)',
+            key: 'WASTE',
+            name: 'Waste',
+            statusColor: 'rgba(195, 54, 106, 1)',
           },
           {
-            key: 'Fugitive Emissions from fuels',
-            name: 'Fugitive Emissions from fuels',
-            statusColor: 'rgba(27, 79, 114, 1)',
+            key: 'OTHER',
+            name: 'Other',
+            statusColor: 'rgba(135, 51, 52, 1)',
           },
-          {
-            key: 'Fugitive Emissions from Production and Consumption of Halocarbons and Sulphur Hexafluoride',
-            name: 'Fugitive Emissions (Halocarbons & SF6)',
-            statusColor: 'rgba(218, 165, 32, 1)',
-          },
-          { key: 'Solvent Use', name: 'Solvent Use', statusColor: 'rgba(165, 105, 189, 1)' },
-          {
-            key: 'Waste Handling and Disposal',
-            name: 'Waste Handling and Disposal',
-            statusColor: 'rgba(34, 139, 34, 1)',
-          },
-          {
-            key: 'Afforestation and Reforestation',
-            name: 'Afforestation and Reforestation',
-            statusColor: 'rgba(23, 165, 137, 1)',
-          },
-          { key: 'Agriculture', name: 'Agriculture', statusColor: 'rgba(44, 62, 80, 1)' },
         ];
 
         const sectorCount: number[] = [];
         const sectorColor: string[] = [];
-        const sectorXAxis: string[] = [];
+        const sectorLabels: string[] = [];
 
         const sectorData = response?.data;
 
@@ -419,20 +457,18 @@ export const SLCFDashboardComponent = (props: any) => {
           if (sectorData && key in sectorData) {
             sectorCount.push(sectorData[key as keyof typeof sectorData]);
             sectorColor.push(statusColor);
-            sectorXAxis.push(name);
+            sectorLabels.push(name);
           }
         });
 
-        setProjectCountBySector([
-          {
-            name: 'Projects',
-            data: sectorCount,
-          },
-        ]);
+        setProjectCountBySector({
+          name: 'Projects',
+          data: sectorCount,
+        });
 
-        optionSideBar.xaxis.categories = sectorXAxis;
-        optionSideBar.colors = sectorColor;
-        optionSideBar.legend.markers.fillColors = sectorColor;
+        sectorPieChartOptions.labels = sectorLabels;
+        sectorPieChartOptions.colors = sectorColor;
+        sectorPieChartOptions.legend.markers.fillColors = sectorColor;
       }
     } catch (error: any) {
       console.log('Error in getting Project Count By Sector', error);
@@ -444,6 +480,158 @@ export const SLCFDashboardComponent = (props: any) => {
       });
     } finally {
       setLoadingProjectCountBySector(false);
+    }
+  };
+
+  const getProjectCountBySectoralScope = async (
+    isMine?: boolean,
+    startDate?: number,
+    endDate?: number,
+    sector?: ProjectSectorEnum
+  ) => {
+    setLoadingProjectCountBySectoralScope(true);
+    try {
+      const response = await post(API_PATHS.GET_PROJECT_COUNT_BY_SECTORAL_SCOPE, {
+        isMine: isMine || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        sector: sector || undefined,
+      });
+      if (response && response.data) {
+        const sectorMap = sector ? SECTOR_TO_SCOPES_MAP[sector] : undefined;
+
+        const sectoralScopeWithColor = [
+          {
+            key: 'ENERGY_INDUSTRIES',
+            name: 'Energy Industries (Renewable, Non-Renewable Sources)',
+            statusColor: 'rgba(35, 43, 184, 1)',
+          },
+          {
+            key: 'ENERGY_DISTRIBUTION',
+            name: 'Energy Distribution',
+            statusColor: 'rgba(77, 85, 249, 1)',
+          },
+          {
+            key: 'ENERGY_DEMAND',
+            name: 'Energy Demand',
+            statusColor: 'rgba(156, 160, 217, 1)',
+          },
+          {
+            key: 'MANUFACTURING_INDUSTRIES',
+            name: 'Manufacturing Industries',
+            statusColor: 'rgba(175, 134, 0, 1)',
+          },
+          {
+            key: 'CHEMICAL_INDUSTRIES',
+            name: 'Chemical Industries',
+            statusColor: 'rgba(167, 151, 99, 1)',
+          },
+          {
+            key: 'CONSTRUCTION',
+            name: 'Construction',
+            statusColor: 'rgba(131, 62, 63, 1)',
+          },
+          {
+            key: 'TRANSPORT',
+            name: 'Transport',
+            statusColor: 'rgba(46, 139, 87, 1)',
+          },
+          {
+            key: 'MINING_MINERAL_PRODUCTION',
+            name: 'Mining/Mineral Production',
+            statusColor: 'rgba(130, 62, 131, 1)',
+          },
+          {
+            key: 'METAL_PRODUCTION',
+            name: 'Metal Production',
+            statusColor: 'rgba(229, 217, 126, 1)',
+          },
+          {
+            key: 'WASTE_FROM_FUELS',
+            name: 'Fugitive Emissions from fuels (Solid, Oil and Gas)',
+            statusColor: 'rgba(27, 79, 114, 1)',
+          },
+          {
+            key: 'FUGITIVE_EMISSIONS_PRODUCTION',
+            name: 'Fugitive Emissions (Halocarbons & SF6)',
+            statusColor: 'rgba(244, 72, 135, 1)',
+          },
+          {
+            key: 'SOLVENT_USE',
+            name: 'Solvent Use',
+            statusColor: 'rgba(63, 32, 64, 1)',
+          },
+          {
+            key: 'WASTE_HANDLING_AND_DISPOSAL',
+            name: 'Waste Handling and Disposal',
+            statusColor: 'rgba(255, 164, 198, 1)',
+          },
+          {
+            key: 'AFFORESTATION_AND_REFORESTATION',
+            name: 'Afforestation and Reforestation',
+            statusColor: 'rgba(65, 131, 57, 1)',
+          },
+          {
+            key: 'AGRICULTURE',
+            name: 'Agriculture',
+            statusColor: 'rgba(115, 41, 134, 1)',
+          },
+          {
+            key: undefined,
+            name: 'Other',
+            statusColor: 'rgba(87, 85, 81, 1)',
+          },
+        ].filter((item: any) => {
+          if (sectorMap) {
+            console.log(
+              '-------sectorMap----------',
+              sectorMap.includes(String(item?.key)),
+              item?.key
+            );
+            return sectorMap.includes(item?.key);
+          } else if (sector) {
+            return false;
+          } else {
+            return true;
+          }
+        });
+
+        const sectoralCount: number[] = [];
+        const sectoralColor: string[] = [];
+        const sectoralXAxis: string[] = [];
+
+        const sectorData = response?.data;
+
+        console.log('---------sectoralScopeWithColor-------', sectoralScopeWithColor);
+        sectoralScopeWithColor.forEach(({ key, name, statusColor }) => {
+          if (sectorData && key && key in sectorData) {
+            sectoralCount.push(sectorData[key as keyof typeof sectorData]);
+            sectoralColor.push(statusColor);
+            sectoralXAxis.push(name);
+          }
+        });
+
+        setProjectCountBySectoralScope([
+          {
+            name: 'Projects',
+            data: sectoralCount,
+          },
+        ]);
+
+        optionSideBar.xaxis.categories = sectoralXAxis;
+        optionSideBar.colors = sectoralColor;
+        optionSideBar.legend.markers.fillColors = sectoralColor;
+      }
+    } catch (error: any) {
+      console.log('Error in getting Project Count By Sector', error);
+      message.open({
+        type: 'error',
+        content: error.message,
+        duration: 3,
+        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+      });
+    } finally {
+      setLoadingProjectCountBySectoralScope(false);
     }
   };
 
@@ -690,8 +878,8 @@ export const SLCFDashboardComponent = (props: any) => {
     }
   };
 
-  const onSectoralScopeChange = (value: ProjectSectorEnum) => {
-    setSectoralScope(value);
+  const onSectorChange = (value: ProjectSectorEnum) => {
+    setSector(value);
   };
 
   //MARK: Update the chart width on screen resize
@@ -699,16 +887,19 @@ export const SLCFDashboardComponent = (props: any) => {
     const handleResize = () => {
       if (window.innerWidth > 1600) {
         setScopeBarChartWidth('270%');
-        setStatusBarChartWidth('370%');
+        setStatusBarChartWidth('300%');
         setCreditChartsWidth('510%');
+        setSectorPieChartWidth('150%');
       } else if (window.innerWidth > 1200) {
         setScopeBarChartWidth('220%');
-        setStatusBarChartWidth('300%');
+        setStatusBarChartWidth('200%');
         setCreditChartsWidth('390%');
+        setSectorPieChartWidth('90%');
       } else {
         setScopeBarChartWidth('220%');
         setStatusBarChartWidth('300%');
         setCreditChartsWidth('390%');
+        setSectorPieChartWidth('90%');
       }
     };
 
@@ -762,26 +953,20 @@ export const SLCFDashboardComponent = (props: any) => {
   ]);
 
   useEffect(() => {
-    const isMine = overallMineButton === OverallMineButtons.MINE;
-
     getPendingActions();
     getProjectSummary();
-    getProjectStatusSummary(isMine, startTime, endTime, sectoralScope);
-    getProjectsByStatusDetail(isMine, startTime, endTime, sectoralScope);
-    getProjectCountBySector(isMine, startTime, endTime, sectoralScope);
-    getCreditSummary(isMine, startTime, endTime, sectoralScope);
-    getCreditsSummaryByDate(isMine, startTime, endTime, sectoralScope);
   }, []);
 
   useEffect(() => {
     const isMine = overallMineButton === OverallMineButtons.MINE;
 
-    getProjectStatusSummary(isMine, startTime, endTime, sectoralScope);
-    getProjectsByStatusDetail(isMine, startTime, endTime, sectoralScope);
-    getProjectCountBySector(isMine, startTime, endTime, sectoralScope);
-    getCreditSummary(isMine, startTime, endTime, sectoralScope);
-    getCreditsSummaryByDate(isMine, startTime, endTime, sectoralScope);
-  }, [overallMineButton, startTime, endTime, sectoralScope]);
+    getProjectStatusSummary(isMine, startTime, endTime, sector);
+    getProjectsByStatusDetail(isMine, startTime, endTime, sector);
+    getProjectCountBySectoralScope(isMine, startTime, endTime, sector);
+    getProjectCountBySector(isMine, startTime, endTime, sector);
+    getCreditSummary(isMine, startTime, endTime, sector);
+    getCreditsSummaryByDate(isMine, startTime, endTime, sector);
+  }, [overallMineButton, startTime, endTime, sector]);
 
   //MARK: HTML
   return (
@@ -888,7 +1073,7 @@ export const SLCFDashboardComponent = (props: any) => {
                   'Last 7 days': [moment().subtract('6', 'days'), moment()],
                   'Last 14 days': [moment().subtract('13', 'days'), moment()],
                 }}
-                defaultValue={[moment().subtract('13', 'days'), moment()]}
+                defaultValue={[moment().subtract('6', 'months'), moment()]}
                 showTime
                 allowClear={true}
                 format="DD:MM:YYYY"
@@ -898,22 +1083,58 @@ export const SLCFDashboardComponent = (props: any) => {
             <div className="category-filter">
               <Select
                 style={{ width: 270 }}
-                placeholder={t('projectSectoralScope')}
+                placeholder={t('selectProjectSector')}
                 options={Object.keys(ProjectSectorEnum).map((key) => ({
                   value: key,
                   label: (ProjectSectorEnum as Record<string, ProjectSectorEnum>)[key],
                 }))}
-                onChange={onSectoralScopeChange}
+                onChange={onSectorChange}
                 allowClear
               />
             </div>
           </Row>
         </div>
         <div className="statistics-and-charts-container center">
-          <Row className="statistic-card-row">
+          {/* <Row className="statistic-card-row">
             <Col
               className="statistic-card-col retirements-by-date-chart-col"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
+            >
+              <SLCFDetailsBarChartsStatComponent
+                id="total-programmes"
+                title={t("totalProgrammesByStatusSLCF")}
+                options={totalProgrammesOptions}
+                series={projectsByStatusDetail}
+                loading={loadingProjectsByStatusDetail}
+                toolTipText={t("totalProgrammesByStatusTooltip")}
+                Chart={Chart}
+                height="440px"
+                // width="600px"
+                width={statusBarchartWidth}
+              />
+            </Col>
+          </Row> */}
+        </div>
+        <div className="statistics-and-charts-container center">
+          <Row gutter={[20, 20]} className="statistic-card-row">
+            <Col xxl={7} xl={7} md={11} className="statistic-card-col">
+              <ProgrammeRejectAndTransferComponent
+                totalProgrammes={projectStatusSummary?.totalProjects}
+                pending={projectStatusSummary?.pendingCount}
+                rejected={projectStatusSummary?.rejectedCount}
+                authorized={projectStatusSummary?.authorisedCount}
+                updatedDate={projectStatusSummaryLastUpdated}
+                loading={loadingProjectStatusSummary}
+                toolTipText={t('projectSummaryTooltip')}
+                t={t}
+              />
+            </Col>
+            <Col
+              xxl={17}
+              xl={17}
+              md={13}
+              className="statistic-card-col"
+              style={{ paddingRight: '0px' }}
             >
               <SLCFDetailsBarChartsStatComponent
                 id="total-programmes"
@@ -928,20 +1149,17 @@ export const SLCFDashboardComponent = (props: any) => {
                 width={statusBarchartWidth}
               />
             </Col>
-          </Row>
-        </div>
-        <div className="statistics-and-charts-container center">
-          <Row gutter={[20, 20]} className="statistic-card-row">
+
             <Col xxl={8} xl={8} md={12} className="statistic-card-col">
-              <ProgrammeRejectAndTransferComponent
-                totalProgrammes={projectStatusSummary?.totalProjects}
-                pending={projectStatusSummary?.pendingCount}
-                rejected={projectStatusSummary?.rejectedCount}
-                authorized={projectStatusSummary?.authorisedCount}
-                updatedDate={projectStatusSummaryLastUpdated}
-                loading={loadingProjectStatusSummary}
-                toolTipText={t('projectSummaryTooltip')}
-                t={t}
+              <SectorPieChart
+                id="credits"
+                title={t('projectsBySectoralScope')}
+                options={sectorPieChartOptions}
+                series={projectCountBySector}
+                loading={loadingProjectCountBySector}
+                toolTipText={t('projectsBySectoralScopeTooltip')}
+                width={sectorPieChartWidth}
+                Chart={Chart}
               />
             </Col>
             <Col
@@ -955,9 +1173,10 @@ export const SLCFDashboardComponent = (props: any) => {
                 id="credits"
                 title={t('projectsBySectoralScope')}
                 options={optionSideBar}
-                series={projectCountBySector}
-                loading={loadingProjectCountBySector}
+                series={projectCountBySectoralScope}
+                loading={loadingProjectCountBySectoralScope}
                 toolTipText={t('projectsBySectoralScopeTooltip')}
+                sector={sector}
                 width={scopeBarchartWidth}
                 Chart={Chart}
               />
