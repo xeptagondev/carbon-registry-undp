@@ -365,7 +365,7 @@ export class AefReportManagementService {
 
         const content = fs.readFileSync(outputFileName, { encoding: 'base64' });
         const url = await this.fileHandler.uploadFile(
-            'documents/exports/' + outputFileName,
+            'exports/' + outputFileName,
             content,
         );
 
@@ -398,7 +398,6 @@ export class AefReportManagementService {
 
         let rowIdx = startRow;
 
-        console.log(headers);
         for (const item of data) {
             const row = sheet.getRow(rowIdx++);
             headers.forEach((key, colIdx) => {
