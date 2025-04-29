@@ -20,7 +20,7 @@ export function deepCopy(obj: any) {
 export function safeClone(obj: any) {
   const seen = new WeakSet();
 
-  function internalClone(value: any) : any {
+  function internalClone(value: any): any {
     if (typeof value !== 'object' || value === null) {
       return value; // primitives
     }
