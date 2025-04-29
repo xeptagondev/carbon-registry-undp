@@ -44,6 +44,7 @@ import {
 import { Loading } from '../Loading/loading';
 import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 import { toMoment } from '../../Utils/convertTime';
+import { safeClone } from '../../Utils/deepCopy';
 
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
@@ -261,10 +262,10 @@ const StepperComponent = (props: VerificationStepProps) => {
       console.log('---------------activityRefId-------------', state?.activityRefId);
 
       const tempValues = {
-        ...structuredClone(values),
+        ...safeClone(values),
         activityRefId: state?.activityId,
         data: {
-          ...structuredClone(values.data),
+          ...safeClone(values.data),
           appendix: appendixVals,
         },
       };
