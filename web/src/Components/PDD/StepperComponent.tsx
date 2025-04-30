@@ -37,6 +37,7 @@ import Monitoring from './Monitoring';
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
+import { safeClone } from '../../Utils/deepCopy';
 
 const CMA_STEPS = {};
 
@@ -268,9 +269,9 @@ const StepperComponent = (props: any) => {
 
   const submitForm = async (appendixVals: any) => {
     const tempValues = {
-      ...values,
+      ...safeClone(values),
       data: {
-        ...values.data,
+        ...safeClone(values.data),
         appendix: appendixVals,
       },
     };
