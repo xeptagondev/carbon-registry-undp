@@ -37,6 +37,8 @@ import {
 } from './viewDataMap';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
+import { toMoment } from '../../Utils/convertTime';
+import { safeClone } from '../../Utils/deepCopy';
 
 export enum ProcessSteps {
   VR_PROJECT_DETAILS = 'VR_PROJECT_DETAILS',
@@ -97,9 +99,9 @@ const StepperComponent = (props: any) => {
     setLoading(true);
 
     const tempValues = {
-      ...existingFormValues,
+      ...safeClone(existingFormValues),
       data: {
-        ...existingFormValues.data,
+        ...safeClone(existingFormValues.data),
         appendix: appendixVals,
       },
     };
@@ -245,12 +247,14 @@ const StepperComponent = (props: any) => {
           })),
       });
 
+      const netGHGEmissionReductions =
+        pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions;
+
       form2.setFieldsValue({
         estimatedNetEmissionReductions:
           pddData?.data?.applicationOfMethodology?.netGHGEmissionReductions?.yearlyGHGEmissionReductions?.map(
             (emissionData: any) => ({
-              startDate: moment.unix(emissionData.startDate),
-              endDate: moment.unix(emissionData.endDate),
+              vintage: toMoment(emissionData.vintage),
             })
           ),
         totalNumberOfCreditingYears: 1,
@@ -281,6 +285,7 @@ const StepperComponent = (props: any) => {
   // };
 
   const handleValuesUpdate = (val: any) => {
+    console.log('---------values--------', val);
     setExistingFormValues((prevVal: any) => {
       const tempContent = {
         ...prevVal.data,
