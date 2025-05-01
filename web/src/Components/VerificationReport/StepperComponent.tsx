@@ -44,6 +44,7 @@ import {
 import { Loading } from '../Loading/loading';
 import { INF_SECTORAL_SCOPE } from '../AddNewProgramme/ProgrammeCreationComponent';
 import { toMoment } from '../../Utils/convertTime';
+import { safeClone } from '../../Utils/deepCopy';
 
 const StepperComponent = (props: VerificationStepProps) => {
   const { translator, t } = props;
@@ -215,8 +216,7 @@ const StepperComponent = (props: VerificationStepProps) => {
         estimatedNetEmissionReductions: emReduction.map((item: any) => {
           return {
             ...item,
-            startDate: item?.startDate ? toMoment(item?.startDate) : undefined,
-            endDate: item?.endDate ? toMoment(item?.endDate) : undefined,
+            vintage: item?.vintage ? toMoment(item?.vintage) : undefined,
           };
         }),
         totalBaselineEmissionReductions: Number(netEmReductions?.totalBaselineEmissionReductions),
@@ -262,10 +262,10 @@ const StepperComponent = (props: VerificationStepProps) => {
       console.log('---------------activityRefId-------------', state?.activityRefId);
 
       const tempValues = {
-        ...values,
+        ...safeClone(values),
         activityRefId: state?.activityId,
         data: {
-          ...values.data,
+          ...safeClone(values.data),
           appendix: appendixVals,
         },
       };

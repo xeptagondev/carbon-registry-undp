@@ -514,7 +514,7 @@ export class VerificationDocumentService extends DocumentService {
                         this.serialNumberManagementService.getCreditBlockSerialNumber(
                             documentEntity?.project?.serialNumber,
                             Number(data.netEmissionReductions),
-                            new Date(parseInt(data.endDate))
+                            new Date(parseInt(data.vintage))
                                 .getFullYear()
                                 .toString(),
                             alreadyIssued,
