@@ -680,9 +680,9 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                             validator: (_, value) => {
                               if (
                                 value &&
-                                value.some((file: any) => file?.size / 1024 / 1024 >= 2)
+                                value.some((file: any) => file?.size > maximumImageSize)
                               ) {
-                                return Promise.reject('Maximum upload file size is 2MB');
+                                return Promise.reject('Maximum upload file size is 5MB');
                               }
                               return Promise.resolve();
                             },
@@ -1039,7 +1039,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                                       validator: (_, value) => {
                                         if (
                                           value &&
-                                          value.some((file: any) => file?.size / 1024 / 1024 >= 2)
+                                          value.some((file: any) => file?.size > maximumImageSize)
                                         ) {
                                           return Promise.reject('Maximum upload file size is 2MB');
                                         }
