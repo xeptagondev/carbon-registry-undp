@@ -196,9 +196,7 @@ export const applicationOfMethodologyDataMapToFields = (vals: any) => {
     descriptionOfMeasurementMethods: vals?.dataAndParametersExAnte?.descriptionOfMeasurementMethods,
     purpose: vals?.dataAndParametersExAnte?.purpose,
     comments: vals?.dataAndParametersExAnte?.comments,
-    vintage: firstYearlyReductions?.vintage
-      ? toMoment(firstYearlyReductions?.vintage)
-      : undefined,
+    vintage: firstYearlyReductions?.vintage ? toMoment(firstYearlyReductions?.vintage) : undefined,
     baselineEmissionReductions: String(firstYearlyReductions?.baselineEmissionReductions),
     projectEmissionReductions: String(firstYearlyReductions?.projectEmissionReductions),
     leakageEmissionReductions: String(firstYearlyReductions?.leakageEmissionReductions),
@@ -209,9 +207,7 @@ export const applicationOfMethodologyDataMapToFields = (vals: any) => {
       if (yearlyReductions !== undefined && yearlyReductions?.length > 0) {
         tempExtraReductions = yearlyReductions.map((reductions: any) => {
           return {
-            vintage: reductions?.vintage
-              ? toMoment(reductions?.vintage)
-              : undefined,
+            vintage: reductions?.vintage ? toMoment(reductions?.vintage) : undefined,
             baselineEmissionReductions: String(reductions?.baselineEmissionReductions),
             projectEmissionReductions: String(reductions?.projectEmissionReductions),
             leakageEmissionReductions: String(reductions?.leakageEmissionReductions),
