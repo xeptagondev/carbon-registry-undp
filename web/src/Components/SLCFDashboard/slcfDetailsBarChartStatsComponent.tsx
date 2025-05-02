@@ -47,6 +47,7 @@ export const SLCFDetailsBarChartsStatComponent: FC<DetailsBarChartStatsProps> = 
             <div className="details-bar-chart-legends">
               <ul className="details-bar-chart-pending-list">
                 <li className="list-title">Pending</li>
+                <li className="list-item">Pending</li>
                 <li className="list-item">Approved</li>
                 <li className="list-item">PDD Submitted</li>
                 <li className="list-item">PDD Approved by Certifier</li>
@@ -55,6 +56,7 @@ export const SLCFDetailsBarChartsStatComponent: FC<DetailsBarChartStatsProps> = 
               </ul>
               <ul className="details-bar-chart-rejected-list">
                 <li className="list-title">Rejected</li>
+                <li className="list-item">Rejected</li>
                 <li className="list-item">PDD Rejected by Certifier </li>
                 <li className="list-item">PDD Rejected by DNA</li>
                 <li className="list-item">Validation Report Rejected</li>
