@@ -1178,7 +1178,10 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
-                          disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
+                          disabledDate={(currentDate: any) => {
+                            const startDate = form.getFieldValue('pa_projectCreditingPeriod');
+                            return currentDate && currentDate < moment(startDate).endOf('day');
+                          }}
                           disabled={disableFields}
                           // onChange={() => updateCreditingPeriodDuration()}
                         />

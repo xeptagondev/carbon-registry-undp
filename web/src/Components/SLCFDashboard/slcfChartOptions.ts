@@ -1,4 +1,5 @@
 import { thousandBasedFormatterWithDecimalPlaces } from '../../Utils/utilityHelper';
+import { addCommSepRound } from '../../Definitions/Definitions/programme.definitions';
 
 //MARK: Projects by status - Details
 export const totalProgrammesOptions: any = {
@@ -559,7 +560,7 @@ export const optionSideBar: any = {
       strokeWidth: 0,
       strokeColor: '#fff',
       fillColors: [],
-      radius: 2,
+      radius: 10,
     },
     itemMargin: {
       horizontal: 2,
@@ -571,6 +572,121 @@ export const optionSideBar: any = {
     onItemHover: {
       highlightDataSeries: true,
     },
+  },
+  responsive: [
+    {
+      breakpoint: 480,
+      options: {
+        legend: {
+          position: 'bottom',
+          offsetX: -10,
+          offsetY: 0,
+        },
+      },
+    },
+  ],
+  dataLabels: {
+    enabled: false,
+    formatter: function (val: any) {
+      if (val >= 1000) {
+        return `${(val / 1000).toFixed(1)}k`; // Convert to 'k' format for values >= 1000
+      }
+      return val;
+    },
+  },
+};
+
+export const sectorPieChartOptions: any = {
+  chart: {
+    type: 'donut',
+    toolbar: {
+      tools: { download: false },
+    },
+  },
+  states: {
+    normal: {
+      filter: { type: 'none', value: 0 },
+    },
+    hover: {
+      filter: { type: 'lighten', value: 0 },
+    },
+    active: {
+      allowMultipleDataPointsSelection: true,
+      filter: { type: 'darken', value: 0.7 },
+    },
+  },
+  plotOptions: {
+    pie: {
+      expandOnClick: false,
+      donut: {
+        labels: {
+          show: true,
+          total: {
+            showAlways: true,
+            show: true,
+            label: 'Total',
+            formatter: function (w: any) {
+              return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0);
+            },
+          },
+        },
+      },
+    },
+  },
+  colors: [],
+  labels: [],
+  noData: {
+    text: 'No data available',
+    align: 'center',
+    verticalAlign: 'middle',
+    style: { fontSize: '16px', color: '#999' },
+  },
+  tooltip: {
+    theme: 'dark',
+    x: { show: false },
+    y: {
+      title: {
+        formatter: function (value: any, { series, seriesIndex, w }: any) {
+          return `${w.globals.labels[seriesIndex]}:`;
+        },
+      },
+    },
+  },
+  // grid: {
+  //   show: false,
+  //   padding: {
+  //     top: 0,
+  //     bottom: 0,
+  //     left: 0,
+  //     right: 0,
+  //   },
+  // },
+  legend: {
+    show: true,
+    showForSingleSeries: true,
+    position: 'bottom',
+    fontSize: '12px',
+    fontFamily: 'Inter',
+    fontWeight: 400,
+    fillColors: [],
+    labels: {
+      colors: 'rgba(140, 140, 140, 1)',
+      useSeriesColors: false,
+    },
+    markers: {
+      width: 12,
+      height: 12,
+      strokeWidth: 0,
+      strokeColor: '#fff',
+      fillColors: [],
+      radius: 10,
+    },
+    itemMargin: {
+      horizontal: 2,
+      vertical: 0,
+    },
+    onItemClick: { toggleDataSeries: true },
+    onItemHover: { highlightDataSeries: true },
   },
   responsive: [
     {

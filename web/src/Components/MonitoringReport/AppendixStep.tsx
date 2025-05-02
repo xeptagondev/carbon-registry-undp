@@ -256,9 +256,12 @@ export const AnnexureStep = (props: CustomStepsProps) => {
                       required={false}
                       rules={[
                         {
-                          validator: (_, value) => {
-                            if (value && value.some((file: any) => file?.size / 1024 / 1024 >= 2)) {
-                              return Promise.reject('Maximum upload file size is 2MB');
+                          validator: async (rule, file) => {
+                            if (file?.length > 0) {
+                              if (file.some((item: any) => item?.size > maximumImageSize)) {
+                                // default size format of files would be in bytes -> 1MB = 1000000bytes
+                                throw new Error(`${t('common:maxSizeVal')}`);
+                              }
                             }
                             return Promise.resolve();
                           },
