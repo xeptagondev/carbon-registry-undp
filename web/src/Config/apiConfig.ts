@@ -123,6 +123,7 @@ export const API_PATHS = {
   GET_PROJECT_STATUS_SUMMARY: 'analytics/getProjectStatusSummary',
   GET_PROJECTS_BY_STATUS_DETAIL: 'analytics/getProjectsByStatusDetail',
   GET_PROJECT_COUNT_BY_SECTOR: 'analytics/getProjectCountBySector',
+  GET_PROJECT_COUNT_BY_SECTORAL_SCOPE: 'analytics/getProjectCountBySectorScope',
   GET_CREDIT_SUMMARY: 'analytics/getCreditSummary',
   GET_CREDIT_SUMMARY_BY_DATE: 'analytics/creditsSummaryByDate',
   //UNUSED APIS
