@@ -150,7 +150,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
           geographicalLocationCoordinates: values?.geographicalLocationCoordinates,
           additionalDocuments: await (async function () {
             const base64Docs: string[] = [];
-
+            console.log('--------------optionalImages-----------', values?.optionalImages);
             if (values?.optionalImages && values?.optionalImages.length > 0) {
               const docs = values.optionalImages;
               for (let i = 0; i < docs.length; i++) {
@@ -166,6 +166,7 @@ const BasicInformation = (props: ValidationStepsProps) => {
             return base64Docs;
           })(),
         };
+
         tempList.push(firstObj);
         if (values?.extraLocations) {
           values?.extraLocations.forEach(async (item: any) => {

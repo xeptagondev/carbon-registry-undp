@@ -16,14 +16,6 @@ export const basicInformationMapDataToFields = (vals: any) => {
   const tempVals = {
     ...vals,
     ...firstLocation,
-    // locationOfProjectActivity: firstLocation?.locationOfProjectActivity,
-    // province: firstLocation?.province,
-    // siteNo: firstLocation?.siteNo,
-    // district: firstLocation?.district,
-    // // dsDivision: firstLocation?.dsDivision,
-    // city: firstLocation?.city,
-    // community: firstLocation?.community,
-    // location: firstLocation?.location,
     optionalImages: mapBase64ToFields(firstLocation?.additionalDocuments),
     extraLocations: (function () {
       const locations = vals?.locationsOfProjectActivity;
