@@ -208,6 +208,8 @@
   "creditingPeriodOption1": "Fixed",
   "creditingPeriodOption2": "Renewable",
   "projectCreditingPeriodDuration": "Duration of crediting Period",
+  "projectCreditingPeriodEndDate": "Crediting period end date",
+  "projectCreditingPeriodStartDate": "Crediting period start date",
   "partiesInvolved": "Parties Involved",
   "projectParticipant": "Project Participants",
   "addProjectParticipant": "Add Project Participant",
