@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { CustomStepsProps } from "./StepProps";
-import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd";
-import TextArea from "antd/lib/input/TextArea";
-import { t } from "i18next";
-import moment from "moment";
-import LabelWithTooltip from "../LabelWithTooltip/LabelWithTooltip";
+import React, { useEffect, useState } from 'react';
+import { CustomStepsProps } from './StepProps';
+import { Button, Col, DatePicker, Form, Input, Row, Select } from 'antd';
+import TextArea from 'antd/lib/input/TextArea';
+import { t } from 'i18next';
+import moment from 'moment';
+import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 
 const StartDateCreditingPeriod = (props: CustomStepsProps) => {
-  const { next, prev, form, current, handleValuesUpdate, disableFields } =
-    props;
+  const { next, prev, form, current, handleValuesUpdate, disableFields } = props;
 
   useEffect(() => {
     //console.log('---------form_values----------', form.getFieldsValue(), disableFields);
@@ -16,22 +15,14 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
 
   const onFinish = (values: any) => {
     const tempValues: any = {
-      projectActivityStartDate: moment(values?.projectActivityStartDate)
-        .startOf("day")
+      projectActivityStartDate: moment(values?.projectActivityStartDate).startOf('day').unix(),
+      projectCreditingPeriodStartDate: moment(values?.projectCreditingPeriodStartDate)
+        .startOf('day')
         .unix(),
-      projectCreditingPeriodStartDate: moment(
-        values?.projectCreditingPeriodStartDate
-      )
-        .startOf("day")
+      projectCreditingPeriodEndDate: moment(values?.projectCreditingPeriodEndDate)
+        .startOf('day')
         .unix(),
-      projectCreditingPeriodEndDate: moment(
-        values?.projectCreditingPeriodEndDate
-      )
-        .startOf("day")
-        .unix(),
-      creditingPeriodStart: moment(values?.creditingPeriodStart)
-        .startOf("day")
-        .unix(),
+      creditingPeriodStart: moment(values?.creditingPeriodStart).startOf('day').unix(),
       operationalLifetime: values?.operationalLifetime,
       creditingPeriodType: values?.creditingPeriodType,
       projectCreditingPeriodDuration: values?.projectCreditingPeriodDuration,
@@ -41,19 +32,15 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
   };
 
   const updateCreditingPeriodDuration = () => {
-    const projectCreditingPeriodStartDate = form.getFieldValue(
-      "projectCreditingPeriodStartDate"
-    );
-    const projectCreditingPeriodEndDate = form.getFieldValue(
-      "projectCreditingPeriodEndDate"
-    );
+    const projectCreditingPeriodStartDate = form.getFieldValue('projectCreditingPeriodStartDate');
+    const projectCreditingPeriodEndDate = form.getFieldValue('projectCreditingPeriodEndDate');
 
     if (projectCreditingPeriodEndDate && projectCreditingPeriodStartDate) {
       const momentStartDate = moment(projectCreditingPeriodStartDate);
       const momentEndDate = moment(projectCreditingPeriodEndDate);
       const duration = moment.duration(momentEndDate.diff(momentStartDate));
       const durationString = `${duration.years()} years, ${duration.months()} months and ${duration.days()} days`;
-      form.setFieldValue("projectCreditingPeriodDuration", durationString);
+      form.setFieldValue('projectCreditingPeriodDuration', durationString);
     }
   };
 
@@ -79,7 +66,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
               <Row gutter={[40, 16]}>
                 <Col md={24} xl={12}>
                   <Form.Item
-                    label={`${t("PDD:projectActivityStartDate")}`}
+                    label={`${t('PDD:projectActivityStartDate')}`}
                     name="projectActivityStartDate"
                   >
                     {/* <DatePicker
@@ -94,15 +81,8 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                     <Input size="large" disabled />
                   </Form.Item>
 
-                  <LabelWithTooltip
-                    label={t("PDD:projectCreditingPeriod")}
-                    required={true}
-                  />
-                  <Row
-                    gutter={[40, 16]}
-                    justify={"space-between"}
-                    align={"stretch"}
-                  >
+                  <LabelWithTooltip label={t('PDD:projectCreditingPeriod')} required={true} />
+                  <Row gutter={[40, 16]} justify={'space-between'} align={'stretch'}>
                     <Col md={11} xl={11}>
                       <Form.Item
                         // label={`${t('PDD:projectActivityStartDate')}`}
@@ -115,12 +95,14 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t("PDD:required")}`);
+                                throw new Error(
+                                  `${t('PDD:projectCreditingPeriodStartDate')} ${t('isRequired')}`
+                                );
                               }
                             },
                           },
@@ -128,9 +110,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                       >
                         <DatePicker
                           size="large"
-                          disabledDate={(currentDate: any) =>
-                            currentDate < moment().startOf("day")
-                          }
+                          disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                           onChange={() => updateCreditingPeriodDuration()}
                           disabled={disableFields}
                         />
@@ -151,15 +131,13 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                           {
                             validator: async (rule, value) => {
                               if (
-                                String(value).trim() === "" ||
+                                String(value).trim() === '' ||
                                 String(value).trim() === undefined ||
                                 value === null ||
                                 value === undefined
                               ) {
                                 throw new Error(
-                                  `${t(
-                                    "PDD:projectCreditingPeriodEndDate"
-                                  )} ${t("isRequired")}`
+                                  `${t('PDD:projectCreditingPeriodEndDate')} ${t('isRequired')}`
                                 );
                               }
                             },
@@ -169,8 +147,13 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                         <DatePicker
                           size="large"
                           disabledDate={(currentDate: any) => {
-                            const projectCreditingPeriodStartDate = form.getFieldValue('projectCreditingPeriodStartDate');
-                            return currentDate && currentDate < moment(projectCreditingPeriodStartDate).endOf("day");
+                            const projectCreditingPeriodStartDate = form.getFieldValue(
+                              'projectCreditingPeriodStartDate'
+                            );
+                            return (
+                              currentDate &&
+                              currentDate < moment(projectCreditingPeriodStartDate).endOf('day')
+                            );
                           }}
                           onChange={() => updateCreditingPeriodDuration()}
                           disabled={disableFields}
@@ -180,7 +163,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                   </Row>
 
                   <Form.Item
-                    label={`${t("PDD:creditingPeriodStart")}`}
+                    label={`${t('PDD:creditingPeriodStart')}`}
                     name="creditingPeriodStart"
                     rules={[
                       {
@@ -190,16 +173,12 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                       {
                         validator: async (rule, value) => {
                           if (
-                            String(value).trim() === "" ||
+                            String(value).trim() === '' ||
                             String(value).trim() === undefined ||
                             value === null ||
                             value === undefined
                           ) {
-                            throw new Error(
-                              `${t("PDD:creditingPeriodStart")} ${t(
-                                "isRequired"
-                              )}`
-                            );
+                            throw new Error(`${t('PDD:creditingPeriodStart')} ${t('isRequired')}`);
                           }
                         },
                       },
@@ -207,9 +186,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                   >
                     <DatePicker
                       size="large"
-                      disabledDate={(currentDate: any) =>
-                        currentDate < moment().startOf("day")
-                      }
+                      disabledDate={(currentDate: any) => currentDate < moment().startOf('day')}
                       disabled={disableFields}
                     />
                   </Form.Item>
@@ -217,7 +194,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
 
                 <Col md={24} xl={12}>
                   <Form.Item
-                    label={`${t("PDD:operationalLifetime")}`}
+                    label={`${t('PDD:operationalLifetime')}`}
                     name="operationalLifetime"
                     rules={[
                       {
@@ -227,16 +204,12 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                       {
                         validator: async (rule, value) => {
                           if (
-                            String(value).trim() === "" ||
+                            String(value).trim() === '' ||
                             String(value).trim() === undefined ||
                             value === null ||
                             value === undefined
                           ) {
-                            throw new Error(
-                              `${t("PDD:operationalLifetime")} ${t(
-                                "isRequired"
-                              )}`
-                            );
+                            throw new Error(`${t('PDD:operationalLifetime')} ${t('isRequired')}`);
                           }
                         },
                       },
@@ -246,7 +219,7 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                   </Form.Item>
 
                   <Form.Item
-                    label={`${t("PDD:creditingPeriodType")}`}
+                    label={`${t('PDD:creditingPeriodType')}`}
                     name="creditingPeriodType"
                     rules={[
                       {
@@ -256,33 +229,27 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                       {
                         validator: async (rule, value) => {
                           if (
-                            String(value).trim() === "" ||
+                            String(value).trim() === '' ||
                             String(value).trim() === undefined ||
                             value === null ||
                             value === undefined
                           ) {
-                            throw new Error(
-                              `${t("PDD:creditingPeriodType")} ${t(
-                                "isRequired"
-                              )}`
-                            );
+                            throw new Error(`${t('PDD:creditingPeriodType')} ${t('isRequired')}`);
                           }
                         },
                       },
                     ]}
                   >
                     <Select size="large" disabled={disableFields}>
-                      <Select.Option value="Fixed">
-                        {t("PDD:creditingPeriodOption1")}
-                      </Select.Option>
+                      <Select.Option value="Fixed">{t('PDD:creditingPeriodOption1')}</Select.Option>
                       <Select.Option value="Renewable">
-                        {t("PDD:creditingPeriodOption2")}
+                        {t('PDD:creditingPeriodOption2')}
                       </Select.Option>
                     </Select>
                   </Form.Item>
 
                   <Form.Item
-                    label={`${t("PDD:projectCreditingPeriodDuration")}`}
+                    label={`${t('PDD:projectCreditingPeriodDuration')}`}
                     name="projectCreditingPeriodDuration"
                     rules={[
                       {
@@ -292,15 +259,13 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                       {
                         validator: async (rule, value) => {
                           if (
-                            String(value).trim() === "" ||
+                            String(value).trim() === '' ||
                             String(value).trim() === undefined ||
                             value === null ||
                             value === undefined
                           ) {
                             throw new Error(
-                              `${t("PDD:projectCreditingPeriodDuration")} ${t(
-                                "isRequired"
-                              )}`
+                              `${t('PDD:projectCreditingPeriodDuration')} ${t('isRequired')}`
                             );
                           }
                         },
@@ -312,22 +277,22 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                 </Col>
               </Row>
 
-              <Row justify={"end"} className="step-actions-end">
-                <Button danger size={"large"} onClick={prev}>
-                  {t("PDD:prev")}
+              <Row justify={'end'} className="step-actions-end">
+                <Button danger size={'large'} onClick={prev}>
+                  {t('PDD:prev')}
                 </Button>
                 {disableFields ? (
                   <Button type="primary" onClick={next}>
-                    {t("PDD:next")}
+                    {t('PDD:next')}
                   </Button>
                 ) : (
                   <Button
                     type="primary"
-                    size={"large"}
-                    htmlType={"submit"}
+                    size={'large'}
+                    htmlType={'submit'}
                     // onClick={next}
                   >
-                    {t("PDD:next")}
+                    {t('PDD:next')}
                   </Button>
                 )}
               </Row>
