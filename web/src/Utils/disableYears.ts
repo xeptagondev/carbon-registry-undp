@@ -25,7 +25,7 @@ export const disableYears = (
     }
   });
 
-  console.log('vintageMap', vintageMap);
+  // console.log("vintageMap", vintageMap);
 
   if (vintageMap[currentDate?.year()]) {
     disableYearsVal = true;

@@ -184,7 +184,10 @@ const StepperComponent = (props: VerificationStepProps) => {
 
     if (programmeData && pddData && validationData && monitoringData) {
       const tempNetGHGEmisisionReduction =
-        validationData?.ghgProjectDescription?.totalNetEmissionReductions;
+        Number(programmeData?.creditEst) -
+        (Number(programmeData?.creditBalance) +
+          Number(programmeData?.creditRetired) +
+          Number(programmeData?.creditTransferred));
 
       console.log('-----------temp netGHG---------', tempNetGHGEmisisionReduction);
 
