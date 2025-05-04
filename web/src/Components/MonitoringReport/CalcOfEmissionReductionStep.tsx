@@ -666,7 +666,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                               picker="year"
                                               format="YYYY"
                                               onChange={(value: any) => {
-                                                onPeriodChange(value, name + 2);
+                                                onPeriodChange(value, fields?.length + 1);
                                               }}
                                               disabledDate={(currentDate: any) => {
                                                 return disableYears(
@@ -898,7 +898,7 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
                                               onClick={() => {
                                                 // reduceTotalCreditingYears()
                                                 remove(name);
-                                                onPeriodChange(null, name + 2);
+                                                onPeriodChange(null, fields?.length + 1);
                                                 calculateTotalEmissions(
                                                   null,
                                                   'baselineEmissionReductions',
