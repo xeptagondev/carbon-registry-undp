@@ -274,7 +274,7 @@ const ApplicationOfMethodology = (props: CustomStepsProps) => {
         if (values?.extraEmissionReductions) {
           values.extraEmissionReductions.forEach((item: any) => {
             const tempObj = {
-              vintage: moment(values?.vintage).startOf('year').valueOf(),
+              vintage: moment(item?.vintage).startOf('year').valueOf(),
               baselineEmissionReductions: Number(item?.baselineEmissionReductions),
               projectEmissionReductions: Number(item?.projectEmissionReductions),
               leakageEmissionReductions: Number(item?.leakageEmissionReductions),
