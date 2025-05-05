@@ -170,9 +170,10 @@ export const CalcEmissionReductionStep = (props: CustomStepsProps) => {
     const reductions = form.getFieldValue('extraEmissionReductions');
 
     let totalCreditingYears = form.getFieldValue('totalCreditingYears') || 0;
+    console.log('-------t, f---------', totalCreditingYears, fieldCounts);
     if (value && totalCreditingYears < fieldCounts) {
       totalCreditingYears += 1;
-    } else if (value === null && totalCreditingYears !== 0 && totalCreditingYears === fieldCounts) {
+    } else if (value === null && totalCreditingYears !== 0 && totalCreditingYears >= fieldCounts) {
       totalCreditingYears -= 1;
     }
     form.setFieldValue('totalCreditingYears', totalCreditingYears);

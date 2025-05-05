@@ -182,13 +182,20 @@ const NetEmissionReduction = (props: any) => {
   };
 
   const onPeriodChange = (value: any, fieldCounts: number) => {
-    let totalCreditingYears = form.getFieldValue('totalCreditingYears') || 0;
-    if (value && totalCreditingYears < fieldCounts) {
-      totalCreditingYears += 1;
-    } else if (value === null && totalCreditingYears !== 0 && totalCreditingYears === fieldCounts) {
-      totalCreditingYears -= 1;
+    let totalNumberOfCreditingYears = form.getFieldValue('totalNumberOfCreditingYears') || 0;
+
+    console.log('-------onPeriodChange--------', fieldCounts, totalNumberOfCreditingYears);
+
+    if (value && totalNumberOfCreditingYears < fieldCounts) {
+      totalNumberOfCreditingYears += 1;
+    } else if (
+      value === null &&
+      totalNumberOfCreditingYears !== 0 &&
+      totalNumberOfCreditingYears === fieldCounts
+    ) {
+      totalNumberOfCreditingYears -= 1;
     }
-    form.setFieldValue('totalCreditingYears', totalCreditingYears);
+    form.setFieldValue('totalNumberOfCreditingYears', totalNumberOfCreditingYears);
   };
 
   return (
@@ -271,7 +278,7 @@ const NetEmissionReduction = (props: any) => {
                                 disableFutureYears
                               );
                             }}
-                            onChange={(value) => onPeriodChange(value, name + 1)}
+                            onChange={(value) => onPeriodChange(value, fields.length)}
                           />
                         </Form.Item>
                       </div>
@@ -509,7 +516,7 @@ const NetEmissionReduction = (props: any) => {
                             onClick={() => {
                               // reduceTotalCreditingYears()
                               remove(name);
-                              onPeriodChange(null, name + 1);
+                              onPeriodChange(null, fields?.length);
                               calculateTotalEmissions(
                                 null,
                                 'projectEmissionReductions',
