@@ -321,12 +321,7 @@ export const getHoldingsReportColumns = (t: any) => [
       },
     ],
   },
-  {
-    title: t('reporting:firstTransferDefinition'),
-    dataIndex: 'firstTransferDefinition',
-    key: 'firstTransferDefinition',
-    // width: 200,
-  },
+
   {
     title: t('reporting:firstTransfer'),
     dataIndex: 'firstTransferingParty',
