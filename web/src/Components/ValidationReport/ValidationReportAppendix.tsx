@@ -573,7 +573,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <Input disabled={disableFields} size='large'/>
+                        <Input disabled={disableFields} size="large" />
                       </Form.Item>
 
                       <Form.Item
@@ -659,7 +659,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <TextArea rows={4} disabled={disableFields} size='large'/>
+                        <TextArea rows={4} disabled={disableFields} size="large" />
                       </Form.Item>
                     </Col>
 
@@ -847,7 +847,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <Input disabled={disableFields} size='large'/>
+                        <Input disabled={disableFields} size="large" />
                       </Form.Item>
 
                       <Form.Item
@@ -904,7 +904,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <Input disabled={disableFields} size='large'/>
+                        <Input disabled={disableFields} size="large" />
                       </Form.Item>
                     </Col>
 
@@ -1121,7 +1121,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <Input disabled={disableFields} size='large'/>
+                        <Input disabled={disableFields} size="large" />
                       </Form.Item>
 
                       <Form.Item
@@ -1178,7 +1178,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                           },
                         ]}
                       >
-                        <Input disabled={disableFields} size='large'/>
+                        <Input disabled={disableFields} size="large" />
                       </Form.Item>
                     </Col>
 
