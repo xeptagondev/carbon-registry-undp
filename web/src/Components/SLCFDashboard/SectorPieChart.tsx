@@ -1,6 +1,6 @@
-import { FC } from "react";
-import { Row, Skeleton, Tooltip } from "antd";
-import { InfoCircle } from "react-bootstrap-icons";
+import { FC } from 'react';
+import { Row, Skeleton, Tooltip } from 'antd';
+import { InfoCircle } from 'react-bootstrap-icons';
 
 export interface ISectorPieChart {
   id: string;
@@ -14,10 +14,9 @@ export interface ISectorPieChart {
 }
 
 export const SectorPieChart: FC<ISectorPieChart> = (props: ISectorPieChart) => {
-  const { id, title, options, series, loading, toolTipText, Chart, width } =
-    props;
+  const { id, title, options, series, loading, toolTipText, Chart, width } = props;
 
-  console.log("--------------pie chart-----------", series);
+  console.log('--------------pie chart-----------', series);
 
   return (
     <div className="statistics-and-pie-card height-pie-rem">
@@ -28,12 +27,8 @@ export const SectorPieChart: FC<ISectorPieChart> = (props: ISectorPieChart) => {
         </div>
       ) : (
         <>
-          <Row
-            justify={"space-between"}
-            align={"middle"}
-            className="pie-charts-top"
-          >
-            <Row align={"middle"}>
+          <Row justify={'space-between'} align={'middle'} className="pie-charts-top">
+            <Row align={'middle'}>
               <div className="pie-charts-title">{title}</div>
               <div className="info-container">
                 <Tooltip
