@@ -60,7 +60,6 @@ const ReportingComponent = (props: { translator: i18n }) => {
         pageSize: pageSize,
       },
     }));
-
   };
 
   const [selectedYear, setSelectedYear] = useState<Moment>(moment());
