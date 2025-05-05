@@ -166,7 +166,10 @@ const StepperComponent = (props: CustomStepsProps) => {
 
     if (programmeData && pddData && validationData) {
       const tempNetGHGEmisisionReduction =
-        validationData?.ghgProjectDescription?.totalNetEmissionReductions;
+        Number(programmeData?.creditEst) -
+        (Number(programmeData?.creditBalance) +
+          Number(programmeData?.creditRetired) +
+          Number(programmeData?.creditTransferred));
 
       console.log('-----------tempNetGHG---------', tempNetGHGEmisisionReduction);
       setMaxNetGHGReduction(Number(tempNetGHGEmisisionReduction));
@@ -343,7 +346,7 @@ const StepperComponent = (props: CustomStepsProps) => {
   };
 
   const handleValuesUpdate = (val: any) => {
-    // console.log('----------temp vals stepper-------------', val);
+    console.log('----------temp vals stepper-------------', val);
     setValues((prevVal: any) => {
       const tempContent = {
         ...prevVal.data,

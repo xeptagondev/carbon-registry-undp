@@ -100,7 +100,9 @@ const StartDateCreditingPeriod = (props: CustomStepsProps) => {
                                 value === null ||
                                 value === undefined
                               ) {
-                                throw new Error(`${t('PDD:required')}`);
+                                throw new Error(
+                                  `${t('PDD:projectCreditingPeriodStartDate')} ${t('isRequired')}`
+                                );
                               }
                             },
                           },

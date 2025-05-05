@@ -197,7 +197,7 @@ const StepperComponent = (props: any) => {
         refId: state?.documents?.PDD?.refId,
         documentType: DocumentEnum.PDD,
       });
-      //console.log('-----------------PDD Response-----------------', pddResponse);
+      console.log('-----------------PDD Response-----------------', pddResponse);
       if (pddResponse?.statusText === 'SUCCESS') {
         pddData = pddResponse?.data;
       } else {
@@ -257,7 +257,7 @@ const StepperComponent = (props: any) => {
               vintage: toMoment(emissionData.vintage),
             })
           ),
-        totalNumberOfCreditingYears: 1,
+        totalNumberOfCreditingYears: netGHGEmissionReductions?.totalNumberOfCredingYears,
         baselineEmissionReductions: 0,
         baselineEmissions: pddData?.data?.projectActivity?.locationsOfProjectActivity?.map(
           (loc: any) => ({ location: loc.locationOfProjectActivity })
