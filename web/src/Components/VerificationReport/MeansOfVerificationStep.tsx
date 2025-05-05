@@ -251,9 +251,15 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                             >
                               <DatePicker
                                 size="small"
-                                disabledDate={(currentDate: any) =>
-                                  currentDate < moment().startOf('day')
-                                }
+                                disabledDate={(currentDate: any) => {
+                                  const siteInspectionDurationStart = form.getFieldValue(
+                                    'siteInspectionDurationStart'
+                                  );
+                                  return (
+                                    currentDate &&
+                                    currentDate < moment(siteInspectionDurationStart).endOf('day')
+                                  );
+                                }}
                                 disabled={disableFields}
                               />
                             </Form.Item>

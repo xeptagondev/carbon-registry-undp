@@ -53,6 +53,11 @@ body {
   border-radius: 6px !important;
 }
 
+.ant-table-pagination {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .ant-input-group .ant-input {
   width: 99% !important;
 }
