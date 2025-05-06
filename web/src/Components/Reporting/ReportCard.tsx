@@ -53,7 +53,7 @@ const ReportCard = (props: IReportCard) => {
               downloadExcel();
             }}
           >
-            Export AS EXCELL <UploadOutlined className="icon" />
+            Export AS EXCEL <UploadOutlined className="icon" />
           </Button>
 
           <Button

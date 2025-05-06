@@ -242,7 +242,7 @@ export class AefReportManagementService {
             dto.sectoralScope = report.sectoralScope;
             dto.projectAuthorizationTime = report.projectAuthorizationTime
                 ? moment(parseInt(report.projectAuthorizationTime)).format(
-                      'YY-MM-DD',
+                      'DD-MMM-YY',
                   )
                 : '';
             dto.authorizationId = report.authorizationId;
@@ -277,7 +277,7 @@ export class AefReportManagementService {
             dto.sectoralScope = report.sectoralScope;
             dto.projectAuthorizationTime = report.projectAuthorizationTime
                 ? moment(parseInt(report.projectAuthorizationTime)).format(
-                      'YY-MM-DD',
+                      'DD-MMM-YY',
                   )
                 : '';
             dto.authorizationId = report.authorizationId;
@@ -285,7 +285,7 @@ export class AefReportManagementService {
             dto.oimp = report.OIMP;
             dto.firstTransferDefinition = report.firstTransferDefinition;
             dto.actionTime = report.actionTime
-                ? moment(parseInt(report.actionTime)).format('YY-MM-DD')
+                ? moment(parseInt(report.actionTime)).format('DD-MMM-YY')
                 : '';
             dto.actionType = report.actionType;
             dto.transferingParty = report.transferingParty;
