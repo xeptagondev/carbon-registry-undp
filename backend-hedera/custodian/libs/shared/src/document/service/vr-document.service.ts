@@ -317,6 +317,11 @@ export class VrDocumentService extends DocumentService {
         return `${day}${month}${year}`;
     }
 
+    normalizeProjectId(id: string | number): string {
+        const s = String(id);
+        return s.padStart(4, '0').slice(-4);
+    }
+
     async verify(requestData: DocumentActionDTO, jwtData: JWTPayload) {
         this.logger.log(
             `Request received to verify Validation report from ${jwtData.userName}`,
@@ -536,7 +541,7 @@ export class VrDocumentService extends DocumentService {
                     );
                 const authorizationId = `${this.authorizeDate()}
                 ${this.configService.get('countryCode')}
-                ${existingProject.id}`;
+                ${this.normalizeProjectId(existingProject.id)}`;
 
                 const updatedProject = plainToClass(ProjectEntity, {
                     ...existingProject,
