@@ -105,6 +105,9 @@ export const getActionsReportColumns = (t: any) => [
   },
   {
     title: t('reporting:authorization'),
+    onHeaderCell: () => ({
+      style: { fontWeight: 'bold' },
+    }),
     children: [
       {
         title: t('reporting:dateOfAuthorization'),
