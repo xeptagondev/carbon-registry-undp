@@ -259,6 +259,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
           <DatePicker
             size="large"
             picker="year"
+            allowClear={false}
             value={selectedYear}
             onChange={(value: any) => {
               console.log('---------value-----------', value);
@@ -271,7 +272,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
         <Row className="mg-top-2">
           <Select
             size="large"
-            placeholder="click to select the Reports to display"
+            placeholder="Click to select the Reports to display"
             mode={'multiple'}
             value={[...selectedYearsArr]}
             className="report-type-selector"
@@ -301,9 +302,9 @@ const ReportingComponent = (props: { translator: i18n }) => {
 
       {selectedReports[ReportTypes.ACTIONS] && (
         <ReportCard
-          title={'Actions Report'}
+          title={'ACTIONS REPORT'}
           reportType={ReportTypes.ACTIONS}
-          host={'Sri lanka'}
+          host={'Sri Lanka'}
           year={String(selectedYear.year())}
           columns={getActionsReportColumns(t)}
           handlePaginationChange={handlePaginationInfoChange}
@@ -321,7 +322,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
 
       {selectedReports[ReportTypes.HOLDINGS] && (
         <ReportCard
-          title={'Holdings Report'}
+          title={'HOLDINGS REPORT'}
           reportType={ReportTypes.HOLDINGS}
           host={'Sri lanka'}
           year={String(selectedYear.year())}
