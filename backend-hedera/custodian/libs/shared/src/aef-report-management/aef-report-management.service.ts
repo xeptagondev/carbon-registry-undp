@@ -28,6 +28,39 @@ import { DataExportDto } from './dto/data.export.dto';
 import { AefExportDto } from './dto/aef.export.dto';
 import { CreditRetirementTypeEmnum } from '../carbon-credit-token/enum/credit.retirement.type.enum';
 import { ProjectEntity } from '../project/entity/project.entity';
+
+export const INF_SECTOR: { [key: string]: string } = {
+    ENERGY: 'Energy',
+    AGRICULTURE: 'Agriculture',
+    HEALTH: 'Health',
+    EDUCATION: 'Education',
+    TRANSPORT: 'Transport',
+    MANUFACTURING: 'Manufacturing',
+    HOSPITALITY: 'Hospitality',
+    FORESTRY: 'Forestry',
+    WASTE: 'Waste',
+    OTHER: 'Other',
+};
+
+export const INF_SECTORAL_SCOPE: { [key: string]: string } = {
+    ENERGY_INDUSTRIES:
+        'Energy Industries (Renewable – / Non-Renewable Sources) ',
+    ENERGY_DISTRIBUTION: 'Energy Distribution',
+    ENERGY_DEMAND: 'Energy Demand',
+    AGRICULTURE: 'Agriculture',
+    AFFORESTATION_AND_REFORESTATION: 'Afforestation and Reforestation',
+    MANUFACTURING_INDUSTRIES: 'Manufacturing Industries',
+    CHEMICAL_INDUSTRIES: 'Chemical Industries',
+    METAL_PRODUCTION: 'Metal Production',
+    TRANSPORT: 'Transport',
+    WASTE_FROM_FUELS: 'Fugitive Emissions from Fuels (Solid, Oil and Gas) ',
+    WASTE_HANDLING_AND_DISPOSAL: 'Waste Handling and Disposal',
+    CONSTRUCTION: 'Construction',
+    MINING_MINERAL_PRODUCTION: 'Mining/Mineral Production',
+    FUGITIVE_EMISSIONS_PRODUCTION:
+        'Fugitive Emissions from Production and Consumption of Halocarbons and Sulphur Hexafluoride',
+    SOLVENT_USE: 'Solvent Use',
+};
 @Injectable()
 export class AefReportManagementService {
     constructor(
@@ -247,8 +280,10 @@ export class AefReportManagementService {
             dto.conversionFactor = report.conversionFactor;
             dto.firstTransferingParty = report.firstTransferingParty;
             dto.vintage = report.vintage;
-            dto.sector = report.sector;
-            dto.sectoralScope = report.sectoralScope;
+            dto.sector = INF_SECTOR[report.sector];
+            dto.sectoralScope = INF_SECTORAL_SCOPE[report.sectoralScope]
+                ? INF_SECTORAL_SCOPE[report.sectoralScope]
+                : 'NA';
             dto.projectAuthorizationTime = report.projectAuthorizationTime
                 ? moment(parseInt(report.projectAuthorizationTime)).format(
                       'DD-MMM-YY',
@@ -282,8 +317,10 @@ export class AefReportManagementService {
             dto.conversionFactor = report.conversionFactor;
             dto.firstTransferingParty = report.firstTransferingParty;
             dto.vintage = report.vintage;
-            dto.sector = report.sector;
-            dto.sectoralScope = report.sectoralScope;
+            dto.sector = INF_SECTOR[report.sector];
+            dto.sectoralScope = INF_SECTORAL_SCOPE[report.sectoralScope]
+                ? INF_SECTORAL_SCOPE[report.sectoralScope]
+                : 'NA';
             dto.projectAuthorizationTime = report.projectAuthorizationTime
                 ? moment(parseInt(report.projectAuthorizationTime)).format(
                       'DD-MMM-YY',
