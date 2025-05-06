@@ -33,8 +33,6 @@ export class AefReportManagementService {
     constructor(
         private readonly helperService: HelperService,
         private readonly serialNumberManagementService: SerialNumberManagementService,
-        @InjectRepository(CreditTransactionsEntity)
-        private creditTransactionsEntityRepository: Repository<CreditTransactionsEntity>,
         @InjectRepository(ProjectEntity)
         private projectRepository: Repository<ProjectEntity>,
         private readonly configService: ConfigService,
@@ -140,6 +138,10 @@ export class AefReportManagementService {
         const updatedRecords = records.map((record) => ({
             ...record,
             ...staticFields,
+            actionType: this.helperService.formatReqMessagesString(
+                `aef.${record.actionType}`,
+                [],
+            ),
         }));
         return new DataListResponseDto(
             updatedRecords,
@@ -290,7 +292,7 @@ export class AefReportManagementService {
             dto.aquiringParty = report.aquiringParty;
             dto.purposeForCancellation = report.purposeForCancellation;
             dto.actionBy = report.actionBy;
-            dto.firstTransfer = report.firstTransferingParty;
+            dto.firstTransfer = report.firstTransferDefinition;
 
             exportData.push(dto);
         }
