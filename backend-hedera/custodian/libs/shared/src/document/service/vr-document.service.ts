@@ -539,9 +539,8 @@ export class VrDocumentService extends DocumentService {
                     this.serialNumberManagementService.getProjectSerialNumber(
                         existingProject.id,
                     );
-                const authorizationId = `${this.authorizeDate()}
-                ${this.configService.get('countryCode')}
-                ${this.normalizeProjectId(existingProject.id)}`;
+                // eslint-disable-next-line max-len
+                const authorizationId = `${this.authorizeDate()}${this.configService.get('countryCode')}${this.normalizeProjectId(existingProject.id)}`;
 
                 const updatedProject = plainToClass(ProjectEntity, {
                     ...existingProject,
