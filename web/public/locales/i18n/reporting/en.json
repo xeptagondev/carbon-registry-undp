@@ -9,7 +9,7 @@
   "firstUniqueIdentifier": "FIRST UNIQUE IDENTIFIER",
   "lastUniqueIdentifier": "LAST UNIQUE IDENTIFIER",
   "underlyingUnitBlockStartId": "UNDERLYING UNIT BLOCK START ID",
-  "underlyingUnitLastBlockId": "UNDERLYING UNIT LAST BLOCK ID",
+  "underlyingUnitLastBlockId": "UNDERLYING UNIT BLOCK LAST ID",
   "metricAndQuantity": "METRIC AND QUANTITY",
   "metric": "METRIC",
   "quantity": "QUANTITY (EXPRESSED IN METRIC)",
