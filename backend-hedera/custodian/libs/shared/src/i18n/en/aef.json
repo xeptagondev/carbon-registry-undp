@@ -5,7 +5,7 @@
     "firstUniqueIdentifier": "First unique identifier",
     "lastUniqueIdentifier": "Last unique identifier",
     "creditBlockStartId": "Underlying unit block start ID",
-    "creditBlockEndId": "Underlying unit last block end",
+    "creditBlockEndId": "Underlying unit last block end ID",
     "metric": "Metric",
     "quantityInMetric": "Quantity (expressed in metric)",
     "creditAmount": "Quantity (t CO2 eq)",
@@ -25,5 +25,9 @@
     "aquiringParty": "Acquiring participating Party",
     "purposeForCancellation": "Purposes for cancellation",
     "actionBy": "Using participating Party or authorized entity or entities",
-    "firstTransfer": "First transfer"
+    "firstTransfer": "First transfer",
+    "authorization": "Authorization",
+    "transfer": "Transfer",
+    "crossBoarderTransfer": "Cross Boarder Transfer",
+    "retire": "Retire"
 }
