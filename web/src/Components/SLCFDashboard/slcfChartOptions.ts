@@ -701,7 +701,7 @@ export const sectorPieChartOptions: any = {
     },
   ],
   dataLabels: {
-    enabled: true,
+    enabled: false,
     formatter: function (val: any) {
       if (val >= 1000) {
         return `${(val / 1000).toFixed(1)}k`;
