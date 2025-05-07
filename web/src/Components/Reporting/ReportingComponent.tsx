@@ -328,7 +328,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
         <ReportCard
           title={'HOLDINGS REPORT'}
           reportType={ReportTypes.HOLDINGS}
-          host={'Sri lanka'}
+          host={'Sri Lanka'}
           year={String(selectedYear.year())}
           columns={getHoldingsReportColumns(t)}
           handlePaginationChange={handlePaginationInfoChange}
