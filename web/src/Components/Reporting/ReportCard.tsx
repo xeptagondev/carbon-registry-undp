@@ -85,6 +85,7 @@ const ReportCard = (props: IReportCard) => {
             style: { textAlign: 'center' },
             position: ['bottomLeft'],
             showSizeChanger: true,
+            showQuickJumper: true,
           }}
           bordered={true}
           onChange={(value) => {
