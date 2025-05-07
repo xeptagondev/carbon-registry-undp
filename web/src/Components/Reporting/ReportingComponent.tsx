@@ -81,6 +81,10 @@ const ReportingComponent = (props: { translator: i18n }) => {
             operation: '<',
             value: selectedYear.endOf('year').valueOf(),
           },
+          {
+            key: 'createdTime',
+            order: 'DESC',
+          }
         ],
       });
 
@@ -117,6 +121,10 @@ const ReportingComponent = (props: { translator: i18n }) => {
             operation: '=',
             value: 'authorization',
           },
+          {
+            key: 'createdTime',
+            order: 'DESC',
+          }
         ],
       });
 
