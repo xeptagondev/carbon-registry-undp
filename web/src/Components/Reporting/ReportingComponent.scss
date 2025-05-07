@@ -87,6 +87,10 @@
     font-size: 14px;
     font-weight: 600;
 
+    .ant-table-tbody {
+      font-weight: 400 !important;
+    }
+
     .ant-table-fixed {
       table-layout: fixed;
     }
