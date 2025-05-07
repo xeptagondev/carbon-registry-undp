@@ -40,6 +40,7 @@ import { MailService } from '@app/shared/mail/service/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 import { AefReportManagementService } from '@app/shared/aef-report-management/aef-report-management.service';
+import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 
 @Injectable()
 export class CarbonCreditService {
@@ -927,9 +928,9 @@ export class CarbonCreditService {
 
         let sortColumn = 'creditTx.createdDate';
         if (query?.sort?.key) {
-            if(query.sort.key=="status"){
-                sortColumn = '"creditTx"."status"::text'
-            }else{
+            if (query.sort.key == 'status') {
+                sortColumn = '"creditTx"."status"::text';
+            } else {
                 sortColumn = 'creditTx.' + query.sort.key;
             }
         }
@@ -1110,6 +1111,18 @@ export class CarbonCreditService {
         await queryRunner.startTransaction();
 
         try {
+            const dnaOrg = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: user.organizationId },
+                },
+            );
+            if (dnaOrg.state !== OrganizationStateEnum.ACTIVE) {
+                throw new HttpException(
+                    'Organisation is Deactivated, Action is Unauthorised',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
             const retireRequest = await queryRunner.manager.findOne(
                 CreditTransactionsEntity,
                 {

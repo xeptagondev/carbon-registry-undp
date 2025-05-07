@@ -45,6 +45,8 @@ import { SerialNumberManagementService } from '@app/shared/serial-number-managem
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 import { UtilService } from '@app/shared/util/service/util.service';
+import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
+import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 
 @Injectable()
 export class VerificationDocumentService extends DocumentService {
@@ -346,6 +348,7 @@ export class VerificationDocumentService extends DocumentService {
             `Request received to verify verification report from ${jwtData.userName}`,
             this.loggerContext,
         );
+
         if (
             !(
                 jwtData.organizationRole ==
@@ -364,6 +367,19 @@ export class VerificationDocumentService extends DocumentService {
         queryRunner.connect();
         try {
             queryRunner.startTransaction();
+
+            const dnaOrg = await queryRunner.manager.findOne(
+                OrganizationEntity,
+                {
+                    where: { id: jwtData.organizationId },
+                },
+            );
+            if (dnaOrg.state !== OrganizationStateEnum.ACTIVE) {
+                throw new HttpException(
+                    'Organisation is Deactivated, Action is Unauthorised',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
 
             const documentEntity = await queryRunner.manager.findOne(
                 DocumentEntity,
