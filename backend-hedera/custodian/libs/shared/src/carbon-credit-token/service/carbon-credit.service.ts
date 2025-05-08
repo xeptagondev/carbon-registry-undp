@@ -1535,6 +1535,7 @@ export class CarbonCreditService {
         }
 
         let creditBlock;
+        let creditTransaction;
         if (
             !transferingBlock.reservedCreditAmount &&
             transferingBlock.creditAmount === amount
@@ -1548,7 +1549,7 @@ export class CarbonCreditService {
 
             const savedBlock = await queryRunner.manager.save(creditBlock);
 
-            const creditTransaction = plainToClass(CreditTransactionsEntity, {
+            creditTransaction = plainToClass(CreditTransactionsEntity, {
                 transferId,
                 tokenId,
                 creditBlock: savedBlock,
@@ -1587,7 +1588,7 @@ export class CarbonCreditService {
 
             const savedBlock = await queryRunner.manager.save(creditBlock);
 
-            const creditTransaction = plainToClass(CreditTransactionsEntity, {
+            creditTransaction = plainToClass(CreditTransactionsEntity, {
                 transferId,
                 tokenId,
                 creditBlock: savedBlock,

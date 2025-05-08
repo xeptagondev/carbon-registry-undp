@@ -126,6 +126,7 @@ export class AefReportManagementService {
             } else {
                 newAefActionRecord.actionType = AefActionTypeEnum.RETIRE;
             }
+            newAefActionRecord.creditAmount = transaction.creditAmount;
         }
 
         await queryRunner.manager.save(newAefActionRecord);
