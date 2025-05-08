@@ -379,6 +379,7 @@ export class CarbonCreditService {
                         project: { organization: true },
                         sender: true,
                         creditBlock: true,
+                        country: true,
                     },
                 });
 
@@ -569,6 +570,7 @@ export class CarbonCreditService {
                     transaction = await queryRunner.manager.save(
                         plainToClass(CreditTransactionsEntity, {
                             ...retireRequest,
+                            country: retireRequest.country,
                             serialNumber: secondSerialNumber,
                             status: CreditEventStatusEnum.COMPLETED,
                         }),
