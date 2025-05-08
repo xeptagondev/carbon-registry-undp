@@ -397,7 +397,7 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: retireRequest?.creditBlock?.id },
-                    relations: { sender: true },
+                    relations: { sender: true, project: true },
                 });
 
             let project = retireRequest?.project;
