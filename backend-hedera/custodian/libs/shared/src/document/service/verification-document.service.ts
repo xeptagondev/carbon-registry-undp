@@ -368,19 +368,6 @@ export class VerificationDocumentService extends DocumentService {
         try {
             queryRunner.startTransaction();
 
-            const dnaOrg = await queryRunner.manager.findOne(
-                OrganizationEntity,
-                {
-                    where: { id: jwtData.organizationId },
-                },
-            );
-            if (dnaOrg.state !== OrganizationStateEnum.ACTIVE) {
-                throw new HttpException(
-                    'Organisation is Deactivated, Action is Unauthorised',
-                    HttpStatus.UNAUTHORIZED,
-                );
-            }
-
             const documentEntity = await queryRunner.manager.findOne(
                 DocumentEntity,
                 {
@@ -408,6 +395,15 @@ export class VerificationDocumentService extends DocumentService {
                 );
             }
 
+            if (
+                documentEntity.project.organization.state !==
+                OrganizationStateEnum.ACTIVE
+            ) {
+                throw new HttpException(
+                    'Organisation is Deactivated, Action is Unauthorised',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
             // Verify the action is allowed
             await this.validateDocumentEvent(
                 documentEntity.refId,

@@ -1113,18 +1113,6 @@ export class CarbonCreditService {
         await queryRunner.startTransaction();
 
         try {
-            const dnaOrg = await queryRunner.manager.findOne(
-                OrganizationEntity,
-                {
-                    where: { id: user.organizationId },
-                },
-            );
-            if (dnaOrg.state !== OrganizationStateEnum.ACTIVE) {
-                throw new HttpException(
-                    'Organisation is Deactivated, Action is Unauthorised',
-                    HttpStatus.UNAUTHORIZED,
-                );
-            }
             const retireRequest = await queryRunner.manager.findOne(
                 CreditTransactionsEntity,
                 {
@@ -1155,6 +1143,16 @@ export class CarbonCreditService {
             }
             if (!retireRequest?.project) {
                 throw new Error('Project not found');
+            }
+
+            if (
+                retireRequest?.project?.organization.state !==
+                OrganizationStateEnum.ACTIVE
+            ) {
+                throw new HttpException(
+                    'Organisation is Deactivated, Action is Unauthorised',
+                    HttpStatus.UNAUTHORIZED,
+                );
             }
 
             if (retireAction.action === RetirementActionEnum.ACCEPT) {
