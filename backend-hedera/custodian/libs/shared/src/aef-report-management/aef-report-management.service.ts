@@ -127,9 +127,9 @@ export class AefReportManagementService {
                 newAefActionRecord.actionType = AefActionTypeEnum.RETIRE;
             }
             newAefActionRecord.creditAmount = transaction.creditAmount;
+            newAefActionRecord.actionTime = transaction.createdDate;
         }
-        const timestamp = new Date().getTime();
-        newAefActionRecord.createdTime = timestamp;
+
         await queryRunner.manager.save(newAefActionRecord);
     }
 
