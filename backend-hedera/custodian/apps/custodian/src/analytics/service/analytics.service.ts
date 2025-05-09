@@ -6,6 +6,7 @@ import { JWTPayload } from '@app/shared/users/dto/jwt.payload.dto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+    Brackets,
     FindOptionsWhere,
     In,
     LessThanOrEqual,
@@ -615,6 +616,9 @@ export class AnalyticsService {
         jwtData: JWTPayload,
     ): Promise<any> {
         const orgId = jwtData.organizationId;
+        const isPD =
+            filters?.isMine &&
+            jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER;
 
         const baseQb = this.auditRepository
             .createQueryBuilder('audit')
@@ -630,23 +634,18 @@ export class AnalyticsService {
         ) => {
             const amountSub = this.auditRepository
                 .createQueryBuilder('inner_audit')
-                .select(
-                    `COALESCE(SUM(CAST(inner_audit."data"->>'amount' AS INTEGER)), 0)`,
-                )
-                .where(`inner_audit."logType" = '${logType}'`);
+                .select(`COALESCE(SUM((inner_audit.data->>'amount')::int), 0)`)
+                .where('inner_audit.logType = :logType', { logType });
 
             const timeSub = this.auditRepository
                 .createQueryBuilder('inner_audit')
-                .select(`MAX(inner_audit."createdTime")`)
-                .where(`inner_audit."logType" = '${logType}'`);
+                .select('MAX(inner_audit.createdTime)')
+                .where('inner_audit.logType = :logType', { logType });
 
-            if (filters?.isMine) {
-                amountSub.andWhere(
-                    `(inner_audit."data"->>'${direction}')::int = ${orgId}`,
-                );
-                timeSub.andWhere(
-                    `(inner_audit."data"->>'${direction}')::int = ${orgId}`,
-                );
+            if (isPD) {
+                const clause = `(inner_audit.data->>'${direction}')::int = :orgId`;
+                amountSub.andWhere(clause, { orgId });
+                timeSub.andWhere(clause, { orgId });
             }
 
             return { amountSub, timeSub };
@@ -662,16 +661,20 @@ export class AnalyticsService {
 
         const { amountSub: issuedAmountSub, timeSub: lastIssuedTimeSub } =
             buildAmountAndTime(
-                ProjectAuditLogType.CREDITS_ISSUED,
+                ProjectAuditLogType.CREDIT_ISSUED,
                 'toCompanyId',
             );
+
+        const transferDirection: 'toCompanyId' | 'fromCompanyId' = isPD
+            ? 'toCompanyId'
+            : 'fromCompanyId';
 
         const {
             amountSub: transferredAmountSub,
             timeSub: lastTransferredTimeSub,
         } = buildAmountAndTime(
             ProjectAuditLogType.CREDIT_TRANSFERED,
-            'fromCompanyId',
+            transferDirection,
         );
 
         const { amountSub: retiredAmountSub, timeSub: lastRetiredTimeSub } =
@@ -699,59 +702,67 @@ export class AnalyticsService {
             .addSelect(`(${retiredAmountSub.getQuery()})`, 'retiredAmount')
             .addSelect(`(${lastRetiredTimeSub.getQuery()})`, 'lastRetiredTime');
 
+        baseQb.setParameters({
+            orgId,
+            ...authorisedAmountSub.getParameters(),
+            ...lastAuthorisedTimeSub.getParameters(),
+            ...issuedAmountSub.getParameters(),
+            ...lastIssuedTimeSub.getParameters(),
+            ...transferredAmountSub.getParameters(),
+            ...lastTransferredTimeSub.getParameters(),
+            ...retiredAmountSub.getParameters(),
+            ...lastRetiredTimeSub.getParameters(),
+        });
+
         if (filters?.startDate) {
-            baseQb.andWhere(`audit."createdTime" >= :startDate`, {
+            baseQb.andWhere('audit.createdTime >= :startDate', {
                 startDate: filters.startDate,
             });
         }
-
         if (filters?.endDate) {
-            baseQb.andWhere(`audit."createdTime" <= :endDate`, {
+            baseQb.andWhere('audit.createdTime <= :endDate', {
                 endDate: filters.endDate,
             });
         }
-
         if (filters?.sector) {
             baseQb.andWhere('project.sector = :sector', {
                 sector: filters.sector,
             });
         }
 
-        if (filters?.isMine) {
-            if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.PROJECT_DEVELOPER
-            ) {
-                baseQb.andWhere(
-                    `(audit."data"->>'toCompanyId')::int = :orgId`,
-                    {
-                        orgId,
-                    },
-                );
-            }
+        if (isPD) {
+            baseQb.andWhere(
+                new Brackets((qb1) =>
+                    qb1
+                        .where(`(audit.data->>'toCompanyId')::int = :orgId`, {
+                            orgId,
+                        })
+                        .orWhere(
+                            `(audit.data->>'fromCompanyId')::int = :orgId`,
+                            { orgId },
+                        ),
+                ),
+            );
         }
 
-        const [result] = await baseQb.getRawMany();
+        const [result = {}] = await baseQb.getRawMany();
 
         return {
-            authorisedAmount: parseInt(result?.authorisedAmount, 10),
-            lastAuthorisedTime: result?.lastAuthorisedTime
-                ? Number(result?.lastAuthorisedTime)
+            authorisedAmount: parseInt(result.authorisedAmount, 10),
+            lastAuthorisedTime: result.lastAuthorisedTime
+                ? Number(result.lastAuthorisedTime)
                 : null,
-
-            issuedAmount: parseInt(result?.issuedAmount, 10),
-            lastIssuedTime: result?.lastIssuedTime
-                ? Number(result?.lastIssuedTime)
+            issuedAmount: parseInt(result.issuedAmount, 10),
+            lastIssuedTime: result.lastIssuedTime
+                ? Number(result.lastIssuedTime)
                 : null,
-
-            transferredAmount: parseInt(result?.transferredAmount, 10),
-            lastTransferredTime: result?.lastTransferredTime
-                ? Number(result?.lastTransferredTime)
+            transferredAmount: parseInt(result.transferredAmount, 10),
+            lastTransferredTime: result.lastTransferredTime
+                ? Number(result.lastTransferredTime)
                 : null,
-
-            retiredAmount: parseInt(result?.retiredAmount, 10),
-            lastRetiredTime: result?.lastRetiredTime
-                ? Number(result?.lastRetiredTime)
+            retiredAmount: parseInt(result.retiredAmount, 10),
+            lastRetiredTime: result.lastRetiredTime
+                ? Number(result.lastRetiredTime)
                 : null,
         };
     }
@@ -761,17 +772,40 @@ export class AnalyticsService {
         jwtData: JWTPayload,
     ) {
         const orgId = jwtData.organizationId;
-
         const offsetInMinutes = filters.timeZone ?? 0;
+
+        let inboundTypes = [
+            ProjectAuditLogType.CREDITS_AUTHORISED,
+            ProjectAuditLogType.CREDITS_ISSUED,
+        ];
+        let outboundTypes = [
+            ProjectAuditLogType.CREDIT_TRANSFERED,
+            ProjectAuditLogType.RETIRE_APPROVED,
+        ];
+
+        if (
+            filters?.isMine &&
+            jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER
+        ) {
+            inboundTypes = [
+                ...inboundTypes,
+                ProjectAuditLogType.CREDIT_TRANSFERED,
+            ];
+            outboundTypes = outboundTypes.filter(
+                (t) => t !== ProjectAuditLogType.CREDIT_TRANSFERED,
+            );
+        }
+
+        const allTypes = [...inboundTypes, ...outboundTypes];
 
         const qb = this.auditRepository
             .createQueryBuilder('audit')
             .select(
                 `to_char(
-               to_timestamp(audit."createdTime" / 1000) 
-               - (:offsetInMinutes * interval '1 minute'),
-               'YYYY-MM-DD'
-             )`,
+             to_timestamp(audit."createdTime" / 1000)
+             - (:offsetInMinutes * interval '1 minute'),
+             'YYYY-MM-DD'
+           )`,
                 'date',
             )
             .addSelect('audit."logType"', 'logType')
@@ -784,14 +818,7 @@ export class AnalyticsService {
                 'project',
                 'project.refId = audit.projectId',
             )
-            .where('audit."logType" IN (:...types)', {
-                types: [
-                    ProjectAuditLogType.CREDITS_AUTHORISED,
-                    ProjectAuditLogType.CREDITS_ISSUED,
-                    ProjectAuditLogType.CREDIT_TRANSFERED,
-                    ProjectAuditLogType.RETIRE_APPROVED,
-                ],
-            })
+            .where('audit."logType" IN (:...allTypes)', { allTypes })
             .setParameter('offsetInMinutes', offsetInMinutes);
 
         if (filters?.startDate) {
@@ -799,28 +826,34 @@ export class AnalyticsService {
                 startDate: filters.startDate,
             });
         }
-
         if (filters?.endDate) {
             qb.andWhere('audit."createdTime" <= :endDate', {
                 endDate: filters.endDate,
             });
         }
-
         if (filters?.sector) {
             qb.andWhere('project.sector = :sector', {
                 sector: filters.sector,
             });
         }
 
-        if (filters?.isMine) {
-            if (
-                jwtData.organizationRole ===
-                OrganizationTypeEnum.PROJECT_DEVELOPER
-            ) {
-                qb.andWhere(`(audit."data"->>'toCompanyId')::int = :orgId`, {
-                    orgId,
-                });
-            }
+        if (
+            filters?.isMine &&
+            jwtData.organizationRole === OrganizationTypeEnum.PROJECT_DEVELOPER
+        ) {
+            qb.andWhere(
+                new Brackets((qb1) => {
+                    qb1.where(
+                        `audit."logType" IN (:...inboundTypes)
+                 AND (audit."data"->>'toCompanyId')::int = :orgId`,
+                        { inboundTypes, orgId },
+                    ).orWhere(
+                        `audit."logType" IN (:...outboundTypes)
+                 AND (audit."data"->>'fromCompanyId')::int = :orgId`,
+                        { outboundTypes, orgId },
+                    );
+                }),
+            );
         }
 
         qb.groupBy('date').addGroupBy('audit."logType"').orderBy('date', 'ASC');
@@ -828,8 +861,7 @@ export class AnalyticsService {
         const results = await qb.getRawMany();
 
         const pivoted: Record<string, any> = {};
-        for (const row of results) {
-            const { date, logType, totalAmount } = row;
+        for (const { date, logType, totalAmount } of results) {
             if (!pivoted[date]) {
                 pivoted[date] = { date };
             }
