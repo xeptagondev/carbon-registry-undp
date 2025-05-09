@@ -128,7 +128,8 @@ export class AefReportManagementService {
             }
             newAefActionRecord.creditAmount = transaction.creditAmount;
         }
-
+        const timestamp = new Date().getTime();
+        newAefActionRecord.createdTime = timestamp;
         await queryRunner.manager.save(newAefActionRecord);
     }
 
