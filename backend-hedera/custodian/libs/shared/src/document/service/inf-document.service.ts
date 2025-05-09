@@ -305,7 +305,6 @@ export class InfDocumentService extends DocumentService {
                 projectRefId: savedProject.refId,
             });
         } catch (err) {
-            console.log(err);
             await queryRunner.rollbackTransaction();
             if (err instanceof HttpException) {
                 throw err;
