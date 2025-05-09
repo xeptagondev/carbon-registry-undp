@@ -4,7 +4,13 @@ import { ConfigService } from '@nestjs/config';
 // import { SuperService } from '@app/custodian-lib/shared/util/service/super.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, QueryRunner, Repository } from 'typeorm';
+import {
+    DataSource,
+    FindOptionsWhere,
+    In,
+    QueryRunner,
+    Repository,
+} from 'typeorm';
 import { SuperService } from '@app/core/service/super.service';
 import { UsersEntity } from '@app/shared/users/entity/users.entity';
 import { UsersDTO } from '@app/shared/users/dto/users.dto';
@@ -209,16 +215,18 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
         email: string,
         taxId: string,
         paymentId: string,
+        hederaAccountId?: string,
     ) {
+        const where: FindOptionsWhere<OrganizationEntity>[] = [
+            { email },
+            { taxId },
+            { paymentId },
+            ...(hederaAccountId ? [{ hederaAccountId }] : []),
+        ];
+
         const existingOrganization = await queryRunner.manager.findOne(
             OrganizationEntity,
-            {
-                where: [
-                    { email: email },
-                    { taxId: taxId },
-                    { paymentId: paymentId },
-                ],
-            },
+            { where },
         );
 
         if (existingOrganization) {
@@ -233,6 +241,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
             } else if (email === existingOrganization.email) {
                 errorMessage =
                     'Organisation already exists in the Carbon Registry System with the given email';
+            } else if (
+                hederaAccountId &&
+                hederaAccountId === existingOrganization.hederaAccountId
+            ) {
+                errorMessage =
+                    'Account creation failed: The provided Hedera account ID already exists.';
             }
 
             throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
@@ -414,6 +428,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto.company.email,
                     userDto.company.taxId,
                     userDto.company.paymentId,
+                    userDto.company.hederaAccount ?? undefined,
                 );
 
                 const orgCreateTime = new Date().getTime();
