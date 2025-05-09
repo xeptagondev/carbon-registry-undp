@@ -722,7 +722,12 @@ export class AnalyticsService {
                 jwtData.organizationRole ===
                 OrganizationTypeEnum.PROJECT_DEVELOPER
             ) {
-                baseQb.andWhere('audit.toCompanyId = :orgId', { orgId });
+                baseQb.andWhere(
+                    `(audit."data"->>'toCompanyId')::int = :orgId`,
+                    {
+                        orgId,
+                    },
+                );
             }
         }
 
@@ -812,7 +817,9 @@ export class AnalyticsService {
                 jwtData.organizationRole ===
                 OrganizationTypeEnum.PROJECT_DEVELOPER
             ) {
-                qb.andWhere('audit.toCompanyId = :orgId', { orgId });
+                qb.andWhere(`(audit."data"->>'toCompanyId')::int = :orgId`, {
+                    orgId,
+                });
             }
         }
 
