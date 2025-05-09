@@ -661,7 +661,7 @@ export class AnalyticsService {
 
         const { amountSub: issuedAmountSub, timeSub: lastIssuedTimeSub } =
             buildAmountAndTime(
-                ProjectAuditLogType.CREDIT_ISSUED,
+                ProjectAuditLogType.CREDITS_ISSUED,
                 'toCompanyId',
             );
 
