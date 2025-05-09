@@ -83,7 +83,7 @@ services:
         REACT_APP_COUNTRY_NAME: "United Nations"
         REACT_APP_REGISTRY_NAME: "UNDP Demo Carbon Registry"
         REACT_APP_GOVERNMENT_MINISTRY: "Ministry Of Environment"
-        REACT_APP_MAPBOXGL_ACCESS_TOKEN: ""
+        REACT_APP_MAPBOXGL_ACCESS_TOKEN: "pk.eyJ1IjoicGFsaW5kYSIsImEiOiJjbGMyNTdqcWEwZHBoM3FxdHhlYTN4ZmF6In0.KBvFaMTjzzvoRCr1Z1dN_g"
         REACT_APP_MAXIMUM_FILE_SIZE: 1048576
     ports:
       - "3030:3030"
