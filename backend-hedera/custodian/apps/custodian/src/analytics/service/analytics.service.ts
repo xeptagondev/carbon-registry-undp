@@ -722,7 +722,7 @@ export class AnalyticsService {
                 jwtData.organizationRole ===
                 OrganizationTypeEnum.PROJECT_DEVELOPER
             ) {
-                baseQb.andWhere('project.organization.id = :orgId', { orgId });
+                baseQb.andWhere('audit.toCompanyId = :orgId', { orgId });
             } else if (
                 jwtData.organizationRole ===
                 OrganizationTypeEnum.INDEPENDENT_CERTIFIER
@@ -822,7 +822,7 @@ export class AnalyticsService {
                 jwtData.organizationRole ===
                 OrganizationTypeEnum.PROJECT_DEVELOPER
             ) {
-                qb.andWhere('project.organization.id = :orgId', { orgId });
+                qb.andWhere('audit.toCompanyId = :orgId', { orgId });
             } else if (
                 jwtData.organizationRole ===
                 OrganizationTypeEnum.INDEPENDENT_CERTIFIER
