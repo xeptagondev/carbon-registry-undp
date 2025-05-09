@@ -126,8 +126,10 @@ export class AefReportManagementService {
             } else {
                 newAefActionRecord.actionType = AefActionTypeEnum.RETIRE;
             }
+            newAefActionRecord.creditAmount = transaction.creditAmount;
         }
-
+        const timestamp = new Date().getTime();
+        newAefActionRecord.createdTime = timestamp;
         await queryRunner.manager.save(newAefActionRecord);
     }
 
@@ -205,6 +207,10 @@ export class AefReportManagementService {
         const query = new QueryDto();
         query.page = 1;
         query.size = await this.aefActionsTableEntityRepository.count();
+        query.sort = {
+            key: 'createdTime',
+            order: 'DESC',
+        };
         if (exportDto.reportType === AefReportTypeEnum.HOLDINGS) {
             query.filterAnd = [
                 {

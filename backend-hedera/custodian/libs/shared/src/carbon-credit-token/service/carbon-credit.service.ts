@@ -379,6 +379,7 @@ export class CarbonCreditService {
                         project: { organization: true },
                         sender: true,
                         creditBlock: true,
+                        country: true,
                     },
                 });
 
@@ -397,7 +398,7 @@ export class CarbonCreditService {
                 .getRepository(CreditBlocksEntity)
                 .findOne({
                     where: { id: retireRequest?.creditBlock?.id },
-                    relations: { sender: true },
+                    relations: { sender: true, project: true },
                 });
 
             let project = retireRequest?.project;
@@ -569,6 +570,7 @@ export class CarbonCreditService {
                     transaction = await queryRunner.manager.save(
                         plainToClass(CreditTransactionsEntity, {
                             ...retireRequest,
+                            country: retireRequest.country,
                             serialNumber: secondSerialNumber,
                             status: CreditEventStatusEnum.COMPLETED,
                         }),
@@ -1533,6 +1535,7 @@ export class CarbonCreditService {
         }
 
         let creditBlock;
+        let creditTransaction;
         if (
             !transferingBlock.reservedCreditAmount &&
             transferingBlock.creditAmount === amount
@@ -1546,7 +1549,7 @@ export class CarbonCreditService {
 
             const savedBlock = await queryRunner.manager.save(creditBlock);
 
-            const creditTransaction = plainToClass(CreditTransactionsEntity, {
+            creditTransaction = plainToClass(CreditTransactionsEntity, {
                 transferId,
                 tokenId,
                 creditBlock: savedBlock,
@@ -1585,7 +1588,7 @@ export class CarbonCreditService {
 
             const savedBlock = await queryRunner.manager.save(creditBlock);
 
-            const creditTransaction = plainToClass(CreditTransactionsEntity, {
+            creditTransaction = plainToClass(CreditTransactionsEntity, {
                 transferId,
                 tokenId,
                 creditBlock: savedBlock,
