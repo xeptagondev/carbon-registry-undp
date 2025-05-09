@@ -284,12 +284,20 @@ const StepperComponent = (props: VerificationStepProps) => {
         navigateToDetailsPage();
       }
     } catch (error: any) {
-      message.open({
-        type: 'error',
-        content: 'Something went wrong',
-        duration: 4,
-        style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-      });
+      if (error.status === 401) {
+        message.open({
+          type: 'error',
+          content: error.message,
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      } else {
+        message.open({
+          content: 'Something went wrong',
+          duration: 4,
+          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+        });
+      }
     } finally {
       setLoading(false);
     }
