@@ -33,7 +33,17 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
 
   const onFinish = (values: any) => {
     console.log('--------values-----------', values);
-    const body = { ...values };
+    const body = {
+      ...values,
+      materialityTable: values?.materialityTable?.map((item: any) => {
+        return {
+          riskThatCouldLead: item?.riskThatCouldLead,
+          riskLevel: item?.riskLevel,
+          justification: item?.justification,
+          response: item?.response,
+        };
+      }),
+    };
     handleValuesUpdate({
       applicationOfMateriality: body,
     });

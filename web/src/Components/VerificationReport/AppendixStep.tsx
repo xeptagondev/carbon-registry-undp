@@ -53,7 +53,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
 
   useEffect(() => {
     if (formMode === FormMode.CREATE) {
-      form.setFieldValue('documents-reviewed', [{ author: '' }]);
+      form.setFieldValue('documentsReviewed', [{ author: '' }]);
     }
   }, []);
 
@@ -85,6 +85,14 @@ export const AppendixStep = (props: VerificationStepProps) => {
   const onFinish = async (values: any) => {
     const appendixFormValues: any = {
       ...values,
+      documentsReviewed: values?.documentsReviewed?.map((item: any) => {
+        return {
+          author: item?.author,
+          title: item?.title,
+          referenceToTheDoc: item?.referenceToTheDoc,
+          provider: item?.provider,
+        };
+      }),
       appendix1Documents: await fileUploadValueExtract(values, 'appendix1Documents'),
       farIdDate: moment(values?.farIdDate).startOf('day').unix(),
       responseDate: moment(values?.responseDate).startOf('day').unix(),
@@ -376,7 +384,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                       </Row>
 
                       <Row className="body">
-                        <Form.List name="documents-reviewed">
+                        <Form.List name="documentsReviewed">
                           {(fields, { add, remove }) => (
                             <>
                               {fields.map(({ key, name, ...restFields }) => (

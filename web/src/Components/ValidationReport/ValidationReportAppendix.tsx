@@ -64,7 +64,14 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
   const onFinish = async (values: any) => {
     const tempVals: any = {
       ...values,
-      documentsReviewed: values?.documentsReviewed,
+      documentsReviewed: values?.documentsReviewed?.map((item: any) => {
+        return {
+          author: item?.author,
+          title: item?.title,
+          referenceToTheDoc: item?.referenceToTheDoc,
+          provider: item?.provider,
+        };
+      }),
       appendix1Documents: await fileUploadValueExtract(values, 'appendix1Documents'),
       cl_date: moment(values?.cl_date).startOf('day').unix(),
       cl_projectParticipantResponseDate: moment(values?.cl_projectParticipantResponseDate)

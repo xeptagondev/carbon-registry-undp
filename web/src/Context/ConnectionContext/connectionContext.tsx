@@ -114,7 +114,7 @@ export const ConnectionContextProvider: FC<ConnectionContextProviderProps> = (
                 });
               }
             } else {
-              console.log('------------e----------------', e);
+              // console.log('------------e----------------', e, data);
               reject({
                 statusText: 'ERROR',
                 message: t('common:networkError'),
