@@ -169,13 +169,23 @@ export const AppendixStep = (props: VerificationStepProps) => {
             next();
           }
         }
-      } catch (error) {
-        message.open({
-          type: 'error',
-          content: t('common:somethingWentWrong'),
-          duration: 4,
-          style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
-        });
+      } catch (error: any) {
+        console.log('--------------error----------------', error);
+        if (error?.status === 500) {
+          message.open({
+            type: 'error',
+            content: t('common:somethingWentWrong'),
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+        } else {
+          message.open({
+            type: 'error',
+            content: error.message,
+            duration: 4,
+            style: { textAlign: 'right', marginRight: 15, marginTop: 10 },
+          });
+        }
       } finally {
         if (handleLoading) {
           handleLoading(false);
