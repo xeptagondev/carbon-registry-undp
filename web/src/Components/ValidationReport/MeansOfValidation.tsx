@@ -110,6 +110,9 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
       onSiteInspection: values?.onSiteInspection.map((item: any) => {
         const temp = {
           ...item,
+          activity: item?.activity,
+          siteLocation: item?.siteLocation,
+          teamMember: item?.teamMember,
           date: moment(item?.date).startOf('day').unix(),
         };
         return temp;
@@ -117,6 +120,11 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
       interviewees: values?.interviewees.map((item: any) => {
         const temp = {
           ...item,
+          lastName: item?.lastName,
+          firstName: item?.firstName,
+          affliationName: item?.affliationName,
+          subject: item?.subject,
+          teamMember: item?.teamMember,
           date: moment(item?.date).startOf('day').unix(),
         };
         return temp;
