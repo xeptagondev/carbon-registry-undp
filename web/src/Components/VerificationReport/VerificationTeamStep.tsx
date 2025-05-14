@@ -18,7 +18,31 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
 
   const onFinish = (values: any) => {
     console.log('--------values-----------', values);
-    const body = { ...values };
+    const body = {
+      ...values,
+      verificationTeamMembers: values?.verificationTeamMembers?.map((item: any) => {
+        return {
+          role: item?.role,
+          typeOfResource: item?.typeOfResource,
+          lastName: item?.lastName,
+          firstName: item?.firstName,
+          affliation: item?.affliation,
+          documentReview: item?.documentReview,
+          onsiteInspections: item?.onsiteInspections,
+          interviews: item?.interviews,
+          verificationFindings: item?.verificationFindings,
+        };
+      }),
+      technicalReviews: values?.technicalReviews?.map((item: any) => {
+        return {
+          role: item?.role,
+          typeOfResource: item?.typeOfResource,
+          lastName: item?.lastName,
+          firstName: item?.firstName,
+          affliation: item?.affliation,
+        };
+      }),
+    };
     handleValuesUpdate({
       verificationTeam: body,
     });

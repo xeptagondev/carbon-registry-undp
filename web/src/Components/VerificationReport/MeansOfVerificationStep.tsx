@@ -138,14 +138,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
       siteInspectionDurationEnd: moment(values?.siteInspectionDurationEnd).startOf('day').unix(),
       onSiteInspection: values?.onSiteInspection.map((item: any) => {
         return {
-          ...item,
+          activity: item?.activity,
+          siteLocation: item?.siteLocation,
+          teamMember: item?.teamMember,
           activityPerformedDate: moment(item?.activityPerformedDate).startOf('day').unix(),
         };
       }),
       interviewees: values?.interviewees.map((item: any) => {
         return {
-          ...item,
-          date: moment.unix(item?.date).startOf('day').unix(),
+          lastName: item?.lastName,
+          firstName: item?.firstName,
+          affliationName: item?.affliationName,
+          subject: item?.subject,
+          teamMember: item?.teamMember,
+          date: moment(item?.date).startOf('day').unix(),
         };
       }),
     };
