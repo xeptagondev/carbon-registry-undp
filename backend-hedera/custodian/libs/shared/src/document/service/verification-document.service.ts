@@ -45,7 +45,6 @@ import { SerialNumberManagementService } from '@app/shared/serial-number-managem
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 import { UtilService } from '@app/shared/util/service/util.service';
-import { OrganizationEntity } from '@app/shared/organization/entity/organization.entity';
 import { OrganizationStateEnum } from '@app/shared/organization/enum/organization.state.enum';
 
 @Injectable()
@@ -250,6 +249,11 @@ export class VerificationDocumentService extends DocumentService {
                     jwtData.email,
                 );
 
+            let creditAmount = 0;
+            for (const data of dto?.data?.ghgProjectDescription
+                ?.estimatedNetEmissionReductions ?? []) {
+                creditAmount += Number(data.netEmissionReductions);
+            }
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
                 documentType: dto.documentType,
@@ -259,6 +263,7 @@ export class VerificationDocumentService extends DocumentService {
                 version: lastVerification ? lastVerification.version + 1 : 1,
                 data: JSON.stringify(dto.data),
                 activity: dto.activityRefId,
+                creditAmount: creditAmount,
             };
 
             await this.guardianService.saveDocument(
@@ -506,6 +511,24 @@ export class VerificationDocumentService extends DocumentService {
                         documentEntity?.refId,
                         jwtData.email,
                     );
+                verificationDoc['tokens'] = {
+                    CRU: documentEntity?.project?.tokenId,
+                };
+                if (
+                    Array.isArray(
+                        verificationDoc?.document?.credentialSubject,
+                    ) &&
+                    verificationDoc.document.credentialSubject.length > 0 &&
+                    documentEntity?.project?.organization?.hederaAccountId
+                ) {
+                    const accountId =
+                        documentEntity.project.organization.hederaAccountId;
+
+                    verificationDoc.accounts = verificationDoc.accounts ?? {};
+
+                    verificationDoc.accounts.default = accountId;
+                    verificationDoc.accounts.hederaAccount = accountId;
+                }
                 await this.guardianService.buttonActionRequest(
                     ButtonNameEnum.VERIFICATION_REPORT_APPROVE_REJECT,
                     ButtonActionEnum.APPROVE,
