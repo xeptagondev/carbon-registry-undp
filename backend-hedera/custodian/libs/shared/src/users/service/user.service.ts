@@ -55,9 +55,7 @@ import { DataExportQueryDto } from '@app/shared/util/dto/data.export.query.dto';
 import { DataExportUserDto } from '@app/shared/util/dto/data.export.user.dto';
 import { DataExportService } from '@app/shared/util/service/data-export.service';
 import { UserStateConstant } from '@app/shared/users/constants/user.state.constants';
-import { CounterType } from '@app/shared/util/enum/counter.type.enum';
 import { GUARDIAN_API } from '@app/shared/guardian/constant/guardian-api-blocks.contant';
-import { OrganizationSchema } from '@app/shared/guardian/interface/guardian-schema.interface';
 import { GridTypeEnum } from '@app/shared/guardian/enum/grid-type.enum';
 import { UserSchemaDtos } from '@app/shared/guardian/dto/guardian-schema.dto';
 import {
@@ -1337,6 +1335,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                             updatedTime: Number(new Date().getTime()),
                             refId: organization.refId,
                             eventIds: [events.id],
+                            hederaAccount: organization.hederaAccountId,
                         },
                         ref: null,
                     },
