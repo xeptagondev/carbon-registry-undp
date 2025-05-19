@@ -137,10 +137,7 @@ export class CarbonCreditService {
         const {
             tokenId,
             batchSerialNumber,
-            metadata,
             amount,
-            accountId,
-            privateKey,
             projectId,
             receiverId,
             userId,
@@ -181,13 +178,13 @@ export class CarbonCreditService {
                     toCompanyId: receiverId,
                 };
 
-                await this.carbonCreditGuardianService.mintProjectNFT(
-                    tokenId,
-                    metadata,
-                    amount,
-                    accountId,
-                    privateKey,
-                );
+                // await this.carbonCreditGuardianService.mintProjectNFT(
+                //     tokenId,
+                //     metadata,
+                //     amount,
+                //     accountId,
+                //     privateKey,
+                // );
 
                 await queryRunner.manager.save(AuditEntity, log);
                 await queryRunner.commitTransaction();

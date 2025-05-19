@@ -536,10 +536,6 @@ export class VerificationDocumentService extends DocumentService {
                     jwtData.email,
                 );
 
-                const metadata = Uint8Array.from(
-                    Buffer.from(documentEntity?.project?.refId, 'utf8'),
-                );
-
                 let alreadyIssued = Number(
                     documentEntity?.project?.creditIssued,
                 );
@@ -558,14 +554,7 @@ export class VerificationDocumentService extends DocumentService {
                     const payload: MintNFTJobPayload = {
                         tokenId: documentEntity?.project?.tokenId,
                         batchSerialNumber: batchSerialNumber,
-                        metadata,
                         amount: Number(data.netEmissionReductions),
-                        accountId:
-                            documentEntity?.project?.organization
-                                ?.hederaAccountId,
-                        privateKey:
-                            documentEntity?.project?.organization
-                                ?.hederaAccountKey,
                         projectId: documentEntity?.project?.refId,
                         receiverId: documentEntity?.project?.organization?.id,
                         userId: jwtData.userId,
