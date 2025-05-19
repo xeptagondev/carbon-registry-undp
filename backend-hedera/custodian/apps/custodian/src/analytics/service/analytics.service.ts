@@ -453,11 +453,39 @@ export class AnalyticsService {
         filters: ProjectDataRequestDTO,
         jwtData: JWTPayload,
     ): Promise<Record<string, number>> {
+        const lifecycleLogTypes = [
+            ProjectAuditLogType.PENDING,
+            ProjectAuditLogType.REJECTED,
+            ProjectAuditLogType.APPROVED,
+            ProjectAuditLogType.PDD_SUBMITTED,
+            ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_REJECTED_BY_DNA,
+            ProjectAuditLogType.PDD_APPROVED_BY_DNA,
+            ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
+            ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
+            ProjectAuditLogType.AUTHORISED,
+        ];
+
         const subQuery = this.auditRepository
             .createQueryBuilder('sub_audit')
             .select('sub_audit.projectId', 'projectId')
             .addSelect('MAX(sub_audit.createdTime)', 'latestTime')
+            .where('sub_audit.logType IN (:...lifecycle)', {
+                lifecycle: lifecycleLogTypes,
+            })
             .groupBy('sub_audit.projectId');
+
+        if (filters?.startDate) {
+            subQuery.andWhere('sub_audit.createdTime >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+        if (filters?.endDate) {
+            subQuery.andWhere('sub_audit.createdTime <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
 
         const qb = this.auditRepository
             .createQueryBuilder('audit')
@@ -471,26 +499,15 @@ export class AnalyticsService {
                 'project',
                 'project.refId = audit.projectId',
             )
+            .where('audit.logType IN (:...lifecycle)', {
+                lifecycle: lifecycleLogTypes,
+            })
             .select('project.sector', 'sector')
             .addSelect('COUNT(DISTINCT project.id)', 'count')
-            .groupBy('project.sector');
-
-        if (filters?.startDate) {
-            qb.andWhere('audit.createdTime >= :startDate', {
-                startDate: filters.startDate,
-            });
-        }
-
-        if (filters?.endDate) {
-            qb.andWhere('audit.createdTime <= :endDate', {
-                endDate: filters.endDate,
-            });
-        }
-
+            .groupBy('project.sector')
+            .setParameters(subQuery.getParameters());
         if (filters?.sector) {
-            qb.andWhere('project.sector = :sector', {
-                sector: filters.sector,
-            });
+            qb.andWhere('project.sector = :sector', { sector: filters.sector });
         }
 
         if (filters?.isMine) {
@@ -514,17 +531,16 @@ export class AnalyticsService {
             }
         }
 
-        const result = await qb.getRawMany();
+        const rows = await qb.getRawMany();
 
         const response: Record<string, number> = {};
-        for (const sectorKey in ProjectSectorEnum) {
-            const sectorName = ProjectSectorEnum[sectorKey];
-            response[sectorName] = 0;
+        for (const key in ProjectSectorEnum) {
+            response[ProjectSectorEnum[key]] = 0;
         }
 
-        for (const row of result) {
-            const sector = row.sector ?? 'Unknown';
-            response[ProjectSectorEnum[sector]] = parseInt(row.count, 10);
+        for (const row of rows) {
+            const sectorKey = row.sector ?? 'Unknown';
+            response[ProjectSectorEnum[sectorKey]] = parseInt(row.count, 10);
         }
 
         return response;
@@ -534,11 +550,39 @@ export class AnalyticsService {
         filters: ProjectDataRequestDTO,
         jwtData: JWTPayload,
     ): Promise<Record<string, number>> {
+        const lifecycleLogTypes = [
+            ProjectAuditLogType.PENDING,
+            ProjectAuditLogType.REJECTED,
+            ProjectAuditLogType.APPROVED,
+            ProjectAuditLogType.PDD_SUBMITTED,
+            ProjectAuditLogType.PDD_REJECTED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_APPROVED_BY_CERTIFIER,
+            ProjectAuditLogType.PDD_REJECTED_BY_DNA,
+            ProjectAuditLogType.PDD_APPROVED_BY_DNA,
+            ProjectAuditLogType.VALIDATION_REPORT_SUBMITTED,
+            ProjectAuditLogType.VALIDATION_REPORT_REJECTED,
+            ProjectAuditLogType.AUTHORISED,
+        ];
+
         const subQuery = this.auditRepository
             .createQueryBuilder('sub_audit')
             .select('sub_audit.projectId', 'projectId')
             .addSelect('MAX(sub_audit.createdTime)', 'latestTime')
+            .where('sub_audit.logType IN (:...lifecycle)', {
+                lifecycle: lifecycleLogTypes,
+            })
             .groupBy('sub_audit.projectId');
+
+        if (filters?.startDate) {
+            subQuery.andWhere('sub_audit.createdTime >= :startDate', {
+                startDate: filters.startDate,
+            });
+        }
+        if (filters?.endDate) {
+            subQuery.andWhere('sub_audit.createdTime <= :endDate', {
+                endDate: filters.endDate,
+            });
+        }
 
         const qb = this.auditRepository
             .createQueryBuilder('audit')
@@ -552,26 +596,15 @@ export class AnalyticsService {
                 'project',
                 'project.refId = audit.projectId',
             )
+            .where('audit.logType IN (:...lifecycle)', {
+                lifecycle: lifecycleLogTypes,
+            })
             .select('project.sectoralScope', 'sector')
             .addSelect('COUNT(DISTINCT project.refId)', 'count')
-            .groupBy('project.sectoralScope');
-
-        if (filters?.startDate) {
-            qb.andWhere('audit.createdTime >= :startDate', {
-                startDate: filters.startDate,
-            });
-        }
-
-        if (filters?.endDate) {
-            qb.andWhere('audit.createdTime <= :endDate', {
-                endDate: filters.endDate,
-            });
-        }
-
+            .groupBy('project.sectoralScope')
+            .setParameters(subQuery.getParameters());
         if (filters?.sector) {
-            qb.andWhere('project.sector = :sector', {
-                sector: filters.sector,
-            });
+            qb.andWhere('project.sector = :sector', { sector: filters.sector });
         }
 
         if (filters?.isMine) {
@@ -595,17 +628,19 @@ export class AnalyticsService {
             }
         }
 
-        const result = await qb.getRawMany();
+        const rows = await qb.getRawMany();
 
         const response: Record<string, number> = {};
-        for (const sectorKey in ProjectSectorScopeEnum) {
-            const sectorName = ProjectSectorScopeEnum[sectorKey];
-            response[sectorName] = 0;
+        for (const key in ProjectSectorScopeEnum) {
+            response[ProjectSectorScopeEnum[key]] = 0;
         }
 
-        for (const row of result) {
-            const sector = row.sector ?? 'Unknown';
-            response[ProjectSectorScopeEnum[sector]] = parseInt(row.count, 10);
+        for (const row of rows) {
+            const scopeKey = row.sector ?? 'Unknown';
+            response[ProjectSectorScopeEnum[scopeKey]] = parseInt(
+                row.count,
+                10,
+            );
         }
 
         return response;
