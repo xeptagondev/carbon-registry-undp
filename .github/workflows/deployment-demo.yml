@@ -19,6 +19,7 @@ concurrency:
 jobs:
   deploy_frontend:
     name: Carbon SL Registry Frontend Deploy
+    environment: guardian
     runs-on: ubuntu-latest
     env:
       # REACT_APP_BACKEND: https://ck5kt5uaw1.execute-api.us-east-1.amazonaws.com/dev
@@ -106,6 +107,7 @@ jobs:
 
   deploy_backend:
     name: Carbon SL Registry Backend Deploy
+    environment: guardian
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-'dev'
