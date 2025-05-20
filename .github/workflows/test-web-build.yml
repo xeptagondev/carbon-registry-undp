@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   Test_web_build:
+    environment: guardian
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
