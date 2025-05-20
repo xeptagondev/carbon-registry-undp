@@ -20,6 +20,7 @@ concurrency:
 jobs:
   deploy:
     name: test deploy
+    environment: guardian
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
