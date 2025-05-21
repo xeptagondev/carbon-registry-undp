@@ -964,62 +964,62 @@ export const SLCFDashboardComponent = (props: any) => {
     };
   }, [window.innerWidth]);
 
-useEffect(() => {
-  const updateTimestamps = () => {
-    setProjectSummaryLastUpdated((prev) => ({
-      last_pending_project_time:
-        projectSummaryLastUpdatedEpoch.last_pending_project_time
-          ? moment(projectSummaryLastUpdatedEpoch.last_pending_project_time).fromNow()
-          : prev.last_pending_project_time,
-      last_credit_issued_time:
-        projectSummaryLastUpdatedEpoch.last_credit_issued_time
-          ? moment(projectSummaryLastUpdatedEpoch.last_credit_issued_time).fromNow()
-          : prev.last_credit_issued_time,
-      last_retire_approved_time:
-        projectSummaryLastUpdatedEpoch.last_retire_approved_time
-          ? moment(projectSummaryLastUpdatedEpoch.last_retire_approved_time).fromNow()
-          : prev.last_retire_approved_time,
-    }));
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProjectSummaryLastUpdated((prev) => ({
+        last_pending_project_time:
+          projectSummaryLastUpdatedEpoch.last_pending_project_time
+            ? moment(
+                projectSummaryLastUpdatedEpoch.last_pending_project_time
+              ).fromNow()
+            : prev.last_pending_project_time,
+        last_credit_issued_time:
+          projectSummaryLastUpdatedEpoch.last_credit_issued_time
+            ? moment(
+                projectSummaryLastUpdatedEpoch.last_credit_issued_time
+              ).fromNow()
+            : prev.last_credit_issued_time,
+        last_retire_approved_time:
+          projectSummaryLastUpdatedEpoch.last_retire_approved_time
+            ? moment(
+                projectSummaryLastUpdatedEpoch.last_retire_approved_time
+              ).fromNow()
+            : prev.last_retire_approved_time,
+      }));
 
-    if (projectStatusSummaryLastUpdatedEpoch) {
-      setProjectStatusSummaryLastUpdated(
-        moment(projectStatusSummaryLastUpdatedEpoch).fromNow()
-      );
-    }
+      if (projectStatusSummaryLastUpdatedEpoch) {
+        setProjectStatusSummaryLastUpdated(
+          moment(projectStatusSummaryLastUpdatedEpoch).fromNow()
+        );
+      }
 
-    setCreditSummaryLastUpdated((prev) => ({
-      lastAuthorisedTime: creditSummaryLastUpdatedEpoch.lastAuthorisedTime
-        ? moment(creditSummaryLastUpdatedEpoch.lastAuthorisedTime).fromNow()
-        : prev.lastAuthorisedTime,
-      lastIssuedTime: creditSummaryLastUpdatedEpoch.lastIssuedTime
-        ? moment(creditSummaryLastUpdatedEpoch.lastIssuedTime).fromNow()
-        : prev.lastIssuedTime,
-      lastTransferredTime: creditSummaryLastUpdatedEpoch.lastTransferredTime
-        ? moment(creditSummaryLastUpdatedEpoch.lastTransferredTime).fromNow()
-        : prev.lastTransferredTime,
-      lastRetiredTime: creditSummaryLastUpdatedEpoch.lastRetiredTime
-        ? moment(creditSummaryLastUpdatedEpoch.lastRetiredTime).fromNow()
-        : prev.lastRetiredTime,
-    }));
-  };
+      setCreditSummaryLastUpdated((prev) => ({
+        lastAuthorisedTime: creditSummaryLastUpdatedEpoch.lastAuthorisedTime
+          ? moment(creditSummaryLastUpdatedEpoch.lastAuthorisedTime).fromNow()
+          : prev.lastAuthorisedTime,
+        lastIssuedTime: creditSummaryLastUpdatedEpoch.lastIssuedTime
+          ? moment(creditSummaryLastUpdatedEpoch.lastIssuedTime).fromNow()
+          : prev.lastIssuedTime,
+        lastTransferredTime: creditSummaryLastUpdatedEpoch.lastTransferredTime
+          ? moment(creditSummaryLastUpdatedEpoch.lastTransferredTime).fromNow()
+          : prev.lastTransferredTime,
+        lastRetiredTime: creditSummaryLastUpdatedEpoch.lastRetiredTime
+          ? moment(creditSummaryLastUpdatedEpoch.lastRetiredTime).fromNow()
+          : prev.lastRetiredTime,
+      }));
+    }, 60 * 1000);
 
-  updateTimestamps(); // initial run
-
-  const timer = setInterval(updateTimestamps, 60 * 1000); // run every minute
-
-  return () => clearInterval(timer);
-}, [
-  projectSummaryLastUpdatedEpoch,
-  projectStatusSummaryLastUpdatedEpoch,
-  creditSummaryLastUpdatedEpoch,
-]);
-
+    return () => clearInterval(timer);
+  }, [
+    projectSummaryLastUpdatedEpoch,
+    projectStatusSummaryLastUpdatedEpoch,
+    creditSummaryLastUpdatedEpoch,
+  ]);
 
   useEffect(() => {
     getPendingActions();
     getProjectSummary();
   }, []);
-  
 
   useEffect(() => {
     const isMine = overallMineButton === OverallMineButtons.MINE;
