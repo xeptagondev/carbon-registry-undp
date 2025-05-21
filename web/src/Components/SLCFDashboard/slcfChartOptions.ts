@@ -80,7 +80,7 @@ export const totalProgrammesOptions: any = {
         fontSize: "12px",
       },
     },
-    tickAmount: undefined,
+    tickAmount: 5,
   },
   noData: {
     text: "No data available",
@@ -507,15 +507,8 @@ export const optionSideBar: any = {
   },
   colors: [],
   xaxis: {
-  // Control the number of ticks shown on the axis
-  tickAmount: 1, 
-  min: 0,       
-  labels: {
-    formatter: function(val: number) {
-      return val.toFixed(0); // Display as integer without decimal point
-    }
-  }
-},
+    categories: [],
+  },
   yaxis: {
     labels: {
       show: false,
@@ -527,28 +520,17 @@ export const optionSideBar: any = {
     verticalAlign: "middle",
     style: { fontSize: "16px", color: "#999" },
   },
-tooltip: {
-  theme: "dark",
-  x: { show: false },
-  custom: function({ series, seriesIndex, dataPointIndex, w }) {
-
-    const sectoralScope = w.globals.labels[dataPointIndex];
-
-    const value = series[seriesIndex][dataPointIndex];
-    
-
-    let formattedValue = value;
-    if (value >= 1000) {
-      formattedValue = `${(value / 1000).toFixed(1)}k`;
-    } else {
-      formattedValue = value.toFixed(0);
-    }
-    
-    return `<div class="apexcharts-tooltip-box" style="padding: 8px;">
-      <span>${sectoralScope}: ${formattedValue}</span>
-    </div>`;
-  }
-},
+  tooltip: {
+    theme: "dark",
+    x: { show: false },
+    y: {
+      title: {
+        formatter: function () {
+          return "";
+        },
+      },
+    },
+  },
   grid: {
     show: false,
     padding: {
