@@ -23,6 +23,7 @@ export class OrganizationSchemaDtos {
     website?: string;
     provinces?: string[];
     eventIds?: number[];
+    hederaAccount?: string;
 
     constructor(data: OrganizationSchema) {
         this.refId = data.refId;
@@ -41,6 +42,7 @@ export class OrganizationSchemaDtos {
         this.website = data.website;
         this.provinces = data.provinces;
         this.eventIds = data.eventIds;
+        this.hederaAccount = data.hederaAccount;
     }
 }
 
@@ -116,6 +118,7 @@ export class DocumentSchemaDtos {
     version: number;
     data: string;
     eventIds?: number[];
+    creditAmount?: number;
 
     constructor(data: DocumentSchema) {
         this.refId = data.refId;
@@ -129,5 +132,6 @@ export class DocumentSchemaDtos {
         this.version = data.version;
         this.data = data.data;
         this.eventIds = data.eventIds;
+        this.creditAmount = data.creditAmount;
     }
 }

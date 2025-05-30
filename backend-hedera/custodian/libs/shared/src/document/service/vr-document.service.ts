@@ -42,6 +42,8 @@ import { AdditionalDocType } from '../enum/additional.document.type';
 import { HbarManagementService } from '@app/shared/hbar-management/service/hbar-management.service';
 import { TransactionType } from '@app/shared/hbar-management/enum/transaction-type.enum';
 import { UtilService } from '@app/shared/util/service/util.service';
+import { TaskEntity } from '@app/shared/task/entity/task.entity';
+import { TaskEnum } from '@app/shared/task/enum/task.enum';
 
 @Injectable()
 export class VrDocumentService extends DocumentService {
@@ -478,7 +480,7 @@ export class VrDocumentService extends DocumentService {
                     ProjectAuditLogType.AUTHORISED,
                     jwtData.userId,
                 );
-                const pddDoc =
+                const vrDoc =
                     await this.guardianService.getGridDocumentUsingRefId(
                         GridTypeEnum.VALIDATION_GRID,
                         documentEntity?.refId,
@@ -488,7 +490,7 @@ export class VrDocumentService extends DocumentService {
                 await this.guardianService.buttonActionRequest(
                     ButtonNameEnum.VALIDATION_REPORT_APPROVE_REJECT,
                     ButtonActionEnum.APPROVE,
-                    pddDoc,
+                    vrDoc,
                     jwtData.email,
                 );
 
@@ -506,92 +508,16 @@ export class VrDocumentService extends DocumentService {
                     jwtData.email,
                 );
 
-                const creditAmount = Number(
-                    documentEntity?.data?.ghgProjectDescription
-                        ?.totalNetEmissionReductions,
-                );
-                const tokenId =
-                    await this.carbonCreditGuardianService.createProjectNFT(
-                        documentEntity?.project?.organization?.hederaAccountId,
-                        documentEntity?.project?.organization?.hederaAccountKey,
-                        creditAmount,
-                    );
-
-                const refId = documentEntity?.project?.refId;
-
-                const existingProject = await queryRunner.manager
-                    .getRepository(ProjectEntity)
-                    .findOne({ where: { refId } });
-
-                if (!existingProject) {
-                    throw new Error(`Project with refId ${refId} not found`);
-                }
-
-                const authoroiseLetterUrl =
-                    await this.authorisationLetterGenerateService.generateLetter(
-                        refId,
-                        documentEntity?.project?.title,
-                        jwtData.organizationName,
-                        [documentEntity?.project?.organization.name],
-                    );
-
-                const serialNumber =
-                    this.serialNumberManagementService.getProjectSerialNumber(
-                        existingProject.id,
-                    );
-                // eslint-disable-next-line max-len
-                const authorizationId = `${this.authorizeDate()}${this.configService.get('countryCode')}${this.normalizeProjectId(existingProject.id)}`;
-
-                const updatedProject = plainToClass(ProjectEntity, {
-                    ...existingProject,
-                    tokenId: tokenId,
-                    creditEst: creditAmount,
-                    authoroiseLetterUrl: authoroiseLetterUrl,
-                    serialNumber: serialNumber,
-                    authorizationId: authorizationId,
-                    projectAuthorizationTime: new Date().getTime(),
+                const asyncTask: TaskEntity = plainToClass(TaskEntity, {
+                    className: 'VrDocumentService',
+                    functionName: 'createToken',
+                    args: [documentEntity, jwtData, countryName],
+                    retryAttemps: 3,
+                    state: TaskEnum.PENDING,
+                    retryUntilSuccess: true,
+                    millisBetweenAttempts: 3000,
                 });
-
-                await queryRunner.manager.save(updatedProject);
-
-                await this.logProjectStage(
-                    queryRunner,
-                    documentEntity?.project?.refId,
-                    ProjectAuditLogType.CREDITS_AUTHORISED,
-                    jwtData.userId,
-                    {
-                        amount: creditAmount,
-                        toCompanyId: documentEntity?.project?.organization?.id,
-                    },
-                );
-
-                const ctx = {
-                    icOrganizationName:
-                        documentEntity.submittedUser.organization.name,
-                    pdOrganizationName:
-                        documentEntity.project.organization.name,
-                    programmeName: documentEntity.project.title,
-                    countryName: countryName,
-                    programmePageLink: this.getProgrammePageLink(
-                        documentEntity.project.refId,
-                    ),
-                };
-
-                await this.sendEmailToProjectOrganizationAdmins(
-                    documentEntity.project,
-                    queryRunner,
-                    VR_APPROVE_HEADER,
-                    MailTemplateEnum.VR_APPROVE_PD,
-                    ctx,
-                );
-
-                await this.sendEmailToProjectAssignees(
-                    documentEntity.project,
-                    queryRunner,
-                    VR_APPROVE_HEADER,
-                    MailTemplateEnum.VR_APPROVE_IC,
-                    ctx,
-                );
+                await queryRunner.manager.save(TaskEntity, asyncTask);
             } else if (requestData.action === DocumentStateEnum.DNA_REJECTED) {
                 await this.updateProjectStage(
                     queryRunner,
@@ -664,6 +590,134 @@ export class VrDocumentService extends DocumentService {
         } catch (err) {
             await queryRunner.rollbackTransaction();
             throw err;
+        } finally {
+            await this.releaseQueryRunner(queryRunner);
+        }
+    }
+
+    public async createToken(
+        documentEntity: DocumentEntity,
+        jwtData: JWTPayload,
+        countryName: any,
+    ) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            await queryRunner.startTransaction();
+            const creditAmount = Number(
+                documentEntity?.data?.ghgProjectDescription
+                    ?.totalNetEmissionReductions,
+            );
+            const vrDocWithToken =
+                await this.guardianService.getGridDocumentUsingRefId(
+                    GridTypeEnum.VALIDATION_GRID,
+                    documentEntity?.refId,
+                    jwtData.email,
+                );
+            if (
+                !(
+                    vrDocWithToken &&
+                    vrDocWithToken.tokens &&
+                    vrDocWithToken.tokens[
+                        this.configService.get('carbonCredit.tokenSymbol')
+                    ]
+                )
+            ) {
+                await queryRunner.rollbackTransaction();
+                throw new HttpException(
+                    'Created token not found',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+            }
+            const tokenId =
+                vrDocWithToken.tokens[
+                    this.configService.get('carbonCredit.tokenSymbol')
+                ];
+            await this.carbonCreditGuardianService.associateNFTToUser(
+                tokenId,
+                documentEntity?.project?.organization?.hederaAccountId,
+                documentEntity?.project?.organization?.hederaAccountKey,
+            );
+
+            console.log(tokenId);
+            const refId = documentEntity?.project?.refId;
+
+            const existingProject = await queryRunner.manager
+                .getRepository(ProjectEntity)
+                .findOne({ where: { refId } });
+
+            if (!existingProject) {
+                throw new Error(`Project with refId ${refId} not found`);
+            }
+
+            const authoroiseLetterUrl =
+                await this.authorisationLetterGenerateService.generateLetter(
+                    refId,
+                    documentEntity?.project?.title,
+                    jwtData.organizationName,
+                    [documentEntity?.project?.organization.name],
+                );
+
+            const serialNumber =
+                this.serialNumberManagementService.getProjectSerialNumber(
+                    existingProject.id,
+                );
+            // eslint-disable-next-line max-len
+            const authorizationId = `${this.authorizeDate()}${this.configService.get('countryCode')}${this.normalizeProjectId(existingProject.id)}`;
+
+            const updatedProject = plainToClass(ProjectEntity, {
+                ...existingProject,
+                tokenId: tokenId,
+                creditEst: creditAmount,
+                authoroiseLetterUrl: authoroiseLetterUrl,
+                serialNumber: serialNumber,
+                authorizationId: authorizationId,
+                projectAuthorizationTime: new Date().getTime(),
+            });
+
+            await queryRunner.manager.save(updatedProject);
+
+            await this.logProjectStage(
+                queryRunner,
+                documentEntity?.project?.refId,
+                ProjectAuditLogType.CREDITS_AUTHORISED,
+                jwtData.userId,
+                {
+                    amount: creditAmount,
+                    toCompanyId: documentEntity?.project?.organization?.id,
+                },
+            );
+
+            const ctx = {
+                icOrganizationName:
+                    documentEntity.submittedUser.organization.name,
+                pdOrganizationName: documentEntity.project.organization.name,
+                programmeName: documentEntity.project.title,
+                countryName: countryName,
+                programmePageLink: this.getProgrammePageLink(
+                    documentEntity.project.refId,
+                ),
+            };
+
+            await this.sendEmailToProjectOrganizationAdmins(
+                documentEntity.project,
+                queryRunner,
+                VR_APPROVE_HEADER,
+                MailTemplateEnum.VR_APPROVE_PD,
+                ctx,
+            );
+
+            await this.sendEmailToProjectAssignees(
+                documentEntity.project,
+                queryRunner,
+                VR_APPROVE_HEADER,
+                MailTemplateEnum.VR_APPROVE_IC,
+                ctx,
+            );
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             await this.releaseQueryRunner(queryRunner);
         }
