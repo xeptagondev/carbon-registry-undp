@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import { CarbonCreditService } from '@app/shared/carbon-credit-token/service/carbon-credit.service';
+import { VrDocumentService } from '@app/shared/document/service/vr-document.service';
 import { EventStateEnum } from '@app/shared/event/enum/event-state.enum';
 import { GuardianService } from '@app/shared/guardian/service/guardian.service';
 import { MailService } from '@app/shared/mail/service/mail.service';
@@ -29,6 +30,7 @@ export class TaskMonitorService implements OnModuleInit {
         private readonly projectService: ProjectService,
         private readonly guardianService: GuardianService,
         private readonly userInitializationService: UserInitializationService,
+        private readonly vrDocumentService: VrDocumentService,
     ) {
         this.serviceMap = {
             UserService: this.userService,
@@ -39,6 +41,7 @@ export class TaskMonitorService implements OnModuleInit {
             GuardianService: this.guardianService,
             CarbonCreditService: this.carbonCreditService,
             UserInitializationService: this.userInitializationService,
+            VrDocumentService: this.vrDocumentService,
         };
     }
 
