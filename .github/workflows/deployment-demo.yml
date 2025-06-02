@@ -1,8 +1,8 @@
-name: Carbon Registry Demo Deployment
+name: Carbon Registry Namibia Deployment
 on:
   push:
     branches:
-      - "main"
+      - "namibia"
     paths:
       - web/**
       - backend/**
@@ -111,19 +111,6 @@ jobs:
           echo "Pushing image to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-      - name: Deploy docker image to Amazon EC2
-        if: github.ref == 'refs/heads/main'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: carbon-web
-          IMAGE_TAG: ${{ github.head_ref || github.ref_name }}
-          PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY_PRIVATE_DEMO }}
-          HOSTNAME: ${{secrets.HOST_IP_DEMO }}
-          USER_NAME: ec2-user
-        run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
-            carbon/prod_frontend_deploy.sh '
 
   deploy_backend:
     name: Carbon Registry Backend Deploy
@@ -166,13 +153,3 @@ jobs:
           echo "Pushing image to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-      - name: Deploy docker image to Amazon EC2
-        if: github.ref == 'refs/heads/main'
-        env:
-          PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY_PRIVATE_DEMO }}
-          HOSTNAME: ${{secrets.HOST_IP_DEMO }}
-          USER_NAME: ec2-user
-        run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
-           carbon/prod_backend_deploy.sh '
