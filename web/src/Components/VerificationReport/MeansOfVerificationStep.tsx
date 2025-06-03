@@ -756,17 +756,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -790,17 +793,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -824,17 +830,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -864,17 +873,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -898,17 +910,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -932,17 +947,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -972,17 +990,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1006,17 +1027,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1040,17 +1064,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1089,17 +1116,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1123,17 +1153,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1157,17 +1190,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1197,17 +1233,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1231,17 +1270,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1265,17 +1307,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1305,17 +1350,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1339,17 +1387,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1373,17 +1424,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1413,17 +1467,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1447,17 +1504,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1481,17 +1541,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1521,17 +1584,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1555,17 +1621,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1589,17 +1658,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1629,17 +1701,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1663,17 +1738,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1697,17 +1775,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1737,17 +1818,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1771,17 +1855,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1805,17 +1892,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1845,17 +1935,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1879,17 +1972,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1913,17 +2009,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1953,17 +2052,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -1987,17 +2089,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2021,17 +2126,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2061,17 +2169,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2095,17 +2206,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2129,17 +2243,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2169,17 +2286,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2203,17 +2323,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2237,17 +2360,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2276,17 +2402,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2310,17 +2439,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2344,17 +2476,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2384,17 +2519,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2418,17 +2556,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2452,17 +2593,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2492,17 +2636,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2526,17 +2673,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2560,17 +2710,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2600,17 +2753,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2634,17 +2790,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2668,17 +2827,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2708,17 +2870,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2742,17 +2907,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2776,17 +2944,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -2834,30 +3005,33 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                           <Col xl={3} className="col other-cols">
                             <Form.Item
                               name="finding-cl-20"
-                              //   rules={[
-                              //     {
-                              //       required: true,
-                              //       message: '',
-                              //     },
-                              //     {
-                              //       validator: async (rule, value) => {
-                              //         if (
-                              //           String(value).trim() === '' ||
-                              //           String(value).trim() === undefined ||
-                              //           value === null ||
-                              //           value === undefined
-                              //         ) {
-                              //           throw new Error(`${t('verificationReport:required')}`);
-                              //         }
+                              rules={[
+                                {
+                                  required: true,
+                                  message: '',
+                                },
+                                {
+                                  validator: async (rule, value) => {
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
+                                    }
 
-                              //         if (isNaN(value)) {
-                              //           return Promise.reject(new Error('Should be a number'));
-                              //         }
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
+                                    }
 
-                              //         return Promise.resolve();
-                              //       },
-                              //     },
-                              //   ]}
+                                    return Promise.resolve();
+                                  },
+                                },
+                              ]}
                             >
                               <Input
                                 onChange={(e) => calculateTotalCL(Number(e.target.value))}
@@ -2868,30 +3042,33 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                           <Col xl={3} className="col other-cols">
                             <Form.Item
                               name="finding-car-20"
-                              //   rules={[
-                              //     {
-                              //       required: true,
-                              //       message: '',
-                              //     },
-                              //     {
-                              //       validator: async (rule, value) => {
-                              //         if (
-                              //           String(value).trim() === '' ||
-                              //           String(value).trim() === undefined ||
-                              //           value === null ||
-                              //           value === undefined
-                              //         ) {
-                              //           throw new Error(`${t('verificationReport:required')}`);
-                              //         }
+                              rules={[
+                                {
+                                  required: true,
+                                  message: '',
+                                },
+                                {
+                                  validator: async (rule, value) => {
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
+                                    }
 
-                              //         if (isNaN(value)) {
-                              //           return Promise.reject(new Error('Should be a number'));
-                              //         }
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
+                                    }
 
-                              //         return Promise.resolve();
-                              //       },
-                              //     },
-                              //   ]}
+                                    return Promise.resolve();
+                                  },
+                                },
+                              ]}
                             >
                               <Input
                                 onChange={(e) => calculateTotalCar(Number(e.target.value))}
@@ -2902,30 +3079,33 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                           <Col xl={3} className="col other-cols">
                             <Form.Item
                               name="finding-far-20"
-                              //   rules={[
-                              //     {
-                              //       required: true,
-                              //       message: '',
-                              //     },
-                              //     {
-                              //       validator: async (rule, value) => {
-                              //         if (
-                              //           String(value).trim() === '' ||
-                              //           String(value).trim() === undefined ||
-                              //           value === null ||
-                              //           value === undefined
-                              //         ) {
-                              //           throw new Error(`${t('verificationReport:required')}`);
-                              //         }
+                              rules={[
+                                {
+                                  required: true,
+                                  message: '',
+                                },
+                                {
+                                  validator: async (rule, value) => {
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
+                                    }
 
-                              //         if (isNaN(value)) {
-                              //           return Promise.reject(new Error('Should be a number'));
-                              //         }
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
+                                    }
 
-                              //         return Promise.resolve();
-                              //       },
-                              //     },
-                              //   ]}
+                                    return Promise.resolve();
+                                  },
+                                },
+                              ]}
                             >
                               <Input
                                 onChange={(e) => calculateTotalFar(Number(e.target.value))}
@@ -2980,17 +3160,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
@@ -3011,17 +3194,20 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 },
                                 {
                                   validator: async (rule, value) => {
-                                    if (
-                                      String(value).trim() === '' ||
-                                      String(value).trim() === undefined ||
-                                      value === null ||
-                                      value === undefined
-                                    ) {
-                                      throw new Error(`${t('verificationReport:required')}`);
+                                    const valStr = String(value).trim();
+                                    if (valStr === '' || value === null || value === undefined) {
+                                      throw new Error(`${t('validationReport:required')}`);
+                                    }
+                                    if (isNaN(value)) {
+                                      throw new Error('Should be a number');
                                     }
 
-                                    if (isNaN(value)) {
-                                      return Promise.reject(new Error('Should be a number'));
+                                    const numValue = Number(value);
+                                    if (!Number.isInteger(numValue)) {
+                                      throw new Error('Value must be an integer');
+                                    }
+                                    if (numValue < 0) {
+                                      throw new Error('Value must be a positive integer');
                                     }
 
                                     return Promise.resolve();
