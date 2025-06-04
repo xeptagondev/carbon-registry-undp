@@ -663,7 +663,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                           },
                         ]}
                       >
-                        <Select
+                        {/* <Select
                           size="large"
                           // placeholder={t('PDD:cityPlaceholder')}
                           disabled={disableFields}
@@ -673,7 +673,8 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
                               {city}
                             </Select.Option>
                           ))}
-                        </Select>
+                        </Select> */}
+                        <Input disabled={disableFields} size="large" />
                       </Form.Item>
                       <Form.Item
                         label={t("PDD:community")}
