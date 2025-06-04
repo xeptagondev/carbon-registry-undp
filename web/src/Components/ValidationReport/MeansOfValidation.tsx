@@ -444,7 +444,7 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
 
               {/* Interviews table start */}
               <>
-                <h4 className="form-section-heading">{t('verificationReport:interviews')}</h4>
+                <h4 className="form-section-heading">{t('validationReport:interviews')}</h4>
                 <div className="interviews-table">
                   <Row className="header">
                     <Col xl={1} className="col-1 col">

@@ -544,10 +544,6 @@ const BasicInformation = (props: ValidationStepsProps) => {
 
                 <h4 className="list-item-title">Location 1</h4>
                 <div className="form-section">
-                  {/* <h4 className="form-section-title">{`${t(
-                    'validationReport:locationOfProjectActivity'
-                  )}`}</h4> */}
-
                   <Row
                     // justify={'space-between'}
                     gutter={[40, 16]}
