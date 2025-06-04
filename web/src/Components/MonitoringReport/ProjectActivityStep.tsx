@@ -29,7 +29,7 @@ import LabelWithTooltip, {
 import { API_PATHS } from "../../Config/apiConfig";
 import { CustomStepsProps } from "../MonitoringReport/StepProps";
 import { fileUploadValueExtract } from "../../Utils/utilityHelper";
-import "./MonitoringReport.scss"
+import "./MonitoringReport.scss";
 
 export const ProjectActivityStep = (props: CustomStepsProps) => {
   const {
@@ -43,11 +43,15 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
     disableFields,
   } = props;
   const CustomLabel = ({ text, required }) => (
-  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
-    {required && <span style={{ color: '#ff4d4f', fontSize: '14px', flexShrink: 0 }}>*</span>}
-    <span>{text}</span>
-  </div>
-);
+    <div style={{ display: "flex", alignItems: "flex-start", gap: "4px" }}>
+      {required && (
+        <span style={{ color: "#ff4d4f", fontSize: "14px", flexShrink: 0 }}>
+          *
+        </span>
+      )}
+      <span>{text}</span>
+    </div>
+  );
 
   const { post } = useConnection();
   // const [contactNoInput] = useState<any>();
@@ -461,7 +465,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         },
                       ]}
                     >
-                      <Select
+                      {/* <Select
                         size="large"
                         // placeholder={t('validationReport:cityPlaceholder')}
                         disabled
@@ -470,8 +474,10 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                           <Select.Option value={city} key={city + index}>
                             {city}
                           </Select.Option>
+                          
                         ))}
-                      </Select>
+                      </Select> */}
+                      <Input disabled size="large" />
                     </Form.Item>
                     <Form.Item
                       label={t("monitoringReport:community")}
@@ -1224,23 +1230,25 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                 <Col xl={12} md={24}>
                   <div className="step-form-left-col">
                     <Form.Item
-  label={
-    <div style={{ display: 'block', width: '100%' }}>
-      {t("monitoringReport:pa_methodology")}<span style={{ color: 'red' }}>*</span>
-    </div>
-  }
-  name="pa_methodology"
-  rules={[
-    {
-      required: true,
-      message: `${t("monitoringReport:pa_methodology")} ${t("isRequired")}`,
-    },
-  ]}
-  className="no-required-mark"
->
-  <Input size="large" disabled={disableFields} />
-</Form.Item>
-
+                      label={
+                        <div style={{ display: "block", width: "100%" }}>
+                          {t("monitoringReport:pa_methodology")}
+                          <span style={{ color: "red" }}>*</span>
+                        </div>
+                      }
+                      name="pa_methodology"
+                      rules={[
+                        {
+                          required: true,
+                          message: `${t("monitoringReport:pa_methodology")} ${t(
+                            "isRequired"
+                          )}`,
+                        },
+                      ]}
+                      className="no-required-mark"
+                    >
+                      <Input size="large" disabled={disableFields} />
+                    </Form.Item>
                   </div>
                   <LabelWithTooltip
                     label={t("monitoringReport:pa_projectCreditingPeriod")}
@@ -1321,8 +1329,13 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                         <DatePicker
                           size="large"
                           disabledDate={(currentDate: any) => {
-                            const startDate = form.getFieldValue('pa_projectCreditingPeriod')
-                            return currentDate && currentDate < moment(startDate).endOf("day");
+                            const startDate = form.getFieldValue(
+                              "pa_projectCreditingPeriod"
+                            );
+                            return (
+                              currentDate &&
+                              currentDate < moment(startDate).endOf("day")
+                            );
                           }}
                           disabled={disableFields}
                           // onChange={() => updateCreditingPeriodDuration()}
