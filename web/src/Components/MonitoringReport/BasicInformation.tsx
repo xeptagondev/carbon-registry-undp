@@ -490,7 +490,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                         placeholder={t('monitoringReport:pd_telephone')}
                         international
                         value={formatPhoneNumberIntl(contactNoInput)}
-                        defaultCountry="LK"
+                        defaultCountry="NA"
                         countryCallingCodeEditable={false}
                         onChange={(v) => {}}
                         countries={countries}

@@ -99,17 +99,17 @@ export const EmailTemplates = {
   FORGOT_PASSOWRD: {
     id: "FORGOT_PASSOWRD",
     subject:
-      "Password Reset Request for Your UNDP Demo Carbon Registry Account",
+      "Password Reset Request for Your Namibia Carbon Registry Account",
     html: `
         Hi,<br><br>
-        We received a request to reset your UNDP Demo Carbon Registry account password. <br><br>
+        We received a request to reset your Namibia Carbon Registry account password. <br><br>
         Use the link below to set a new password for your account. This password reset is only valid for the next hour.
         <br><br>
 
         <a href="{{home}}/resetPassword/{{requestId}}">Click here to reset the password</a>
         <br><br>
 
-        If you do not use UNDP Demo Carbon Credit Registry or did not request a password reset, please ignore this email or contact support if you have questions.
+        If you do not use Namibia Carbon Credit Registry or did not request a password reset, please ignore this email or contact support if you have questions.
 
         <br><br>
         Sincerely, <br>

@@ -988,7 +988,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       placeholder={t('addCompany:phoneNo')}
                       international
                       value={formatPhoneNumberIntl(contactNoInput)}
-                      defaultCountry="LK"
+                      defaultCountry="NA"
                       countryCallingCodeEditable={false}
                       onChange={(v) => {}}
                       countries={countries}
@@ -1038,7 +1038,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       placeholder={t('addCompany:faxNo')}
                       international
                       value={formatPhoneNumberIntl(faxNumber)}
-                      defaultCountry="LK"
+                      defaultCountry="NA"
                       countryCallingCodeEditable={false}
                       onChange={(v) => {
                         if (v === undefined) {
@@ -1198,7 +1198,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       placeholder={t('addCompany:phoneNo')}
                       international
                       value={formatPhoneNumberIntl(contactNoInput)}
-                      defaultCountry="LK"
+                      defaultCountry="NA"
                       countryCallingCodeEditable={false}
                       onChange={(v) => {}}
                     />

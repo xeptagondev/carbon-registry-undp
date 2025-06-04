@@ -1,84 +1,150 @@
 Name,Country,District,DS Division,Latitude,Longitude,Language
-Colombo 1 (Fort),LK,Colombo,Colombo 1 (Fort),6.9271,79.8612,en
-Colombo 2 (Slave Island),LK,Colombo,Colombo 2 (Slave Island),6.9271,79.8612,en
-Colombo 3 (Kollupitiya),LK,Colombo,Colombo 3 (Kollupitiya),6.9271,79.8612,en
-Colombo 4 (Bambalapitiya),LK,Colombo,Colombo 4 (Bambalapitiya),6.9271,79.8612,en
-Colombo 5 (Havelock Town),LK,Colombo,Colombo 5 (Havelock Town),6.9271,79.8612,en
-Colombo 6 (Wellawatte),LK,Colombo,Colombo 6 (Wellawatte),6.9271,79.8612,en
-Colombo 7 (Cinnamon Gardens),LK,Colombo,Colombo 7 (Cinnamon Gardens),6.9271,79.8612,en
-Colombo 8 (Borella),LK,Colombo,Colombo 8 (Borella),6.9271,79.8612,en
-Colombo 9 (Dematagoda),LK,Colombo,Colombo 9 (Dematagoda),6.9271,79.8612,en
-Colombo 10 (Maradana),LK,Colombo,Colombo 10 (Maradana),6.9271,79.8612,en
-Colombo 11 (Pettah),LK,Colombo,Colombo 11 (Pettah),6.9271,79.8612,en
-Colombo 12 (Hulftsdorp),LK,Colombo,Colombo 12 (Hulftsdorp),6.9271,79.8612,en
-Colombo 13 (Kotahena),LK,Colombo,Colombo 13 (Kotahena),6.9271,79.8612,en
-Colombo 14 (Grandpass),LK,Colombo,Colombo 14 (Grandpass),6.9271,79.8612,en
-Colombo 15 (Mutwal),LK,Colombo,Colombo 15 (Mutwal),6.9271,79.8612,en
-Dehiwala,LK,Colombo,Dehiwala,6.8444,79.8650,en
-Mount Lavinia,LK,Colombo,Mount Lavinia,6.8283,79.8630,en
-Moratuwa,LK,Colombo,Moratuwa,6.7730,79.8815,en
-Ratmalana,LK,Colombo,Ratmalana,6.8194,79.8802,en
-Gampaha,LK,Gampaha,Gampaha,7.0902,79.9940,en
-Negombo,LK,Gampaha,Negombo,7.2083,79.8358,en
-Kalutara,LK,Kalutara,Kalutara,6.5831,79.9607,en
-Horana,LK,Kalutara,Horana,6.7167,80.0667,en
-Kandy,LK,Kandy,Kandy,7.2906,80.6337,en
-Peradeniya,LK,Kandy,Peradeniya,7.2627,80.5981,en
-Gampola,LK,Kandy,Gampola,7.1646,80.5706,en
-Kadugannawa,LK,Kandy,Kadugannawa,7.2546,80.5239,en
-Digana,LK,Kandy,Digana,7.3005,80.7558,en
-Matale,LK,Matale,Matale,7.4675,80.6234,en
-Dambulla,LK,Matale,Dambulla,7.8717,80.6520,en
-Galewela,LK,Matale,Galewela,7.7833,80.5667,en
-Ukuwela,LK,Matale,Ukuwela,7.4167,80.6833,en
-Nuwara Eliya,LK,Nuwara Eliya,Nuwara Eliya,6.9708,80.7829,en
-Hatton,LK,Nuwara Eliya,Hatton,6.8994,80.5934,en
-Talawakele,LK,Nuwara Eliya,Talawakele,6.9340,80.6692,en
-Ginigathhena,LK,Nuwara Eliya,Ginigathhena,6.9633,80.5333,en
-Ampara,LK,Ampara,Ampara,7.2964,81.6745,en
-Kalmunai,LK,Ampara,Kalmunai,7.4167,81.8167,en
-Akkaraipattu,LK,Ampara,Akkaraipattu,7.2167,81.8500,en
-Sammanthurai,LK,Ampara,Sammanthurai,7.3667,81.8333,en
-Batticaloa,LK,Batticaloa,Batticaloa,7.7102,81.6924,en
-Kattankudy,LK,Batticaloa,Kattankudy,7.6833,81.7333,en
-Eravur,LK,Batticaloa,Eravur,7.7667,81.6000,en
-Valachchenai,LK,Batticaloa,Valachchenai,7.8994,81.5661,en
-Trincomalee,LK,Trincomalee,Trincomalee,8.5760,81.2330,en
-Kinniya,LK,Trincomalee,Kinniya,8.4833,81.1833,en
-Muttur,LK,Trincomalee,Muttur,8.4500,81.2667,en
-Anuradhapura,LK,Anuradhapura,Anuradhapura,8.3114,80.4037,en
-Mihintale,LK,Anuradhapura,Mihintale,8.3752,80.5070,en
-Kekirawa,LK,Anuradhapura,Kekirawa,8.0356,80.5950,en
-Polonnaruwa,LK,Polonnaruwa,Polonnaruwa,7.9403,81.0188,en
-Hingurakgoda,LK,Polonnaruwa,Hingurakgoda,8.0500,80.9500,en
-Medirigiriya,LK,Polonnaruwa,Medirigiriya,8.1833,80.9167,en
-Kurunegala,LK,Kurunegala,Kurunegala,7.4863,80.3621,en
-Kuliyapitiya,LK,Kurunegala,Kuliyapitiya,7.4667,80.0333,en
-Pannala,LK,Kurunegala,Pannala,7.3833,80.0333,en
-Puttalam,LK,Puttalam,Puttalam,8.0333,79.8333,en
-Chilaw,LK,Puttalam,Chilaw,7.5833,79.8000,en
-Wennappuwa,LK,Puttalam,Wennappuwa,7.3000,79.8500,en
-Jaffna,LK,Jaffna,Jaffna,9.6685,80.0074,en
-Point Pedro,LK,Jaffna,Point Pedro,9.8167,80.2333,en
-Mannar,LK,Mannar,Mannar,8.9833,79.9000,en
-Pesalai,LK,Mannar,Pesalai,9.0500,79.7333,en
-Mullaitivu,LK,Mullaitivu,Mullaitivu,9.2674,80.8128,en
-Puthukudiyiruppu,LK,Mullaitivu,Puthukudiyiruppu,9.3833,80.7667,en
-Vavuniya,LK,Vavuniya,Vavuniya,8.7500,80.5000,en
-Omanthai,LK,Vavuniya,Omanthai,8.8500,80.4667,en
-Kilinochchi,LK,Kilinochchi,Kilinochchi,9.4000,80.4000,en
-Paranthan,LK,Kilinochchi,Paranthan,9.4333,80.4167,en
-Kegalle,LK,Kegalle,Kegalle,7.2514,80.3464,en
-Warakapola,LK,Kegalle,Warakapola,7.1500,80.2500,en
-Ratnapura,LK,Ratnapura,Ratnapura,6.6828,80.3992,en
-Balangoda,LK,Ratnapura,Balangoda,6.6470,80.7042,en
-Galle,LK,Galle,Galle,6.0535,80.2210,en
-Ambalangoda,LK,Galle,Ambalangoda,6.2394,80.0533,en
-Matara,LK,Matara,Matara,5.9485,80.5353,en
-Weligama,LK,Matara,Weligama,5.9736,80.4292,en
-Hambantota,LK,Hambantota,Hambantota,6.1240,81.1185,en
-Tangalle,LK,Hambantota,Tangalle,6.0228,80.7916,en
-Badulla,LK,Badulla,Badulla,6.9896,81.0552,en
-Bandarawela,LK,Badulla,Bandarawela,6.8316,80.9936,en
-Monaragala,LK,Monaragala,Monaragala,6.8804,81.3509,en
-Wellawaya,LK,Monaragala,Wellawaya,6.7351,81.1015,en
+Aminius,NA,Aminuis,,?23.6333,19.3666,en
+Arandis,NA,Arandis,,?22.4166,14.966,en
+Aranos,NA,Aranos,,?24.1377,19.1107,en
+Ariamsvlei,NA,Karasburg West,,?27.3833,18.983,en
+Aroab,NA,Keetmanshoop Rural,,?26.61667,17.6,en
+Auas Valley,NA,Windhoek East,,?22.58717,17.08356,en
+Aus,NA,?Nami?N�s,,?26.721,16.15139,en
+Aussenkehr,NA,Karasburg West,,?28.6333,17.4833,en
+Ausspannplatz,NA,Windhoek West,,?22.57625,17.08576,en
+Bachbrecht,NA,Khomasdal,,?22.5516,17.0738,en
+Berseba,NA,Berseba,,?26.15,17.85,en
+Bethanie,NA,Keetmanshoop Urban,,?26.528,17.162,en
+Bukalo,NA,Kabbe South,,?17.7166,24.45,en
+China Town,NA,Windhoek West,,?22.570,17.08,en
+Chincimane,NA,Katima Mulilo Rural,,?17.500,24.2333,en
+Craft Center,NA,Windhoek West,,?22.570,17.08361,en
+Divundu,NA,Mukwe,,?18.167,21.48,en
+Dordabis,NA,Windhoek Rural,,?22.9482,17.66149,en
+Eenhana,NA,Eenhana,,?17.485,16.3287,en
+Endola,NA,Endola,,?17.600,15.71667,en
+Epukiro,NA,Epukiro,,?21.700,19.1166,en
+Eros,NA,Windhoek East,,?22.6122,17.08056,en
+Fransfontein,NA,Khorixas,,?20.000,16.15,en
+GAME Kiosk,NA,Windhoek West,,?22.5594,17.08323,en
+Gibeon,NA,Gibeon,,?25.1244,17.766,en
+Gobabis,NA,Gobabis,,?22.449259,18.969973,en
+Gochas,NA,Aranos,,?25.9666,18.5,en
+Goreangab,NA,Samora Machel,,?22.53417,17.0794,en
+Government O?ce Park Kiosk,NA,Windhoek West,,?22.5539,17.08487,en
+Grootfontein,NA,Grootfontein,,?19.5666,18.1166,en
+Gr�nau,NA,Karasburg West,,?26.416,18.1333,en
+Helmeringhausen,NA,Berseba,,?26.859,16.528,en
+Henties Bay,NA,Arandis,,?22.1184,14.2824,en
+Hochfeld,NA,Omatako,,?21.4910,17.852,en
+Hosea Kutako Airport,NA,Windhoek Rural,,?22.48667,17.4625,en
+Hybrid Mail,NA,Windhoek West,,?22.5594,17.0832,en
+Kalkfeld,NA,Otjiwarongo,,?19.465,17.191,en
+Kalkrand,NA,Rehoboth Rural,,?24.4833,18.2333,en
+Kamanjab,NA,Kamanjab,,?20.2833,15.466,en
+Karasburg,NA,Karasburg East,,?28.033,18.8666,en
+Karibib,NA,Karibib,,?21.933,15.833,en
+Katima Mulilo Kiosk,NA,Katima Mulilo Urban,,?17.500,24.266,en
+Katutura,NA,Katutura Central,,?22.533,17.083,en
+Keetmanshoop,NA,Keetmanshoop Urban,,?26.5833,18.1333,en
+Khomasdal,NA,Khomasdal,,?22.53796,17.055,en
+Khorixas,NA,Khorixas,,?20.3666,15.949,en
+Kiosk Prosperita,NA,Windhoek West,,?22.57000,17.08361,en
+Klein Aub,NA,Rehoboth Rural,,?24.603,17.788,en
+Klein Windhoek,NA,Windhoek East,,?22.57889,17.10083,en
+Kleine Kuppe,NA,Windhoek East,,?22.6211,17.1008,en
+Ko�s,NA,Keetmanshoop Rural,,?26.9166,17.733,en
+Kombat,NA,Otavi,,?19.0166,17.35,en
+Kuisebmund,NA,Walvis Bay Urban,,?22.93196,14.5286,en
+Leonardville,NA,Aminuis,,?23.50,18.8,en
+L�deritz,NA,?Nami?N�s,,?26.64858,15.15728,en
+Maerua Mall,NA,Windhoek West,,?22.58357,17.09371,en
+Maltah�he,NA,Daweb,,?24.83806,16.98013,en
+Mariental,NA,Mariental Rural,,?24.6251,17.9614,en
+Mayuni,NA,Katima Mulilo Rural,,?17.6666,24.35,en
+Mondesa,NA,Swakopmund,,?22.683,14.5333,en
+Mpungu,NA,Mpungu,,?17.6666,18.233,en
+Narraville,NA,Walvis Bay Urban,,?22.954,14.5447,en
+Ngweze,NA,Kabbe South,,?17.9333,19.2166,en
+Nkurenkuru,NA,Nkurenkuru,,?17.800,19.15,en
+Noordoewer,NA,Karasburg West,,?28.6666,17.633,en
+Ogongo,NA,Ogongo,,?17.66,15.166,en
+Ohangwena,NA,Ohangwena,,?17.766,16.7166,en
+Okahandja,NA,Okahandja,,?21.983,16.917,en
+Okahandja West,NA,Okahandja,,?21.9830,16.917,en
+Okahao,NA,Okahao,,?18.133,15.95,en
+Okakarara,NA,Okakarara,,?20.3450,17.225,en
+Okamatapati,NA,Okakarara,,?18.9820,18.401,en
+Okankolo,NA,Okankolo,,?17.966,16.4166,en
+Okaukuejo,NA,Okakarara,,?19.183,15.933,en
+Okombahe,NA,D�ures,,?21.360,15.375,en
+Okondjatu,NA,Okakarara,,?20.41528,17.13556,en
+Okongo,NA,Okongo,,?17.56879,17.21345,en
+Okuryangava,NA,Tobias Hainyeko,,?22.5333,17.08333,en
+Oluno,NA,Okatana,,?17.7166,16.8,en
+Olympia,NA,Windhoek East,,?22.6025,17.105,en
+Omaruru,NA,Omaruru,,?21.433,15.933,en
+Omatjete,NA,D�ures,,?21.050,15.5,en
+Omeya Kiosk,NA,Windhoek Rural,,?22.85203,17.11259,en
+Omitara,NA,Okorukambe,,?22.29029,18.008,en
+Omungwelume,NA,Epembe,,?17.700,16.2166,en
+Omuntele,NA,Omuntele,,?18.233,16.2333,en
+Omuthiya,NA,Omuthiyagwiipundi,,?18.3604,16.5805,en
+Onaanda,NA,Otamanzi,,?17.7833,15.583,en
+Onandjaba,NA,Onesi,,?17.450,17,en
+Onandjokwe,NA,Oniipa,,?17.900,16.033,en
+Onankali,NA,Onyaanya,,?18.166,16.35,en
+Onawa,NA,Otamanzi,,?17.60,15.2,en
+Onayena,NA,Onayena,,?17.9496,16.1937,en
+Ondangwa,NA,Ondangwa Rural,,?17.91375,15.9782,en
+Ondobe,NA,Ondobe,,?17.5167,16.05,en
+Onesi,NA,Onesi,,?17.5915,14.68648,en
+Ongenga,NA,Ongenga,,?17.433,15.683,en
+Ongha,NA,Endola,,?17.683,16.8833,en
+Ongwediva,NA,Ongwediva,,?17.77167,15.76417,en
+Onyaanya,NA,Onyaanya,,?18.066,16.266,en
+Opuwo,NA,Opuwo Urban,,?18.0600,13.83,en
+Oranjemund,NA,Oranjemund,,?28.566,16.4,en
+Oshakati,NA,Oshakati East,,?17.7836,15.69939,en
+Oshakati Pick n Pay,NA,Oshakati West,,?17.78354,15.7535,en
+Oshakati Spar,NA,Oshakati West,,?17.77214,15.69285,en
+Oshigambo,NA,Oniipa,,?17.7833,16.066,en
+Oshikango,NA,Oshikango,,?17.39783,15.89069,en
+Oshikango Savings Bank,NA,Oshikango,,?17.3978,15.89069,en
+Oshikuku,NA,Oshikuku,,?17.6543,15.4727,en
+Oshivelo,NA,Guinas,,?18.61987,17.1676,en
+Osire,NA,Omatako,,?20.7383,17.0494,en
+Otavi,NA,Otavi,,?19.650,17.333,en
+Otjinene,NA,Otjinene,,?21.135195,18.7868,en
+Otjiwarongo,NA,Otjiwarongo,,?20.46417,16.65278,en
+Otjomuise,NA,Khomasdal,,?22.56667,17.08333,en
+Outapi,NA,Outapi,,?17.5044,14.9847,en
+Outjo,NA,Outjo,,?20.1166,16.15,en
+Parcel Depot,NA,Windhoek West,,?22.5594,17.0832,en
+Pelican Square,NA,Windhoek West,,?22.570,17.08361,en
+Pionierspark,NA,Windhoek West,, ?22.570,17.08361,en
+Pionierspark Motors,NA,Windhoek West,,?22.570,17.08361,en
+Rehoboth,NA,Rehoboth Urban East,,?23.31667,17.0833,en
+Rocky Crest,NA,Windhoek West,,?22.5734,17.0399,en
+Rosh Pinah,NA,Oranjemund,,?26.5833,15.2,en
+Ruacana,NA,Ruacana,,?17.1666,15.1,en
+Rundu,NA,Rundu Urban,,?17.9166,19.7666,en
+Sesfontein,NA,Sesfontein,,?19.8000,13.8333,en
+Soweto,NA,John Pandeni,,?22.535,17.0825,en
+Stampriet,NA,Mariental Rural,,?24.333,18.4,en
+Swakopmund,NA,Swakopmund,,?22.683,14.533,en
+Tallismanus,NA,Otjombinde,,?21.833,20.75,en
+Tsandi,NA,Tsandi,,?17.5830,14.683,en
+Tses,NA,Berseba,,?26.7166,18.2166,en
+Tsumeb,NA,Tsumeb,,?19.250,17.867,en
+Tsumkwe,NA,Tsumkwe,,?18.060,19.98,en
+Uis,NA,D�ures,,?21.2186,14.8675,en
+University of Namibia,NA,Windhoek West,,?22.570,17.08361,en
+Usakos,NA,Karibib,,?22.000,15.6,en
+Vineta,NA,Swakopmund,,?22.6500,14.5166,en
+Walvis Bay,NA,Walvis Bay Urban,,?22.95611,14.50806,en
+Wanaheda,NA,Samora Machel,,?22.5292,17.0767,en
+Warmbad,NA,Karasburg East,,?28.0166,17.3333,en
+Wernhill Pick n Pay,NA,Windhoek West,,?22.567,17.08056,en
+Wika Service Station Kiosk,NA,Windhoek West,,?22.5594,17.08323,en
+Windhoek,NA,Windhoek West,,?22.5594,17.0832,en
+Windhoek Central Prison,NA,Khomasdal,,?22.53969,17.07072,en
+Windhoek O?ce of Exchange,NA,Windhoek West,,?22.56311,17.08411,en
+Witvlei,NA,Okorukambe,,?22.40492,18.49289,en
+Woermann & Brock Centre Kiosk,NA,Swakopmund,,?22.683,14.5333,en

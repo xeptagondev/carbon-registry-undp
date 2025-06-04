@@ -1014,7 +1014,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
                     // placeholder={t('projectProposal:phoneNo')}
                     international
                     value={formatPhoneNumberIntl(contactNoInput)}
-                    defaultCountry="LK"
+                    defaultCountry="NA"
                     countryCallingCodeEditable={false}
                     onChange={(v) => {}}
                     countries={countries as Country[]}
@@ -1178,7 +1178,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
                   <PhoneInput
                     international
                     value={formatPhoneNumberIntl(contactNoInput)}
-                    defaultCountry="LK"
+                    defaultCountry="NA"
                     countryCallingCodeEditable={false}
                     onChange={(v) => {}}
                     countries={countries as Country[]}
@@ -1303,7 +1303,7 @@ const ProjectProposalComponent = (props: { translator: i18n }) => {
                   <PhoneInput
                     international
                     value={formatPhoneNumberIntl(contactNoInput)}
-                    defaultCountry="LK"
+                    defaultCountry="NA"
                     countryCallingCodeEditable={false}
                     onChange={(v) => {}}
                     countries={countries as Country[]}

@@ -184,7 +184,7 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                         placeholder={t('verificationReport:telephone')}
                         international
                         value={formatPhoneNumberIntl(contactNoInput)}
-                        defaultCountry="LK"
+                        defaultCountry="NA"
                         disabled
                         countryCallingCodeEditable={false}
                         onChange={(v) => {}}

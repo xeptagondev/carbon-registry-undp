@@ -541,7 +541,7 @@ const Assessment = (props: any) => {
                           <PhoneInput
                             style={{ width: 303 }}
                             international
-                            defaultCountry="LK"
+                            defaultCountry="NA"
                             countryCallingCodeEditable={false}
                             onChange={(v) => {}}
                             countries={countries}

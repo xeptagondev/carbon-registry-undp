@@ -1,26 +1,122 @@
 Name,Country,Province,Latitude,Longitude,Language
-Ampara,LK,Eastern,7.291418,81.636696,en
-Anuradhapura,LK,North Central,8.311351,80.403650,en
-Badulla,LK,Uva,6.9934,81.0550,en
-Batticaloa,LK,Eastern,7.7310,81.6747,en
-Colombo,LK,Western,6.927079,79.861243,en
-Galle,LK,Southern,6.053519,80.220977,en
-Gampaha,LK,Western,7.0873,79.9999,en
-Hambantota,LK,Southern,6.1429,81.1212,en
-Jaffna,LK,Northern,9.6615,80.0255,en
-Kalutara,LK,Western,6.5854,79.9607,en
-Kandy,LK,Central,7.2906,80.6337,en
-Kegalle,LK,Sabaragamuwa,7.2513,80.3464,en
-Kilinochchi,LK,Northern,9.3961,80.3982,en
-Kurunegala,LK,North Western,7.4863,80.3623,en
-Mannar,LK,Northern,8.9779,79.9093,en
-Matale,LK,Central,7.4675,80.6234,en
-Matara,LK,Southern,5.9485,80.5353,en
-Monaragala,LK,Uva,6.8710,81.3487,en
-Mullaitivu,LK,Northern,9.2671,80.8142,en
-Nuwara Eliya,LK,Central,6.9708,80.7829,en
-Polonnaruwa,LK,North Central,7.9403,81.0188,en
-Puttalam,LK,North Western,8.0330,79.8264,en
-Ratnapura,LK,Sabaragamuwa,6.6828,80.3991,en
-Trincomalee,LK,Eastern,8.5874,81.2152,en
-Vavuniya,LK,Northern,8.7542,80.4982,en
+Arandis,NA,Erongo,-22.38303,14.8305,en
+D�ures,NA,Erongo,-21.01785,14.1394,en
+Karibib,NA,Erongo,?21.93806,15.8544,en
+Omaruru,NA,Erongo,?21.43333,15.9333,en
+Swakopmund,NA,Erongo,-22.63199,14.6012,en
+Walvis Bay Rural,NA,Erongo,-23.32983,15.1122,en
+Walvis Bay Urban,NA,Erongo,-22.96011,14.5014,en
+Aranos,NA,Hardap,?24.13777,19.1107,en
+Daweb,NA,Hardap,?24.83806,16.9801,en
+Gibeon,NA,Hardap,-25.1285,17.7644,en
+Mariental Rural,NA,Hardap,?24.333,18.4,en
+Mariental Urban,NA,Hardap,?24.6251,17.9614,en
+Rehoboth Rural,NA,Hardap,?24.033,17.167,en
+Rehoboth Urban East,NA,Hardap,?23.31667,17.0833,en
+Rehoboth Urban West,NA,Hardap,?23.31667,17.08333,en
+Mashare,NA,Kavango East,�17.8833,20.2167,en
+Mukwe,NA,Kavango East,�18.0333,21.4333,en
+Ndiyona,NA,Kavango East,�18.0399,20.7007,en
+Ndonga Linena,NA,Kavango East,�17.9834,20.5347,en
+Rundu Rural,NA,Kavango East,-17.918,19.77314,en
+Rundu Urban,NA,Kavango East,�17.9333,19.7667,en
+Kapako,NA,Kavango West,�18.0167,21.3833,en
+Mankumpi,NA,Kavango West,�18.4068,19.0468,en
+Mpungu,NA,Kavango West,�17.6667,18.2333,en
+Musese,NA,Kavango West,�17.84134,19.0827,en
+Ncamagoro,NA,Kavango West,�18.1984,19.4808,en
+Ncuncuni,NA,Kavango West,�18.3333,19,en
+Nkurenkuru,NA,Kavango West,�17.8000,19.15,en
+Tondoro,NA,Kavango West,�17.900,19.05,en
+John Pandeni,NA,Khomas,�22.5609,17.0658,en
+Katutura Central,NA,Khomas,�22.5205,17.0562,en
+Katutura East,NA,Khomas,�22.52306,17.0603,en
+Khomasdal,NA,Khomas,�22.5379,17.055,en
+Moses ?Garo�b,NA,Khomas,�22.5231,17.0603,en
+Samora Machel,NA,Khomas,�22.52306,17.0603,en
+Tobias Hainyeko,NA,Khomas,�22.52306,17.0603,en
+Windhoek East,NA,Khomas,�22.5594,17.0832,en
+Windhoek Rural,NA,Khomas,�22.3667,17.25,en
+Windhoek West,NA,Khomas,�22.5700,17.08,en
+Epupa,NA,Kunene,-17.00388,13.2483,en
+Kamanjab,NA,Kunene,�20.2833,15.4667,en
+Khorixas,NA,Kunene,-20.36792,14.96,en
+Opuwo Rural,NA,Kunene,�18.0600,13.83,en
+Opuwo Urban,NA,Kunene,�18.0600,13.83,en
+Outjo,NA,Kunene,�20.1167,16.15,en
+Sesfontein,NA,Kunene,-19.56106,13.7653,en
+Eenhana,NA,Ohangwena,�17.48503,16.3287,en
+Endola,NA,Ohangwena,�17.6000,15.716667,en
+Engela,NA,Ohangwena,�17.4333,15.8667,en
+Epembe,NA,Ohangwena,�17.7670,16.2,en
+Ohangwena,NA,Ohangwena,�17.5148,15.9036,en
+Okongo,NA,Ohangwena,�17.56878,17.2135,en
+Omulonga,NA,Ohangwena,�17.4670,16.85,en
+Omundaungilo,NA,Ohangwena,-17.41667,16.7,en
+Ondobe,NA,Ohangwena,�17.5167,16.05,en
+Ongenga,NA,Ohangwena,�17.4330,15.683,en
+Oshikango,NA,Ohangwena,�17.3978,15.8907,en
+Oshikunde,NA,Ohangwena,�17.4166,16.5833,en
+Aminuis,NA,Omaheke,�22.5683,18.67,en
+Epukiro,NA,Omaheke,�23.3333,19.15,en
+Gobabis,NA,Omaheke,�22.4533,18.9675,en
+Kalahari,NA,Omaheke,�22.81667,19.3,en
+Otjinene,NA,Omaheke,�22.1500,18.7,en
+Otjombinde,NA,Omaheke,�23.1333,19.4333,en
+Okorukambe,NA,Omaheke,�23.4333,18.633,en
+Anamulenge,NA,Omusati,�17.700,15.2,en
+Elim,NA,Omusati,�17.3167,15.1,en
+Etayi,NA,Omusati,�17.600,14.8667,en
+Ogongo,NA,Omusati,�17.6667,15.1667,en
+Okahao,NA,Omusati,�18.1333,15.95,en
+Okalongo,NA,Omusati,�17.91667,15.8667,en
+Onesi,NA,Omusati,�17.233,15.833,en
+Oshikuku,NA,Omusati,-17.7833,15.933,en
+Otamanzi,NA,Omusati,�17.783,15.583,en
+Outapi,NA,Omusati,�17.513875,14.8705,en
+Ruacana,NA,Omusati,�17.16666,15.1,en
+Tsandi,NA,Omusati,�17.233,15.1,en
+Okaku,NA,Oshana,�17.7833,15.933,en
+Okatana,NA,Oshana,�17.8166,15.8,en
+Okatyali,NA,Oshana,�17.766,15.9166,en
+Ompundja,NA,Oshana,�17.9233,15.8233,en
+Ondangwa Rural,NA,Oshana,�17.8833,15.95,en
+Ondangwa Urban,NA,Oshana,�17.900,15.933,en
+Ongwediva,NA,Oshana,�17.7833,15.7833,en
+Oshakati East,NA,Oshana,�17.7833,15.8,en
+Oshakati West,NA,Oshana,�17.7833,15.7833,en
+Uukwiyu,NA,Oshana,�17.8166,15.9166,en
+Uuvudhiya,NA,Oshana,�17.7166,15.8333,en
+Eengodi,NA,Oshikoto,�18.500,16.2166,en
+Guinas,NA,Oshikoto,�18.600,16.1,en
+Nehale lyaMpingana,NA,Oshikoto,�18.1333,17,en
+Okankolo,NA,Oshikoto,�18.1333,17.1,en
+Olukonda,NA,Oshikoto,�18.0166,17.05,en
+Omuntele,NA,Oshikoto,�18.1333,17.05,en
+Omuthiyagwiipundi,NA,Oshikoto,�18.0666,16.8,en
+Onayena,NA,Oshikoto,�18.21666,16.3333,en
+Oniipa,NA,Oshikoto,�17.966,17.1,en
+Onyaanya,NA,Oshikoto,�18.0166,16.333,en
+Tsumeb,NA,Oshikoto,�19.233,17.7166,en
+Grootfontein,NA,Otjozondjupa,�19.5666,18.1,en
+Okahandja,NA,Otjozondjupa,�21.9833,16.91666,en
+Okakarara,NA,Otjozondjupa,�20.2666,17.3,en
+Omatako,NA,Otjozondjupa,-20.63333,17.7333,en
+Otavi,NA,Otjozondjupa,�19.9166,17.1833,en
+Otjiwarongo,NA,Otjozondjupa,�20.4555,17.065,en
+Tsumkwe,NA,Otjozondjupa,�19.5833,19.1166,en
+Judea Lyaboloma,NA,Zambezi,�17.4666,24.3,en
+Kabbe North,NA,Zambezi,�17.50,24.25,en
+Kabbe South,NA,Zambezi,�17.700,24.35,en
+Katima Mulilo Rural,NA,Zambezi,�17.500,24.266,en
+Katima Mulilo Urban,NA,Zambezi,�17.500,24.266,en
+Kongola,NA,Zambezi,�18.0166,21.833,en
+Linyanti,NA,Zambezi,�17.500,24.3166,en
+Sibbinda,NA,Zambezi,�17.633,24.466,en
+Berseba,NA,?Karas,�26.150,17.85,en
+Karasburg East,NA,?Karas,�28.033,18.85,en
+Karasburg West,NA,?Karas,�28.00,18.8166,en
+Keetmanshoop Rural,NA,?Karas,�26.5833,18.1333,en
+Keetmanshoop Urban,NA,?Karas,�26.583,18.1333,en
+?Nami?N�s,NA,?Karas,�28.566,16.4,en
+Oranjemund,NA,?Karas,-28.04077,16.83229,en

@@ -1,10 +1,15 @@
 Name,Country,Latitude,Longitude,Language
-Central,LK,7.291418,80.636696,en
-Eastern,LK,7.713054,81.674728,en
-Northern,LK,9.268255,80.814249,en
-Southern,LK,6.053519,80.220977,en
-Western,LK,6.927079,79.861243,en
-North Western,LK,7.940338,80.247860,en
-North Central,LK,8.311351,80.403650,en
-Uva,LK,6.971684,81.124128,en
-Sabaragamuwa,LK,6.705619,80.384738,en
+Erongo,NA,-22.08333,15.33333,en
+Hardap,NA,-24.5,17.25,en
+Kavango East,NA,-18.33333,20.58333,en
+Kavango West,NA,-18.25,18.91667,en
+Khomas,NA,-22.75,17.08333,en
+Kunene,NA,-19.41667,13.75,en
+Ohangwena,NA,-17.58333,16.75,en
+Omaheke,NA,-21.75,19.41667,en
+Omusati,NA,-18.33333,14.83333,en
+Oshana,NA,-18.5,15.75,en
+Oshikoto,NA,-18.5,17.08333,en
+Otjozondjupa,NA,-20.33333,18,en
+Zambezi,NA,-17.83333,23.75,en
+?Karas,NA,-27,17.5,en

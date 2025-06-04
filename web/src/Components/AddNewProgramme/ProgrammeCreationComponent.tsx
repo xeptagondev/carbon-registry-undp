@@ -1477,7 +1477,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   <PhoneInput
                                     placeholder={t("addProgramme:phoneNo")}
                                     international
-                                    defaultCountry="LK"
+                                    defaultCountry="NA"
                                     countryCallingCodeEditable={false}
                                     onChange={(v) => {}}
                                     countries={countries}
@@ -1537,7 +1537,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   <PhoneInput
                                     placeholder={t("addProgramme:phoneNo")}
                                     international
-                                    defaultCountry="LK"
+                                    defaultCountry="NA"
                                     countryCallingCodeEditable={false}
                                     onChange={(v) => {}}
                                     countries={countries}

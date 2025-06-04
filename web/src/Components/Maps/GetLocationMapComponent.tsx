@@ -65,9 +65,7 @@ const GetLocationMapComponent = (props: CMAMapComponentProps) => {
 
   useEffect(() => {
     setProjectLocationMapCenter(
-      projectLocation?.length > 0
-        ? getCenter(projectLocation)
-        : [80.7718, 7.8731]
+      projectLocation?.length > 0 ? getCenter(projectLocation) : [-22, 17]
     );
 
     const mapSource: MapSourceData = {
