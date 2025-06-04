@@ -72,15 +72,15 @@
         rgba(255, 255, 255, 0.3) 0%,
         rgba(4, 105, 177, 0.24) 0%
       ),
-      url("../../Assets/Images/sigiriya.jpg");
+      url("../../Assets/Images/namibia.jpg");
     background-image: linear-gradient(
         to bottom,
         rgba(255, 255, 255, 0.3) 0%,
         rgba(4, 105, 177, 0.24) 0%
       ),
       image-set(
-        "../../Assets/Images/sigiriya.jpg" type("image/jpg"),
-        "../../Assets/Images/sigiriya.webp" type("image/webp")
+        "../../Assets/Images/namibia.jpg" type("image/jpg"),
+        "../../Assets/Images/namibia.webp" type("image/webp")
       );
     background-size: cover;
     background-position: top !important;

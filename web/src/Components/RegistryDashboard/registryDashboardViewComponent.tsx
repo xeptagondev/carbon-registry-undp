@@ -2022,7 +2022,7 @@ ${total}
         programmeLocations?.features &&
           programmeLocations?.features[0]?.geometry?.coordinates
           ? programmeLocations?.features[0]?.geometry?.coordinates
-          : [7.4924165, 5.5324032]
+          : [-22, 17]
       );
 
       const mapSource: MapSourceData = {
@@ -2696,7 +2696,7 @@ ${total}
                     <div className="map-content">
                       <MapComponent
                         mapType={mapType}
-                        center={[12, 50]}
+                        center={[-22, 17]}
                         zoom={0.5}
                         mapSource={transferLocationsMapSource}
                         onClick={transferLocationsMapOnClick}

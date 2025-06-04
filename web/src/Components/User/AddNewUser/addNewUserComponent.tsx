@@ -404,7 +404,7 @@ export const AddNewUserComponent = (props: any) => {
                     placeholder={t('addUser:phoneNo')}
                     international
                     // value={contactNoInput}
-                    defaultCountry="LK"
+                    defaultCountry="NA"
                     countryCallingCodeEditable={false}
                     onChange={(v) => {}}
                     countries={countries}

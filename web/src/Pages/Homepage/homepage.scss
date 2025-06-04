@@ -98,13 +98,11 @@ $title-color: #3a8ab5;
   }
 
   .image-container {
-    background-image:
-      url("../../Assets/Images/homepage_img.png");
-    background-image:
-      image-set(
-        "../../Assets/Images/homepage_img.png" type("image/png"),
-        "../../Assets/Images/homepage_img.webp" type("image/webp")
-      );
+    background-image: url("../../Assets/Images/namibia_home.jpg");
+    background-image: image-set(
+      "../../Assets/Images/namibia_home.jpg" type("image/png"),
+      "../../Assets/Images/namibia_home.webp" type("image/webp")
+    );
     background-size: cover;
     background-position: top !important;
   }
@@ -124,9 +122,9 @@ $title-color: #3a8ab5;
         flex-flow: row;
       }
     }
-    .arrow-ctn{
+    .arrow-ctn {
       display: flex;
-      align-items:center;
+      align-items: center;
       justify-content: center;
     }
     .arrows {
@@ -209,40 +207,40 @@ $title-color: #3a8ab5;
       -webkit-animation-delay: 0s;
     }
 
-.text-ctn {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start; // or "center" if you want horizontal center too
-  height: 75vh; // full viewport height
-  margin-left: 5vw;
-  font-family: variables.$secondary-font-family !important;
-  font-size: 4rem;
-  color: variables.$outside-background-color;
-  line-height: 1.2em;
-  text-transform: uppercase;
-  padding-top: 80px;  
-  @media (max-width: 1800px) {
-    font-size: 3rem;
-  }
+    .text-ctn {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start; // or "center" if you want horizontal center too
+      height: 75vh; // full viewport height
+      margin-left: 5vw;
+      font-family: variables.$secondary-font-family !important;
+      font-size: 4rem;
+      color: variables.$outside-background-color;
+      line-height: 1.2em;
+      text-transform: uppercase;
+      padding-top: 80px;
+      @media (max-width: 1800px) {
+        font-size: 3rem;
+      }
 
-  @media (max-width: 579px) {
-    font-size: 2.2rem;
-    align-items: flex-start;
-  }
+      @media (max-width: 579px) {
+        font-size: 2.2rem;
+        align-items: flex-start;
+      }
 
-  @media (max-width: 427px) {
-    font-size: 2.2rem;
-    align-items: center;
-    text-align: center;
-  }
+      @media (max-width: 427px) {
+        font-size: 2.2rem;
+        align-items: center;
+        text-align: center;
+      }
 
-  @media (max-width: 380px) {
-    font-size: 2rem;
-    align-items: center;
-    text-align: center;
-  }
-}
+      @media (max-width: 380px) {
+        font-size: 2rem;
+        align-items: center;
+        text-align: center;
+      }
+    }
 
     .subhome {
       text-align: left;
@@ -774,81 +772,80 @@ $title-color: #3a8ab5;
     }
   }
 }
-.vision{
+.vision {
   justify-content: center;
 
-.vision-section {
-  background: #f3f4f6;
-  position: relative;
-  margin-top: -8rem;
-  z-index: 10;
-  border-radius: 2rem;
-
-  .vision-container {
-    max-width: 1365px;
-    margin: 0 auto;
-    background: white;
-    padding: 3rem 3rem;
+  .vision-section {
+    background: #f3f4f6;
+    position: relative;
+    margin-top: -8rem;
+    z-index: 10;
     border-radius: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    text-align: center;
 
-    .vision-title {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #16b1ff;
-      margin-bottom: 1rem;
-      text-align: left;
-    }
+    .vision-container {
+      max-width: 1365px;
+      margin: 0 auto;
+      background: white;
+      padding: 3rem 3rem;
+      border-radius: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
 
-    .vision-description {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #1e3a8a;
-      margin: 2rem;
-    }
+      .vision-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #16b1ff;
+        margin-bottom: 1rem;
+        text-align: left;
+      }
 
-    .vision-subtitle {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 2rem;
-      text-align: left;
-    }
+      .vision-description {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #1e3a8a;
+        margin: 2rem;
+      }
 
-    .vision-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 2rem;
+      .vision-subtitle {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 2rem;
+        text-align: left;
+      }
 
-      .vision-card {
-        text-align: center;
+      .vision-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 2rem;
 
-        .vision-icon {
-          font-size: 2.5rem;
-          color: #2563eb;
-          margin-bottom: 0.5rem;
+        .vision-card {
+          text-align: center;
 
-          .vislogo{
-            height: 100px;
+          .vision-icon {
+            font-size: 2.5rem;
+            color: #2563eb;
+            margin-bottom: 0.5rem;
+
+            .vislogo {
+              height: 100px;
+            }
           }
-          
-        }
 
-        .vision-role {
-          font-weight: 700;
-          font-size: 16px;
-          color: #0063AC;
-        }
+          .vision-role {
+            font-weight: 700;
+            font-size: 16px;
+            color: #0063ac;
+          }
 
-        .vision-text {
-          font-size: 0.875rem;
-          color: #0063AC;
+          .vision-text {
+            font-size: 0.875rem;
+            color: #0063ac;
+          }
         }
       }
     }
   }
-}
 }
 .developer-resources-row {
   margin-bottom: 2rem;
@@ -867,10 +864,9 @@ $title-color: #3a8ab5;
   align-items: center;
   justify-content: center;
   text-align: center;
-  
 }
-.connects{
-  color:#6c757d ;
+.connects {
+  color: #6c757d;
 }
 
 .resource-label {
@@ -883,13 +879,13 @@ $title-color: #3a8ab5;
 }
 @media (max-width: 1000px) {
   .developer-resources-row {
-    gap:10px;
+    gap: 10px;
   }
   .resource-item {
     text-align: center;
     justify-content: center;
   }
-  
+
   .Devresources {
     margin-bottom: 0.5rem;
   }
@@ -897,14 +893,14 @@ $title-color: #3a8ab5;
 
 @media (max-width: 767px) {
   .developer-resources-row {
-    gap:1px;
+    gap: 1px;
     justify-content: center;
   }
   .resource-item {
     text-align: center;
     justify-content: center;
   }
-  
+
   .Devresources {
     margin-bottom: 0.5rem;
   }
@@ -915,7 +911,7 @@ $title-color: #3a8ab5;
     padding-left: 15px;
     padding-right: 15px;
   }
-  
+
   .resource-item {
     padding: 0.75rem 0;
     font-size: 0.9rem;

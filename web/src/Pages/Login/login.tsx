@@ -112,7 +112,6 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
               <div className="text-ctn">
                 <span>
                   {t("login:heading1")} <br />
-                  {t("login:heading2")} <br />
                   {t("login:heading3")} <br />
                   {t("login:heading4")} <br />
                 </span>
