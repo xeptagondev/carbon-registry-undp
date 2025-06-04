@@ -353,7 +353,11 @@ export const ProgrammeCreationComponent = (props: any) => {
 
           if (res?.statusText === 'SUCCESS') {
             const data = res?.data?.data;
-
+            const formatScope = (value: string | undefined): string => {
+              if (!value) return '';
+              if (value.toUpperCase() === 'N/A') return 'NA';
+              return INF_SECTORAL_SCOPE[value.toUpperCase()] || value;
+            };
             console.log('-----------view data-----------', data);
             const viewData = {
               ...data,
@@ -361,6 +365,7 @@ export const ProgrammeCreationComponent = (props: any) => {
               optionalDocuments: mapBase64ToFields(data?.additionalDocuments),
               projectLocation: data.geographicalLocationCoordinates,
               startTime: toMoment(data?.startDate),
+              sectoralScope: formatScope(data?.sectoralScope),
             };
             form.setFieldsValue(viewData);
           }
