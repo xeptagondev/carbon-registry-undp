@@ -4,7 +4,10 @@ import "./ReportingComponent.scss";
 import { DatePicker, Empty, Row, Select } from "antd";
 import moment, { Moment } from "moment";
 import ReportCard from "./ReportCard";
-import { getActionsReportColumns, getHoldingsReportColumns } from "./reportingColumns";
+import {
+  getActionsReportColumns,
+  getHoldingsReportColumns,
+} from "./reportingColumns";
 import { FILE_TYPES, REPORT_TYPES } from "./reportTypes";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
 import { API_PATHS } from "../../Config/apiConfig";
@@ -40,7 +43,9 @@ const ReportingComponent = (props: { translator: i18n }) => {
   const [holdingsData, setHoldingsData] = useState<any[]>([]);
 
   const [paginationInfo, setPaginationInfo] = useState<
-    Partial<Record<keyof typeof REPORT_TYPES, { page: number; pageSize: number }>>
+    Partial<
+      Record<keyof typeof REPORT_TYPES, { page: number; pageSize: number }>
+    >
   >({
     [REPORT_TYPES.ACTIONS]: {
       page: 1,
@@ -52,7 +57,11 @@ const ReportingComponent = (props: { translator: i18n }) => {
     },
   });
 
-  const handlePaginationInfoChange = (page: number, pageSize: number, reportType: REPORT_TYPES) => {
+  const handlePaginationInfoChange = (
+    page: number,
+    pageSize: number,
+    reportType: REPORT_TYPES
+  ) => {
     setPaginationInfo((prev) => ({
       ...prev,
       [reportType]: {
@@ -297,16 +306,22 @@ const ReportingComponent = (props: { translator: i18n }) => {
               }));
             }}
             onDeselect={(value) => {
-              setSelectedYearsArr((prev) => [...prev.filter((item) => item !== value)]);
+              setSelectedYearsArr((prev) => [
+                ...prev.filter((item) => item !== value),
+              ]);
               setSelectedReports((prev) => ({
                 ...prev,
                 [value]: false,
               }));
             }}
           >
-            {Object.keys(REPORT_TYPES).map((type: keyof typeof REPORT_TYPES) => (
-              <Select.Option value={type}>{t(`reporting:${String(type)}`)}</Select.Option>
-            ))}
+            {Object.keys(REPORT_TYPES).map(
+              (type: keyof typeof REPORT_TYPES) => (
+                <Select.Option value={type}>
+                  {t(`reporting:${String(type)}`)}
+                </Select.Option>
+              )
+            )}
           </Select>
         </Row>
       </div>
@@ -317,7 +332,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
         <ReportCard
           title={"ACTIONS REPORT"}
           reportType={REPORT_TYPES.ACTIONS}
-          host={"Sri Lanka"}
+          host={import.meta.env.VITE_APP_COUNTRY_NAME || "Namibia"}
           year={String(selectedYear.year())}
           columns={getActionsReportColumns(t)}
           handlePaginationChange={handlePaginationInfoChange}
@@ -337,7 +352,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
         <ReportCard
           title={"HOLDINGS REPORT"}
           reportType={REPORT_TYPES.HOLDINGS}
-          host={"Sri Lanka"}
+          host={import.meta.env.VITE_APP_COUNTRY_NAME || "Namibia"}
           year={String(selectedYear.year())}
           columns={getHoldingsReportColumns(t)}
           handlePaginationChange={handlePaginationInfoChange}
@@ -355,7 +370,9 @@ const ReportingComponent = (props: { translator: i18n }) => {
 
       {!checkIfAnyReportIsSelected() && (
         <div className="no-reports">
-          <Empty description={<span className="description">No report found !</span>} />
+          <Empty
+            description={<span className="description">No report found !</span>}
+          />
         </div>
       )}
     </div>
