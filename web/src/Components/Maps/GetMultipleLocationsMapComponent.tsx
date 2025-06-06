@@ -52,7 +52,7 @@ const GetMultipleLocationsMapComponent = (
     number[]
   >([]);
 
-  const [zoomLevel, setZoomLevel] = useState(5);
+  const [zoomLevel, setZoomLevel] = useState<number>(3);
 
   const updateZoomLevel = (zoom: number) => {
     setZoomLevel(zoom);
@@ -65,7 +65,7 @@ const GetMultipleLocationsMapComponent = (
   useEffect(() => {
     if (!disabled) {
       setProjectLocations([]);
-      updateZoomLevel(4);
+      updateZoomLevel(3);
     }
   }, [disableMultipleLocations]);
 
