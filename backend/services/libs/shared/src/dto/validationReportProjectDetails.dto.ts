@@ -24,7 +24,7 @@ export class ValidationReportProjectDetails {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  @IsPhoneNumber()
+  // @IsPhoneNumber(null) // Nambia Number not supporting
   telephone: string;
 
   @ApiProperty()

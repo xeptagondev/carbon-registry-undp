@@ -87,7 +87,7 @@ export class OrganisationDto {
         c.companyRole
       )
   )
-  @IsPhoneNumber(null)
+  // @IsPhoneNumber(null) // Nambia Number not supporting
   @IsNotEmpty()
   @IsString()
   @ApiPropertyOptional()
@@ -97,7 +97,7 @@ export class OrganisationDto {
   @ApiPropertyOptional()
   @IsNotEmpty()
   @IsOptional()
-  @IsPhoneNumber(null)
+  // @IsPhoneNumber(null) // Nambia Number not supporting
   faxNo: string;
 
   @ValidateIf(

@@ -88,13 +88,13 @@ export class OrganisationUpdateDto {
   )
   @IsString()
   @ApiPropertyOptional()
-  @IsPhoneNumber(null)
+  // @IsPhoneNumber(null) // Nambia Number not supporting
   phoneNo: string;
 
   @IsString()
   @ApiPropertyOptional()
   @IsOptional()
-  @IsPhoneNumber(null)
+  // @IsPhoneNumber(null) // Nambia Number not supporting
   faxNo: string;
 
   @ValidateIf(

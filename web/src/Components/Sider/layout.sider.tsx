@@ -90,7 +90,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
       getItem(t("nav:reports"), "reports", <Icon.ClipboardData />)
     );
   }
-  
+
   if (
     userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
     userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
@@ -178,7 +178,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
                 alt="country flag"
                 src={
                   import.meta.env.VITE_APP_COUNTRY_FLAG_URL ||
-                  "https://carbon-common-dev.s3.amazonaws.com/flag.png"
+                  "https://carbon-common-local.s3.us-east-1.amazonaws.com/namibia-flag-uhd-4k-wallpaper.jpg"
                 }
               />
             </div>

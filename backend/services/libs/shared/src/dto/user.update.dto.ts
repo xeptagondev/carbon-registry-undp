@@ -21,7 +21,7 @@ export class UserUpdateDto {
 
   @IsString()
   @IsOptional()
-  @IsPhoneNumber(null)
+  // @IsPhoneNumber(null) // Nambia Number not supporting
   @ApiPropertyOptional()
   phoneNo: string;
 }
