@@ -146,7 +146,10 @@ import { DocumentStateEnum } from "../../Definitions/Definitions/documentState.e
 import { DocumentEnum } from "../../Definitions/Enums/document.enum";
 import VerificationPhaseForms from "./projectForms/VerificationPhaseForms";
 import VerificationPhaseStatus from "./verificationPhaseStatus/verificationPhaseStatus";
-import { defaultTimeout, defaultTimeoutForInfApprove } from "../../Definitions/Constants/defaultTimeout";
+import {
+  defaultTimeout,
+  defaultTimeoutForInfApprove,
+} from "../../Definitions/Constants/defaultTimeout";
 
 const SLCFProjectDetailsViewComponent = (props: any) => {
   const { onNavigateToProgrammeView, translator } = props;
@@ -423,7 +426,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         data?.geographicalLocationCoordinates &&
         data.geographicalLocationCoordinates.length > 0
       ) {
-        setProjectLocationMapCenter([80.7718, 7.8731]);
+        setProjectLocationMapCenter([16.449244310339168, -23.560784245038803]);
         const tempMapSource: any = [];
         const tempLocationLayer: any = [];
         const tempOutlineLayer: any = [];
@@ -560,7 +563,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         setTimeout(() => {
           getProgrammeById();
           setSlcfActionModalVisible(false);
-        }, defaultTimeout)
+        }, defaultTimeout);
       }
     } catch (error: any) {
       setSlcfActionModalVisible(false);
@@ -661,7 +664,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         duration: 3,
         style: { textAlign: "right", marginRight: 15, marginTop: 10 },
       });
-    } 
+    }
   };
 
   const rejectProposal = async (remark: string) => {
@@ -2164,9 +2167,8 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
         } else if (k === "sectoralScope") {
           generalInfo[text] = t(`projectDetailsView:${v}`);
         } else if (k === "sector") {
-          generalInfo[text] = t(`projectDetailsView:${v}`)
-        }
-        else if (k === "purposeOfCreditDevelopment") {
+          generalInfo[text] = t(`projectDetailsView:${v}`);
+        } else if (k === "purposeOfCreditDevelopment") {
           generalInfo[text] = (
             <Tag color={getCreditTypeTagType(v as CreditTypeSl)}>
               {addSpaces(getCreditTypeName(v as string))}
@@ -2670,7 +2672,7 @@ const SLCFProjectDetailsViewComponent = (props: any) => {
                     <MapComponent
                       mapType={mapType}
                       center={projectLocationMapCenter}
-                      zoom={6}
+                      zoom={3}
                       height={300}
                       style="mapbox://styles/mapbox/light-v11"
                       accessToken={accessToken}
