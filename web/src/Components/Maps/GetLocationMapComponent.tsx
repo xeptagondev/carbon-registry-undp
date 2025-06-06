@@ -57,7 +57,7 @@ const GetLocationMapComponent = (props: CMAMapComponentProps) => {
     number[]
   >([]);
 
-  const [zoomLevel, setZoomLevel] = useState(5);
+  const [zoomLevel, setZoomLevel] = useState<number>(3);
 
   const updateZoomLevel = (zoom: number) => {
     setZoomLevel(zoom);
