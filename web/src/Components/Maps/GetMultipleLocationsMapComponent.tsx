@@ -76,7 +76,9 @@ const GetMultipleLocationsMapComponent = (
   }, [existingCoordinate]);
 
   useEffect(() => {
-    setProjectLocationMapCenter(center ? center : [-22, 17]);
+    setProjectLocationMapCenter(
+      center ? center : [16.449244310339168, -23.560784245038803]
+    );
 
     const tempMapSource: any = [];
     const tempLocationLayer: any = [];

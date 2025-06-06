@@ -35,7 +35,7 @@ export class UserDto {
 
   @IsOptional()
   @IsString()
-  @IsPhoneNumber(null)
+  // @IsPhoneNumber(null) // Nambia Number not supporting
   @ApiPropertyOptional()
   phoneNo: string;
 
