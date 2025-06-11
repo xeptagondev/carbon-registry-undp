@@ -12,7 +12,14 @@ import {
   Upload,
   message,
 } from 'antd';
-import { InfoCircleOutlined, MinusOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  InfoCircleOutlined,
+  MinusOutlined,
+  PlusOutlined,
+  UploadOutlined,
+  FileDoneOutlined,
+  FilePdfOutlined,
+} from '@ant-design/icons';
 import './ProgrammeCreationComponent.scss';
 import moment from 'moment';
 import TextArea from 'antd/lib/input/TextArea';
@@ -36,11 +43,14 @@ import { ROUTES } from '../../Config/uiRoutingConfig';
 import { SectoralScope } from '../../Definitions/Enums/sectoralScope.enum';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 import { ReactComponent as ConfirmSubmitSVG } from '../../Assets/DialogIcons/ConfirmSubmit.svg';
+
 import { DocumentEnum } from '../../Definitions/Enums/document.enum';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { mapBase64ToFields } from '../../Utils/mapBase64ToFields';
 import validator from 'validator';
 import { toMoment } from '../../Utils/convertTime';
+import * as Icon from 'react-bootstrap-icons';
+import { COLOR_CONFIGS } from '../../Config/colorConfigs';
 
 type SizeType = Parameters<typeof Form>[0]['size'];
 
@@ -495,7 +505,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                     <div className="programme-details-form">
                       <ConfirmDialog
                         showDialog={showDialog}
-                        Icon={ConfirmSubmitSVG}
+                        Icon={<FileDoneOutlined />}
                         message={t('addProgramme:confirmModalMessage')}
                         subMessage={t('addProgramme:confirmModalSubMessage')}
                         okText={t('common:yes')}

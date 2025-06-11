@@ -1210,7 +1210,7 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                 </Col>
               </Row>
               <Row justify={'end'} className="step-actions-end">
-                <Button danger onClick={prev} disabled={false}>
+                <Button type="primary" ghost onClick={prev} disabled={false}>
                   {t('monitoringReport:back')}
                 </Button>
                 {disableFields ? (

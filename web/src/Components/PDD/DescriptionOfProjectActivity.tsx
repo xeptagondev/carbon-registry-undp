@@ -1690,7 +1690,7 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
               </Form.Item>
 
               <Row justify={'end'} className="step-actions-end">
-                <Button danger size={'large'} onClick={prev}>
+                <Button type="primary" ghost size={'large'} onClick={prev}>
                   {t('PDD:prev')}
                 </Button>
                 {disableFields ? (
