@@ -203,7 +203,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
             .freezeWith(supplyClient);
 
         const burnSign = await burnTx.sign(
-            PrivateKey.fromStringED25519(supplyKeyStr),
+            PrivateKey.fromStringED25519(treasuryPrivateKeyStr),
         );
 
         const burnSubmit = await burnSign.execute(supplyClient);
