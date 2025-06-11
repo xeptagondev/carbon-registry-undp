@@ -188,6 +188,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
                     `Failed to transfer NFT to treasury: ${transferReceipt.status}`,
                 );
             }
+            console.log('Successfully transfered to treasury account');
         }
 
         const supplyClient = Client.forTestnet().setOperator(
@@ -208,7 +209,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
         const burnSubmit = await burnSign.execute(supplyClient);
         const burnReceipt: TransactionReceipt =
             await burnSubmit.getReceipt(supplyClient);
-
+        console.log('Burn successfull');
         return burnReceipt.status.toString();
     }
 
