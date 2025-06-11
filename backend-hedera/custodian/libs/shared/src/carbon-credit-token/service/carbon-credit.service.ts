@@ -508,7 +508,7 @@ export class CarbonCreditService {
                                 senderAccountId,
                                 senderPrivateKey,
                                 supplyKey,
-                                teasuryAccount,
+                                '0.0.5312292',
                                 this.configService.get(
                                     'guardian.treasuryPrivateKey',
                                 ),
