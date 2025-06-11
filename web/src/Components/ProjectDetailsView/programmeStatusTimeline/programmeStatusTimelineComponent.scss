@@ -1,3 +1,5 @@
+@use "../../../Styles/variables.scss";
+
 .programme-status-timeline {
   .info-view {
     .ant-steps-item-icon {
@@ -16,7 +18,7 @@
     }
 
     .ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
-      color: rgba(93, 195, 128, 1);
+      color: variables.$primary-color;
     }
 
     .ant-steps-item-process
@@ -50,10 +52,8 @@
       color: rgba(0, 0, 0, 0.45);
     }
 
-    
-
     .timeline-description-item-complete {
-      color: #5dc380;
+      color: variables.$primary-color;
       font-weight: 600;
       font-size: 0.75rem;
       margin-left: -2px;
@@ -81,7 +81,7 @@
         stroke: 'black';
         fill: 'none';
       }
-  }
+    }
 
     .timeline-description {
       padding-left: 0 !important;
@@ -98,7 +98,6 @@
       margin-left: -14px;
     }
 
-   
     .timeline-description-pending-true {
       list-style: circle;
     }
@@ -114,13 +113,12 @@
     .timeline-description-approved-true {
       display: flex;
     }
-    
+
     .timeline-description-pending-false,
     .timeline-description-submitted-false,
     .timeline-description--false {
       list-style: circle;
     }
-
 
     .list-style-none {
       padding-left: 0 !important;
@@ -137,7 +135,7 @@
     }
 
     .list-style-next {
-      color: #16B1FF;
+      color: variables.$primary-color;
     }
     // .timeline-description-pending-false::before,
     // .timeline-description-submitted-false::before,
@@ -152,7 +150,6 @@
     //   margin-left: -14px;
     // }
 
-
     .pdd-title {
       line-height: 1.5;
       margin-bottom: 6px;
@@ -165,17 +162,17 @@
         font-size: 0.7rem;
         font-weight: 500;
 
-      //   li {
-      //     list-style: none;
-      //     // font-size: 20px;
-      // }
-      
-      // li:before {
-      //     content:"o";
-      //     font-size:10px;
-      //     vertical-align:middle;
-      //     line-height:20px;
-      // }
+        //   li {
+        //     list-style: none;
+        //     // font-size: 20px;
+        // }
+
+        // li:before {
+        //     content:"o";
+        //     font-size:10px;
+        //     vertical-align:middle;
+        //     line-height:20px;
+        // }
       }
     }
 
@@ -190,12 +187,10 @@
       line-height: 1.8;
     }
 
-   
-
     .inf-submitted-process {
-      background-color: #1890ff;
+      background-color: variables.$primary-color;
       color: #fff;
-      border: 1px solid #1890ff;
+      border: 1px solid variables.$primary-color;
       border-radius: 100%;
       /* margin-right: 10px; */
       font-size: 14px;
@@ -211,9 +206,9 @@
     }
 
     .inf-submitted-process {
-      background-color: #1890ff;
+      background-color: variables.$primary-color;
       color: #fff;
-      border: 1px solid #1890ff;
+      border: 1px solid variables.$primary-color;
       border-radius: 100%;
       /* margin-right: 10px; */
       font-size: 14px;
@@ -236,8 +231,8 @@
 
     .proposal-pending-process {
       background-color: #fff;
-      color: #1890ff;
-      border: 1px solid #1890ff;
+      color: variables.$primary-color;
+      border: 1px solid variables.$primary-color;
       border-radius: 100%;
       /* margin-right: 10px; */
       font-size: 14px;
@@ -248,9 +243,9 @@
     }
 
     .proposal-submitted-process {
-      background-color: #1890ff;
+      background-color: variables.$primary-color;
       color: #fff;
-      border: 1px solid #1890ff;
+      border: 1px solid variables.$primary-color;
       border-radius: 100%;
       /* margin-right: 10px; */
       font-size: 14px;
@@ -278,8 +273,8 @@
 
     .pdd-pending-process {
       background-color: #fff;
-      color: #1890ff;
-      border: 1px solid #1890ff;
+      color: variables.$primary-color;
+      border: 1px solid variables.$primary-color;
       border-radius: 100%;
       /* margin-right: 10px; */
       font-size: 14px;
@@ -290,9 +285,9 @@
     }
 
     .pdd-submitted-process {
-      background-color: #1890ff;
+      background-color: variables.$primary-color;
       color: #fff;
-      border: 1px solid #1890ff;
+      border: 1px solid variables.$primary-color;
       border-radius: 100%;
       /* margin-right: 10px; */
       font-size: 14px;
@@ -320,8 +315,8 @@
 
     .validation-pending-process {
       background-color: #fff;
-      color: #1890ff;
-      border: 1px solid #1890ff;
+      color: variables.$primary-color;
+      border: 1px solid variables.$primary-color;
       border-radius: 100%;
       /* margin-right: 10px; */
       font-size: 14px;
@@ -332,9 +327,9 @@
     }
 
     .validation-submitted-process {
-      background-color: #1890ff;
+      background-color: variables.$primary-color;
       color: #fff;
-      border: 1px solid #1890ff;
+      border: 1px solid variables.$primary-color;
       border-radius: 100%;
       /* margin-right: 10px; */
       font-size: 14px;
@@ -359,7 +354,5 @@
       padding-top: 0px;
       line-height: 1.8;
     }
-
-    
   }
 }
