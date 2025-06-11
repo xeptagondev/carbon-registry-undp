@@ -133,13 +133,13 @@ describe('CarbonCreditGuardianService', () => {
         const treasuryAccountId = senderAccountId;
 
         const retireStatus = await service.retireProjectNFT(
-            tokenId,
-            serialToTransfer.toNumber(),
-            receiverAccountId,
-            receiverPrivateKey,
-            supplyKey,
-            senderAccountId,
-            senderPrivateKey,
+            '0.0.6123296',
+            3,
+            '0.0.6122981',
+            '302e020100300506032b6570042204201da2fc9ff3e6d6e6cc8086db0ee4d57d7094bafba58c7bfc22318a3564d184b6',
+            '302e020100300506032b6570042204201da2fc9ff3e6d6e6cc8086db0ee4d57d7094bafba58c7bfc22318a3564d184b6',
+            '0.0.5312292',
+            '302e020100300506032b657004220420bc377588ed7ba011dc08260a46745a9ffe4530b9a775df70eae881176974dcb7',
         );
         expect(retireStatus).toBeDefined();
         console.log('Retire status:', retireStatus);
