@@ -509,6 +509,9 @@ export class CarbonCreditService {
                                 senderPrivateKey,
                                 supplyKey,
                                 teasuryAccount,
+                                this.configService.get(
+                                    'guardian.treasuryPrivateKey',
+                                ),
                             );
 
                         retirementStatuses.push(status);

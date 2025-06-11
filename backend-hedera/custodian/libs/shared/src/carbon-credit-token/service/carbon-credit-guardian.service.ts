@@ -159,6 +159,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
         userPrivateKeyStr: string,
         supplyKeyStr: string,
         treasuryAccountId: string,
+        treasuryPrivateKeyStr: string,
     ): Promise<string> {
         if (userAccountId !== treasuryAccountId) {
             const userClient = Client.forTestnet().setOperator(
@@ -191,7 +192,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
 
         const supplyClient = Client.forTestnet().setOperator(
             AccountId.fromString(treasuryAccountId),
-            PrivateKey.fromStringED25519(supplyKeyStr),
+            PrivateKey.fromStringED25519(treasuryPrivateKeyStr),
         );
 
         const burnTx = await new TokenBurnTransaction()

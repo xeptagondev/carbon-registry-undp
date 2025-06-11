@@ -61,6 +61,7 @@ export default () => ({
     guardian: {
         hederaNetwork:
             (process.env.HEDERA_NETWORK_TYPE as HederaNetworkType) || 'Testnet',
+        treasuryPrivateKey: process.env.TREASURY_PRIVATE_KEY || '',
         url: process.env.GUARDIAN_URL || 'http://3.93.78.104:3000',
         task: {
             retrycount: parseInt(
