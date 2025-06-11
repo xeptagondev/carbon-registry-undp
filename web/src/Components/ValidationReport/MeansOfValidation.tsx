@@ -3272,7 +3272,7 @@ const MeansOfValidation = (props: ValidationStepsProps) => {
               {/* Clarification Table end */}
 
               <Row justify={'end'} className="step-actions-end mg-bottom-2">
-                <Button danger size={'large'} onClick={prev} disabled={false}>
+                <Button type="primary" ghost size={'large'} onClick={prev} disabled={false}>
                   {t('validationReport:prev')}
                 </Button>
                 {disableFields ? (

@@ -1231,7 +1231,7 @@ const ValidationFindings = (props: ValidationStepsProps) => {
               {/* Global stakeholder consultation end */}
 
               <Row justify={'end'} className="step-actions-end mg-top-2">
-                <Button danger size={'large'} onClick={prev}>
+                <Button type="primary" ghost size={'large'} onClick={prev}>
                   {t('validationReport:prev')}
                 </Button>
                 {disableFields ? (

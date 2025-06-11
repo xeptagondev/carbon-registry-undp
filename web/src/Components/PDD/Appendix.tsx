@@ -1084,7 +1084,7 @@ const Step08 = (props: CustomStepsProps) => {
               <Row justify={'end'} className="step-actions-end">
                 {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
                   <>
-                    <Button danger size={'large'} onClick={prev}>
+                    <Button type="primary" ghost size={'large'} onClick={prev}>
                       {t('PDD:prev')}
                     </Button>
                     <Button type="primary" htmlType="submit">
@@ -1094,7 +1094,7 @@ const Step08 = (props: CustomStepsProps) => {
                 )}
                 {state?.mode === FormMode.VIEW && (
                   <>
-                    <Button danger size={'large'} onClick={prev}>
+                    <Button type="primary" ghost size={'large'} onClick={prev}>
                       {t('PDD:prev')}
                     </Button>
                     <Button type="primary" onClick={next}>
@@ -1108,7 +1108,12 @@ const Step08 = (props: CustomStepsProps) => {
                       <Button size={'large'} onClick={prev} type={'default'}>
                         {t('PDD:prev')}
                       </Button>
-                      <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
+                      <Button
+                        type="primary"
+                        ghost
+                        size={'large'}
+                        onClick={() => setShowDeclineDialog(true)}
+                      >
                         {t('PDD:decline')}
                       </Button>
                       <Button
@@ -1126,7 +1131,12 @@ const Step08 = (props: CustomStepsProps) => {
                       <Button size={'large'} onClick={prev} type={'default'}>
                         {t('PDD:prev')}
                       </Button>
-                      <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
+                      <Button
+                        type="primary"
+                        ghost
+                        size={'large'}
+                        onClick={() => setShowDeclineDialog(true)}
+                      >
                         {t('PDD:reject')}
                       </Button>
                       <Button

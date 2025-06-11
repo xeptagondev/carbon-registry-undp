@@ -1392,7 +1392,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
 
                 {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
                   <>
-                    <Button danger size={'large'} onClick={prev} disabled={false}>
+                    <Button type="primary" ghost size={'large'} onClick={prev} disabled={false}>
                       {t('validationReport:prev')}
                     </Button>
                     <Button type="primary" htmlType="submit" disabled={false}>
@@ -1402,7 +1402,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                 )}
                 {state?.mode === FormMode.VIEW && (
                   <>
-                    <Button danger size={'large'} onClick={prev} disabled={false}>
+                    <Button type="primary" ghost size={'large'} onClick={prev} disabled={false}>
                       {t('validationReport:prev')}
                     </Button>
                     <Button type="primary" onClick={next} disabled={false}>
@@ -1416,7 +1416,8 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                       {t('validationReport:prev')}
                     </Button>
                     <Button
-                      danger
+                      type="primary"
+                      ghost
                       size={'large'}
                       onClick={() => setShowDeclineDialog(true)}
                       disabled={false}

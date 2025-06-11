@@ -302,7 +302,7 @@ export const AnnexureStep = (props: CustomStepsProps) => {
               <Row justify={'end'} className="step-actions-end">
                 {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
                   <>
-                    <Button danger size={'large'} onClick={prev}>
+                    <Button type="primary" ghost size={'large'} onClick={prev}>
                       {t('monitoringReport:prev')}
                     </Button>
                     <Button type="primary" htmlType="submit">
@@ -312,7 +312,7 @@ export const AnnexureStep = (props: CustomStepsProps) => {
                 )}
                 {state?.mode === FormMode.VIEW && (
                   <>
-                    <Button danger size={'large'} onClick={prev}>
+                    <Button type="primary" ghost size={'large'} onClick={prev}>
                       {t('monitoringReport:prev')}
                     </Button>
                     <Button type="primary" onClick={next}>
