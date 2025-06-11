@@ -39,6 +39,9 @@ export class UsersEntity {
     @Column({ name: 'hedera_account_id', nullable: true, unique: true })
     hederaAccount?: string;
 
+    @Column({ name: 'hedera_account_key', nullable: true })
+    hederaAccountKey?: string;
+
     @ManyToOne(
         () => OrganizationEntity,
         (organizationEntity) => organizationEntity.users,

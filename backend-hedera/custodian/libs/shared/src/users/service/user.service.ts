@@ -785,6 +785,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     hederaAccount: userDto.hederaAccount
                         ? userDto.hederaAccount
                         : hederaAccResult?.id,
+                    hederaAccountKey: userDto.hederaKey
+                        ? userDto.hederaKey
+                        : hederaAccResult?.key,
                 },
             );
 
