@@ -1305,7 +1305,7 @@ export const VerificationFindingStep = (props: VerificationStepProps) => {
               {/* Global stakeholder consultation end */}
 
               <Row justify={'end'} className="step-actions-end mg-top-2">
-                <Button danger onClick={prev} disabled={false}>
+                <Button type="primary" ghost onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
                 {disableFields ? (

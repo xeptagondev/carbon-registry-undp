@@ -3226,7 +3226,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                 </Col>
               </Row>
               <Row justify={'end'} className="step-actions-end">
-                <Button danger size={'large'} onClick={prev} disabled={false}>
+                <Button type="primary" ghost size={'large'} onClick={prev} disabled={false}>
                   {t('verificationReport:back')}
                 </Button>
                 {disableFields ? (

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 import sliderLogo from '../../Assets/Images/logo-slider.png';
 import undpLogo from '../../Assets/Images/undp1.webp';
 import EBRD from '../../Assets/Images/EBRD.webp';
@@ -18,17 +20,30 @@ import WBANKff from '../../Assets/Images/WBANK.png';
 import forestfall from '../../Assets/Images/forestnew.png';
 import resources from '../../Assets/Images/resources.webp';
 import resourcesfall from '../../Assets/Images/resources.png';
+import logo_Gold from '../../Assets/Images/logo_Gold.png';
+import { ReactComponent as Government } from '../../Assets/Images/gov.svg';
+import { ReactComponent as Projdev } from '../../Assets/Images/projdev.svg';
+import { ReactComponent as Certifier } from '../../Assets/Images/certif.svg';
+import { ReactComponent as Buyer } from '../../Assets/Images/buyer.svg';
 import LayoutFooter from '../../Components/Footer/layout.footer';
 // import { ImgWithFallback } from '@undp/carbon-library';
 import './homepage.scss';
+import ProcessFlow from '../../Components/Homepage/Howdoesitwork';
+import PartnershipBanner from '../../Components/Homepage/Partners';
+import FAQ from '../../Components/Homepage/Faq';
+// import MapAnimation from '../../Components/Homepage/MapAnimation';
 import { GlobeAmericas, ShieldCheck, CartCheck, Briefcase } from 'react-bootstrap-icons';
 import { ImgWithFallback } from '../../Components/ImgwithFallback/imgWithFallback';
 import CollapsePanel from 'antd/lib/collapse/CollapsePanel';
 import { ROUTES } from '../../Config/uiRoutingConfig';
+import CarbonDashboard from '../../Components/Homepage/CarbonDashboard';
+import DigitalPublicGood from '../../Components/Homepage/DigitalPublic';
+import DemoSite from '../../Components/Homepage/DemoSite';
+import FeatureCards from '../../Components/Homepage/Keyfeatures';
 
 const Homepage = () => {
   const { i18n, t } = useTranslation(['common', 'homepage']);
-  const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
+  const countryName = process.env.REACT_APP_COUNTRY_NAME || 'Gold Standard';
   const navigate = useNavigate();
   const [Visible, setVisible] = useState(true);
 
@@ -43,14 +58,17 @@ const Homepage = () => {
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
   };
-
   const handleClickScroll = () => {
-    const element = document.getElementById('scrollhome');
+    const element = document.getElementById('vision');
     if (element) {
-      // 👇 Will scroll smoothly to the top of the next section
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start', // ensures it scrolls the element to the top of the viewport
+      });
     }
   };
+
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.2 });
 
   useEffect(() => {
     if (localStorage.getItem('i18nextLng')!.length > 2) {
@@ -70,15 +88,15 @@ const Homepage = () => {
               <Col md={18} lg={21} xs={17} flex="auto">
                 <div className="homepage-header-container">
                   <div className="logo">
-                    <img src={sliderLogo} alt="slider-logo" />
+                    <img src={logo_Gold} alt="slider-logo" />
                   </div>
                   <div>
                     <div style={{ display: 'flex' }}>
-                      <div className="title">{'CARBON MARKET DIGITAL PLATFORM'}</div>
+                      <div className="title">{'IMPACT REGISTRY'}</div>
                       {/* <div className="title-sub">{'REGISTRY'}</div> */}
                     </div>
                     <div className="country-name">
-                      {process.env.REACT_APP_COUNTRY_NAME || 'CountryX'}
+                      {process.env.REACT_APP_COUNTRY_NAME || 'Gold Standard'}
                     </div>
                   </div>
                 </div>
@@ -106,7 +124,7 @@ const Homepage = () => {
                 <div className="subhome">{t('homepage:subHeading')}</div>
               </div>
             </Row>
-            <Row>
+            <Row className="arrow-ctn">
               {Visible && (
                 <nav className={'arrows'}>
                   <svg onClick={handleClickScroll}>
@@ -118,6 +136,85 @@ const Homepage = () => {
               )}
             </Row>
           </div>
+        </Col>
+      </Row>
+      <Row className="vision">
+        <Col>
+          <section className="vision-section" ref={ref}>
+            <motion.div
+              className="vision-container"
+              initial={{ opacity: 0, y: 40 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+            >
+              <h2 className="vision-title" id="vision">
+                Mission
+              </h2>
+              <p className="vision-description">
+                Gold Standard’s Mission Is To Accelerate Progress Toward Climate Security And
+                Sustainable Development For All By Catalyzing Finance And Maximizing Its Impact.
+              </p>
+              <h3 className="vision-subtitle">The Platform Supports:</h3>
+
+              <div className="vision-grid">
+                <motion.div
+                  className="vision-card"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                >
+                  <div className="vision-icon">
+                    <Government className="vislogo" />
+                  </div>
+                  <p className="vision-role">Governments</p>
+                  <p className="vision-text">
+                    Launching Carbon Markets Aligned with the Paris Agreement
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  className="vision-card"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                >
+                  <div className="vision-icon">
+                    <Projdev className="vislogo" />
+                  </div>
+                  <p className="vision-role">Project Developers</p>
+                  <p className="vision-text">
+                    Accessing Climate Finance for Emissions-Reducing Projects
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  className="vision-card"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                >
+                  <div className="vision-icon">
+                    <Certifier className="vislogo" />
+                  </div>
+                  <p className="vision-role">Certifiers</p>
+                  <p className="vision-text">Verifying Climate Action Efficiently</p>
+                </motion.div>
+
+                <motion.div
+                  className="vision-card"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 0.8, duration: 0.6 }}
+                >
+                  <div className="vision-icon">
+                    <Buyer className="vislogo" />
+                  </div>
+                  <p className="vision-role">Buyers</p>
+                  <p className="vision-text">Navigating a Trusted Marketplace for Carbon Credits</p>
+                </motion.div>
+              </div>
+            </motion.div>
+          </section>
         </Col>
       </Row>
       {/* <Row gutter={[8, 8]}>
@@ -483,6 +580,36 @@ const Homepage = () => {
           </div>
         </Col>
       </Row> */}
+      <CarbonDashboard />
+      <DigitalPublicGood />
+      <ProcessFlow />
+      <FeatureCards />
+      <FAQ />
+
+      <Row className="developer-resources-row">
+        <Col xs={12} sm={6} md={4} lg={2} xl={2} className="Devresources">
+          <div className="resource-item">
+            <b>Developer Resources:</b>
+          </div>
+        </Col>
+        <Col xs={12} sm={6} md={4} lg={2} xl={2} className="Devresources">
+          <u>
+            <a href="">
+              {' '}
+              <div className="resource-item connects">GitHub site</div>
+            </a>
+          </u>
+        </Col>
+        <Col xs={12} sm={6} md={4} lg={2} xl={2} className="Devresources">
+          <div className="resource-item connects">Guidance to serial number</div>
+        </Col>
+        <Col xs={12} sm={6} md={4} lg={3} xl={3} className="Devresources">
+          <div className="resource-item connects">Guidance for AEF reporting</div>
+        </Col>
+        <Col xs={12} sm={6} md={8} lg={3} xl={3} className="Devresources">
+          <div className="resource-item connects">Cad Trust data model</div>
+        </Col>
+      </Row>
       <LayoutFooter />
     </div>
   );
