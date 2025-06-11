@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Menu, Layout, MenuProps, Col, Row, Tooltip } from 'antd';
-import sliderLogo from '../../Assets/Images/logo-slider.png';
+import logo from '../../Assets/Images/logo_Gold.png';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './layout.sider.scss';
 import * as Icon from 'react-bootstrap-icons';
@@ -194,15 +194,15 @@ const LayoutSider = (props: LayoutSiderProps) => {
           onClick={() => navigate(ROUTES.DASHBOARD, { replace: true })}
         >
           <div className="logo">
-            <img src={sliderLogo} alt="slider-logo" />
+            <img src={logo} alt="slider-logo" />
           </div>
           {!collapsed && (
             <div>
               <div>
-                <div className="title">{collapsed ? '' : 'CARBON MARKET'}</div>
-                <div className="title-sub">{collapsed ? '' : 'DIGITAL PLATFORM'}</div>
+                <div className="title">{collapsed ? '' : 'IMPACT REGISTRY'}</div>
+                {/* <div className="title-sub">{collapsed ? '' : 'DIGITAL PLATFORM'}</div> */}
               </div>
-              <div className="country-name">{process.env.REACT_APP_COUNTRY_NAME || 'CountryX'}</div>
+              {/* <div className="country-name">{process.env.REACT_APP_COUNTRY_NAME || 'CountryX'}</div> */}
             </div>
           )}
           {collapsed && (

@@ -42,8 +42,8 @@ const ConfirmDialog = (props: IConfirmDialog) => {
       className="dialog-box"
       onCancel={closeDialog}
     >
-      <div>
-        <Icon className="icon" />
+      <div className="icon-container">
+        <div className="icon">{Icon}</div>
       </div>
       <h4 className="message">{message}</h4>
       {subMessage && !getRemarks && <p className="subMessage">{subMessage}</p>}

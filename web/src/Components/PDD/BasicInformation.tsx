@@ -211,7 +211,7 @@ const ProjectDetails = (props: CustomStepsProps) => {
               </Row>
               <Row justify={'end'} className="step-actions-end">
                 {/* In this page prev is navigateToDetailPage */}
-                <Button danger size={'large'} onClick={prev}>
+                <Button type="primary" ghost size={'large'} onClick={prev}>
                   {t('PDD:cancel')}
                 </Button>
                 {disableFields ? (
