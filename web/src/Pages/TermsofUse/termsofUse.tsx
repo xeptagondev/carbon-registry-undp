@@ -1101,7 +1101,8 @@ const TermsOfUse = () => {
               <br /> City, Region
               <br /> Country
               <br /> Phone: +1-123-456-7890
-              <br /> address@CountryX.org
+              <br />
+              {import.meta.env.VITE_APP_CONTACT_EMAIL || "address@CountryX.org"}
               <br /> These terms of use were created using Termly's{" "}
               <a
                 target="_blank"

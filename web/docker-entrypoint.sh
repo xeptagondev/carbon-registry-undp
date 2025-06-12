@@ -48,10 +48,12 @@ VITE_APP_BACKEND=$(env | grep VITE_APP_BACKEND= | cut -d'=' -f2-)
 VITE_APP_COUNTRY_NAME=$(env | grep VITE_APP_COUNTRY_NAME= | cut -d'=' -f2-)
 VITE_APP_REGISTRY_NAME=$(env | grep VITE_APP_REGISTRY_NAME= | cut -d'=' -f2-)
 VITE_APP_MAXIMUM_FILE_SIZE=$(env | grep VITE_APP_MAXIMUM_FILE_SIZE= | cut -d'=' -f2-)
+VITE_APP_CONTACT_EMAIL=$(env | grep VITE_APP_CONTACT_EMAIL= | cut -d'=' -f2-)
 echo "VITE_APP_BACKEND value: $VITE_APP_BACKEND"
 echo "VITE_APP_COUNTRY_NAME value: $VITE_APP_COUNTRY_NAME"
 echo "VITE_APP_REGISTRY_NAME value: $VITE_APP_REGISTRY_NAME"
 echo "VITE_APP_MAXIMUM_FILE_SIZE value: $VITE_APP_MAXIMUM_FILE_SIZE"
+echo "VITE_APP_CONTACT_EMAIL value: $VITE_APP_CONTACT_EMAIL"
 
 if [ -n "$VITE_APP_BACKEND" ]; then
     sed -i "s|http://localhost:3000|$VITE_APP_BACKEND|g" /usr/share/nginx/html/assets/*.js
@@ -75,6 +77,12 @@ if [ -n "$VITE_APP_MAXIMUM_FILE_SIZE" ]; then
     sed -i "s|5242880|$VITE_APP_MAXIMUM_FILE_SIZE|g" /usr/share/nginx/html/assets/*.js
 else
     echo "VITE_APP_MAXIMUM_FILE_SIZE environment variable not found."
+fi
+
+if [ -n "$VITE_APP_CONTACT_EMAIL" ]; then
+    sed -i "s|address@CountryX.org|$VITE_APP_CONTACT_EMAIL|g" /usr/share/nginx/html/assets/*.js
+else
+    echo "VITE_APP_CONTACT_EMAIL environment variable not found."
 fi
 
 echo "Enviroment Variable Injection Complete."
