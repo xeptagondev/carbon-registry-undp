@@ -1,3 +1,5 @@
+@use "../../../Styles/variables.scss";
+
 .verification-phase-section {
   height: 100%;
 }
@@ -22,7 +24,7 @@
   align-self: stretch;
 
   .list {
-    margin-left: -20px;
+    margin-left: 20px;
   }
 
   .style-disk {
@@ -42,7 +44,7 @@
   }
 
   .verified-icon {
-    color: #5dc380;
+    color: variables.$primary-color;
     font-weight: 600;
     font-size: 0.75rem;
     margin-left: -14px;
@@ -58,6 +60,6 @@
   }
 
   .next {
-    color: #16b1ff;
+    color: variables.$primary-color;
   }
 }
