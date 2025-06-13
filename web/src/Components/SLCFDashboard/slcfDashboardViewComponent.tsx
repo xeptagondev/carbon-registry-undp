@@ -967,7 +967,7 @@ export const SLCFDashboardComponent = (props: any) => {
     getCreditSummary(isMine, startTime, endTime, sector);
     getCreditsSummaryByDate(isMine, startTime, endTime, sector);
   }, [overallMineButton, startTime, endTime, sector]);
-
+  const isAdminOrRoot = userInfoState?.userRole === 'Admin' || userInfoState?.userRole === 'Root';
   //MARK: HTML
   return (
     <div className="slcf-dashboard-main-container">
@@ -1030,12 +1030,14 @@ export const SLCFDashboardComponent = (props: any) => {
               className="statistic-card-col retirements-by-date-chart-col"
               style={{ width: '100%' }}
             >
-              <PendingActionsComponent
-                pendingActionData={pendingActions}
-                loading={loadingPendingActions}
-                toolTipText={t('pendingTaskTooltip')}
-                t={t}
-              />
+              {isAdminOrRoot && (
+                <PendingActionsComponent
+                  pendingActionData={pendingActions}
+                  loading={loadingPendingActions}
+                  toolTipText={t('pendingTaskTooltip')}
+                  t={t}
+                />
+              )}
             </Col>
           </Row>
         </div>

@@ -92,10 +92,21 @@ export const ApplicationOfMaterialityStep = (props: VerificationStepProps) => {
                               </Col>
                             </Row>
                             <Row>
-                              <Col xl={8} className="assesment-col-subCols-first">
+                              <Col
+                                xl={8}
+                                className="assesment-col-subCols-first"
+                                style={{
+                                  paddingTop: '12px',
+                                  minHeight: '70px',
+                                }}
+                              >
                                 Risk Level
                               </Col>
-                              <Col xl={16} className="assesment-col-subCols-last">
+                              <Col
+                                xl={16}
+                                className="assesment-col-subCols-last"
+                                style={{ paddingTop: '12px', minHeight: '70px' }}
+                              >
                                 Justification
                               </Col>
                             </Row>
