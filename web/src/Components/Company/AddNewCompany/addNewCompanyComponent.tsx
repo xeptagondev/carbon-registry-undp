@@ -867,7 +867,7 @@ export const AddNewCompanyComponent = (props: any) => {
                             <Tooltip placement="top" title={t('addCompany:doeToolTip')}>
                               <Radio.Button className="certifier" value="IC">
                                 <SafetyOutlined className="role-icons" />
-                                {t('addCompany:ic')}
+                                {t('addCompany:IC')}
                               </Radio.Button>
                             </Tooltip>
                           </div>
@@ -890,7 +890,7 @@ export const AddNewCompanyComponent = (props: any) => {
                             >
                               <Radio.Button className="dev" value="PD">
                                 <ExperimentOutlined className="role-icons" />
-                                {t('addCompany:ProgrammeDeveloper')}
+                                {t('addCompany:PD')}
                               </Radio.Button>
                             </Tooltip>
                           </div>
