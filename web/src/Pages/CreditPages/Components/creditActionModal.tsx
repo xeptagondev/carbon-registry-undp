@@ -25,6 +25,7 @@ import {
 } from '../Enums/creditRetirementProceedType.enum';
 import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
 import { COLOR_CONFIGS } from '../../../Config/colorConfigs';
+import { CreditEventStatusEnum } from '../Enums/creditEventEnum';
 
 interface CreditActionModalProps {
   icon?: any;
@@ -221,6 +222,7 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
       }
 
       form.setFieldsValue({
+        from: data?.senderName,
         project: data?.projectName,
         retirementType: retirementTypeRef,
         comment: '',
@@ -264,13 +266,13 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
           >
             <Row>
               <Col span={24}>
-                <Form.Item
-                  className="credit-action-project-name"
-                  label={t('project')}
-                  name="project"
-                >
-                  <Input placeholder={data.projectName} disabled />
-                </Form.Item>
+                {type === CreditActionType.RETIREMENT &&
+                  'status' in data &&
+                  data.status === CreditEventStatusEnum.PENDING && (
+                    <Form.Item className="credit-action-project-name" label={t('From')} name="From">
+                      <Input placeholder={data.senderName} disabled />
+                    </Form.Item>
+                  )}
               </Col>
             </Row>
 
@@ -385,6 +387,19 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                         />
                       )}
                     </Form.Item>
+                    <Row>
+                      <Col span={24}>
+                        {type === CreditActionType.RETIREMENT && (
+                          <Form.Item
+                            className="credit-action-project-name"
+                            label={t('From')}
+                            name="From"
+                          >
+                            <Input placeholder={data.senderName} disabled />
+                          </Form.Item>
+                        )}
+                      </Col>
+                    </Row>
                     <Form.Item
                       className="credit-action-organization-name"
                       label={t('organizationName')}
