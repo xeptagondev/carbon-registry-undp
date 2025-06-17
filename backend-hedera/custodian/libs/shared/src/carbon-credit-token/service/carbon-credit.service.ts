@@ -882,6 +882,7 @@ export class CarbonCreditService {
             .leftJoinAndSelect('creditTx.sender', 'sender')
             .leftJoinAndSelect('creditTx.receiver', 'receiver')
             .leftJoinAndSelect('creditTx.country', 'country')
+            .leftJoinAndSelect('creditTx.organizationName', 'organizationName')
             .select([
                 'creditTx.id as id',
                 'creditTx.serialNumber as "serialNumber"',
@@ -889,6 +890,7 @@ export class CarbonCreditService {
                 'creditTx.createdDate as "createdDate"',
                 'creditTx.retirementType as "retirementType"',
                 'creditTx.status as status',
+                'creditTx.organizationName as organizationName',
                 'country.name as "countryName"',
                 'project.id as "projectId"',
                 'project.title as "projectName"',
