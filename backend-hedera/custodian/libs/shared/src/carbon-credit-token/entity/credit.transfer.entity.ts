@@ -76,6 +76,9 @@ export class CreditTransactionsEntity {
     @Column({ nullable: true, type: 'bigint' })
     updatedDate?: number;
 
+    @Column({ type: 'text', nullable: true })
+    organizationName?: string;
+
     @BeforeInsert()
     generateRefId() {
         if (!this.createdDate) {

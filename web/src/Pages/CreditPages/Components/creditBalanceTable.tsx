@@ -410,8 +410,13 @@ export const CreditBalanceTableComponent = (props: any) => {
           blockId: blockId,
           remarks: remark,
           retirementType: retirementType,
-          country: reciveParty,
-          amount: creditAmount,
+          ...(retirementType === CreditRetirementTypeEmnum.CROSS_BORDER_TRANSACTIONS
+            ? {
+                country: reciveParty.country,
+                organizationName: reciveParty.organization,
+              }
+            : {}),
+          amount: Number(creditAmount),
         });
       }
       if (response.status === HttpStatusCode.Created) {

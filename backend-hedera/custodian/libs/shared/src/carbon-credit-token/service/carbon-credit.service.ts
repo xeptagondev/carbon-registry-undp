@@ -1416,9 +1416,11 @@ export class CarbonCreditService {
                 retirementType: retireRequest.retirementType,
                 status: CreditEventStatusEnum.PENDING,
                 country: retireRequest.country,
+                organizationName: retireRequest.organizationName,
             });
-
+            console.log('Organization', retireRequest.organizationName);
             await queryRunner.manager.save(creditTransaction);
+            console.log('crediTransaction :', creditTransaction);
 
             const log = new AuditEntity();
             log.projectId = project.refId;
