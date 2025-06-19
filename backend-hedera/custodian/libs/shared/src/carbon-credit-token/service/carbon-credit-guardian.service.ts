@@ -159,6 +159,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
         userPrivateKeyStr: string,
         supplyKeyStr: string,
         treasuryAccountId: string,
+        treasuryPrivateKeyStr: string,
     ): Promise<string> {
         if (userAccountId !== treasuryAccountId) {
             const userClient = Client.forTestnet().setOperator(
@@ -187,11 +188,12 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
                     `Failed to transfer NFT to treasury: ${transferReceipt.status}`,
                 );
             }
+            console.log('Successfully transfered to treasury account');
         }
 
         const supplyClient = Client.forTestnet().setOperator(
             AccountId.fromString(treasuryAccountId),
-            PrivateKey.fromStringED25519(supplyKeyStr),
+            PrivateKey.fromStringED25519(treasuryPrivateKeyStr),
         );
 
         const burnTx = await new TokenBurnTransaction()
@@ -207,7 +209,7 @@ export class CarbonCreditGuardianService implements OnModuleDestroy {
         const burnSubmit = await burnSign.execute(supplyClient);
         const burnReceipt: TransactionReceipt =
             await burnSubmit.getReceipt(supplyClient);
-
+        console.log('Burn successfull');
         return burnReceipt.status.toString();
     }
 

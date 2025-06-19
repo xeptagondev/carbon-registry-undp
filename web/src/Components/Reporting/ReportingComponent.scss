@@ -31,16 +31,16 @@
         padding: 10px;
 
         .ant-select-selection-item {
-          background-color: color.scale($color: variables.$primary-color, $lightness: 85%);
+          background-color: color.scale($color: variables.$primary-color, $lightness: 92%);
 
-          color: color.scale($color: variables.$primary-color, $lightness: 10%);
+          color: color.scale($color: variables.$primary-color, $lightness: 4%);
           padding: 0px 16px;
           border-radius: 6px;
           border-width: 0px;
           margin: 0px 6px;
 
           .anticon {
-            color: color.scale(variables.$primary-color, $lightness: 10%);
+            color: color.scale(variables.$primary-color, $lightness: 4%);
           }
         }
       }

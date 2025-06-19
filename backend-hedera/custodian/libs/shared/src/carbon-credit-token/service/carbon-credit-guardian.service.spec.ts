@@ -111,8 +111,6 @@ describe('CarbonCreditGuardianService', () => {
         const serialToTransfer = mintedSerials[0];
         console.log('Minted NFT serial:', serialToTransfer.toNumber());
 
-        // Associate the receiver's account with the token.
-        // This step ensures the receiver can receive the NFT.
         await service.associateNFTToUser(
             tokenId,
             receiverAccountId,
@@ -130,5 +128,20 @@ describe('CarbonCreditGuardianService', () => {
         );
         expect(transferStatus).toBeDefined();
         console.log('Transfer status:', transferStatus);
+
+        const supplyKey = senderPrivateKey;
+        const treasuryAccountId = senderAccountId;
+
+        const retireStatus = await service.retireProjectNFT(
+            '0.0.6123296',
+            3,
+            '0.0.6122981',
+            '302e020100300506032b6570042204201da2fc9ff3e6d6e6cc8086db0ee4d57d7094bafba58c7bfc22318a3564d184b6',
+            '302e020100300506032b6570042204201da2fc9ff3e6d6e6cc8086db0ee4d57d7094bafba58c7bfc22318a3564d184b6',
+            '0.0.5312292',
+            '302e020100300506032b657004220420bc377588ed7ba011dc08260a46745a9ffe4530b9a775df70eae881176974dcb7',
+        );
+        expect(retireStatus).toBeDefined();
+        console.log('Retire status:', retireStatus);
     }, 30000);
 });

@@ -763,6 +763,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDto,
                     accGenTaskId,
                 );
+                console.log(hederaAccResult);
                 if (!hederaAccResult) {
                     throw new HttpException(
                         'Hedera Account Generation Failed',
@@ -784,6 +785,9 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     hederaAccount: userDto.hederaAccount
                         ? userDto.hederaAccount
                         : hederaAccResult?.id,
+                    hederaAccountKey: userDto.hederaKey
+                        ? userDto.hederaKey
+                        : hederaAccResult?.key,
                 },
             );
 

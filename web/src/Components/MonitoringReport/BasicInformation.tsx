@@ -503,7 +503,7 @@ export const BasicInformationStep = (props: CustomStepsProps) => {
                 </Col>
               </Row>
               <Row justify={'end'} className="step-actions-end">
-                <Button onClick={prev} disabled={false} danger>
+                <Button onClick={prev} disabled={false} type="primary" ghost>
                   {t('monitoringReport:back')}
                 </Button>
                 {disableFields ? (
