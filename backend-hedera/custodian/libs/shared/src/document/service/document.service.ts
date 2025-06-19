@@ -280,6 +280,7 @@ export abstract class DocumentService {
             .andWhere('role.name IN (:...roles)', {
                 roles: [RoleEnum.Admin, RoleEnum.Root],
             })
+            .andWhere('users.isActive = :isActive', { isActive: true })
             .getMany();
 
         return dnaAdmins;
@@ -298,6 +299,7 @@ export abstract class DocumentService {
             .andWhere('role.name = :roleName', {
                 roleName: RoleEnum.Admin,
             })
+            .andWhere('users.isActive = :isActive', { isActive: true })
             .getMany();
 
         const assigneeEmails: string[] = [];
@@ -367,6 +369,7 @@ export abstract class DocumentService {
             .innerJoinAndSelect('guardianRole.role', 'role')
             .where('organization.id = :id', { id: project?.organization.id })
             .andWhere('role.name = :roleName', { roleName: RoleEnum.Admin })
+            .andWhere('users.isActive = :isActive', { isActive: true })
             .getMany();
 
         const orgAdminEmails = orgAdminUsers.map((user) => user.email);

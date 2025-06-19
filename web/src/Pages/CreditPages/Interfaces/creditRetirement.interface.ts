@@ -11,4 +11,5 @@ export interface CreditRetirementInterface {
   senderId: number;
   senderName: string;
   senderLogo: string;
+  organizationName: string;
 }
