@@ -1,42 +1,56 @@
-@import './variables.scss';
+@use './variables.scss';
+@use 'sass:color';
 
 body {
-  background-color: $background-color;
-  font-family: $primary-font-family;
+  background-color: variables.$background-color;
+  font-family: variables.$primary-font-family;
   font-weight: 400;
 }
 
+// ::selection {
+//   background: none;
+//   color: #fff;
+// }
+
 .title-container .main {
-  color: $primary-color !important;
+  color: variables.$primary-color !important;
 }
 
 .ant-menu {
-  background-color: $background-color;
+  background-color: variables.$background-color;
+}
+
+.ant-menu-light .ant-menu-submenu-title:hover {
+  color: variables.$primary-color;
 }
 
 .ant-layout-header {
-  background-color: $background-color;
+  background-color: variables.$background-color;
 }
 
 .ant-layout {
-  background-color: $background-color;
+  background-color: variables.$background-color;
 }
 
 .ant-menu-submenu {
   .ant-menu {
-    background-color: $background-color;
+    background-color: variables.$background-color;
   }
 }
 .ant-menu-item {
-  background-color: $background-color;
+  background-color: variables.$background-color;
+
+  a:hover {
+    color: variables.$primary-color;
+  }
 }
 
 .ant-menu-sub {
-  background-color: $background-color;
+  background-color: variables.$background-color;
 }
 
 .ant-table-content {
-  font-family: $primary-font-family;
+  font-family: variables.$primary-font-family;
 }
 
 .ant-input {
@@ -65,11 +79,11 @@ body {
 
 .ant-tooltip-inner {
   border-radius: 5px !important;
-  background-color: #16b1ff !important;
+  background-color: variables.$primary-color !important;
 }
 
 .ant-tooltip-arrow-content {
-  --antd-arrow-background-color: linear-gradient(to right bottom, #16b1ff, #16b1ff) !important;
+  --antd-arrow-background-color: variables.$primary-color !important;
 }
 
 .ant-radio-group {
@@ -83,7 +97,7 @@ body {
 .yes-no-radio-container,
 .radio-container {
   .ant-radio-button-checked {
-    background: $primary-color !important;
+    background: variables.$primary-color !important;
     color: #ffffff;
   }
 }
@@ -96,8 +110,8 @@ body {
 }
 
 .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-  color: $dark-text-color !important;
-  border-color: $primary-color !important;
+  color: variables.$dark-text-color !important;
+  border-color: variables.$primary-color !important;
   box-shadow: none;
 }
 
@@ -113,11 +127,11 @@ body {
   .mrv-total-programme-details
   .details
   .value {
-  color: $primary-purple !important;
+  color: variables.$primary-purple !important;
 }
 .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-tail::after,
 .ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-tail::after {
-  background-color: $primary-color !important;
+  background-color: variables.$primary-color !important;
   width: 1.7px !important;
 }
 
@@ -127,19 +141,74 @@ body {
   border-radius: 5px !important;
 }
 
+.ant-steps-icon .ant-steps-icon-dot {
+  background: variables.$primary-color !important;
+}
+
 .ant-upload-list-picture .ant-upload-list-item-error,
 .ant-upload-list-picture-card .ant-upload-list-item-error {
-  border-color: #40a9ff;
+  border-color: variables.$primary-color;
   border-radius: 5px;
   height: 40px;
 
   .ant-upload-list-item-name {
-    color: #40a9ff !important;
+    color: variables.$primary-color !important;
   }
 }
 
 .ant-upload-list-item-error .ant-upload-list-item-card-actions .anticon {
-  color: #40a9ff;
+  color: variables.$primary-color;
+}
+
+.ant-btn-primary:not(.ant-btn-background-ghost) {
+  background: variables.$primary-color;
+  color: variables.$dark-text-color;
+  border: none;
+
+  &:hover {
+    background: color.scale(variables.$primary-color, $lightness: 5%) !important;
+  }
+}
+
+.ant-btn-background-ghost {
+  background: none;
+  color: variables.$primary-color !important;
+  border-color: variables.$primary-color !important;
+
+  .ant-btn-primary:hover {
+    background: color.scale(variables.$primary-color, $lightness: 5%) !important;
+    border-color: variables.$primary-color !important;
+  }
+}
+
+.ant-picker:hover {
+  border-color: variables.$primary-color !important;
+  outline-color: variables.$primary-color !important;
+}
+
+.ant-picker-focussed {
+  border-color: variables.$primary-color !important;
+  outline-color: variables.$primary-color !important;
+}
+.ant-picker:focus {
+  border-color: variables.$primary-color !important;
+}
+
+.ant-input:hover {
+  border-color: variables.$primary-color !important;
+}
+
+.ant-input-number:hover,
+.ant-input-number:focus {
+  border-color: variables.$primary-color !important;
+}
+
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: variables.$primary-color !important;
+}
+
+.ant-input:focus {
+  border-color: variables.$primary-color !important;
 }
 
 // .ant-input-status-error:not(.ant-input-disabled):not(.ant-input-borderless).ant-input,
@@ -153,7 +222,7 @@ body {
 
 .ant-form-item-explain-error {
   font-size: 13px;
-  color: $error-color;
+  color: variables.$error-color;
 }
 
 .ant-table-thead
@@ -170,7 +239,7 @@ body {
 .ant-form-item-label
   > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
   margin-left: 0.2rem !important;
-  color: $error-color !important;
+  color: variables.$error-color !important;
 }
 
 .ant-picker {
@@ -195,7 +264,7 @@ body {
 }
 
 .filter-title {
-  color: $common-filter-color;
+  color: variables.$common-filter-color;
   font-family: 'Inter';
   font-style: normal;
   font-weight: 600;
@@ -208,11 +277,11 @@ body {
   font-weight: 400;
   font-size: 0.875rem;
   line-height: 22px;
-  color: $common-filter-color;
+  color: variables.$common-filter-color;
 }
 
 .ant-list-item {
-  color: $common-filter-color;
+  color: variables.$common-filter-color;
 }
 
 .PhoneInput {
@@ -222,25 +291,25 @@ body {
     min-width: 0;
     border-radius: 5px !important;
     height: 40px;
-    border-right: 1px solid #40a9ff !important;
-    outline: 1px solid #40a9ff;
+    border-right: 1px solid variables.$primary-color !important;
+    outline: 1px solid variables.$primary-color;
   }
 }
 .company-details-form {
   .ant-btn-primary {
-    background-color: $primary-color !important;
-    color: $dark-text-color;
+    background-color: variables.$primary-color !important;
+    color: variables.$dark-text-color;
     border: none;
   }
 }
 
 .layout-content-container {
   padding-bottom: 100px;
-  .ant-btn-primary {
-    background-color: $primary-color !important;
-    color: $dark-text-color;
-    border: none;
-  }
+  // .ant-btn-primary {
+  //   background-color: variables.$primary-color !important;
+  //   color: variables.$dark-text-color;
+  //   border: none;
+  // }
 
   .ant-btn {
     height: 32px;
@@ -263,20 +332,20 @@ body {
     padding: 0px 0px 30px 0px;
   }
   .body-title {
-    color: $primary-color;
+    color: variables.$primary-color;
     font-weight: 500;
     font-size: 1.2rem;
   }
 
   .body-sub-title {
-    color: $body-text-color;
+    color: variables.$body-text-color;
     font-weight: 400;
     font-size: 0.8rem;
   }
 }
 
 .content-card {
-  background-color: $outside-background-color;
+  background-color: variables.$outside-background-color;
   border-radius: 10px;
   width: 100%;
   .action-bar {
@@ -333,7 +402,7 @@ body {
 
 .action-menu {
   min-width: 120px;
-  color: $body-text-color;
+  color: variables.$body-text-color;
 
   .action-icon {
     margin-right: 12px;
@@ -395,11 +464,11 @@ body {
 }
 
 .apexcharts-canvas {
-  font-family: $primary-font-family !important;
+  font-family: variables.$primary-font-family !important;
 }
 
 .apexcharts-legend-text {
-  font-family: $primary-font-family !important;
+  font-family: variables.$primary-font-family !important;
 }
 
 .ant-tag {
@@ -437,7 +506,7 @@ body {
 
 .ant-modal-body {
   text-align: center;
-  color: $body-text-color;
+  color: variables.$body-text-color;
   font-size: 0.8rem;
 
   .ant-select-selector {
@@ -450,7 +519,7 @@ body {
     text-align: left;
 
     .req-ast {
-      color: $error-color;
+      color: variables.$error-color;
       padding-left: 5px;
     }
   }
@@ -469,9 +538,9 @@ body {
 
 .popup-header {
   text-align: center;
-  color: $title-text-color;
+  color: variables.$title-text-color;
   font-weight: 600;
-  font-family: $primary-font-family;
+  font-family: variables.$primary-font-family;
   font-size: 0.9rem;
   margin: 25px 20px -20px 20px;
 
@@ -488,18 +557,18 @@ body {
 
 .popup-success {
   .icon {
-    color: $success-color;
+    color: variables.$success-color;
   }
 
   .ant-btn-primary {
-    background: $primary-color;
-    border-radius: $primary-color;
+    background: variables.$primary-color;
+    border-radius: variables.$primary-color;
     border: none;
   }
 
   .ant-btn-default {
-    color: $body-text-color;
-    border-color: $body-text-color;
+    color: variables.$body-text-color;
+    border-color: variables.$body-text-color;
   }
 
   .ant-btn-primary[disabled] {
@@ -510,18 +579,18 @@ body {
 
 .popup-primary {
   .icon {
-    color: $primary-color;
+    color: variables.$primary-color;
   }
 
   .ant-btn-primary {
-    background: $primary-color;
-    border-radius: $primary-color;
+    background: variables.$primary-color;
+    border-radius: variables.$primary-color;
     border: none;
   }
 
   .ant-btn-default {
-    color: $body-text-color;
-    border-color: $body-text-color;
+    color: variables.$body-text-color;
+    border-color: variables.$body-text-color;
   }
 
   .ant-btn-primary[disabled] {
@@ -532,12 +601,12 @@ body {
 
 .popup-danger {
   .icon {
-    color: $error-color;
+    color: variables.$error-color;
   }
 
   .ant-btn-primary {
-    background: $error-color;
-    border-radius: $error-color;
+    background: variables.$error-color;
+    border-radius: variables.$error-color;
     border: none;
   }
 
@@ -547,8 +616,8 @@ body {
   }
 
   .ant-btn-default {
-    color: $body-text-color;
-    border-color: $body-text-color;
+    color: variables.$body-text-color;
+    border-color: variables.$body-text-color;
   }
 }
 
@@ -561,13 +630,13 @@ body {
   }
 
   .ant-btn-default {
-    color: $border-default-btn !important;
-    border-color: $border-default-btn !important;
+    color: variables.$border-default-btn !important;
+    border-color: variables.$border-default-btn !important;
   }
 }
 
 .ant-tag-processing {
-  color: $primary-color;
+  color: variables.$primary-color;
   background: rgba($color: #b9e2f4, $alpha: 0.4);
 }
 
@@ -635,18 +704,18 @@ body {
   .label {
     text-align: left;
     font-size: 0.9rem;
-    color: $body-text-color;
+    color: variables.$body-text-color;
   }
   .seperator {
     font-size: 1.2rem;
-    color: $line-colors;
+    color: variables.$line-colors;
   }
 
   .footer {
     margin-bottom: 0px;
     margin-top: 15px;
   }
-  color: $body-text-color;
+  color: variables.$body-text-color;
 
   label {
     font-size: 0.8rem;
@@ -656,7 +725,7 @@ body {
   }
 
   input {
-    color: $body-text-color;
+    color: variables.$body-text-color;
   }
 
   button {
@@ -666,11 +735,11 @@ body {
 }
 
 .color-error {
-  color: $error-color;
+  color: variables.$error-color;
 }
 
 .color-primary {
-  color: $primary-color;
+  color: variables.$primary-color;
 }
 
 .ant-input-number-input {
@@ -741,8 +810,8 @@ body {
   }
 
   .ant-message-error {
-    color: $error-color;
-    border: 1px solid $error-color;
+    color: variables.$error-color;
+    border: 1px solid variables.$error-color;
   }
 
   .ant-message-success {
@@ -752,7 +821,7 @@ body {
 }
 
 .ant-select-selection-item {
-  color: $body-text-color;
+  color: variables.$body-text-color;
 }
 
 .sub-text {
@@ -800,11 +869,11 @@ body {
 }
 
 .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
-  color: $primary-color;
+  color: variables.$primary-color;
 }
 
 .ant-tabs-tab:hover {
-  color: $primary-color;
+  color: variables.$primary-color;
 }
 
 .btnAddNewMainAct {
@@ -814,7 +883,7 @@ body {
   border-radius: 10px;
   border: 1px solid rgba(58, 53, 65, 0.5);
   background: #fff;
-  color: $primary-color;
+  color: variables.$primary-color;
   text-align: center;
   font-family: Inter;
   font-size: 16px;
@@ -831,7 +900,7 @@ body {
 }
 
 .ant-tabs-ink-bar {
-  background: $primary-color;
+  background: variables.$primary-color;
 }
 
 .programme-details-form-container
@@ -841,7 +910,7 @@ body {
   .included-val
   .yes-no-radio-container
   .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-  border-color: $primary-color !important;
+  border-color: variables.$primary-color !important;
 }
 
 .download-data-btn {

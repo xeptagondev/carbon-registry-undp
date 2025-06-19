@@ -507,8 +507,13 @@ export class CarbonCreditService {
                                 serial,
                                 senderAccountId,
                                 senderPrivateKey,
-                                supplyKey,
-                                teasuryAccount,
+                                this.configService.get(
+                                    'guardian.treasuryPrivateKey',
+                                ),
+                                '0.0.5312292',
+                                this.configService.get(
+                                    'guardian.treasuryPrivateKey',
+                                ),
                             );
 
                         retirementStatuses.push(status);

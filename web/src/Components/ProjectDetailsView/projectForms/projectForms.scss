@@ -1,4 +1,4 @@
-@import '../../../Styles/variables.scss';
+@use '../../../Styles/variables.scss';
 
 .projectDocuments {
   .title-icon {
@@ -6,7 +6,7 @@
   }
 
   .title-text {
-    color: $title-text-color;
+    color: variables.$title-text-color;
     font-weight: 600;
   }
 
@@ -33,7 +33,7 @@
   }
 
   .title-text {
-    color: $title-text-color;
+    color: variables.$title-text-color;
     font-weight: 600;
     margin-top: -2px;
   }
@@ -89,7 +89,7 @@
     color: white;
     padding: 0.13rem 0.23rem 0rem 0.23rem;
     border-radius: 100%;
-    background-color: #5dc380;
+    background-color: variables.$primary-color;
   }
   .step-icon-pending {
     font-size: 14px;
@@ -123,7 +123,7 @@
   }
 
   .title-text {
-    color: $title-text-color;
+    color: variables.$title-text-color;
     font-weight: 600;
   }
 
@@ -132,7 +132,7 @@
   }
 
   .field-key {
-    color: $body-text-color;
+    color: variables.$body-text-color;
     font-weight: 500;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -148,7 +148,7 @@
     }
 
     .label-uploaded {
-      color: $common-filter-color;
+      color: variables.$common-filter-color;
       width: 70%;
     }
 
@@ -157,7 +157,7 @@
   }
 
   .field-value {
-    color: $body-text-color;
+    color: variables.$body-text-color;
     text-overflow: ellipsis;
     overflow: hidden;
 
@@ -319,7 +319,7 @@
     .monitoring-approved,
     .verification-approved,
     .issue-cert-approved {
-      color: #5dc380;
+      color: variables.$primary-color;
     }
 
     .monitoring-rejected,

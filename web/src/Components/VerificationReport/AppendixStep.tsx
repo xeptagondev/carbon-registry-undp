@@ -712,7 +712,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
               <Row justify={'end'} className="step-actions-end">
                 {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
                   <>
-                    <Button danger size={'large'} onClick={prev}>
+                    <Button type="primary" ghost size={'large'} onClick={prev}>
                       {t('verificationReport:prev')}
                     </Button>
                     <Button type="primary" htmlType="submit">
@@ -722,7 +722,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
                 )}
                 {state?.mode === FormMode.VIEW && (
                   <>
-                    <Button danger size={'large'} onClick={prev}>
+                    <Button type="primary" ghost size={'large'} onClick={prev}>
                       {t('verificationReport:prev')}
                     </Button>
                     <Button type="primary" onClick={next}>
@@ -735,7 +735,12 @@ export const AppendixStep = (props: VerificationStepProps) => {
                     <Button size={'large'} onClick={prev} type={'default'}>
                       {t('verificationReport:prev')}
                     </Button>
-                    <Button danger size={'large'} onClick={() => setShowDeclineDialog(true)}>
+                    <Button
+                      type="primary"
+                      ghost
+                      size={'large'}
+                      onClick={() => setShowDeclineDialog(true)}
+                    >
                       {t('verificationReport:reject')}
                     </Button>
                     <Button size={'large'} onClick={() => setShowVerifyDialog(true)} type="primary">
