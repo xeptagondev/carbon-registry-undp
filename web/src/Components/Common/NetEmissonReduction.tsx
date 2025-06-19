@@ -302,12 +302,12 @@ const NetEmissionReduction = (props: any) => {
                                 return Promise.resolve();
                               }
 
-                              // eslint-disable-next-line no-restricted-globals
-                              // if (Number(value) % 1 !== 0) {
-                              //   return Promise.reject(
-                              //     new Error("Should be an integer")
-                              //   );
-                              // }
+                              const numValue = Number(value);
+
+                              // Check if it's a non-negative integer (includes 0)
+                              if (numValue < 0 || !Number.isInteger(numValue)) {
+                                return Promise.reject(new Error('Should be a positive integer'));
+                              }
 
                               return Promise.resolve();
                             },
@@ -348,12 +348,12 @@ const NetEmissionReduction = (props: any) => {
                                 return Promise.resolve();
                               }
 
-                              // eslint-disable-next-line no-restricted-globals
-                              // if (isNaN(value)) {
-                              //   return Promise.reject(
-                              //     new Error("Should be an integer")
-                              //   );
-                              // }
+                              const numValue = Number(value);
+
+                              // Check if it's a non-negative integer (includes 0)
+                              if (numValue < 0 || !Number.isInteger(numValue)) {
+                                return Promise.reject(new Error('Should be a positive integer'));
+                              }
 
                               return Promise.resolve();
                             },
@@ -395,12 +395,12 @@ const NetEmissionReduction = (props: any) => {
                                 return Promise.resolve();
                               }
 
-                              // eslint-disable-next-line no-restricted-globals
-                              // if (isNaN(value)) {
-                              //   return Promise.reject(
-                              //     new Error("Should be an integer")
-                              //   );
-                              // }
+                              const numValue = Number(value);
+
+                              // Check if it's a non-negative integer (includes 0)
+                              if (numValue < 0 || !Number.isInteger(numValue)) {
+                                return Promise.reject(new Error('Should be a positive integer'));
+                              }
 
                               return Promise.resolve();
                             },
