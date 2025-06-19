@@ -9,7 +9,7 @@ export interface CreditBalanceInterface {
   receiverName: string;
   receiverLogo: string;
   senderId: number | null;
-  senderName: string | null;
+  senderName: string;
   senderLogo: string | null;
   eventType: 'Issued' | 'Received';
 }
