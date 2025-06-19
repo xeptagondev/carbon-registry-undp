@@ -24,7 +24,6 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
   const onFinish = (values: any) => {
     const body = {
       ...values,
-      // Convert numerical fields to numbers
       avgBaselineEmissionReductions: Number(values?.avgBaselineEmissionReductions),
       avgLeakageEmissionReductions: Number(values?.avgLeakageEmissionReductions),
       avgNetEmissionReductions: Number(values?.avgNetEmissionReductions),
@@ -35,7 +34,6 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
       totalNumberOfCreditingYears: Number(values?.totalNumberOfCreditingYears),
       totalProjectEmissionReductions: Number(values?.totalProjectEmissionReductions),
 
-      // Handle estimatedNetEmissionReductions array
       estimatedNetEmissionReductions: values?.estimatedNetEmissionReductions?.map((item: any) => {
         const temp = {
           ...item,
@@ -48,7 +46,6 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
         return temp;
       }),
 
-      // Keep these as they are (they're already null in your example)
       calculationOfBaselineEmissionFactor: values?.calculationOfBaselineEmissionFactor,
       plantFactor: values?.plantFactor,
       annualEmissionReductionCalculation: values?.annualEmissionReductionCalculation,
