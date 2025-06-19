@@ -24,13 +24,35 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
   const onFinish = (values: any) => {
     const body = {
       ...values,
-      estimatedNetEmissionReductions: values?.estimatedNetEmissionReductions.map((item: any) => {
+      // Convert numerical fields to numbers
+      avgBaselineEmissionReductions: Number(values?.avgBaselineEmissionReductions),
+      avgLeakageEmissionReductions: Number(values?.avgLeakageEmissionReductions),
+      avgNetEmissionReductions: Number(values?.avgNetEmissionReductions),
+      avgProjectEmissionReductions: Number(values?.avgProjectEmissionReductions),
+      totalBaselineEmissionReductions: Number(values?.totalBaselineEmissionReductions),
+      totalLeakageEmissionReductions: Number(values?.totalLeakageEmissionReductions),
+      totalNetEmissionReductions: Number(values?.totalNetEmissionReductions),
+      totalNumberOfCreditingYears: Number(values?.totalNumberOfCreditingYears),
+      totalProjectEmissionReductions: Number(values?.totalProjectEmissionReductions),
+
+      // Handle estimatedNetEmissionReductions array
+      estimatedNetEmissionReductions: values?.estimatedNetEmissionReductions?.map((item: any) => {
         const temp = {
           ...item,
-          vintage: item?.vintage ? moment(item?.vintage).startOf('day').valueOf() : undefined,
+          vintage: item?.vintage
+            ? moment({ year: moment(item?.vintage).year(), month: 1, day: 1 })
+                .startOf('day')
+                .valueOf()
+            : undefined,
+          netEmissionReductions: Number(item?.netEmissionReductions),
+          leakageEmissionReductions: Number(item?.leakageEmissionReductions),
+          baselineEmissionReductions: Number(item?.baselineEmissionReductions),
+          projectEmissionReductions: Number(item?.projectEmissionReductions),
         };
         return temp;
       }),
+
+      // Keep these as they are (they're already null in your example)
       calculationOfBaselineEmissionFactor: values?.calculationOfBaselineEmissionFactor,
       plantFactor: values?.plantFactor,
       annualEmissionReductionCalculation: values?.annualEmissionReductionCalculation,
@@ -38,6 +60,7 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
       leakageEmission: values?.leakageEmission,
       baselineEmissions: values?.baselineEmissions,
     };
+
     console.log('--------body---------', body);
     handleValuesUpdate({ ghgProjectDescription: body });
   };
