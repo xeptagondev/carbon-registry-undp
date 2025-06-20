@@ -355,9 +355,15 @@ export const SLCFDashboardComponent = (props: any) => {
             xAxis.push(name);
           }
         });
+        const rawMaxValue = Math.max(...statusCount, 1); // Use 1 as fallback if array is empty
+        const computedMax = parseInt((rawMaxValue * 1).toString(), 10);
+        const tickAmount = rawMaxValue > 5 ? 5 : Math.ceil(rawMaxValue);
+
         totalProgrammesOptions.xaxis.categories = xAxis;
         totalProgrammesOptions.fill.colors = statusColorMap;
         totalProgrammesOptions.legend.markers.fillColors = statusColorMap;
+        totalProgrammesOptions.yaxis.max = computedMax;
+        totalProgrammesOptions.yaxis.tickAmount = tickAmount;
 
         setProjectsByStatusDetail([
           {
@@ -912,7 +918,7 @@ export const SLCFDashboardComponent = (props: any) => {
   }, [window.innerWidth]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const updateTimestamps = () => {
       setProjectSummaryLastUpdated((prev) => ({
         last_pending_project_time: projectSummaryLastUpdatedEpoch.last_pending_project_time
           ? moment(projectSummaryLastUpdatedEpoch.last_pending_project_time).fromNow()
@@ -943,7 +949,11 @@ export const SLCFDashboardComponent = (props: any) => {
           ? moment(creditSummaryLastUpdatedEpoch.lastRetiredTime).fromNow()
           : prev.lastRetiredTime,
       }));
-    }, 60 * 1000);
+    };
+
+    updateTimestamps(); // initial run
+
+    const timer = setInterval(updateTimestamps, 60 * 1000); // run every minute
 
     return () => clearInterval(timer);
   }, [
