@@ -288,6 +288,7 @@
   "CONSTRUCTION": "Construction",
   "TRANSPORT": "Transport",
   "MINING_MINERAL_PRODUCTION": "Mining/Mineral Production",
+  "WASTE_FROM_FUELS":"Fugitive Emissions from Fuels (Solid, Oil and Gas) ",
   "METAL_PRODUCTION": "Metal Production",
   "FUGITIVE_EMISSIONS_FUELS": "Fugitive Emissions from fuels",
   "FUGITIVE_EMISSIONS_PRODUCTION": "Fugitive Emissions from Production and Consumption of Halocarbons and Sulphur Hexafluoride",
