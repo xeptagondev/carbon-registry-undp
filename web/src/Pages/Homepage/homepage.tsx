@@ -132,7 +132,7 @@ const handleClickScroll = () => {
                     }}
                   />
                 </span>
-                <div className="subhome">{t("homepage:subHeading")}</div>
+                {/* <div className="subhome">{t("homepage:subHeading")}</div> */}
               </div>
             </Row>
             <Row className="arrow-ctn">
@@ -160,7 +160,7 @@ const handleClickScroll = () => {
       >
         <h2 className="vision-title" id="vision">Vision</h2>
         <p className="vision-description">
-          UNDP's Open-Source National Carbon Registry Enables Countries to Implement and Manage Carbon Markets by Issuing, Managing, and Tracking Carbon Credits with Confidence, Achieving National Climate Commitments.
+          The Namibia Carbon Registry enables the country to implement and manage carbon markets by issuing, tracking, and managing carbon credits in support of its national climate commitments.
         </p>
         <h3 className="vision-subtitle">The Platform Supports:</h3>
 
@@ -174,9 +174,9 @@ const handleClickScroll = () => {
             <div className="vision-icon">
             <Government className="vislogo" />
              </div>
-            <p className="vision-role">Governments</p>
+            <p className="vision-role">Government</p>
             <p className="vision-text">
-              Launching Carbon Markets Aligned with the Paris Agreement
+              Managing the Carbon Market aligned with the Paris Agreement
             </p>
           </motion.div>
 
@@ -225,6 +225,23 @@ const handleClickScroll = () => {
         </div>
       </motion.div>
     </section>
+        </Col>
+      </Row>
+      <Row className="value">
+        <Col>
+        <section className="value-section" ref={ref}>
+      <motion.div
+        className="value-container"
+        initial={{ opacity: 0, y: 40 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <h2 className="value-title"> Value </h2>
+        <p className="footer-text">
+          The Paris Agreement is an international treaty on climate change aiming to limit global warming to below 2°C, with efforts to keep it to 1.5°C by 2100. Article 6 introduces mechanisms for countries to cooperate on climate goals through market-based (Articles 6.2 and 6.4) and non-market approaches (Article 6.8). As a signatory, Namibia must account for any carbon credits used or transferred within their Nationally Determined Contributions (NDCs).<b> A digital carbon registry is essential for the country to track and manage carbon credits, ensuring data integrity and enabling consistent reporting.</b>
+        </p>
+        </motion.div>
+      </section>
         </Col>
       </Row>
       {/* <Row gutter={[8, 8]}>
@@ -590,16 +607,9 @@ const handleClickScroll = () => {
           </div>
         </Col>
       </Row> */}
-      <CarbonDashboard/>
-      <DigitalPublicGood/>
-      <MapAnimation/>
-      <DemoSite/>
       <ProcessFlow/>
-      <FeatureCards/>
-      <PartnershipBanner/>
-      <FAQ/>
 
-<Row className="developer-resources-row">
+{/* <Row className="developer-resources-row">
   <Col xs={12} sm={6} md={4} lg={2} xl={2} className="Devresources">
     <div className="resource-item">
       <b>Developer Resources:</b>
@@ -625,7 +635,7 @@ const handleClickScroll = () => {
       Cad Trust data model
     </div></a></u>
   </Col>
-</Row>
+</Row> */}
       <LayoutFooter />
     </div>
   );
