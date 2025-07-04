@@ -98,8 +98,17 @@ $title-color: #3a8ab5;
   }
 
   .image-container {
-    background-image: url("../../Assets/Images/namibia.jpg");
-    background-image: image-set(
+    background-image:linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(4, 105, 177, 0.24) 0%
+      ), url("../../Assets/Images/namibia.jpg");
+    background-image: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(4, 105, 177, 0.24) 0%
+      ),
+    image-set(
       "../../Assets/Images/namibia.jpg" type("image/png"),
       "../../Assets/Images/namibia.webp" type("image/webp")
     );
