@@ -98,10 +98,10 @@ $title-color: #3a8ab5;
   }
 
   .image-container {
-    background-image: url("../../Assets/Images/namibia_home.jpg");
+    background-image: url("../../Assets/Images/namibia.jpg");
     background-image: image-set(
-      "../../Assets/Images/namibia_home.jpg" type("image/png"),
-      "../../Assets/Images/namibia_home.webp" type("image/webp")
+      "../../Assets/Images/namibia.jpg" type("image/png"),
+      "../../Assets/Images/namibia.webp" type("image/webp")
     );
     background-size: cover;
     background-position: top !important;
@@ -843,6 +843,42 @@ $title-color: #3a8ab5;
             color: #0063ac;
           }
         }
+      }
+    }
+  }
+}
+.value{
+  justify-content: center;
+    .value-section {
+    margin-top: 4rem;
+    background: #f3f4f6;
+    position: relative;
+    z-index: 10;
+    border-radius: 2rem;
+
+    .value-container {
+      max-width: 1365px;
+      margin: 0 auto;
+      background: white;
+      padding: 3rem 3rem;
+      border-radius: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
+
+      .value-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #16b1ff;
+        margin-bottom: 1rem;
+        text-align: left;
+      }
+
+      .value-description {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 2rem;
+        text-align: center;
       }
     }
   }

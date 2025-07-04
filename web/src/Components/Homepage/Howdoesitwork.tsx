@@ -1,6 +1,8 @@
 import React from 'react';
 import { Mail, CheckCircle, Hammer, Wallet } from 'lucide-react';
 import { Trans, useTranslation } from "react-i18next";
+import './Dashboard.scss';
+
 
 // Invisible SVG that defines the linear gradient
 const GradientDefs = () => (
