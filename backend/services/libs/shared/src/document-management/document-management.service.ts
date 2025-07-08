@@ -23,7 +23,7 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import { CompanyService } from "../company/company.service";
 import { FileHandlerInterface } from "../file-handler/filehandler.interface";
 import { plainToClass, plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
+import { validate, ValidationError } from "class-validator";
 import { DocType } from "../enum/document.type";
 import { UserService } from "../user/user.service";
 import { DocumentQueryDto } from "../dto/document.query.dto";
@@ -46,6 +46,9 @@ import { PositiveIntegerValidationDto } from "../dto/positive.integer.validation
 import { ActivityVintageCreditsArrayDto } from "../dto/activty.vintage.credits.array.dto";
 import { SECTOR_TO_SCOPES_MAP } from "../constants/inf.sector.sectoralScope.mapping.const";
 import { CompanyState } from "../enum/company.state.enum";
+import { INFRequestDto } from "../dto/create.inf.form.dto";
+import { PddRequestDto } from "../dto/create.pdd.form.dto";
+
 
 @Injectable()
 export class DocumentManagementService {
@@ -120,6 +123,17 @@ export class DocumentManagementService {
 
       switch (addDocumentDto.documentType) {
         case DocumentTypeEnum.INITIAL_NOTIFICATION_FORM: {
+          const infRequestDto: INFRequestDto = plainToInstance(
+            INFRequestDto,
+            addDocumentDto.data
+          );
+          const infCreationErrors = await validate(infRequestDto);
+          console.log("------------infCreationError----------",infCreationErrors);
+          if (infCreationErrors.length > 0) {
+            const formatted = this.helperService.formatValidationErrors(infCreationErrors);
+            console.log("------------formatted----------",formatted);
+            throw new HttpException(formatted, HttpStatus.BAD_REQUEST);
+          }
           if (
             user.companyRole !== CompanyRole.PROJECT_DEVELOPER ||
             user.role !== Role.Admin
@@ -244,6 +258,17 @@ export class DocumentManagementService {
           });
         }
         case DocumentTypeEnum.PROJECT_DESIGN_DOCUMENT: {
+          const pddRequestDto: PddRequestDto = plainToInstance(
+            PddRequestDto,
+            addDocumentDto.data
+          );
+          const pddCreationErrors = await validate(pddRequestDto);
+          console.log("------------pddCreationError----------",pddCreationErrors);
+          if (pddCreationErrors.length > 0) {
+            const formatted = this.helperService.formatValidationErrors(pddCreationErrors);
+            console.log("------------formatted----------",formatted);
+            throw new HttpException(formatted, HttpStatus.BAD_REQUEST);
+          }
           if (user.companyId != project.companyId || user.role !== Role.Admin) {
             throw new HttpException(
               this.helperService.formatReqMessagesString(
@@ -2123,3 +2148,5 @@ export class DocumentManagementService {
     });
   }
 }
+
+
