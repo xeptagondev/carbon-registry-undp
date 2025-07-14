@@ -27,7 +27,7 @@ const ProcessFlow = () => {
         <div className="step-card card1">
           <div className="step-header">
             <div className="step-icon">
-              <Mail size={80} stroke="url(#iconGradient)" />
+              <Mail size={80} />
             </div>
           </div>
           <h3 className="step-title">{t('homepage:feature1Title')}</h3>
