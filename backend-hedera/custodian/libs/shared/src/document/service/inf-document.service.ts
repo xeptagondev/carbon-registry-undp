@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
@@ -85,7 +86,7 @@ export class InfDocumentService extends DocumentService {
         if (
             !(
                 jwtData.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                OrganizationTypeEnum.PROJECT_DEVELOPER &&
                 jwtData.userRole === RoleEnum.Admin
             )
         ) {
@@ -220,12 +221,7 @@ export class InfDocumentService extends DocumentService {
                 }),
             );
 
-            const organizationDoc =
-                await this.guardianService.getGridDocumentUsingRefId(
-                    GridTypeEnum.ORGANIZATION_GRID,
-                    org.refId,
-                    jwtData.email,
-                );
+
 
             const projectSchema: ProjectSchema = {
                 refId: savedProject.refId,
@@ -257,7 +253,7 @@ export class InfDocumentService extends DocumentService {
                 this.getBlockNameByDocType(dto.documentType),
                 {
                     document: documentSchema,
-                    ref: { document: organizationDoc },
+                    ref: null,
                 },
             );
 
@@ -326,7 +322,7 @@ export class InfDocumentService extends DocumentService {
         if (
             !(
                 jwtData.organizationRole ===
-                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
                 (jwtData.userRole === RoleEnum.Admin ||
                     jwtData.userRole === RoleEnum.Root)
             )

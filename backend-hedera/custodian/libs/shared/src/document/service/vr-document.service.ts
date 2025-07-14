@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
@@ -194,7 +195,7 @@ export class VrDocumentService extends DocumentService {
             if (
                 !(
                     jwtData.organizationRole ===
-                        OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
                     jwtData.userRole === RoleEnum.Admin
                 )
             ) {
@@ -206,23 +207,18 @@ export class VrDocumentService extends DocumentService {
 
             if (
                 jwtData.organizationRole ===
-                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
                 jwtData.userRole === RoleEnum.Admin &&
                 assigneeOrgIds.includes(jwtData.organizationId)
             ) {
-                const organizationDoc =
-                    await this.guardianService.getGridDocumentUsingRefId(
-                        GridTypeEnum.ORGANIZATION_GRID,
-                        project?.organization?.refId,
-                        jwtData.email,
-                    );
+
 
                 await this.guardianService.saveDocument(
                     jwtData.email,
                     this.getBlockNameByDocType(dto.documentType),
                     {
                         document: documentSchema,
-                        ref: { document: organizationDoc },
+                        ref: null,
                     },
                 );
 
@@ -619,7 +615,7 @@ export class VrDocumentService extends DocumentService {
                     vrDocWithToken &&
                     vrDocWithToken.tokens &&
                     vrDocWithToken.tokens[
-                        this.configService.get('carbonCredit.tokenSymbol')
+                    this.configService.get('carbonCredit.tokenSymbol')
                     ]
                 )
             ) {
@@ -631,7 +627,7 @@ export class VrDocumentService extends DocumentService {
             }
             const tokenId =
                 vrDocWithToken.tokens[
-                    this.configService.get('carbonCredit.tokenSymbol')
+                this.configService.get('carbonCredit.tokenSymbol')
                 ];
             await this.carbonCreditGuardianService.associateNFTToUser(
                 tokenId,
