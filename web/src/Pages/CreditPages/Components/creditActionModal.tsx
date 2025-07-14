@@ -90,13 +90,13 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
           : await get(API_PATHS.CB_RETIRE_COINTRY_QUERY);
 
       if (response && response.data && response.data.length > 0) {
-        const filteredData =
-          type === CreditActionType.TRANSFER
-            ? response.data.filter((item: any) => item.state === '1')
-            : response.data;
+        // const filteredData =
+        //   type === CreditActionType.TRANSFER
+        //     ? response.data.filter((item: any) => item.state === '1')
+        //     : response.data;
 
         setDropDownList(
-          filteredData.map((item: any) => ({
+          response?.data.map((item: any) => ({
             value: type === CreditActionType.TRANSFER ? item.id : item.alpha2,
             label: item.name,
           }))
