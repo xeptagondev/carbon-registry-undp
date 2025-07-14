@@ -67,10 +67,31 @@
     }
   }
   .container-image {
-    background-image: url('../../Assets/Images/homepage_img2.webp');
-    background-image: image-set('../../Assets/Images/homepage_img2.webp' type('image/webp'));
+    background-image: linear-gradient(
+        to bottom,
+        rgba(196, 196, 196, 0) 0%,
+        rgba(4, 105, 177, 0.24) 0.01%
+      ),
+      url('../../Assets/Images/sigiriya.webp');
+    background-image: linear-gradient(
+        to bottom,
+        rgba(196, 196, 196, 0) 0% rgba(4, 105, 177, 0.24) 0.01%
+      ),
+      image-set(
+        '../../Assets/Images/sigiriya.jpg' type('image/jpg'),
+        '../../Assets/Images/sigiriya.webp' type('image/webp')
+      );
+    background-image: -webkit-gradient(
+        linear,
+        left top,
+        left bottom,
+        from(hsla(0, 0%, 77%, 0), rgba(4, 105, 177, 0.24))
+      ),
+      image-set(
+        '../../Assets/Images/sigiriya.jpg' type('image/jpg'),
+        '../../Assets/Images/sigiriya.webp' type('image/webp')
+      );
     background-size: cover;
-    background-position: top !important;
   }
 
   .login-img-container {
@@ -123,25 +144,19 @@
 
   .login-country-name {
     font-size: 0.8rem;
-    flex-direction: row;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    display: flex;
     display: flex;
     margin-top: 12px;
     color: variables.$title-text-color;
 
-    .carbon {
-      font-family: 'MuseoSans';
-      color: variables.$logo-text-color;
-      font-weight: 700;
-      margin-right: 6px;
-      margin-bottom: 0;
+    span {
+      @media (max-width: variables.$lg-size) {
+        text-align: center;
+      }
     }
 
-    .registry {
-      // font-weight: 700;
-      font-family: 'MuseoSans';
-    }
   }
 
   .login-text-contents {
