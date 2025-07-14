@@ -136,7 +136,7 @@ const Homepage = () => {
               transition={{ duration: 0.8, ease: 'easeOut' }}
             >
               <h2 className="vision-title" id="vision">
-                Vission
+                Vision
               </h2>
               <p className="vision-description">
                 UNDP’s open-source National Carbon Registry enables countries to implement and
