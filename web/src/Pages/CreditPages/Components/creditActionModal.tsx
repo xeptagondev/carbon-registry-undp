@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
 import { CreditActionType } from '../Enums/creditActionType.enum';
 import {
@@ -25,6 +26,7 @@ import {
 } from '../Enums/creditRetirementProceedType.enum';
 import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
 import { COLOR_CONFIGS } from '../../../Config/colorConfigs';
+import { CreditEventStatusEnum } from '../Enums/creditEventEnum';
 
 interface CreditActionModalProps {
   icon?: any;
@@ -86,9 +88,15 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
               filterOwn: true,
             })
           : await get(API_PATHS.CB_RETIRE_COINTRY_QUERY);
+
       if (response && response.data && response.data.length > 0) {
+        const filteredData =
+          type === CreditActionType.TRANSFER
+            ? response.data.filter((item: any) => item.state === '1')
+            : response.data;
+
         setDropDownList(
-          response.data.map((item: any) => ({
+          filteredData.map((item: any) => ({
             value: type === CreditActionType.TRANSFER ? item.id : item.alpha2,
             label: item.name,
           }))
@@ -115,8 +123,12 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
         ? allValues.toCompanyId
         : type === CreditActionType.RETIREMENT &&
           allValues.retirementType === RetirementType.CROSS_BORDER
-        ? allValues.toCountry
+        ? {
+            country: allValues.toCountry,
+            organization: allValues.toOrganization,
+          }
         : undefined;
+
     remarkRef.current = allValues.comment || '';
     checkedRef.current = allValues.confirm || false;
 
@@ -137,10 +149,11 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
       }
     } else {
       if (
-        (type === CreditActionType.TRANSFER ||
-          (type === CreditActionType.RETIREMENT &&
-            allValues.retirementType === RetirementType.CROSS_BORDER)) &&
-        !recivePartyRef.current
+        (type === CreditActionType.TRANSFER && !recivePartyRef.current) ||
+        (type === CreditActionType.RETIREMENT &&
+          allValues.retirementType === RetirementType.CROSS_BORDER &&
+          !recivePartyRef.current.country &&
+          !recivePartyRef.current.organization)
       ) {
         valid = false;
       }
@@ -221,6 +234,7 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
       }
 
       form.setFieldsValue({
+        owner: data?.senderName,
         project: data?.projectName,
         retirementType: retirementTypeRef,
         comment: '',
@@ -262,6 +276,17 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
             onValuesChange={handleValuesChange}
             onFinish={handleSubmit}
           >
+            <Row>
+              <Col span={24}>
+                {type === CreditActionType.RETIREMENT &&
+                  'status' in data &&
+                  data.status === CreditEventStatusEnum.PENDING && (
+                    <Form.Item className="credit-action-project-name" label={t('From')} name="From">
+                      <Input placeholder={data.senderName} disabled />
+                    </Form.Item>
+                  )}
+              </Col>
+            </Row>
             <Row>
               <Col span={24}>
                 <Form.Item
@@ -325,7 +350,12 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                   </span>
                 }
                 name="retirementType"
-                required
+                rules={[
+                  {
+                    required: !isProceed,
+                    message: t('required'),
+                  },
+                ]}
               >
                 <Radio.Group disabled={isProceed}>
                   <Radio value={RetirementType.CROSS_BORDER}>
@@ -388,11 +418,17 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                     <Form.Item
                       className="credit-action-organization-name"
                       label={t('organizationName')}
-                      name="company"
+                      name="toOrganization"
+                      rules={[
+                        {
+                          required: !isProceed,
+                          message: t('required'),
+                        },
+                      ]}
                     >
                       <Input
-                        placeholder={'receiverName' in data ? data.receiverName : data.senderName}
-                        disabled
+                        disabled={isProceed}
+                        placeholder={'organizationName' in data ? data.organizationName : ''}
                       />
                     </Form.Item>
                   </Col>
@@ -404,16 +440,18 @@ export const CreditActionModal = (props: CreditActionModalProps) => {
                 <label>
                   <span style={{ color: `${COLOR_CONFIGS.PRIMARY_FONT_COLOR}` }}>
                     {t('creditAmount')}
-                    <span
-                      style={{
-                        color: `${COLOR_CONFIGS.PRIMARY_RED_COLOR}`,
-                        position: 'relative',
-                        top: '2px',
-                        marginLeft: 2,
-                      }}
-                    >
-                      *
-                    </span>
+                    {!isProceed && (
+                      <span
+                        style={{
+                          color: `${COLOR_CONFIGS.PRIMARY_RED_COLOR}`,
+                          position: 'relative',
+                          top: '2px',
+                          marginLeft: 2,
+                        }}
+                      >
+                        *
+                      </span>
+                    )}
                   </span>
                 </label>
               </Col>

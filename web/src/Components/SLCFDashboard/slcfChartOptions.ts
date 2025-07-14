@@ -81,7 +81,7 @@ export const totalProgrammesOptions: any = {
         fontSize: '12px',
       },
     },
-    tickAmount: 5,
+    tickAmount: undefined,
   },
   noData: {
     text: 'No data available',
@@ -526,12 +526,30 @@ export const optionSideBar: any = {
   tooltip: {
     theme: 'dark',
     x: { show: false },
-    y: {
-      title: {
-        formatter: function () {
-          return '';
-        },
-      },
+    custom: function ({
+      series,
+      seriesIndex,
+      dataPointIndex,
+      w,
+    }: {
+      series: number[][];
+      seriesIndex: number;
+      dataPointIndex: number;
+      w: any;
+    }) {
+      const sectoralScope = w.globals.labels[dataPointIndex];
+      const value = series[seriesIndex][dataPointIndex];
+
+      let formattedValue = value;
+      if (value >= 1000) {
+        formattedValue = Number(`${(value / 1000).toFixed(1)}k`);
+      } else {
+        formattedValue = Number(value.toFixed(0));
+      }
+
+      return `<div class="apexcharts-tooltip-box" style="padding: 8px;">
+      <span>${sectoralScope}: ${formattedValue}</span>
+    </div>`;
     },
   },
   grid: {

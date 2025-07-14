@@ -1,6 +1,6 @@
 {
-  "heading": "GOLD STANDARD IMPACT REGISTRY",
-  "subHeading": "Climate Security and Sustainable Development for All.",
+  "heading": "National Carbon Registry",
+  "subHeading": "DEMONSTRATION WEBSITE",
   "ourVisonTitle": "Our Vision",
   "ourVisonContentStart": "UNDP has developed an",
   "ourVisonContentHighlight": "open-source National Carbon Registry",
@@ -30,6 +30,7 @@
   "policyContextBody": "The Paris Agreement is an international treaty on climate change aiming to limit global warming to below 2°C, with efforts to keep it to 1.5°C by 2100. Article 6 introduces mechanisms for countries to cooperate on climate goals through market-based (Articles 6.2 and 6.4) and non-market approaches (Article 6.8). All countries must account for any carbon credits used or transferred within their Nationally Determined Contributions (NDCs).",
   "policyContextBody2": "Digital carbon registries are essential for countries to track and manage carbon credits, ensuring data integrity and enable consistent reporting.",
   "allAboutImpact": "We Are All About Impact ",
+  "digitalPublicTitle": "A Digital Public Good ",
   "digitalPublicBody": "In response to countries’ need for support, UNDP has created the National Carbon Credit Registry as an open-source toolkit that follows the Digital Public Goods Standard. Countries can access the free, open-source code and installation instructions from UNDP’s managed Github to customize a Registry according to their national needs. This approach helps save time, reduce costs, and avoids duplication of effort.",
   "demoSiteTitle": "Demo Site",
   "demoSiteBody": "This demonstration site showcases the core functionality of the <b>Carbon Credit Registry</b> built on the source code. Governments and potential partners working with UNDP can:<ul><li>Request access to the demo site.</li><li>Schedule a live demonstration.</li><li>Explore potential collaboration and support.</li></ul>For inquiries and to request a demo, please contact <b>UNDP Digital For Planet</b> at <a>digital4planet@undp.org</a>. Additional technical details are available on GitHub.",

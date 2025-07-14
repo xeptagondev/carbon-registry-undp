@@ -220,6 +220,15 @@ export class MonitoringDocumentService extends DocumentService {
                 transactionCost * totalCreditAmount,
                 'The transaction couldn’t proceed due to low HBAR balance. Please top up the balance and try again.',
             );
+            if (
+                Number(project?.creditEst) <
+                Number(project?.creditIssued) + totalCreditAmount
+            ) {
+                throw new HttpException(
+                    'Project has reached maximum allowed credit limit',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
 
             if (
                 monitoringData?.appendix?.a_uploadDoc &&

@@ -84,20 +84,26 @@
 
   .table {
     margin-top: 32px;
-    font-size: 14px;
-    font-weight: 600;
 
-    .ant-table-tbody {
-      font-weight: 400 !important;
+    .ant-table {
+      font-size: 13px;
+      font-weight: 400;
     }
 
-    .ant-table-fixed {
-      table-layout: fixed;
+    .ant-table-thead > tr > th {
+      font-size: 13px;
+      font-weight: 600;
+      color: #595959;
     }
 
     .ant-table-tbody > tr > td {
-      word-wrap: break-word;
-      word-break: break-all;
+      font-size: 13px;
+      font-weight: 400;
+      color: #333333;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background-color: #fafafa;
     }
   }
 }
