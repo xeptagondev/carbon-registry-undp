@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Menu, Layout, MenuProps, Col, Row, Tooltip } from 'antd';
-import logo from '../../Assets/Images/logo_Gold.png';
+import logo from '../../Assets/Images/logo-slider.png';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './layout.sider.scss';
 import * as Icon from 'react-bootstrap-icons';
@@ -63,7 +63,6 @@ const LayoutSider = (props: LayoutSiderProps) => {
 
   const items: MenuItem[] = [
     getItem(t('nav:dashboard'), 'dashboard', <DashboardOutlined />),
-    getItem(t('nav:slcfprogrammes'), 'programmeManagement/viewAllProjects', <AppstoreOutlined />),
     getItem(t('nav:projectList'), 'programmeManagement/viewAll', <UnorderedListOutlined />),
     // getItem(t('nav:programmes'), 'programmeManagement/viewAll', <AppstoreOutlined />),
     // getItem(t('nav:cdmTransitionProjects'), 'cdmManagement/viewAll', <UnorderedListOutlined />),
@@ -199,21 +198,10 @@ const LayoutSider = (props: LayoutSiderProps) => {
           {!collapsed && (
             <div>
               <div>
-                <div className="title">{collapsed ? '' : 'IMPACT REGISTRY'}</div>
-                {/* <div className="title-sub">{collapsed ? '' : 'DIGITAL PLATFORM'}</div> */}
+                <div className="title">{collapsed ? '' : 'CARBON MARKET'}</div>
+                <div className="title-sub">{collapsed ? '' : 'DIGITAL PLATFORM'}</div>
               </div>
-              {/* <div className="country-name">{process.env.REACT_APP_COUNTRY_NAME || 'CountryX'}</div> */}
-            </div>
-          )}
-          {collapsed && (
-            <div className="country-flag">
-              <img
-                alt="country flag"
-                src={
-                  process.env.REACT_APP_COUNTRY_FLAG_URL ||
-                  'https://carbon-common-dev.s3.amazonaws.com/flag.png'
-                }
-              />
+              <div className="country-name">{process.env.REACT_APP_COUNTRY_NAME || 'CountryX'}</div>
             </div>
           )}
         </div>
@@ -243,7 +231,6 @@ const LayoutSider = (props: LayoutSiderProps) => {
                     item?.key === 'ndcManagement/viewAll' ||
                     item?.key === 'investmentManagement/viewAll' ||
                     item?.key === 'retirementManagement/viewAll' ||
-                    item?.key === 'programmeManagement/viewAll' ||
                     item?.key === 'creditTransfers/viewAll'
                       ? 'custom-padding-left'
                       : item?.key === 'cdmManagement/viewAll'

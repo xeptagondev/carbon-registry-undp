@@ -250,6 +250,16 @@ export class VerificationDocumentService extends DocumentService {
                 ?.estimatedNetEmissionReductions ?? []) {
                 creditAmount += Number(data.netEmissionReductions);
             }
+
+            if (
+                Number(project?.creditEst) <
+                Number(project?.creditIssued) + creditAmount
+            ) {
+                throw new HttpException(
+                    'Project has reached maximum allowed credit limit',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
                 documentType: dto.documentType,

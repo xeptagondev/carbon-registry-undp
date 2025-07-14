@@ -24,13 +24,28 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
   const onFinish = (values: any) => {
     const body = {
       ...values,
-      estimatedNetEmissionReductions: values?.estimatedNetEmissionReductions.map((item: any) => {
+      avgBaselineEmissionReductions: Number(values?.avgBaselineEmissionReductions),
+      avgLeakageEmissionReductions: Number(values?.avgLeakageEmissionReductions),
+      avgNetEmissionReductions: Number(values?.avgNetEmissionReductions),
+      avgProjectEmissionReductions: Number(values?.avgProjectEmissionReductions),
+      totalBaselineEmissionReductions: Number(values?.totalBaselineEmissionReductions),
+      totalLeakageEmissionReductions: Number(values?.totalLeakageEmissionReductions),
+      totalNetEmissionReductions: Number(values?.totalNetEmissionReductions),
+      totalNumberOfCreditingYears: Number(values?.totalNumberOfCreditingYears),
+      totalProjectEmissionReductions: Number(values?.totalProjectEmissionReductions),
+
+      estimatedNetEmissionReductions: values?.estimatedNetEmissionReductions?.map((item: any) => {
         const temp = {
           ...item,
           vintage: item?.vintage ? moment(item?.vintage).startOf('day').valueOf() : undefined,
+          netEmissionReductions: Number(item?.netEmissionReductions),
+          leakageEmissionReductions: Number(item?.leakageEmissionReductions),
+          baselineEmissionReductions: Number(item?.baselineEmissionReductions),
+          projectEmissionReductions: Number(item?.projectEmissionReductions),
         };
         return temp;
       }),
+
       calculationOfBaselineEmissionFactor: values?.calculationOfBaselineEmissionFactor,
       plantFactor: values?.plantFactor,
       annualEmissionReductionCalculation: values?.annualEmissionReductionCalculation,
@@ -38,6 +53,7 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
       leakageEmission: values?.leakageEmission,
       baselineEmissions: values?.baselineEmissions,
     };
+
     console.log('--------body---------', body);
     handleValuesUpdate({ ghgProjectDescription: body });
   };
@@ -451,7 +467,7 @@ const GHGProjectDescription = (props: ValidationStepsProps) => {
               {/* Estimated net emissions reduction end */}
 
               <Row justify={'end'} className="step-actions-end">
-                <Button type="primary" ghost size={'large'} onClick={prev} disabled={false}>
+                <Button danger size={'large'} onClick={prev} disabled={false}>
                   {t('validationReport:prev')}
                 </Button>
                 {disableFields ? (

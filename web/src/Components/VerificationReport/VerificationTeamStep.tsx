@@ -92,7 +92,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                         First name
                       </Col>
                       <Col xl={3} className="other-cols col">
-                        Affliation
+                        Affiliation
                       </Col>
                       <Col xl={4}>
                         <Row>
@@ -201,7 +201,9 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                   ]}
                                 >
                                   <Radio.Group className="radio-btn-grp" disabled={disableFields}>
-                                    <Radio value="IR">{t('verificationReport:IR')}</Radio>
+                                    <Radio value="IR" style={{ paddingLeft: '20px' }}>
+                                      {t('verificationReport:IR')}
+                                    </Radio>
                                     <Radio value="ER">{t('verificationReport:ER')}</Radio>
                                   </Radio.Group>
                                 </Form.Item>
@@ -383,7 +385,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                           First name
                         </Col>
                         <Col xl={4} className="other-cols col">
-                          Affliation
+                          Affiliation
                         </Col>
                         <Col xl={2}></Col>
                       </Row>
@@ -422,11 +424,20 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     ]}
                                   >
                                     <Select disabled={disableFields}>
-                                      <Select.Option value="technicalReviewer">
-                                        {t('verificationReport:technicalReviewer')}
+                                      <Select.Option value="viewer">
+                                        {t('verificationReport:viewer')}
                                       </Select.Option>
                                       <Select.Option value="approver">
                                         {t('verificationReport:approver')}
+                                      </Select.Option>
+                                      <Select.Option value="technicalExpert">
+                                        {t('verificationReport:technicalExpert')}
+                                      </Select.Option>
+                                      <Select.Option value="financialOtherExpert">
+                                        {t('verificationReport:financialOtherExpert')}
+                                      </Select.Option>
+                                      <Select.Option value="trainee">
+                                        {t('verificationReport:trainee')}
                                       </Select.Option>
                                     </Select>
                                   </Form.Item>

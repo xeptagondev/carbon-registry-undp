@@ -41,4 +41,14 @@ export class CreditRetireRequestDto {
     @IsNotEmpty()
     @ApiProperty({ type: 'string', required: false })
     country: string;
+
+    @ApiProperty()
+    @ValidateIf(
+        (o) =>
+            o.retirementType ===
+            CreditRetirementTypeEmnum.CROSS_BORDER_TRANSACTIONS,
+    )
+    @IsNotEmpty()
+    @IsString()
+    organizationName?: string;
 }

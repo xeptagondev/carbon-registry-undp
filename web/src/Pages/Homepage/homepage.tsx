@@ -5,22 +5,8 @@ import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import sliderLogo from '../../Assets/Images/logo-slider.png';
-import undpLogo from '../../Assets/Images/undp1.webp';
-import EBRD from '../../Assets/Images/EBRD.webp';
-import EBRDff from '../../Assets/Images/EBRD.png';
-import UNFCCC from '../../Assets/Images/UNFCCC.webp';
-import UNFCCCff from '../../Assets/Images/UNFCCC.png';
-import IETA from '../../Assets/Images/IETA.webp';
-import IETAff from '../../Assets/Images/IETA.png';
-import ESA from '../../Assets/Images/ESA.webp';
-import ESAff from '../../Assets/Images/ESA.png';
-import WBANK from '../../Assets/Images/WBANK.webp';
-import WBANKff from '../../Assets/Images/WBANK.png';
-import forestfall from '../../Assets/Images/forestnew.png';
-import resources from '../../Assets/Images/resources.webp';
-import resourcesfall from '../../Assets/Images/resources.png';
-import logo_Gold from '../../Assets/Images/logo_Gold.png';
+
+import logo from '../../Assets/Images/logo-slider.png';
 import { ReactComponent as Government } from '../../Assets/Images/gov.svg';
 import { ReactComponent as Projdev } from '../../Assets/Images/projdev.svg';
 import { ReactComponent as Certifier } from '../../Assets/Images/certif.svg';
@@ -31,7 +17,7 @@ import './homepage.scss';
 import ProcessFlow from '../../Components/Homepage/Howdoesitwork';
 import PartnershipBanner from '../../Components/Homepage/Partners';
 import FAQ from '../../Components/Homepage/Faq';
-// import MapAnimation from '../../Components/Homepage/MapAnimation';
+import MapAnimation from '../../Components/Homepage/MapAnimation';
 import { GlobeAmericas, ShieldCheck, CartCheck, Briefcase } from 'react-bootstrap-icons';
 import { ImgWithFallback } from '../../Components/ImgwithFallback/imgWithFallback';
 import CollapsePanel from 'antd/lib/collapse/CollapsePanel';
@@ -40,6 +26,8 @@ import CarbonDashboard from '../../Components/Homepage/CarbonDashboard';
 import DigitalPublicGood from '../../Components/Homepage/DigitalPublic';
 import DemoSite from '../../Components/Homepage/DemoSite';
 import FeatureCards from '../../Components/Homepage/Keyfeatures';
+
+// import MapAnimation from "../../Components/Homepage/MapAnimation";
 
 const Homepage = () => {
   const { i18n, t } = useTranslation(['common', 'homepage']);
@@ -88,15 +76,15 @@ const Homepage = () => {
               <Col md={18} lg={21} xs={17} flex="auto">
                 <div className="homepage-header-container">
                   <div className="logo">
-                    <img src={logo_Gold} alt="slider-logo" />
+                    <img src={logo} alt="slider-logo" />
                   </div>
                   <div>
                     <div style={{ display: 'flex' }}>
-                      <div className="title">{'IMPACT REGISTRY'}</div>
-                      {/* <div className="title-sub">{'REGISTRY'}</div> */}
+                      <div className="title">{'NATIONAL CARBON'}</div>
+                      <div className="title-sub">{'REGISTRY'}</div>
                     </div>
                     <div className="country-name">
-                      {process.env.REACT_APP_COUNTRY_NAME || 'Gold Standard'}
+                      {process.env.REACT_APP_COUNTRY_NAME || 'countryX'}
                     </div>
                   </div>
                 </div>
@@ -148,11 +136,12 @@ const Homepage = () => {
               transition={{ duration: 0.8, ease: 'easeOut' }}
             >
               <h2 className="vision-title" id="vision">
-                Mission
+                Vision
               </h2>
               <p className="vision-description">
-                Gold Standard’s Mission Is To Accelerate Progress Toward Climate Security And
-                Sustainable Development For All By Catalyzing Finance And Maximizing Its Impact.
+                UNDP’s open-source National Carbon Registry enables countries to implement and
+                manage carbon markets by issuing, managing, and tracking carbon credits with
+                confidence, achieving national climate commitments.
               </p>
               <h3 className="vision-subtitle">The Platform Supports:</h3>
 
@@ -582,6 +571,7 @@ const Homepage = () => {
       </Row> */}
       <CarbonDashboard />
       <DigitalPublicGood />
+      <MapAnimation />
       <ProcessFlow />
       <FeatureCards />
       <FAQ />
