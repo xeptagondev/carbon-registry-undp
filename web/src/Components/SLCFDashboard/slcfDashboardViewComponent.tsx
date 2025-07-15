@@ -582,11 +582,11 @@ export const SLCFDashboardComponent = (props: any) => {
             name: 'Agriculture',
             statusColor: 'rgba(115, 41, 134, 1)',
           },
-          {
-            key: undefined,
-            name: 'Other',
-            statusColor: 'rgba(87, 85, 81, 1)',
-          },
+          // {
+          //   key: undefined,
+          //   name: 'Other',
+          //   statusColor: 'rgba(87, 85, 81, 1)',
+          // },
         ].filter((item: any) => {
           if (sectorMap) {
             console.log(
