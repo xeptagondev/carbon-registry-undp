@@ -123,17 +123,6 @@ export class DocumentManagementService {
 
       switch (addDocumentDto.documentType) {
         case DocumentTypeEnum.INITIAL_NOTIFICATION_FORM: {
-          const infRequestDto: INFRequestDto = plainToInstance(
-            INFRequestDto,
-            addDocumentDto.data
-          );
-          const infCreationErrors = await validate(infRequestDto);
-          console.log("------------infCreationError----------",infCreationErrors);
-          if (infCreationErrors.length > 0) {
-            const formatted = this.helperService.formatValidationErrors(infCreationErrors);
-            console.log("------------formatted----------",formatted);
-            throw new HttpException(formatted, HttpStatus.BAD_REQUEST);
-          }
           if (
             user.companyRole !== CompanyRole.PROJECT_DEVELOPER ||
             user.role !== Role.Admin
@@ -258,17 +247,6 @@ export class DocumentManagementService {
           });
         }
         case DocumentTypeEnum.PROJECT_DESIGN_DOCUMENT: {
-          const pddRequestDto: PddRequestDto = plainToInstance(
-            PddRequestDto,
-            addDocumentDto.data
-          );
-          const pddCreationErrors = await validate(pddRequestDto);
-          console.log("------------pddCreationError----------",pddCreationErrors);
-          if (pddCreationErrors.length > 0) {
-            const formatted = this.helperService.formatValidationErrors(pddCreationErrors);
-            console.log("------------formatted----------",formatted);
-            throw new HttpException(formatted, HttpStatus.BAD_REQUEST);
-          }
           if (user.companyId != project.companyId || user.role !== Role.Admin) {
             throw new HttpException(
               this.helperService.formatReqMessagesString(
