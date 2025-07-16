@@ -1,7 +1,8 @@
-import { ArrayNotEmpty, IsArray, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { ArrayMaxSize, ArrayMinSize, ArrayNotEmpty, IsArray, IsEmail, IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
 import { InfSectorEnum } from "../enum/inf.sector.enum";
 import { InfSectoralScopeEnum } from "../enum/inf.sectoral.scope.enum";
 import { ProjectGeography } from "../enum/projectGeography.enum";
+import { Type } from "class-transformer";
 
 export class INFRequestDto {
     @IsString()
@@ -37,8 +38,9 @@ export class INFRequestDto {
     street: string;
 
     @IsArray()
-    @ArrayNotEmpty()
-    geographicalLocationCoordinates: number[][][][];
+    @ArrayMinSize(1)
+    @ArrayMaxSize(1)
+    geographicalLocationCoordinates:[][][][];
 
     @IsEnum(ProjectGeography)
     @IsNotEmpty()
@@ -54,6 +56,7 @@ export class INFRequestDto {
 
     @IsString()
     @IsNotEmpty()
+    @IsIn(['PROPOSAL_STAGE','PROCUREMENT_STAGE','CONSTRUCTION_STAGE','INSTALLATION_STAGE'])
     projectStatus: string;
 
     @IsString()
@@ -62,6 +65,8 @@ export class INFRequestDto {
 
     @IsNumber()
     @IsNotEmpty()
+    @Min(0) // 1970-01-01T00:00:00Z
+    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
     startDate: number;
 
     @IsArray()
@@ -100,7 +105,4 @@ export class INFRequestDto {
     @IsArray()
     @ArrayNotEmpty()
     independentCertifiers: number[];
-
-
-
 }

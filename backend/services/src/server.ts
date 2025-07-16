@@ -19,7 +19,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { TrimPipe } from "@app/shared/validation/trim-pipe.transform";
 import { ValidationException } from "@app/shared/validation/validation.exception";
 import { ValidationExceptionFilter } from "@app/shared/validation/validation-exception.filter";
-import { useContainer } from "class-validator";
+import { useContainer, ValidationError } from "class-validator";
 import { UtilModule } from "@app/shared/util/util.module";
 import * as bodyParser from "body-parser";
 
@@ -114,7 +114,26 @@ export async function buildNestApp(
   nestApp.useGlobalPipes(new TrimPipe());
   nestApp.useGlobalPipes(
     new ValidationPipe({
-      exceptionFactory: (errors) => new BadRequestException(errors),
+      exceptionFactory: (errors) => {
+        const formattedErrors = {};
+
+        const formatErrors = (errs: ValidationError[]) => {
+          for (const err of errs) {
+            const propertyPath = err.property;
+
+            if (err.constraints) {
+              formattedErrors[propertyPath] = Object.values(err.constraints);
+            }
+            //nested
+            if (err.children && err.children.length > 0) {
+              formatErrors(err.children);
+            }
+          }
+        };
+        formatErrors(errors);
+        console.log(formattedErrors);
+        return new BadRequestException(formattedErrors);
+      },
     })
   );
   nestApp.useGlobalFilters(new ValidationExceptionFilter());
