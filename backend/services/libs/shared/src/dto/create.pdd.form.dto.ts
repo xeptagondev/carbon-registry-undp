@@ -1,7 +1,7 @@
-import { ArrayNotEmpty, IsArray, IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl, ValidateNested } from "class-validator";
+import { ArrayNotEmpty, IsArray, IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl, Max, Min, ValidateNested } from "class-validator";
 import { InfSectoralScopeEnum } from "../enum/inf.sectoral.scope.enum";
 import { Optional } from "@nestjs/common";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 
 class LocationsOfProjectActivityDto{
     @IsArray()
@@ -14,6 +14,8 @@ class LocationsOfProjectActivityDto{
 
     @IsNumber()
     @IsOptional()
+    @Min(0) // 1970-01-01T00:00:00Z
+    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
     commissioningDate: number;
 
     @IsString()
@@ -42,6 +44,8 @@ class LocationsOfProjectActivityDto{
 
     @IsNumber()
     @IsOptional()
+    @Min(0) // 1970-01-01T00:00:00Z
+    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
     startDate: number;
 }
 
@@ -149,11 +153,26 @@ class Vintage {
 
     @IsNumber()
     year:number;
+
+    static fromTimestamp(timestamp: number): Vintage {
+    const date = new Date(timestamp);
+    return {
+      day: date.getDate(),
+      month: date.getMonth() + 1,
+      year: date.getFullYear()
+    };
+  }
 }
 class YearlyGHGEmissionReductions{
 
     @ValidateNested()
     @Type(() => Vintage)
+    @Transform(({ value }) => {
+    if (typeof value === 'number') {
+      return Vintage.fromTimestamp(value);
+    }
+    return value;
+    })
     vintage: Vintage;
 
     @IsNumber()
@@ -278,7 +297,7 @@ class ProjectDetailsDto {
     @IsNotEmpty()
     appliedMethodologies:string;
 
-    @IsString()
+    @IsNumber()
     @IsNotEmpty()
     completionDate:number;
 
@@ -298,8 +317,9 @@ class ProjectDetailsDto {
     @IsNotEmpty()
     projectTitle: string;
 
-    @IsEnum(InfSectoralScopeEnum)
-    sectoralScope: InfSectoralScopeEnum;
+
+    @IsString()
+    sectoralScope: string;
 
     @IsNumber()
     versionNumber:number;
@@ -384,10 +404,9 @@ class ApplicationOfMethodology{
     @IsNotEmpty()
     otherElementsOfMonitoringPlan: string;
 
-    @IsArray()
     @ValidateNested()
     @Type(() => ProjectBoundary)
-    projectBoundary: ProjectBoundary[];
+    projectBoundary: ProjectBoundary;
 
     @IsString()
     @IsNotEmpty()
@@ -424,7 +443,7 @@ class StartDateCreditingPeriod{
     projectCreditingPeriodStartDate: number;
 }
 
-export class EnvironmentImpactsDto{
+class EnvironmentImpactsDto{
 
     @IsString()
     @IsNotEmpty()
@@ -460,8 +479,9 @@ class AppendixDto {
     @IsEmail()
     email: string;
 
-    @IsUrl()
-    website: string| null;
+    @IsString()
+    @IsOptional()
+    website: string;
 
     @IsString()
     telephone: string;
@@ -476,7 +496,8 @@ class AppendixDto {
     address: string;
 
     @IsString()
-    fax: string| null;
+    @IsOptional()
+    fax: string;
 
     @IsString()
     appendix2Comments: string;
