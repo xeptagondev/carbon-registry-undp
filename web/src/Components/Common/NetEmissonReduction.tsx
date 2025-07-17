@@ -293,10 +293,6 @@ const NetEmissionReduction = (props: any) => {
                             message: `${t('common:required')}`,
                           },
                           {
-                            pattern: /^-?\d+$/,
-                            message: 'Should be an integer',
-                          },
-                          {
                             validator(rule, value) {
                               if (!value) {
                                 return Promise.resolve();
@@ -337,10 +333,6 @@ const NetEmissionReduction = (props: any) => {
                           {
                             required: true,
                             message: `${t('common:required')}`,
-                          },
-                          {
-                            pattern: /^-?\d+$/,
-                            message: 'Should be an integer',
                           },
                           {
                             validator(rule, value) {
@@ -384,10 +376,6 @@ const NetEmissionReduction = (props: any) => {
                           {
                             required: true,
                             message: `${t('common:required')}`,
-                          },
-                          {
-                            pattern: /^-?\d+$/,
-                            message: 'Should be an integer',
                           },
                           {
                             validator(rule, value) {
@@ -618,7 +606,6 @@ const NetEmissionReduction = (props: any) => {
                       return Promise.resolve();
                     }
 
-                    // eslint-disable-next-line no-restricted-globals
                     if (isNaN(value)) {
                       return Promise.reject(new Error('Should be an integer'));
                     }
