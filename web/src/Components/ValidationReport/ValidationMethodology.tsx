@@ -311,7 +311,32 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                           <Col xl={4}>
                             <Row>
                               <Col xl={6} className="other-cols checkbox-cols">
-                                <Form.Item name={[name, 'documentReview']} valuePropName="checked">
+                                <Form.Item
+                                  name={[name, 'documentReview']}
+                                  valuePropName="checked"
+                                  rules={[
+                                    {
+                                      validator: async (rule, value) => {
+                                        const formValues = form.getFieldsValue();
+                                        const validationTeamMembers =
+                                          formValues.validationTeamMembers || [];
+                                        const currentMember = validationTeamMembers[name];
+
+                                        if (currentMember) {
+                                          const hasAtLeastOne =
+                                            currentMember.documentReview ||
+                                            currentMember.onsiteInspections ||
+                                            currentMember.interviews ||
+                                            currentMember.verificationFindings;
+
+                                          if (!hasAtLeastOne) {
+                                            return Promise.reject(new Error());
+                                          }
+                                        }
+                                      },
+                                    },
+                                  ]}
+                                >
                                   <Checkbox disabled={disableFields} />
                                 </Form.Item>
                               </Col>
@@ -319,12 +344,59 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                 <Form.Item
                                   name={[name, 'onsiteInspections']}
                                   valuePropName="checked"
+                                  rules={[
+                                    {
+                                      validator: async (rule, value) => {
+                                        const formValues = form.getFieldsValue();
+                                        const validationTeamMembers =
+                                          formValues.validationTeamMembers || [];
+                                        const currentMember = validationTeamMembers[name];
+
+                                        if (currentMember) {
+                                          const hasAtLeastOne =
+                                            currentMember.documentReview ||
+                                            currentMember.onsiteInspections ||
+                                            currentMember.interviews ||
+                                            currentMember.verificationFindings;
+
+                                          if (!hasAtLeastOne) {
+                                            return Promise.reject(new Error());
+                                          }
+                                        }
+                                      },
+                                    },
+                                  ]}
                                 >
                                   <Checkbox disabled={disableFields} />
                                 </Form.Item>
                               </Col>
                               <Col xl={6} className="other-cols checkbox-cols">
-                                <Form.Item name={[name, 'interviews']} valuePropName="checked">
+                                <Form.Item
+                                  name={[name, 'interviews']}
+                                  valuePropName="checked"
+                                  rules={[
+                                    {
+                                      validator: async (rule, value) => {
+                                        const formValues = form.getFieldsValue();
+                                        const validationTeamMembers =
+                                          formValues.validationTeamMembers || [];
+                                        const currentMember = validationTeamMembers[name];
+
+                                        if (currentMember) {
+                                          const hasAtLeastOne =
+                                            currentMember.documentReview ||
+                                            currentMember.onsiteInspections ||
+                                            currentMember.interviews ||
+                                            currentMember.verificationFindings;
+
+                                          if (!hasAtLeastOne) {
+                                            return Promise.reject(new Error());
+                                          }
+                                        }
+                                      },
+                                    },
+                                  ]}
+                                >
                                   <Checkbox disabled={disableFields} />
                                 </Form.Item>
                               </Col>
@@ -332,6 +404,28 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                 <Form.Item
                                   name={[name, 'validationFindings']}
                                   valuePropName="checked"
+                                  rules={[
+                                    {
+                                      validator: async (rule, value) => {
+                                        const formValues = form.getFieldsValue();
+                                        const validationTeamMembers =
+                                          formValues.validationTeamMembers || [];
+                                        const currentMember = validationTeamMembers[name];
+
+                                        if (currentMember) {
+                                          const hasAtLeastOne =
+                                            currentMember.documentReview ||
+                                            currentMember.onsiteInspections ||
+                                            currentMember.interviews ||
+                                            currentMember.verificationFindings;
+
+                                          if (!hasAtLeastOne) {
+                                            return Promise.reject(new Error());
+                                          }
+                                        }
+                                      },
+                                    },
+                                  ]}
                                 >
                                   <Checkbox disabled={disableFields} />
                                 </Form.Item>
