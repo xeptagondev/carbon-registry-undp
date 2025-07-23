@@ -39,7 +39,6 @@ export class EmailHelperService {
       "email.disableLowPriorityEmails"
     );
 
-    console.log("$$$$$$$$$$$$$$$", this.isEmailDisabled)
   }
 
   public async sendEmailToProgrammeOwnerAdmins(
