@@ -164,7 +164,7 @@ export const SLCFDashboardComponent = (props: any) => {
     OverallMineButtons.OVERALL
   );
   const [startTime, setStartTime] = useState<number>(
-    Date.parse(String(moment().subtract('13', 'days').startOf('day')))
+    Date.parse(String(moment().subtract('6', 'months').startOf('day')))
   );
   const [endTime, setEndTime] = useState<number>(Date.parse(String(moment().endOf('day'))));
   const [sector, setSector] = useState<ProjectSectorEnum>();
