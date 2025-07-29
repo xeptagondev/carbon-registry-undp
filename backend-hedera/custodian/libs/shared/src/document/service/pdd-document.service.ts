@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
@@ -215,7 +216,7 @@ export class PddDocumentService extends DocumentService {
             if (
                 !(
                     jwtData.organizationRole ===
-                        OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
                     jwtData.userRole === RoleEnum.Admin &&
                     submittedUser.organization.id === project.organization.id
                 )
@@ -240,12 +241,7 @@ export class PddDocumentService extends DocumentService {
                 }),
             );
 
-            const organizationDoc =
-                await this.guardianService.getGridDocumentUsingRefId(
-                    GridTypeEnum.ORGANIZATION_GRID,
-                    project?.organization?.refId,
-                    jwtData.email,
-                );
+
 
             const documentSchema: DocumentSchema = {
                 refId: savedDoc.refId,
@@ -263,7 +259,7 @@ export class PddDocumentService extends DocumentService {
                 this.getBlockNameByDocType(dto.documentType),
                 {
                     document: documentSchema,
-                    ref: { document: organizationDoc },
+                    ref: null,
                 },
             );
 
@@ -395,7 +391,7 @@ export class PddDocumentService extends DocumentService {
                     !(
                         jwtData.userRole === RoleEnum.Admin &&
                         jwtData.organizationRole ===
-                            OrganizationTypeEnum.INDEPENDENT_CERTIFIER
+                        OrganizationTypeEnum.INDEPENDENT_CERTIFIER
                     )
                 ) {
                     throw new HttpException(
@@ -421,7 +417,7 @@ export class PddDocumentService extends DocumentService {
                         (jwtData.userRole === RoleEnum.Admin ||
                             jwtData.userRole === RoleEnum.Root) &&
                         jwtData.organizationRole ===
-                            OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
+                        OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY
                     )
                 ) {
                     throw new HttpException(

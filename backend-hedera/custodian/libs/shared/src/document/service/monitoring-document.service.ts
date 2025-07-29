@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
@@ -97,7 +98,7 @@ export class MonitoringDocumentService extends DocumentService {
         if (
             !(
                 jwtData.organizationRole ===
-                    OrganizationTypeEnum.PROJECT_DEVELOPER &&
+                OrganizationTypeEnum.PROJECT_DEVELOPER &&
                 jwtData.userRole === RoleEnum.Admin
             )
         ) {
@@ -152,9 +153,9 @@ export class MonitoringDocumentService extends DocumentService {
                 lastActivity &&
                 !(
                     lastActivity.state ===
-                        ActivityStateEnum.MONITORING_REPORT_REJECTED ||
+                    ActivityStateEnum.MONITORING_REPORT_REJECTED ||
                     lastActivity.state ===
-                        ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
+                    ActivityStateEnum.VERIFICATION_REPORT_VERIFIED
                 )
             ) {
                 throw new HttpException(
@@ -184,7 +185,7 @@ export class MonitoringDocumentService extends DocumentService {
                 !(
                     project &&
                     project.projectProposalStage ===
-                        ProjectProposalStage.AUTHORISED
+                    ProjectProposalStage.AUTHORISED
                 )
             ) {
                 throw new HttpException(
@@ -245,7 +246,7 @@ export class MonitoringDocumentService extends DocumentService {
             if (
                 monitoringData?.calcEmissionReductions?.ce_documentUpload &&
                 monitoringData.calcEmissionReductions.ce_documentUpload.length >
-                    0
+                0
             ) {
                 const docUrls = await this.uploadDocuments(
                     monitoringData.calcEmissionReductions.ce_documentUpload,
@@ -262,7 +263,7 @@ export class MonitoringDocumentService extends DocumentService {
                 (lastActivity.state ===
                     ActivityStateEnum.MONITORING_REPORT_UPLOADED ||
                     lastActivity.state ===
-                        ActivityStateEnum.MONITORING_REPORT_VERIFIED)
+                    ActivityStateEnum.MONITORING_REPORT_VERIFIED)
             ) {
                 throw new HttpException(
                     'Monitoring report already exists',
@@ -271,7 +272,7 @@ export class MonitoringDocumentService extends DocumentService {
             } else if (
                 lastActivity &&
                 lastActivity.state ===
-                    ActivityStateEnum.MONITORING_REPORT_REJECTED
+                ActivityStateEnum.MONITORING_REPORT_REJECTED
             ) {
                 lastActivity = await queryRunner.manager.save(
                     plainToClass(ActivityEntity, {
@@ -417,7 +418,7 @@ export class MonitoringDocumentService extends DocumentService {
         );
         if (
             jwtData.organizationRole !==
-                OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+            OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
             jwtData.userRole !== RoleEnum.Admin
         ) {
             throw new HttpException(
@@ -498,8 +499,8 @@ export class MonitoringDocumentService extends DocumentService {
                 documentEntity.project.createdBy.email,
                 queryRunner,
                 transactionCost *
-                    documentEntity?.data.projectActivityDetails
-                        .bi_projectedGHGReductions,
+                documentEntity?.data.projectActivityDetails
+                    .bi_projectedGHGReductions,
                 `The associated PD does not have enough HBAR balance to complete the transaction.
                  They've been notified — please try again shortly.`,
             );

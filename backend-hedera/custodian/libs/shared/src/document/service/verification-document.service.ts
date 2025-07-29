@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { BaseDocumentDTO } from '../dto/base-document.dto';
@@ -98,7 +99,7 @@ export class VerificationDocumentService extends DocumentService {
         if (
             !(
                 jwtData.organizationRole ===
-                    OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
+                OrganizationTypeEnum.INDEPENDENT_CERTIFIER &&
                 jwtData.userRole === RoleEnum.Admin
             )
         ) {
@@ -180,9 +181,9 @@ export class VerificationDocumentService extends DocumentService {
                 lastActivity &&
                 !(
                     lastActivity.state ===
-                        ActivityStateEnum.MONITORING_REPORT_VERIFIED ||
+                    ActivityStateEnum.MONITORING_REPORT_VERIFIED ||
                     lastActivity.state ===
-                        ActivityStateEnum.VERIFICATION_REPORT_REJECTED
+                    ActivityStateEnum.VERIFICATION_REPORT_REJECTED
                 )
             ) {
                 throw new HttpException(
@@ -242,12 +243,7 @@ export class VerificationDocumentService extends DocumentService {
                 }),
             );
 
-            const organizationDoc =
-                await this.guardianService.getGridDocumentUsingRefId(
-                    GridTypeEnum.ORGANIZATION_GRID,
-                    project?.organization?.refId,
-                    jwtData.email,
-                );
+
 
             let creditAmount = 0;
             for (const data of dto?.data?.ghgProjectDescription
@@ -281,7 +277,7 @@ export class VerificationDocumentService extends DocumentService {
                 this.getBlockNameByDocType(dto.documentType),
                 {
                     document: documentSchema,
-                    ref: { document: organizationDoc },
+                    ref: null,
                 },
             );
 
@@ -367,7 +363,7 @@ export class VerificationDocumentService extends DocumentService {
         if (
             !(
                 jwtData.organizationRole ==
-                    OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
+                OrganizationTypeEnum.DESIGNATED_NATIONAL_AUTHORITY &&
                 (jwtData.userRole == RoleEnum.Admin ||
                     jwtData.userRole == RoleEnum.Root)
             )
@@ -482,7 +478,7 @@ export class VerificationDocumentService extends DocumentService {
                 if (
                     Number(documentEntity?.project?.creditEst) <
                     Number(documentEntity?.project?.creditIssued) +
-                        totalCreditAmount
+                    totalCreditAmount
                 ) {
                     throw new HttpException(
                         'Project has reached maximum allowed credit limit',
