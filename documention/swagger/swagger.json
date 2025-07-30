@@ -577,7 +577,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -594,7 +594,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -611,7 +611,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -628,7 +628,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -645,7 +645,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -662,7 +662,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -679,7 +679,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -696,7 +696,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -713,7 +713,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -729,7 +729,7 @@
           }
         ],
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }, { "api_key": [] }]
       }
     },
@@ -746,7 +746,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -763,7 +763,7 @@
           }
         },
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -782,7 +782,7 @@
           }
         },
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -799,7 +799,7 @@
           }
         },
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -816,7 +816,7 @@
           }
         },
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -833,7 +833,7 @@
           }
         },
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -850,7 +850,7 @@
           }
         },
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -869,7 +869,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -888,7 +888,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -907,7 +907,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -926,7 +926,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -943,7 +943,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -960,7 +960,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -976,7 +976,7 @@
           }
         ],
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -993,7 +993,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -1010,7 +1010,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -1027,7 +1027,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -1044,7 +1044,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -1061,7 +1061,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -1078,7 +1078,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -1087,7 +1087,7 @@
         "operationId": "ProgrammeController_getNdcDetailsPeriods",
         "parameters": [],
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1104,7 +1104,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1117,7 +1117,7 @@
           "content": { "application/json": { "schema": { "type": "number" } } }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1130,7 +1130,7 @@
           "content": { "application/json": { "schema": { "type": "number" } } }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1139,7 +1139,7 @@
         "operationId": "ProgrammeController_getNdcDetailActions",
         "parameters": [],
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1156,7 +1156,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1173,7 +1173,7 @@
           }
         },
         "responses": { "200": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1190,7 +1190,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1207,7 +1207,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Programme"],
+        "tags": ["Phase 1 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1300,7 +1300,7 @@
           }
         },
         "responses": { "201": { "description": "" } },
-        "tags": ["Project Management"],
+        "tags": ["Phase 2 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -1309,7 +1309,7 @@
         "operationId": "ProjectManagementController_getProjectById",
         "parameters": [],
         "responses": { "201": { "description": "" } },
-        "tags": ["Project Management"],
+        "tags": ["Phase 2 Project Management"],
         "security": [{ "bearer": [] }, { "bearer": [] }]
       }
     },
@@ -1325,7 +1325,7 @@
           }
         ],
         "responses": { "200": { "description": "" } },
-        "tags": ["Project Management"],
+        "tags": ["Phase 2 Project Management"],
         "security": [{ "bearer": [] }]
       }
     },
@@ -1663,7 +1663,56 @@
     "version": "0.5",
     "contact": {}
   },
-  "tags": [],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication APIs for login, logout, token handling, and session control."
+    },
+    {
+      "name": "User",
+      "description": "Endpoints for managing user profiles, roles, and access permissions."
+    },
+    {
+      "name": "Organisation",
+      "description": "APIs for managing organisations, including organisation profiles, user associations, and hierarchical structure."
+    },
+    {
+      "name": "Phase 1 Project Management",
+      "description": "Handles phase 1 workflow programme creation, updates, lifecycle, and assignment across the system."
+    },
+    {
+      "name": "Phase 2 Project Management",
+      "description": "Handles phase 2 workflow programme creation, updates, lifecycle, and assignment across the system."
+    },
+    {
+      "name": "Document Management",
+      "description": "Handles uploading, storing, retrieving, and verifying documents."
+    },
+    {
+      "name": "Credit Transactions Management",
+      "description": "APIs for tracking and managing credit issuance, allocations, transfers, and ownership."
+    },
+    {
+      "name": "Reports Management",
+      "description": "Endpoints to generate, download, and manage system reports."
+    },
+    {
+      "name": "Analytics",
+      "description": "Provides access to analytical insights, summaries, and dashboards."
+    },
+    {
+      "name": "Settings",
+      "description": "Endpoints to manage application-wide settings and configuration values."
+    },
+    {
+      "name": "Location",
+      "description": "APIs for managing geographic data such as maps, regions, districts, and other location-based hierarchies."
+    },
+    {
+      "name": "Default",
+      "description": "System-level endpoints such as health checks, and service status."
+    }
+  ],
   "servers": [{ "url": "/" }],
   "components": {
     "securitySchemes": {

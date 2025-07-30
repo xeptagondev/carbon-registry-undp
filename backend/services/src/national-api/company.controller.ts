@@ -31,8 +31,9 @@ import { HelperService } from "@app/shared/util/helpers.service";
 import { ByTypeDto } from "@app/shared/dto/byType.dto";
 import { GetOrganizationsRequest } from "@app/shared/dto/organizations-request.dto";
 import { OrganisationRejectDto } from "@app/shared/dto/organisation.reject.dto";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 
-@ApiTags("Organisation")
+@ApiTags(ApiTagsEnum.ORGANISATION)
 @ApiBearerAuth()
 @Controller("organisation")
 export class CompanyController {

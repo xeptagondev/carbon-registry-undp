@@ -25,8 +25,9 @@ import { UserUpdateDto } from "@app/shared/dto/user.update.dto";
 import { User } from "@app/shared/entities/user.entity";
 import { UserService } from "@app/shared/user/user.service";
 import { HelperService } from "@app/shared/util/helpers.service";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 
-@ApiTags("User")
+@ApiTags(ApiTagsEnum.USER)
 @ApiBearerAuth()
 @Controller("user")
 export class UserController {

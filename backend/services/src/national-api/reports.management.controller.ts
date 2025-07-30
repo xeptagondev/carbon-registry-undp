@@ -8,9 +8,10 @@ import { AefExportDto } from "@app/shared/dto/aef.export.dto";
 import { QueryDto } from "@app/shared/dto/query.dto";
 import { ProjectEntity } from "@app/shared/entities/projects.entity";
 import { AefReportTypeEnum } from "@app/shared/enum/aef.report.type.enum";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 import { Body, Request, Controller, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-@ApiTags("Reports Management")
+@ApiTags(ApiTagsEnum.REPORTS_MANAGEMENT)
 @Controller("reportsManagement")
 export class ReportsManagementController {
   constructor(

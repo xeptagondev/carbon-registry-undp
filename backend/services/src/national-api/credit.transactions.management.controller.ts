@@ -9,9 +9,10 @@ import { CreditRetireRequestDto } from "@app/shared/dto/credit.retire.request.dt
 import { CreditTransferDto } from "@app/shared/dto/credit.transfer.dto";
 import { QueryDto } from "@app/shared/dto/query.dto";
 import { ProjectEntity } from "@app/shared/entities/projects.entity";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 import { Body, Controller, Request, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-@ApiTags("Credit Transactions Management")
+@ApiTags(ApiTagsEnum.CREDIT_TRANSACTIONS_MANAGEMENT)
 @Controller("creditTransactionsManagement")
 export class CreditTransactionsManagementController {
   constructor(

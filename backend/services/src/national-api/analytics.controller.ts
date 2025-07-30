@@ -11,7 +11,8 @@ import { AnalyticsService } from "@app/shared/analytics/analytics.service";
 import { ProjectDataRequestDTO } from "@app/shared/dto/project-data-request.dto";
 import { PoliciesGuard } from "@app/shared/casl/policy.guard";
 import { ApiTags } from "@nestjs/swagger";
-@ApiTags("Analytics")
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
+@ApiTags(ApiTagsEnum.ANALYTICS)
 @Controller("analytics")
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}

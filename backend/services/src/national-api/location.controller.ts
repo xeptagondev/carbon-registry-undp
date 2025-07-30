@@ -13,8 +13,9 @@ import { LocationDataType } from "@app/shared/enum/locationDataType.enum";
 import { LocationService } from "@app/shared/location/location.service";
 import { QueryDto } from "@app/shared/dto/query.dto";
 import { DataListResponseDto } from "@app/shared/dto/data.list.response";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 
-@ApiTags("Location")
+@ApiTags(ApiTagsEnum.LOCATION)
 @ApiBearerAuth()
 @Controller("location")
 export class LocationController {

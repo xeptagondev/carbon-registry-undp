@@ -46,8 +46,9 @@ import { Programme } from "@app/shared/entities/programme.entity";
 import { ProgrammeTransfer } from "@app/shared/entities/programme.transfer";
 import { ApiKeyJwtAuthGuard } from "@app/shared/auth/guards/api-jwt-key.guard";
 import { ProgrammeService } from "@app/shared/programme/programme.service";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 
-@ApiTags("Programme")
+@ApiTags(ApiTagsEnum.PROGRAMME)
 @ApiBearerAuth()
 @Controller("programme")
 export class ProgrammeController {

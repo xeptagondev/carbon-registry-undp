@@ -16,8 +16,9 @@ import { PasswordResetDto } from "@app/shared/dto/passwordReset.dto";
 import { HelperService } from "@app/shared/util/helpers.service";
 import { PasswordResetService } from "@app/shared/util/passwordReset.service";
 import { RefreshLoginDto } from "@app/shared/dto/refreshLogin.dto";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 
-@ApiTags("Auth")
+@ApiTags(ApiTagsEnum.AUTH)
 @Controller("auth")
 export class AuthController {
   constructor(

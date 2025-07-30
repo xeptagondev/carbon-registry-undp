@@ -8,6 +8,7 @@ import { BaseDocumentDto } from "@app/shared/dto/base.document.dto";
 import { DocumentActionRequestDto } from "@app/shared/dto/document.action.request.dto";
 import { DocumentQueryDto } from "@app/shared/dto/document.query.dto";
 import { DocumentEntity } from "@app/shared/entities/document.entity";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 import {
   Body,
   Controller,
@@ -17,7 +18,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-@ApiTags("Document Management")
+@ApiTags(ApiTagsEnum.DOCUMENT_MANAGEMENT)
 @Controller("documentManagement")
 export class DocumentManagementController {
   constructor(

@@ -6,6 +6,7 @@ import { PoliciesGuard } from "@app/shared/casl/policy.guard";
 import { ProjectCreateDto } from "@app/shared/dto/project.create.dto";
 import { QueryDto } from "@app/shared/dto/query.dto";
 import { ProjectEntity } from "@app/shared/entities/projects.entity";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 import { ProjectManagementService } from "@app/shared/project-management/project-management.service";
 import {
   Body,
@@ -20,7 +21,7 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
-@ApiTags("Project Management")
+@ApiTags(ApiTagsEnum.PROJECT_MANAGEMENT)
 @ApiBearerAuth()
 @Controller("projectManagement")
 export class ProjectManagementController {

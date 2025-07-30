@@ -16,8 +16,9 @@ import { ConfigurationSettings } from "@app/shared/entities/configuration.settin
 import { ConfigurationSettingsService } from "@app/shared/util/configurationSettings.service";
 import { SLCFSignsDto } from "@app/shared/dto/slcfSigns.dto";
 import { SLCFCertificateType } from "@app/shared/enum/certificate.type.enum";
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
 
-@ApiTags("Settings")
+@ApiTags(ApiTagsEnum.SETTINGS)
 @Controller("Settings")
 @ApiBearerAuth()
 export class SettingsController {

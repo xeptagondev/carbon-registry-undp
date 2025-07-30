@@ -16,7 +16,8 @@ import { Stat } from "@app/shared/dto/stat.dto";
 import { StatList } from "@app/shared/dto/stat.list.dto";
 import { QueryDto } from "@app/shared/dto/query.dto";
 import { StatFilter } from "@app/shared/dto/stat.filter";
-@ApiTags("Programme")
+import { ApiTagsEnum } from "@app/shared/enum/api.tags.enum";
+@ApiTags(ApiTagsEnum.PROGRAMME)
 @ApiBearerAuth()
 @Controller("programme")
 export class ProgrammeController {

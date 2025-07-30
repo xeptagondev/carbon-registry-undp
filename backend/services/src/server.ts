@@ -22,6 +22,7 @@ import { ValidationExceptionFilter } from "@app/shared/validation/validation-exc
 import { useContainer } from "class-validator";
 import { UtilModule } from "@app/shared/util/util.module";
 import * as bodyParser from "body-parser";
+import { ApiTagsEnum } from "../libs/shared/src/enum/api.tags.enum";
 
 const express = require("express");
 const fs_promises = require("fs/promises");
@@ -48,7 +49,59 @@ function setupSwagger(
     )
     .build();
   // ${process.env.NODE_ENV}
-  const document = SwaggerModule.createDocument(nestApp, config);
+  const document = SwaggerModule.createDocument(nestApp, config, {
+    deepScanRoutes: true,
+  });
+  document.tags = [
+    {
+      name: ApiTagsEnum.AUTH,
+      description: `Authentication APIs for login, logout, token handling, and session control.`,
+    },
+    {
+      name: ApiTagsEnum.USER,
+      description: `Endpoints for managing user profiles, roles, and access permissions.`,
+    },
+    {
+      name: ApiTagsEnum.ORGANISATION,
+      description: `APIs for managing organisations, including organisation profiles, user associations, and hierarchical structure.`,
+    },
+    {
+      name: ApiTagsEnum.PROGRAMME,
+      description: `Handles phase 1 workflow programme creation, updates, lifecycle, and assignment across the system.`,
+    },
+    {
+      name: ApiTagsEnum.PROJECT_MANAGEMENT,
+      description: `Handles phase 2 workflow programme creation, updates, lifecycle, and assignment across the system.`,
+    },
+    {
+      name: ApiTagsEnum.DOCUMENT_MANAGEMENT,
+      description: `Handles uploading, storing, retrieving, and verifying documents.`,
+    },
+    {
+      name: ApiTagsEnum.CREDIT_TRANSACTIONS_MANAGEMENT,
+      description: `APIs for tracking and managing credit issuance, allocations, transfers, and ownership.`,
+    },
+    {
+      name: ApiTagsEnum.REPORTS_MANAGEMENT,
+      description: `Endpoints to generate, download, and manage system reports.`,
+    },
+    {
+      name: ApiTagsEnum.ANALYTICS,
+      description: `Provides access to analytical insights, summaries, and dashboards.`,
+    },
+    {
+      name: ApiTagsEnum.SETTINGS,
+      description: `Endpoints to manage application-wide settings and configuration values.`,
+    },
+    {
+      name: ApiTagsEnum.LOCATION,
+      description: `APIs for managing geographic data such as maps, regions, districts, and other location-based hierarchies.`,
+    },
+    {
+      name: ApiTagsEnum.DEFAULT,
+      description: `System-level endpoints such as health checks, and service status.`,
+    },
+  ];
 
   SwaggerModule.setup(`${httpBase}`, nestApp, document, {
     customSiteTitle: "API Documentation",
