@@ -9,16 +9,23 @@ import { QueryDto } from "@app/shared/dto/query.dto";
 import { ProjectEntity } from "@app/shared/entities/projects.entity";
 import { AefReportTypeEnum } from "@app/shared/enum/aef.report.type.enum";
 import { Body, Request, Controller, Post, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth } from "@nestjs/swagger";
-
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+@ApiTags("Reports Management")
 @Controller("reportsManagement")
 export class ReportsManagementController {
-  constructor(private readonly aefReportManagementService: AefReportManagementService) {}
+  constructor(
+    private readonly aefReportManagementService: AefReportManagementService
+  ) {}
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, PoliciesGuard)
-  @CheckPolicies((ability: AppAbility) => ability.can(Action.Read, ProjectEntity))
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, ProjectEntity)
+  )
   @Post("queryAefRecords")
-  async queryAefRecords(@Body() queryDto: QueryDto, @Request() req): Promise<any> {
+  async queryAefRecords(
+    @Body() queryDto: QueryDto,
+    @Request() req
+  ): Promise<any> {
     return this.aefReportManagementService.queryAefRecords(
       queryDto,
       req.abilityCondition,
@@ -27,9 +34,14 @@ export class ReportsManagementController {
   }
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, PoliciesGuard)
-  @CheckPolicies((ability: AppAbility) => ability.can(Action.Read, ProjectEntity))
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, ProjectEntity)
+  )
   @Post("downloadAefReport")
-  async downloadAefReport(@Body() exportDto: AefExportDto, @Request() req): Promise<any> {
+  async downloadAefReport(
+    @Body() exportDto: AefExportDto,
+    @Request() req
+  ): Promise<any> {
     return this.aefReportManagementService.downloadAefReport(
       exportDto,
       req.abilityCondition,

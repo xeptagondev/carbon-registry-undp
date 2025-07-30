@@ -65,6 +65,11 @@ function setupSwagger(
       tagSorter: "alpha",
     },
   });
+
+  nestApp.getHttpAdapter().get(`${httpBase}/swagger.json`, (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(document);
+  });
 }
 
 export function getLogger(module) {

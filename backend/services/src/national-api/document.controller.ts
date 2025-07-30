@@ -16,8 +16,8 @@ import {
   Request,
   Query,
 } from "@nestjs/common";
-import { ApiBearerAuth } from "@nestjs/swagger";
-
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+@ApiTags("Document Management")
 @Controller("documentManagement")
 export class DocumentManagementController {
   constructor(

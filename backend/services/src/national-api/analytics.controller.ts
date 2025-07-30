@@ -1,9 +1,17 @@
 import { JwtAuthGuard } from "@app/shared/auth/guards/jwt-auth.guard";
-import { Body, Controller, Get, Post, Request, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from "@nestjs/common";
 import { AnalyticsService } from "@app/shared/analytics/analytics.service";
 import { ProjectDataRequestDTO } from "@app/shared/dto/project-data-request.dto";
 import { PoliciesGuard } from "@app/shared/casl/policy.guard";
-
+import { ApiTags } from "@nestjs/swagger";
+@ApiTags("Analytics")
 @Controller("analytics")
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
@@ -21,7 +29,10 @@ export class AnalyticsController {
 
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @Post("getProjectsData")
-  async getProjectsData(@Body() filters: ProjectDataRequestDTO, @Request() req) {
+  async getProjectsData(
+    @Body() filters: ProjectDataRequestDTO,
+    @Request() req
+  ) {
     return await this.analyticsService.getProjectsData(filters, req.user);
   }
 
@@ -33,37 +44,67 @@ export class AnalyticsController {
 
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @Post("getProjectStatusSummary")
-  async getProjectStatusSummary(@Body() filters: ProjectDataRequestDTO, @Request() req) {
-    return await this.analyticsService.getProjectStatusSummary(filters, req.user);
+  async getProjectStatusSummary(
+    @Body() filters: ProjectDataRequestDTO,
+    @Request() req
+  ) {
+    return await this.analyticsService.getProjectStatusSummary(
+      filters,
+      req.user
+    );
   }
 
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @Post("getProjectsByStatusDetail")
-  async getProjectsByStatusDetail(@Body() filters: ProjectDataRequestDTO, @Request() req) {
-    return await this.analyticsService.getProjectsByStatusDetail(filters, req.user);
+  async getProjectsByStatusDetail(
+    @Body() filters: ProjectDataRequestDTO,
+    @Request() req
+  ) {
+    return await this.analyticsService.getProjectsByStatusDetail(
+      filters,
+      req.user
+    );
   }
 
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @Post("getProjectCountBySector")
-  async getProjectCountBySector(@Body() filters: ProjectDataRequestDTO, @Request() req) {
-    return await this.analyticsService.getProjectCountBySector(filters, req.user);
+  async getProjectCountBySector(
+    @Body() filters: ProjectDataRequestDTO,
+    @Request() req
+  ) {
+    return await this.analyticsService.getProjectCountBySector(
+      filters,
+      req.user
+    );
   }
 
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @Post("getProjectCountBySectorScope")
-  async getProjectCountBySectorScope(@Body() filters: ProjectDataRequestDTO, @Request() req) {
-    return await this.analyticsService.getProjectCountBySectorScope(filters, req.user);
+  async getProjectCountBySectorScope(
+    @Body() filters: ProjectDataRequestDTO,
+    @Request() req
+  ) {
+    return await this.analyticsService.getProjectCountBySectorScope(
+      filters,
+      req.user
+    );
   }
 
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @Post("getCreditSummary")
-  async getCreditSummary(@Body() filters: ProjectDataRequestDTO, @Request() req) {
+  async getCreditSummary(
+    @Body() filters: ProjectDataRequestDTO,
+    @Request() req
+  ) {
     return await this.analyticsService.getCreditSummary(filters, req.user);
   }
 
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @Post("creditsSummaryByDate")
-  async creditsSummaryByDate(@Body() filters: ProjectDataRequestDTO, @Request() req) {
+  async creditsSummaryByDate(
+    @Body() filters: ProjectDataRequestDTO,
+    @Request() req
+  ) {
     return await this.analyticsService.creditsSummaryByDate(filters, req.user);
   }
 }

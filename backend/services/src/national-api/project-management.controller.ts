@@ -20,7 +20,7 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
-@ApiTags("ProjectManagement")
+@ApiTags("Project Management")
 @ApiBearerAuth()
 @Controller("projectManagement")
 export class ProjectManagementController {
