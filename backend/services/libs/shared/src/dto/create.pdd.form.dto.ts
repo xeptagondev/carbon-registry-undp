@@ -1,11 +1,21 @@
-import { ArrayNotEmpty, IsArray, IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl, Max, Min, ValidateNested } from "class-validator";
+import { ArrayContains, ArrayNotEmpty, IsArray, IsBase64, IsBoolean, IsEmail, IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional, IsPhoneNumber, IsString, IsUrl, Matches, Max, Min, ValidateNested } from "class-validator";
 import { InfSectoralScopeEnum } from "../enum/inf.sectoral.scope.enum";
 import { Optional } from "@nestjs/common";
 import { Transform, Type } from "class-transformer";
+import { IsFutureTimeStamp } from "../decorators/isFutureTimeStamp.decorator";
+import { isValidGSPCoordinate } from "../decorators/isValidGSPCoordinate.decorator";
 
 class LocationsOfProjectActivityDto{
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     additionalDocuments: string[];
 
     @IsString()
@@ -15,7 +25,7 @@ class LocationsOfProjectActivityDto{
     @IsNumber()
     @IsOptional()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    // @IsFutureTimeStamp()
     commissioningDate: number;
 
     @IsString()
@@ -27,8 +37,15 @@ class LocationsOfProjectActivityDto{
     district: string;
 
     @IsArray()
-    @ArrayNotEmpty()
-    geographicalLocationCoordinates: number[][][][];
+    @Transform(({ value }) => {
+    //Unwrap exactly two outer layers if they exist
+    if (Array.isArray(value) && Array.isArray(value[0]) && Array.isArray(value[0][0])) {
+        value = value[0][0]; // Strip the first two layers
+    }
+    return value;
+    })
+    @isValidGSPCoordinate()
+    geographicalLocationCoordinates: [number, number][];
 
     @IsString()
     @IsNotEmpty()
@@ -45,7 +62,7 @@ class LocationsOfProjectActivityDto{
     @IsNumber()
     @IsOptional()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    // @IsFutureTimeStamp()
     startDate: number;
 }
 
@@ -299,6 +316,8 @@ class ProjectDetailsDto {
 
     @IsNumber()
     @IsNotEmpty()
+    @Min(0) // 1970-01-01T00:00:00Z
+    @IsFutureTimeStamp()
     completionDate:number;
 
     @IsString()
@@ -319,6 +338,24 @@ class ProjectDetailsDto {
 
 
     @IsString()
+    @IsIn([
+    'Energy Industries (Renewable – / Non-Renewable Sources)',
+    'Energy Distribution',
+    'Energy Demand',
+    'Manufacturing Industries',
+    'Chemical Industries',
+    'Construction',
+    'Transport',
+    'Mining/Mineral Production',
+    'Metal Production',
+    'Fugitive Emissions From Fuels (Solid, Oil and Gas)',
+    'Fugitive Emissions From Production and Consumption of Halocarbons and Sulphur Hexafluoride',
+    'Solvent Use',
+    'Waste Handling and Disposal',
+    'Afforestation and Reforestation',
+    'Agriculture',
+    'NA'
+    ])
     sectoralScope: string;
 
     @IsNumber()
@@ -420,6 +457,8 @@ class ApplicationOfMethodology{
 class StartDateCreditingPeriod{
 
     @IsNumber()
+    @Min(0) // 1970-01-01T00:00:00Z
+    @IsFutureTimeStamp()
     creditingPeriodStart: number;
 
     @IsString()
@@ -431,15 +470,21 @@ class StartDateCreditingPeriod{
     operationalLifetime: string;
 
     @IsNumber()
+    @Min(0) // 1970-01-01T00:00:00Z
+    @IsFutureTimeStamp()
     projectActivityStartDate: number;
 
     @IsString()
     projectCreditingPeriodDuration:string;
 
     @IsNumber()
+    @Min(0) // 1970-01-01T00:00:00Z
+    @IsFutureTimeStamp()
     projectCreditingPeriodEndDate: number;
 
     @IsNumber()
+    @Min(0) // 1970-01-01T00:00:00Z
+    @IsFutureTimeStamp()
     projectCreditingPeriodStartDate: number;
 }
 
@@ -470,6 +515,7 @@ class localStakeholderConsultationDto{
 }
 class ApproveAndAuthorizationDto{
     @IsString()
+    @IsNotEmpty()
     approvalAndAuthorization: string;
 }
 class AppendixDto {
@@ -481,6 +527,7 @@ class AppendixDto {
 
     @IsString()
     @IsOptional()
+    @IsUrl()
     website: string;
 
     @IsString()
@@ -500,45 +547,99 @@ class AppendixDto {
     fax: string;
 
     @IsString()
+    @IsOptional()
     appendix2Comments: string;
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     appendix2Documents: string[];
 
     @IsString()
+    @IsOptional()
     appendix3Comments: string;
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     appendix3Documents: string[];
 
     @IsString()
+    @IsOptional()
     appendix4Comments: string;
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     appendix4Documents: string[];
 
     @IsString()
+    @IsOptional()
     appendix5Comments: string;
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     appendix5Documents: string[];
 
     @IsString()
+    @IsOptional()
     appendix6Comments: string;
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     appendix6Documents: string[];
 
     @IsString()
+    @IsOptional()
     appendix7Comments: string;
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     appendix7Documents: string[];
 
 }
