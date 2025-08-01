@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { VerificationStepProps } from './StepProps';
+import './VerificationReport.scss';
 
 export const VerificationTeamStep = (props: VerificationStepProps) => {
   const { t, current, form, formMode, next, prev, handleValuesUpdate, disableFields } = props;
@@ -224,11 +225,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(
-                                            `${t('verificationReport:referencesToDocument')} ${t(
-                                              'isRequired'
-                                            )}`
-                                          );
+                                          throw new Error(`${t('verificationReport:required')}`);
                                         }
                                       },
                                     },
@@ -253,9 +250,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(
-                                            `${t('verificationReport:provider')} ${t('isRequired')}`
-                                          );
+                                          throw new Error(`${t('verificationReport:required')}`);
                                         }
                                       },
                                     },
@@ -280,9 +275,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                           value === null ||
                                           value === undefined
                                         ) {
-                                          throw new Error(
-                                            `${t('verificationReport:provider')} ${t('isRequired')}`
-                                          );
+                                          throw new Error(`${t('verificationReport:required')}`);
                                         }
                                       },
                                     },
@@ -297,6 +290,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     <Form.Item
                                       name={[name, 'documentReview']}
                                       valuePropName="checked"
+                                      className="custom-checkbox"
                                       rules={[
                                         {
                                           validator: async (rule, value) => {
@@ -327,6 +321,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     <Form.Item
                                       name={[name, 'onsiteInspections']}
                                       valuePropName="checked"
+                                      className="custom-checkbox"
                                       rules={[
                                         {
                                           validator: async (rule, value) => {
@@ -357,6 +352,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     <Form.Item
                                       name={[name, 'interviews']}
                                       valuePropName="checked"
+                                      className="custom-checkbox"
                                       rules={[
                                         {
                                           validator: async (rule, value) => {
@@ -387,6 +383,7 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     <Form.Item
                                       name={[name, 'verificationFindings']}
                                       valuePropName="checked"
+                                      className="custom-checkbox"
                                       rules={[
                                         {
                                           validator: async (rule, value) => {
