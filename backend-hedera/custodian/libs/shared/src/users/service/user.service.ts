@@ -2670,14 +2670,12 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     requestUser.email,
                     true,
                 );
-
-            if (userVcDocument) {
+            if (userVcDocument.option?.status !== GuardianStateEnum.REVOKED) {
                 throw new HttpException(
                     'User document is not revoked',
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
             }
-
             const blockName = GUARDIAN_API.BLOCKS.CREATE_USER;
 
             await this.guardianService.saveDocument(
@@ -2808,7 +2806,6 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     userDetails.refId,
                     requestUser.email,
                 );
-
             await this.guardianService.buttonActionRequest(
                 ButtonNameEnum.USER_REVOKE,
                 ButtonActionEnum.SUBMIT,
