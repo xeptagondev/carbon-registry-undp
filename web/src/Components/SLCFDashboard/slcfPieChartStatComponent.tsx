@@ -50,7 +50,9 @@ export const SLCFSideBarChartsStatComponent: FC<SideBarChartStatsProps> = (
                 </Tooltip>
               </div>
             </Col>
-            <Col md={3}>{sector && <span className="sector-badge">{INF_SECTOR[sector]}</span>}</Col>
+            <Col md={3} style={{ marginRight: '24px' }}>
+              {sector && <span className="sector-badge">{INF_SECTOR[sector]}</span>}
+            </Col>
           </Row>
           <div className="pie-charts-section">
             <Chart
