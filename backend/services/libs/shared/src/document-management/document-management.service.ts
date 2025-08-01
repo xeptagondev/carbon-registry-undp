@@ -46,8 +46,6 @@ import { PositiveIntegerValidationDto } from "../dto/positive.integer.validation
 import { ActivityVintageCreditsArrayDto } from "../dto/activty.vintage.credits.array.dto";
 import { SECTOR_TO_SCOPES_MAP } from "../constants/inf.sector.sectoralScope.mapping.const";
 import { CompanyState } from "../enum/company.state.enum";
-import { INFRequestDto } from "../dto/create.inf.form.dto";
-import { PddRequestDto } from "../dto/create.pdd.form.dto";
 
 
 @Injectable()

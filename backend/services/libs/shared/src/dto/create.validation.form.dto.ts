@@ -1,6 +1,5 @@
 import { Transform, Type } from "class-transformer";
 import {
-  ArrayNotEmpty,
   IsArray,
   IsBoolean,
   IsIn,
@@ -9,11 +8,14 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Matches,
   Max,
   Min,
   ValidateNested,
 } from "class-validator";
 import { inspect } from "util";
+import { isValidGSPCoordinate } from "../decorators/isValidGSPCoordinate.decorator";
+import { IsFutureTimeStamp } from "../decorators/isFutureTimeStamp.decorator";
 
 class LocationsOfProjectActivityDto {
   @IsArray()
@@ -27,7 +29,6 @@ class LocationsOfProjectActivityDto {
   @IsNumber()
   @IsOptional()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
   commissioningDate: number;
 
   @IsString()
@@ -37,10 +38,6 @@ class LocationsOfProjectActivityDto {
   @IsString()
   @IsNotEmpty()
   district: string;
-
-  @IsArray()
-  @IsOptional()
-  geographicalLocationCoordinates: number[][][][];
 
   @IsString()
   @IsNotEmpty()
@@ -57,7 +54,6 @@ class LocationsOfProjectActivityDto {
   @IsNumber()
   @IsOptional()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
   startDate: number;
 }
 
@@ -94,7 +90,6 @@ class EstimatedNetEmissionReductions {
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
   vintage: number;
 
   @IsNumber()
@@ -185,7 +180,7 @@ class Interviewees {
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   date: number;
 
   @IsString()
@@ -209,7 +204,7 @@ class OnSiteInspection {
   @IsNumber()
   @IsNotEmpty()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   date: number;
 
   @IsString()
@@ -238,6 +233,7 @@ class BasicInformation {
 
   @IsString()
   @IsNotEmpty()
+  @IsIn(["Small Scale", "Large Scale"])
   projectScale: string;
 
   @IsString()
@@ -255,17 +251,37 @@ class BasicInformation {
   @IsNumber()
   @IsNotEmpty()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   completionDate: number;
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0) // 1970-01-01T00:00:00Z
+  @IsFutureTimeStamp()
   pddUploadedGlobalStakeholderConsultation: number;
 
   @IsString()
   hostParty: string;
 
   @IsString()
+  @IsIn([
+  'Energy Industries (Renewable – / Non-Renewable Sources)',
+  'Energy Distribution',
+  'Energy Demand',
+  'Manufacturing Industries',
+  'Chemical Industries',
+  'Construction',
+  'Transport',
+  'Mining/Mineral Production',
+  'Metal Production',
+  'Fugitive Emissions From Fuels (Solid, Oil and Gas)',
+  'Fugitive Emissions From Production and Consumption of Halocarbons and Sulphur Hexafluoride',
+  'Solvent Use',
+  'Waste Handling and Disposal',
+  'Afforestation and Reforestation',
+  'Agriculture',
+  'NA'
+  ])
   mandatarySectoralScopes: string;
 
   @IsString()
@@ -281,12 +297,12 @@ class BasicInformation {
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   creditingPeriodStart: number;
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   creditingPeriodEnd: number;
 
   @IsArray()
@@ -294,14 +310,22 @@ class BasicInformation {
   @Type(() => LocationsOfProjectActivityDto)
   locationsOfProjectActivity: LocationsOfProjectActivityDto[];
 
+  @Transform(({ value }) => {
+  //Unwrap exactly two outer layers if they exist
+  if (Array.isArray(value) && Array.isArray(value[0]) && Array.isArray(value[0][0])) {
+    return value[0][0];
+  }
+  return value;
+  })
+  @isValidGSPCoordinate()
+  geographicalLocationCoordinates: [number, number][];
+
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
   versionDate: number;
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
   dateOfIssue: number;
 }
 
@@ -665,13 +689,13 @@ class MeansOfValidation {
   @IsNumber()
   @IsNotEmpty()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   siteInspectionDurationEnd: number;
 
   @IsNumber()
   @IsNotEmpty()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   siteInspectionDurationStart: number;
 }
 
@@ -928,6 +952,7 @@ class DocumentsReviewed {
   title: string;
 
   @IsString()
+  @IsOptional()
   referenceToTheDoc: string;
 }
 class Appendix {
@@ -936,11 +961,19 @@ class Appendix {
 
   @IsArray()
   @IsOptional()
+  @Transform(({ value }) => {
+    if (!Array.isArray(value)) return value;
+    return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+  })
+  @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+      each: true,
+      message: 'Each document must be a valid base64-encoded data URI',
+  })
   appendix1Documents: string[];
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   car_date: number;
 
   @IsString()
@@ -953,6 +986,7 @@ class Appendix {
   car_doeAssesment: string;
 
   @IsNumber()
+  @IsFutureTimeStamp()
   car_doeAssesmentDate: number;
 
   @IsString()
@@ -962,6 +996,7 @@ class Appendix {
   car_projectParticipantResponse: string;
 
   @IsNumber()
+  @IsFutureTimeStamp()
   car_projectParticipantResponseDate: number;
 
   @IsString()
@@ -969,7 +1004,7 @@ class Appendix {
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   cl_date: number;
 
   @IsString()
@@ -982,6 +1017,8 @@ class Appendix {
   cl_doeAssesment: string;
 
   @IsNumber()
+  @Min(0) // 1970-01-01T00:00:00Z
+  @IsFutureTimeStamp()
   cl_doeAssesmentDate: number;
 
   @IsString()
@@ -1003,7 +1040,7 @@ class Appendix {
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+  @IsFutureTimeStamp()
   far_date: number;
 
   @IsString()
@@ -1016,6 +1053,8 @@ class Appendix {
   far_doeAssesment: string;
 
   @IsNumber()
+  @Min(0) // 1970-01-01T00:00:00Z
+  @IsFutureTimeStamp()
   far_doeAssesmentDate: number;
 
   @IsString()
@@ -1025,6 +1064,7 @@ class Appendix {
   far_projectParticipantResponse: string;
 
   @IsNumber()
+  @IsFutureTimeStamp()
   far_projectParticipantResponseDate: number;
 
   @IsString()

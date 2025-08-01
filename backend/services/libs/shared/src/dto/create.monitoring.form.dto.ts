@@ -1,5 +1,7 @@
-import { Type } from "class-transformer";
-import { IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Matches, Max, Min, ValidateNested } from "class-validator";
+import { IsFutureTimeStamp } from "../decorators/isFutureTimeStamp.decorator";
+import { isValidGSPCoordinate } from "../decorators/isValidGSPCoordinate.decorator";
 
 class LocationsOfProjectActivityDto{
     @IsArray()
@@ -20,7 +22,15 @@ class LocationsOfProjectActivityDto{
 
     @IsArray()
     @IsOptional()
-    geographicalLocationCoordinates: number[][][][];
+    @Transform(({ value }) => {
+    //Unwrap exactly two outer layers if they exist
+    if (Array.isArray(value) && Array.isArray(value[0]) && Array.isArray(value[0][0])) {
+        value = value[0][0]; // Strip the first two layers
+    }
+    return value;
+    })
+    @isValidGSPCoordinate()
+    geographicalLocationCoordinates: [number, number][];
 
     @IsString()
     @IsNotEmpty()
@@ -168,7 +178,7 @@ class BasicInformationDto {
     @IsNumber()
     @IsNotEmpty()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    @IsFutureTimeStamp()
     bi_completionDate:number;
 
     @IsString()
@@ -200,13 +210,13 @@ class ProjectActivityDetailsDTO{
     @IsNumber()
     @IsNotEmpty()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    @IsFutureTimeStamp()
     pa_projectCreditingPeriod:number;
 
     @IsNumber()
     @IsNotEmpty()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    @IsFutureTimeStamp()
     pa_projectCreditingPeriodEndDate:number;
 
     @IsArray()
@@ -316,6 +326,14 @@ class CalcEmissionReductionsDTO{
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     ce_documentUpload:string[];
 
     @IsString()
@@ -354,6 +372,14 @@ class AppendixDTO{
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     a_uploadDoc:string[];
 }
 

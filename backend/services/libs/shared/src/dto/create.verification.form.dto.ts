@@ -1,11 +1,11 @@
-import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Matches, Max, Min, ValidateNested } from "class-validator";
+import { IsFutureTimeStamp } from "../decorators/isFutureTimeStamp.decorator";
 
 
 class EstimatedNetEmissionReductions{
     @IsNumber()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
     vintage:number;
 
     @IsNumber()
@@ -72,6 +72,7 @@ class TechnicalReviews{
 
 class MaterialityTable{
     @IsString()
+    @IsOptional()
     justification:string;
 
     @IsString()
@@ -98,7 +99,7 @@ class Interviewees {
     lastName:string;
 
     @IsString()
-    ['subject ']:string;
+    subject:string;
 
     @IsString()
     teamMember:string;
@@ -148,7 +149,7 @@ class BasicInformationDTO {
     @IsNumber()
     @IsNotEmpty()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    @IsFutureTimeStamp()
     b_completionDate:number;
 
     @IsString()
@@ -196,6 +197,7 @@ class BasicInformationDTO {
     b_projectTitle:string;
 
     @IsString()
+    @IsIn(['Small Scale', 'Large Scale'])
     b_scaleOfProject:string;
 
     @IsString()
@@ -575,13 +577,13 @@ class MeansOfVerificationDTO{
    @IsNumber()
    @IsNotEmpty()
    @Min(0) // 1970-01-01T00:00:00Z
-   @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+   @IsFutureTimeStamp()
    siteInspectionDurationEnd:number;
 
    @IsNumber()
    @IsNotEmpty()
    @Min(0) // 1970-01-01T00:00:00Z
-   @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+   @IsFutureTimeStamp()
    siteInspectionDurationStart:number;
 
 }
@@ -661,7 +663,7 @@ class VerificationFindingsDTO{
 
     @IsString()
     @IsNotEmpty()
-    actualGHG_conclusichangesCreditingPeriodStartDate_conclusionsons:string;
+    changesCreditingPeriodStartDate_conclusions:string;
 
     @IsString()
     @IsNotEmpty()
@@ -890,6 +892,14 @@ class AppendixDTO{
 
     @IsArray()
     @IsOptional()
+    @Transform(({ value }) => {
+        if (!Array.isArray(value)) return value;
+        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
+    })
+    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
+        each: true,
+        message: 'Each document must be a valid base64-encoded data URI',
+    })
     appendix1Documents:string[];
 
     @IsString()
@@ -906,7 +916,7 @@ class AppendixDTO{
 
     @IsNumber()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    @IsFutureTimeStamp()
     doeDate:number;
 
     @IsString()
@@ -914,7 +924,7 @@ class AppendixDTO{
 
     @IsNumber()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    @IsFutureTimeStamp()
     farIdDate:number;
 
     @IsString()
@@ -922,7 +932,7 @@ class AppendixDTO{
 
     @IsNumber()
     @Min(0) // 1970-01-01T00:00:00Z
-    @Max(4102444800) // 2100-01-01T00:00:00Z in seconds
+    @IsFutureTimeStamp()
     responseDate:number;
 
     @IsString()
