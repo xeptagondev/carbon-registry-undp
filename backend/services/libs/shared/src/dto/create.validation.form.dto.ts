@@ -92,8 +92,8 @@ class EstimatedNetEmissionReductions {
   @Min(0) // 1970-01-01T00:00:00Z
   vintage: number;
 
-  @IsNumber()
-  baselineEmissionReductions: number;
+  @IsString()
+  baselineEmissionReductions: string;
 
   @IsNumber()
   leakageEmissionReductions: number;
@@ -339,20 +339,20 @@ class GHGProjectDescription {
   @Type(() => EstimatedNetEmissionReductions)
   estimatedNetEmissionReductions: EstimatedNetEmissionReductions[];
 
-  @IsNumber()
-  totalBaselineEmissionReductions: number;
+  @IsString()
+  totalBaselineEmissionReductions: string;
 
-  @IsNumber()
-  totalLeakageEmissionReductions: number;
+  @IsString()
+  totalLeakageEmissionReductions: string;
 
-  @IsNumber()
-  totalNetEmissionReductions: number;
+  @IsString()
+  totalNetEmissionReductions: string;
 
   @IsNumber()
   totalNumberOfCreditingYears: number;
 
-  @IsNumber()
-  totalProjectEmissionReductions: number;
+  @IsString()
+  totalProjectEmissionReductions: string;
 
   @IsNumber()
   avgBaselineEmissionReductions: number;
