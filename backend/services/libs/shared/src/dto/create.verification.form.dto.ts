@@ -60,7 +60,7 @@ class TechnicalReviews{
     @IsIn(['IR','ER'])
     typeOfResource:string;
 
-    @IsIn(['technicalReviewer','approver'])
+    @IsIn(['viewer','technicalExpert','financialOtherExpert','trainee'])
     role:string;
 
     @IsString()
