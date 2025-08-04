@@ -23,7 +23,7 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import { CompanyService } from "../company/company.service";
 import { FileHandlerInterface } from "../file-handler/filehandler.interface";
 import { plainToClass, plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
+import { validate, ValidationError } from "class-validator";
 import { DocType } from "../enum/document.type";
 import { UserService } from "../user/user.service";
 import { DocumentQueryDto } from "../dto/document.query.dto";
@@ -46,6 +46,7 @@ import { PositiveIntegerValidationDto } from "../dto/positive.integer.validation
 import { ActivityVintageCreditsArrayDto } from "../dto/activty.vintage.credits.array.dto";
 import { SECTOR_TO_SCOPES_MAP } from "../constants/inf.sector.sectoralScope.mapping.const";
 import { CompanyState } from "../enum/company.state.enum";
+
 
 @Injectable()
 export class DocumentManagementService {
@@ -2152,3 +2153,5 @@ private getFileExtension = (file: string): string => {
     });
   }
 }
+
+
