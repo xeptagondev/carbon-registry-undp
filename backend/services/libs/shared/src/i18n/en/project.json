@@ -23,6 +23,7 @@
   "noICExistingInSystem": "No independent certifier exists in the system",
   "notAuthorised": "User is not authorized to perform this action",
   "noProject": "No project found with the provided ID",
+  "invalidDocumentUpload": "Invalid document upload",
   "programmeIsNotInSuitableStageToProceed": "The project is not in a suitable stage to proceed",
   "infSubmitted": "Initial Notification was submitted successfully",
   "infRejected": "Initial Notification was rejected",

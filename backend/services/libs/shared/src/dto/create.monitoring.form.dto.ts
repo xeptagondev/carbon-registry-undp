@@ -326,14 +326,6 @@ class CalcEmissionReductionsDTO{
 
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     ce_documentUpload:string[];
 
     @IsString()
@@ -372,14 +364,6 @@ class AppendixDTO{
 
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     a_uploadDoc:string[];
 }
 

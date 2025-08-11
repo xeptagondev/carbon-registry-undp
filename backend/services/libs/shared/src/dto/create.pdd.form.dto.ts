@@ -8,14 +8,6 @@ import { isValidGSPCoordinate } from "../decorators/isValidGSPCoordinate.decorat
 class LocationsOfProjectActivityDto{
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     additionalDocuments: string[];
 
     @IsString()
@@ -552,14 +544,6 @@ class AppendixDto {
 
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     appendix2Documents: string[];
 
     @IsString()
@@ -568,14 +552,6 @@ class AppendixDto {
 
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     appendix3Documents: string[];
 
     @IsString()
@@ -584,14 +560,6 @@ class AppendixDto {
 
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     appendix4Documents: string[];
 
     @IsString()
@@ -600,14 +568,6 @@ class AppendixDto {
 
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     appendix5Documents: string[];
 
     @IsString()
@@ -616,14 +576,6 @@ class AppendixDto {
 
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     appendix6Documents: string[];
 
     @IsString()
@@ -632,14 +584,6 @@ class AppendixDto {
 
     @IsArray()
     @IsOptional()
-    @Transform(({ value }) => {
-        if (!Array.isArray(value)) return value;
-        return value.map((v: string) => (typeof v === 'string' ? v.trim() : v));
-    })
-    @Matches(/^data:[\w/+.-]+;base64,[a-zA-Z0-9+/=]+$/, {
-        each: true,
-        message: 'Each document must be a valid base64-encoded data URI',
-    })
     appendix7Documents: string[];
 
 }
