@@ -206,10 +206,10 @@ const DescriptionOfProjectActivity = (props: CustomStepsProps) => {
   };
 
   const onFinish = async (values: any) => {
-    console.log(
-      "--------------projectParticipants-----------",
-      values?.projectParticipants
-    );
+    // console.log(
+    //   "--------------projectParticipants-----------",
+    //   values?.projectParticipants
+    // );
     const tempValues: any = {
       introduction: values?.introduction,
       // sectoralScope: values?.sectoralScope,

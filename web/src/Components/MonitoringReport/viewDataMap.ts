@@ -39,7 +39,7 @@ export const projectActivityMapDataToFields = (vals: any) => {
         tempExtraLocations = locations.map((location: any) => {
           const tempObj = {
             ...location,
-            optionalImages: mapBase64ToFields(location?.additionalDocuments),
+            uploadImages: mapBase64ToFields(location?.additionalDocuments),
           };
           return tempObj;
         });

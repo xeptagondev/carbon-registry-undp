@@ -359,22 +359,29 @@ const StepperComponent = (props: CustomStepsProps) => {
         }, defaultTimeout);
       }
     } catch (error: any) {
-      if (error.status === 400) {
+      if (error.errors && error.errors.length > 0) {
+        error.errors.forEach((err: any) => {
+          Object.keys(err).forEach((field) => {
+            console.log(`Error in ${field}: ${err[field].join(", ")}`);
+            message.open({
+              type: "error",
+              content: err[field].join(", "),
+              duration: 4,
+              style: { textAlign: "right", marginRight: 15, marginTop: 10 },
+            });
+          });
+        });
+      } else {
         message.open({
           type: "error",
           content: error.message,
           duration: 4,
           style: { textAlign: "right", marginRight: 15, marginTop: 10 },
         });
-      } else {
-        message.open({
-          content: "Something went wrong",
-          duration: 4,
-          style: { textAlign: "right", marginRight: 15, marginTop: 10 },
-        });
+        setLoading(false);
       }
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const handleValuesUpdate = (val: any) => {

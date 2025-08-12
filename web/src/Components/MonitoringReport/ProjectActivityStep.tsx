@@ -199,10 +199,10 @@ export const ProjectActivityStep = (props: CustomStepsProps) => {
                   const base64Docs: string[] = [];
 
                   if (
-                    values?.optionalImages &&
-                    values?.optionalImages.length > 0
+                    values?.uploadImages &&
+                    values?.uploadImages.length > 0
                   ) {
-                    const docs = values.optionalImages;
+                    const docs = values.uploadImages;
                     for (let i = 0; i < docs.length; i++) {
                       if (docs[i]?.originFileObj === undefined) {
                         base64Docs.push(docs[i]?.url);

@@ -480,7 +480,7 @@ export const ProgrammeCreationComponent = (props: any) => {
         }, defaultTimeout);
       }
     } catch (error: any) {
-      if (error && error.errors && error.errors.length > 0) {
+      if (error.errors && error.errors.length > 0) {
         error.errors.forEach((err: any) => {
           Object.keys(err).forEach((field) => {
             console.log(`Error in ${field}: ${err[field].join(", ")}`);
@@ -502,6 +502,7 @@ export const ProgrammeCreationComponent = (props: any) => {
         setLoading(false);
       }
     }
+    setLoading(false);
   };
 
   if (loading) {

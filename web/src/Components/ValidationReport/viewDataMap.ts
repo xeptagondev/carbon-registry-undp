@@ -27,9 +27,10 @@ export const basicInformationMapDataToFields = (vals: any) => {
             province: location?.province,
             district: location?.district,
             dsDivision: location?.dsDivision,
+            siteNo: location?.siteNo,
             city: location?.city,
             community: location?.community,
-            location: location?.location,
+            geographicalLocationCoordinates: location?.geographicalLocationCoordinates,
             optionalImages: mapBase64ToFields(location?.additionalDocuments),
           };
           return tempObj;

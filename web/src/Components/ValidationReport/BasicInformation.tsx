@@ -138,7 +138,6 @@ const BasicInformation = (props: ValidationStepsProps) => {
       await fileUploadValueExtract(values, "approverSignature")
     )[0];
     const projectDetailsFormValues = {
-      ...values,
       completionDate: moment(values?.completionDate).startOf("day").unix(),
       pddUploadedGlobalStakeholderConsultation: moment(
         values?.pddUploadedGlobalStakeholderConsultation
@@ -223,9 +222,17 @@ const BasicInformation = (props: ValidationStepsProps) => {
       unfccRefNo: values?.unfccRefNo,
       telephone: values?.telephone,
       website: values?.website,
+      hostParty:values?.hostParty,
       mandatarySectoralScopes: values?.mandatarySectoralScopes,
+      titleOfSpecificCase:values?.titleOfSpecificCase,
+      titleOfTheProjectActivity:values?.titleOfTheProjectActivity,
+      projectScale:values?.projectScale,
+      projectDeveloper:values?.projectDeveloper,
       annualAverageGHGReduction: values?.annualAverageGHGReduction,
+      appliedMethodologies:values?.appliedMethodologies,
+      conditionalSectoralScopes:values?.conditionalSectoralScopes,
       approverName: values?.approverName,
+      creditingPeriod:values?.creditingPeriod,
       creditingPeriodStart: moment(values?.creditingPeriodStart)
         .startOf("day")
         .unix(),
@@ -969,11 +976,11 @@ const BasicInformation = (props: ValidationStepsProps) => {
                             </Form.Item>
                           </div>
                           <div className="form-section">
-                            <h4 className="form-section-title">
+                            {/* <h4 className="form-section-title">
                               {`${t(
                                 "validationReport:locationOfProjectActivity"
                               )}`}
-                            </h4>
+                            </h4> */}
                             <Row
                               justify={"space-between"}
                               gutter={[40, 16]}
