@@ -2670,7 +2670,8 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                     requestUser.email,
                     true,
                 );
-            if (userVcDocument.option?.status !== GuardianStateEnum.REVOKED) {
+
+            if (userVcDocument) {
                 throw new HttpException(
                     'User document is not revoked',
                     HttpStatus.INTERNAL_SERVER_ERROR,
