@@ -55,6 +55,16 @@ class LocationsOfProjectActivityDto {
   @IsOptional()
   @Min(0) // 1970-01-01T00:00:00Z
   startDate: number;
+
+  @Transform(({ value }) => {
+  //Unwrap exactly two outer layers if they exist
+  if (Array.isArray(value) && Array.isArray(value[0]) && Array.isArray(value[0][0])) {
+    return value[0][0];
+  }
+  return value;
+  })
+  @isValidGSPCoordinate()
+  geographicalLocationCoordinates: [number, number][];
 }
 
 // class Vintage {
@@ -297,7 +307,7 @@ class BasicInformation {
 
   @IsNumber()
   @Min(0) // 1970-01-01T00:00:00Z
-  @IsFutureTimeStamp()
+  // @IsFutureTimeStamp()
   creditingPeriodStart: number;
 
   @IsNumber()
@@ -318,6 +328,7 @@ class BasicInformation {
   return value;
   })
   @isValidGSPCoordinate()
+  @IsOptional()
   geographicalLocationCoordinates: [number, number][];
 
   @IsNumber()

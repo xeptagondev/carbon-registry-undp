@@ -1023,7 +1023,16 @@ export class DocumentManagementService {
     ["vnd.openxmlformats-officedocument.wordprocessingml.document", "docx"],
     ["csv", "csv"],
     ["png", "png"],
+    ["docx","docx"],
+    ["pptx","pptx"],
+    ["doc", "doc"],
     ["jpeg", "jpg"],
+    ['jpg', 'jpg'],
+    ["xls", "xls"],
+    ["xlsx","xlsx"],
+    ["ppt","ppt"],
+    ["svg+xml", "svg"],
+    ["svg", "svg"]
   ]);
 
   async verify(requestData: DocumentActionRequestDto, user: User) {
