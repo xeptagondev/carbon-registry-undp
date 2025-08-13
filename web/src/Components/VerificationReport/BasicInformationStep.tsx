@@ -393,6 +393,12 @@ export const BasicInformationStep = (props: VerificationStepProps) => {
                             'isRequired'
                           )}`,
                         },
+                        {
+                          pattern: /^[1-9]\d*$/,
+                          message:
+                            t('Only positive integers are allowed') ||
+                            'Only positive integers are allowed',
+                        },
                       ]}
                     >
                       <Input size="large" disabled={disableFields} />
