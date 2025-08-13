@@ -869,9 +869,9 @@ export class OrganizationService extends SuperService<
                 functionName: 'guardianUpdateSaveDocument',
                 args: [],
                 state: TaskEnum.PENDING,
-                retryAttemps: 3,
+                retryAttemps: 5,
                 retryUntilSuccess: false,
-                millisBetweenAttempts: 3000,
+                millisBetweenAttempts: 4000,
                 events: [events],
                 previousTask: asyncTask,
             });
@@ -919,7 +919,7 @@ export class OrganizationService extends SuperService<
                     orgRefId,
                     user.email,
                 );
-
+            // console.log('Organization revoke', organizationVcDocument);
             if (
                 !organizationVcDocument ||
                 !organizationVcDocument.document ||
@@ -971,7 +971,7 @@ export class OrganizationService extends SuperService<
                     user.email,
                     true,
                 );
-
+            // console.log('Organization document ', organizationVcDocument);
             if (organizationVcDocument) {
                 throw new HttpException(
                     'Organization document is not revoked',
