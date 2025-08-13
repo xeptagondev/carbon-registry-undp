@@ -290,7 +290,6 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     <Form.Item
                                       name={[name, 'documentReview']}
                                       valuePropName="checked"
-                                      className="custom-checkbox"
                                       rules={[
                                         {
                                           validator: async (rule, value) => {
@@ -314,7 +313,10 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                         },
                                       ]}
                                     >
-                                      <Checkbox disabled={disableFields} />
+                                      <Checkbox
+                                        disabled={disableFields}
+                                        className="custom-checkbox"
+                                      />
                                     </Form.Item>
                                   </Col>
                                   <Col xl={6} className="other-cols checkbox-cols">
@@ -345,14 +347,16 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                         },
                                       ]}
                                     >
-                                      <Checkbox disabled={disableFields} />
+                                      <Checkbox
+                                        disabled={disableFields}
+                                        className="custom-checkbox"
+                                      />
                                     </Form.Item>
                                   </Col>
                                   <Col xl={6} className="other-cols checkbox-cols">
                                     <Form.Item
                                       name={[name, 'interviews']}
                                       valuePropName="checked"
-                                      className="custom-checkbox"
                                       rules={[
                                         {
                                           validator: async (rule, value) => {
@@ -376,14 +380,16 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                         },
                                       ]}
                                     >
-                                      <Checkbox disabled={disableFields} />
+                                      <Checkbox
+                                        disabled={disableFields}
+                                        className="custom-checkbox"
+                                      />
                                     </Form.Item>
                                   </Col>
                                   <Col xl={6} className="other-cols checkbox-cols">
                                     <Form.Item
                                       name={[name, 'verificationFindings']}
                                       valuePropName="checked"
-                                      className="custom-checkbox"
                                       rules={[
                                         {
                                           validator: async (rule, value) => {
@@ -407,7 +413,10 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                         },
                                       ]}
                                     >
-                                      <Checkbox disabled={disableFields} />
+                                      <Checkbox
+                                        disabled={disableFields}
+                                        className="custom-checkbox"
+                                      />
                                     </Form.Item>
                                   </Col>
                                 </Row>
@@ -512,11 +521,8 @@ export const VerificationTeamStep = (props: VerificationStepProps) => {
                                     ]}
                                   >
                                     <Select disabled={disableFields}>
-                                      <Select.Option value="viewer">
-                                        {t('verificationReport:viewer')}
-                                      </Select.Option>
-                                      <Select.Option value="approver">
-                                        {t('verificationReport:approver')}
+                                      <Select.Option value="verfier">
+                                        {t('verificationReport:verifier')}
                                       </Select.Option>
                                       <Select.Option value="technicalExpert">
                                         {t('verificationReport:technicalExpert')}
