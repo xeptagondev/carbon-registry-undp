@@ -20,6 +20,7 @@ import { FormMode } from '../../Definitions/Enums/formMode.enum';
 import { useEffect, useState } from 'react';
 import LabelWithTooltip from '../LabelWithTooltip/LabelWithTooltip';
 import { useLocation } from 'react-router-dom';
+import './ValidationReport.scss';
 
 const ValidationMethodology = (props: ValidationStepsProps) => {
   const countryName = process.env.REACT_APP_COUNTRY_NAME || 'CountryX';
@@ -241,11 +242,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                       value === null ||
                                       value === undefined
                                     ) {
-                                      throw new Error(
-                                        `${t('validationReport:referencesToDocument')} ${t(
-                                          'isRequired'
-                                        )}`
-                                      );
+                                      throw new Error(`${t('validationReport:required')}`);
                                     }
                                   },
                                 },
@@ -270,9 +267,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                       value === null ||
                                       value === undefined
                                     ) {
-                                      throw new Error(
-                                        `${t('validationReport:provider')} ${t('isRequired')}`
-                                      );
+                                      throw new Error(`${t('validationReport:required')}`);
                                     }
                                   },
                                 },
@@ -297,9 +292,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                       value === null ||
                                       value === undefined
                                     ) {
-                                      throw new Error(
-                                        `${t('validationReport:provider')} ${t('isRequired')}`
-                                      );
+                                      throw new Error(`${t('validationReport:required')}`);
                                     }
                                   },
                                 },
@@ -337,7 +330,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Checkbox disabled={disableFields} />
+                                  <Checkbox disabled={disableFields} className="custom-checkbox" />
                                 </Form.Item>
                               </Col>
                               <Col xl={6} className="other-cols checkbox-cols">
@@ -367,7 +360,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Checkbox disabled={disableFields} />
+                                  <Checkbox disabled={disableFields} className="custom-checkbox" />
                                 </Form.Item>
                               </Col>
                               <Col xl={6} className="other-cols checkbox-cols">
@@ -397,7 +390,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Checkbox disabled={disableFields} />
+                                  <Checkbox disabled={disableFields} className="custom-checkbox" />
                                 </Form.Item>
                               </Col>
                               <Col xl={6} className="other-cols checkbox-cols">
@@ -427,7 +420,7 @@ const ValidationMethodology = (props: ValidationStepsProps) => {
                                     },
                                   ]}
                                 >
-                                  <Checkbox disabled={disableFields} />
+                                  <Checkbox disabled={disableFields} className="custom-checkbox" />
                                 </Form.Item>
                               </Col>
                             </Row>
