@@ -477,7 +477,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                 First name
                               </Col>
                               <Col xl={8} className="interviewee-col-subCols-last">
-                                Affliation
+                                Affiliation
                               </Col>
                             </Row>
                           </Col>
@@ -744,7 +744,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                       <div className="body">
                         <Row>
                           <Col xl={15} className="col col-1">
-                            {t('verificationReport:demonstrationPriorCDM')}
+                            {t('verificationReport:demonstrationPriorCMD')}
                           </Col>
                           <Col xl={3} className="col other-cols">
                             <Form.Item
