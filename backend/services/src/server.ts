@@ -115,17 +115,23 @@ export async function buildNestApp(
   nestApp.useGlobalPipes(
     new ValidationPipe({
       exceptionFactory: (errors) => {
-        // new BadRequestException(errors),
-        const formattedErrors = [];
+        const formattedErrors:any[]= [];
+        const seen = new Set<string>();
 
         const formatErrors = (errs: ValidationError[]) => {
           for (const err of errs) {
-            const fieldError = {};
             const propertyPath = err.property;
 
             if (err.constraints) {
-              fieldError[propertyPath] = Object.values(err.constraints);
-              formattedErrors.push(fieldError);
+              const messages = Object.values(err.constraints);
+
+              messages.forEach((msg) => {
+                const key = `${propertyPath}:${msg}`;
+                if ( !seen.has(key)){
+                  seen.add(key);
+                  formattedErrors.push({[propertyPath]:[msg]});
+                }
+              })
             }
 
             if (err.children && err.children.length > 0) {
@@ -134,7 +140,7 @@ export async function buildNestApp(
           }
         };
         formatErrors(errors);
-        console.log(formattedErrors);
+        // console.log(formattedErrors);
         return new BadRequestException({errors:formattedErrors});
       },
     })
