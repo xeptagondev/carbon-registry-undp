@@ -1141,6 +1141,7 @@ export class OrganizationService extends SuperService<
                 }
 
                 const countryName: string = this.configService.get('country');
+                const homeURL: string = this.configService.get('url');
 
                 const mailDTO: MailTemplateDTO = {
                     subject: header.replace('{{countryName}}', countryName),
@@ -1148,7 +1149,7 @@ export class OrganizationService extends SuperService<
                     to: adminEmails,
                     context: {
                         countryName: countryName,
-                        home: 'http://3.93.78.104:3031/',
+                        home: homeURL,
                     },
                 };
 
