@@ -210,7 +210,7 @@ export const AppendixStep = (props: VerificationStepProps) => {
             {(state?.mode === FormMode.CREATE || state?.mode === FormMode.EDIT) && (
               <>
                 <SlcfFormActionModel
-                  icon={<ConfirmSubmitSVG />}
+                  icon={<ConfirmSubmitSVG className="custom-icon-color" />}
                   title={t('verificationReport:confirmModalMessage')}
                   onCancel={closeDialog}
                   actionBtnText={t('common:yes')}

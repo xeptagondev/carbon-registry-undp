@@ -108,7 +108,10 @@ export const SlcfFormActionModel: FC<SlcfFormActionModelProps> = (
           <Row>
             <Col span={24}>
               <Form.Item className="text-left" valuePropName="checked" label="" name="confirm">
-                <Checkbox className="label" onChange={(v) => setChecked(v.target.checked)}>
+                <Checkbox
+                  className={`label ${type === 'danger' ? 'danger-checkbox' : ''}`}
+                  onChange={(v) => setChecked(v.target.checked)}
+                >
                   {checkMessage ? checkMessage : t('view:confirmClosure')}
                 </Checkbox>
               </Form.Item>
