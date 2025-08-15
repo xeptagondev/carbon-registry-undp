@@ -516,11 +516,8 @@ export class HelperService {
     const payload = match[2];
     // Validate base64 payload
     try {
-      const isBase64=this.isBase64(payload);
-      console.log("isBase64", isBase64);
       return this.isBase64(payload);
     } catch {
-      console.log("Invalid base64 payload");
       return false;
     }
   }

@@ -213,6 +213,9 @@ export const handler: Handler = async (event) => {
     company.taxId = `00000${event["systemCountryCode"]}`;
     company.govDep = GovDepartment[event["Department"]];
     company.ministry = mapEnvironmentToEnum(event["Ministry"], Ministry);
+    company.address = event["address"]
+    company.phoneNo = event["phoneno"]
+    company.website = event["website"]
 
     const user = new UserDto();
     user.email = event["rootEmail"];

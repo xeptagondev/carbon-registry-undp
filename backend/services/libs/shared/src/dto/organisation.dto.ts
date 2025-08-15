@@ -81,12 +81,12 @@ export class OrganisationDto {
   @IsValidProvince()
   provinces: string[];
 
-  @ValidateIf(
-    (c) =>
-      ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
-        c.companyRole
-      )
-  )
+  // @ValidateIf(
+  //   (c) =>
+  //     ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
+  //       c.companyRole
+  //     )
+  // )
   @IsPhoneNumber(null)
   @IsNotEmpty()
   @IsString()
@@ -100,23 +100,23 @@ export class OrganisationDto {
   @IsPhoneNumber(null)
   faxNo: string;
 
-  @ValidateIf(
-    (c) =>
-      ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
-        c.companyRole
-      )
-  )
+  // @ValidateIf(
+  //   (c) =>
+  //     ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
+  //       c.companyRole
+  //     )
+  // )
   @IsUrl()
   @IsOptional()
   @ApiPropertyOptional()
   website: string;
 
-  @ValidateIf(
-    (c) =>
-      ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
-        c.companyRole
-      )
-  )
+  // @ValidateIf(
+  //   (c) =>
+  //     ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
+  //       c.companyRole
+  //     )
+  // )
   @IsNotEmpty()
   @IsString()
   @ApiPropertyOptional()
