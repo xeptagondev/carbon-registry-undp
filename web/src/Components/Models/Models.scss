@@ -55,6 +55,20 @@
   padding-top: 10px;
   font-weight: 600;
 }
-.icon{
-  filter: brightness(0) saturate(100%) invert(45%) sepia(99%) saturate(2067%) hue-rotate(170deg) brightness(98%) contrast(99%);
+.popup-danger {
+  .ant-checkbox {
+    &:hover .ant-checkbox-inner,
+    &.ant-checkbox-input:focus + .ant-checkbox-inner {
+      border-color: #ff4d4f !important;
+    }
+    
+    &.ant-checkbox-checked .ant-checkbox-inner {
+      background-color: #ff4d4f !important;
+      border-color: #ff4d4f !important;
+    }
+    
+    &.ant-checkbox-checked::after {
+      border-color: #ff4d4f !important;
+    }
+  }
 }
