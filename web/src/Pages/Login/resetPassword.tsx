@@ -8,9 +8,39 @@ import { useConnection } from '../../Context/ConnectionContext/connectionContext
 import { API_PATHS } from '../../Config/apiConfig';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 
+// eslint-disable-next-line no-duplicate-imports
+import { Tooltip } from 'antd';
+import { InfoCircle } from 'react-bootstrap-icons';
+
 export interface ResetPasswordPageProps {
   forgotPassword?: boolean;
 }
+
+// Hedera password validation function
+const validateHederaPassword = (password: string): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  if (!password || password.length < 8) {
+    errors.push('Password must be at least 8 characters long');
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Password must include at least one uppercase letter');
+  }
+
+  if (!/[a-z]/.test(password)) {
+    errors.push('Password must include at least one lowercase letter');
+  }
+
+  if (!/[0-9]/.test(password)) {
+    errors.push('Password must include at least one number');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+};
 
 const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps) => {
   const { i18n, t } = useTranslation(['common', 'resetPassword']);
@@ -22,17 +52,28 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
   const [loading, setLoading] = useState<boolean>(false);
   const [disable, setDisable] = useState<boolean>(false);
   const [resetError, setResetError] = useState<boolean>(false);
-  //   const requestid = queryParameters.get('requestid');
+  const [passwordValidationErrors, setPasswordValidationErrors] = useState<string[]>([]);
 
   const onSubmit = async (values: any) => {
     try {
       setLoading(true);
+      setResetError(false);
+
       if (!requestid) {
         throw new Error('Request ID is missing');
       }
+      // Double-check password validation before submission
+      const passwordValidation = validateHederaPassword(values.password);
+      if (!passwordValidation.isValid) {
+        setPasswordValidationErrors(passwordValidation.errors);
+        message.error('Please fix password validation errors before submitting');
+        return;
+      }
+
       const response: any = await put(API_PATHS.RESET_PW(requestid), {
         newPassword: values.password,
       });
+
       if (response.status === 200 || response.status === 201) {
         message.open({
           type: 'success',
@@ -47,6 +88,11 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
     } catch (exception: any) {
       setResetError(true);
       console.log('error while resetting password -- ', exception);
+
+      // Check if the error is related to password validation from backend
+      if (exception.response?.data?.message?.includes('password')) {
+        message.error('Password does not meet security requirements');
+      }
     } finally {
       setLoading(false);
     }
@@ -55,6 +101,18 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
   const onClickBacktoSignIn = () => {
     navigate(ROUTES.LOGIN, { replace: true });
   };
+
+  const passwordRequirementsTooltip = (
+    <div style={{ fontSize: '12px', lineHeight: '1.4' }}>
+      <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Password must contain:</div>
+      <ul style={{ margin: 0, paddingLeft: '16px' }}>
+        <li>At least 8 characters</li>
+        <li>At least one uppercase letter</li>
+        <li>At least one lowercase letter</li>
+        <li>At least one number</li>
+      </ul>
+    </div>
+  );
 
   return (
     <div className="reset-password-container">
@@ -77,21 +135,32 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
             >
               <Form.Item
                 name="password"
-                label={`${t('resetPassword:newPwd')}`}
+                label={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{t('resetPassword:newPwd')}</span>
+                    <Tooltip
+                      title={passwordRequirementsTooltip}
+                      placement="topRight"
+                      trigger="hover"
+                      overlayStyle={{ maxWidth: '300px' }}
+                    >
+                      <InfoCircle color="#1890ff" size={16} style={{ cursor: 'help' }} />
+                    </Tooltip>
+                  </div>
+                }
                 rules={[
                   {
                     required: true,
-                    message: ``,
+                    message: `New Password ${t('common:isRequired')}`,
                   },
                   {
                     validator: async (rule, value) => {
-                      if (
-                        String(value).trim() === '' ||
-                        String(value).trim() === undefined ||
-                        value === null ||
-                        value === undefined
-                      ) {
-                        throw new Error(`New Password ${t('common:isRequired')}`);
+                      const validation = validateHederaPassword(value);
+                      if (!validation.isValid) {
+                        setPasswordValidationErrors(validation.errors);
+                        throw new Error('');
+                      } else {
+                        setPasswordValidationErrors([]);
                       }
                     },
                   },
@@ -101,6 +170,7 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
                   <Input.Password type="password" />
                 </div>
               </Form.Item>
+
               <Form.Item
                 name="confirmPassword"
                 className="confirm-password"
@@ -108,27 +178,15 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
                 rules={[
                   {
                     validator: async (rule, value) => {
-                      if (
-                        String(value).trim() === '' ||
-                        String(value).trim() === undefined ||
-                        value === null ||
-                        value === undefined
-                      ) {
+                      if (!value || String(value).trim() === '') {
                         throw new Error(`Confirm New Password ${t('common:isRequired')}`);
-                      } else {
-                        const val = value;
-                        const password = resetPasswordForm.getFieldValue('password');
-                        if (password) {
-                          if (password !== val) {
-                            throw new Error(`${t('resetPassword:passwordNotMatch')}`);
-                          }
-                        }
+                      }
+
+                      const password = resetPasswordForm.getFieldValue('password');
+                      if (password && password !== value) {
+                        throw new Error(`${t('resetPassword:passwordNotMatch')}`);
                       }
                     },
-                  },
-                  {
-                    required: true,
-                    message: '',
                   },
                 ]}
               >
@@ -136,6 +194,27 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
                   <Input.Password type="password" />
                 </div>
               </Form.Item>
+              {passwordValidationErrors.length > 0 && (
+                <div
+                  className="password-validation-errors"
+                  style={{
+                    backgroundColor: '#fff2f0',
+                    border: '1px solid #ffccc7',
+                    borderRadius: '4px',
+                    padding: '8px 12px',
+                    marginBottom: '16px',
+                  }}
+                >
+                  <div style={{ color: '#ff4d4f', fontWeight: 'bold', marginBottom: '4px' }}>
+                    Password Requirements Not Met:
+                  </div>
+                  {passwordValidationErrors.map((error, index) => (
+                    <div key={index} style={{ color: '#ff4d4f', fontSize: '12px' }}>
+                      • {error}
+                    </div>
+                  ))}
+                </div>
+              )}
               <Form.Item>
                 <div className="login-submit-btn-container">
                   <Button
@@ -163,6 +242,7 @@ const ResetPassword: FC<ResetPasswordPageProps> = (props: ResetPasswordPageProps
                   <div className="msg">{t('resetPassword:passwordResetNotWorked')}</div>
                 </div>
               )}
+
               <div className="bottom-forgot-password-section">
                 {t('common:backto')}&nbsp;
                 <span onClick={() => onClickBacktoSignIn()} className="backto-signin-txt">
