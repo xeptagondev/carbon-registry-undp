@@ -69,4 +69,7 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
     @ApiPropertyOptional()
     @MaxLength(1048576, { message: 'Logo cannot exceed 1MB' })
     logo: string;
+
+    @IsString()
+    createdBy: string;
 }

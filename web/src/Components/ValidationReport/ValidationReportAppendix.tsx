@@ -458,7 +458,7 @@ const ValidationReportAppendix = (props: ValidationStepsProps) => {
                               </Col>
                               <Col xl={5} className="col-4 col">
                                 <Form.Item
-                                  name={[name, 'referencesToDocument']}
+                                  name={[name, 'referenceToTheDoc']}
                                   rules={[
                                     {
                                       required: true,

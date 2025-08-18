@@ -390,7 +390,6 @@ export const CompanyProfileComponent = (props: any) => {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="content-container company-profile">
       <div className="title-bar">
@@ -436,15 +435,18 @@ export const CompanyProfileComponent = (props: any) => {
           {parseInt(companyDetails?.state) === 2 &&
             ability.can(Action.Reject, plainToClass(Company, companyDetails)) &&
             !isLoading &&
-            companyDetails && (
+            companyDetails &&
+            companyDetails.createdBy !== Role.Root && (
               <Button className="btn-danger" onClick={onRejectOrganisation}>
                 {t('common:reject')}
               </Button>
             )}
+
           {(parseInt(companyDetails?.state) === 2 || parseInt(companyDetails?.state) === 3) &&
             ability.can(Action.Approve, plainToClass(Company, companyDetails)) &&
             !isLoading &&
-            companyDetails && (
+            companyDetails &&
+            companyDetails.createdBy !== Role.Root && (
               <Button className="mg-left-1" type="primary" onClick={onApproveOrganisation}>
                 {t('common:approve')}
               </Button>

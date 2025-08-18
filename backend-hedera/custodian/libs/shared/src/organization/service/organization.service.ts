@@ -140,6 +140,7 @@ export class OrganizationService extends SuperService<
             nationalSopValue: null,
             ministry: null,
             govDep: null,
+            createdBy: organization?.orgCreatedBy,
         };
     }
 
