@@ -16,6 +16,7 @@ export interface OrganizationSchema {
     provinces?: string[];
     eventIds?: number[];
     hederaAccount?: string;
+    createdBy?: string;
 }
 
 export interface UserSchema {

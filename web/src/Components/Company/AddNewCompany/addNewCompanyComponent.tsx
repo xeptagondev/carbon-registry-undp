@@ -164,7 +164,6 @@ export const AddNewCompanyComponent = (props: any) => {
       console.log(error);
     }
   };
-
   // const getGovDep = async (val: any) => {
   //   setLoadingList(true);
   //   try {
@@ -263,6 +262,7 @@ export const AddNewCompanyComponent = (props: any) => {
     };
     setLoading(true);
     try {
+      requestData.company.createdBy = userInfoState?.userRole;
       if (requestData.phoneNo && requestData.phoneNo.length > 4) {
         requestData.phoneNo = formatPhoneNumberIntl(requestData.phoneNo);
       } else {
