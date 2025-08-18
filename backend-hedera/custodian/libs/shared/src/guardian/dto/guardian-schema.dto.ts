@@ -24,6 +24,7 @@ export class OrganizationSchemaDtos {
     provinces?: string[];
     eventIds?: number[];
     hederaAccount?: string;
+    createdBy?: string;
 
     constructor(data: OrganizationSchema) {
         this.refId = data.refId;
@@ -43,6 +44,7 @@ export class OrganizationSchemaDtos {
         this.provinces = data.provinces;
         this.eventIds = data.eventIds;
         this.hederaAccount = data.hederaAccount;
+        this.createdBy = data.createdBy;
     }
 }
 

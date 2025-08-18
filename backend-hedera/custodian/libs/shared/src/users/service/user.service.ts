@@ -454,6 +454,7 @@ export class UserService extends SuperService<UsersEntity, UsersDTO> {
                 orgEntity.address = userDto?.company?.address;
                 orgEntity.createdTime = orgCreateTime;
                 orgEntity.updatedTime = new Date().getTime();
+                orgEntity.orgCreatedBy = userDto?.company?.createdBy;
 
                 // iii. Save organization
                 organization = await queryRunner.manager.save(
