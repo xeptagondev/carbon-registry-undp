@@ -64,12 +64,12 @@ export class OrganisationUpdateDto {
   @ApiProperty()
   paymentId: string;
 
-  @ValidateIf(
-    (c) =>
-      ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
-        c.companyRole
-      )
-  )
+  // @ValidateIf(
+  //   (c) =>
+  //     ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
+  //       c.companyRole
+  //     )
+  // )
   @IsUrl()
   @IsOptional()
   @ApiPropertyOptional()
@@ -80,12 +80,12 @@ export class OrganisationUpdateDto {
   @MaxLength(1048576, { message: "Logo cannot exceed 1MB" })
   logo: string;
 
-  @ValidateIf(
-    (c) =>
-      ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
-        c.companyRole
-      )
-  )
+  // @ValidateIf(
+  //   (c) =>
+  //     ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
+  //       c.companyRole
+  //     )
+  // )
   @IsString()
   @ApiPropertyOptional()
   @IsPhoneNumber(null)
@@ -97,12 +97,12 @@ export class OrganisationUpdateDto {
   @IsPhoneNumber(null)
   faxNo: string;
 
-  @ValidateIf(
-    (c) =>
-      ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
-        c.companyRole
-      )
-  )
+  // @ValidateIf(
+  //   (c) =>
+  //     ![CompanyRole.DESIGNATED_NATIONAL_AUTHORITY, CompanyRole.API].includes(
+  //       c.companyRole
+  //     )
+  // )
   @IsString()
   @ApiProperty()
   @IsNotEmpty()
