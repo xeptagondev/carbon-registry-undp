@@ -80,6 +80,9 @@ export class OrganizationEntity {
     @Column('varchar', { array: true, nullable: true })
     provinces: string[];
 
+    @Column({ name: 'org_created_by', nullable: true })
+    orgCreatedBy?: string;
+
     @Column({ nullable: true })
     website?: string;
 

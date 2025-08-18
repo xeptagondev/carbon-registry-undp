@@ -618,7 +618,7 @@ export const MeansOfVerificationStep = (props: VerificationStepProps) => {
                                     </Col>
                                     <Col xl={3} className="other-cols col">
                                       <Form.Item
-                                        name={[name, 'subject ']}
+                                        name={[name, 'subject']}
                                         rules={[
                                           {
                                             required: true,
