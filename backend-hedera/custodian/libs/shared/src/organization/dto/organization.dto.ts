@@ -71,5 +71,6 @@ export class OrganizationDto extends SuperDTO<OrganizationEntity> {
     logo: string;
 
     @IsString()
+    @IsOptional()
     createdBy: string;
 }
