@@ -1,5 +1,5 @@
 import { Button, Col, Form, Input, message, Row, Select, Spin } from 'antd';
-import React, { FC, Suspense, useContext, useEffect, useState } from 'react';
+import React, { FC, startTransition, Suspense, useContext, useEffect, useState } from 'react';
 import './login.scss';
 import logo from '../../Assets/Images/logo_Gold.png';
 import { useTranslation } from 'react-i18next';
@@ -126,7 +126,9 @@ const Login: FC<LoginPageProps> = (props: LoginPageProps) => {
                             src={logo}
                             alt="country-logo"
                             onClick={() => {
-                              navigate('/');
+                              startTransition(() => {
+                                navigate('/');
+                              });
                             }}
                           />
                         </div>
