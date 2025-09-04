@@ -1,13 +1,21 @@
-@import '../../Assets/Fonts/fonts.scss';
-@import '../../Styles/variables.scss';
+@use '../../Assets/Fonts/fonts.scss';
+@use '../../Styles/variables.scss';
 
 .homepage-footer-container {
-  background-color: $background-color-dark;
-  min-height: 200px;
+  background-color: variables.$footer-color-dark;
+  min-height: 250px;
   height: 100%;
   align-items: center;
   padding: 1rem 2rem 0 1rem;
   cursor: pointer;
+  @media (max-width:645px) 
+  {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 1rem 0 1rem;
+  }
 
   .ant-divider {
     @media (max-width: 660px) {
@@ -15,18 +23,18 @@
     }
 
     @media (max-width: 645px) {
-      margin: 2px 60px 2px 12px !important;
+      margin: 2px 60px 2px 60px !important;
     }
   }
 
   .footertext {
-    color: $dark-text-color;
+    color: variables.$dark-text-color;
     padding: 5px 60px 20px 60px;
     font-size: 0.875rem;
 
     @media (max-width: 645px) {
       padding: 5px 10px 20px 10px;
-      // text-align: center;
+      text-align: center;
     }
   }
 
@@ -35,7 +43,7 @@
   }
 
   .footertext-bottom {
-    color: $dark-text-color;
+    color: variables.$dark-text-color;
     padding: 100px 60px 28px 60px;
     font-size: 0.875rem;
     font-family: 'MuseoSans';
@@ -56,14 +64,16 @@
 
   .footertext-link-container {
     display: flex;
-    color: $dark-text-color;
+    color: variables.$dark-text-color;
     padding: 100px 60px 20px 60px;
     font-size: 0.75rem;
     text-decoration: underline;
-    justify-content: right;
+    justify-content: center;
+    padding-left: 400px;
 
     @media (max-width: 1077px) {
       flex-direction: column;
+      padding-left: 0px;
     }
 
     @media (max-width: 837px) {
@@ -81,7 +91,8 @@
 
   .footertext-links {
     padding-right: 15px;
-    color: $dark-text-color;
+    color: variables.$dark-text-color;
+    white-space: nowrap;
 
     @media (max-width: 645px) {
       padding-left: 0;
@@ -101,16 +112,20 @@
 
   .logocontainer {
     display: flex;
-    margin-top: 10px;
+    margin-top: 25px;
+    margin-bottom: 20px;
 
     @media (max-width: 645px) {
       margin-left: -3.5rem;
+    }
+    .logo-text{
+      padding-left: 0.1rem;
     }
 
     .title {
       font-family: 'MuseoSans';
       font-size: 2rem;
-      color: $dark-text-color;
+      color: variables.$dark-text-color;
       font-weight: 700;
       margin-right: 0.5rem;
       margin-left: 0.5rem;
@@ -119,12 +134,14 @@
         font-size: 1.8rem;
       }
     }
-
+    // span{
+    //   font-weight: 50;
+    // }
     .title-sub {
       font-weight: 100 !important;
       font-family: 'MuseoSans';
       font-size: 2rem;
-      color: $dark-text-color;
+      color: variables.$dark-text-color;
 
       @media (max-width: 645px) {
         font-size: 1.8rem;
@@ -132,8 +149,9 @@
     }
 
     .logo {
-      height: 97px;
+      height: 94px;
       width: 110px;
+      margin-top: -12px;
 
       img {
         object-fit: cover;
@@ -144,10 +162,11 @@
     }
 
     .footer-country-name {
-      font-size: 0.875rem;
-      color: $dark-text-color;
+      font-size: 1.4rem;
+      color: variables.$dark-text-color;
       font-family: 'MuseoSans';
-      margin-left: 0.6rem;
+      margin-left: 0.65rem;
+      margin-top: -16px;
     }
   }
 }

@@ -91,7 +91,7 @@ const CarbonDashboard = () => {
   const projectData = [
     { value: 43250, title: t('homepage:issued') },
     { value: 18302, title: t('homepage:transferred') },
-    { value: 19508, title: t('homepage:rejected') },
+    { value: 19508, title: t('homepage:retired') },
   ];
 
   useEffect(() => {
