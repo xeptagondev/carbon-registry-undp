@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 // import { AddNewCompanyComponent } from '@undp/carbon-library';
 import './registerNewCompany.scss';
 import { Row, Col, Button } from 'antd';
-import sliderLogo from '../../Assets/Images/logo-slider.png';
+import sliderLogo from '../../Assets/Images/logo_Gold.png';
 import { AddNewCompanyComponent } from '../../Components/Company/AddNewCompany/addNewCompanyComponent';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 
@@ -30,7 +30,7 @@ const RegisterNewCompany = () => {
               </div>
               <div>
                 <div style={{ display: 'flex' }}>
-                  <div className="title">{'CARBON MARKET DIGITAL PLATFORM'}</div>
+                  <div className="title">{'IMPACT REGISTRY'}</div>
                   {/* <div className="title-sub">{'REGISTRY'}</div> */}
                 </div>
                 <div className="country-name">
