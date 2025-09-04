@@ -1,5 +1,5 @@
-@use '../../Assets/Fonts/fonts.scss';
-@use '../../Styles/variables.scss';
+@use "../../Assets/Fonts/fonts.scss";
+@use "../../Styles/variables.scss";
 
 .login-container {
   height: 100vh;
@@ -8,7 +8,7 @@
   background-color: variables.$outside-background-color;
 
   .title {
-    font-family: 'MuseoSans';
+    font-family: "MuseoSans";
     font-size: 0.7rem;
     color: variables.$logo-text-color;
     font-weight: 700;
@@ -18,7 +18,7 @@
 
   .title-sub {
     font-weight: 700;
-    font-family: 'MuseoSans';
+    font-family: "MuseoSans";
     font-size: 0.7rem;
     color: variables.$logo-text-color;
     margin-top: -8px;
@@ -26,7 +26,7 @@
 
   .country-name {
     font-size: 0.6rem;
-    font-family: 'MuseoSans';
+    font-family: "MuseoSans";
     margin-top: -3px;
   }
 
@@ -67,43 +67,28 @@
     }
   }
   .container-image {
-    background-image: linear-gradient(
-        to bottom,
-        rgba(196, 196, 196, 0) 0%,
-        rgba(4, 105, 177, 0.24) 0.01%
-      ),
-      url('../../Assets/Images/sigiriya.webp');
-    background-image: linear-gradient(
-        to bottom,
-        rgba(196, 196, 196, 0) 0% rgba(4, 105, 177, 0.24) 0.01%
-      ),
-      image-set(
-        '../../Assets/Images/sigiriya.jpg' type('image/jpg'),
-        '../../Assets/Images/sigiriya.webp' type('image/webp')
-      );
-    background-image: -webkit-gradient(
-        linear,
-        left top,
-        left bottom,
-        from(hsla(0, 0%, 77%, 0), rgba(4, 105, 177, 0.24))
-      ),
-      image-set(
-        '../../Assets/Images/sigiriya.jpg' type('image/jpg'),
-        '../../Assets/Images/sigiriya.webp' type('image/webp')
-      );
+    background-image: url("../../Assets/Images/login-GS.webp");
     background-size: cover;
+    background-position: top !important;
+    background-repeat: no-repeat;
   }
 
   .login-img-container {
     height: 100vh;
     background-position-x: 90%;
     background-position-y: 100%;
-    flex-direction: column;
-    justify-content: flex-end;
+    flex-direction: row;
+    justify-content: end;
     display: flex;
     flex: 1;
     text-align: left;
     // background-size: 300vh;
+    .login-SQR{
+      background-color: white;
+      
+      margin: 2rem;
+
+    }
 
     @media (max-width: variables.$lg-size) {
       text-align: center;
@@ -111,19 +96,28 @@
     }
 
     .text-ctn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-left: 2vw;
-      margin-bottom: 8vh;
       font-family: variables.$secondary-font-family;
       font-size: 4rem;
       color: variables.$outside-background-color;
       line-height: 1.2em;
       text-transform: uppercase;
+      @media (max-width:1500px) {
+        font-size: 3rem;
+        
+      }
 
       @media (max-width: variables.$lg-size) {
         font-size: 2.2rem;
         margin-top: 1rem;
         margin-bottom: unset;
         line-height: 1.5em;
+      }
+        @media (max-width: 1024px) {
+          display: none;
       }
     }
   }
@@ -138,25 +132,41 @@
       margin-top: 20px;
       object-fit: cover;
       height: auto;
-      width: 3.7rem;
+      width: 3.5rem;
+
+      @media (max-width:568px) {
+        width: 2.5rem;
+        
+      }
     }
   }
 
   .login-country-name {
     font-size: 0.8rem;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+    justify-content: center;
     display: flex;
-    display: flex;
-    margin-top: 12px;
+    margin-top: 8px;
     color: variables.$title-text-color;
 
-    span {
-      @media (max-width: variables.$lg-size) {
-        text-align: center;
-      }
+    .carbon {
+      font-family: "MuseoSans";
+      color: variables.$logo-text-color;
+      font-weight: 700;
+      margin-right: 6px;
+      margin-bottom: 0;
     }
 
+    .registry {
+      // font-weight: 700;
+      font-family: "MuseoSans";
+    }
+    // span {
+    //   @media (max-width: variables.$lg-size) {
+    //     text-align: center;
+    //   }
+    // }
   }
 
   .login-text-contents {
@@ -173,6 +183,12 @@
       line-height: 2.5rem;
       color: variables.$title-text-color;
       font-weight: 600;
+
+      @media (max-width:678px) {
+        font-size: 1.8rem;
+      line-height: 1.5rem;
+        
+      }
 
       .login-text-welcome {
         font-size: 0.8rem;
@@ -262,8 +278,7 @@
     @media (max-width: variables.$lg-size) {
       margin: auto;
       padding: 30px;
-      width: 100vw;
-      margin-bottom: 350px;
+      width: 90vw;
     }
 
     .login-error-message-container {
@@ -361,9 +376,9 @@
         color: variables.$title-text-color;
       }
 
-      input[type='username']:-webkit-autofill,
-      input[type='username']:-webkit-autofill:hover,
-      input[type='username']:-webkit-autofill:focus {
+      input[type="username"]:-webkit-autofill,
+      input[type="username"]:-webkit-autofill:hover,
+      input[type="username"]:-webkit-autofill:focus {
         -webkit-text-fill-color: variables.$title-text-color;
         -webkit-box-shadow: 0 0 0 30px variables.$outside-background-color inset !important;
       }
@@ -390,9 +405,9 @@
         padding: 0px 11px;
       }
 
-      input[type='password']:-webkit-autofill,
-      input[type='password']:-webkit-autofill:hover,
-      input[type='password']:-webkit-autofill:focus {
+      input[type="password"]:-webkit-autofill,
+      input[type="password"]:-webkit-autofill:hover,
+      input[type="password"]:-webkit-autofill:focus {
         -webkit-text-fill-color: variables.$title-text-color;
         -webkit-box-shadow: 0 0 0 30px variables.$outside-background-color inset !important;
       }
@@ -429,6 +444,9 @@
     font-size: 0.875rem;
     color: variables.$note-light-text;
     text-align: justify;
+    @media (max-width:678px) {
+      margin: 1.5rem;
+    }
 
     .label {
       margin-right: 0.5rem;

@@ -3,14 +3,14 @@ import './Dashboard.scss';
 import { ChevronDown, Envelope } from 'react-bootstrap-icons';
 
 const FAQ = () => {
-  const [openIndex, setOpenIndex] = useState(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const toggleItem = (index: any) => {
+  const toggleItem = (index: number) => {
     setOpenIndex((prev) => (prev === index ? null : index));
   };
 
   return (
-    <div className="faq-container">
+    <div className="faq-container pb-[20px]">
       <h2 className="header-title">Frequently Asked Questions</h2>
       <div className="faq-list">
         <div className="faq-item">
@@ -21,13 +21,16 @@ const FAQ = () => {
             <span className={`chevron ${openIndex === 0 ? 'rotated' : ''}`}>
               <ChevronDown />
             </span>
-            <span className="question-text">What is a National Carbon Registry?</span>
+            <span className="question-text">What is the Gold Standard Impact Registry?</span>
           </button>
           {openIndex === 0 && (
             <div className="faq-answer">
               <p>
-                A National Carbon Registry is a secure digital platform used by governments to
-                track, manage, and regulate carbon credits within their national carbon markets.
+                The Gold Standard Impact Registry is the authoritative, public ledger where Gold
+                Standard-certified carbon credits such as Verified Emission Reductions are issued,
+                held, transferred, and retired with full transparency. Each credit is assigned a
+                unique serial number, enabling stakeholders to trace it throughout its entire
+                lifecycle. The registry also showcases certified SDG impacts of projects.
               </p>
             </div>
           )}
@@ -41,49 +44,15 @@ const FAQ = () => {
             <span className={`chevron ${openIndex === 1 ? 'rotated' : ''}`}>
               <ChevronDown />
             </span>
-            <span className="question-text">
-              How does a government adopt a National Carbon Registry?
-            </span>
+            <span className="question-text">Who can use the Registry?</span>
           </button>
           {openIndex === 1 && (
             <div className="faq-answer">
               <p>
-                Governments can adopt and customize the open-source National Carbon Registry to meet
-                their specific needs. By building on UNDP's open-source codebase, countries can
-                reduce development time and costs by up to 70%.
+                This global platform serves various user groups, including project developers,
+                credit buyers, marketplaces, and the general public. It provides an open, reliable
+                view of project statuses, issued credits, and retirement records.
               </p>
-              <p>To implement the Registry nationally, countries should have:</p>
-              <ul className="faqList">
-                <li>A defined Carbon Market Framework</li>
-                <li>
-                  A full-stack digital team, with expertise in:
-                  <ul className="faqSubList">
-                    <li>UX/UI design</li>
-                    <li>Backend and frontend development</li>
-                    <li>DevOps and system administration</li>
-                    <li>Cybersecurity</li>
-                  </ul>
-                </li>
-                <li>
-                  Essential IT infrastructure, including:
-                  <ul className="faqSubList">
-                    <li>Server space (cloud, local, or blockchain-based)</li>
-                    <li>SSL/TLS certificates for encrypted communication</li>
-                    <li>A secure domain name (e.g., HTTPS with trusted CA)</li>
-                    <li>Firewalls and intrusion detection systems</li>
-                    <li>Role-based access control (RBAC)</li>
-                    <li>Data encryption (at rest and in transit)</li>
-                    <li>Regular security audits and penetration testing</li>
-                    <li>Backup and disaster recovery protocols</li>
-                  </ul>
-                </li>
-                <li>
-                  An Implementation Task Force: A cross-functional team of policy and IT
-                  representatives to lead deployment
-                </li>
-                <li>A designated Project Owner</li>
-                <li>A long-term maintenance plan, with a dedicated IT budget</li>
-              </ul>
             </div>
           )}
         </div>
@@ -97,17 +66,15 @@ const FAQ = () => {
               <ChevronDown />
             </span>
             <span className="question-text">
-              If we use the open-source code, does that mean all data on the Registry is open?
+              Can the Registry distinguish Article 6-authorized credits?
             </span>
           </button>
           {openIndex === 2 && (
             <div className="faq-answer">
               <p>
-                No. The open-source code is publicly available, as a starting point to help
-                countries adapt and build their own national Registries. All country-specific
-                registries and data, once built, are hosted and secured by each government. Each
-                country is responsible for managing its own system in line with national data
-                protection laws. Data access and sharing are entirely up to each government.
+                Yes. The registry supports Article 6 labelling, enabling users to identify and track
+                credits explicitly authorized under Article 6 of the Paris Agreement. This enhances
+                transparency and compliance with global frameworks and standards.
               </p>
             </div>
           )}
@@ -121,31 +88,18 @@ const FAQ = () => {
               <ChevronDown />
             </span>
             <span className="question-text">
-              What if the Registry features do not work for my country?
+              How does the certification and assurance process work?
             </span>
           </button>
           {openIndex === 5 && (
             <div className="faq-answer">
               <p>
-                The Registry is designed to be fully customizable. Countries typically start each
-                process by defining their countries’ needs and determining what needs to be changed
-                from the demo system. Countries have already adapted the platform to fit a wide
-                variety of contexts, including:
+                Gold Standard's certification involves multiple stages: project planning,
+                stakeholder consultation, preliminary review, validation by an independent VVB,
+                verification, and issuance of credits. A digital assurance platform streamlines
+                document submission, reviews, and monitoring, while expert reviewers conduct quality
+                checks to uphold integrity.
               </p>
-              <ul className="faqList">
-                <li>
-                  The process flow of project registration, authorisation, monitoring, issuance
-                </li>
-                <li>User roles and permissions</li>
-                <li>Approval authorities</li>
-                <li>Documentation requirements and forms</li>
-                <li>Data requirements (data fields)</li>
-                <li>Serial number formatting</li>
-                <li>API Integration</li>
-                <li>Types of carbon market mechanisms supported</li>
-                <li>Advanced AI functionality </li>
-                <li>Data Hosting & Security protocols</li>
-              </ul>
             </div>
           )}
         </div>
@@ -157,46 +111,17 @@ const FAQ = () => {
             <span className={`chevron ${openIndex === 6 ? 'rotated' : ''}`}>
               <ChevronDown />
             </span>
-            <span className="question-text">Where will the data hosted?</span>
+            <span className="question-text">Who are VVBs and what is their role?</span>
           </button>
           {openIndex === 6 && (
             <div className="faq-answer">
               <p>
-                Countries are responsible for hosting and maintaining their Registry. Three primary
-                hosting options countries have considered include:
+                Validation and Verification Bodies (VVBs) are independent, accredited entities
+                responsible for assessing projects against Gold Standard requirements, conducting
+                validation or verification, and making certification decisions. They follow strict
+                competence, impartiality, and transparency criteria, supported by peer review and
+                oversight from Gold Standard.
               </p>
-              <ul className="faqList">
-                <li>
-                  <p>
-                    <b>Cloud Hosting</b>
-                  </p>
-                  <span>
-                    Offers scalability, integrated security, and ease of backup and maintenance.
-                    Hosting on AWS (via a government-owned account) allows countries to fully
-                    leverage QLDB with minimal configuration changes.
-                  </span>
-                </li>
-                <li>
-                  <p>
-                    <b>Local Hosting</b>
-                  </p>
-                  <span>
-                    Countries can choose to install the software on government-managed servers or
-                    preferred cloud platforms to maintain full control over data, access, and
-                    security. Local IT teams will be responsible for ongoing maintenance,
-                    configuration, and backups.
-                  </span>
-                </li>
-                <li>
-                  <p>
-                    <b>Blockchain Integration</b>
-                  </p>
-                  <span>
-                    Countries may opt to integrate blockchain-based encryption and distributed
-                    storage to enhance security and traceability.
-                  </span>
-                </li>
-              </ul>
             </div>
           )}
         </div>
