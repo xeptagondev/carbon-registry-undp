@@ -1,6 +1,7 @@
 {
-  "heading": "National Carbon Registry",
-  "subHeading": "DEMONSTRATION WEBSITE",
+  "heading": "GOLD STANDARD IMPACT REGISTRY",
+  "subHeading": "Climate Security and Sustainable Development for All.",
+  "subHeadingtext": "The Gold Standard Impact Registry ensures transparency and credibility in climate action. Every credit is uniquely tracked from issuance to retirement, preventing double counting and guaranteeing real impact. It empowers organizations and individuals to confidently support projects that drive climate security and sustainable development worldwide.",
   "ourVisonTitle": "Our Vision",
   "ourVisonContentStart": "UNDP has developed an",
   "ourVisonContentHighlight": "open-source National Carbon Registry",
@@ -68,7 +69,7 @@
   "faqA6": "This demo site is hosted on UNDP’s Amazon Web Services (AWS) infrastructure. By using AWS, we leverage Amazon’s Quantum Ledger Database (QLDB), which provides a transparent, immutable, and cryptographically verifiable transaction log, ensuring a reliable and complete history of data changes.",
   "faqA6-2": "After installation, countries are expected to host and maintain the software independently. There are two main hosting options:<ul><li><b>Cloud Hosting:</b> Cloud hosting offers flexibility, reliability, and integrated security, along with backup and maintenance features. Hosting on AWS (through an account owned and managed by the country government) allows countries to take full advantage of the Quantum Ledger Database with minimal configuration changes required from the original source code.</li><li><b>Local Hosting:</b> Countries can choose to host the system on local servers or other cloud platforms to gain more direct control over data and security. In this case, countries will need to manage all configuration, security, backup, and ongoing maintenance based on their local IT environment and security protocols.</li></ul>",
   "faqQ7": "Who can use the source code?",
-  "faqA7": "The tool is developed and maintained by UNDP and is licensed under the GNU Affero General Public License (AGPL-3.0), which permits free use, modification, and sharing of the software.",
+  "faqA7": "The tool is developed and maintained by UUNDP and is licensed under the GNU Affero General Public License (AGPL-3.0), which permits free use, modification, and sharing of the software.",
   "faqA7-2": "We kindly ask users to inform us of your usage by contacting <a>digital4planet@undp.org</a> as this helps us track the tool’s impact and guide future improvements.",
   "faqA7-3": "Under AGPL-3.0, any modifications to the code must be made publicly available by creating a new branch on GitHub. The software cannot be relicensed under more restrictive terms without adhering to the AGPL-3.0 guidelines.",
   "footertext1": "Climate security and sustainable development for all.",
