@@ -5,33 +5,25 @@ import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-
-import logo from '../../Assets/Images/logo-slider.png';
-import { ReactComponent as Government } from '../../Assets/Images/gov.svg';
-import { ReactComponent as Projdev } from '../../Assets/Images/projdev.svg';
-import { ReactComponent as Certifier } from '../../Assets/Images/certif.svg';
-import { ReactComponent as Buyer } from '../../Assets/Images/buyer.svg';
+import logo_Gold from '../../Assets/Images/logo_Gold_White.png';
 import LayoutFooter from '../../Components/Footer/layout.footer';
 // import { ImgWithFallback } from '@undp/carbon-library';
 import './homepage.scss';
 import ProcessFlow from '../../Components/Homepage/Howdoesitwork';
 import PartnershipBanner from '../../Components/Homepage/Partners';
 import FAQ from '../../Components/Homepage/Faq';
-import MapAnimation from '../../Components/Homepage/MapAnimation';
-import { GlobeAmericas, ShieldCheck, CartCheck, Briefcase } from 'react-bootstrap-icons';
 import { ImgWithFallback } from '../../Components/ImgwithFallback/imgWithFallback';
 import CollapsePanel from 'antd/lib/collapse/CollapsePanel';
 import { ROUTES } from '../../Config/uiRoutingConfig';
 import CarbonDashboard from '../../Components/Homepage/CarbonDashboard';
-import DigitalPublicGood from '../../Components/Homepage/DigitalPublic';
 import DemoSite from '../../Components/Homepage/DemoSite';
 import FeatureCards from '../../Components/Homepage/Keyfeatures';
-
-// import MapAnimation from "../../Components/Homepage/MapAnimation";
+// import NeonCursor from "../../Components/Homepage/NeonCursor";
+import Timeline from '../../Components/Homepage/Timeline';
 
 const Homepage = () => {
   const { i18n, t } = useTranslation(['common', 'homepage']);
-  const countryName = process.env.REACT_APP_COUNTRY_NAME || 'Gold Standard';
+  // const countryName = import.meta.env.VITE_APP_COUNTRY_NAME || "Gold Standard";
   const navigate = useNavigate();
   const [Visible, setVisible] = useState(true);
 
@@ -72,26 +64,26 @@ const Homepage = () => {
       <Row>
         <Col md={24} lg={24} flex="auto">
           <div className="homepage-img-container image-container">
+            {/* <div className="homepage-img-container mobile-image-container"> */}
+
             <Row>
               <Col md={18} lg={21} xs={17} flex="auto">
                 <div className="homepage-header-container">
                   <div className="logo">
-                    <img src={logo} alt="slider-logo" />
+                    <img src={logo_Gold} alt="slider-logo" />
                   </div>
                   <div>
                     <div style={{ display: 'flex' }}>
-                      <div className="title">{'NATIONAL CARBON'}</div>
-                      <div className="title-sub">{'REGISTRY'}</div>
+                      <div className="title">{'IMPACT REGISTRY'}</div>
+                      {/* <div className="title-sub">{'REGISTRY'}</div> */}
                     </div>
-                    <div className="country-name">
-                      {process.env.REACT_APP_COUNTRY_NAME || 'countryX'}
-                    </div>
+                    <div className="country-name">Gold Standard</div>
                   </div>
                 </div>
               </Col>
               <Col md={6} lg={3} xs={7} flex="auto">
                 <div className="homepage-button-container">
-                  <div className="button">
+                  <div className="SignInbtn">
                     <Button type="primary" onClick={() => navigate(ROUTES.LOGIN)}>
                       SIGN IN
                     </Button>
@@ -101,6 +93,7 @@ const Homepage = () => {
             </Row>
             <Row>
               <div className="text-ctn">
+                {/* <NeonCursor /> */}
                 <span>
                   <Trans
                     i18nKey="homepage:heading"
@@ -110,496 +103,43 @@ const Homepage = () => {
                   />
                 </span>
                 <div className="subhome">{t('homepage:subHeading')}</div>
-              </div>
-            </Row>
-            <Row className="arrow-ctn">
-              {Visible && (
-                <nav className={'arrows'}>
-                  <svg onClick={handleClickScroll}>
-                    <path className="a1" d="M0 0 L30 32 L60 0"></path>
-                    <path className="a2" d="M0 20 L30 52 L60 20"></path>
-                    <path className="a3" d="M0 40 L30 72 L60 40"></path>
-                  </svg>
-                </nav>
-              )}
-            </Row>
-          </div>
-        </Col>
-      </Row>
-      <Row className="vision">
-        <Col>
-          <section className="vision-section" ref={ref}>
-            <motion.div
-              className="vision-container"
-              initial={{ opacity: 0, y: 40 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-            >
-              <h2 className="vision-title" id="vision">
-                Vision
-              </h2>
-              <p className="vision-description">
-                UNDP’s open-source National Carbon Registry enables countries to implement and
-                manage carbon markets by issuing, managing, and tracking carbon credits with
-                confidence, achieving national climate commitments.
-              </p>
-              <h3 className="vision-subtitle">The Platform Supports:</h3>
-
-              <div className="vision-grid">
-                <motion.div
-                  className="vision-card"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.2, duration: 0.6 }}
-                >
-                  <div className="vision-icon">
-                    <Government className="vislogo" />
-                  </div>
-                  <p className="vision-role">Governments</p>
-                  <p className="vision-text">
-                    Launching Carbon Markets Aligned with the Paris Agreement
-                  </p>
-                </motion.div>
-
-                <motion.div
-                  className="vision-card"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.4, duration: 0.6 }}
-                >
-                  <div className="vision-icon">
-                    <Projdev className="vislogo" />
-                  </div>
-                  <p className="vision-role">Project Developers</p>
-                  <p className="vision-text">
-                    Accessing Climate Finance for Emissions-Reducing Projects
-                  </p>
-                </motion.div>
-
-                <motion.div
-                  className="vision-card"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.6, duration: 0.6 }}
-                >
-                  <div className="vision-icon">
-                    <Certifier className="vislogo" />
-                  </div>
-                  <p className="vision-role">Certifiers</p>
-                  <p className="vision-text">Verifying Climate Action Efficiently</p>
-                </motion.div>
-
-                <motion.div
-                  className="vision-card"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.8, duration: 0.6 }}
-                >
-                  <div className="vision-icon">
-                    <Buyer className="vislogo" />
-                  </div>
-                  <p className="vision-role">Buyers</p>
-                  <p className="vision-text">Navigating a Trusted Marketplace for Carbon Credits</p>
-                </motion.div>
-              </div>
-            </motion.div>
-          </section>
-        </Col>
-      </Row>
-      {/* <Row gutter={[8, 8]}>
-        <Col md={24} lg={24} flex="auto">
-          <div className="homepage-content-containerwhite">
-            <div id="scrollhome" className="title">
-              {t('homepage:ourVisonTitle')}
-            </div>
-            <div className="homepagebody">
-              <div className="homepagebody_text">
-                {t('homepage:ourVisonContentStart')}
-                <strong> {t('homepage:ourVisonContentHighlight')} </strong>
-                {t('homepage:ourVisonContentEnd')}
-              </div>
-              <div className="homepagebody_text">{t('homepage:OurPlatformEnables')}</div>
-
-              <div className="aboutus_cards-container">
-                <Row gutter={[5, 5]} className="aboutus_card-row">
-                  <Col xxl={6} xl={6} md={12} className="aboutus_card-col">
-                    <div className="aboutus-card-main-container">
-                      <Col>
-                        <Row className="aboutus_card-row">
-                          <div>
-                            <GlobeAmericas className="aboutusicon" color="#FFFF" size="60px" />
-                          </div>
-                        </Row>
-                        <Row className="aboutus_card-row">
-                          <div className="aboutus-card-title">{t('homepage:governmentsTitle')}</div>
-                        </Row>
-                        <Row>
-                          <div className="aboutus-card-text">{t('homepage:governmentsBody')}</div>
-                        </Row>
-                      </Col>
-                    </div>
-                  </Col>
-                  <Col xxl={6} xl={6} md={12} className="aboutus_card-col">
-                    <div className="aboutus-card-main-container">
-                      <Col>
-                        <Row className="aboutus_card-row">
-                          <div>
-                            <Briefcase className="aboutusicon" color="#FFFF" size="60px" />
-                          </div>
-                        </Row>
-                        <Row className="aboutus_card-row">
-                          <div className="aboutus-card-title">
-                            {t('homepage:projectDevelopersTitle')}
-                          </div>
-                        </Row>
-                        <Row>
-                          <div className="aboutus-card-text">
-                            {t('homepage:projectDevelopersBody')}
-                          </div>
-                        </Row>
-                      </Col>
-                    </div>
-                  </Col>
-                  <Col xxl={6} xl={6} md={12} className="aboutus_card-col">
-                    <div className="aboutus-card-main-container">
-                      <Col>
-                        <Row className="aboutus_card-row">
-                          <div>
-                            <ShieldCheck className="aboutusicon" color="#FFFF" size="60px" />
-                          </div>
-                        </Row>
-                        <Row className="aboutus_card-row">
-                          <div className="aboutus-card-title">{t('homepage:certifiersTitle')}</div>
-                        </Row>
-                        <Row>
-                          <div className="aboutus-card-text">{t('homepage:certifiersBody')}</div>
-                        </Row>
-                      </Col>
-                    </div>
-                  </Col>
-                  <Col xxl={6} xl={6} md={12} className="aboutus_card-col">
-                    <div className="aboutus-card-main-container">
-                      <Col>
-                        <Row className="aboutus_card-row">
-                          <div>
-                            <CartCheck className="aboutusicon" color="#FFFF" size="60px" />
-                          </div>
-                        </Row>
-                        <Row className="aboutus_card-row">
-                          <div className="aboutus-card-title">{t('homepage:buyersTitle')}</div>
-                        </Row>
-                        <Row>
-                          <div className="aboutus-card-text">{t('homepage:buyersBody')}</div>
-                        </Row>
-                      </Col>
-                    </div>
-                  </Col>
-                </Row>
-              </div>
-              <div className="homepagebody_subtitle">{t('homepage:policyContextTitle')}</div>
-              <div className="homepagebody_text">{t('homepage:policyContextBody')}</div>
-              <div className="homepagebody_text">{t('homepage:policyContextBody2')}</div>
-              <div className="homepagebody_subtitle">{t('homepage:digitalPublicTitle')}</div>
-              <div className="homepagebody_text">
-                <Trans
-                  i18nKey="homepage:digitalPublicBody"
-                  components={{
-                    a0: (
-                      <a
-                        href="https://digitalpublicgoods.net/digital-public-goods/"
-                        target="_blank"
-                      />
-                    ),
-                    a1: <a href="https://github.com/undp/carbon-registry" target="_blank" />,
-                  }}
-                />
-              </div>
-              <div className="homepagebody_subtitle">{t('homepage:demoSiteTitle')}</div>
-              <div className="homepagebody_text">
-                <Trans
-                  i18nKey="homepage:demoSiteBody"
-                  components={{
-                    b: <strong />,
-                    ul: <ul className="homepagebody_text list" />,
-                    li: <li />,
-                    a: <a href="mailto:digital4planet@undp.org" target="_blank" />,
-                  }}
-                />
-              </div>
-              <div className="homepagebody_text">
-                <Trans
-                  i18nKey="homepage:demoSiteBody2"
-                  components={{
-                    a: <a href="https://github.com/undp/carbon-registry" target="_blank" />,
-                  }}
-                />
-              </div>
-            </div>
-            <div className="title">{t('homepage:HdiwTitle')}</div>
-            <div className="homepagebody">
-              <div className="homepagebody_text">{t('homepage:HdiwBody')}</div>
-              <ul className="homepagebody_text list">
-                <li>
-                  <strong>{t('homepage:feature1Title')}</strong>:{' '}
-                  {t('homepage:feature1Description')}
-                </li>
-                <li>
-                  <strong>{t('homepage:feature2Title')}</strong>:{' '}
-                  {t('homepage:feature2Description')}
-                </li>
-                <li>
-                  <strong>{t('homepage:feature3Title')}</strong>:{' '}
-                  {t('homepage:feature3Description')}
-                </li>
-                <li>
-                  <strong>{t('homepage:feature4Title')}</strong>:{' '}
-                  {t('homepage:feature4Description')}
-                </li>
-              </ul>
-              <div className="homepagebody_subtitle">{t('homepage:issuingCarbonCreditsTitle')}</div>
-              <div className="homepagebody_text">{t('homepage:issuingCarbonCreditsBody')}</div>
-              <div className="homepagebody_subtitle">{t('homepage:dashboardAndInsightsTitle')}</div>
-              <div className="homepagebody_text">{t('homepage:dashboardAndInsightsBody')}</div>
-              <div className="homepagebody_subtitle">{t('homepage:interoperableTitle')}</div>
-              <div className="homepagebody_text">{t('homepage:interoperableBody')}</div>
-            </div>
-            <div className="title">{t('homepage:developedInPartnershipTitle')}</div>
-            <div className="homepagebody">
-              <div className="homepagebody_text">
-                <Trans
-                  i18nKey="homepage:developedInPartnershipBody"
-                  components={{
-                    a0: (
-                      <a
-                        href="https://www.theclimatewarehouse.org/work/digital-4-climate"
-                        target="_blank"
-                      />
-                    ),
-                    a1: <a href="https://www.ebrd.com/" target="_blank" />,
-                    a2: <a href="https://www.undp.org/" target="_blank" />,
-                    a3: <a href="https://www.unfccc.int/" target="_blank" />,
-                    a4: <a href="https://www.ieta.org/" target="_blank" />,
-                    a5: <a href="https://www.esa.int/" target="_blank" />,
-                    a6: <a href="https://www.worldbank.org/" target="_blank" />,
-                  }}
-                />
-              </div>
-              <Row className="undplogocontainer">
-                <Col className="gutter-row" xl={5} md={8} sm={24} xs={24}>
-                  <ImgWithFallback
-                    className="erbd"
-                    src={EBRD}
-                    fallbackSrc={EBRDff}
-                    mediaType="image/webp"
-                    alt="EBRD"
-                  />
-                </Col>
-                <Col className="gutter-row" xl={3} md={8} sm={12} xs={12}>
-                  <ImgWithFallback
-                    className="undp"
-                    src={undpLogo}
-                    fallbackSrc={undpLogo}
-                    mediaType="image/svg"
-                    alt="UNDP"
-                  />
-                </Col>
-                <Col className="gutter-row" xl={3} md={8} sm={12} xs={12}>
-                  <ImgWithFallback
-                    className="unfccc"
-                    src={UNFCCC}
-                    fallbackSrc={UNFCCCff}
-                    mediaType="image/webp"
-                    alt="UNFCCC"
-                  />
-                </Col>
-                <Col className="gutter-row" xl={5} md={8} sm={24} xs={24}>
-                  <ImgWithFallback
-                    className="ieta"
-                    src={IETA}
-                    fallbackSrc={IETAff}
-                    mediaType="image/webp"
-                    alt="IETA"
-                  />
-                </Col>
-                <Col className="gutter-row" xl={5} md={8} sm={24} xs={24}>
-                  <a href="https://www.esa.int/" target="_blank">
-                    <ImgWithFallback
-                      className="esa"
-                      src={ESA}
-                      fallbackSrc={ESAff}
-                      mediaType="image/webp"
-                      alt="ESAFF"
-                    />
-                  </a>{' '}
-                </Col>
-                <Col className="gutter-row" xl={3} md={8} sm={24} xs={24}>
-                  <a href="https://www.worldbank.org/" target="_blank">
-                    <ImgWithFallback
-                      className="wbank"
-                      src={WBANK}
-                      fallbackSrc={WBANKff}
-                      mediaType="image/webp"
-                      alt="WBANK"
-                    />
-                  </a>{' '}
-                </Col>
-              </Row>
-            </div>
-          </div>
-        </Col>
-      </Row>
-      <Row gutter={[8, 8]}>
-        <Col md={24} lg={24} flex="auto">
-          <div className="homepage-image-content-container">
-            <Row>
-              <Col className="eligicontent" flex={2} md={22} lg={23}>
-                <div className="title">{t('homepage:faqTitle')}</div>
-                <div className="homepagebody homepage_accordian_wrapper">
-                  <Collapse accordion defaultActiveKey={['1']} className="homepage_accordian">
-                    <CollapsePanel
-                      header={t('homepage:faqQ1')}
-                      key="1"
-                      className="homepage_collapsepanel"
-                    >
-                      <div className="collapsetext">{t('homepage:faqA1')}</div>
-                    </CollapsePanel>
-                    <CollapsePanel
-                      header={t('homepage:faqQ2')}
-                      key="2"
-                      className="homepage_collapsepanel"
-                    >
-                      <div className="collapsetext">
-                        <Trans
-                          i18nKey="homepage:faqA2"
-                          components={{
-                            ol: <ol />,
-                            li: <li />,
-                            b: <strong />,
-                          }}
-                        />
-                      </div>
-                    </CollapsePanel>
-                    <CollapsePanel
-                      header={t('homepage:faqQ3')}
-                      key="3"
-                      className="homepage_collapsepanel"
-                    >
-                      <div className="collapsetext">
-                        <Trans
-                          i18nKey="homepage:faqA3"
-                          components={{
-                            ul: <ul />,
-                            li: <li />,
-                            b: <strong />,
-                          }}
-                        />
-                      </div>
-                    </CollapsePanel>
-                    <CollapsePanel
-                      header={t('homepage:faqQ4')}
-                      key="4"
-                      className="homepage_collapsepanel"
-                    >
-                      <div className="collapsetext">
-                        <Trans
-                          i18nKey="homepage:faqA4"
-                          components={{
-                            ul: <ul />,
-                            li: <li />,
-                            b: <strong />,
-                          }}
-                        />
-                      </div>
-                    </CollapsePanel>
-                    <CollapsePanel
-                      header={t('homepage:faqQ5')}
-                      key="5"
-                      className="homepage_collapsepanel"
-                    >
-                      <div className="collapsetext">
-                        <Trans
-                          i18nKey="homepage:faqA5"
-                          components={{
-                            ul: <ul />,
-                            li: <li />,
-                            b: <strong />,
-                          }}
-                        />
-                      </div>
-                    </CollapsePanel>
-                    <CollapsePanel
-                      header={t('homepage:faqQ6')}
-                      key="6"
-                      className="homepage_collapsepanel"
-                    >
-                      <div className="collapsetext">{t('homepage:faqA6')}</div>
-                      <div className="collapsetext">
-                        <Trans
-                          i18nKey="homepage:faqA6-2"
-                          components={{
-                            ul: <ul />,
-                            li: <li />,
-                            b: <strong />,
-                          }}
-                        />
-                      </div>
-                    </CollapsePanel>
-                    <CollapsePanel
-                      header={t('homepage:faqQ7')}
-                      key="7"
-                      className="homepage_collapsepanel"
-                    >
-                      <div className="collapsetext">{t('homepage:faqA7')}</div>
-                      <div className="collapsetext">
-                        <Trans
-                          i18nKey="homepage:faqA7-2"
-                          components={{
-                            a: <a href="mailto:digital4planet@undp.org" target="_blank" />,
-                          }}
-                        />
-                      </div>
-                      <div className="collapsetext">{t('homepage:faqA7-3')}</div>
-                    </CollapsePanel>
-                  </Collapse>
+                <div className="subhometxt">{t('homepage:subHeadingtext')}</div>
+                <div className="explorebutton">
+                  <Button type="default" onClick={handleClickScroll}>
+                    Explore More
+                  </Button>
                 </div>
-              </Col>
-              <Col flex={3} md={8} lg={8}>
-              </Col>
+              </div>
             </Row>
+            {/* </div> */}
           </div>
         </Col>
-      </Row> */}
+      </Row>
+      <div className="parent-title">
+        <section className="title-section" id="vision" ref={ref}>
+          <h1 className="header-title">
+            We are all About Impact for Planet,
+            <br /> People and Nature
+          </h1>
+          <p>
+            Established in 2003, Gold Standard sets the benchmark for climate projects that reduce
+            carbon emissions while upholding the highest environmental integrity. The Gold Standard
+            Impact Registry offers a transparent, public view of certified projects, providing
+            access to key documentation and progress updates. As the “source of truth” for Gold
+            Standard products, including carbon credits, it tracks issuance, transfers, and
+            retirements with unique serial numbers. This ensures full traceability and verified
+            impact, enabling stakeholders to make informed decisions while advancing Net-Zero
+            targets and broader Sustainable Development Goals.
+          </p>
+        </section>
+      </div>
+
       <CarbonDashboard />
-      <DigitalPublicGood />
-      <MapAnimation />
-      <ProcessFlow />
+      <div className="TimelineSect">
+        <Timeline />
+      </div>
       <FeatureCards />
       <FAQ />
-
-      <Row className="developer-resources-row">
-        <Col xs={12} sm={6} md={4} lg={2} xl={2} className="Devresources">
-          <div className="resource-item">
-            <b>Developer Resources:</b>
-          </div>
-        </Col>
-        <Col xs={12} sm={6} md={4} lg={2} xl={2} className="Devresources">
-          <u>
-            <a href="">
-              {' '}
-              <div className="resource-item connects">GitHub site</div>
-            </a>
-          </u>
-        </Col>
-        <Col xs={12} sm={6} md={4} lg={2} xl={2} className="Devresources">
-          <div className="resource-item connects">Guidance to serial number</div>
-        </Col>
-        <Col xs={12} sm={6} md={4} lg={3} xl={3} className="Devresources">
-          <div className="resource-item connects">Guidance for AEF reporting</div>
-        </Col>
-        <Col xs={12} sm={6} md={8} lg={3} xl={3} className="Devresources">
-          <div className="resource-item connects">Cad Trust data model</div>
-        </Col>
-      </Row>
       <LayoutFooter />
     </div>
   );
