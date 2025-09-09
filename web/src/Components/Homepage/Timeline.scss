@@ -1,5 +1,4 @@
 .block-content {
-
   p {
     font-size: 0.95em;
     color: #ffff;
@@ -7,9 +6,8 @@
     letter-spacing: 1px;
     -webkit-font-smoothing: antialiased;
     margin: 0 auto 1em auto;
-    @media (max-width:568px) {
-      font-size: 0.7rem;;
-      
+    @media (max-width: 568px) {
+      font-size: 0.7rem;
     }
   }
 
@@ -48,7 +46,7 @@
 
   &:before {
     display: block;
-    content: "";
+    content: '';
     border-left: 5px solid #ccc;
     left: -0.25em;
     height: 89%;
@@ -57,7 +55,7 @@
     top: 5px;
     transform-origin: 0 0;
     animation: scaleVertical 1s 0.5s ease both 1;
-    @media (max-width:678px) {
+    @media (max-width: 678px) {
       display: none;
     }
   }
@@ -68,7 +66,7 @@
     position: relative;
 
     &:before {
-      content: "";
+      content: '';
       position: absolute;
       top: 5px;
       left: -1em;
@@ -78,6 +76,12 @@
       background: none repeat scroll 0% 0%;
       border: 5px solid #fff;
       animation: revealScaleUp 0.5s 0s ease both 1;
+      @media (max-width: 578px) {
+        // left: 1em;
+        // width: 20px;
+        // height: 20px;
+        display: none;
+      }
     }
   }
 }
@@ -90,10 +94,9 @@
     font-size: 2.5em;
     line-height: 1;
     letter-spacing: 0.02em;
-    @media (max-width:678px) {
-        font-size: 1.5rem;
-        
-      }
+    @media (max-width: 678px) {
+      font-size: 1.5rem;
+    }
   }
 
   .subtitle {
@@ -105,7 +108,7 @@
   }
 
   .content {
-          margin-left: 20px;
+    margin-left: 20px;
     h3 {
       font-size: 32px;
       display: flex;
@@ -114,11 +117,9 @@
       gap: 10px;
       color: white;
 
-      @media (max-width:678px) {
+      @media (max-width: 678px) {
         font-size: 20px;
-        
       }
-
     }
 
     .timeline-link h3:hover {
@@ -150,7 +151,7 @@
     margin: 0 auto;
 
     &:before {
-      content: "";
+      content: '';
       border-left: 5px solid #ccc;
       left: -0.1em;
       height: 75%;
@@ -167,14 +168,14 @@
       position: relative;
 
       &:before {
-        content: "";
+        content: '';
         position: absolute;
         top: 5px;
         left: -1em;
         width: 30px;
         height: 30px;
         border-radius: 50%;
-        background: none repeat scroll 0% 0% #0F877A;
+        background: none repeat scroll 0% 0% #0f877a;
         border: 5px solid #ffffff;
         animation: revealScaleUp 0.5s 0s ease both 1;
       }
@@ -219,8 +220,9 @@ h3 {
 
 .t-block-teal {
   /* background: #01B3C0; */
-  background: url("../../Assets/Images/allAbout.webp");
+  background: url('../../Assets/Images/allAbout.webp');
   background-size: cover;
+  background-position: center;
 
   h2 {
     color: #fff;
