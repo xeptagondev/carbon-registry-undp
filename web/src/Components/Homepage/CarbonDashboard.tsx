@@ -163,7 +163,9 @@ const CarbonDashboard = () => {
                 <div className="stat-item">
                   <div className="stat-number">{counts.co2}</div>
                   <div className="stat-label">Million</div>
-                  <div className="stat-subtitle">tCO2EQ Reduced/Removed</div>
+                  <div className="stat-subtitle">
+                    tCO<sub>2</sub>eq Reduced/Removed
+                  </div>
                 </div>
 
                 <div className="stat-item">
