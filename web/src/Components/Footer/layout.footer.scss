@@ -8,8 +8,7 @@
   align-items: center;
   padding: 1rem 2rem 0 1rem;
   cursor: pointer;
-  @media (max-width:645px) 
-  {
+  @media (max-width: 645px) {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -33,7 +32,7 @@
     font-size: 0.875rem;
 
     @media (max-width: 645px) {
-      padding: 5px 10px 20px 10px;
+      padding: 5px 35px 20px 35px;
       text-align: center;
     }
   }
@@ -118,7 +117,7 @@
     @media (max-width: 645px) {
       margin-left: -3.5rem;
     }
-    .logo-text{
+    .logo-text {
       padding-left: 0.1rem;
     }
 
