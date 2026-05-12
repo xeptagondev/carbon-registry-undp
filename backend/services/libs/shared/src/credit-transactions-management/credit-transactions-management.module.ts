@@ -12,6 +12,7 @@ import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.tr
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
 import { DocumentManagementModule } from "../document-management/document-management.module";
 import { AefReportManagementModule } from "../aef-report-management/aef-report-management.module";
+import { CooperativeApproach } from "../entities/cooperative.approach.entity";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AefReportManagementModule } from "../aef-report-management/aef-report-m
       CreditBlockBalancesViewEntity,
       CreditBlockTransfersViewEntity,
       CreditBlockRetirementsViewEntity,
+      CooperativeApproach,
     ]),
     DocumentManagementModule,
     AefReportManagementModule,

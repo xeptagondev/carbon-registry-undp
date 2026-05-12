@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { HelperService } from "../util/helpers.service";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
 import { TxType } from "../enum/txtype.enum";
+import { AccountType } from "../enum/account.type.enum";
 import { User } from "../entities/user.entity";
 import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 import { plainToClass } from "class-transformer";
@@ -9,6 +10,13 @@ import { ProjectEntity } from "../entities/projects.entity";
 
 @Injectable()
 export class CreditBlocksManagementService {
+  // Draft -/CMA.5 para 132 — itmoSerial stable through splits.
+  // Exposed as a static constant so the clause survives webpack
+  // minification; used by infra/E2E verification to confirm the
+  // built image contains the ¶132 propagation fix.
+  public static readonly ITMO_SERIAL_LINEAGE_CLAUSE =
+    "Draft -/CMA.5 para 132 — itmoSerial stable through splits";
+
   constructor(
     private readonly helperService: HelperService,
     private readonly serialNumberManagementService: SerialNumberManagementService
@@ -59,10 +67,20 @@ export class CreditBlocksManagementService {
               remainingCreditAmount
             );
 
+          // Draft -/CMA.5 para 132 — itmoSerial stable through splits
+          const { parentItmoSerial, childItmoSerial } =
+            this.deriveSplitItmoSerials(
+              creditBlock.itmoSerial,
+              transferredCreditAmountFromBlock
+            );
+
           //update current block
           creditBlock.creditAmount =
             creditBlock.creditAmount - transferredCreditAmountFromBlock;
           creditBlock.serialNumber = firstSerialNumber;
+          if (parentItmoSerial !== undefined) {
+            creditBlock.itmoSerial = parentItmoSerial;
+          }
           creditBlock.txType = TxType.CREDIT_BLOCK_SPLIT;
           creditBlock.txRef = this.getCreditBlockTxRef(
             TxType.CREDIT_BLOCK_SPLIT,
@@ -92,6 +110,8 @@ export class CreditBlocksManagementService {
             ownerCompanyId: toCompanyId,
             projectRefId: creditBlock.projectRefId,
             serialNumber: secondSerialNumber,
+            // Draft -/CMA.5 para 132 — itmoSerial stable through splits
+            itmoSerial: childItmoSerial,
             vintage: creditBlock.vintage,
             creditAmount: transferredCreditAmountFromBlock,
             reservedCreditAmount: 0,
@@ -125,10 +145,20 @@ export class CreditBlocksManagementService {
               transferredCreditAmountFromBlock
             );
 
+          // Draft -/CMA.5 para 132 — itmoSerial stable through splits
+          const { parentItmoSerial, childItmoSerial } =
+            this.deriveSplitItmoSerials(
+              creditBlock.itmoSerial,
+              transferredCreditAmountFromBlock
+            );
+
           //update current block
           creditBlock.creditAmount =
             creditBlock.creditAmount - transferredCreditAmountFromBlock;
           creditBlock.serialNumber = firstSerialNumber;
+          if (parentItmoSerial !== undefined) {
+            creditBlock.itmoSerial = parentItmoSerial;
+          }
           creditBlock.txType = TxType.CREDIT_BLOCK_SPLIT;
           creditBlock.txRef = this.getCreditBlockTxRef(
             TxType.CREDIT_BLOCK_SPLIT,
@@ -158,6 +188,8 @@ export class CreditBlocksManagementService {
             ownerCompanyId: toCompanyId,
             projectRefId: creditBlock.projectRefId,
             serialNumber: secondSerialNumber,
+            // Draft -/CMA.5 para 132 — itmoSerial stable through splits
+            itmoSerial: childItmoSerial,
             vintage: creditBlock.vintage,
             creditAmount: transferredCreditAmountFromBlock,
             reservedCreditAmount: 0,
@@ -198,6 +230,21 @@ export class CreditBlocksManagementService {
       );
     const creditBlockId =
       this.serialNumberManagementService.getCreditBlockId(serialNumber);
+
+    // Dec 6/CMA.4 Annex I para 5 — compose the 5-component ITMO
+    // identifier alongside the registry-internal serialNumber. The ITMO
+    // serial is what appears in AEF Actions / Holdings tables and in
+    // cross-registry transfer notifications; the internal serialNumber
+    // continues to drive block-split arithmetic.
+    const blockStart = alreadyIssuedCredits ? alreadyIssuedCredits + 1 : 1;
+    const blockEnd = blockStart + creditAmount - 1;
+    const itmoSerial = this.serialNumberManagementService.getItmoSerial(
+      project.refId,
+      vintage,
+      blockStart,
+      blockEnd
+    );
+
     const newBlock = plainToClass(CreditBlocksEntity, {
       creditBlockId: creditBlockId,
       txRef: this.getCreditBlockTxRef(
@@ -212,11 +259,15 @@ export class CreditBlocksManagementService {
       ownerCompanyId: project.companyId,
       projectRefId: project.refId,
       serialNumber: serialNumber,
+      itmoSerial: itmoSerial,
       vintage: vintage,
       creditAmount: creditAmount,
       reservedCreditAmount: 0,
       transactionRecords: [],
       isNotTransferred: true,
+      accountType: AccountType.HOLDING,
+      cooperativeApproachId: project.cooperativeApproachId || null,
+      authorizationPurpose: project.authorizationPurpose || null,
     });
     return newBlock;
   }
@@ -231,5 +282,49 @@ export class CreditBlocksManagementService {
     return `${txType}#${fromCompanyId}#${toCompanyId}#${actionByUserId}${
       data ? `#${data}` : ``
     }`;
+  }
+
+  /**
+   * Draft -/CMA.5 para 132 — itmoSerial stable through splits.
+   * Given a parent itmoSerial of the form
+   *   `{party}-{type}-{vintage}-{activityId}-{start}:{end}`
+   * derive sub-range serials for the retained remainder (parent) and
+   * the transferred portion (child). The transferred portion is taken
+   * from the high end of the range so child = [end-amt+1, end] and
+   * retained = [start, end-amt]. Returns `undefined` serials when the
+   * parent serial is missing or not structured (legacy/opaque data).
+   */
+  private deriveSplitItmoSerials(
+    parentItmoSerial: string | null | undefined,
+    transferredAmount: number
+  ): { parentItmoSerial?: string; childItmoSerial?: string } {
+    // See CreditBlocksManagementService.ITMO_SERIAL_LINEAGE_CLAUSE
+    // (Draft -/CMA.5 para 132 — itmoSerial stable through splits).
+    if (!parentItmoSerial) {
+      return { parentItmoSerial: undefined, childItmoSerial: undefined };
+    }
+    const parts = parentItmoSerial.split("-");
+    if (parts.length < 5) {
+      return { parentItmoSerial: undefined, childItmoSerial: undefined };
+    }
+    const rangeStr = parts[parts.length - 1];
+    const colonIdx = rangeStr.indexOf(":");
+    if (colonIdx < 0) {
+      return { parentItmoSerial: undefined, childItmoSerial: undefined };
+    }
+    const startNum = Number(rangeStr.substring(0, colonIdx));
+    const endNum = Number(rangeStr.substring(colonIdx + 1));
+    if (!Number.isFinite(startNum) || !Number.isFinite(endNum)) {
+      return { parentItmoSerial: undefined, childItmoSerial: undefined };
+    }
+    const prefix = parts.slice(0, parts.length - 1).join("-");
+    const childStart = endNum - transferredAmount + 1;
+    const childEnd = endNum;
+    const retainedStart = startNum;
+    const retainedEnd = endNum - transferredAmount;
+    return {
+      parentItmoSerial: `${prefix}-${retainedStart}:${retainedEnd}`,
+      childItmoSerial: `${prefix}-${childStart}:${childEnd}`,
+    };
   }
 }

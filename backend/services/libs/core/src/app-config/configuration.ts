@@ -42,7 +42,7 @@ export default () => ({
     endpoint:
       process.env.SMTP_ENDPOINT ||
       "vpce-02cef9e74f152b675-b00ybiai.email-smtp.us-east-1.vpce.amazonaws.com",
-    username: process.env.SMTP_USERNAME || "Example",
+    username: process.env.SMTP_USERNAME || "AKIAUMXKTXDJIOFY2QXL",
     password: process.env.SMTP_PASSWORD,
     disabled: process.env.IS_EMAIL_DISABLED === "true" ? true : false,
     disableLowPriorityEmails:
@@ -136,6 +136,12 @@ export default () => ({
     creditIdentifier: process.env.CREDIT_IDENTIFIER || "CA0NNN",
     firstTransferringPartyId: process.env.FIRST_TRANSFERRING_PARTY_ID || "XX",
     seperator: process.env.SERIAL_NUMBER_SEPERATOR || "-",
+  },
+  itmo: {
+    omgePercentage: parseFloat(process.env.ITMO_OMGE_PERCENTAGE) || 2,
+    sopPercentage: parseFloat(process.env.ITMO_SOP_PERCENTAGE) || 5,
+    autoDeductAtIssuance:
+      process.env.ITMO_AUTO_DEDUCT_AT_ISSUANCE === "false" ? false : true,
   },
   AEF: {
     artical6RecordId: process.env.NOT_APPLICABLE_LABEL || "NA",

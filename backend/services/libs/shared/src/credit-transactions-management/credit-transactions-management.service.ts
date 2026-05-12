@@ -32,6 +32,8 @@ import { BasicResponseDto } from "../dto/basic.response.dto";
 import { AefReportManagementService } from "../aef-report-management/aef-report-management.service";
 import { Role } from "../casl/role.enum";
 import { CompanyState } from "../enum/company.state.enum";
+import { CooperativeApproach } from "../entities/cooperative.approach.entity";
+import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
 
 @Injectable()
 export class CreditTransactionsManagementService {
@@ -51,7 +53,12 @@ export class CreditTransactionsManagementService {
     private creditBlockTransfersViewEntityRepository: Repository<CreditBlockTransfersViewEntity>,
     @InjectRepository(CreditBlockRetirementsViewEntity)
     private creditBlockRetirementsViewEntityRepository: Repository<CreditBlockRetirementsViewEntity>,
-    private readonly aefReportManagementService: AefReportManagementService
+    private readonly aefReportManagementService: AefReportManagementService,
+    // Draft -/CMA.5 paras 20-21 guard: refuse /transfer when the block's
+    // linked cooperative approach has been revoked. Mirrors the
+    // authorizeProgramme guard in programme.service.ts.
+    @InjectRepository(CooperativeApproach)
+    private cooperativeApproachRepo: Repository<CooperativeApproach>
   ) {}
 
   public async transferCredits(
@@ -112,6 +119,18 @@ export class CreditTransactionsManagementService {
           HttpStatus.BAD_REQUEST
         );
       }
+      // Article 6.2 semantics: sender != receiver. Without this guard the
+      // ledger silently flips ownerCompanyId to itself and emits a
+      // spurious AEF row / CA-ADJ double-count.
+      if (Number(companyId) === Number(creditTransferDto.receiverOrgId)) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.selfTransferRejected",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
       const creditBlock = await this.creditBlocksEntityRepository.findOne({
         where: { creditBlockId: creditTransferDto.blockId },
       });
@@ -144,6 +163,30 @@ export class CreditTransactionsManagementService {
           ),
           HttpStatus.BAD_REQUEST
         );
+      }
+      // Draft -/CMA.5 para 21: "no further ITMOs shall be first
+      // transferred" after a CA is revoked. Mirrors the authorizeProgramme
+      // guard (programme.service.ts :6435). Pre-Article-6 blocks without
+      // a cooperativeApproachId skip this check silently — no CA, no
+      // revocation state to enforce.
+      if (creditBlock.cooperativeApproachId) {
+        const ca = await this.cooperativeApproachRepo.findOne({
+          where: {
+            cooperativeApproachId: creditBlock.cooperativeApproachId,
+          },
+        });
+        if (ca && ca.status === CooperativeApproachStatus.REVOKED) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "creditTransaction.transferFromRevokedCa",
+              [
+                creditBlock.creditBlockId,
+                creditBlock.cooperativeApproachId,
+              ]
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
       }
       await this.programmeLedgerService.transferCredits(
         creditTransferDto,
@@ -398,7 +441,8 @@ export class CreditTransactionsManagementService {
 
   public async handleTransactionRecords(
     creditBlock: CreditBlocksEntity,
-    em: EntityManager
+    em: EntityManager,
+    previousCreditBlock?: CreditBlocksEntity
   ) {
     if (creditBlock.txType == TxType.ISSUE) {
       const id = await this.counterService.incrementCount(
@@ -415,6 +459,12 @@ export class CreditTransactionsManagementService {
         serialNumber: creditBlock.serialNumber,
         amount: creditBlock.creditAmount,
         projectRefId: creditBlock.projectRefId,
+        // Propagate Phase 2 Article 6.2 metadata from the block so
+        // annual AEF tables (Dec 4/CMA.6 Annex II Actions + Holdings)
+        // can surface them without a join against credit_blocks_entity.
+        cooperativeApproachId: creditBlock.cooperativeApproachId,
+        authorizationPurpose: creditBlock.authorizationPurpose,
+        toAccountType: creditBlock.accountType,
       });
       await em.save(CreditTransactionsEntity, newIssueRecord);
     } else if (creditBlock.txType == TxType.TRANSFER) {
@@ -422,16 +472,34 @@ export class CreditTransactionsManagementService {
         CounterType.CREDIT_TRANSACTIONS,
         0
       );
+      // Dec 2/CMA.3 Annex para 1(a) and Dec 4/CMA.6 Annex II Actions
+      // table both distinguish a "first transfer" from subsequent
+      // transfers because the first transfer is the event that
+      // finalises authorization and triggers the corresponding
+      // adjustment obligation. We infer "first transfer" from the
+      // pre-update block state: a block is being first-transferred
+      // iff it had isNotTransferred === true before this update and
+      // the tx type is TRANSFER.
+      const isFirstTransfer = Boolean(
+        previousCreditBlock && previousCreditBlock.isNotTransferred === true
+      );
       const newTranferRecord = plainToClass(CreditTransactionsEntity, {
         id: id,
         senderId: creditBlock.previousOwnerCompanyId,
         recieverId: creditBlock.ownerCompanyId,
-        type: CreditTransactionTypesEnum.TRANSFERED,
+        type: isFirstTransfer
+          ? CreditTransactionTypesEnum.FIRST_TRANSFER
+          : CreditTransactionTypesEnum.TRANSFERED,
         status: CreditTransactionStatusEnum.COMPLETED,
         creditBlockId: creditBlock.creditBlockId,
         serialNumber: creditBlock.serialNumber,
         amount: creditBlock.creditAmount,
         projectRefId: creditBlock.projectRefId,
+        isFirstTransfer,
+        cooperativeApproachId: creditBlock.cooperativeApproachId,
+        authorizationPurpose: creditBlock.authorizationPurpose,
+        fromAccountType: previousCreditBlock?.accountType,
+        toAccountType: creditBlock.accountType,
       });
       await em.save(CreditTransactionsEntity, newTranferRecord);
     } else if (creditBlock.txType == TxType.RETIRE_REQ) {
@@ -481,7 +549,11 @@ export class CreditTransactionsManagementService {
         updatedTranferRecord
       );
     }
-    await this.aefReportManagementService.handleAefRecord(creditBlock, em);
+    await this.aefReportManagementService.handleAefRecord(
+      creditBlock,
+      em,
+      previousCreditBlock
+    );
   }
 
   public async queryCreditBalances(

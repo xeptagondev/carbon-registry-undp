@@ -7,5 +7,7 @@
   "noTransferPermission": "You do not have permission to transfer credits.",
   "noRetirePermission": "You do not have permission to retire credits.",
   "noRetireActionPermission": "You do not have permission to approve or reject credit retirement requests.",
-  "creditRetirementReqAction": "Credit retirement request {}ed"
+  "creditRetirementReqAction": "Credit retirement request {}ed",
+  "selfTransferRejected": "You cannot transfer credits to your own organisation. Pick a different recipient.",
+  "transferFromRevokedCa": "Credit block {} was issued under cooperative approach {}, which has since been Revoked. ITMO transfers from a Revoked CA are not permitted (Draft -/CMA.5 para 21)."
 }

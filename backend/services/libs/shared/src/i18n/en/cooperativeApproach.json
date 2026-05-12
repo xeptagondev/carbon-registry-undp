@@ -1,0 +1,6 @@
+{
+  "notFound": "Cooperative approach {} not found.",
+  "transitionFromCompleted": "Cooperative approach {} is Completed — its lifecycle has ended and its status cannot change. To start a new bilateral arrangement, create a fresh cooperative approach.",
+  "transitionFromRevoked": "Cooperative approach {} was Revoked under Draft -/CMA.5 paras 20-21. Revoked is terminal; no further status changes are permitted.",
+  "transitionRevertToDraft": "Cooperative approach {} cannot revert from {} to Draft. Once a CA leaves Draft, its working version is fixed."
+}
