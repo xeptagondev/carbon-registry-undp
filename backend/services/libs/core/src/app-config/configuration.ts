@@ -42,7 +42,7 @@ export default () => ({
     endpoint:
       process.env.SMTP_ENDPOINT ||
       "vpce-02cef9e74f152b675-b00ybiai.email-smtp.us-east-1.vpce.amazonaws.com",
-    username: process.env.SMTP_USERNAME || "AKIAUMXKTXDJIOFY2QXL",
+    username: process.env.SMTP_USERNAME || "Example",
     password: process.env.SMTP_PASSWORD,
     disabled: process.env.IS_EMAIL_DISABLED === "true" ? true : false,
     disableLowPriorityEmails:
