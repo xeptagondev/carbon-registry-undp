@@ -16,3 +16,9 @@ backend/services/*.pdf
 backend/services/*.csv
 backend/services/*.xlsx
 backend/services/public/*
+.env
+.env.db
+.env.national
+.env.replicator
+.env.local
+CODE_QUALITY_REVIEW.md
