@@ -62,7 +62,7 @@ export default () => ({
   s3CommonBucket: {
     name: process.env.S3_COMMON_BUCKET || "carbon-common-dev",
   },
-  host: process.env.HOST || "http://localhost:4200",
+  host: process.env.HOST || "http://localhost:3030",
   backendHost: process.env.BACKEND_HOST || "http://localhost:3000",
   liveChat: "https://undp2020cdo.typeform.com/to/emSWOmDo",
   mapbox: {
