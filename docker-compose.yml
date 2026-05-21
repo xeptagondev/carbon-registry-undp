@@ -37,8 +37,8 @@ services:
       DOMAIN_MAP: "true"
     volumes:
       - filestore:/app/backend/services/public
-      - ./users.csv:/app/backend/services/users.csv:Z
-      - ./organisations.csv:/app/backend/services/organisations.csv:Z
+      - ./scripts/seed-data/users.csv:/app/backend/services/users.csv:Z
+      - ./scripts/seed-data/organisations.csv:/app/backend/services/organisations.csv:Z
   stats:
     build:
       context: .
@@ -50,6 +50,7 @@ services:
       - national
     env_file:
       - .env.db
+      - .env.national
     environment:
       RUN_PORT: 3100
       RUN_MODULE: analytics-api
