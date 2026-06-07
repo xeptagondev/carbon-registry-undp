@@ -29,6 +29,11 @@ export default () => ({
     synchronize: process.env.NODE_ENV === "test" || process.env.DB_SYNCHRONIZE === "true",
     autoLoadEntities: true,
     logging: ["error"],
+    // Apply pending migrations at startup when explicitly opted in (prod/staging).
+    // Uses the compiled output paths at runtime; the CLI uses the .ts sources.
+    migrations: ["dist/migrations/*.js"],
+    migrationsRun: process.env.DB_MIGRATIONS_RUN === "true",
+    migrationsTableName: "migrations",
   },
   jwt: {
     expiresIn: process.env.EXPIRES_IN || "7200",
