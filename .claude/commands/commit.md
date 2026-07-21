@@ -26,11 +26,7 @@ Create a git commit for the work just completed in this session.
 4. Do not commit anything under `.env`, `.env.*` (except the committed
    `.env.*.example` files), or other files that look like they contain secrets
    — warn instead of committing if one is staged.
-5. Create the commit with the message ending in:
-   ```
-   Co-Authored-By: Claude <noreply@anthropic.com>
-   ```
-6. Run `git status` after to confirm the commit succeeded and report what was
+5. Run `git status` after to confirm the commit succeeded and report what was
    (and wasn't) included.
 
 Never use `--amend`, `--no-verify`, or force-push. If a pre-commit hook fails,
