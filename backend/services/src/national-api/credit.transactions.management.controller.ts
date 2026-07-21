@@ -7,6 +7,7 @@ import { CreditTransactionsManagementService } from "@app/shared/credit-transact
 import { CreditRetireActionDto } from "@app/shared/dto/credit.retire.action.dto";
 import { CreditRetireRequestDto } from "@app/shared/dto/credit.retire.request.dto";
 import { CreditTransferDto } from "@app/shared/dto/credit.transfer.dto";
+import { CreditBlockHistoryRequestDto } from "@app/shared/dto/credit.block.history.request.dto";
 import { QueryDto } from "@app/shared/dto/query.dto";
 import { ProjectEntity } from "@app/shared/entities/projects.entity";
 import { Body, Controller, Request, Post, UseGuards } from "@nestjs/common";
@@ -124,6 +125,24 @@ export class CreditTransactionsManagementController {
     return this.creditTransactionsManagementService.queryExplorer(
       queryDto,
       req.abilityCondition,
+      req.user
+    );
+  }
+
+  // Explorer drill-down: full lineage of one credit block (issuance ->
+  // splits -> transfers/retirements), reconstructed from the ledger.
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, ProjectEntity)
+  )
+  @Post("creditBlockHistory")
+  async creditBlockHistory(
+    @Body() creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto,
+    @Request() req
+  ): Promise<any> {
+    return this.creditTransactionsManagementService.getCreditBlockHistoryTree(
+      creditBlockHistoryRequestDto,
       req.user
     );
   }

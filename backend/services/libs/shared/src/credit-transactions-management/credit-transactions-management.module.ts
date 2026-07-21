@@ -14,12 +14,14 @@ import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.exp
 import { DocumentManagementModule } from "../document-management/document-management.module";
 import { AefReportManagementModule } from "../aef-report-management/aef-report-management.module";
 import { CooperativeApproach } from "../entities/cooperative.approach.entity";
+import { SerialNumberManagementModule } from "../serial-number-management/serial-number-management.module";
 
 @Module({
   imports: [
     UtilModule,
     CompanyModule,
     ProgrammeLedgerModule,
+    SerialNumberManagementModule,
     TypeOrmModule.forFeature([
       CreditTransactionsEntity,
       CreditBlocksEntity,
