@@ -7,7 +7,7 @@ import { CompanyService } from "../company/company.service";
 import { ProgrammeLedgerService } from "../programme-ledger/programme-ledger.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager, In, Repository } from "typeorm";
 import { TxType } from "../enum/txtype.enum";
 import { plainToClass } from "class-transformer";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
@@ -37,6 +37,7 @@ import { CooperativeApproach } from "../entities/cooperative.approach.entity";
 import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
 import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 import { CreditBlockHistoryRequestDto } from "../dto/credit.block.history.request.dto";
+import { CreditBlockExplorerFirstTransferDto } from "../dto/credit.block.explorer.first.transfer.dto";
 import * as moment from "moment";
 
 /**
@@ -794,10 +795,128 @@ export class CreditTransactionsManagementService {
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
-    return new DataListResponseDto(
-      resp.length > 0 ? resp[0] : undefined,
-      resp.length > 1 ? resp[1] : undefined
+    const rows = resp.length > 0 ? resp[0] : [];
+    const total = resp.length > 1 ? resp[1] : undefined;
+    if (!rows || rows.length === 0) {
+      return new DataListResponseDto(rows, total);
+    }
+    const enrichedRows = await this.enrichExplorerRowsWithFirstTransfer(rows);
+    return new DataListResponseDto(enrichedRows, total);
+  }
+
+  /**
+   * Explorer enrichment: attach each row's first transfer (the transfer
+   * that first moved the block's credits out of the issuing
+   * organisation), computed in-memory over just the returned page rather
+   * than baked into the view SQL, to avoid recomputing lineage for the
+   * whole table on every query.
+   *
+   * isNotTransferred can't drive this on its own - it is flipped to
+   * false by retirement as well as transfer (see
+   * ProgrammeLedgerService.retirementRequestAction), so a block retired
+   * directly by its issuer would be misreported as transferred. The
+   * FIRST_TRANSFER CreditTransactionsEntity row (written in
+   * handleTransactionRecords, gated on the pre-update block still having
+   * isNotTransferred === true) is the unambiguous source: its
+   * presence/absence naturally yields null for both "still held by
+   * issuer" and "retired by issuer".
+   *
+   * Splits always shear credits off the top of a block's serial range
+   * (SerialNumberManagementService.splitCreditBlockSerialNumber), so
+   * every descendant block's range stays fully inside the sub-range that
+   * was first transferred - matching a row to its first transfer is
+   * therefore: same project + vintage, and the first-transfer's range
+   * contains the row's range.
+   */
+  private async enrichExplorerRowsWithFirstTransfer(
+    rows: CreditBlockExplorerViewEntity[]
+  ): Promise<Array<CreditBlockExplorerViewEntity & { firstTransfer: CreditBlockExplorerFirstTransferDto | null }>> {
+    const projectIds = Array.from(new Set(rows.map((r) => r.projectId)));
+    const firstTransferTxs = await this.creditTransactionsEntityRepository.find(
+      {
+        where: {
+          type: CreditTransactionTypesEnum.FIRST_TRANSFER,
+          status: CreditTransactionStatusEnum.COMPLETED,
+          projectRefId: In(projectIds),
+        },
+      }
     );
+
+    // Pre-parse each first-transfer's range/vintage once and group by
+    // project so matching a row doesn't reparse serials repeatedly.
+    interface ParsedFirstTransfer {
+      tx: CreditTransactionsEntity;
+      range: { start: number; end: number };
+      vintage: string;
+    }
+    const byProject = new Map<string, ParsedFirstTransfer[]>();
+    const companyIds = new Set<number>();
+    for (const tx of firstTransferTxs) {
+      let range: { start: number; end: number };
+      let vintage: string;
+      try {
+        range = this.serialNumberManagementService.getBlockRange(
+          tx.serialNumber
+        );
+        vintage = this.serialNumberManagementService.getVintage(
+          tx.serialNumber
+        );
+      } catch {
+        continue; // malformed/legacy serial - skip, never throw
+      }
+      if (
+        !Number.isFinite(range?.start) ||
+        !Number.isFinite(range?.end) ||
+        !vintage
+      ) {
+        continue;
+      }
+      const parsed: ParsedFirstTransfer = { tx, range, vintage };
+      const list = byProject.get(tx.projectRefId) ?? [];
+      list.push(parsed);
+      byProject.set(tx.projectRefId, list);
+      if (tx.senderId != null) companyIds.add(tx.senderId);
+      if (tx.recieverId != null) companyIds.add(tx.recieverId);
+    }
+
+    const companyNames = await this.resolveCompanyNames(companyIds);
+
+    return rows.map((row) => {
+      let firstTransfer: CreditBlockExplorerFirstTransferDto | null = null;
+      const candidates = byProject.get(row.projectId);
+      if (candidates && candidates.length > 0) {
+        try {
+          const rowRange = this.serialNumberManagementService.getBlockRange(
+            row.serialNumber
+          );
+          const rowVintage = this.serialNumberManagementService.getVintage(
+            row.serialNumber
+          );
+          const match = candidates.find(
+            (c) =>
+              c.vintage === rowVintage &&
+              c.range.start <= rowRange.start &&
+              c.range.end >= rowRange.end
+          );
+          if (match) {
+            firstTransfer = {
+              fromOrganizationId: match.tx.senderId,
+              fromOrganizationName:
+                companyNames.get(match.tx.senderId) ?? null,
+              toOrganizationId: match.tx.recieverId,
+              toOrganizationName:
+                companyNames.get(match.tx.recieverId) ?? null,
+              amount: match.tx.amount,
+              serialNumber: match.tx.serialNumber,
+              transferTime: match.tx.createTime,
+            };
+          }
+        } catch {
+          // malformed/legacy row serial - leave firstTransfer null
+        }
+      }
+      return { ...row, firstTransfer };
+    });
   }
 
   // ---------------------------------------------------------------------
