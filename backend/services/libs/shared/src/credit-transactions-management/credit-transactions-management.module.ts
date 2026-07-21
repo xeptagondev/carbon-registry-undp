@@ -10,6 +10,7 @@ import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
 import { CreditBlockBalancesViewEntity } from "../view-entities/credit.block.balances.view.entity";
 import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.transfers.view.entity";
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
+import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.explorer.view.entity";
 import { DocumentManagementModule } from "../document-management/document-management.module";
 import { AefReportManagementModule } from "../aef-report-management/aef-report-management.module";
 import { CooperativeApproach } from "../entities/cooperative.approach.entity";
@@ -25,6 +26,7 @@ import { CooperativeApproach } from "../entities/cooperative.approach.entity";
       CreditBlockBalancesViewEntity,
       CreditBlockTransfersViewEntity,
       CreditBlockRetirementsViewEntity,
+      CreditBlockExplorerViewEntity,
       CooperativeApproach,
     ]),
     DocumentManagementModule,

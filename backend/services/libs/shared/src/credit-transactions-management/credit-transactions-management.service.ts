@@ -24,6 +24,7 @@ import { CreditBlockBalancesViewEntity } from "../view-entities/credit.block.bal
 import { FilterEntry } from "../dto/filter.entry";
 import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.transfers.view.entity";
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
+import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.explorer.view.entity";
 import { DocumentManagementService } from "../document-management/document-management.service";
 import { ProjectAuditLogType } from "../enum/project.audit.log.type.enum";
 import { DataResponseDto } from "../dto/data.response.dto";
@@ -53,6 +54,8 @@ export class CreditTransactionsManagementService {
     private creditBlockTransfersViewEntityRepository: Repository<CreditBlockTransfersViewEntity>,
     @InjectRepository(CreditBlockRetirementsViewEntity)
     private creditBlockRetirementsViewEntityRepository: Repository<CreditBlockRetirementsViewEntity>,
+    @InjectRepository(CreditBlockExplorerViewEntity)
+    private creditBlockExplorerViewEntityRepository: Repository<CreditBlockExplorerViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
     // Draft -/CMA.5 paras 20-21 guard: refuse /transfer when the block's
     // linked cooperative approach has been revoked. Mirrors the
@@ -687,5 +690,372 @@ export class CreditTransactionsManagementService {
       resp.length > 0 ? resp[0] : undefined,
       resp.length > 1 ? resp[1] : undefined
     );
+  }
+
+  public async queryExplorer(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    // Credits -> Explorer is a DNA-only, registry-wide browse of every
+    // credit block (including retired ones). Unlike queryCreditBalances /
+    // queryTransfers / queryRetirements, no other company role gets a
+    // scoped view here.
+    if (user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.unauthorized",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    // The Explorer search box is sent as a single filterAnd entry keyed
+    // "serialColumns" whose operation is meaningless (generateWhereSQL
+    // would turn it into invalid SQL) - pull it out and translate it into
+    // its own predicate before the generic filter machinery runs.
+    const serialPredicate = this.extractSerialSearchPredicate(query);
+    const baseWhere = this.helperService.generateWhereSQL(
+      query,
+      abilityCondition
+    );
+    const qb =
+      this.creditBlockExplorerViewEntityRepository.createQueryBuilder(
+        "creditBlock"
+      );
+    if (baseWhere) {
+      qb.where(baseWhere);
+      if (serialPredicate) {
+        qb.andWhere(serialPredicate.sql, serialPredicate.params);
+      }
+    } else if (serialPredicate) {
+      qb.where(serialPredicate.sql, serialPredicate.params);
+    }
+    const resp = await qb
+      .orderBy(
+        query?.sort?.key && `"${query?.sort?.key}"`,
+        query?.sort?.order,
+        query?.sort?.nullFirst !== undefined
+          ? query?.sort?.nullFirst === true
+            ? "NULLS FIRST"
+            : "NULLS LAST"
+          : undefined
+      )
+      .skip(query.size * query.page - query.size)
+      .take(query.size)
+      .getManyAndCount();
+    return new DataListResponseDto(
+      resp.length > 0 ? resp[0] : undefined,
+      resp.length > 1 ? resp[1] : undefined
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Explorer serial-number search
+  //
+  // A block serial is 7 "-"-separated parts (see
+  // serial-number-management.service.ts): creditId-country-
+  // firstTransferParty-projectId-rangeStart-rangeEnd-vintage, e.g.
+  // "CA0NNN-NG-XX-32-3001-4000-2023". The Explorer search box lets a user
+  // type any fragment of that - a full serial, a full/partial unit range,
+  // or a bare unit number - and expects it resolved against the numeric
+  // components (range/vintage/projectId) rather than a literal substring
+  // match, since the numbers shift position depending on how much of the
+  // serial was typed.
+  // ---------------------------------------------------------------------
+
+  /**
+   * Strip the "serialColumns" filterAnd entry (if present) out of the
+   * query in place - generateWhereSQL has no special handling for it and
+   * would otherwise emit malformed SQL - and translate its value into a
+   * standalone predicate for the caller to AND in separately.
+   */
+  private extractSerialSearchPredicate(
+    query: QueryDto
+  ): { sql: string; params: Record<string, any> } | null {
+    if (!query.filterAnd || query.filterAnd.length === 0) {
+      return null;
+    }
+    const serialEntries = query.filterAnd.filter(
+      (e) => e.key === "serialColumns"
+    );
+    query.filterAnd = query.filterAnd.filter(
+      (e) => e.key !== "serialColumns"
+    );
+    const searchValue = serialEntries
+      .map((e) => e.value)
+      .find((v) => v !== undefined && v !== null && String(v).trim() !== "");
+    if (searchValue === undefined) {
+      return null;
+    }
+    return this.buildSerialSearchPredicate(String(searchValue));
+  }
+
+  /**
+   * Translate one search-box value into a parameterized SQL predicate
+   * against the "creditBlock" alias. There are two interpretations,
+   * depending on the shape of the "-"-separated parts:
+   *
+   *  - "prefix" shape - one or more leading text parts immediately
+   *    followed by one or more numeric parts, and no text part after a
+   *    number (e.g. a serial typed from its start, "CA0NNN-NG-XX-32-3001",
+   *    including a full 7-part serial). Delegates to
+   *    `buildSerialPrefixPredicate`, which maps every part onto its fixed
+   *    serial section left-to-right (creditId, country,
+   *    firstTransferParty, projectId, rangeStart, rangeEnd, vintage)
+   *    instead of interpreting the numbers positionally from the right.
+   *  - anything else (numbers only, text only, or a text part following a
+   *    number) - the original "fragment" shape, handled inline below:
+   *     - non-numeric parts are ILIKE'd against the full serial string.
+   *     - numeric parts are interpreted positionally from the right:
+   *       1 number -> the unit the block's range must contain;
+   *       2 numbers -> the range's [lo, hi] boundaries, taken in the order
+   *         given (first number is lo, second is hi) - NOT reordered by
+   *         magnitude, so an inverted pair (lo > hi) is treated as an
+   *         invalid range and matches nothing;
+   *       3+ numbers -> the same positional range (the two before the
+   *         last) plus the last number ILIKE-matched against the vintage
+   *         component;
+   *       4+ numbers -> additionally the number before those three
+   *         ILIKE-matched against the projectId component;
+   *       any further leftover numbers are ILIKE-matched only against the
+   *       serial's "creditId-country-firstTransferParty" head, since
+   *       that's the only part of the serial without a defined numeric
+   *       slot.
+   * Range containment/overlap uses split_part() with a numeric guard so a
+   * legacy/malformed serial (non-numeric range parts) is excluded rather
+   * than throwing on cast.
+   */
+  private buildSerialSearchPredicate(
+    value: string
+  ): { sql: string; params: Record<string, any> } | null {
+    const parts = value
+      .trim()
+      .split("-")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    if (parts.length === 0) {
+      return null;
+    }
+    const numericParts: number[] = [];
+    const textParts: string[] = [];
+    for (const part of parts) {
+      if (/^\d+$/.test(part)) {
+        numericParts.push(Number(part));
+      } else {
+        textParts.push(part);
+      }
+    }
+
+    if (this.isSerialPrefixShape(parts)) {
+      return this.buildSerialPrefixPredicate(textParts, numericParts);
+    }
+
+    const conditions: string[] = [];
+    const params: Record<string, any> = {};
+
+    textParts.forEach((text, idx) => {
+      const paramKey = `serialTxt${idx}`;
+      params[paramKey] = `%${text}%`;
+      conditions.push(`creditBlock."serialNumber" ILIKE :${paramKey}`);
+    });
+
+    const n = numericParts.length;
+    if (n === 1) {
+      conditions.push(
+        this.serialRangeConditionSQL(numericParts[0], numericParts[0], params)
+      );
+    } else if (n === 2) {
+      conditions.push(
+        this.serialRangeConditionSQL(numericParts[0], numericParts[1], params)
+      );
+    } else if (n >= 3) {
+      conditions.push(
+        this.serialRangeConditionSQL(
+          numericParts[n - 3],
+          numericParts[n - 2],
+          params
+        )
+      );
+
+      params.serialVint = `%${numericParts[n - 1]}%`;
+      conditions.push(`${this.serialVintageExpr()} ILIKE :serialVint`);
+
+      const consumed = n >= 4 ? 4 : 3;
+      if (n >= 4) {
+        params.serialPid = `%${numericParts[n - 4]}%`;
+        conditions.push(`${this.serialProjectIdExpr()} ILIKE :serialPid`);
+      }
+      // Any numeric parts beyond the 4 known components (projectId,
+      // rangeStart, rangeEnd, vintage) don't map to a known numeric slot.
+      // The only remaining part of the serial is the
+      // creditId-country-firstTransferParty head, so match against that
+      // only - not the whole serial (which would also re-match the
+      // range/vintage/projectId digits already accounted for above).
+      numericParts.slice(0, n - consumed).forEach((num, idx) => {
+        const paramKey = `serialNum${idx}`;
+        params[paramKey] = `%${num}%`;
+        conditions.push(`${this.serialPrefixExpr()} ILIKE :${paramKey}`);
+      });
+    }
+
+    if (conditions.length === 0) {
+      return null;
+    }
+    return { sql: `(${conditions.join(" AND ")})`, params };
+  }
+
+  /**
+   * True when `parts` is shaped as one or more leading non-numeric parts
+   * immediately followed by one or more numeric parts, with no non-numeric
+   * part appearing after a numeric one - e.g. a serial (or any prefix of
+   * one) typed from its start, "CA0NNN-NG-XX-32-3001". This is the trigger
+   * for the left-anchored "prefix" interpretation in
+   * `buildSerialPrefixPredicate`; anything else (numbers only, text only,
+   * or a text part following a number) keeps the original right-anchored
+   * "fragment" interpretation.
+   */
+  private isSerialPrefixShape(parts: string[]): boolean {
+    let sawNumber = false;
+    let sawText = false;
+    for (const part of parts) {
+      if (/^\d+$/.test(part)) {
+        sawNumber = true;
+      } else {
+        sawText = true;
+        if (sawNumber) {
+          return false;
+        }
+      }
+    }
+    return sawText && sawNumber;
+  }
+
+  /**
+   * Build the predicate for the "prefix" shape (see `isSerialPrefixShape`):
+   * every part is mapped onto its fixed serial section, left-to-right -
+   * textParts fill creditId/country/firstTransferParty, numericParts fill
+   * projectId/rangeStart/rangeEnd/vintage:
+   *  - 1 number -> projectId only (exact match).
+   *  - 2 numbers -> projectId (exact) + the block's range must contain the
+   *    2nd number (a rangeStart with no rangeEnd typed yet).
+   *  - 3 numbers -> projectId (exact) + range overlap [2nd, 3rd] (no
+   *    vintage typed yet).
+   *  - 4 numbers -> projectId (exact) + range overlap [2nd, 3rd] + vintage
+   *    (exact).
+   *  - any further leftover numbers, or a 4th+ text part, don't map to a
+   *    known section, so they're ILIKE-matched against the whole serial
+   *    string instead of being dropped.
+   * projectId/vintage use exact string equality (not ILIKE) against their
+   * split_part() position - no numeric cast, so a legacy/malformed serial
+   * is excluded rather than throwing. Range overlap reuses
+   * `serialRangeConditionSQL`, which already guards non-numeric range
+   * parts and treats an inverted pair as unsatisfiable.
+   */
+  private buildSerialPrefixPredicate(
+    textParts: string[],
+    numericParts: number[]
+  ): { sql: string; params: Record<string, any> } | null {
+    const conditions: string[] = [];
+    const params: Record<string, any> = {};
+
+    const textExprs = [
+      this.serialCreditIdExpr(),
+      this.serialCountryExpr(),
+      this.serialFtpExpr(),
+    ];
+    textParts.forEach((text, idx) => {
+      const paramKey = `serialPfxTxt${idx}`;
+      params[paramKey] = `%${text}%`;
+      const expr = textExprs[idx] ?? `creditBlock."serialNumber"`;
+      conditions.push(`${expr} ILIKE :${paramKey}`);
+    });
+
+    const n = numericParts.length;
+    if (n >= 1) {
+      params.serialPfxPid = String(numericParts[0]);
+      conditions.push(`${this.serialProjectIdExpr()} = :serialPfxPid`);
+    }
+    if (n === 2) {
+      conditions.push(
+        this.serialRangeConditionSQL(numericParts[1], numericParts[1], params)
+      );
+    } else if (n >= 3) {
+      conditions.push(
+        this.serialRangeConditionSQL(
+          numericParts[1],
+          numericParts[2],
+          params
+        )
+      );
+    }
+    if (n >= 4) {
+      params.serialPfxVint = String(numericParts[3]);
+      conditions.push(`${this.serialVintageExpr()} = :serialPfxVint`);
+    }
+    // Leftover numbers beyond the 4 known slots (projectId, rangeStart,
+    // rangeEnd, vintage) don't map to a defined section.
+    numericParts.slice(4).forEach((num, idx) => {
+      const paramKey = `serialPfxNum${idx}`;
+      params[paramKey] = `%${num}%`;
+      conditions.push(`creditBlock."serialNumber" ILIKE :${paramKey}`);
+    });
+
+    if (conditions.length === 0) {
+      return null;
+    }
+    return { sql: `(${conditions.join(" AND ")})`, params };
+  }
+
+  /**
+   * Build the range predicate for a positional [lo, hi] pair, registering
+   * whatever params it needs into the shared `params` map. An inverted
+   * pair (lo > hi) is not a valid range - per business rule, it must
+   * match nothing - so it short-circuits to a literal FALSE instead of
+   * silently reordering into [hi, lo].
+   */
+  private serialRangeConditionSQL(
+    lo: number,
+    hi: number,
+    params: Record<string, any>
+  ): string {
+    if (lo > hi) {
+      return "FALSE";
+    }
+    params.serialLo = lo;
+    params.serialHi = hi;
+    return `(${this.serialRangeStartExpr()} <= :serialHi AND ${this.serialRangeEndExpr()} >= :serialLo)`;
+  }
+
+  private serialRangeStartExpr(): string {
+    return `CASE WHEN split_part(creditBlock."serialNumber", '-', 5) ~ '^[0-9]+$' THEN split_part(creditBlock."serialNumber", '-', 5)::int END`;
+  }
+
+  private serialRangeEndExpr(): string {
+    return `CASE WHEN split_part(creditBlock."serialNumber", '-', 6) ~ '^[0-9]+$' THEN split_part(creditBlock."serialNumber", '-', 6)::int END`;
+  }
+
+  private serialVintageExpr(): string {
+    return `split_part(creditBlock."serialNumber", '-', 7)`;
+  }
+
+  private serialProjectIdExpr(): string {
+    return `split_part(creditBlock."serialNumber", '-', 4)`;
+  }
+
+  private serialCreditIdExpr(): string {
+    return `split_part(creditBlock."serialNumber", '-', 1)`;
+  }
+
+  private serialCountryExpr(): string {
+    return `split_part(creditBlock."serialNumber", '-', 2)`;
+  }
+
+  private serialFtpExpr(): string {
+    return `split_part(creditBlock."serialNumber", '-', 3)`;
+  }
+
+  private serialPrefixExpr(): string {
+    return `(split_part(creditBlock."serialNumber", '-', 1) || '-' || split_part(creditBlock."serialNumber", '-', 2) || '-' || split_part(creditBlock."serialNumber", '-', 3))`;
   }
 }

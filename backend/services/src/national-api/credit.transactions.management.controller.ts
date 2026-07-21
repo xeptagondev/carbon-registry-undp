@@ -110,4 +110,21 @@ export class CreditTransactionsManagementController {
       req.user
     );
   }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, ProjectEntity)
+  )
+  @Post("queryExplorer")
+  async queryExplorer(
+    @Body() queryDto: QueryDto,
+    @Request() req
+  ): Promise<any> {
+    return this.creditTransactionsManagementService.queryExplorer(
+      queryDto,
+      req.abilityCondition,
+      req.user
+    );
+  }
 }
