@@ -25,6 +25,7 @@ import { FilterEntry } from "../dto/filter.entry";
 import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.transfers.view.entity";
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
 import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.explorer.view.entity";
+import { CreditBlockIssuancesViewEntity } from "../view-entities/credit.block.issuances.view.entity";
 import { DocumentManagementService } from "../document-management/document-management.service";
 import { ProjectAuditLogType } from "../enum/project.audit.log.type.enum";
 import { DataResponseDto } from "../dto/data.response.dto";
@@ -106,6 +107,8 @@ export class CreditTransactionsManagementService {
     private creditBlockRetirementsViewEntityRepository: Repository<CreditBlockRetirementsViewEntity>,
     @InjectRepository(CreditBlockExplorerViewEntity)
     private creditBlockExplorerViewEntityRepository: Repository<CreditBlockExplorerViewEntity>,
+    @InjectRepository(CreditBlockIssuancesViewEntity)
+    private creditBlockIssuancesViewEntityRepository: Repository<CreditBlockIssuancesViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
     // Draft -/CMA.5 paras 20-21 guard: refuse /transfer when the block's
     // linked cooperative approach has been revoked. Mirrors the
@@ -727,6 +730,50 @@ export class CreditTransactionsManagementService {
         query?.sort?.key && query.sort.key == "status"
           ? `"${query.sort.key}"::text`
           : `"${query.sort.key}"`,
+        query?.sort?.order,
+        query?.sort?.nullFirst !== undefined
+          ? query?.sort?.nullFirst === true
+            ? "NULLS FIRST"
+            : "NULLS LAST"
+          : undefined
+      )
+      .skip(query.size * query.page - query.size)
+      .take(query.size)
+      .getManyAndCount();
+    return new DataListResponseDto(
+      resp.length > 0 ? resp[0] : undefined,
+      resp.length > 1 ? resp[1] : undefined
+    );
+  }
+
+  public async queryIssuances(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
+      const onlyOwn: FilterEntry = {
+        key: "organizationId",
+        value: user.companyId,
+        operation: "=",
+      };
+      query.filterAnd
+        ? query.filterAnd.push(onlyOwn)
+        : (query.filterAnd = [onlyOwn]);
+    } else if (user.companyRole == CompanyRole.INDEPENDENT_CERTIFIER) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.unauthorized",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    const resp = await this.creditBlockIssuancesViewEntityRepository
+      .createQueryBuilder("creditTx")
+      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+      .orderBy(
+        query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
         query?.sort?.nullFirst !== undefined
           ? query?.sort?.nullFirst === true

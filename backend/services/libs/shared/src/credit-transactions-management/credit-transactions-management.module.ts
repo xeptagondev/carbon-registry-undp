@@ -11,6 +11,7 @@ import { CreditBlockBalancesViewEntity } from "../view-entities/credit.block.bal
 import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.transfers.view.entity";
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
 import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.explorer.view.entity";
+import { CreditBlockIssuancesViewEntity } from "../view-entities/credit.block.issuances.view.entity";
 import { DocumentManagementModule } from "../document-management/document-management.module";
 import { AefReportManagementModule } from "../aef-report-management/aef-report-management.module";
 import { CooperativeApproach } from "../entities/cooperative.approach.entity";
@@ -29,6 +30,7 @@ import { SerialNumberManagementModule } from "../serial-number-management/serial
       CreditBlockTransfersViewEntity,
       CreditBlockRetirementsViewEntity,
       CreditBlockExplorerViewEntity,
+      CreditBlockIssuancesViewEntity,
       CooperativeApproach,
     ]),
     DocumentManagementModule,
