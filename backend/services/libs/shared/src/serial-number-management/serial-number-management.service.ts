@@ -95,6 +95,19 @@ export class SerialNumberManagementService {
     return Number(serailNumber.split(sep)[5]);
   }
 
+  /**
+   * Public [start, end] range accessor for callers outside this service
+   * (e.g. credit-block history/tree reconstruction) that need the same
+   * range parsing `splitCreditBlockSerialNumber` uses internally, without
+   * duplicating the separator/position logic.
+   */
+  public getBlockRange(serialNumber: string): { start: number; end: number } {
+    return {
+      start: this.getBlockStart(serialNumber),
+      end: this.getBlockEnd(serialNumber),
+    };
+  }
+
   public getVintage(serailNumber: string): string {
     const sep = this.configService.get("serialNumber.seperator");
     return serailNumber.split(sep)[6];

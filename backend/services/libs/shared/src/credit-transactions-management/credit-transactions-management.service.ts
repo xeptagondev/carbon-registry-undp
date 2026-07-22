@@ -7,7 +7,7 @@ import { CompanyService } from "../company/company.service";
 import { ProgrammeLedgerService } from "../programme-ledger/programme-ledger.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager, In, Repository } from "typeorm";
 import { TxType } from "../enum/txtype.enum";
 import { plainToClass } from "class-transformer";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
@@ -24,6 +24,7 @@ import { CreditBlockBalancesViewEntity } from "../view-entities/credit.block.bal
 import { FilterEntry } from "../dto/filter.entry";
 import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.transfers.view.entity";
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
+import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.explorer.view.entity";
 import { DocumentManagementService } from "../document-management/document-management.service";
 import { ProjectAuditLogType } from "../enum/project.audit.log.type.enum";
 import { DataResponseDto } from "../dto/data.response.dto";
@@ -34,6 +35,56 @@ import { Role } from "../casl/role.enum";
 import { CompanyState } from "../enum/company.state.enum";
 import { CooperativeApproach } from "../entities/cooperative.approach.entity";
 import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
+import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
+import { CreditBlockHistoryRequestDto } from "../dto/credit.block.history.request.dto";
+import { CreditBlockExplorerFirstTransferDto } from "../dto/credit.block.explorer.first.transfer.dto";
+import * as moment from "moment";
+
+/**
+ * One block's parsed ledger version, as seen by the credit-block
+ * history-tree reconstruction (see CreditTransactionsManagementService.
+ * getCreditBlockHistoryTree). `range` is derived from `serialNumber`
+ * since that's the only field carrying the live [start, end] through a
+ * split (itmoSerial is not reliably kept in sync on a retired split -
+ * see ProgrammeLedgerService.retirementRequestAction Case B).
+ */
+interface CreditBlockLedgerVersion {
+  creditBlockId: string;
+  range: { start: number; end: number };
+  txType: TxType;
+  txTime: number;
+  ownerCompanyId: number;
+  previousOwnerCompanyId?: number;
+  creditAmount: number;
+  vintage: string;
+}
+
+/**
+ * The structured description of a single action a credit-block history
+ * node/child represents (who did what, when, to how many credits). For
+ * RETIRE, companyId/companyName deliberately identify the company that
+ * *performed* the retirement (the block's previousOwnerCompanyId) rather
+ * than the resulting owner (always 0 - retired credits have no owner),
+ * so a retire action isn't shown as belonging to no one.
+ */
+interface CreditBlockHistoryActionInfo {
+  companyId: number | null;
+  companyName: string | null;
+  timestamp: string;
+  amount: number;
+  action: "ISSUE" | "RETAIN" | "TRANSFER" | "RETIRE";
+}
+
+interface CreditBlockHistoryNode {
+  range: string;
+  info?: CreditBlockHistoryActionInfo;
+  children: CreditBlockHistoryChildNode[];
+}
+
+interface CreditBlockHistoryChildNode {
+  range: string;
+  info: CreditBlockHistoryActionInfo;
+}
 
 @Injectable()
 export class CreditTransactionsManagementService {
@@ -53,12 +104,15 @@ export class CreditTransactionsManagementService {
     private creditBlockTransfersViewEntityRepository: Repository<CreditBlockTransfersViewEntity>,
     @InjectRepository(CreditBlockRetirementsViewEntity)
     private creditBlockRetirementsViewEntityRepository: Repository<CreditBlockRetirementsViewEntity>,
+    @InjectRepository(CreditBlockExplorerViewEntity)
+    private creditBlockExplorerViewEntityRepository: Repository<CreditBlockExplorerViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
     // Draft -/CMA.5 paras 20-21 guard: refuse /transfer when the block's
     // linked cooperative approach has been revoked. Mirrors the
     // authorizeProgramme guard in programme.service.ts.
     @InjectRepository(CooperativeApproach)
-    private cooperativeApproachRepo: Repository<CooperativeApproach>
+    private cooperativeApproachRepo: Repository<CooperativeApproach>,
+    private readonly serialNumberManagementService: SerialNumberManagementService
   ) {}
 
   public async transferCredits(
@@ -687,5 +741,858 @@ export class CreditTransactionsManagementService {
       resp.length > 0 ? resp[0] : undefined,
       resp.length > 1 ? resp[1] : undefined
     );
+  }
+
+  public async queryExplorer(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    // Credits -> Explorer is a DNA-only, registry-wide browse of every
+    // credit block (including retired ones). Unlike queryCreditBalances /
+    // queryTransfers / queryRetirements, no other company role gets a
+    // scoped view here.
+    if (user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.unauthorized",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    // The Explorer search box is sent as a single filterAnd entry keyed
+    // "serialColumns" whose operation is meaningless (generateWhereSQL
+    // would turn it into invalid SQL) - pull it out and translate it into
+    // its own predicate before the generic filter machinery runs.
+    const serialPredicate = this.extractSerialSearchPredicate(query);
+    const baseWhere = this.helperService.generateWhereSQL(
+      query,
+      abilityCondition
+    );
+    const qb =
+      this.creditBlockExplorerViewEntityRepository.createQueryBuilder(
+        "creditBlock"
+      );
+    if (baseWhere) {
+      qb.where(baseWhere);
+      if (serialPredicate) {
+        qb.andWhere(serialPredicate.sql, serialPredicate.params);
+      }
+    } else if (serialPredicate) {
+      qb.where(serialPredicate.sql, serialPredicate.params);
+    }
+    const resp = await qb
+      .orderBy(
+        query?.sort?.key && `"${query?.sort?.key}"`,
+        query?.sort?.order,
+        query?.sort?.nullFirst !== undefined
+          ? query?.sort?.nullFirst === true
+            ? "NULLS FIRST"
+            : "NULLS LAST"
+          : undefined
+      )
+      .skip(query.size * query.page - query.size)
+      .take(query.size)
+      .getManyAndCount();
+    const rows = resp.length > 0 ? resp[0] : [];
+    const total = resp.length > 1 ? resp[1] : undefined;
+    if (!rows || rows.length === 0) {
+      return new DataListResponseDto(rows, total);
+    }
+    const enrichedRows = await this.enrichExplorerRowsWithFirstTransfer(rows);
+    return new DataListResponseDto(enrichedRows, total);
+  }
+
+  /**
+   * Explorer enrichment: attach each row's first transfer (the transfer
+   * that first moved the block's credits out of the issuing
+   * organisation), computed in-memory over just the returned page rather
+   * than baked into the view SQL, to avoid recomputing lineage for the
+   * whole table on every query.
+   *
+   * isNotTransferred can't drive this on its own - it is flipped to
+   * false by retirement as well as transfer (see
+   * ProgrammeLedgerService.retirementRequestAction), so a block retired
+   * directly by its issuer would be misreported as transferred. The
+   * FIRST_TRANSFER CreditTransactionsEntity row (written in
+   * handleTransactionRecords, gated on the pre-update block still having
+   * isNotTransferred === true) is the unambiguous source: its
+   * presence/absence naturally yields null for both "still held by
+   * issuer" and "retired by issuer".
+   *
+   * Splits always shear credits off the top of a block's serial range
+   * (SerialNumberManagementService.splitCreditBlockSerialNumber), so
+   * every descendant block's range stays fully inside the sub-range that
+   * was first transferred - matching a row to its first transfer is
+   * therefore: same project + vintage, and the first-transfer's range
+   * contains the row's range.
+   */
+  private async enrichExplorerRowsWithFirstTransfer(
+    rows: CreditBlockExplorerViewEntity[]
+  ): Promise<Array<CreditBlockExplorerViewEntity & { firstTransfer: CreditBlockExplorerFirstTransferDto | null }>> {
+    const projectIds = Array.from(new Set(rows.map((r) => r.projectId)));
+    const firstTransferTxs = await this.creditTransactionsEntityRepository.find(
+      {
+        where: {
+          type: CreditTransactionTypesEnum.FIRST_TRANSFER,
+          status: CreditTransactionStatusEnum.COMPLETED,
+          projectRefId: In(projectIds),
+        },
+      }
+    );
+
+    // Pre-parse each first-transfer's range/vintage once and group by
+    // project so matching a row doesn't reparse serials repeatedly.
+    interface ParsedFirstTransfer {
+      tx: CreditTransactionsEntity;
+      range: { start: number; end: number };
+      vintage: string;
+    }
+    const byProject = new Map<string, ParsedFirstTransfer[]>();
+    const companyIds = new Set<number>();
+    for (const tx of firstTransferTxs) {
+      let range: { start: number; end: number };
+      let vintage: string;
+      try {
+        range = this.serialNumberManagementService.getBlockRange(
+          tx.serialNumber
+        );
+        vintage = this.serialNumberManagementService.getVintage(
+          tx.serialNumber
+        );
+      } catch {
+        continue; // malformed/legacy serial - skip, never throw
+      }
+      if (
+        !Number.isFinite(range?.start) ||
+        !Number.isFinite(range?.end) ||
+        !vintage
+      ) {
+        continue;
+      }
+      const parsed: ParsedFirstTransfer = { tx, range, vintage };
+      const list = byProject.get(tx.projectRefId) ?? [];
+      list.push(parsed);
+      byProject.set(tx.projectRefId, list);
+      if (tx.senderId != null) companyIds.add(tx.senderId);
+      if (tx.recieverId != null) companyIds.add(tx.recieverId);
+    }
+
+    const companyNames = await this.resolveCompanyNames(companyIds);
+
+    return rows.map((row) => {
+      let firstTransfer: CreditBlockExplorerFirstTransferDto | null = null;
+      const candidates = byProject.get(row.projectId);
+      if (candidates && candidates.length > 0) {
+        try {
+          const rowRange = this.serialNumberManagementService.getBlockRange(
+            row.serialNumber
+          );
+          const rowVintage = this.serialNumberManagementService.getVintage(
+            row.serialNumber
+          );
+          const match = candidates.find(
+            (c) =>
+              c.vintage === rowVintage &&
+              c.range.start <= rowRange.start &&
+              c.range.end >= rowRange.end
+          );
+          if (match) {
+            firstTransfer = {
+              fromOrganizationId: match.tx.senderId,
+              fromOrganizationName:
+                companyNames.get(match.tx.senderId) ?? null,
+              toOrganizationId: match.tx.recieverId,
+              toOrganizationName:
+                companyNames.get(match.tx.recieverId) ?? null,
+              amount: match.tx.amount,
+              serialNumber: match.tx.serialNumber,
+              transferTime: match.tx.createTime,
+            };
+          }
+        } catch {
+          // malformed/legacy row serial - leave firstTransfer null
+        }
+      }
+      return { ...row, firstTransfer };
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Credit block history tree - the Explorer drill-down
+  //
+  // Reconstructs a credit block's full lineage - from initial issuance,
+  // through every partial transfer/retirement that split it, down to its
+  // current leaves - as a flat list of nodes the UI graph renders. See
+  // explorer-serial-search-examples.md's sibling doc-comment style: a
+  // block serial range shrinks every time part of it is transferred or
+  // retired, taking the amount off the TOP of the range
+  // (SerialNumberManagementService.splitCreditBlockSerialNumber). The
+  // retained/low portion keeps its original creditBlockId (its range
+  // start never changes); the transferred/retired high portion becomes a
+  // brand-new block with a new creditBlockId. The operational DB only
+  // keeps each block's *current* row, so intermediate ranges are gone by
+  // the time a block has been split more than once - the reconstruction
+  // therefore reads every version from the append-only ledger instead
+  // (ProgrammeLedgerService.getCreditBlockLedgerHistory).
+  // ---------------------------------------------------------------------
+
+  public async getCreditBlockHistoryTree(
+    creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto,
+    user: User
+  ): Promise<DataResponseDto> {
+    // Same DNA-only gate as queryExplorer - this is a drill-down from it.
+    if (user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.unauthorized",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const queriedBlock = await this.creditBlocksEntityRepository.findOne({
+      where: { creditBlockId: creditBlockHistoryRequestDto.blockId },
+    });
+    if (!queriedBlock) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.creditBlockNotExists",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const ledgerVersions =
+      await this.programmeLedgerService.getCreditBlockLedgerHistory(
+        queriedBlock.projectRefId
+      );
+    const groups = this.groupCreditBlockLedgerVersions(ledgerVersions);
+
+    const queriedRange = this.serialNumberManagementService.getBlockRange(
+      queriedBlock.serialNumber
+    );
+    const rootVersions = this.findCreditBlockHistoryRoot(
+      groups,
+      queriedRange,
+      queriedBlock.vintage
+    );
+    if (!rootVersions) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.creditBlockNotExists",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const ownerCompanyIds = new Set<number>();
+    for (const versions of groups.values()) {
+      for (const v of versions) {
+        if (v.ownerCompanyId) {
+          ownerCompanyIds.add(v.ownerCompanyId);
+        }
+        // A RETIRE action attributes to the retiring company
+        // (previousOwnerCompanyId), not the resulting owner (always 0) -
+        // make sure its name is resolved too.
+        if (v.previousOwnerCompanyId) {
+          ownerCompanyIds.add(v.previousOwnerCompanyId);
+        }
+      }
+    }
+    const ownerNames = await this.resolveCompanyNames(ownerCompanyIds);
+
+    const history = this.buildCreditBlockHistoryTree(
+      groups,
+      rootVersions,
+      ownerNames
+    );
+    return new DataResponseDto(HttpStatus.OK, { history });
+  }
+
+  private groupCreditBlockLedgerVersions(
+    ledgerVersions: CreditBlocksEntity[]
+  ): Map<string, CreditBlockLedgerVersion[]> {
+    const groups = new Map<string, CreditBlockLedgerVersion[]>();
+    for (const version of ledgerVersions || []) {
+      const range = this.serialNumberManagementService.getBlockRange(
+        version.serialNumber
+      );
+      if (!Number.isFinite(range.start) || !Number.isFinite(range.end)) {
+        // Legacy/malformed serial - can't place it in the range-based
+        // tree, so it's excluded rather than throwing.
+        continue;
+      }
+      const parsed: CreditBlockLedgerVersion = {
+        creditBlockId: version.creditBlockId,
+        range,
+        txType: version.txType,
+        txTime: Number(version.txTime),
+        ownerCompanyId: Number(version.ownerCompanyId),
+        previousOwnerCompanyId:
+          version.previousOwnerCompanyId != null
+            ? Number(version.previousOwnerCompanyId)
+            : undefined,
+        creditAmount: version.creditAmount,
+        vintage: version.vintage,
+      };
+      if (!groups.has(parsed.creditBlockId)) {
+        groups.set(parsed.creditBlockId, []);
+      }
+      groups.get(parsed.creditBlockId).push(parsed);
+    }
+    return groups;
+  }
+
+  /**
+   * The root of the tree is the ISSUE version whose range contains the
+   * queried block's current range within the same vintage - regardless
+   * of how many splits deep the queried block is, since issuance batches
+   * within a project/vintage are contiguous and non-overlapping.
+   */
+  private findCreditBlockHistoryRoot(
+    groups: Map<string, CreditBlockLedgerVersion[]>,
+    queriedRange: { start: number; end: number },
+    vintage: string
+  ): CreditBlockLedgerVersion[] | undefined {
+    for (const versions of groups.values()) {
+      const first = versions[0];
+      if (
+        first.txType === TxType.ISSUE &&
+        first.previousOwnerCompanyId == null &&
+        first.vintage === vintage &&
+        first.range.start <= queriedRange.start &&
+        first.range.end >= queriedRange.end
+      ) {
+        return versions;
+      }
+    }
+    return undefined;
+  }
+
+  private async resolveCompanyNames(
+    companyIds: Set<number>
+  ): Promise<Map<number, string>> {
+    const names = new Map<number, string>();
+    await Promise.all(
+      Array.from(companyIds).map(async (id) => {
+        const company = await this.companyService.findByCompanyId(id);
+        if (company) {
+          names.set(id, company.name);
+        }
+      })
+    );
+    return names;
+  }
+
+  private formatCreditBlockHistoryTime(epochMs: number): string {
+    return moment(epochMs).format("YYYY-MM-DD HH:mm");
+  }
+
+  private formatCreditBlockRange(range: {
+    start: number;
+    end: number;
+  }): string {
+    return `${range.start}-${range.end}`;
+  }
+
+  /**
+   * The structured action info for a version that took ownership of
+   * `range` - shared between a split's "high" child (a brand-new block
+   * created by the split) and a whole-block transition (same block, no
+   * split, ownership just moved). `ownerCompanyId === 0` is the
+   * authoritative "this is a retirement" signal - unlike txType, which a
+   * rejected/cancelled retire request also sets to RETIRE without
+   * anything actually retiring (see ProgrammeLedgerService.
+   * retirementRequestAction's REJECT/CANCEL branch), so it can't be used
+   * alone to tell a real retirement apart from a rejected one. For a
+   * RETIRE, companyId/companyName identify the *retiring* company
+   * (previousOwnerCompanyId) rather than the resulting owner (always 0).
+   */
+  private buildCreditBlockActionInfo(
+    range: { start: number; end: number },
+    version: CreditBlockLedgerVersion,
+    ownerName: (companyId?: number) => string
+  ): CreditBlockHistoryActionInfo {
+    const amount = range.end - range.start + 1;
+    const timestamp = this.formatCreditBlockHistoryTime(version.txTime);
+    if (version.ownerCompanyId === 0) {
+      const retiringCompanyId = version.previousOwnerCompanyId ?? null;
+      return {
+        companyId: retiringCompanyId,
+        companyName: retiringCompanyId ? ownerName(retiringCompanyId) : null,
+        timestamp,
+        amount,
+        action: "RETIRE",
+      };
+    }
+    return {
+      companyId: version.ownerCompanyId,
+      companyName: ownerName(version.ownerCompanyId),
+      timestamp,
+      amount,
+      action: "TRANSFER",
+    };
+  }
+
+  /**
+   * Depth-first, ancestor-before-descendant reconstruction. For a given
+   * block's own version history, every consecutive pair of versions is
+   * one of:
+   *  - a split (same start, smaller end): the retained "low" portion
+   *    continues within the same creditBlockId group; the "high" portion
+   *    sheared off the top becomes a brand-new block, looked up by its
+   *    own group's first version matching (start, txTime, vintage).
+   *  - a whole-block transition (same range, ownerCompanyId changed): the
+   *    entire remaining balance was transferred or retired in one action,
+   *    so the block keeps its creditBlockId and range - no new group to
+   *    recurse into, just a single-child node recording the new owner.
+   *  - neither (e.g. a pending retire request, or one that was rejected/
+   *    cancelled - reservedCreditAmount/transactionRecords/txType may
+   *    change but ownerCompanyId doesn't): no node, silently skipped.
+   * Per the sample payload ordering, a group's own chain of splits and
+   * transitions is listed in full, in chronological order, before
+   * descending into any child branch created by a split along the way.
+   */
+  private buildCreditBlockHistoryTree(
+    groups: Map<string, CreditBlockLedgerVersion[]>,
+    rootVersions: CreditBlockLedgerVersion[],
+    ownerNames: Map<number, string>
+  ): CreditBlockHistoryNode[] {
+    const history: CreditBlockHistoryNode[] = [];
+
+    // Index every non-issuance group by the (vintage, start, txTime) of
+    // its first version, i.e. the split event that created it as a "high"
+    // child - so a shrink can look up the sibling it produced.
+    const childIndex = new Map<string, CreditBlockLedgerVersion[]>();
+    for (const versions of groups.values()) {
+      const first = versions[0];
+      if (first.previousOwnerCompanyId != null) {
+        childIndex.set(
+          `${first.vintage}#${first.range.start}#${first.txTime}`,
+          versions
+        );
+      }
+    }
+
+    const ownerName = (companyId?: number): string =>
+      companyId ? ownerNames.get(companyId) ?? `Company ${companyId}` : "";
+
+    const rootFirst = rootVersions[0];
+    history.push({
+      range: this.formatCreditBlockRange(rootFirst.range),
+      info: {
+        companyId: rootFirst.ownerCompanyId,
+        companyName: ownerName(rootFirst.ownerCompanyId),
+        timestamp: this.formatCreditBlockHistoryTime(rootFirst.txTime),
+        amount: rootFirst.creditAmount,
+        action: "ISSUE",
+      },
+      children: [],
+    });
+
+    const visit = (versions: CreditBlockLedgerVersion[]) => {
+      const pendingChildBranches: CreditBlockLedgerVersion[][] = [];
+      for (let i = 0; i + 1 < versions.length; i++) {
+        const before = versions[i];
+        const after = versions[i + 1];
+        const isSplit =
+          after.range.start === before.range.start &&
+          after.range.end < before.range.end;
+
+        if (isSplit) {
+          const lowRange = after.range;
+          const highRange = {
+            start: after.range.end + 1,
+            end: before.range.end,
+          };
+          const highVersions = childIndex.get(
+            `${after.vintage}#${highRange.start}#${after.txTime}`
+          );
+
+          const lowChild: CreditBlockHistoryChildNode = {
+            range: this.formatCreditBlockRange(lowRange),
+            info: {
+              companyId: after.ownerCompanyId,
+              companyName: ownerName(after.ownerCompanyId),
+              timestamp: this.formatCreditBlockHistoryTime(after.txTime),
+              amount: lowRange.end - lowRange.start + 1,
+              action: "RETAIN",
+            },
+          };
+          let highChild: CreditBlockHistoryChildNode;
+          if (highVersions) {
+            const highFirst = highVersions[0];
+            highChild = {
+              range: this.formatCreditBlockRange(highRange),
+              info: this.buildCreditBlockActionInfo(
+                highRange,
+                highFirst,
+                ownerName
+              ),
+            };
+            pendingChildBranches.push(highVersions);
+          } else {
+            // No matching child group in the ledger for this shrink - keep
+            // the tree structurally valid rather than throwing. `after`
+            // is the best available data for what happened here, since
+            // there's no separate highFirst version to draw from.
+            highChild = {
+              range: this.formatCreditBlockRange(highRange),
+              info: this.buildCreditBlockActionInfo(highRange, after, ownerName),
+            };
+          }
+
+          history.push({
+            range: this.formatCreditBlockRange(before.range),
+            children: [lowChild, highChild],
+          });
+          continue;
+        }
+
+        // Whole-block transition: the entire remaining balance was
+        // transferred or retired in one action, so the block kept its
+        // creditBlockId and range - no new group to recurse into, just a
+        // single-child node recording the new owner. Anything else with
+        // an unchanged range (a pending retire request, or one that was
+        // rejected/cancelled) leaves ownerCompanyId untouched and is
+        // silently skipped here.
+        const isWholeBlockTransition =
+          after.range.start === before.range.start &&
+          after.range.end === before.range.end &&
+          after.ownerCompanyId !== before.ownerCompanyId;
+        if (!isWholeBlockTransition) {
+          continue;
+        }
+
+        const transitionChild: CreditBlockHistoryChildNode = {
+          range: this.formatCreditBlockRange(after.range),
+          info: this.buildCreditBlockActionInfo(after.range, after, ownerName),
+        };
+        history.push({
+          range: this.formatCreditBlockRange(after.range),
+          children: [transitionChild],
+        });
+      }
+      for (const branch of pendingChildBranches) {
+        visit(branch);
+      }
+    };
+
+    visit(rootVersions);
+    return history;
+  }
+
+  // ---------------------------------------------------------------------
+  // Explorer serial-number search
+  //
+  // A block serial is 7 "-"-separated parts (see
+  // serial-number-management.service.ts): creditId-country-
+  // firstTransferParty-projectId-rangeStart-rangeEnd-vintage, e.g.
+  // "CA0NNN-NG-XX-32-3001-4000-2023". The Explorer search box lets a user
+  // type any fragment of that - a full serial, a full/partial unit range,
+  // or a bare unit number - and expects it resolved against the numeric
+  // components (range/vintage/projectId) rather than a literal substring
+  // match, since the numbers shift position depending on how much of the
+  // serial was typed.
+  // ---------------------------------------------------------------------
+
+  /**
+   * Strip the "serialColumns" filterAnd entry (if present) out of the
+   * query in place - generateWhereSQL has no special handling for it and
+   * would otherwise emit malformed SQL - and translate its value into a
+   * standalone predicate for the caller to AND in separately.
+   */
+  private extractSerialSearchPredicate(
+    query: QueryDto
+  ): { sql: string; params: Record<string, any> } | null {
+    if (!query.filterAnd || query.filterAnd.length === 0) {
+      return null;
+    }
+    const serialEntries = query.filterAnd.filter(
+      (e) => e.key === "serialColumns"
+    );
+    query.filterAnd = query.filterAnd.filter(
+      (e) => e.key !== "serialColumns"
+    );
+    const searchValue = serialEntries
+      .map((e) => e.value)
+      .find((v) => v !== undefined && v !== null && String(v).trim() !== "");
+    if (searchValue === undefined) {
+      return null;
+    }
+    return this.buildSerialSearchPredicate(String(searchValue));
+  }
+
+  /**
+   * Translate one search-box value into a parameterized SQL predicate
+   * against the "creditBlock" alias. There are two interpretations,
+   * depending on the shape of the "-"-separated parts:
+   *
+   *  - "prefix" shape - one or more leading text parts immediately
+   *    followed by one or more numeric parts, and no text part after a
+   *    number (e.g. a serial typed from its start, "CA0NNN-NG-XX-32-3001",
+   *    including a full 7-part serial). Delegates to
+   *    `buildSerialPrefixPredicate`, which maps every part onto its fixed
+   *    serial section left-to-right (creditId, country,
+   *    firstTransferParty, projectId, rangeStart, rangeEnd, vintage)
+   *    instead of interpreting the numbers positionally from the right.
+   *  - anything else (numbers only, text only, or a text part following a
+   *    number) - the original "fragment" shape, handled inline below:
+   *     - non-numeric parts are ILIKE'd against the full serial string.
+   *     - numeric parts are interpreted positionally from the right:
+   *       1 number -> the unit the block's range must contain;
+   *       2 numbers -> the range's [lo, hi] boundaries, taken in the order
+   *         given (first number is lo, second is hi) - NOT reordered by
+   *         magnitude, so an inverted pair (lo > hi) is treated as an
+   *         invalid range and matches nothing;
+   *       3+ numbers -> the same positional range (the two before the
+   *         last) plus the last number ILIKE-matched against the vintage
+   *         component;
+   *       4+ numbers -> additionally the number before those three
+   *         ILIKE-matched against the projectId component;
+   *       any further leftover numbers are ILIKE-matched only against the
+   *       serial's "creditId-country-firstTransferParty" head, since
+   *       that's the only part of the serial without a defined numeric
+   *       slot.
+   * Range containment/overlap uses split_part() with a numeric guard so a
+   * legacy/malformed serial (non-numeric range parts) is excluded rather
+   * than throwing on cast.
+   */
+  private buildSerialSearchPredicate(
+    value: string
+  ): { sql: string; params: Record<string, any> } | null {
+    const parts = value
+      .trim()
+      .split("-")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    if (parts.length === 0) {
+      return null;
+    }
+    const numericParts: number[] = [];
+    const textParts: string[] = [];
+    for (const part of parts) {
+      if (/^\d+$/.test(part)) {
+        numericParts.push(Number(part));
+      } else {
+        textParts.push(part);
+      }
+    }
+
+    if (this.isSerialPrefixShape(parts)) {
+      return this.buildSerialPrefixPredicate(textParts, numericParts);
+    }
+
+    const conditions: string[] = [];
+    const params: Record<string, any> = {};
+
+    textParts.forEach((text, idx) => {
+      const paramKey = `serialTxt${idx}`;
+      params[paramKey] = `%${text}%`;
+      conditions.push(`"creditBlock"."serialNumber" ILIKE :${paramKey}`);
+    });
+
+    const n = numericParts.length;
+    if (n === 1) {
+      conditions.push(
+        this.serialRangeConditionSQL(numericParts[0], numericParts[0], params)
+      );
+    } else if (n === 2) {
+      conditions.push(
+        this.serialRangeConditionSQL(numericParts[0], numericParts[1], params)
+      );
+    } else if (n >= 3) {
+      conditions.push(
+        this.serialRangeConditionSQL(
+          numericParts[n - 3],
+          numericParts[n - 2],
+          params
+        )
+      );
+
+      params.serialVint = `%${numericParts[n - 1]}%`;
+      conditions.push(`${this.serialVintageExpr()} ILIKE :serialVint`);
+
+      const consumed = n >= 4 ? 4 : 3;
+      if (n >= 4) {
+        params.serialPid = `%${numericParts[n - 4]}%`;
+        conditions.push(`${this.serialProjectIdExpr()} ILIKE :serialPid`);
+      }
+      // Any numeric parts beyond the 4 known components (projectId,
+      // rangeStart, rangeEnd, vintage) don't map to a known numeric slot.
+      // The only remaining part of the serial is the
+      // creditId-country-firstTransferParty head, so match against that
+      // only - not the whole serial (which would also re-match the
+      // range/vintage/projectId digits already accounted for above).
+      numericParts.slice(0, n - consumed).forEach((num, idx) => {
+        const paramKey = `serialNum${idx}`;
+        params[paramKey] = `%${num}%`;
+        conditions.push(`${this.serialPrefixExpr()} ILIKE :${paramKey}`);
+      });
+    }
+
+    if (conditions.length === 0) {
+      return null;
+    }
+    return { sql: `(${conditions.join(" AND ")})`, params };
+  }
+
+  /**
+   * True when `parts` is shaped as one or more leading non-numeric parts
+   * immediately followed by one or more numeric parts, with no non-numeric
+   * part appearing after a numeric one - e.g. a serial (or any prefix of
+   * one) typed from its start, "CA0NNN-NG-XX-32-3001". This is the trigger
+   * for the left-anchored "prefix" interpretation in
+   * `buildSerialPrefixPredicate`; anything else (numbers only, text only,
+   * or a text part following a number) keeps the original right-anchored
+   * "fragment" interpretation.
+   */
+  private isSerialPrefixShape(parts: string[]): boolean {
+    let sawNumber = false;
+    let sawText = false;
+    for (const part of parts) {
+      if (/^\d+$/.test(part)) {
+        sawNumber = true;
+      } else {
+        sawText = true;
+        if (sawNumber) {
+          return false;
+        }
+      }
+    }
+    return sawText && sawNumber;
+  }
+
+  /**
+   * Build the predicate for the "prefix" shape (see `isSerialPrefixShape`):
+   * every part is mapped onto its fixed serial section, left-to-right -
+   * textParts fill creditId/country/firstTransferParty, numericParts fill
+   * projectId/rangeStart/rangeEnd/vintage:
+   *  - 1 number -> projectId only (exact match).
+   *  - 2 numbers -> projectId (exact) + the block's range must contain the
+   *    2nd number (a rangeStart with no rangeEnd typed yet).
+   *  - 3 numbers -> projectId (exact) + range overlap [2nd, 3rd] (no
+   *    vintage typed yet).
+   *  - 4 numbers -> projectId (exact) + range overlap [2nd, 3rd] + vintage
+   *    (exact).
+   *  - any further leftover numbers, or a 4th+ text part, don't map to a
+   *    known section, so they're ILIKE-matched against the whole serial
+   *    string instead of being dropped.
+   * projectId/vintage use exact string equality (not ILIKE) against their
+   * split_part() position - no numeric cast, so a legacy/malformed serial
+   * is excluded rather than throwing. Range overlap reuses
+   * `serialRangeConditionSQL`, which already guards non-numeric range
+   * parts and treats an inverted pair as unsatisfiable.
+   */
+  private buildSerialPrefixPredicate(
+    textParts: string[],
+    numericParts: number[]
+  ): { sql: string; params: Record<string, any> } | null {
+    const conditions: string[] = [];
+    const params: Record<string, any> = {};
+
+    const textExprs = [
+      this.serialCreditIdExpr(),
+      this.serialCountryExpr(),
+      this.serialFtpExpr(),
+    ];
+    textParts.forEach((text, idx) => {
+      const paramKey = `serialPfxTxt${idx}`;
+      params[paramKey] = `%${text}%`;
+      const expr = textExprs[idx] ?? `"creditBlock"."serialNumber"`;
+      conditions.push(`${expr} ILIKE :${paramKey}`);
+    });
+
+    const n = numericParts.length;
+    if (n >= 1) {
+      params.serialPfxPid = String(numericParts[0]);
+      conditions.push(`${this.serialProjectIdExpr()} = :serialPfxPid`);
+    }
+    if (n === 2) {
+      conditions.push(
+        this.serialRangeConditionSQL(numericParts[1], numericParts[1], params)
+      );
+    } else if (n >= 3) {
+      conditions.push(
+        this.serialRangeConditionSQL(
+          numericParts[1],
+          numericParts[2],
+          params
+        )
+      );
+    }
+    if (n >= 4) {
+      params.serialPfxVint = String(numericParts[3]);
+      conditions.push(`${this.serialVintageExpr()} = :serialPfxVint`);
+    }
+    // Leftover numbers beyond the 4 known slots (projectId, rangeStart,
+    // rangeEnd, vintage) don't map to a defined section.
+    numericParts.slice(4).forEach((num, idx) => {
+      const paramKey = `serialPfxNum${idx}`;
+      params[paramKey] = `%${num}%`;
+      conditions.push(`"creditBlock"."serialNumber" ILIKE :${paramKey}`);
+    });
+
+    if (conditions.length === 0) {
+      return null;
+    }
+    return { sql: `(${conditions.join(" AND ")})`, params };
+  }
+
+  /**
+   * Build the range predicate for a positional [lo, hi] pair, registering
+   * whatever params it needs into the shared `params` map. An inverted
+   * pair (lo > hi) is not a valid range - per business rule, it must
+   * match nothing - so it short-circuits to a literal FALSE instead of
+   * silently reordering into [hi, lo].
+   */
+  private serialRangeConditionSQL(
+    lo: number,
+    hi: number,
+    params: Record<string, any>
+  ): string {
+    if (lo > hi) {
+      return "FALSE";
+    }
+    params.serialLo = lo;
+    params.serialHi = hi;
+    return `(${this.serialRangeStartExpr()} <= :serialHi AND ${this.serialRangeEndExpr()} >= :serialLo)`;
+  }
+
+  private serialRangeStartExpr(): string {
+    return `CASE WHEN split_part("creditBlock"."serialNumber", '-', 5) ~ '^[0-9]+$' THEN split_part("creditBlock"."serialNumber", '-', 5)::int END`;
+  }
+
+  private serialRangeEndExpr(): string {
+    return `CASE WHEN split_part("creditBlock"."serialNumber", '-', 6) ~ '^[0-9]+$' THEN split_part("creditBlock"."serialNumber", '-', 6)::int END`;
+  }
+
+  private serialVintageExpr(): string {
+    return `split_part("creditBlock"."serialNumber", '-', 7)`;
+  }
+
+  private serialProjectIdExpr(): string {
+    return `split_part("creditBlock"."serialNumber", '-', 4)`;
+  }
+
+  private serialCreditIdExpr(): string {
+    return `split_part("creditBlock"."serialNumber", '-', 1)`;
+  }
+
+  private serialCountryExpr(): string {
+    return `split_part("creditBlock"."serialNumber", '-', 2)`;
+  }
+
+  private serialFtpExpr(): string {
+    return `split_part("creditBlock"."serialNumber", '-', 3)`;
+  }
+
+  private serialPrefixExpr(): string {
+    return `(split_part("creditBlock"."serialNumber", '-', 1) || '-' || split_part("creditBlock"."serialNumber", '-', 2) || '-' || split_part("creditBlock"."serialNumber", '-', 3))`;
   }
 }

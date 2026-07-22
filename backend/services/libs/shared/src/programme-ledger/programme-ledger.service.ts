@@ -1349,6 +1349,33 @@ export class ProgrammeLedgerService {
     });
   }
 
+  /**
+   * All ledger versions of every credit block belonging to a project,
+   * chronological (oldest first). Unlike the operational DB's
+   * CreditBlocksEntity table - which only holds each block's *current*
+   * state, so a retained/low-range block's earlier, wider ranges are
+   * overwritten away as it's repeatedly split - the append-only ledger
+   * keeps every intermediate version. That full lineage is what a
+   * credit-block history/tree reconstruction (issuance -> splits ->
+   * transfers/retirements) needs to read from.
+   */
+  public async getCreditBlockLedgerHistory(
+    projectRefId: string
+  ): Promise<CreditBlocksEntity[]> {
+    return (
+      await this.ledger.fetchHistory(
+        { projectRefId: projectRefId },
+        this.ledger.creditBlocksTable
+      )
+    )?.map((domValue) => {
+      // fetchHistory returns ledger revisions shaped as
+      // { data, meta, hash } - the actual CreditBlocks fields live under
+      // `data`, so unwrap before mapping to the flat entity.
+      const revision = JSON.parse(JSON.stringify(domValue));
+      return plainToClass(CreditBlocksEntity, revision.data ?? revision);
+    });
+  }
+
   public async getProgrammeHistoryByExternalId(
     externalId: string
   ): Promise<ProgrammeHistoryDto[]> {
