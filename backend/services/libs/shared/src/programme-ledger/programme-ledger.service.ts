@@ -1368,10 +1368,11 @@ export class ProgrammeLedgerService {
         this.ledger.creditBlocksTable
       )
     )?.map((domValue) => {
-      return plainToClass(
-        CreditBlocksEntity,
-        JSON.parse(JSON.stringify(domValue))
-      );
+      // fetchHistory returns ledger revisions shaped as
+      // { data, meta, hash } - the actual CreditBlocks fields live under
+      // `data`, so unwrap before mapping to the flat entity.
+      const revision = JSON.parse(JSON.stringify(domValue));
+      return plainToClass(CreditBlocksEntity, revision.data ?? revision);
     });
   }
 
