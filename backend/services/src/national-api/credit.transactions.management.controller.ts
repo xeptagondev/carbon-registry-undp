@@ -129,8 +129,6 @@ export class CreditTransactionsManagementController {
     );
   }
 
-  // Explorer drill-down: full lineage of one credit block (issuance ->
-  // splits -> transfers/retirements), reconstructed from the ledger.
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @CheckPolicies((ability: AppAbility) =>

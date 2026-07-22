@@ -1394,7 +1394,7 @@ export class CreditTransactionsManagementService {
     textParts.forEach((text, idx) => {
       const paramKey = `serialTxt${idx}`;
       params[paramKey] = `%${text}%`;
-      conditions.push(`creditBlock."serialNumber" ILIKE :${paramKey}`);
+      conditions.push(`"creditBlock"."serialNumber" ILIKE :${paramKey}`);
     });
 
     const n = numericParts.length;
@@ -1504,7 +1504,7 @@ export class CreditTransactionsManagementService {
     textParts.forEach((text, idx) => {
       const paramKey = `serialPfxTxt${idx}`;
       params[paramKey] = `%${text}%`;
-      const expr = textExprs[idx] ?? `creditBlock."serialNumber"`;
+      const expr = textExprs[idx] ?? `"creditBlock"."serialNumber"`;
       conditions.push(`${expr} ILIKE :${paramKey}`);
     });
 
@@ -1535,7 +1535,7 @@ export class CreditTransactionsManagementService {
     numericParts.slice(4).forEach((num, idx) => {
       const paramKey = `serialPfxNum${idx}`;
       params[paramKey] = `%${num}%`;
-      conditions.push(`creditBlock."serialNumber" ILIKE :${paramKey}`);
+      conditions.push(`"creditBlock"."serialNumber" ILIKE :${paramKey}`);
     });
 
     if (conditions.length === 0) {
@@ -1565,34 +1565,34 @@ export class CreditTransactionsManagementService {
   }
 
   private serialRangeStartExpr(): string {
-    return `CASE WHEN split_part(creditBlock."serialNumber", '-', 5) ~ '^[0-9]+$' THEN split_part(creditBlock."serialNumber", '-', 5)::int END`;
+    return `CASE WHEN split_part("creditBlock"."serialNumber", '-', 5) ~ '^[0-9]+$' THEN split_part("creditBlock"."serialNumber", '-', 5)::int END`;
   }
 
   private serialRangeEndExpr(): string {
-    return `CASE WHEN split_part(creditBlock."serialNumber", '-', 6) ~ '^[0-9]+$' THEN split_part(creditBlock."serialNumber", '-', 6)::int END`;
+    return `CASE WHEN split_part("creditBlock"."serialNumber", '-', 6) ~ '^[0-9]+$' THEN split_part("creditBlock"."serialNumber", '-', 6)::int END`;
   }
 
   private serialVintageExpr(): string {
-    return `split_part(creditBlock."serialNumber", '-', 7)`;
+    return `split_part("creditBlock"."serialNumber", '-', 7)`;
   }
 
   private serialProjectIdExpr(): string {
-    return `split_part(creditBlock."serialNumber", '-', 4)`;
+    return `split_part("creditBlock"."serialNumber", '-', 4)`;
   }
 
   private serialCreditIdExpr(): string {
-    return `split_part(creditBlock."serialNumber", '-', 1)`;
+    return `split_part("creditBlock"."serialNumber", '-', 1)`;
   }
 
   private serialCountryExpr(): string {
-    return `split_part(creditBlock."serialNumber", '-', 2)`;
+    return `split_part("creditBlock"."serialNumber", '-', 2)`;
   }
 
   private serialFtpExpr(): string {
-    return `split_part(creditBlock."serialNumber", '-', 3)`;
+    return `split_part("creditBlock"."serialNumber", '-', 3)`;
   }
 
   private serialPrefixExpr(): string {
-    return `(split_part(creditBlock."serialNumber", '-', 1) || '-' || split_part(creditBlock."serialNumber", '-', 2) || '-' || split_part(creditBlock."serialNumber", '-', 3))`;
+    return `(split_part("creditBlock"."serialNumber", '-', 1) || '-' || split_part("creditBlock"."serialNumber", '-', 2) || '-' || split_part("creditBlock"."serialNumber", '-', 3))`;
   }
 }
