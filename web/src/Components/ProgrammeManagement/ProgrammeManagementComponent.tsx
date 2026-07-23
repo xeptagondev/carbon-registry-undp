@@ -639,6 +639,7 @@ export const ProgrammeManagementComponent = (props: any) => {
           <Col span={24}>
             <div className="programmeManagement-table-container">
               <Table
+                rowKey="refId"
                 dataSource={tableData.length ? tableData : []}
                 columns={columns}
                 className="common-table-class"

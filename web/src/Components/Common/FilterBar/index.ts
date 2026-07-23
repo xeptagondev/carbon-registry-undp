@@ -11,3 +11,9 @@ export type {
   SearchFilterControl,
   SingleSelectFilterControl,
 } from "./FilterBar";
+export { usePaginatedSelectOptions } from "./usePaginatedSelectOptions";
+export type {
+  FetchPageParams,
+  PaginatedSelectOptions,
+  UsePaginatedSelectOptionsParams,
+} from "./usePaginatedSelectOptions";
