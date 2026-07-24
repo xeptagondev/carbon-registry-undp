@@ -751,6 +751,10 @@ export class CreditTransactionsManagementService {
     abilityCondition: string,
     user: User
   ): Promise<DataListResponseDto> {
+    const page = query.page || 1;
+    const size = query.size || 10;
+    query.page = page;
+    query.size = size;
     if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
       const onlyOwn: FilterEntry = {
         key: "organizationId",
@@ -795,6 +799,10 @@ export class CreditTransactionsManagementService {
     abilityCondition: string,
     user: User
   ): Promise<DataListResponseDto> {
+    const page = query.page || 1;
+    const size = query.size || 10;
+    query.page = page;
+    query.size = size;
     // Credits -> Explorer is a DNA-only, registry-wide browse of every
     // credit block (including retired ones). Unlike queryCreditBalances /
     // queryTransfers / queryRetirements, no other company role gets a
