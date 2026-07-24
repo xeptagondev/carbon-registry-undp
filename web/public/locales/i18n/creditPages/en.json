@@ -185,6 +185,7 @@
     "searchByProjectOrOrg": "Search by project / organization",
     "filterByOrganization": "Filter by Organization",
     "filterByProject": "Filter by Project",
+    "filterByVintage": "Filter by Vintage",
     "searchBySerialNumber": "Search by Serial Number",
     "appliedFilters": "Applied Filters",
     "clearAll": "Clear All",

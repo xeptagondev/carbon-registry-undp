@@ -17,6 +17,7 @@ import './companyProfileComponent.scss';
 import * as Icon from 'react-bootstrap-icons';
 import { OrganisationStatus } from '../../OrganisationStatus/organisationStatus';
 import { CompanyDetailsComponent } from '../CompanyDetails/companyDetailsComponent';
+import { OrganizationTransactionsTable } from './organizationTransactionsTable';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
 import {
   CarbonNeutralConfirmationModelSl,
@@ -27,6 +28,7 @@ import { useUserContext } from '../../../Context/UserInformationContext/userInfo
 import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
 import { Role } from '../../../Definitions/Enums/role.enum';
 import { API_PATHS } from '../../../Config/apiConfig';
+import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
 
 export const CompanyProfileComponent = (props: any) => {
   const {
@@ -475,6 +477,72 @@ export const CompanyProfileComponent = (props: any) => {
                   </Row>
                 </Skeleton>
               </Card>
+              <Card className="card-container credit-summary-container">
+                <div className="info-view">
+                  <div className="title">
+                    <span className="title-icon">
+                      <Icon.ClipboardData />
+                    </span>
+                    <span className="title-text">{t('companyProfile:creditSummary')}</span>
+                  </div>
+                  <Row className="field">
+                    <Col span={12} className="field-key">
+                      {t('companyProfile:creditsIssued')}
+                    </Col>
+                    <Col span={12} className="field-value credit-issued">
+                      {companyDetails.creditIssued !== undefined &&
+                      companyDetails.creditIssued !== null
+                        ? addCommSep(companyDetails.creditIssued)
+                        : '-'}
+                    </Col>
+                  </Row>
+                  <Row className="field">
+                    <Col span={12} className="field-key">
+                      {t('companyProfile:creditsRetired')}
+                    </Col>
+                    <Col span={12} className="field-value credit-retired">
+                      {companyDetails.creditRetired !== undefined &&
+                      companyDetails.creditRetired !== null
+                        ? addCommSep(companyDetails.creditRetired)
+                        : '-'}
+                    </Col>
+                  </Row>
+                  <Row className="field">
+                    <Col span={12} className="field-key">
+                      {t('companyProfile:creditsTransferred')}
+                    </Col>
+                    <Col span={12} className="field-value credit-transferred">
+                      {companyDetails.creditTransferred !== undefined &&
+                      companyDetails.creditTransferred !== null
+                        ? addCommSep(companyDetails.creditTransferred)
+                        : '-'}
+                    </Col>
+                  </Row>
+                  <Row className="field">
+                    <Col span={12} className="field-key">
+                      {t('companyProfile:creditsReserved')}
+                    </Col>
+                    <Col span={12} className="field-value credit-reserved">
+                      {companyDetails.creditReserved !== undefined &&
+                      companyDetails.creditReserved !== null
+                        ? addCommSep(companyDetails.creditReserved)
+                        : '-'}
+                    </Col>
+                  </Row>
+                  <div className="credit-summary-divider" />
+                  <Row className="field">
+                    <Col span={12} className="field-key">
+                      {t('companyProfile:creditBalance')}
+                    </Col>
+                    <Col span={12} className="field-value credit-balance">
+                      {companyDetails.creditBalance !== undefined &&
+                      companyDetails.creditBalance !== null
+                        ? addCommSep(companyDetails.creditBalance)
+                        : '-'}
+                    </Col>
+                  </Row>
+                </div>
+              </Card>
               {carbonNeutralCertificateData?.length > 0 && (
                 <Card className="card-container cnc-container">
                   <div className="info-view">
@@ -648,6 +716,11 @@ export const CompanyProfileComponent = (props: any) => {
                   </div>
                 </Card>
               )}
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <OrganizationTransactionsTable t={t} />
             </Col>
           </Row>
         </div>

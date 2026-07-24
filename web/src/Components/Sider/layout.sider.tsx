@@ -86,7 +86,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
       );
     }
     creditItems.push(
-      // getItem(t("nav:issuance"), "credits/issuanceList", <Icon.PlusCircle />),
+      getItem(t("nav:issuance"), "credits/issuanceList", <Icon.PlusCircle />),
       getItem(t("nav:creditBalance"), "credits/balance", <Icon.Wallet2 />),
       getItem(t("nav:transfers"), "credits/transfers", <SwapOutlined />),
       getItem(

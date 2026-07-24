@@ -187,12 +187,10 @@ export class CreditTransactionsManagementController {
   )
   @Post("creditBlockHistory")
   async creditBlockHistory(
-    @Body() creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto,
-    @Request() req
+    @Body() creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto
   ): Promise<any> {
     return this.creditTransactionsManagementService.getCreditBlockHistoryTree(
-      creditBlockHistoryRequestDto,
-      req.user
+      creditBlockHistoryRequestDto
     );
   }
 }
