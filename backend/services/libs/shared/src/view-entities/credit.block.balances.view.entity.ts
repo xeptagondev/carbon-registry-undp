@@ -7,7 +7,9 @@ import { ViewColumn, ViewEntity } from "typeorm";
       cb."serialNumber" AS "serialNumber",
       cb."itmoSerial" AS "itmoSerial",
       (cb."creditAmount" - cb."reservedCreditAmount") AS "creditAmount",
+      cb."reservedCreditAmount" AS "reservedCredits",
       cb."createTime" AS "createdDate",
+      cb."txTime" AS "updatedTime",
       cb."projectRefId" AS "projectId",
       p."title" AS "projectName",
       cb."ownerCompanyId" AS "receiverId",
@@ -46,7 +48,13 @@ export class CreditBlockBalancesViewEntity {
   creditAmount: number;
 
   @ViewColumn()
+  reservedCredits: number;
+
+  @ViewColumn()
   createdDate: number;
+
+  @ViewColumn()
+  updatedTime: number;
 
   @ViewColumn()
   projectId: string;
