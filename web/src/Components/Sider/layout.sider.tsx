@@ -79,18 +79,26 @@ const LayoutSider = (props: LayoutSiderProps) => {
     userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
     userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER
   ) {
+    const creditItems: MenuItem[] = [];
+    if (userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
+      creditItems.push(
+        getItem(t("nav:creditBlockList"), "credits/blockList", <Icon.Search />)
+      );
+    }
+    creditItems.push(
+      // getItem(t("nav:issuance"), "credits/issuanceList", <Icon.PlusCircle />),
+      getItem(t("nav:creditBalance"), "credits/balance", <Icon.Wallet2 />),
+      getItem(t("nav:transfers"), "credits/transfers", <SwapOutlined />),
+      getItem(
+        t("nav:retirements"),
+        "credits/retirements",
+        <Icon.ClockHistory />
+      )
+    );
     items.splice(
       2,
       0,
-      getItem(t("nav:credits"), "credits", <AppstoreOutlined />, [
-        getItem(t("nav:creditBalance"), "credits/balance", <Icon.Wallet2 />),
-        getItem(t("nav:transfers"), "credits/transfers", <SwapOutlined />),
-        getItem(
-          t("nav:retirements"),
-          "credits/retirements",
-          <Icon.ClockHistory />
-        ),
-      ])
+      getItem(t("nav:credits"), "credits", <AppstoreOutlined />, creditItems)
     );
   }
 

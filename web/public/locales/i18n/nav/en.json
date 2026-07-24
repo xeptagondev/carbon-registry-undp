@@ -23,6 +23,8 @@
   "cdmTransitionProjects": "CDM Transition Requested Projects",
   "projectList": "Project Details",
   "creditBalance": "Credit Balance",
+  "creditBlockList": "Explorer",
+  "issuance": "Issuance",
   "credits": "Credits",
   "hbarCreditsBalance": "HBAR Balance",
   "organization": "Organisation",

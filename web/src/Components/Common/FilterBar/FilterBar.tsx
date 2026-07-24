@@ -1,4 +1,4 @@
-import { Button, Checkbox, Empty, Input, Popover, Radio, Select, Skeleton, Tag } from "antd";
+import { Button, Checkbox, Empty, Input, Popover, Radio, Select, Skeleton, Spin, Tag } from "antd";
 import { DoubleRightOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import "./FilterBar.scss";
@@ -36,7 +36,25 @@ export interface SearchFilterControl extends ControlBase {
   infoDescription?: ReactNode;
 }
 
-export interface SingleSelectFilterControl extends ControlBase {
+/** Opt-in async behavior for a select control — the dropdown then loads its
+ * options from the backend page-by-page and searches server-side (see
+ * `usePaginatedSelectOptions`), instead of client-filtering a static list.
+ * When `serverSearch` is set, antd's own option filtering is disabled so it
+ * doesn't re-filter the server results. All optional — omit for the plain
+ * static/client-search select. */
+interface AsyncSelectControlProps {
+  serverSearch?: boolean;
+  loading?: boolean;
+  onSearch?: (value: string) => void;
+  onPopupScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
+  onDropdownVisibleChange?: (open: boolean) => void;
+  /** Popup max height in px (antd default 256). Lower it so the list
+   * overflows — and thus becomes scrollable, firing `onPopupScroll` — with
+   * fewer options. */
+  listHeight?: number;
+}
+
+export interface SingleSelectFilterControl extends ControlBase, AsyncSelectControlProps {
   type: "select";
   mode?: "single";
   clearValue?: FilterValue;
@@ -44,7 +62,7 @@ export interface SingleSelectFilterControl extends ControlBase {
   onChange?: (value: FilterValue | undefined) => void;
 }
 
-export interface MultiSelectFilterControl extends ControlBase {
+export interface MultiSelectFilterControl extends ControlBase, AsyncSelectControlProps {
   type: "select";
   mode: "multiple";
   clearValue?: FilterValue[];
@@ -535,9 +553,26 @@ export const FilterBar = ({
                 </>
               ) : (
                 <Select
-                  allowClear={control.mode !== "multiple"}
+                  allowClear
                   mode={control.mode === "multiple" ? "multiple" : undefined}
                   maxTagCount="responsive"
+                  showArrow={control.mode === "multiple" ? true : undefined}
+                  showSearch
+                  // Server-search selects re-query the backend as you type, so
+                  // antd must NOT also client-filter (`filterOption={false}`) —
+                  // it only has the current page and would wrongly hide valid
+                  // server results. Static selects keep client search by the
+                  // visible label (default matches on value/id, not name).
+                  {...(control.serverSearch
+                    ? {
+                        filterOption: false as const,
+                        onSearch: control.onSearch,
+                        onPopupScroll: control.onPopupScroll,
+                        onDropdownVisibleChange: control.onDropdownVisibleChange,
+                        notFoundContent: control.loading ? <Spin size="small" /> : undefined,
+                      }
+                    : { optionFilterProp: "label" as const })}
+                  listHeight={control.listHeight}
                   value={control.value}
                   options={control.options}
                   placeholder={control.placeholder}

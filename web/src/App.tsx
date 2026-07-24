@@ -4,6 +4,8 @@ import "antd/dist/antd.css";
 import "./Styles/app.scss";
 import Login from "./Pages/Login/login";
 import PrivateRoute from "./Components/PrivateRoute/privateRoute";
+import RoleRoute from "./Components/RoleRoute/roleRoute";
+import { CompanyRole } from "./Definitions/Enums/company.role.enum";
 import SignUp from "./Pages/Signup/signup";
 import CustomLayout from "./Components/Layout/layout";
 import AddUser from "./Pages/AddUser/addUser";
@@ -44,6 +46,8 @@ import ProgrammeManagement from "./Pages/ProgrammeManagement/programmeManagement
 import { CreditBalancePage } from "./Pages/CreditPages/creditBalancePage";
 import { CreditTransfersPage } from "./Pages/CreditPages/creditTransfersPage";
 import { CreditRetirementsPage } from "./Pages/CreditPages/creditRetirementsPage";
+import { CreditBlockListPage } from "./Pages/CreditPages/creditBlockListPage";
+import { CreditHistoryViewPage } from "./Pages/CreditPages/creditHistoryViewPage";
 import Reports from "./Pages/Reports/Reports";
 import CooperativeApproaches from "./Pages/CooperativeApproaches/cooperativeApproaches";
 import AddCooperativeApproach from "./Pages/CooperativeApproaches/addCooperativeApproach";
@@ -163,7 +167,25 @@ const App = () => {
                       path="retirements"
                       element={<CreditRetirementsPage />}
                     />
+                    <Route
+                      element={
+                        <RoleRoute
+                          allow={[CompanyRole.DESIGNATED_NATIONAL_AUTHORITY]}
+                        />
+                      }
+                    >
+                      <Route
+                        path="blockList"
+                        element={<CreditBlockListPage />}
+                      />
+                    </Route>
                   </Route>
+                  {/* Standalone (no CustomLayout) — opened in a new tab by the
+                      credit-history graph's "open in new tab" button. */}
+                  <Route
+                    path="/credits/historyView"
+                    element={<CreditHistoryViewPage />}
+                  />
                   <Route
                     path="/cooperativeApproaches"
                     element={

@@ -4,6 +4,69 @@
   margin-bottom: 30px;
 }
 
+.credit-management .search-bar {
+  gap: 12px;
+}
+
+.credit-info-modal .ant-modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111;
+  margin: 20px 0 0 0;
+}
+
+// antd's own header-bottom/body-top padding is what's left of the gap once
+// our own title/heading margins are trimmed down.
+.credit-info-modal {
+  .ant-modal-header {
+    padding-bottom: 12px;
+  }
+
+  .ant-modal-body {
+    padding-top: 8px;
+  }
+}
+
+.credit-view-overview-title,
+.credit-view-history-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 10px 0;
+  text-align: left;
+}
+
+.credit-view-overview {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 10px;
+}
+
+.credit-view-overview-row {
+  display: flex;
+  padding: 8px 0;
+  font-size: 12.5px;
+  // Overrides the global `.ant-modal-body { text-align: center; }` — without
+  // this, the label/value text centers within its box instead of starting
+  // flush left.
+  text-align: left;
+
+  .credit-view-overview-label {
+    width: 130px;
+    flex-shrink: 0;
+    color: #3a3541cc;
+    font-weight: 500;
+  }
+
+  .credit-view-overview-value {
+    color: #8c8c8c;
+  }
+}
+
 .all-check {
   .ant-checkbox-inner::after {
     background-color: rgba(#3a3541, 0.5);
@@ -52,6 +115,16 @@
 
   .ant-checkbox-input[value='Cancelled'] + .ant-checkbox-inner {
     background-color: #cb6957;
+    border: none;
+  }
+
+  .ant-checkbox-input[value='Retired'] + .ant-checkbox-inner {
+    background-color: #f1c40f;
+    border: none;
+  }
+
+  .ant-checkbox-input[value='Assigned'] + .ant-checkbox-inner {
+    background-color: #2fa100;
     border: none;
   }
 }
