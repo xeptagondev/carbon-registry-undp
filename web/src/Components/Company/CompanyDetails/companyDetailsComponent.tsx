@@ -186,21 +186,6 @@ export const CompanyDetailsComponent = (props: any) => {
             </Row>
           )}
 
-          {![
-            CompanyRole.CERTIFIER,
-            CompanyRole.CLIMATE_FUND,
-            CompanyRole.EXECUTIVE_COMMITTEE,
-          ].includes(companyDetails?.companyRole) && (
-            <Row className="field">
-              <Col span={12} className="field-key">
-                {t('companyDetails:creditBalance')}
-              </Col>
-              <Col span={12} className="field-value">
-                {companyDetails.creditBalance ? addCommSep(companyDetails.creditBalance) : '-'}
-              </Col>
-            </Row>
-          )}
-
           {companyDetails?.companyRole === CompanyRole.PROGRAMME_DEVELOPER && (
             <>
               <Row className="field">

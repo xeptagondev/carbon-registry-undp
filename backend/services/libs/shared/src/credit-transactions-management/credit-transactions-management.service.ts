@@ -890,6 +890,8 @@ export class CreditTransactionsManagementService {
     const size = query.size || 10;
     query.page = page;
     query.size = size;
+    // DNA and Independent Certifiers see every issuance; Project Developers
+    // are scoped to their own org.
     if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
       const onlyOwn: FilterEntry = {
         key: "organizationId",
@@ -899,18 +901,29 @@ export class CreditTransactionsManagementService {
       query.filterAnd
         ? query.filterAnd.push(onlyOwn)
         : (query.filterAnd = [onlyOwn]);
-    } else if (user.companyRole == CompanyRole.INDEPENDENT_CERTIFIER) {
-      throw new HttpException(
-        this.helperService.formatReqMessagesString(
-          "creditTransaction.unauthorized",
-          []
-        ),
-        HttpStatus.BAD_REQUEST
-      );
     }
-    const resp = await this.creditBlockIssuancesViewEntityRepository
-      .createQueryBuilder("creditTx")
-      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+    // queryIssuances has no real vintage column - the Issuance page's
+    // vintage filter is sent as a "vintageRange" pseudo-entry
+    // (generateWhereSQL has no special handling for it) and translated
+    // into a predicate against the serial's trailing segment instead, the
+    // same pattern queryExplorer uses for "serialColumns".
+    const vintagePredicate = this.extractVintageRangePredicate(query);
+    const baseWhere = this.helperService.generateWhereSQL(
+      query,
+      abilityCondition
+    );
+    const qb = this.creditBlockIssuancesViewEntityRepository.createQueryBuilder(
+      "creditTx"
+    );
+    if (baseWhere) {
+      qb.where(baseWhere);
+      if (vintagePredicate) {
+        qb.andWhere(vintagePredicate.sql, vintagePredicate.params);
+      }
+    } else if (vintagePredicate) {
+      qb.where(vintagePredicate.sql, vintagePredicate.params);
+    }
+    const resp = await qb
       .orderBy(
         query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
@@ -1128,21 +1141,11 @@ export class CreditTransactionsManagementService {
   // (ProgrammeLedgerService.getCreditBlockLedgerHistory).
   // ---------------------------------------------------------------------
 
+  // Unlike queryExplorer, open to any authenticated user - it's also the
+  // drill-down for the Issuance page (DNA/PD/IC), not just Explorer (DNA-only).
   public async getCreditBlockHistoryTree(
-    creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto,
-    user: User
+    creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto
   ): Promise<DataResponseDto> {
-    // Same DNA-only gate as queryExplorer - this is a drill-down from it.
-    if (user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-      throw new HttpException(
-        this.helperService.formatReqMessagesString(
-          "creditTransaction.unauthorized",
-          []
-        ),
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
     const queriedBlock = await this.creditBlocksEntityRepository.findOne({
       where: { creditBlockId: creditBlockHistoryRequestDto.blockId },
     });
@@ -1516,6 +1519,37 @@ export class CreditTransactionsManagementService {
       return null;
     }
     return this.buildSerialSearchPredicate(String(searchValue));
+  }
+
+  /**
+   * Strip the "vintageRange" filterAnd entry (if present) out of the query
+   * in place and translate its {from, to} value into a standalone
+   * predicate against the issuance row's serial number - queryIssuances
+   * has no real vintage column, so this matches positionally against the
+   * serial's trailing (7th) "-"-separated segment instead, the same
+   * split_part() convention the Explorer's serial search uses for vintage.
+   */
+  private extractVintageRangePredicate(
+    query: QueryDto
+  ): { sql: string; params: Record<string, any> } | null {
+    if (!query.filterAnd || query.filterAnd.length === 0) {
+      return null;
+    }
+    const entry = query.filterAnd.find((e) => e.key === "vintageRange");
+    query.filterAnd = query.filterAnd.filter((e) => e.key !== "vintageRange");
+    const from = Number(entry?.value?.from);
+    const to = Number(entry?.value?.to);
+    if (!entry || !Number.isFinite(from) || !Number.isFinite(to)) {
+      return null;
+    }
+    const vintageExpr = `split_part("creditTx"."serialNumber", '-', 7)`;
+    return {
+      sql: `${vintageExpr} ~ '^[0-9]+$' AND ${vintageExpr}::int BETWEEN :vintageFrom AND :vintageTo`,
+      params: {
+        vintageFrom: Math.min(from, to),
+        vintageTo: Math.max(from, to),
+      },
+    };
   }
 
   /**
