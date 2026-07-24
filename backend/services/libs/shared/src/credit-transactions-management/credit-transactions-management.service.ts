@@ -26,6 +26,9 @@ import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.tr
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
 import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.explorer.view.entity";
 import { CreditBlockIssuancesViewEntity } from "../view-entities/credit.block.issuances.view.entity";
+import { CreditBlockOrgBalancesViewEntity } from "../view-entities/credit.block.org.balances.view.entity";
+import { CreditBlockProjectBalancesViewEntity } from "../view-entities/credit.block.project.balances.view.entity";
+import { CreditBlockProjectHolderBalancesViewEntity } from "../view-entities/credit.block.project.holder.balances.view.entity";
 import { DocumentManagementService } from "../document-management/document-management.service";
 import { ProjectAuditLogType } from "../enum/project.audit.log.type.enum";
 import { DataResponseDto } from "../dto/data.response.dto";
@@ -109,6 +112,12 @@ export class CreditTransactionsManagementService {
     private creditBlockExplorerViewEntityRepository: Repository<CreditBlockExplorerViewEntity>,
     @InjectRepository(CreditBlockIssuancesViewEntity)
     private creditBlockIssuancesViewEntityRepository: Repository<CreditBlockIssuancesViewEntity>,
+    @InjectRepository(CreditBlockOrgBalancesViewEntity)
+    private creditBlockOrgBalancesViewEntityRepository: Repository<CreditBlockOrgBalancesViewEntity>,
+    @InjectRepository(CreditBlockProjectBalancesViewEntity)
+    private creditBlockProjectBalancesViewEntityRepository: Repository<CreditBlockProjectBalancesViewEntity>,
+    @InjectRepository(CreditBlockProjectHolderBalancesViewEntity)
+    private creditBlockProjectHolderBalancesViewEntityRepository: Repository<CreditBlockProjectHolderBalancesViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
     // Draft -/CMA.5 paras 20-21 guard: refuse /transfer when the block's
     // linked cooperative approach has been revoked. Mirrors the
@@ -638,6 +647,132 @@ export class CreditTransactionsManagementService {
     }
     const resp = await this.creditBlockBalancesViewEntityRepository
       .createQueryBuilder("creditBlock")
+      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+      .orderBy(
+        query?.sort?.key && `"${query?.sort?.key}"`,
+        query?.sort?.order,
+        query?.sort?.nullFirst !== undefined
+          ? query?.sort?.nullFirst === true
+            ? "NULLS FIRST"
+            : "NULLS LAST"
+          : undefined
+      )
+      .skip(query.size * query.page - query.size)
+      .take(query.size)
+      .getManyAndCount();
+    return new DataListResponseDto(
+      resp.length > 0 ? resp[0] : undefined,
+      resp.length > 1 ? resp[1] : undefined
+    );
+  }
+
+  /**
+   * Credits -> Balance -> By Organization (DNA only): one row per
+   * organization, aggregating the balance and reserved amount of every
+   * non-retired block it owns, via CreditBlockOrgBalancesViewEntity.
+   * updatedTime is the most recent block update within that
+   * organization's owned blocks. Ignores the page's account-type filter
+   * by design - totals always cover all account types.
+   */
+  public async queryBalanceByOrganization(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    if (user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.unauthorized",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    const resp = await this.creditBlockOrgBalancesViewEntityRepository
+      .createQueryBuilder("orgBalance")
+      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+      .orderBy(
+        query?.sort?.key && `"${query?.sort?.key}"`,
+        query?.sort?.order,
+        query?.sort?.nullFirst !== undefined
+          ? query?.sort?.nullFirst === true
+            ? "NULLS FIRST"
+            : "NULLS LAST"
+          : undefined
+      )
+      .skip(query.size * query.page - query.size)
+      .take(query.size)
+      .getManyAndCount();
+    return new DataListResponseDto(
+      resp.length > 0 ? resp[0] : undefined,
+      resp.length > 1 ? resp[1] : undefined
+    );
+  }
+
+  /**
+   * Credits -> Balance -> By Project: one row per project, aggregating
+   * the balance and reserved amount of every non-retired block within
+   * it. projectOwner* always identifies the project's developer company
+   * (project_entity.companyId), not the current credit holder(s). DNA
+   * sees totals across every holding organization
+   * (CreditBlockProjectBalancesViewEntity); Project Developers are
+   * scoped to blocks their own company holds
+   * (CreditBlockProjectHolderBalancesViewEntity, filtered to
+   * holderId = own companyId - a pre-aggregation scope baked into the
+   * view's grain, so totals only ever reflect their own credits).
+   * updatedTime is the most recent block update within that project's
+   * (scoped) blocks. Ignores the page's account-type filter by design -
+   * totals always cover all account types. The inner per-block
+   * breakdown for a project is fed by the existing
+   * queryBalance/queryCreditBalances endpoint filtered by projectId.
+   */
+  public async queryBalanceByProject(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    if (user.companyRole == CompanyRole.INDEPENDENT_CERTIFIER) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.unauthorized",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
+      const onlyOwn: FilterEntry = {
+        key: "holderId",
+        value: user.companyId,
+        operation: "=",
+      };
+      query.filterAnd
+        ? query.filterAnd.push(onlyOwn)
+        : (query.filterAnd = [onlyOwn]);
+      const resp = await this.creditBlockProjectHolderBalancesViewEntityRepository
+        .createQueryBuilder("projectBalance")
+        .where(this.helperService.generateWhereSQL(query, abilityCondition))
+        .orderBy(
+          query?.sort?.key && `"${query?.sort?.key}"`,
+          query?.sort?.order,
+          query?.sort?.nullFirst !== undefined
+            ? query?.sort?.nullFirst === true
+              ? "NULLS FIRST"
+              : "NULLS LAST"
+            : undefined
+        )
+        .skip(query.size * query.page - query.size)
+        .take(query.size)
+        .getManyAndCount();
+      return new DataListResponseDto(
+        resp.length > 0 ? resp[0] : undefined,
+        resp.length > 1 ? resp[1] : undefined
+      );
+    }
+
+    const resp = await this.creditBlockProjectBalancesViewEntityRepository
+      .createQueryBuilder("projectBalance")
       .where(this.helperService.generateWhereSQL(query, abilityCondition))
       .orderBy(
         query?.sort?.key && `"${query?.sort?.key}"`,

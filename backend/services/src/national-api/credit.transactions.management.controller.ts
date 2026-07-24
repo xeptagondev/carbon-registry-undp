@@ -83,6 +83,40 @@ export class CreditTransactionsManagementController {
   @CheckPolicies((ability: AppAbility) =>
     ability.can(Action.Read, ProjectEntity)
   )
+  @Post("queryBalanceByOrganization")
+  async queryBalanceByOrganization(
+    @Body() queryDto: QueryDto,
+    @Request() req
+  ): Promise<any> {
+    return this.creditTransactionsManagementService.queryBalanceByOrganization(
+      queryDto,
+      req.abilityCondition,
+      req.user
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, ProjectEntity)
+  )
+  @Post("queryBalanceByProject")
+  async queryBalanceByProject(
+    @Body() queryDto: QueryDto,
+    @Request() req
+  ): Promise<any> {
+    return this.creditTransactionsManagementService.queryBalanceByProject(
+      queryDto,
+      req.abilityCondition,
+      req.user
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, ProjectEntity)
+  )
   @Post("queryTransfers")
   async queryTransfers(
     @Body() queryDto: QueryDto,
