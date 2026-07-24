@@ -679,6 +679,8 @@ export class CreditTransactionsManagementService {
     abilityCondition: string,
     user: User
   ): Promise<DataListResponseDto> {
+    query.page = query.page || 1;
+    query.size = query.size || 10;
     if (user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
       throw new HttpException(
         this.helperService.formatReqMessagesString(
@@ -731,6 +733,8 @@ export class CreditTransactionsManagementService {
     abilityCondition: string,
     user: User
   ): Promise<DataListResponseDto> {
+    query.page = query.page || 1;
+    query.size = query.size || 10;
     if (user.companyRole == CompanyRole.INDEPENDENT_CERTIFIER) {
       throw new HttpException(
         this.helperService.formatReqMessagesString(
