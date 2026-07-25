@@ -29,6 +29,8 @@ import { CreditBlockIssuancesViewEntity } from "../view-entities/credit.block.is
 import { CreditBlockOrgBalancesViewEntity } from "../view-entities/credit.block.org.balances.view.entity";
 import { CreditBlockProjectBalancesViewEntity } from "../view-entities/credit.block.project.balances.view.entity";
 import { CreditBlockProjectHolderBalancesViewEntity } from "../view-entities/credit.block.project.holder.balances.view.entity";
+import { CreditBlockOrgTransactionsViewEntity } from "../view-entities/credit.block.org.transactions.view.entity";
+import { OrgCreditBlocksRequestDto } from "../dto/org.credit.blocks.request.dto";
 import { DocumentManagementService } from "../document-management/document-management.service";
 import { ProjectAuditLogType } from "../enum/project.audit.log.type.enum";
 import { DataResponseDto } from "../dto/data.response.dto";
@@ -118,6 +120,8 @@ export class CreditTransactionsManagementService {
     private creditBlockProjectBalancesViewEntityRepository: Repository<CreditBlockProjectBalancesViewEntity>,
     @InjectRepository(CreditBlockProjectHolderBalancesViewEntity)
     private creditBlockProjectHolderBalancesViewEntityRepository: Repository<CreditBlockProjectHolderBalancesViewEntity>,
+    @InjectRepository(CreditBlockOrgTransactionsViewEntity)
+    private creditBlockOrgTransactionsViewEntityRepository: Repository<CreditBlockOrgTransactionsViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
     // Draft -/CMA.5 paras 20-21 guard: refuse /transfer when the block's
     // linked cooperative approach has been revoked. Mirrors the
@@ -927,6 +931,56 @@ export class CreditTransactionsManagementService {
       .orderBy(
         query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
+        query?.sort?.nullFirst !== undefined
+          ? query?.sort?.nullFirst === true
+            ? "NULLS FIRST"
+            : "NULLS LAST"
+          : undefined
+      )
+      .skip(query.size * query.page - query.size)
+      .take(query.size)
+      .getManyAndCount();
+    return new DataListResponseDto(
+      resp.length > 0 ? resp[0] : undefined,
+      resp.length > 1 ? resp[1] : undefined
+    );
+  }
+
+  // All credit interactions (issued / received / transferred / retired) for a
+  // single organization, one paginated list keyed on the org's perspective.
+  // DNA and Independent Certifiers may query any organization; a Project
+  // Developer is scoped to their own company regardless of the organizationId
+  // sent (mirrors queryIssuances' own-org injection).
+  public async queryOrgCreditBlocks(
+    query: OrgCreditBlocksRequestDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    const page = query.page || 1;
+    const size = query.size || 10;
+    query.page = page;
+    query.size = size;
+
+    let organizationId = query.organizationId;
+    if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
+      organizationId = user.companyId;
+    }
+
+    const orgFilter: FilterEntry = {
+      key: "organizationId",
+      value: organizationId,
+      operation: "=",
+    };
+    query.filterAnd
+      ? query.filterAnd.push(orgFilter)
+      : (query.filterAnd = [orgFilter]);
+
+    const resp = await this.creditBlockOrgTransactionsViewEntityRepository
+      .createQueryBuilder("orgTx")
+      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+      .orderBy(
+        query?.sort?.key ? `"${query?.sort?.key}"` : `"updatedDate"`,
+        query?.sort?.order ?? "DESC",
         query?.sort?.nullFirst !== undefined
           ? query?.sort?.nullFirst === true
             ? "NULLS FIRST"

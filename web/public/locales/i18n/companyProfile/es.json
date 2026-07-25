@@ -43,5 +43,9 @@
   "Issued": "Emitido",
   "Transferred": "Transferido",
   "Received": "Recibido",
-  "Retired": "Retirado"
+  "Retired": "Retirado",
+  "all": "Todos",
+  "filterByProject": "Filtrar por proyecto",
+  "appliedFilters": "Filtros aplicados",
+  "clearAll": "Borrar todo"
 }
