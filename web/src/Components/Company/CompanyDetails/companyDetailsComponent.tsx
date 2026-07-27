@@ -23,7 +23,7 @@ export const CompanyDetailsComponent = (props: any) => {
   };
 
   return (
-    <Card className="card-container">
+    <Card className="card-container organisation-details-container">
       <div className="info-view">
         <div className="title">
           <span className="title-icon">

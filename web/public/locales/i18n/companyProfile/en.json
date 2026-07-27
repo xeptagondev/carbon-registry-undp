@@ -20,6 +20,7 @@
     "programmeCount":"Number of Projects",
     "creditSummary": "Credit Summary",
     "creditsIssued": "Credits Issued",
+    "creditsReceived": "Credits Received",
     "creditsRetired": "Credits Retired",
     "creditsTransferred": "Credits Transferred",
     "creditsReserved": "Credits Reserved",
