@@ -26,6 +26,7 @@ import "../creditPageStyles.scss";
 import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
 import { CreditActionType } from "../Enums/creditActionType.enum";
 import { ActionResponseType } from "../../../Definitions/Enums/actionResponse.enum";
+import { ProjectDetailsLink } from "./ProjectDetailsLink";
 import * as Icon from "react-bootstrap-icons";
 import { CreditActionModal } from "./creditActionModal";
 import { ActionResponseModal } from "../../../Components/Models/actionResponseModal";
@@ -288,7 +289,12 @@ export const CreditRetirementsTableComponent = (props: any) => {
       sorter: true,
       align: "left" as const,
       render: (item: CreditRetirementInterface) => {
-        return <span>{item?.projectName}</span>;
+        return (
+          <ProjectDetailsLink
+            projectId={item.projectId}
+            projectName={item.projectName}
+          />
+        );
       },
     },
     {

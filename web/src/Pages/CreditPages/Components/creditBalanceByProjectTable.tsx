@@ -16,6 +16,7 @@ import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedT
 import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
 import type { CreditBalanceInterface } from '../Interfaces/creditBalance.interface';
 import { CreditActionModal } from './creditActionModal';
+import { ProjectDetailsLink } from './ProjectDetailsLink';
 import '../creditPageStyles.scss';
 
 interface CreditSerialBalance {
@@ -328,7 +329,16 @@ const CreditBalanceSerialTable = ({
 };
 
 const columns: ColumnsType<ProjectBalance> = [
-  { title: 'Project Name', dataIndex: 'name', key: 'name', align: 'left', sorter: (a, b) => a.name.localeCompare(b.name) },
+  {
+    title: 'Project Name',
+    dataIndex: 'name',
+    key: 'name',
+    align: 'left',
+    sorter: (a, b) => a.name.localeCompare(b.name),
+    render: (_, row) => (
+      <ProjectDetailsLink projectId={row.id} projectName={row.name} />
+    ),
+  },
   { title: 'Project Owner', key: 'owner', align: 'left', sorter: (a, b) => a.owner.localeCompare(b.owner), render: (_, row) => <OrganizationCell name={row.owner} color={row.ownerColor} logo={row.ownerLogo} /> },
   { title: 'Total Credit Balance', dataIndex: 'balance', key: 'balance', align: 'left', sorter: (a, b) => a.balance - b.balance, render: formatCredits },
   { title: 'Total Reserved Credits', dataIndex: 'reserved', key: 'reserved', align: 'left', sorter: (a, b) => a.reserved - b.reserved, render: formatCredits },

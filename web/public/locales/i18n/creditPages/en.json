@@ -251,5 +251,25 @@
     "projectFilter": "Project",
     "selectOrganization": "Select Organization",
     "selectProject": "Select Project",
-    "selectAll": "Select All"
+    "selectAll": "Select All",
+    "serialSearchInfo": {
+        "infoDescription": "Learn how to search credits using serial numbers.",
+        "intro": "You can search using any of the following:",
+        "fullSerialTitle": "Full serial number",
+        "fullSerialDescription": "Enter the complete serial to find the exact block.",
+        "fullSerialRangeDescription": "You can also enter a full serial with a single credit as the range (start and end the same) to find the block that contains that credit.",
+        "singleCreditTitle": "A single credit number",
+        "singleCreditDescription": "Enter one number to find blocks whose serial range contains that credit.",
+        "singleCreditMatch": "matches any block covering unit 3500",
+        "numberRangeTitle": "Number range",
+        "numberRangeDescription": "Enter two numbers to find blocks whose range overlaps that window, or three numbers to also filter by vintage. The first number must be smaller than the second.",
+        "serialPrefixTitle": "Serial prefix",
+        "serialPrefixDescription": "Start typing a serial from the beginning to narrow results as you type; you can stop at any point.",
+        "textFragmentTitle": "Text fragment",
+        "textFragmentDescription": "Enter any part of the serial, like an organization or country code to find blocks containing that text.",
+        "example": "e.g.",
+        "or": "or",
+        "byProject": "by project",
+        "byProjectAndCredit": "by project + credit"
+    }
 }

@@ -26,6 +26,7 @@ import { addCommSep } from "../../../Definitions/Definitions/programme.definitio
 import { CreditIssuanceInterface } from "../Interfaces/creditIssuance.interface";
 import { CreditHistoryEntry } from "../../../Components/CreditHistoryGraph/creditHistoryGraph.types";
 import { CreditHistoryGraph } from "../../../Components/CreditHistoryGraph/CreditHistoryGraph";
+import { ProjectDetailsLink } from "./ProjectDetailsLink";
 import {
   FilterBar,
   FilterValues,
@@ -233,7 +234,12 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
       sorter: true,
       align: "left" as const,
       render: (record: CreditIssuanceInterface) => {
-        return <span>{record?.projectName}</span>;
+        return (
+          <ProjectDetailsLink
+            projectId={record.projectId}
+            projectName={record.projectName}
+          />
+        );
       },
     },
     {
