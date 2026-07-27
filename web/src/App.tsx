@@ -58,6 +58,7 @@ import InitialReportManagement from "./Pages/InitialReport/initialReportManageme
 import CreateInitialReport from "./Pages/InitialReport/createInitialReport";
 import EditInitialReport from "./Pages/InitialReport/editInitialReport";
 import InitialReportDetails from "./Pages/InitialReport/initialReportDetails";
+import { CreditIssuancePage } from "./Pages/CreditPages/creditIssuancePage";
 
 const App = () => {
   const { t } = useTranslation(["common"]);
@@ -179,6 +180,10 @@ const App = () => {
                         element={<CreditBlockListPage />}
                       />
                     </Route>
+                    <Route
+                      path="issuanceList"
+                      element={<CreditIssuancePage />}
+                    />
                   </Route>
                   {/* Standalone (no CustomLayout) — opened in a new tab by the
                       credit-history graph's "open in new tab" button. */}

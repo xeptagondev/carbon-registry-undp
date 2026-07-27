@@ -7,7 +7,7 @@ import { CompanyService } from "../company/company.service";
 import { ProgrammeLedgerService } from "../programme-ledger/programme-ledger.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
-import { EntityManager, In, Repository } from "typeorm";
+import { EntityManager, Repository } from "typeorm";
 import { TxType } from "../enum/txtype.enum";
 import { plainToClass } from "class-transformer";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
@@ -29,6 +29,8 @@ import { CreditBlockIssuancesViewEntity } from "../view-entities/credit.block.is
 import { CreditBlockOrgBalancesViewEntity } from "../view-entities/credit.block.org.balances.view.entity";
 import { CreditBlockProjectBalancesViewEntity } from "../view-entities/credit.block.project.balances.view.entity";
 import { CreditBlockProjectHolderBalancesViewEntity } from "../view-entities/credit.block.project.holder.balances.view.entity";
+import { CreditBlockOrgTransactionsViewEntity } from "../view-entities/credit.block.org.transactions.view.entity";
+import { OrgCreditBlocksRequestDto } from "../dto/org.credit.blocks.request.dto";
 import { DocumentManagementService } from "../document-management/document-management.service";
 import { ProjectAuditLogType } from "../enum/project.audit.log.type.enum";
 import { DataResponseDto } from "../dto/data.response.dto";
@@ -118,6 +120,8 @@ export class CreditTransactionsManagementService {
     private creditBlockProjectBalancesViewEntityRepository: Repository<CreditBlockProjectBalancesViewEntity>,
     @InjectRepository(CreditBlockProjectHolderBalancesViewEntity)
     private creditBlockProjectHolderBalancesViewEntityRepository: Repository<CreditBlockProjectHolderBalancesViewEntity>,
+    @InjectRepository(CreditBlockOrgTransactionsViewEntity)
+    private creditBlockOrgTransactionsViewEntityRepository: Repository<CreditBlockOrgTransactionsViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
     // Draft -/CMA.5 paras 20-21 guard: refuse /transfer when the block's
     // linked cooperative approach has been revoked. Mirrors the
@@ -679,6 +683,8 @@ export class CreditTransactionsManagementService {
     abilityCondition: string,
     user: User
   ): Promise<DataListResponseDto> {
+    query.page = query.page || 1;
+    query.size = query.size || 10;
     if (user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
       throw new HttpException(
         this.helperService.formatReqMessagesString(
@@ -731,6 +737,8 @@ export class CreditTransactionsManagementService {
     abilityCondition: string,
     user: User
   ): Promise<DataListResponseDto> {
+    query.page = query.page || 1;
+    query.size = query.size || 10;
     if (user.companyRole == CompanyRole.INDEPENDENT_CERTIFIER) {
       throw new HttpException(
         this.helperService.formatReqMessagesString(
@@ -890,6 +898,8 @@ export class CreditTransactionsManagementService {
     const size = query.size || 10;
     query.page = page;
     query.size = size;
+    // DNA and Independent Certifiers see every issuance; Project Developers
+    // are scoped to their own org.
     if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
       const onlyOwn: FilterEntry = {
         key: "organizationId",
@@ -899,21 +909,82 @@ export class CreditTransactionsManagementService {
       query.filterAnd
         ? query.filterAnd.push(onlyOwn)
         : (query.filterAnd = [onlyOwn]);
-    } else if (user.companyRole == CompanyRole.INDEPENDENT_CERTIFIER) {
-      throw new HttpException(
-        this.helperService.formatReqMessagesString(
-          "creditTransaction.unauthorized",
-          []
-        ),
-        HttpStatus.BAD_REQUEST
-      );
     }
-    const resp = await this.creditBlockIssuancesViewEntityRepository
-      .createQueryBuilder("creditTx")
-      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+    // queryIssuances has no real vintage column - the Issuance page's
+    // vintage filter is sent as a "vintageRange" pseudo-entry
+    // (generateWhereSQL has no special handling for it) and translated
+    // into a predicate against the serial's trailing segment instead, the
+    // same pattern queryExplorer uses for "serialColumns".
+    const vintagePredicate = this.extractVintageRangePredicate(query);
+    const baseWhere = this.helperService.generateWhereSQL(
+      query,
+      abilityCondition
+    );
+    const qb = this.creditBlockIssuancesViewEntityRepository.createQueryBuilder(
+      "creditTx"
+    );
+    if (baseWhere) {
+      qb.where(baseWhere);
+      if (vintagePredicate) {
+        qb.andWhere(vintagePredicate.sql, vintagePredicate.params);
+      }
+    } else if (vintagePredicate) {
+      qb.where(vintagePredicate.sql, vintagePredicate.params);
+    }
+    const resp = await qb
       .orderBy(
         query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
+        query?.sort?.nullFirst !== undefined
+          ? query?.sort?.nullFirst === true
+            ? "NULLS FIRST"
+            : "NULLS LAST"
+          : undefined
+      )
+      .skip(query.size * query.page - query.size)
+      .take(query.size)
+      .getManyAndCount();
+    return new DataListResponseDto(
+      resp.length > 0 ? resp[0] : undefined,
+      resp.length > 1 ? resp[1] : undefined
+    );
+  }
+
+  // All credit interactions (issued / received / transferred / retired) for a
+  // single organization, one paginated list keyed on the org's perspective.
+  // DNA and Independent Certifiers may query any organization; a Project
+  // Developer is scoped to their own company regardless of the organizationId
+  // sent (mirrors queryIssuances' own-org injection).
+  public async queryOrgCreditBlocks(
+    query: OrgCreditBlocksRequestDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    const page = query.page || 1;
+    const size = query.size || 10;
+    query.page = page;
+    query.size = size;
+
+    let organizationId = query.organizationId;
+    if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
+      organizationId = user.companyId;
+    }
+
+    const orgFilter: FilterEntry = {
+      key: "organizationId",
+      value: organizationId,
+      operation: "=",
+    };
+    query.filterAnd
+      ? query.filterAnd.push(orgFilter)
+      : (query.filterAnd = [orgFilter]);
+
+    const resp = await this.creditBlockOrgTransactionsViewEntityRepository
+      .createQueryBuilder("orgTx")
+      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+      .orderBy(
+        query?.sort?.key ? `"${query?.sort?.key}"` : `"updatedDate"`,
+        query?.sort?.order ?? "DESC",
         query?.sort?.nullFirst !== undefined
           ? query?.sort?.nullFirst === true
             ? "NULLS FIRST"
@@ -1001,73 +1072,104 @@ export class CreditTransactionsManagementService {
    * than baked into the view SQL, to avoid recomputing lineage for the
    * whole table on every query.
    *
-   * isNotTransferred can't drive this on its own - it is flipped to
-   * false by retirement as well as transfer (see
-   * ProgrammeLedgerService.retirementRequestAction), so a block retired
-   * directly by its issuer would be misreported as transferred. The
-   * FIRST_TRANSFER CreditTransactionsEntity row (written in
-   * handleTransactionRecords, gated on the pre-update block still having
-   * isNotTransferred === true) is the unambiguous source: its
-   * presence/absence naturally yields null for both "still held by
-   * issuer" and "retired by issuer".
+   * This is derived straight from the append-only ledger
+   * (ProgrammeLedgerService.getCreditBlockLedgerHistory - the same source
+   * getCreditBlockHistoryTree's drill-down uses) rather than from a
+   * FIRST_TRANSFER CreditTransactionsEntity row. A CreditTransactionsEntity
+   * row can only be tagged FIRST_TRANSFER when handleTransactionRecords
+   * finds the pre-update block by creditBlockId with isNotTransferred ===
+   * true - which holds for a whole-block transfer, but not for a partial
+   * transfer, where the transferred portion is sheared off into a
+   * brand-new creditBlockId
+   * (CreditBlocksManagementService.transferCreditAmountFromBlocks) that has
+   * no "previous" row to look up. Partial transfers are the common case,
+   * so relying on that row left firstTransfer null for most transferred
+   * blocks - including ones transferred long before this fix, which a
+   * write-path correction alone could never backfill.
    *
-   * Splits always shear credits off the top of a block's serial range
-   * (SerialNumberManagementService.splitCreditBlockSerialNumber), so
-   * every descendant block's range stays fully inside the sub-range that
-   * was first transferred - matching a row to its first transfer is
-   * therefore: same project + vintage, and the first-transfer's range
-   * contains the row's range.
+   * Definition used instead: the first transfer is the EARLIEST
+   * (min txTime) ledger revision, in the same project and vintage, whose
+   * txType is TRANSFER (ownerCompanyId != 0 - excludes RETIRE, which also
+   * clears the sender's balance but isn't a transfer) and whose serial
+   * range contains the row's range. Splits always shear credits off the
+   * TOP of a block's range (SerialNumberManagementService.
+   * splitCreditBlockSerialNumber) and every block starts out issuer-held,
+   * so the earliest TRANSFER revision covering a range is unambiguously
+   * the event that first moved those credits out of the issuer - and a
+   * further-split/re-transferred descendant still resolves to that same
+   * original transfer (not its later, narrower one), since the earliest
+   * containing revision is always the outermost one.
    */
   private async enrichExplorerRowsWithFirstTransfer(
     rows: CreditBlockExplorerViewEntity[]
   ): Promise<Array<CreditBlockExplorerViewEntity & { firstTransfer: CreditBlockExplorerFirstTransferDto | null }>> {
     const projectIds = Array.from(new Set(rows.map((r) => r.projectId)));
-    const firstTransferTxs = await this.creditTransactionsEntityRepository.find(
-      {
-        where: {
-          type: CreditTransactionTypesEnum.FIRST_TRANSFER,
-          status: CreditTransactionStatusEnum.COMPLETED,
-          projectRefId: In(projectIds),
-        },
-      }
-    );
 
-    // Pre-parse each first-transfer's range/vintage once and group by
-    // project so matching a row doesn't reparse serials repeatedly.
-    interface ParsedFirstTransfer {
-      tx: CreditTransactionsEntity;
+    interface ParsedTransfer {
       range: { start: number; end: number };
       vintage: string;
+      txTime: number;
+      fromOrganizationId?: number;
+      toOrganizationId: number;
+      amount: number;
+      serialNumber: string;
     }
-    const byProject = new Map<string, ParsedFirstTransfer[]>();
+    const byProject = new Map<string, ParsedTransfer[]>();
     const companyIds = new Set<number>();
-    for (const tx of firstTransferTxs) {
-      let range: { start: number; end: number };
-      let vintage: string;
-      try {
-        range = this.serialNumberManagementService.getBlockRange(
-          tx.serialNumber
-        );
-        vintage = this.serialNumberManagementService.getVintage(
-          tx.serialNumber
-        );
-      } catch {
-        continue; // malformed/legacy serial - skip, never throw
-      }
-      if (
-        !Number.isFinite(range?.start) ||
-        !Number.isFinite(range?.end) ||
-        !vintage
-      ) {
-        continue;
-      }
-      const parsed: ParsedFirstTransfer = { tx, range, vintage };
-      const list = byProject.get(tx.projectRefId) ?? [];
-      list.push(parsed);
-      byProject.set(tx.projectRefId, list);
-      if (tx.senderId != null) companyIds.add(tx.senderId);
-      if (tx.recieverId != null) companyIds.add(tx.recieverId);
-    }
+
+    await Promise.all(
+      projectIds.map(async (projectId) => {
+        const ledgerVersions =
+          await this.programmeLedgerService.getCreditBlockLedgerHistory(
+            projectId
+          );
+        const parsedTransfers: ParsedTransfer[] = [];
+        for (const version of ledgerVersions || []) {
+          if (
+            version.txType !== TxType.TRANSFER ||
+            Number(version.ownerCompanyId) === 0
+          ) {
+            continue; // not a real org-to-org transfer (e.g. a retirement)
+          }
+          let range: { start: number; end: number };
+          let vintage: string;
+          try {
+            range = this.serialNumberManagementService.getBlockRange(
+              version.serialNumber
+            );
+            vintage = this.serialNumberManagementService.getVintage(
+              version.serialNumber
+            );
+          } catch {
+            continue; // malformed/legacy serial - skip, never throw
+          }
+          if (
+            !Number.isFinite(range?.start) ||
+            !Number.isFinite(range?.end) ||
+            !vintage
+          ) {
+            continue;
+          }
+          parsedTransfers.push({
+            range,
+            vintage,
+            txTime: Number(version.txTime),
+            fromOrganizationId:
+              version.previousOwnerCompanyId != null
+                ? Number(version.previousOwnerCompanyId)
+                : undefined,
+            toOrganizationId: Number(version.ownerCompanyId),
+            amount: version.creditAmount,
+            serialNumber: version.serialNumber,
+          });
+          if (version.previousOwnerCompanyId != null) {
+            companyIds.add(Number(version.previousOwnerCompanyId));
+          }
+          companyIds.add(Number(version.ownerCompanyId));
+        }
+        byProject.set(projectId, parsedTransfers);
+      })
+    );
 
     const companyNames = await this.resolveCompanyNames(companyIds);
 
@@ -1082,23 +1184,33 @@ export class CreditTransactionsManagementService {
           const rowVintage = this.serialNumberManagementService.getVintage(
             row.serialNumber
           );
-          const match = candidates.find(
-            (c) =>
+          // Among every transfer whose range contains this row's range,
+          // the earliest one is the first transfer - a descendant of a
+          // later re-transfer still resolves to the original.
+          let match: ParsedTransfer | undefined;
+          for (const c of candidates) {
+            if (
               c.vintage === rowVintage &&
               c.range.start <= rowRange.start &&
-              c.range.end >= rowRange.end
-          );
+              c.range.end >= rowRange.end &&
+              (!match || c.txTime < match.txTime)
+            ) {
+              match = c;
+            }
+          }
           if (match) {
             firstTransfer = {
-              fromOrganizationId: match.tx.senderId,
+              fromOrganizationId: match.fromOrganizationId,
               fromOrganizationName:
-                companyNames.get(match.tx.senderId) ?? null,
-              toOrganizationId: match.tx.recieverId,
+                match.fromOrganizationId != null
+                  ? companyNames.get(match.fromOrganizationId) ?? null
+                  : null,
+              toOrganizationId: match.toOrganizationId,
               toOrganizationName:
-                companyNames.get(match.tx.recieverId) ?? null,
-              amount: match.tx.amount,
-              serialNumber: match.tx.serialNumber,
-              transferTime: match.tx.createTime,
+                companyNames.get(match.toOrganizationId) ?? null,
+              amount: match.amount,
+              serialNumber: match.serialNumber,
+              transferTime: match.txTime,
             };
           }
         } catch {
@@ -1128,21 +1240,11 @@ export class CreditTransactionsManagementService {
   // (ProgrammeLedgerService.getCreditBlockLedgerHistory).
   // ---------------------------------------------------------------------
 
+  // Unlike queryExplorer, open to any authenticated user - it's also the
+  // drill-down for the Issuance page (DNA/PD/IC), not just Explorer (DNA-only).
   public async getCreditBlockHistoryTree(
-    creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto,
-    user: User
+    creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto
   ): Promise<DataResponseDto> {
-    // Same DNA-only gate as queryExplorer - this is a drill-down from it.
-    if (user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY) {
-      throw new HttpException(
-        this.helperService.formatReqMessagesString(
-          "creditTransaction.unauthorized",
-          []
-        ),
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
     const queriedBlock = await this.creditBlocksEntityRepository.findOne({
       where: { creditBlockId: creditBlockHistoryRequestDto.blockId },
     });
@@ -1516,6 +1618,37 @@ export class CreditTransactionsManagementService {
       return null;
     }
     return this.buildSerialSearchPredicate(String(searchValue));
+  }
+
+  /**
+   * Strip the "vintageRange" filterAnd entry (if present) out of the query
+   * in place and translate its {from, to} value into a standalone
+   * predicate against the issuance row's serial number - queryIssuances
+   * has no real vintage column, so this matches positionally against the
+   * serial's trailing (7th) "-"-separated segment instead, the same
+   * split_part() convention the Explorer's serial search uses for vintage.
+   */
+  private extractVintageRangePredicate(
+    query: QueryDto
+  ): { sql: string; params: Record<string, any> } | null {
+    if (!query.filterAnd || query.filterAnd.length === 0) {
+      return null;
+    }
+    const entry = query.filterAnd.find((e) => e.key === "vintageRange");
+    query.filterAnd = query.filterAnd.filter((e) => e.key !== "vintageRange");
+    const from = Number(entry?.value?.from);
+    const to = Number(entry?.value?.to);
+    if (!entry || !Number.isFinite(from) || !Number.isFinite(to)) {
+      return null;
+    }
+    const vintageExpr = `split_part("creditTx"."serialNumber", '-', 7)`;
+    return {
+      sql: `${vintageExpr} ~ '^[0-9]+$' AND ${vintageExpr}::int BETWEEN :vintageFrom AND :vintageTo`,
+      params: {
+        vintageFrom: Math.min(from, to),
+        vintageTo: Math.max(from, to),
+      },
+    };
   }
 
   /**

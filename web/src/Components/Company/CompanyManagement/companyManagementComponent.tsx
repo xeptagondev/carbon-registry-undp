@@ -220,6 +220,24 @@ export const CompanyManagementComponent = (props: any) => {
       },
     },
     {
+      title: t('company:creditIssued'),
+      dataIndex: 'creditIssued',
+      key: CompanyManagementColumns.creditIssued,
+      align: 'left' as const,
+      render: (item: any) => {
+        return item !== null && item !== undefined ? addCommSep(item) : '-';
+      },
+    },
+    {
+      title: t('company:creditRetired'),
+      dataIndex: 'creditRetired',
+      key: CompanyManagementColumns.creditRetired,
+      align: 'left' as const,
+      render: (item: any) => {
+        return item !== null && item !== undefined ? addCommSep(item) : '-';
+      },
+    },
+    {
       title: t('company:companyState'),
       dataIndex: 'state',
       key: CompanyManagementColumns.companyState,

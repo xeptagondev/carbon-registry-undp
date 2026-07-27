@@ -10,7 +10,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { OrganisationDto } from "../dto/organisation.dto";
-import { FindOptionsWhere, Not, QueryFailedError, Repository } from "typeorm";
+import { FindOptionsWhere, In, Not, QueryFailedError, Repository } from "typeorm";
 import { Company } from "../entities/company.entity";
 import { CompanyRole } from "../enum/company.role.enum";
 import { QueryDto } from "../dto/query.dto";
@@ -62,6 +62,7 @@ import { GetOrganizationsRequest } from "../dto/organizations-request.dto";
 import { IDNameResponse } from "../dto/id-name.response.dto";
 import { Role } from "../casl/role.enum";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
+import { CreditBlockOrgAggregationViewEntity } from "../view-entities/credit.block.org.aggregation.view.entity";
 
 @Injectable()
 export class CompanyService {
@@ -90,7 +91,9 @@ export class CompanyService {
     private httpUtilService: HttpUtilService,
     @Inject("CACHE_MANAGER") private cacheManager: Cache,
     @InjectRepository(CreditBlocksEntity)
-    private creditBlocksEntityRepository: Repository<CreditBlocksEntity>
+    private creditBlocksEntityRepository: Repository<CreditBlocksEntity>,
+    @InjectRepository(CreditBlockOrgAggregationViewEntity)
+    private creditBlockOrgAggregationViewEntityRepository: Repository<CreditBlockOrgAggregationViewEntity>
   ) {}
 
   async suspend(
@@ -633,10 +636,40 @@ export class CompanyService {
       .limit(query.size)
       .getManyAndCount();
 
+    const companies: Company[] = resp.length > 0 ? resp[0] : [];
+    await this.attachCreditAggregation(companies);
+
     return new DataListResponseDto(
-      resp.length > 0 ? resp[0] : undefined,
+      companies,
       resp.length > 1 ? resp[1] : undefined
     );
+  }
+
+  // Attaches the per-org credit totals (issued / retired / transferred /
+  // reserved / balance) from CreditBlockOrgAggregationViewEntity onto each
+  // company, so the View Organisations table (creditIssued / creditRetired)
+  // and the profile summary card can read them off the response. Orgs with no
+  // credit activity default to 0.
+  private async attachCreditAggregation(companies: Company[]): Promise<void> {
+    if (!companies || companies.length === 0) {
+      return;
+    }
+    const companyIds = companies.map((c) => c.companyId);
+    const aggregations =
+      await this.creditBlockOrgAggregationViewEntityRepository.find({
+        where: { organizationId: In(companyIds) },
+      });
+    const byOrgId = new Map<number, CreditBlockOrgAggregationViewEntity>(
+      aggregations.map((a) => [Number(a.organizationId), a])
+    );
+    for (const company of companies) {
+      const agg = byOrgId.get(Number(company.companyId));
+      (company as any).creditIssued = Number(agg?.creditIssued ?? 0);
+      (company as any).creditRetired = Number(agg?.creditRetired ?? 0);
+      (company as any).creditTransferred = Number(agg?.creditTransferred ?? 0);
+      (company as any).creditReserved = Number(agg?.creditReserved ?? 0);
+      (company as any).creditBalance = Number(agg?.creditBalance ?? 0);
+    }
   }
 
   async byType(
@@ -983,6 +1016,10 @@ export class CompanyService {
       },
     });
     if (includeCreditBlockBalance && companies && companies.length > 0) {
+      // Populates creditIssued / creditRetired / creditTransferred /
+      // creditReserved for the profile credit summary card.
+      await this.attachCreditAggregation(companies);
+      // Keep the live, authoritative available balance for creditBalance.
       const availableCreditBlockBalance =
         await this.getCompanyAvailableCreditBlockBalance(companyId);
       companies[0].creditBalance = availableCreditBlockBalance;

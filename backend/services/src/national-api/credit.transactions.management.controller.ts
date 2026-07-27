@@ -8,6 +8,7 @@ import { CreditRetireActionDto } from "@app/shared/dto/credit.retire.action.dto"
 import { CreditRetireRequestDto } from "@app/shared/dto/credit.retire.request.dto";
 import { CreditTransferDto } from "@app/shared/dto/credit.transfer.dto";
 import { CreditBlockHistoryRequestDto } from "@app/shared/dto/credit.block.history.request.dto";
+import { OrgCreditBlocksRequestDto } from "@app/shared/dto/org.credit.blocks.request.dto";
 import { QueryDto } from "@app/shared/dto/query.dto";
 import { ProjectEntity } from "@app/shared/entities/projects.entity";
 import { Body, Controller, Request, Post, UseGuards } from "@nestjs/common";
@@ -187,11 +188,26 @@ export class CreditTransactionsManagementController {
   )
   @Post("creditBlockHistory")
   async creditBlockHistory(
-    @Body() creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto,
-    @Request() req
+    @Body() creditBlockHistoryRequestDto: CreditBlockHistoryRequestDto
   ): Promise<any> {
     return this.creditTransactionsManagementService.getCreditBlockHistoryTree(
-      creditBlockHistoryRequestDto,
+      creditBlockHistoryRequestDto
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Read, ProjectEntity)
+  )
+  @Post("orgCreditBlocks")
+  async orgCreditBlocks(
+    @Body() orgCreditBlocksRequestDto: OrgCreditBlocksRequestDto,
+    @Request() req
+  ): Promise<any> {
+    return this.creditTransactionsManagementService.queryOrgCreditBlocks(
+      orgCreditBlocksRequestDto,
+      req.abilityCondition,
       req.user
     );
   }

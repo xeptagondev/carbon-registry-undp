@@ -49,6 +49,8 @@ export const API_PATHS = {
   CREDIT_TRANSFER_REQUEST: "national/creditTransactionsManagement/transfer",
   CREDIT_EXPLORER_QUERY: "national/creditTransactionsManagement/queryExplorer",
   CREDIT_BLOCK_HISTORY: "national/creditTransactionsManagement/creditBlockHistory",
+  CREDIT_ISSUANCES_QUERY: "national/creditTransactionsManagement/queryIssuances",
+  ORG_CREDIT_BLOCKS: "national/creditTransactionsManagement/orgCreditBlocks",
   //LOCATION
   PROVINCES: "national/location/province",
   DISTRICTS: "national/location/district",

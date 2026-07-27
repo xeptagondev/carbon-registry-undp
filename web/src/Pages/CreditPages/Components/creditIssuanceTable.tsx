@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Col,
+  DatePicker,
   Empty,
   message,
   PaginationProps,
@@ -9,82 +10,49 @@ import {
   Popover,
   List,
   Typography,
-  Tag,
-  Tooltip,
   Modal,
   Spin,
 } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { useEffect, useRef, useState } from "react";
 import { useConnection } from "../../../Context/ConnectionContext/connectionContext";
+import { useUserContext } from "../../../Context/UserInformationContext/userInformationContext";
+import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
 import { API_PATHS } from "../../../Config/apiConfig";
 import { ProfileIcon } from "../../../Components/IconComponents/ProfileIcon/profile.icon";
 import "../creditPageStyles.scss";
-import { CreditBlockStatus } from "../Enums/creditEventEnum";
 import * as Icon from "react-bootstrap-icons";
 import moment from "moment";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
-import { CreditBlockInterface } from "../Interfaces/creditBlock.interface";
+import { CreditIssuanceInterface } from "../Interfaces/creditIssuance.interface";
 import { CreditHistoryEntry } from "../../../Components/CreditHistoryGraph/creditHistoryGraph.types";
 import { CreditHistoryGraph } from "../../../Components/CreditHistoryGraph/CreditHistoryGraph";
 import {
   FilterBar,
-  FilterValue,
   FilterValues,
   usePaginatedSelectOptions,
 } from "../../../Components/Common/FilterBar";
-import { getCreditBlockStatusTagColor } from "./creditTableHelpers";
 
-enum CreditBlockColumns {
+enum CreditIssuanceColumns {
   SERIAL_NO = "serialNo",
   ORGANIZATION_NAME = "organization",
   PROJECT_NAME = "projectName",
   CREDITS = "noOfCredits",
-  RESERVED = "reserved",
-  UPDATE_DATE = "updateDate",
-  CURRENT_STATUS = "currentStatus",
-  FIRST_TRANSFER = "firstTransfer",
+  ISSUANCE_DATE = "issuanceDate",
 }
 
-// Raw row from POST .../queryExplorer (CreditBlockExplorerViewEntity +
-// `firstTransfer`, which is null until the block is transferred).
-interface ExplorerQueryRow {
+// Raw row from POST .../queryIssuances (CreditBlockIssuancesViewEntity).
+interface IssuanceQueryRow {
   id: string;
   serialNumber: string;
+  creditAmount: number;
+  issuanceDate: number | string;
+  projectId: string;
+  projectName: string;
   organizationId: number;
   organizationName: string;
   organizationLogo: string | null;
-  projectId: string;
-  projectName: string;
-  balance: number;
-  reserved: number;
-  status: string;
-  updatedTime: number | string;
-  firstTransfer: { toOrganizationName: string } | null;
 }
-
-const mapExplorerRow = (row: ExplorerQueryRow): CreditBlockInterface => ({
-  id: row.id,
-  serialNumber: row.serialNumber,
-  creditBalance: row.balance,
-  reserved: row.reserved,
-  updateDate: String(row.updatedTime),
-  organizationId: row.organizationId,
-  organizationName: row.organizationName,
-  organizationLogo: row.organizationLogo,
-  projectId: row.projectId,
-  projectName: row.projectName,
-  currentStatus: row.status as CreditBlockStatus,
-  firstTransfer: row.firstTransfer ? row.firstTransfer.toOrganizationName : "-",
-  vintage: vintageFromSerial(row.serialNumber),
-});
-
-// The block's range, encoded in its serial (…-start-end-vintage). Pins the
-// history graph's path to this block rather than the deepest leaf.
-const currentRangeFromSerial = (serialNumber: string): string | undefined => {
-  const parts = serialNumber.split("-");
-  return parts.length >= 6 ? `${parts[4]}-${parts[5]}` : undefined;
-};
 
 // Vintage is the serial number's trailing segment, e.g.
 // "CA0NNN-NG-XX-1-1-14-2023" -> "2023".
@@ -93,52 +61,56 @@ const vintageFromSerial = (serialNumber: string): string | undefined => {
   return parts.length >= 7 ? parts[6] : undefined;
 };
 
-// FilterBar's "select all" pseudo-option for the status checkbox group —
-// never sent to the backend (see the `statuses` filter in getQueryData).
-const STATUS_ALL = "All";
+const mapIssuanceRow = (row: IssuanceQueryRow): CreditIssuanceInterface => ({
+  id: row.id,
+  serialNumber: row.serialNumber,
+  creditAmount: row.creditAmount,
+  issuanceDate: String(row.issuanceDate),
+  projectId: row.projectId,
+  projectName: row.projectName,
+  organizationId: row.organizationId,
+  organizationName: row.organizationName,
+  organizationLogo: row.organizationLogo,
+  vintage: vintageFromSerial(row.serialNumber),
+});
+
+// The block's own creditBlockId is its serial's first 5 segments (matches
+// SerialNumberManagementService.getCreditBlockId) — the issuance row's own
+// `id` is the credit-transaction id, not the block id creditBlockHistory needs.
+const creditBlockIdFromSerial = (serialNumber: string): string =>
+  serialNumber.split("-").slice(0, 5).join("-");
 
 const INITIAL_FILTER_VALUES: FilterValues = {
-  status: [STATUS_ALL, ...Object.values(CreditBlockStatus)],
   organization: [],
   project: [],
-  serialSearch: "",
 };
 
-const SerialSearchInfoContent = () => (
-  <p>
-    Enter a serial number to find the matching credit block. You can also enter
-    a single credit number to find blocks whose serial range contains that
-    credit.
-  </p>
-);
-
-interface CreditBlockListTableProps {
+interface CreditIssuanceTableProps {
   t: (key: string) => string;
 }
 
-export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) => {
+export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) => {
   const { post } = useConnection();
+  const { userInfoState } = useUserContext();
+  const isProjectDeveloper = userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER;
   const isInitialRender = useRef(false);
   const [totalProgramme, setTotalProgramme] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
-  const [tableData, setTableData] = useState<CreditBlockInterface[]>([]);
+  const [tableData, setTableData] = useState<CreditIssuanceInterface[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [sortOrder, setSortOrder] = useState<string>();
   const [sortField, setSortField] = useState<string>();
-  const [filterValues, setFilterValues] = useState<FilterValues>(INITIAL_FILTER_VALUES);
-  // The serial search only applies on Enter / the search icon (FilterBar's
-  // onSearch), not per keystroke — `filterValues.serialSearch` holds what's
-  // being typed, this holds what the table is actually filtered by.
-  const [appliedSerialSearch, setAppliedSerialSearch] = useState<string>("");
-  const [viewModalRecord, setViewModalRecord] = useState<CreditBlockInterface | null>(null);
+  const [viewModalRecord, setViewModalRecord] = useState<CreditIssuanceInterface | null>(null);
   const [historyLoading, setHistoryLoading] = useState<boolean>(false);
   const [historyEntries, setHistoryEntries] = useState<CreditHistoryEntry[]>([]);
+  const [filterValues, setFilterValues] = useState<FilterValues>(INITIAL_FILTER_VALUES);
+  const [vintageYear, setVintageYear] = useState<number>();
 
   // Org & Project dropdowns load lazily, page-by-page, and search server-side
   // (see usePaginatedSelectOptions) rather than preloading the whole list.
   const orgSelect = usePaginatedSelectOptions({
-    selectedValues: filterValues.organization as FilterValue[],
+    selectedValues: filterValues.organization as (string | number)[],
     fetchPage: async ({ search, page, size }) => {
       const response: any = await post(API_PATHS.ORGANIZATION_NAMES, {
         page,
@@ -151,7 +123,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
   });
 
   const projectSelect = usePaginatedSelectOptions({
-    selectedValues: filterValues.project as FilterValue[],
+    selectedValues: filterValues.project as (string | number)[],
     fetchPage: async ({ search, page, size }) => {
       const response: any = await post(API_PATHS.GET_PROJECT, {
         page,
@@ -159,7 +131,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
         filterAnd: search ? [{ key: "title", operation: "like", value: `%${search}%` }] : undefined,
         sort: { key: "title", order: "ASC" },
       });
-      // The explorer view's projectId column is the project's refId.
+      // The issuances view's projectId column is the project's refId.
       return (response?.data ?? []).map((d: any) => ({ label: d.title, value: d.refId }));
     },
   });
@@ -168,46 +140,38 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
     setLoading(true);
 
     try {
-      const statuses = (filterValues.status as string[]).filter((s) => s !== STATUS_ALL);
-      if (statuses.length === 0) {
-        setTableData([]);
-        setTotalProgramme(0);
-        return;
-      }
-
       const orgIds = filterValues.organization as number[];
       const projectIds = filterValues.project as string[];
-      const filterAnd: any[] = [
-        { key: "status", operation: "in", value: statuses },
-      ];
+      const filterAnd: any[] = [];
       if (orgIds.length > 0) {
         filterAnd.push({ key: "organizationId", operation: "in", value: orgIds });
       }
       if (projectIds.length > 0) {
         filterAnd.push({ key: "projectId", operation: "in", value: projectIds });
       }
-      if (appliedSerialSearch) {
-        // Not a real column — the backend pulls this entry out
-        // (extractSerialSearchPredicate) and builds its own prefix/fragment
-        // serial predicate from the value; the operation is ignored.
-        filterAnd.push({ key: "serialColumns", operation: "=", value: appliedSerialSearch });
+      if (vintageYear !== undefined) {
+        filterAnd.push({
+          key: "vintageRange",
+          operation: "=",
+          value: { from: vintageYear, to: vintageYear },
+        });
       }
       const sort = sortField && sortOrder
         ? { key: sortField, order: sortOrder, nullFirst: false }
-        : { key: "updatedTime", order: "DESC" };
+        : { key: "issuanceDate", order: "DESC" };
 
-      const response: any = await post(API_PATHS.CREDIT_EXPLORER_QUERY, {
+      const response: any = await post(API_PATHS.CREDIT_ISSUANCES_QUERY, {
         page: currentPage,
         size: pageSize,
         filterAnd,
         sort,
       });
 
-      const rows: ExplorerQueryRow[] = response?.data ?? [];
-      setTableData(rows.map(mapExplorerRow));
+      const rows: IssuanceQueryRow[] = response?.data ?? [];
+      setTableData(rows.map(mapIssuanceRow));
       setTotalProgramme(response?.response?.data?.total ?? 0);
     } catch (error: any) {
-      console.error("Error in getting credit blocks", error);
+      console.error("Error in getting credit issuances", error);
       message.open({
         type: "error",
         content: error.message,
@@ -219,13 +183,13 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
     }
   };
 
-  const onNavigateToProgrammeView = async (record: CreditBlockInterface) => {
+  const onNavigateToProgrammeView = async (record: CreditIssuanceInterface) => {
     setViewModalRecord(record);
     setHistoryEntries([]);
     setHistoryLoading(true);
     try {
       const response: any = await post(API_PATHS.CREDIT_BLOCK_HISTORY, {
-        blockId: record.id,
+        blockId: creditBlockIdFromSerial(record.serialNumber),
       });
       setHistoryEntries(response?.data?.history ?? []);
     } catch (error: any) {
@@ -236,7 +200,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
     }
   };
 
-  const actionMenu = (record: CreditBlockInterface) => {
+  const actionMenu = (record: CreditIssuanceInterface) => {
     return (
       <List
         className="action-menu"
@@ -264,117 +228,61 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
 
   const columns = [
     {
-      title: t(CreditBlockColumns.SERIAL_NO),
-      key: "serialNumber",
+      title: t(CreditIssuanceColumns.PROJECT_NAME),
+      key: "projectName",
       sorter: true,
       align: "left" as const,
-      render: (record: CreditBlockInterface) => {
-        return <span>{record?.serialNumber}</span>;
+      render: (record: CreditIssuanceInterface) => {
+        return <span>{record?.projectName}</span>;
       },
     },
     {
-      title: t(CreditBlockColumns.ORGANIZATION_NAME),
+      title: t(CreditIssuanceColumns.ORGANIZATION_NAME),
       key: "organizationName",
       sorter: true,
-      align: "center" as const,
-      render: (record: CreditBlockInterface) => {
+      align: "left" as const,
+      render: (record: CreditIssuanceInterface) => {
         return (
           <div className="org-list">
-            <Row justify="center" align="middle">
-              <Tooltip title={record.organizationName}>
-                <span>
-                  <ProfileIcon
-                    icon={record.organizationLogo}
-                    bg={"rgba(185, 226, 244, 0.56)"}
-                    name={record.organizationName}
-                  />
-                </span>
-              </Tooltip>
+            <Row>
+              <ProfileIcon
+                icon={record.organizationLogo}
+                bg={"rgba(185, 226, 244, 0.56)"}
+                name={record.organizationName}
+              />
+              <span style={{ marginTop: "6px" }}>{record.organizationName}</span>
             </Row>
           </div>
         );
       },
     },
     {
-      title: t(CreditBlockColumns.PROJECT_NAME),
-      key: "projectName",
+      title: t(CreditIssuanceColumns.SERIAL_NO),
+      key: "serialNumber",
       sorter: true,
       align: "left" as const,
-      render: (record: CreditBlockInterface) => {
-        return <span>{record?.projectName}</span>;
+      render: (record: CreditIssuanceInterface) => {
+        return <span>{record?.serialNumber}</span>;
       },
     },
     {
-      title: t(CreditBlockColumns.CREDITS),
-      key: "balance",
+      title: t(CreditIssuanceColumns.ISSUANCE_DATE),
+      key: "issuanceDate",
       sorter: true,
       align: "left" as const,
-      render: (record: CreditBlockInterface) => {
+      render: (record: CreditIssuanceInterface) => {
+        return <span>{moment(Number(record?.issuanceDate)).format("YYYY-MM-DD HH:mm:ss")}</span>;
+      },
+    },
+    {
+      title: t(CreditIssuanceColumns.CREDITS),
+      key: "creditAmount",
+      sorter: true,
+      align: "left" as const,
+      render: (record: CreditIssuanceInterface) => {
         return (
           <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(record?.creditBalance))}
-          </span>
-        );
-      },
-    },
-    {
-      title: t(CreditBlockColumns.RESERVED),
-      key: "reserved",
-      sorter: true,
-      align: "left" as const,
-      render: (record: CreditBlockInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(record?.reserved ?? 0))}
-          </span>
-        );
-      },
-    },
-    {
-      title: t(CreditBlockColumns.CURRENT_STATUS),
-      key: "status",
-      align: "center" as const,
-      render: (record: CreditBlockInterface) => {
-        return (
-          <Tag color={getCreditBlockStatusTagColor(record?.currentStatus)}>
-            {t(record?.currentStatus)}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: t(CreditBlockColumns.FIRST_TRANSFER),
-      // Not a real DB column (computed in-memory per page by the backend's
-      // enrichExplorerRowsWithFirstTransfer) — not sortable server-side.
-      key: "firstTransfer",
-      align: "center" as const,
-      // The name of the first organization this block was transferred to —
-      // "-" when it hasn't been transferred yet (still with its original
-      // holder, or retired directly).
-      render: (record: CreditBlockInterface) => {
-        if (!record?.firstTransfer || record.firstTransfer === "-") {
-          return <span>-</span>;
-        }
-        return (
-          <Row justify="center" align="middle">
-            <Tooltip title={record.firstTransfer}>
-              <span>
-                <ProfileIcon icon={null} bg={"rgba(185, 226, 244, 0.56)"} name={record.firstTransfer} />
-              </span>
-            </Tooltip>
-          </Row>
-        );
-      },
-    },
-    {
-      title: t(CreditBlockColumns.UPDATE_DATE),
-      key: "updatedTime",
-      sorter: true,
-      align: "left" as const,
-      render: (item: CreditBlockInterface) => {
-        return (
-          <span>
-            {moment(Number(item?.updateDate)).format("YYYY-MM-DD HH:mm:ss")}
+            {addCommSep(String(record?.creditAmount))}
           </span>
         );
       },
@@ -384,7 +292,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
       width: 6,
       align: "right" as const,
       key: "action",
-      render: (_: unknown, record: CreditBlockInterface) => {
+      render: (_: unknown, record: CreditIssuanceInterface) => {
         return (
           <Popover placement="bottomRight" content={actionMenu(record)} trigger="click">
             <EllipsisOutlined
@@ -436,64 +344,17 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
         getQueryData();
       }
     }
-  }, [
-    sortField,
-    sortOrder,
-    filterValues.status,
-    filterValues.organization,
-    filterValues.project,
-    appliedSerialSearch,
-  ]);
-
-  const allStatusesSelected = (filterValues.status as string[]).includes(STATUS_ALL);
-
-  // A bare-number serial search is the backend's "partial unit" rule: it
-  // matches blocks whose range *contains* that single credit. When that's
-  // what found the rows, the history popup calls the searched credit out
-  // on the block's node (CreditHistoryGraph's highlightCredit chip). Any
-  // other search shape (prefix, multi-number, text) targets blocks, not
-  // one credit, so there's nothing to mark.
-  const searchedCredit = /^\d+$/.test(appliedSerialSearch)
-    ? Number(appliedSerialSearch)
-    : undefined;
+  }, [sortField, sortOrder, filterValues.organization, filterValues.project, vintageYear]);
 
   return (
     <div className="content-card">
-      <FilterBar
-        radioGroup={{
-          id: "status",
-          multiple: true,
-          selectAllValue: STATUS_ALL,
-          clearValue: [],
-          options: [
-            { label: t("all"), value: STATUS_ALL },
-            ...Object.values(CreditBlockStatus).map((status) => ({
-              label: t(status),
-              value: status,
-            })),
-          ],
-          // "Every status" is the default, not a narrowing — don't show it
-          // as an applied-filter chip.
-          isApplied: () => !allStatusesSelected,
-        }}
+      <FilterBar 
         controls={[
-          {
-            id: "serialSearch",
-            type: "search",
-            placeholder: t("searchBySerialNumber"),
-            width: 240,
-            onSearch: (value: string) => setAppliedSerialSearch(value.trim()),
-            infoVisible: true,
-            infoDescription: "Search the credit by serial text patterns.",
-            infoLearnMore: {
-              title: "Search by Serial Number",
-              content: <SerialSearchInfoContent />,
-            },
-          },
           {
             id: "organization",
             type: "select",
             mode: "multiple",
+            visible: !isProjectDeveloper,
             placeholder: t("filterByOrganization"),
             options: orgSelect.options,
             width: 220,
@@ -517,12 +378,31 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
             onDropdownVisibleChange: (open) => open && projectSelect.onDropdownOpen(),
           },
         ]}
+        extraControls={
+          <div className="filter-bar__control_extra">
+            <DatePicker
+              picker="year"
+              allowClear
+              placeholder={t("filterByVintage")}
+              value={vintageYear !== undefined ? moment().year(vintageYear) : null}
+              onChange={(date) => setVintageYear(date ? date.year() : undefined)}
+            />
+          </div>
+        }
+        extraAppliedChips={
+          vintageYear !== undefined
+            ? [{
+                key: "vintage",
+                label: <>{vintageYear}</>,
+                onRemove: () => setVintageYear(undefined),
+              }]
+            : []
+        }
         values={filterValues}
-        appliedValues={{ serialSearch: appliedSerialSearch }}
         onChange={(id, value) => setFilterValues((prev) => ({ ...prev, [id]: value }))}
         onClearAll={() => {
           setFilterValues(INITIAL_FILTER_VALUES);
-          setAppliedSerialSearch("");
+          setVintageYear(undefined);
         }}
         disabled={loading}
         appliedFiltersLabel={t("appliedFilters")}
@@ -565,12 +445,6 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
         footer={null}
         width={900}
         centered
-        // Without this, antd keeps the modal's content mounted (just
-        // hidden) across close/reopen — CreditHistoryGraph's internal
-        // "has the initial view been applied yet" state would then persist
-        // too, so every reopen after the first would skip straight to
-        // whatever state it was left in instead of showing the initial
-        // (path-scoped) view again.
         destroyOnClose
       >
         {viewModalRecord && (
@@ -578,21 +452,14 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
             <div className="credit-view-overview-title">Overview</div>
             <div className="credit-view-overview">
               {[
-                { label: "Current Holder", value: viewModalRecord.organizationName?viewModalRecord.organizationName: "-" },
+                { label: "Project Name", value: viewModalRecord.projectName },
+                { label: "Organization", value: viewModalRecord.organizationName },
                 { label: "Serial Number", value: viewModalRecord.serialNumber },
-                { label: "Current Status", value: t(viewModalRecord.currentStatus) },
-                { label: "No. of Credits", value: addCommSep(String(viewModalRecord.creditBalance)) },
-                { label: "Project Issued to", value: viewModalRecord.projectName },
                 {
-                  // Sourced from the ISSUE root of the fetched history tree
-                  // (entries[0].info.timestamp) — queryExplorer's own
-                  // response doesn't carry an issuance date.
-                  label: "Issued date",
-                  value: historyEntries[0]?.info?.timestamp
-                    ? moment(historyEntries[0].info.timestamp, "YYYY-MM-DD HH:mm").format("MMM DD, YYYY")
-                    : "-",
+                  label: "Issuance Date",
+                  value: moment(Number(viewModalRecord.issuanceDate)).format("MMM DD, YYYY"),
                 },
-                { label: "Vintage", value: viewModalRecord.vintage || "-" },
+                { label: "No. of Credits", value: addCommSep(String(viewModalRecord.creditAmount)) },
               ].map((f) => (
                 <div className="credit-view-overview-row" key={f.label}>
                   <div className="credit-view-overview-label">{f.label}</div>
@@ -609,14 +476,11 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
               <CreditHistoryGraph
                 entries={historyEntries}
                 serial={viewModalRecord.serialNumber}
-                focusRange={currentRangeFromSerial(viewModalRecord.serialNumber)}
-                interactiveSelection={false}
-                collapseStrategy="pathOnly"
-                showOpenInNewTab={true}
-                showModeToggle={true}
-                initialFitScope="path"
+                interactiveSelection
+                collapseStrategy="depth"
+                defaultSelection="none"
+                defaultMode="binary"
                 height="50vh"
-                highlightCredit={searchedCredit}
               />
             ) : (
               <Empty description="No history available" />

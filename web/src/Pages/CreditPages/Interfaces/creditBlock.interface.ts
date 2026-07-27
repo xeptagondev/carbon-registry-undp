@@ -19,12 +19,10 @@ export interface CreditBlockInterface {
   currentStatus: CreditBlockStatus;
   firstTransfer: string; // Name of the first organization this block was transferred to, or "-"
   // TODO: not part of queryExplorer's response yet — kept optional until the
-  // backend adds them directly; Overview falls back to "-" while undefined.
+  // backend adds it directly; Overview falls back to "-" while undefined.
   issuanceDate?: string;
-  monitoringPeriod?: string;
   // Derived client-side from serialNumber's trailing segment (see
   // vintageFromSerial in creditBlockList.tsx) until the backend adds it
-  // directly — unlike issuanceDate/monitoringPeriod, this one IS populated
-  // today, just not sourced straight from the API response.
+  // directly.
   vintage?: string;
 }

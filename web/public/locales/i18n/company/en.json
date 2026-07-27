@@ -10,6 +10,8 @@
   "addCompany": "Add organisation",
   "numberOfProgrammes": "NUMBER OF PROJECTS",
   "creditBalance": "CREDIT BALANCE",
+  "creditIssued": "ISSUED",
+  "creditRetired": "RETIRED",
   "date": "Date",
   "getCompanyError": "Error in getting company",
   "filterByCompany": "Filter by Organisation Type",
