@@ -264,6 +264,16 @@ export const ProgrammeManagementComponent = (props: any) => {
       },
     },
     {
+      title: t("projectList:issued"),
+      dataIndex: "creditIssued",
+      key: ProgrammeManagementSlColumns.creditIssued,
+      sorter: true,
+      align: "right" as const,
+      render: (item: any) => {
+        return <span>{item}</span>;
+      },
+    },
+    {
       title: t("projectList:balance"),
       dataIndex: "creditBalance",
       key: ProgrammeManagementSlColumns.creditBalance,

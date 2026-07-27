@@ -718,11 +718,19 @@ export const CompanyProfileComponent = (props: any) => {
               )}
             </Col>
           </Row>
-          <Row gutter={16}>
-            <Col span={24}>
-              <OrganizationTransactionsTable t={t} />
-            </Col>
-          </Row>
+          {/* Transactions table: DNA and IC may view any organisation; a
+              Project Developer only their own. The credit summary card above
+              stays visible to everyone. */}
+          {(userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
+            userInfoState?.companyRole === CompanyRole.INDEPENDENT_CERTIFIER ||
+            (userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+              Number(userInfoState?.companyId) === Number(companyDetails?.companyId))) && (
+            <Row gutter={16}>
+              <Col span={24}>
+                <OrganizationTransactionsTable t={t} companyId={companyDetails?.companyId} />
+              </Col>
+            </Row>
+          )}
         </div>
       )}
 
