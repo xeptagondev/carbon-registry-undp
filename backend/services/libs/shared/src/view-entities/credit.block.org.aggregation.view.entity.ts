@@ -7,6 +7,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
 //   - creditIssued      = SUM(amount) of Issued txns received (recieverId)
 //   - creditRetired     = SUM(amount) of Retired txns performed (senderId)
 //   - creditTransferred = SUM(amount) of Transfered/FirstTransfer txns sent (senderId)
+//   - creditReceived    = SUM(amount) of Transfered/FirstTransfer txns received (recieverId)
 //   - creditReserved    = SUM(reservedCreditAmount) of currently-owned blocks
 //   - creditBalance     = SUM(creditAmount - reservedCreditAmount) of currently-owned blocks
 @ViewEntity({
@@ -16,6 +17,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
       COALESCE(iss."creditIssued", 0) AS "creditIssued",
       COALESCE(ret."creditRetired", 0) AS "creditRetired",
       COALESCE(tr."creditTransferred", 0) AS "creditTransferred",
+      COALESCE(rec."creditReceived", 0) AS "creditReceived",
       COALESCE(bal."creditReserved", 0) AS "creditReserved",
       COALESCE(bal."creditBalance", 0) AS "creditBalance"
     FROM "company" c
@@ -39,6 +41,12 @@ import { ViewColumn, ViewEntity } from "typeorm";
       GROUP BY ct."senderId"
     ) tr ON tr."organizationId" = c."companyId"
     LEFT JOIN (
+      SELECT ct."recieverId" AS "organizationId", SUM(ct."amount") AS "creditReceived"
+      FROM "credit_transactions_entity" ct
+      WHERE ct."type" IN ('Transfered', 'FirstTransfer')
+      GROUP BY ct."recieverId"
+    ) rec ON rec."organizationId" = c."companyId"
+    LEFT JOIN (
       SELECT
         cb."ownerCompanyId" AS "organizationId",
         SUM(cb."reservedCreditAmount") AS "creditReserved",
@@ -60,6 +68,9 @@ export class CreditBlockOrgAggregationViewEntity {
 
   @ViewColumn()
   creditTransferred: number;
+
+  @ViewColumn()
+  creditReceived: number;
 
   @ViewColumn()
   creditReserved: number;

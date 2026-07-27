@@ -122,8 +122,13 @@ interface BinaryTreeNodeData {
   pathDelayMs: number;
   /** When false, `onClick` is a no-op and the cursor stays default. */
   interactiveSelection: boolean;
+  /** Whether this node's detail panel is expanded — driven by the shared
+   * `expandedDetailIds` set (per-node eye button, or the toolbar's "all"
+   * master toggle). */
+  showInfo: boolean;
   onClick: () => void;
   onToggle: (e: React.MouseEvent) => void;
+  onToggleDetail: () => void;
 }
 
 const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
@@ -139,13 +144,14 @@ const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
     selected,
     pathDelayMs,
     interactiveSelection,
+    showInfo,
     onClick,
     onToggle,
+    onToggleDetail,
   } = data;
   const noteText = note && note.trim() ? note.trim() : null;
-  // Local display toggle for the eye icon. The expanded height isn't in ELK's
-  // layout, so an open node can overlap the row below — accepted for inline info.
-  const [showInfo, setShowInfo] = useState(false);
+  // The expanded height isn't in ELK's layout, so an open node can overlap
+  // the row below — accepted for inline info.
   // On-path labels already read "{range} | {note}"; off-path labels are bare
   // range, so the eye toggle builds the same text to show it in the same spot.
   const displayLabel = showInfo && !onPath && noteText ? `${range} | ${noteText}` : label;
@@ -182,13 +188,13 @@ const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
       }}
     >
       <Handle type="target" position={Position.Top} style={{ visibility: "hidden" }} />
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
         <span style={{ whiteSpace: "normal", wordBreak: "break-word", minWidth: 0, flex: 1 }}>{displayLabel}</span>
         <button
           className="nodrag nopan"
           onClick={(e) => {
             e.stopPropagation();
-            setShowInfo((v) => !v);
+            onToggleDetail();
           }}
           style={{
             border: "none",
@@ -197,7 +203,6 @@ const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
             display: "flex",
             alignItems: "center",
             flexShrink: 0,
-            marginTop: 2,
             cursor: "pointer",
             color: showInfo ? (selected ? "#fff" : "#0b6dc7") : selected ? "#e6f4ff" : "#94a3b8",
           }}
@@ -287,8 +292,10 @@ export const BinaryTreeGraphView = ({
   fitScope,
   isDefaultStateReady,
   maxZoom,
+  expandedDetailIds,
   onSelectNode,
   onToggleCollapse,
+  onToggleNodeDetail,
 }: GraphViewProps) => {
   const { getNodes, fitBounds } = useReactFlow();
   const storeApi = useStoreApi();
@@ -382,11 +389,24 @@ export const BinaryTreeGraphView = ({
           selected: n.id === selectedId,
           pathDelayMs: n.depth * PATH_STAGGER_MS,
           interactiveSelection,
+          showInfo: expandedDetailIds.has(n.id),
           onClick: interactiveSelection ? () => onSelectNode(n.id) : () => {},
           onToggle: () => onToggleCollapse(n.id),
+          onToggleDetail: () => onToggleNodeDetail(n.id),
         },
       })),
-    [layout, collapsed, pathIds, selectedId, interactiveSelection, showCollapseToggle, onSelectNode, onToggleCollapse]
+    [
+      layout,
+      collapsed,
+      pathIds,
+      selectedId,
+      interactiveSelection,
+      showCollapseToggle,
+      expandedDetailIds,
+      onSelectNode,
+      onToggleCollapse,
+      onToggleNodeDetail,
+    ]
   );
 
   // Per-edge depth lookup, for the highlight cascade timing.

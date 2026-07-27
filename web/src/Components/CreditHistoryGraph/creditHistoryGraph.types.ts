@@ -85,6 +85,11 @@ export interface GraphViewProps {
   /** Caps how far "Fit to screen" zooms in (see `fitGraphToScreen`) — set by
    * the fullscreen tab so a small tree isn't oversized; unset when inline. */
   maxZoom?: number;
+  /** IDs of nodes currently showing their expanded detail panel (Binary Tree's
+   * per-node eye toggle). Unused by Timeline, which has no such panel. */
+  expandedDetailIds: Set<string>;
   onSelectNode: (id: string) => void;
   onToggleCollapse: (id: string) => void;
+  /** Toggles a single node's entry in `expandedDetailIds`. */
+  onToggleNodeDetail: (id: string) => void;
 }
