@@ -245,5 +245,10 @@
     "creditRetireCancelledSuccessfully": "The credit retire request has been cancelled successfully",
     "country": "Country",
     "shouldBeInterger": "Credit Amount Should be Interger Value",
-    "invalidOrganizationName":"Invalid organization name"
+    "invalidOrganizationName":"Invalid organization name",
+    "organizationFilter": "Organization",
+    "projectFilter": "Project",
+    "selectOrganization": "Select Organization",
+    "selectProject": "Select Project",
+    "selectAll": "Select All"
 }

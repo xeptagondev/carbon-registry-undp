@@ -104,6 +104,14 @@ const INITIAL_FILTER_VALUES: FilterValues = {
   serialSearch: "",
 };
 
+const SerialSearchInfoContent = () => (
+  <p>
+    Enter a serial number to find the matching credit block. You can also enter
+    a single credit number to find blocks whose serial range contains that
+    credit.
+  </p>
+);
+
 interface CreditBlockListTableProps {
   t: (key: string) => string;
 }
@@ -475,8 +483,12 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
             placeholder: t("searchBySerialNumber"),
             width: 240,
             onSearch: (value: string) => setAppliedSerialSearch(value.trim()),
-            infoVisible:true,
-            infoDescription:"Search the credit by serial number."
+            infoVisible: true,
+            infoDescription: "Search the credit by serial text patterns.",
+            infoLearnMore: {
+              title: "Search by Serial Number",
+              content: <SerialSearchInfoContent />,
+            },
           },
           {
             id: "organization",

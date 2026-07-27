@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
@@ -6,13 +6,13 @@ import {
   type FilterControlValue,
   type FilterValues,
 } from '../../Components/Common/FilterBar';
+import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
+import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import {
   CreditBalanceByProjectTable,
-  CREDIT_BALANCE_PROJECT_OPTIONS,
 } from './Components/creditBalanceByProjectTable';
 import {
   CreditBalanceByOrganizationTable,
-  CREDIT_BALANCE_ORGANIZATION_OPTIONS,
 } from './Components/creditBalanceByOrganizationTable';
 import './creditPageStyles.scss';
 
@@ -20,8 +20,20 @@ type BalanceView = 'project' | 'organization';
 
 export const CreditBalancePage = () => {
   const { t } = useTranslation(['creditPages']);
+  const { userInfoState } = useUserContext();
   const [view, setView] = useState<BalanceView>('project');
   const [filterValues, setFilterValues] = useState<FilterValues>({});
+  const [projectOptions, setProjectOptions] = useState<string[]>([]);
+  const [projectOrganizationOptions, setProjectOrganizationOptions] = useState<string[]>([]);
+  const [organizationOptions, setOrganizationOptions] = useState<string[]>([]);
+  const canViewOrganization =
+    userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY;
+
+  useEffect(() => {
+    if (!canViewOrganization && view === 'organization') {
+      setView('project');
+    }
+  }, [canViewOrganization, view]);
 
   const selectedOrganizations = Array.isArray(filterValues.organizations)
     ? filterValues.organizations.map(String)
@@ -33,6 +45,27 @@ export const CreditBalancePage = () => {
   const onFilterChange = (id: string, value: FilterControlValue) => {
     setFilterValues((current) => ({ ...current, [id]: value }));
   };
+
+  const onProjectFilterOptionsChange = useCallback((options: {
+    organizations: string[];
+    projects: string[];
+  }) => {
+    setProjectOptions((current) => {
+      const next = Array.from(new Set([...current, ...options.projects]));
+      return next.length === current.length ? current : next;
+    });
+    setProjectOrganizationOptions((current) => {
+      const next = Array.from(new Set([...current, ...options.organizations]));
+      return next.length === current.length ? current : next;
+    });
+  }, []);
+
+  const onOrganizationFilterOptionsChange = useCallback((organizations: string[]) => {
+    setOrganizationOptions((current) => {
+      const next = Array.from(new Set([...current, ...organizations]));
+      return next.length === current.length ? current : next;
+    });
+  }, []);
 
   return (
     <div className="content-container credit-management credit-balance-redesign">
@@ -46,10 +79,21 @@ export const CreditBalancePage = () => {
                 <Radio.Group
                   value={view}
                   aria-label="Credit balance grouping"
-                  onChange={(event) => setView(event.target.value as BalanceView)}
+                  onChange={(event) => {
+                    const nextView = event.target.value as BalanceView;
+                    if (nextView === 'project' || canViewOrganization) {
+                      setView(nextView);
+                    }
+                  }}
                 >
                   <Radio.Button className="overall" value="project">By Project</Radio.Button>
-                  <Radio.Button className="mine" value="organization">By Organization</Radio.Button>
+                  <Radio.Button
+                    className="mine"
+                    value="organization"
+                    disabled={!canViewOrganization}
+                  >
+                    By Organization
+                  </Radio.Button>
                 </Radio.Group>
               </div>
 
@@ -63,7 +107,10 @@ export const CreditBalancePage = () => {
                     mode: 'multiple',
                     placeholder: t('selectOrganization'),
                     width: 240,
-                    options: CREDIT_BALANCE_ORGANIZATION_OPTIONS.map((name) => ({ label: name, value: name })),
+                    options: (view === 'project'
+                      ? projectOrganizationOptions
+                      : organizationOptions
+                    ).map((name) => ({ label: name, value: name })),
                     clearValue: [],
                     showAsApplied: false,
                   },
@@ -73,7 +120,7 @@ export const CreditBalancePage = () => {
                     mode: 'multiple',
                     placeholder: t('selectProject'),
                     width: 280,
-                    options: CREDIT_BALANCE_PROJECT_OPTIONS.map((name) => ({ label: name, value: name })),
+                    options: projectOptions.map((name) => ({ label: name, value: name })),
                     clearValue: [],
                     showAsApplied: false,
                     visible: view === 'project',
@@ -91,9 +138,19 @@ export const CreditBalancePage = () => {
               <CreditBalanceByProjectTable
                 selectedOrganizations={selectedOrganizations}
                 selectedProjects={selectedProjects}
+                onFilterOptionsChange={onProjectFilterOptionsChange}
+              />
+            ) : canViewOrganization ? (
+              <CreditBalanceByOrganizationTable
+                selectedOrganizations={selectedOrganizations}
+                onFilterOptionsChange={onOrganizationFilterOptionsChange}
               />
             ) : (
-              <CreditBalanceByOrganizationTable selectedOrganizations={selectedOrganizations} />
+              <CreditBalanceByProjectTable
+                selectedOrganizations={selectedOrganizations}
+                selectedProjects={selectedProjects}
+                onFilterOptionsChange={onProjectFilterOptionsChange}
+              />
             )}
           </section>
         </div>

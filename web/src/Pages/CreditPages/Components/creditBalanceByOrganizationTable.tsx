@@ -1,12 +1,15 @@
-import { Empty, Table } from 'antd';
+import { Empty, message, Table } from 'antd';
 import type { ColumnsType } from 'antd/lib/table';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ProfileIcon } from '../../../Components/IconComponents/ProfileIcon/profile.icon';
+import { API_PATHS } from '../../../Config/apiConfig';
+import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
 import '../creditPageStyles.scss';
 
 interface OrganizationBalance {
   id: string;
   name: string;
+  logo: string;
   avatarColor: string;
   balance: number;
   reserved: number;
@@ -15,21 +18,52 @@ interface OrganizationBalance {
 
 export interface CreditBalanceByOrganizationTableProps {
   selectedOrganizations: string[];
+  onFilterOptionsChange?: (organizations: string[]) => void;
 }
 
-export const CREDIT_BALANCE_ORGANIZATION_OPTIONS = [
-  'Sample Developer',
-  'Project Developer 1',
-  'Project Developer',
-];
+interface OrganizationBalanceApiRow {
+  organizationId: string;
+  organizationName: string;
+  organizationLogo: string | null;
+  creditBalance: string | number;
+  reservedCredits: string | number;
+  updatedTime: string | number;
+}
 
-const organizationBalances: OrganizationBalance[] = [
-  { id: 'sample-developer', name: CREDIT_BALANCE_ORGANIZATION_OPTIONS[0], avatarColor: '#dbeafe', balance: 4900, reserved: 1200, updatedAt: '2026-04-23 14:11:54' },
-  { id: 'project-developer-1', name: CREDIT_BALANCE_ORGANIZATION_OPTIONS[1], avatarColor: '#fce7f3', balance: 200, reserved: 200, updatedAt: '2026-04-23 13:57:58' },
-  { id: 'project-developer', name: CREDIT_BALANCE_ORGANIZATION_OPTIONS[2], avatarColor: '#fef9c3', balance: 45, reserved: 5, updatedAt: '2025-07-23 16:48:02' },
-];
+interface ConnectionResponse<T> {
+  data?: T;
+  response?: { data?: { total?: number } };
+}
+
+interface OrganizationBalanceQuery {
+  page: number;
+  size: number;
+  filterAnd?: Array<{
+    key: 'organizationName';
+    operation: 'in';
+    value: string[];
+  }>;
+  sort: {
+    key: 'updatedTime';
+    order: 'DESC';
+    nullFirst: false;
+  };
+}
 
 const formatCredits = (value: number) => new Intl.NumberFormat('en-US').format(value);
+
+const formatTimestamp = (value: string | number) => {
+  const date = new Date(Number(value));
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleString('sv-SE', { hour12: false });
+};
+
+const avatarColor = (name: string) => {
+  const colors = ['#dbeafe', '#fce7f3', '#fef9c3', '#dcfce7', '#ede9fe'];
+  const hash = Array.from(name).reduce((total, character) => total + character.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+};
 
 const columns: ColumnsType<OrganizationBalance> = [
   {
@@ -40,7 +74,7 @@ const columns: ColumnsType<OrganizationBalance> = [
     sorter: (a, b) => a.name.localeCompare(b.name),
     render: (name, row) => (
       <div className="credit-balance-organization-cell">
-        <ProfileIcon icon="" bg={row.avatarColor} name={name} />
+        <ProfileIcon icon={row.logo} bg={row.avatarColor} name={name} />
         <span>{name}</span>
       </div>
     ),
@@ -52,34 +86,101 @@ const columns: ColumnsType<OrganizationBalance> = [
 
 export const CreditBalanceByOrganizationTable = ({
   selectedOrganizations,
+  onFilterOptionsChange,
 }: CreditBalanceByOrganizationTableProps) => {
+  const { post } = useConnection();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const filteredRows = useMemo(
-    () => selectedOrganizations.length === 0
-      ? organizationBalances
-      : organizationBalances.filter(({ name }) => selectedOrganizations.includes(name)),
-    [selectedOrganizations],
-  );
+  const [rows, setRows] = useState<OrganizationBalance[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const requestGenerationRef = useRef(0);
+  const selectedOrganizationsKey = selectedOrganizations.join('\u0000');
 
-  useEffect(() => setCurrentPage(1), [selectedOrganizations]);
+  useEffect(() => setCurrentPage(1), [selectedOrganizationsKey]);
+
+  useEffect(() => {
+    const requestGeneration = requestGenerationRef.current + 1;
+    requestGenerationRef.current = requestGeneration;
+    const organizations = selectedOrganizationsKey
+      ? selectedOrganizationsKey.split('\u0000')
+      : [];
+    const request: OrganizationBalanceQuery = {
+      page: currentPage,
+      size: pageSize,
+      filterAnd: organizations.length > 0
+        ? [{
+          key: 'organizationName',
+          operation: 'in',
+          value: organizations,
+        }]
+        : undefined,
+      sort: { key: 'updatedTime', order: 'DESC', nullFirst: false },
+    };
+
+    setLoading(true);
+    void (post(
+      API_PATHS.CREDIT_BALANCE_BY_ORGANIZATION_QUERY,
+      request,
+    ) as Promise<ConnectionResponse<OrganizationBalanceApiRow[]>>)
+      .then((response) => {
+        if (requestGenerationRef.current !== requestGeneration) return;
+        const mappedRows = (response.data ?? []).map((row): OrganizationBalance => ({
+          id: row.organizationId,
+          name: row.organizationName,
+          logo: row.organizationLogo ?? '',
+          avatarColor: avatarColor(row.organizationName),
+          balance: Number(row.creditBalance) || 0,
+          reserved: Number(row.reservedCredits) || 0,
+          updatedAt: formatTimestamp(row.updatedTime),
+        }));
+        setRows(mappedRows);
+        setTotal(response.response?.data?.total ?? mappedRows.length);
+        onFilterOptionsChange?.(mappedRows.map(({ name }) => name));
+      })
+      .catch((error: { message?: string }) => {
+        if (requestGenerationRef.current !== requestGeneration) return;
+        setRows([]);
+        setTotal(0);
+        message.error(error.message ?? 'Unable to load organization credit balances');
+      })
+      .finally(() => {
+        if (requestGenerationRef.current === requestGeneration) setLoading(false);
+      });
+
+    return () => {
+      if (requestGenerationRef.current === requestGeneration) {
+        requestGenerationRef.current += 1;
+      }
+    };
+  }, [
+    currentPage,
+    onFilterOptionsChange,
+    pageSize,
+    post,
+    selectedOrganizationsKey,
+  ]);
 
   return (
     <div className="credit-table-container credit-balance-organization-table">
       <Table<OrganizationBalance>
         className="common-table-class"
         rowKey="id"
-        dataSource={filteredRows}
+        dataSource={rows}
         columns={columns}
+        loading={loading}
         scroll={{ x: 760 }}
         pagination={{
           current: currentPage,
           pageSize,
-          total: filteredRows.length,
+          total,
           showQuickJumper: true,
           showSizeChanger: true,
           pageSizeOptions: ['5', '10', '20'],
-          onChange: (page, size) => { setCurrentPage(page); setPageSize(size); },
+          onChange: (page, size) => {
+            setCurrentPage(size !== pageSize ? 1 : page);
+            setPageSize(size);
+          },
         }}
         locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No organization credit balances match the selected filters" /> }}
       />

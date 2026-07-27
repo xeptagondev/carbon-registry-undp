@@ -1,7 +1,7 @@
 import { IssuedOrReceivedOptions } from "../Enums/creditEventEnum";
 
 export interface CreditBalanceInterface {
-  id: number;
+  id: string;
   serialNumber: string;
   creditAmount: number;
   createdDate: string;

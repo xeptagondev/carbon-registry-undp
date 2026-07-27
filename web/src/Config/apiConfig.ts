@@ -32,6 +32,10 @@ export const API_PATHS = {
   PROJECT_ACTION: (action: string) => `programme/${action}`,
   // CREDITS
   CREDIT_BALANCE_QUERY: "national/creditTransactionsManagement/queryBalance",
+  CREDIT_BALANCE_BY_PROJECT_QUERY:
+    "national/creditTransactionsManagement/queryBalanceByProject",
+  CREDIT_BALANCE_BY_ORGANIZATION_QUERY:
+    "national/creditTransactionsManagement/queryBalanceByOrganization",
   CREDIT_TRANSFERS_QUERY:
     "national/creditTransactionsManagement/queryTransfers",
   CREDIT_RETIREMENT_QUERY:
