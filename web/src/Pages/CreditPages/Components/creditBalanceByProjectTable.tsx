@@ -8,6 +8,8 @@ import { ProfileIcon } from '../../../Components/IconComponents/ProfileIcon/prof
 import { COLOR_CONFIGS } from '../../../Config/colorConfigs';
 import { API_PATHS } from '../../../Config/apiConfig';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
+import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
+import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
 import { CreditActionType } from '../Enums/creditActionType.enum';
 import { IssuedOrReceivedOptions } from '../Enums/creditEventEnum';
 import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedType.enum';
@@ -131,7 +133,7 @@ const OrganizationCell = ({
 );
 
 const getSerialColumns = (
-  openActions: (row: CreditSerialBalance) => ReactNode,
+  openActions?: (row: CreditSerialBalance) => ReactNode,
 ): ColumnsType<CreditSerialBalance> => [
   { title: 'Serial Number', dataIndex: 'serialNumber', key: 'serialNumber', align: 'left', width: 280, render: (value) => <span className="credit-balance-serial-number">{value}</span> },
   { title: 'Organization', key: 'organization', align: 'left', render: (_, row) => <OrganizationCell name={row.organization} color={row.organizationColor} logo={row.organizationLogo} /> },
@@ -149,18 +151,18 @@ const getSerialColumns = (
       </Tag>
     ),
   },
-  {
+  ...(openActions ? [{
     title: 'Action',
     key: 'action',
-    align: 'center',
+    align: 'center' as const,
     width: 90,
-    render: (_, row) => openActions(row),
-  },
+    render: (_value: unknown, row: CreditSerialBalance) => openActions(row),
+  }] : []),
 ];
 
 interface CreditBalanceSerialTableProps {
   project: ProjectBalance;
-  openActions: (row: CreditSerialBalance) => ReactNode;
+  openActions?: (row: CreditSerialBalance) => ReactNode;
   refreshGeneration: number;
 }
 
@@ -300,14 +302,18 @@ const CreditBalanceSerialTable = ({
   return (
     <div className="credit-balance-serial-scroll" ref={containerRef}>
       <Table<CreditSerialBalance>
-        className="common-table-class credit-balance-serial-table"
+        className={`common-table-class credit-balance-serial-table${
+          openActions ? ' credit-balance-serial-table--with-actions' : ''
+        }`}
         rowKey="serialNumber"
         dataSource={rows}
         columns={getSerialColumns(openActions)}
         pagination={false}
         tableLayout="fixed"
         loading={loading && rows.length === 0}
-        scroll={{ x: 1050, y: SERIAL_BODY_HEIGHT }}
+        scroll={openActions
+          ? { x: 1050, y: SERIAL_BODY_HEIGHT }
+          : { y: SERIAL_BODY_HEIGHT }}
       />
       {loading && rows.length > 0 && (
         <div className="credit-balance-serial-loading" aria-label="Loading more credit balances">
@@ -336,6 +342,9 @@ export const CreditBalanceByProjectTable = ({
 }: CreditBalanceByProjectTableProps) => {
   const { t } = useTranslation(['creditPages']);
   const { post } = useConnection();
+  const { userInfoState } = useUserContext();
+  const canManageCredits =
+    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER;
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [rows, setRows] = useState<ProjectBalance[]>([]);
@@ -487,6 +496,7 @@ export const CreditBalanceByProjectTable = ({
     project: ProjectBalance,
     type: CreditActionType,
   ) => {
+    if (!canManageCredits) return;
     const transfer = type === CreditActionType.TRANSFER;
     setModalActionData({
       icon: transfer
@@ -532,6 +542,7 @@ export const CreditBalanceByProjectTable = ({
     remark?: string,
     retirementType?: CreditRetirementTypeEmnum,
   ) => {
+    if (!canManageCredits) return;
     setModalActionLoading(true);
     try {
       let response: ConnectionResponse<unknown>;
@@ -597,7 +608,9 @@ export const CreditBalanceByProjectTable = ({
             <div className={`credit-balance-detail-panel${collapsingProjectId === row.id ? ' credit-balance-detail-panel--collapsing' : ''}`}>
               <CreditBalanceSerialTable
                 project={row}
-                openActions={(serial) => actionButton(serial, row)}
+                openActions={canManageCredits
+                  ? (serial) => actionButton(serial, row)
+                  : undefined}
                 refreshGeneration={refreshGeneration}
               />
             </div>
@@ -634,21 +647,23 @@ export const CreditBalanceByProjectTable = ({
         }}
         locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No project credit balances match the selected filters" /> }}
       />
-      <CreditActionModal
-        onFinish={onFinishAction}
-        onCancel={() => setModalActionVisible(false)}
-        t={t}
-        actionBtnText={modalActionData?.actionBtnText}
-        openModal={modalActionVisible}
-        loading={modalActionLoading}
-        icon={modalActionData?.icon}
-        title={modalActionData?.title}
-        isProceed={false}
-        type={modalActionData?.type}
-        remarkRequired={false}
-        proceedAction={CreditRetirementProceedAction.ACCEPT}
-        data={modalActionData?.data}
-      />
+      {canManageCredits && (
+        <CreditActionModal
+          onFinish={onFinishAction}
+          onCancel={() => setModalActionVisible(false)}
+          t={t}
+          actionBtnText={modalActionData?.actionBtnText}
+          openModal={modalActionVisible}
+          loading={modalActionLoading}
+          icon={modalActionData?.icon}
+          title={modalActionData?.title}
+          isProceed={false}
+          type={modalActionData?.type}
+          remarkRequired={false}
+          proceedAction={CreditRetirementProceedAction.ACCEPT}
+          data={modalActionData?.data}
+        />
+      )}
     </div>
   );
 };

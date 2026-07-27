@@ -30,12 +30,21 @@ export const CreditBalancePage = () => {
     userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY;
 
   useEffect(() => {
-    if (!canViewOrganization && view === 'organization') {
-      setView('project');
+    if (!canViewOrganization) {
+      if (view === 'organization') {
+        setView('project');
+      }
+      setFilterValues((current) => {
+        const organizations = current.organizations;
+        return Array.isArray(organizations) && organizations.length === 0
+          ? current
+          : { ...current, organizations: [] };
+      });
     }
   }, [canViewOrganization, view]);
 
-  const selectedOrganizations = Array.isArray(filterValues.organizations)
+  const selectedOrganizations = canViewOrganization
+    && Array.isArray(filterValues.organizations)
     ? filterValues.organizations.map(String)
     : [];
   const selectedProjects = Array.isArray(filterValues.projects)
@@ -113,6 +122,7 @@ export const CreditBalancePage = () => {
                     ).map((name) => ({ label: name, value: name })),
                     clearValue: [],
                     showAsApplied: false,
+                    visible: canViewOrganization,
                   },
                   {
                     id: 'projects',

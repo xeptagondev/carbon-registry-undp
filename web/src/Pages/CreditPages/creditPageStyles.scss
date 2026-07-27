@@ -388,12 +388,6 @@
       white-space: nowrap;
     }
 
-    .ant-table-thead > tr > th:last-child,
-    .ant-table-tbody > tr > td:last-child {
-      min-width: 90px;
-      width: 90px;
-    }
-
     .ant-table-tbody > tr > td {
       height: 50px;
       padding: 11px 16px;
@@ -417,6 +411,14 @@
         font-size: 0.75rem;
         line-height: 28px;
       }
+    }
+  }
+
+  .credit-balance-serial-table--with-actions {
+    .ant-table-thead > tr > th:last-child,
+    .ant-table-tbody > tr > td:last-child {
+      min-width: 90px;
+      width: 90px;
     }
   }
 
