@@ -645,11 +645,11 @@ export class CompanyService {
     );
   }
 
-  // Attaches the per-org credit totals (issued / retired / transferred /
-  // reserved / balance) from CreditBlockOrgAggregationViewEntity onto each
-  // company, so the View Organisations table (creditIssued / creditRetired)
-  // and the profile summary card can read them off the response. Orgs with no
-  // credit activity default to 0.
+  // Attaches the per-org credit totals (issued / received / retired /
+  // transferred / reserved / balance) from CreditBlockOrgAggregationViewEntity
+  // onto each company, so the View Organisations table (creditIssued /
+  // creditRetired) and the profile summary card can read them off the
+  // response. Orgs with no credit activity default to 0.
   private async attachCreditAggregation(companies: Company[]): Promise<void> {
     if (!companies || companies.length === 0) {
       return;
@@ -665,6 +665,7 @@ export class CompanyService {
     for (const company of companies) {
       const agg = byOrgId.get(Number(company.companyId));
       (company as any).creditIssued = Number(agg?.creditIssued ?? 0);
+      (company as any).creditReceived = Number(agg?.creditReceived ?? 0);
       (company as any).creditRetired = Number(agg?.creditRetired ?? 0);
       (company as any).creditTransferred = Number(agg?.creditTransferred ?? 0);
       (company as any).creditReserved = Number(agg?.creditReserved ?? 0);

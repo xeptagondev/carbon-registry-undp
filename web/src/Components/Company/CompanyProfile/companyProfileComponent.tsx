@@ -459,8 +459,8 @@ export const CompanyProfileComponent = (props: any) => {
       )}
       {companyDetails && (
         <div className="content-body">
-          <Row gutter={16}>
-            <Col md={24} lg={10}>
+          <Row gutter={16} align="stretch">
+            <Col md={24} lg={10} className="profile-left-col">
               <Card className="card-container">
                 <Skeleton loading={isLoading} active>
                   <Row justify="center">
@@ -496,6 +496,18 @@ export const CompanyProfileComponent = (props: any) => {
                         : '-'}
                     </Col>
                   </Row>
+                  <Row className="field">
+                    <Col span={12} className="field-key">
+                      {t('companyProfile:creditsReceived')}
+                    </Col>
+                    <Col span={12} className="field-value credit-received">
+                      {companyDetails.creditReceived !== undefined &&
+                      companyDetails.creditReceived !== null
+                        ? addCommSep(companyDetails.creditReceived)
+                        : '-'}
+                    </Col>
+                  </Row>
+                  <div className="credit-summary-divider" />
                   <Row className="field">
                     <Col span={12} className="field-key">
                       {t('companyProfile:creditsRetired')}
@@ -671,7 +683,7 @@ export const CompanyProfileComponent = (props: any) => {
                 </Card>
               )}
             </Col>
-            <Col md={24} lg={14}>
+            <Col md={24} lg={14} className="profile-right-col">
               <CompanyDetailsComponent
                 t={t}
                 companyDetails={companyDetails}

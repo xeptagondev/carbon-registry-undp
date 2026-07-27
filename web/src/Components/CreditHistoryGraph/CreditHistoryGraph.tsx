@@ -74,6 +74,10 @@ const GraphShell = ({
   const [mode, setMode] = useState<GraphMode>(defaultMode);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Binary Tree's per-node detail panels — IDs currently expanded. Master
+  // toggle (toolbar eye icon) sets/clears every ID at once; the per-node eye
+  // button toggles just its own ID via `onToggleNodeDetail`.
+  const [expandedDetailIds, setExpandedDetailIds] = useState<Set<string>>(new Set());
   // False until `applyDefaultState` runs — gates the views' initial fit past
   // the first paint, which happens with untouched initial state.
   const [isDefaultStateReady, setIsDefaultStateReady] = useState(false);
@@ -90,6 +94,7 @@ const GraphShell = ({
       (defaultSelection === "none" ? null : findDefaultTarget(r));
     setCollapsed(collapseStrategy === "pathOnly" ? collapseAllExceptPath(r, target) : defaultCollapse(r, target));
     setSelectedId(target ? target.id : null);
+    setExpandedDetailIds(new Set());
     setIsDefaultStateReady(true);
     setIsDefaultState(true);
   };
@@ -129,8 +134,22 @@ const GraphShell = ({
     });
     setIsDefaultState(false);
   };
+  const onToggleNodeDetail = (id: string) => {
+    setExpandedDetailIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   if (!root) return null;
+
+  const allNodeIds = nodeIndex ? Array.from(nodeIndex.keys()) : [];
+  const allDetailsExpanded =
+    allNodeIds.length > 0 && allNodeIds.every((id) => expandedDetailIds.has(id));
+  const onToggleAllDetails = () =>
+    setExpandedDetailIds(allDetailsExpanded ? new Set() : new Set(allNodeIds));
 
   const viewProps = {
     root,
@@ -143,8 +162,10 @@ const GraphShell = ({
     isDefaultStateReady,
     creditMarkerLabel: highlightCredit !== undefined ? `Credit #${highlightCredit} is located here` : undefined,
     maxZoom,
+    expandedDetailIds,
     onSelectNode,
     onToggleCollapse,
+    onToggleNodeDetail,
   };
 
   return (
@@ -160,6 +181,8 @@ const GraphShell = ({
           showOpenInNewTab={showOpenInNewTab}
           showModeToggle={showModeToggle}
           onResetView={onResetView}
+          showAllDetails={allDetailsExpanded}
+          onToggleAllDetails={onToggleAllDetails}
           viewProps={viewProps}
         />
       </ReactFlowProvider>
@@ -175,6 +198,10 @@ interface GraphToolbarAndViewProps {
   showOpenInNewTab: boolean;
   showModeToggle: boolean;
   onResetView: () => void;
+  /** Whether every node's detail panel is currently expanded (Binary Tree
+   * only) — drives the toolbar eye icon's on/off state. */
+  showAllDetails: boolean;
+  onToggleAllDetails: () => void;
   viewProps: GraphViewProps;
 }
 
@@ -189,6 +216,8 @@ const GraphToolbarAndView = ({
   showOpenInNewTab,
   showModeToggle,
   onResetView,
+  showAllDetails,
+  onToggleAllDetails,
   viewProps,
 }: GraphToolbarAndViewProps) => {
   const { zoomIn, zoomOut, getNodes, fitBounds } = useReactFlow();
@@ -261,6 +290,17 @@ const GraphToolbarAndView = ({
                 <Icon.ArrowCounterclockwise />
               </button>
             </Tooltip>
+            {mode === "binary" && (
+              <Tooltip
+                title={showAllDetails ? "Hide details on all nodes" : "Show details on all nodes"}
+                placement="bottom"
+                overlayClassName="chg-toolbar-tooltip"
+              >
+                <button className="chg-icon-btn" onClick={onToggleAllDetails}>
+                  {showAllDetails ? <Icon.EyeSlashFill /> : <Icon.EyeFill />}
+                </button>
+              </Tooltip>
+            )}
             {showOpenInNewTab && (
               <Tooltip title="Open in new tab" placement="bottom" overlayClassName="chg-toolbar-tooltip">
                 <button className="chg-icon-btn" onClick={onOpenFullView}>
