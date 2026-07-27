@@ -1,6 +1,7 @@
-import { Button, Checkbox, Empty, Input, Modal, Popover, Radio, Select, Skeleton, Spin, Tag } from "antd";
+import { Button, Checkbox, DatePicker, Empty, Input, Modal, Popover, Radio, Select, Skeleton, Spin, Tag } from "antd";
 import { DoubleRightOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import moment from "moment";
 import "./FilterBar.scss";
 
 const { Search } = Input;
@@ -78,15 +79,25 @@ export interface MultiSelectFilterControl extends ControlBase, AsyncSelectContro
   onChange?: (value: FilterValue[]) => void;
 }
 
+/** A single year picker (e.g. credit vintage) — stores the picked year as a
+ * plain number in `values`, same as a select control's value. */
+export interface YearFilterControl extends ControlBase {
+  type: "year";
+  clearValue?: FilterValue;
+  onChange?: (value: FilterValue | undefined) => void;
+}
+
 export type FilterControl =
   | SearchFilterControl
   | SingleSelectFilterControl
-  | MultiSelectFilterControl;
+  | MultiSelectFilterControl
+  | YearFilterControl;
 
 type ResolvedFilterControl =
   | (SearchFilterControl & { value: string })
   | (SingleSelectFilterControl & { value?: FilterValue })
-  | (MultiSelectFilterControl & { value: FilterValue[] });
+  | (MultiSelectFilterControl & { value: FilterValue[] })
+  | (YearFilterControl & { value?: FilterValue });
 
 export interface RadioFilterGroup {
   id: string;
@@ -108,17 +119,6 @@ export interface RadioFilterGroup {
 export interface FilterBarProps {
   radioGroup?: RadioFilterGroup;
   controls?: FilterControl[];
-  /** Rendered as one more item alongside `controls`, in the same row and
-   * gap, for a control shape the FilterControl union doesn't model (e.g. a
-   * year picker). Not tracked by `values`/applied-chips - the caller owns
-   * its own state and applied indicator, if any. */
-  extraControls?: ReactNode;
-  /** Applied-filter chips for `extraControls` - since that state lives
-   * outside `values`, the caller supplies its own chip(s) and remove
-   * handler(s) directly instead of FilterBar deriving them. Also cleared by
-   * "Clear All" alongside `onClearAll` (the caller's `onClearAll` should
-   * reset this state too - FilterBar only renders the chips/click-off). */
-  extraAppliedChips?: { key: string; label: ReactNode; onRemove: () => void }[];
   values: FilterValues;
   appliedValues?: FilterValues;
   onChange: (id: string, value: FilterControlValue) => void;
@@ -145,8 +145,6 @@ const optionLabel = (options: FilterOption[], value: FilterValue) =>
 export const FilterBar = ({
   radioGroup,
   controls = [],
-  extraControls,
-  extraAppliedChips = [],
   values,
   appliedValues = {},
   onChange,
@@ -176,6 +174,9 @@ export const FilterBar = ({
       const value = values[control.id];
       if (control.type === "search") {
         return { ...control, value: String(value ?? "") };
+      }
+      if (control.type === "year") {
+        return { ...control, value: Array.isArray(value) ? undefined : value };
       }
       if (control.mode === "multiple") {
         return { ...control, value: Array.isArray(value) ? value : [] };
@@ -243,6 +244,18 @@ export const FilterBar = ({
           control.onSearch?.(clearValue);
         },
       });
+    } else if (control.type === "year") {
+      if (control.value !== undefined) {
+        chips.push({
+          key: `${control.id}-${control.value}`,
+          label: control.label ? <>{control.label}: {control.value}</> : <>{control.value}</>,
+          remove: () => emitChange(
+            control.id,
+            control.clearValue,
+            control.onChange as ((value: never) => void) | undefined
+          ),
+        });
+      }
     } else if (control.mode === "multiple") {
       (control.value as FilterValue[]).forEach((value) => chips.push({
         key: `${control.id}-${value}`,
@@ -267,12 +280,6 @@ export const FilterBar = ({
       });
     }
   });
-
-  extraAppliedChips.forEach((chip) => chips.push({
-    key: `extra-${chip.key}`,
-    label: chip.label,
-    remove: chip.onRemove,
-  }));
 
   const rootClassName = ["filter-bar", `filter-bar--${theme}`, disabled ? "filter-bar--disabled" : "", className]
     .filter(Boolean)
@@ -423,7 +430,7 @@ export const FilterBar = ({
     return <div className={rootClassName}><Skeleton active paragraph={{ rows: 1 }} title={false} /></div>;
   }
 
-  if (!visibleRadio && visibleControls.length === 0 && !extraControls) {
+  if (!visibleRadio && visibleControls.length === 0) {
     return <div className={rootClassName}><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} /></div>;
   }
 
@@ -535,10 +542,10 @@ export const FilterBar = ({
             </div>
           </div>
         )}
-        <div className={`filter-bar__controls${extraControls ? " filter-bar__control_extra" : ""}`}>
+        <div className="filter-bar__controls">
           {visibleControls.map((control) => (
             <div
-              className={`filter-bar__control${control.type === "search" ? " filter-bar__control--search" : ""}`}
+              className={`filter-bar__control${control.type === "search" ? " filter-bar__control--search" : ""}${control.type === "year" ? " filter-bar__control--year" : ""}`}
               key={control.id}
               style={control.type === "search"
                 ? { flex: "0 0 auto" }
@@ -601,6 +608,20 @@ export const FilterBar = ({
                     }}
                   />
                 </>
+              ) : control.type === "year" ? (
+                <DatePicker
+                  picker="year"
+                  allowClear
+                  value={control.value !== undefined ? moment().year(control.value as number) : null}
+                  placeholder={control.placeholder}
+                  disabled={disabled || control.disabled}
+                  style={control.width ? { width: control.width } : undefined}
+                  onChange={(date) => emitChange(
+                    control.id,
+                    date ? date.year() : undefined,
+                    control.onChange as ((value: never) => void) | undefined
+                  )}
+                />
               ) : (
                 <Select
                   allowClear
@@ -636,7 +657,6 @@ export const FilterBar = ({
               )}
             </div>
           ))}
-          {extraControls}
         </div>
       </div>
       {showAppliedFilters && chips.length > 0 && (

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Col,
-  DatePicker,
   Empty,
   message,
   PaginationProps,
@@ -83,6 +82,7 @@ const creditBlockIdFromSerial = (serialNumber: string): string =>
 const INITIAL_FILTER_VALUES: FilterValues = {
   organization: [],
   project: [],
+  vintage: undefined,
 };
 
 interface CreditIssuanceTableProps {
@@ -105,7 +105,6 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
   const [historyLoading, setHistoryLoading] = useState<boolean>(false);
   const [historyEntries, setHistoryEntries] = useState<CreditHistoryEntry[]>([]);
   const [filterValues, setFilterValues] = useState<FilterValues>(INITIAL_FILTER_VALUES);
-  const [vintageYear, setVintageYear] = useState<number>();
 
   // Org & Project dropdowns load lazily, page-by-page, and search server-side
   // (see usePaginatedSelectOptions) rather than preloading the whole list.
@@ -149,6 +148,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
       if (projectIds.length > 0) {
         filterAnd.push({ key: "projectId", operation: "in", value: projectIds });
       }
+      const vintageYear = filterValues.vintage as number | undefined;
       if (vintageYear !== undefined) {
         filterAnd.push({
           key: "vintageRange",
@@ -344,11 +344,11 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
         getQueryData();
       }
     }
-  }, [sortField, sortOrder, filterValues.organization, filterValues.project, vintageYear]);
+  }, [sortField, sortOrder, filterValues.organization, filterValues.project, filterValues.vintage]);
 
   return (
     <div className="content-card">
-      <FilterBar 
+      <FilterBar
         controls={[
           {
             id: "organization",
@@ -377,33 +377,16 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
             onPopupScroll: projectSelect.onPopupScroll,
             onDropdownVisibleChange: (open) => open && projectSelect.onDropdownOpen(),
           },
+          {
+            id: "vintage",
+            type: "year",
+            placeholder: t("filterByVintage"),
+            width: 150,
+          },
         ]}
-        extraControls={
-          <div className="filter-bar__control_extra">
-            <DatePicker
-              picker="year"
-              allowClear
-              placeholder={t("filterByVintage")}
-              value={vintageYear !== undefined ? moment().year(vintageYear) : null}
-              onChange={(date) => setVintageYear(date ? date.year() : undefined)}
-            />
-          </div>
-        }
-        extraAppliedChips={
-          vintageYear !== undefined
-            ? [{
-                key: "vintage",
-                label: <>{vintageYear}</>,
-                onRemove: () => setVintageYear(undefined),
-              }]
-            : []
-        }
         values={filterValues}
         onChange={(id, value) => setFilterValues((prev) => ({ ...prev, [id]: value }))}
-        onClearAll={() => {
-          setFilterValues(INITIAL_FILTER_VALUES);
-          setVintageYear(undefined);
-        }}
+        onClearAll={() => setFilterValues(INITIAL_FILTER_VALUES)}
         disabled={loading}
         appliedFiltersLabel={t("appliedFilters")}
         clearAllLabel={t("clearAll")}
