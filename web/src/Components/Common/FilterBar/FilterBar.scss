@@ -137,6 +137,21 @@
     &:focus-visible { outline: 2px solid rgba(24, 144, 255, 0.35); outline-offset: 2px; }
     &:disabled { color: #bfbfbf; cursor: not-allowed; }
   }
+  &__info-popover-content {
+    display: inline;
+  }
+  &__learn-more {
+    display: inline;
+    padding: 0;
+    margin-left: 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   &__control-label, &__applied-label { color: #3a3541; font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
 
   &__applied { gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #eef0f2; }
@@ -144,6 +159,30 @@
   &__chips .ant-tag { margin: 0; padding: 3px 8px; border-radius: 14px; }
   &__applied .ant-btn { padding: 0 4px; min-width: auto !important; }
   .ant-skeleton { width: 100%; }
+}
+
+.filter-bar__info-modal {
+  .ant-modal-title {
+    margin: 20px 0 0;
+    color: #111;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .ant-modal-header {
+    padding-bottom: 12px;
+  }
+
+  .ant-modal-body {
+    padding-top: 8px;
+  }
+
+  .filter-bar__info-modal-content {
+    color: #3a3541cc;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    text-align: left;
+  }
 }
 
 @media (max-width: 767px) {

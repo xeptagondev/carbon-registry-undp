@@ -1,4 +1,4 @@
-import { Button, Checkbox, Empty, Input, Popover, Radio, Select, Skeleton, Spin, Tag } from "antd";
+import { Button, Checkbox, Empty, Input, Modal, Popover, Radio, Select, Skeleton, Spin, Tag } from "antd";
 import { DoubleRightOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import "./FilterBar.scss";
@@ -8,6 +8,13 @@ const { Search } = Input;
 export type FilterValue = string | number;
 export type FilterControlValue = FilterValue | FilterValue[] | undefined;
 export type FilterValues = Record<string, FilterControlValue>;
+
+export interface FilterInfoLearnMore {
+  title: ReactNode;
+  content: ReactNode;
+  label?: ReactNode;
+  width?: number | string;
+}
 
 export interface FilterOption {
   label: ReactNode;
@@ -34,6 +41,7 @@ export interface SearchFilterControl extends ControlBase {
   onSearch?: (value: string) => void;
   infoVisible?: boolean;
   infoDescription?: ReactNode;
+  infoLearnMore?: FilterInfoLearnMore;
 }
 
 /** Opt-in async behavior for a select control — the dropdown then loads its
@@ -143,6 +151,8 @@ export const FilterBar = ({
   const radioMeasureRef = useRef<HTMLDivElement>(null);
   const [visibleRadioCount, setVisibleRadioCount] = useState<number>(Number.MAX_SAFE_INTEGER);
   const [overflowExpanded, setOverflowExpanded] = useState(false);
+  const [openInfoPopoverId, setOpenInfoPopoverId] = useState<string>();
+  const [openInfoDetails, setOpenInfoDetails] = useState<FilterInfoLearnMore>();
   const visibleRadioConfig = radioGroup?.visible !== false ? radioGroup : undefined;
   const visibleRadio = visibleRadioConfig
     ? { ...visibleRadioConfig, value: values[visibleRadioConfig.id] ?? visibleRadioConfig.clearValue }
@@ -521,7 +531,28 @@ export const FilterBar = ({
               {control.type === "search" ? (
                 <>
                   {control.infoVisible && control.infoDescription != null && (
-                    <Popover content={control.infoDescription} trigger="click">
+                    <Popover
+                      content={(
+                        <div className="filter-bar__info-popover-content">
+                          <span>{control.infoDescription}</span>
+                          {control.infoLearnMore && (
+                            <button
+                              type="button"
+                              className="filter-bar__learn-more"
+                              onClick={() => {
+                                setOpenInfoPopoverId(undefined);
+                                setOpenInfoDetails(control.infoLearnMore);
+                              }}
+                            >
+                              {control.infoLearnMore.label ?? "Learn more"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      trigger="click"
+                      open={openInfoPopoverId === control.id}
+                      onOpenChange={(open) => setOpenInfoPopoverId(open ? control.id : undefined)}
+                    >
                       <button
                         type="button"
                         className="filter-bar__info-button"
@@ -597,6 +628,20 @@ export const FilterBar = ({
           <Button type="link" disabled={disabled} onClick={onClearAll}>{clearAllLabel}</Button>
         </div>
       )}
+      <Modal
+        className="filter-bar__info-modal"
+        title={openInfoDetails?.title}
+        open={!!openInfoDetails}
+        onCancel={() => setOpenInfoDetails(undefined)}
+        footer={null}
+        width={openInfoDetails?.width ?? 900}
+        centered
+        destroyOnClose
+      >
+        <div className="filter-bar__info-modal-content">
+          {openInfoDetails?.content}
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -222,3 +222,345 @@
   // padding: 0px 20px;
   padding: 0px;
 }
+
+.credit-balance-redesign {
+  .body-title {
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .credit-balance-card {
+    padding: 0;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  .credit-balance-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 20px 28px;
+  }
+
+  .credit-balance-tabs {
+    align-self: center;
+
+    .ant-radio-button-wrapper {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 35px !important;
+      padding: 0 16px;
+      color: rgba(58, 53, 65, 0.5);
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+      border-color: variables.$primary-color !important;
+      background-color: variables.$primary-color !important;
+      color: #fff !important;
+    }
+
+    .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled)::before {
+      background-color: variables.$primary-color !important;
+    }
+
+    .overall { border-radius: 5px 0 0 5px !important; }
+    .mine { border-radius: 0 5px 5px 0 !important; }
+  }
+
+  .credit-balance-filter-bar {
+    align-self: center;
+    flex: 1 1 520px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-bottom: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+
+    .filter-bar__toolbar,
+    .filter-bar__controls {
+      align-items: center;
+      justify-content: flex-end;
+    }
+  }
+
+  .credit-balance-organization-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .profile-icon { flex: 0 0 auto; }
+  }
+
+  .credit-balance-placeholder-action {
+    color: #94a3b8;
+    cursor: default;
+    font-size: 1rem;
+  }
+
+  .credit-balance-project-table {
+    width: 100%;
+    max-width: 100%;
+
+    > .ant-table-wrapper > .ant-spin-nested-loading > .ant-spin-container > .ant-table {
+      > .ant-table-container > .ant-table-content > table {
+        > thead > tr > th:last-child,
+        > tbody > tr > td:last-child {
+          text-align: center;
+        }
+      }
+    }
+
+    .ant-table-expanded-row > .ant-table-cell {
+      position: relative;
+      padding: 5px 0px 5px 28px;
+      background: #f3f3f3;
+    }
+
+    .credit-balance-expand-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      margin: 0;
+      border: 0 !important;
+      border-radius: 8px;
+      background: #eaf7ff !important;
+      color: #38bdf8 !important;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: none;
+      transition: background-color 160ms ease, color 160ms ease;
+
+      &:hover {
+        background: #dff3ff !important;
+        color: #0ea5e9 !important;
+      }
+
+      &:focus-visible {
+        outline: 2px solid rgba(56, 189, 248, 0.55);
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  .credit-balance-detail-panel {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    background: transparent;
+    transform-origin: top center;
+    animation: credit-balance-detail-expand 280ms ease-in-out both;
+  }
+
+  .credit-balance-detail-panel--collapsing {
+    pointer-events: none;
+    animation-name: credit-balance-detail-collapse;
+    animation-duration: 220ms;
+  }
+
+  .credit-balance-serial-table {
+    .ant-table {
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .ant-table-container { border-radius: 0; }
+
+    .ant-table-content > table,
+    .ant-table-header > table,
+    .ant-table-body > table {
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .ant-table-body {
+      max-height: 250px !important;
+      overflow-y: auto !important;
+    }
+
+    .ant-table-thead > tr > th {
+      padding: 11px 16px;
+      border-bottom: 0;
+      color: variables.$body-text-color !important;
+      white-space: nowrap;
+    }
+
+    .ant-table-thead > tr > th:last-child,
+    .ant-table-tbody > tr > td:last-child {
+      min-width: 90px;
+      width: 90px;
+    }
+
+    .ant-table-tbody > tr > td {
+      height: 50px;
+      padding: 11px 16px;
+      background: variables.$white;
+      border-bottom: 1px solid variables.$sep-line-color;
+      vertical-align: middle;
+      transition: background-color 160ms ease;
+    }
+
+    .ant-table-tbody > tr:last-child > td { border-bottom: 0; }
+    .ant-table-tbody > tr:hover > td { background: #f8fbff; }
+
+    .credit-balance-organization-cell {
+      gap: 9px;
+
+      .profile-icon {
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        margin-right: 0;
+        font-size: 0.75rem;
+        line-height: 28px;
+      }
+    }
+  }
+
+  .credit-balance-serial-scroll {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .credit-balance-serial-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 40px;
+    padding: 8px 18px;
+    border-top: 1px solid variables.$sep-line-color;
+    background: variables.$white;
+    color: variables.$title-text-color;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .credit-balance-serial-loading {
+    position: absolute;
+    right: 18px;
+    bottom: 50px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(variables.$white, 0.92);
+  }
+
+  .credit-balance-serial-number,
+  .credit-balance-detail-date {
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .credit-balance-detail-number {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .credit-balance-detail-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: variables.$title-text-color;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid rgba(56, 189, 248, 0.55);
+      outline-offset: 2px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .credit-balance-toolbar { align-items: stretch; }
+    .credit-balance-filter-bar { flex-basis: 100%; max-width: none; margin-left: 0; }
+  }
+
+  @media (max-width: 600px) {
+    .credit-balance-toolbar { padding: 16px; }
+    .credit-balance-tabs,
+    .credit-balance-tabs .ant-radio-group { width: 100%; }
+    .credit-balance-tabs .ant-radio-button-wrapper { flex: 1; }
+    .credit-balance-project-table .ant-table-expanded-row > .ant-table-cell {
+      padding: 12px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .credit-balance-detail-panel { animation: none; }
+  }
+}
+
+@keyframes credit-balance-detail-expand {
+  from {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.98);
+  }
+
+  to {
+    max-height: 640px;
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes credit-balance-detail-collapse {
+  from {
+    max-height: 640px;
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+
+  to {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.98);
+  }
+}
+
+// .popup-RETIREMENT {
+//   .credit-action-model .ant-radio-group {
+//     display: grid;
+//     grid-template-columns: repeat(2, minmax(0, 1fr));
+//     width: 100%;
+//     gap: 10px 16px;
+
+//     .ant-radio-wrapper {
+//       display: inline-flex;
+//       align-items: flex-start;
+//       min-width: 0;
+//       margin: 0;
+//       color: #475569;
+//       line-height: 1.4;
+//       white-space: normal;
+
+//       .ant-radio { margin-top: 2px; }
+//       > span:last-child { min-width: 0; padding-right: 4px; }
+//     }
+//   }
+
+//   @media (max-width: 420px) {
+//     .credit-action-model .ant-radio-group { grid-template-columns: 1fr; }
+//   }
+// }
