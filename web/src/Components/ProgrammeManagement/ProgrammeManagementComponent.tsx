@@ -31,6 +31,7 @@ import {
   getProjectProposalStageEnumVal,
 } from "../../Definitions/Definitions/programme.definitions";
 import { CheckboxChangeEvent } from "antd/lib/checkbox";
+import { TimedPageInfoTitle } from "../Common/TimedPageInfoTitle/TimedPageInfoTitle";
 import { ProgrammeManagementSlColumns } from "../../Definitions/Enums/programme.management.sl.columns.enum";
 import {
   PlusOutlined,
@@ -575,9 +576,16 @@ export const ProgrammeManagementComponent = (props: any) => {
     <div className="content-container programme-management">
       <div className="programme-title-bar">
         <div className="title-bar">
-          <div className="body-title">
-            {t("projectList:slcfViewProgrammes")}
-          </div>
+          <TimedPageInfoTitle
+            title={t("projectList:slcfViewProgrammes")}
+            description={t("projectList:projectsPageDescription", {
+              defaultValue:
+                "View and manage projects, their organizations, sectors, proposal stages, credit activity, and current status.",
+            })}
+            infoButtonLabel={t("projectList:showProjectsPageDescription", {
+              defaultValue: "Show information about Projects",
+            })}
+          />
         </div>
         <div className="actions">
           {userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&

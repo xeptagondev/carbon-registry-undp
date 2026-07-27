@@ -23,12 +23,13 @@
     flex-wrap: wrap;
   }
 
-  &__toolbar { justify-content: space-between; flex-wrap: wrap; }
+  &__toolbar { justify-content: space-between; flex-wrap: wrap; gap: 12px; }
   &__radio-group, &__controls { gap: 12px; flex-wrap: wrap; }
   &__radio-group {
     position: relative;
-    flex: 0 1 35%;
-    max-width: 35%;
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
     flex-wrap: wrap;
     row-gap: 0;
   }
@@ -171,6 +172,13 @@
 }
 
 .filter-bar__info-modal {
+  .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 64px);
+    overflow: hidden;
+  }
+
   .ant-modal-title {
     margin: 20px 0 0;
     color: #111;
@@ -183,7 +191,10 @@
   }
 
   .ant-modal-body {
+    min-height: 0;
     padding-top: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .filter-bar__info-modal-content {

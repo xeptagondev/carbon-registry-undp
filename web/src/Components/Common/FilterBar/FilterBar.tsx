@@ -159,6 +159,7 @@ export const FilterBar = ({
   className = "",
 }: FilterBarProps) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
   const radioMeasureRef = useRef<HTMLDivElement>(null);
   const [visibleRadioCount, setVisibleRadioCount] = useState<number>(Number.MAX_SAFE_INTEGER);
   const [overflowExpanded, setOverflowExpanded] = useState(false);
@@ -287,8 +288,9 @@ export const FilterBar = ({
 
   useEffect(() => {
     const toolbar = toolbarRef.current;
+    const controlsContainer = controlsRef.current;
     const measurement = radioMeasureRef.current;
-    if (!toolbar || !measurement || !visibleRadio) {
+    if (!toolbar || !controlsContainer || !measurement || !visibleRadio) {
       setVisibleRadioCount(Number.MAX_SAFE_INTEGER);
       return;
     }
@@ -299,7 +301,24 @@ export const FilterBar = ({
           visibleRadio.multiple ? ".ant-checkbox-wrapper" : ".ant-radio-button-wrapper"
         )
       );
-      const availableWidth = toolbar.clientWidth * 0.35;
+      const controlElements = Array.from(
+        controlsContainer.children
+      ) as HTMLElement[];
+      const controlsStyle = window.getComputedStyle(controlsContainer);
+      const controlsGap = parseFloat(controlsStyle.columnGap || controlsStyle.gap) || 0;
+      const toolbarStyle = window.getComputedStyle(toolbar);
+      const toolbarColumnGap =
+        parseFloat(toolbarStyle.columnGap || toolbarStyle.gap) || 0;
+      const controlsContentWidth = controlElements.reduce(
+        (sum, control, index) =>
+          sum + control.getBoundingClientRect().width + (index > 0 ? controlsGap : 0),
+        0
+      );
+      const toolbarGap = controlElements.length > 0 ? toolbarColumnGap : 0;
+      const isMobileLayout = window.matchMedia("(max-width: 767px)").matches;
+      const availableWidth = isMobileLayout
+        ? toolbar.clientWidth
+        : Math.max(0, toolbar.clientWidth - controlsContentWidth - toolbarGap);
       const optionGap = visibleRadio.multiple ? 16 : 0;
       const totalWidth = optionElements.reduce(
         (sum, option, index) => sum + option.offsetWidth + (index > 0 ? optionGap : 0),
@@ -329,6 +348,10 @@ export const FilterBar = ({
     const resizeObserver = new ResizeObserver(updateRadioLayout);
     resizeObserver.observe(toolbar);
     resizeObserver.observe(measurement);
+    resizeObserver.observe(controlsContainer);
+    Array.from(controlsContainer.children).forEach((control) =>
+      resizeObserver.observe(control)
+    );
     return () => resizeObserver.disconnect();
   }, [visibleRadio]);
 
@@ -542,7 +565,7 @@ export const FilterBar = ({
             </div>
           </div>
         )}
-        <div className="filter-bar__controls">
+        <div className="filter-bar__controls" ref={controlsRef}>
           {visibleControls.map((control) => (
             <div
               className={`filter-bar__control${control.type === "search" ? " filter-bar__control--search" : ""}${control.type === "year" ? " filter-bar__control--year" : ""}`}

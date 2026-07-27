@@ -14,6 +14,7 @@ import {
 import {
   CreditBalanceByOrganizationTable,
 } from './Components/creditBalanceByOrganizationTable';
+import { TimedPageInfoTitle } from '../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle';
 import './creditPageStyles.scss';
 
 type BalanceView = 'project' | 'organization';
@@ -80,7 +81,16 @@ export const CreditBalancePage = () => {
     <div className="content-container credit-management credit-balance-redesign">
       <div className="credit-title-bar">
         <div className="title-bar">
-          <div className="body-title">{t('creditBalance')}</div>
+          <TimedPageInfoTitle
+            title={t('creditBalance')}
+            description={t('creditBalancePageDescription', {
+              defaultValue:
+                'Review available and reserved credit balances grouped by project or organization.',
+            })}
+            infoButtonLabel={t('showCreditBalancePageDescription', {
+              defaultValue: 'Show information about Credit Balance',
+            })}
+          />
 
           <section className="content-card credit-balance-card">
             <div className="credit-balance-toolbar">

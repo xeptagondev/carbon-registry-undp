@@ -1,5 +1,7 @@
 {
   "reportsTitle": "Reports",
+  "reportsPageDescription": "Generate and review registry activity and credit holdings reports for the selected reporting year.",
+  "showReportsPageDescription": "Show information about Reports",
 
   "ACTIONS": "Actions Report",
 
