@@ -155,7 +155,7 @@ const getSerialColumns = (
     ),
   },
   ...(openActions ? [{
-    title: 'Action',
+    title: '',
     key: 'action',
     align: 'center' as const,
     width: 90,
