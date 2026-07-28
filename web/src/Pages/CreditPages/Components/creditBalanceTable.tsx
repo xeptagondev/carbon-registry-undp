@@ -26,6 +26,7 @@ import "../creditPageStyles.scss";
 import { IssuedOrReceivedOptions } from "../Enums/creditEventEnum";
 import { CreditActionType } from "../Enums/creditActionType.enum";
 import { CreditActionModal } from "./creditActionModal";
+import { ProjectDetailsLink } from "./ProjectDetailsLink";
 import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
 import { HttpStatusCode } from "axios";
 import { ActionResponseModal } from "../../../Components/Models/actionResponseModal";
@@ -270,7 +271,12 @@ export const CreditBalanceTableComponent = (props: any) => {
       sorter: true,
       align: "left" as const,
       render: (record: CreditBalanceInterface) => {
-        return <span>{record?.projectName}</span>;
+        return (
+          <ProjectDetailsLink
+            projectId={record.projectId}
+            projectName={record.projectName}
+          />
+        );
       },
     },
     {

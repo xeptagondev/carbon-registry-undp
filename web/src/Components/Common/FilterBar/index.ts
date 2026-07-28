@@ -2,6 +2,7 @@ export { FilterBar } from "./FilterBar";
 export type {
   FilterBarProps,
   FilterControl,
+  FilterInfoLearnMore,
   FilterOption,
   FilterControlValue,
   FilterValue,

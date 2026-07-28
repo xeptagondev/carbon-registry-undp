@@ -1,38 +1,214 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Select, Tag } from 'antd';
-import { CreditBalanceTableComponent } from './Components/creditBalanceTable';
+import {
+  FilterBar,
+  type FilterControlValue,
+  type FilterValues,
+} from '../../Components/Common/FilterBar';
+import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
+import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
+import {
+  CreditBalanceByProjectTable,
+} from './Components/creditBalanceByProjectTable';
+import {
+  CreditBalanceByOrganizationTable,
+} from './Components/creditBalanceByOrganizationTable';
+import { TimedPageInfoTitle } from '../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle';
 import './creditPageStyles.scss';
 
-const accountTypeOptions = [
-  { value: 'all', label: 'All Accounts' },
-  { value: 'Holding', label: 'Holding' },
-  { value: 'RetirementNDC', label: 'Retired (NDC)' },
-  { value: 'RetirementOIMP', label: 'Retired (OIMP)' },
-  { value: 'CancellationVoluntary', label: 'Cancelled (Voluntary)' },
-  { value: 'CancellationOMGE', label: 'Cancelled (OMGE)' },
-  { value: 'CancellationSOP', label: 'Cancelled (SOP)' },
-];
+type BalanceView = 'project' | 'organization';
 
 export const CreditBalancePage = () => {
   const { t } = useTranslation(['creditPages']);
-  const [accountTypeFilter, setAccountTypeFilter] = useState<string>('all');
+  const { userInfoState } = useUserContext();
+  const [view, setView] = useState<BalanceView>('project');
+  const [filterValues, setFilterValues] = useState<FilterValues>({});
+  const [refreshGeneration, setRefreshGeneration] = useState(0);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout>>();
+  const [projectOptions, setProjectOptions] = useState<string[]>([]);
+  const [projectOrganizationOptions, setProjectOrganizationOptions] = useState<string[]>([]);
+  const [organizationOptions, setOrganizationOptions] = useState<string[]>([]);
+  const canViewOrganization =
+    userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY;
+
+  useEffect(() => {
+    if (!canViewOrganization) {
+      if (view === 'organization') {
+        setView('project');
+      }
+      setFilterValues((current) => {
+        const organizations = current.organizations;
+        return Array.isArray(organizations) && organizations.length === 0
+          ? current
+          : { ...current, organizations: [] };
+      });
+    }
+  }, [canViewOrganization, view]);
+
+  const selectedOrganizations = canViewOrganization
+    && Array.isArray(filterValues.organizations)
+    ? filterValues.organizations.map(String)
+    : [];
+  const selectedProjects = Array.isArray(filterValues.projects)
+    ? filterValues.projects.map(String)
+    : [];
+
+  const onFilterChange = (id: string, value: FilterControlValue) => {
+    setFilterValues((current) => ({ ...current, [id]: value }));
+  };
+
+  const onProjectFilterOptionsChange = useCallback((options: {
+    organizations: string[];
+    projects: string[];
+  }) => {
+    setProjectOptions((current) => {
+      const next = Array.from(new Set([...current, ...options.projects]));
+      return next.length === current.length ? current : next;
+    });
+    setProjectOrganizationOptions((current) => {
+      const next = Array.from(new Set([...current, ...options.organizations]));
+      return next.length === current.length ? current : next;
+    });
+  }, []);
+
+  const onOrganizationFilterOptionsChange = useCallback((organizations: string[]) => {
+    setOrganizationOptions((current) => {
+      const next = Array.from(new Set([...current, ...organizations]));
+      return next.length === current.length ? current : next;
+    });
+  }, []);
+
+  const triggerBalanceRefresh = useCallback(() => {
+    setRefreshGeneration((current) => current + 1);
+  }, []);
+
+  const refreshBalances = useCallback(() => {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => {
+      triggerBalanceRefresh();
+      refreshTimer.current = undefined;
+    }, 1000);
+  }, [triggerBalanceRefresh]);
+
+  useEffect(() => {
+    const refreshWhenPageBecomesActive = () => {
+      if (document.visibilityState === 'visible') {
+        triggerBalanceRefresh();
+      }
+    };
+
+    window.addEventListener('focus', triggerBalanceRefresh);
+    document.addEventListener('visibilitychange', refreshWhenPageBecomesActive);
+
+    return () => {
+      window.removeEventListener('focus', triggerBalanceRefresh);
+      document.removeEventListener('visibilitychange', refreshWhenPageBecomesActive);
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    };
+  }, [triggerBalanceRefresh]);
 
   return (
-    <div className="content-container credit-management">
+    <div className="content-container credit-management credit-balance-redesign">
       <div className="credit-title-bar">
         <div className="title-bar">
-          <div className="body-title" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            {t('creditBalance')}
-            <Select
-              value={accountTypeFilter}
-              onChange={setAccountTypeFilter}
-              options={accountTypeOptions}
-              style={{ width: 200, fontSize: '0.875rem' }}
-              size="small"
-            />
-          </div>
-          <CreditBalanceTableComponent t={t} accountTypeFilter={accountTypeFilter} />
+          <TimedPageInfoTitle
+            title={t('creditBalance')}
+            description={t('creditBalancePageDescription', {
+              defaultValue:
+                'Review available and reserved credit balances grouped by project or organization.',
+            })}
+            infoButtonLabel={t('showCreditBalancePageDescription', {
+              defaultValue: 'Show information about Credit Balance',
+            })}
+          />
+
+          <section className="content-card credit-balance-card">
+            <div className="credit-balance-toolbar">
+              <div className="credit-balance-tabs radio-selection">
+                <Radio.Group
+                  value={view}
+                  aria-label="Credit balance grouping"
+                  onChange={(event) => {
+                    const nextView = event.target.value as BalanceView;
+                    if (nextView === 'project' || canViewOrganization) {
+                      setView(nextView);
+                    }
+                  }}
+                >
+                  <Radio.Button className="overall" value="project">By Project</Radio.Button>
+                  <Radio.Button
+                    className="mine"
+                    value="organization"
+                    disabled={!canViewOrganization}
+                  >
+                    By Organization
+                  </Radio.Button>
+                </Radio.Group>
+              </div>
+
+              <FilterBar
+                className="credit-balance-filter-bar"
+                values={filterValues}
+                controls={[
+                  {
+                    id: 'organizations',
+                    type: 'select',
+                    mode: 'multiple',
+                    placeholder: t('selectOrganization'),
+                    width: 240,
+                    options: (view === 'project'
+                      ? projectOrganizationOptions
+                      : organizationOptions
+                    ).map((name) => ({ label: name, value: name })),
+                    clearValue: [],
+                    showAsApplied: false,
+                    visible: canViewOrganization,
+                  },
+                  {
+                    id: 'projects',
+                    type: 'select',
+                    mode: 'multiple',
+                    placeholder: t('selectProject'),
+                    width: 280,
+                    options: projectOptions.map((name) => ({ label: name, value: name })),
+                    clearValue: [],
+                    showAsApplied: false,
+                    visible: view === 'project',
+                  },
+                ]}
+                onChange={onFilterChange}
+                appliedFiltersLabel="Applied filters"
+                clearAllLabel="Clear all"
+                onClearAll={() => setFilterValues({ organizations: [], projects: [] })}
+                showAppliedFilters={false}
+              />
+            </div>
+
+            {view === 'project' ? (
+              <CreditBalanceByProjectTable
+                selectedOrganizations={selectedOrganizations}
+                selectedProjects={selectedProjects}
+                onFilterOptionsChange={onProjectFilterOptionsChange}
+                refreshGeneration={refreshGeneration}
+                onBalanceChanged={refreshBalances}
+              />
+            ) : canViewOrganization ? (
+              <CreditBalanceByOrganizationTable
+                selectedOrganizations={selectedOrganizations}
+                onFilterOptionsChange={onOrganizationFilterOptionsChange}
+                refreshGeneration={refreshGeneration}
+              />
+            ) : (
+              <CreditBalanceByProjectTable
+                selectedOrganizations={selectedOrganizations}
+                selectedProjects={selectedProjects}
+                onFilterOptionsChange={onProjectFilterOptionsChange}
+                refreshGeneration={refreshGeneration}
+                onBalanceChanged={refreshBalances}
+              />
+            )}
+          </section>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Menu, Layout, MenuProps } from "antd";
 import sliderLogo from "../../Assets/Images/logo-slider.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -55,7 +55,12 @@ const LayoutSider = (props: LayoutSiderProps) => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [selectKey, setSelectKey] = useState<any>(selectedKey);
-  const { i18n, t } = useTranslation(["nav"]);
+  const [menuScrollState, setMenuScrollState] = useState({
+    hasContentAbove: false,
+    hasContentBelow: false,
+  });
+  const menuContainerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation(["nav"]);
 
   const currentPage = location.pathname.replace(/^\/|\/$/g, "");
 
@@ -131,6 +136,59 @@ const LayoutSider = (props: LayoutSiderProps) => {
     setSelectKey(currentPage);
   }, [currentPage]);
 
+  const updateMenuScrollState = useCallback(() => {
+    const menuContainer = menuContainerRef.current;
+    if (!menuContainer) return;
+
+    const hasContentAbove = menuContainer.scrollTop > 1;
+    const hasContentBelow =
+      menuContainer.scrollTop + menuContainer.clientHeight <
+      menuContainer.scrollHeight - 1;
+
+    setMenuScrollState((current) =>
+      current.hasContentAbove === hasContentAbove &&
+      current.hasContentBelow === hasContentBelow
+        ? current
+        : { hasContentAbove, hasContentBelow }
+    );
+  }, []);
+
+  useEffect(() => {
+    const menuContainer = menuContainerRef.current;
+    if (!menuContainer) return;
+
+    let animationFrame: number | undefined;
+    const scheduleUpdate = () => {
+      if (animationFrame !== undefined) {
+        cancelAnimationFrame(animationFrame);
+      }
+      animationFrame = requestAnimationFrame(updateMenuScrollState);
+    };
+
+    scheduleUpdate();
+
+    const resizeObserver = new ResizeObserver(scheduleUpdate);
+    resizeObserver.observe(menuContainer);
+    if (menuContainer.firstElementChild) {
+      resizeObserver.observe(menuContainer.firstElementChild);
+    }
+
+    const mutationObserver = new MutationObserver(scheduleUpdate);
+    mutationObserver.observe(menuContainer, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      if (animationFrame !== undefined) {
+        cancelAnimationFrame(animationFrame);
+      }
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [collapsed, updateMenuScrollState]);
+
   // if (
   //   userInfoState?.userRole === Role.Root ||
   //   (userInfoState?.companyRole === CompanyRole.GOVERNMENT &&
@@ -201,7 +259,21 @@ const LayoutSider = (props: LayoutSiderProps) => {
             </div>
           )}
         </div>
-        <div className="layout-sider-menu-container">
+        <div
+          ref={menuContainerRef}
+          className={[
+            "layout-sider-menu-container",
+            menuScrollState.hasContentAbove
+              ? "layout-sider-menu-container--fade-top"
+              : "",
+            menuScrollState.hasContentBelow
+              ? "layout-sider-menu-container--fade-bottom"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          onScroll={updateMenuScrollState}
+        >
           <Menu
             theme="light"
             selectedKeys={[

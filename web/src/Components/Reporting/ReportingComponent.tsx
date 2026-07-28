@@ -9,6 +9,7 @@ import { FILE_TYPES, REPORT_TYPES } from "./reportTypes";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
 import { API_PATHS } from "../../Config/apiConfig";
 import { Loading } from "../Loading/loading";
+import { TimedPageInfoTitle } from "../Common/TimedPageInfoTitle/TimedPageInfoTitle";
 
 const ReportingComponent = (props: { translator: i18n }) => {
   const { translator } = props;
@@ -265,7 +266,17 @@ const ReportingComponent = (props: { translator: i18n }) => {
     <div className="reporting-container">
       <div className="title-container">
         <Row justify={"space-between"}>
-          <div className="main">{t("reporting:reportsTitle")}</div>
+          <TimedPageInfoTitle
+            title={t("reporting:reportsTitle")}
+            description={t("reporting:reportsPageDescription", {
+              defaultValue:
+                "Generate and review registry activity and credit holdings reports for the selected reporting year.",
+            })}
+            infoButtonLabel={t("reporting:showReportsPageDescription", {
+              defaultValue: "Show information about Reports",
+            })}
+            titleClassName="main"
+          />
         </Row>
         <Row justify={"end"}>
           <DatePicker

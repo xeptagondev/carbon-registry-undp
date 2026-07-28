@@ -20,6 +20,7 @@ import moment from "moment";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
 import { useUserContext } from "../../../Context/UserInformationContext/userInformationContext";
 import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
+import { ProjectDetailsLink } from "./ProjectDetailsLink";
 
 const { Search } = Input;
 
@@ -134,7 +135,12 @@ export const CreditTransfersTableComponent = (props: any) => {
       sorter: true,
       align: "left" as const,
       render: (item: CreditTransfersInterface) => {
-        return <span>{item?.projectName}</span>;
+        return (
+          <ProjectDetailsLink
+            projectId={item.projectId}
+            projectName={item.projectName}
+          />
+        );
       },
     },
     {

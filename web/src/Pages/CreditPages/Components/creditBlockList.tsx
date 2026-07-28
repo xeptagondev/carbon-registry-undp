@@ -26,6 +26,7 @@ import moment from "moment";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
 import { CreditBlockInterface } from "../Interfaces/creditBlock.interface";
 import { CreditHistoryEntry } from "../../../Components/CreditHistoryGraph/creditHistoryGraph.types";
+import { ProjectDetailsLink } from "./ProjectDetailsLink";
 import { CreditHistoryGraph } from "../../../Components/CreditHistoryGraph/CreditHistoryGraph";
 import {
   FilterBar,
@@ -103,6 +104,84 @@ const INITIAL_FILTER_VALUES: FilterValues = {
   project: [],
   serialSearch: "",
 };
+
+const SerialSearchInfoContent = ({ t }: { t: (key: string) => string }) => (
+  <div className="serial-search-info">
+    <p className="serial-search-info__intro">
+      {t("serialSearchInfo.intro")}
+    </p>
+    <div className="serial-search-info__grid">
+      <section className="serial-search-info__card">
+        <div className="serial-search-info__heading">
+          <span className="serial-search-info__number">1</span>
+          <strong>{t("serialSearchInfo.fullSerialTitle")}</strong>
+        </div>
+        <p>{t("serialSearchInfo.fullSerialDescription")}</p>
+        <div className="serial-search-info__example">
+          <span>{t("serialSearchInfo.example")}</span>
+          <code>CA0NNN-NG-XX-32-3001-4000-2023</code>
+        </div>
+        <p>
+          {t("serialSearchInfo.fullSerialRangeDescription")}
+        </p>
+        <div className="serial-search-info__example">
+          <span>{t("serialSearchInfo.example")}</span>
+          <code>CA0NNN-NG-XX-32-3500-3500-2023</code>
+        </div>
+      </section>
+      <section className="serial-search-info__card">
+        <div className="serial-search-info__heading">
+          <span className="serial-search-info__number">2</span>
+          <strong>{t("serialSearchInfo.singleCreditTitle")}</strong>
+        </div>
+        <p>{t("serialSearchInfo.singleCreditDescription")}</p>
+        <div className="serial-search-info__example">
+          <span>{t("serialSearchInfo.example")}</span>
+          <code>3500</code>
+          <span>{t("serialSearchInfo.singleCreditMatch")}</span>
+        </div>
+      </section>
+      <section className="serial-search-info__card">
+        <div className="serial-search-info__heading">
+          <span className="serial-search-info__number">3</span>
+          <strong>{t("serialSearchInfo.numberRangeTitle")}</strong>
+        </div>
+        <p>{t("serialSearchInfo.numberRangeDescription")}</p>
+        <div className="serial-search-info__codes">
+          <span>{t("serialSearchInfo.example")}</span>
+          <code>3200-3600</code>
+          <span>{t("serialSearchInfo.or")}</span>
+          <code>3200-3600-2023</code>
+        </div>
+      </section>
+      <section className="serial-search-info__card">
+        <div className="serial-search-info__heading">
+          <span className="serial-search-info__number">4</span>
+          <strong>{t("serialSearchInfo.serialPrefixTitle")}</strong>
+        </div>
+        <p>{t("serialSearchInfo.serialPrefixDescription")}</p>
+        <div className="serial-search-info__prefixes">
+          <span>{t("serialSearchInfo.example")}</span>
+          <code>CA0NNN-NG-XX-32</code>
+          <span>({t("serialSearchInfo.byProject")}) {t("serialSearchInfo.or")}</span>
+          <code>CA0NNN-NG-XX-32-3001</code>
+          <span>({t("serialSearchInfo.byProjectAndCredit")})</span>
+        </div>
+      </section>
+      <section className="serial-search-info__card serial-search-info__card--wide">
+        <div className="serial-search-info__heading">
+          <span className="serial-search-info__number">5</span>
+          <strong>{t("serialSearchInfo.textFragmentTitle")}</strong>
+        </div>
+        <p>{t("serialSearchInfo.textFragmentDescription")}</p>
+        <div className="serial-search-info__example">
+          <span>{t("serialSearchInfo.example")}</span>
+          <code>NG</code>
+        </div>
+      </section>
+    </div>
+  </div>
+);
 
 interface CreditBlockListTableProps {
   t: (key: string) => string;
@@ -293,7 +372,12 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
       sorter: true,
       align: "left" as const,
       render: (record: CreditBlockInterface) => {
-        return <span>{record?.projectName}</span>;
+        return (
+          <ProjectDetailsLink
+            projectId={record.projectId}
+            projectName={record.projectName}
+          />
+        );
       },
     },
     {
@@ -475,8 +559,12 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
             placeholder: t("searchBySerialNumber"),
             width: 240,
             onSearch: (value: string) => setAppliedSerialSearch(value.trim()),
-            infoVisible:true,
-            infoDescription:"Search the credit by serial number."
+            infoVisible: true,
+            infoDescription: t("serialSearchInfo.infoDescription"),
+            infoLearnMore: {
+              title: t("searchBySerialNumber"),
+              content: <SerialSearchInfoContent t={t} />,
+            },
           },
           {
             id: "organization",

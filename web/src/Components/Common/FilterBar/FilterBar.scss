@@ -23,12 +23,13 @@
     flex-wrap: wrap;
   }
 
-  &__toolbar { justify-content: space-between; flex-wrap: wrap; }
+  &__toolbar { justify-content: space-between; flex-wrap: wrap; gap: 12px; }
   &__radio-group, &__controls { gap: 12px; flex-wrap: wrap; }
   &__radio-group {
     position: relative;
-    flex: 0 1 35%;
-    max-width: 35%;
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
     flex-wrap: wrap;
     row-gap: 0;
   }
@@ -146,6 +147,21 @@
     &:focus-visible { outline: 2px solid rgba(24, 144, 255, 0.35); outline-offset: 2px; }
     &:disabled { color: #bfbfbf; cursor: not-allowed; }
   }
+  &__info-popover-content {
+    display: inline;
+  }
+  &__learn-more {
+    display: inline;
+    padding: 0;
+    margin-left: 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   &__control-label, &__applied-label { color: #3a3541; font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
 
   &__applied { gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #eef0f2; }
@@ -153,6 +169,40 @@
   &__chips .ant-tag { margin: 0; padding: 3px 8px; border-radius: 14px; }
   &__applied .ant-btn { padding: 0 4px; min-width: auto !important; }
   .ant-skeleton { width: 100%; }
+}
+
+.filter-bar__info-modal {
+  .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 64px);
+    overflow: hidden;
+  }
+
+  .ant-modal-title {
+    margin: 20px 0 0;
+    color: #111;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .ant-modal-header {
+    padding-bottom: 12px;
+  }
+
+  .ant-modal-body {
+    min-height: 0;
+    padding-top: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .filter-bar__info-modal-content {
+    color: #3a3541cc;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    text-align: left;
+  }
 }
 
 @media (max-width: 767px) {

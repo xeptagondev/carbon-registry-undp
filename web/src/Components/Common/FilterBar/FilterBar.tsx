@@ -1,4 +1,4 @@
-import { Button, Checkbox, DatePicker, Empty, Input, Popover, Radio, Select, Skeleton, Spin, Tag } from "antd";
+import { Button, Checkbox, DatePicker, Empty, Input, Modal, Popover, Radio, Select, Skeleton, Spin, Tag } from "antd";
 import { DoubleRightOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import moment from "moment";
@@ -9,6 +9,13 @@ const { Search } = Input;
 export type FilterValue = string | number;
 export type FilterControlValue = FilterValue | FilterValue[] | undefined;
 export type FilterValues = Record<string, FilterControlValue>;
+
+export interface FilterInfoLearnMore {
+  title: ReactNode;
+  content: ReactNode;
+  label?: ReactNode;
+  width?: number | string;
+}
 
 export interface FilterOption {
   label: ReactNode;
@@ -35,6 +42,7 @@ export interface SearchFilterControl extends ControlBase {
   onSearch?: (value: string) => void;
   infoVisible?: boolean;
   infoDescription?: ReactNode;
+  infoLearnMore?: FilterInfoLearnMore;
 }
 
 /** Opt-in async behavior for a select control — the dropdown then loads its
@@ -151,9 +159,12 @@ export const FilterBar = ({
   className = "",
 }: FilterBarProps) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
   const radioMeasureRef = useRef<HTMLDivElement>(null);
   const [visibleRadioCount, setVisibleRadioCount] = useState<number>(Number.MAX_SAFE_INTEGER);
   const [overflowExpanded, setOverflowExpanded] = useState(false);
+  const [openInfoPopoverId, setOpenInfoPopoverId] = useState<string>();
+  const [openInfoDetails, setOpenInfoDetails] = useState<FilterInfoLearnMore>();
   const visibleRadioConfig = radioGroup?.visible !== false ? radioGroup : undefined;
   const visibleRadio = visibleRadioConfig
     ? { ...visibleRadioConfig, value: values[visibleRadioConfig.id] ?? visibleRadioConfig.clearValue }
@@ -277,8 +288,9 @@ export const FilterBar = ({
 
   useEffect(() => {
     const toolbar = toolbarRef.current;
+    const controlsContainer = controlsRef.current;
     const measurement = radioMeasureRef.current;
-    if (!toolbar || !measurement || !visibleRadio) {
+    if (!toolbar || !controlsContainer || !measurement || !visibleRadio) {
       setVisibleRadioCount(Number.MAX_SAFE_INTEGER);
       return;
     }
@@ -289,7 +301,24 @@ export const FilterBar = ({
           visibleRadio.multiple ? ".ant-checkbox-wrapper" : ".ant-radio-button-wrapper"
         )
       );
-      const availableWidth = toolbar.clientWidth * 0.35;
+      const controlElements = Array.from(
+        controlsContainer.children
+      ) as HTMLElement[];
+      const controlsStyle = window.getComputedStyle(controlsContainer);
+      const controlsGap = parseFloat(controlsStyle.columnGap || controlsStyle.gap) || 0;
+      const toolbarStyle = window.getComputedStyle(toolbar);
+      const toolbarColumnGap =
+        parseFloat(toolbarStyle.columnGap || toolbarStyle.gap) || 0;
+      const controlsContentWidth = controlElements.reduce(
+        (sum, control, index) =>
+          sum + control.getBoundingClientRect().width + (index > 0 ? controlsGap : 0),
+        0
+      );
+      const toolbarGap = controlElements.length > 0 ? toolbarColumnGap : 0;
+      const isMobileLayout = window.matchMedia("(max-width: 767px)").matches;
+      const availableWidth = isMobileLayout
+        ? toolbar.clientWidth
+        : Math.max(0, toolbar.clientWidth - controlsContentWidth - toolbarGap);
       const optionGap = visibleRadio.multiple ? 16 : 0;
       const totalWidth = optionElements.reduce(
         (sum, option, index) => sum + option.offsetWidth + (index > 0 ? optionGap : 0),
@@ -319,6 +348,10 @@ export const FilterBar = ({
     const resizeObserver = new ResizeObserver(updateRadioLayout);
     resizeObserver.observe(toolbar);
     resizeObserver.observe(measurement);
+    resizeObserver.observe(controlsContainer);
+    Array.from(controlsContainer.children).forEach((control) =>
+      resizeObserver.observe(control)
+    );
     return () => resizeObserver.disconnect();
   }, [visibleRadio]);
 
@@ -532,7 +565,7 @@ export const FilterBar = ({
             </div>
           </div>
         )}
-        <div className="filter-bar__controls">
+        <div className="filter-bar__controls" ref={controlsRef}>
           {visibleControls.map((control) => (
             <div
               className={`filter-bar__control${control.type === "search" ? " filter-bar__control--search" : ""}${control.type === "year" ? " filter-bar__control--year" : ""}`}
@@ -547,7 +580,28 @@ export const FilterBar = ({
               {control.type === "search" ? (
                 <>
                   {control.infoVisible && control.infoDescription != null && (
-                    <Popover content={control.infoDescription} trigger="click">
+                    <Popover
+                      content={(
+                        <div className="filter-bar__info-popover-content">
+                          <span>{control.infoDescription}</span>
+                          {control.infoLearnMore && (
+                            <button
+                              type="button"
+                              className="filter-bar__learn-more"
+                              onClick={() => {
+                                setOpenInfoPopoverId(undefined);
+                                setOpenInfoDetails(control.infoLearnMore);
+                              }}
+                            >
+                              {control.infoLearnMore.label ?? "Learn more"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      trigger="click"
+                      open={openInfoPopoverId === control.id}
+                      onOpenChange={(open) => setOpenInfoPopoverId(open ? control.id : undefined)}
+                    >
                       <button
                         type="button"
                         className="filter-bar__info-button"
@@ -637,6 +691,20 @@ export const FilterBar = ({
           <Button type="link" disabled={disabled} onClick={onClearAll}>{clearAllLabel}</Button>
         </div>
       )}
+      <Modal
+        className="filter-bar__info-modal"
+        title={openInfoDetails?.title}
+        open={!!openInfoDetails}
+        onCancel={() => setOpenInfoDetails(undefined)}
+        footer={null}
+        width={openInfoDetails?.width ?? 900}
+        centered
+        destroyOnClose
+      >
+        <div className="filter-bar__info-modal-content">
+          {openInfoDetails?.content}
+        </div>
+      </Modal>
     </div>
   );
 };
