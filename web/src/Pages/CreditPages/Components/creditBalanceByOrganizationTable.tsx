@@ -18,6 +18,7 @@ interface OrganizationBalance {
 
 export interface CreditBalanceByOrganizationTableProps {
   selectedOrganizations: string[];
+  refreshGeneration: number;
   onFilterOptionsChange?: (organizations: string[]) => void;
 }
 
@@ -86,6 +87,7 @@ const columns: ColumnsType<OrganizationBalance> = [
 
 export const CreditBalanceByOrganizationTable = ({
   selectedOrganizations,
+  refreshGeneration,
   onFilterOptionsChange,
 }: CreditBalanceByOrganizationTableProps) => {
   const { post } = useConnection();
@@ -158,6 +160,7 @@ export const CreditBalanceByOrganizationTable = ({
     onFilterOptionsChange,
     pageSize,
     post,
+    refreshGeneration,
     selectedOrganizationsKey,
   ]);
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
@@ -24,6 +24,8 @@ export const CreditBalancePage = () => {
   const { userInfoState } = useUserContext();
   const [view, setView] = useState<BalanceView>('project');
   const [filterValues, setFilterValues] = useState<FilterValues>({});
+  const [refreshGeneration, setRefreshGeneration] = useState(0);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout>>();
   const [projectOptions, setProjectOptions] = useState<string[]>([]);
   const [projectOrganizationOptions, setProjectOrganizationOptions] = useState<string[]>([]);
   const [organizationOptions, setOrganizationOptions] = useState<string[]>([]);
@@ -76,6 +78,35 @@ export const CreditBalancePage = () => {
       return next.length === current.length ? current : next;
     });
   }, []);
+
+  const triggerBalanceRefresh = useCallback(() => {
+    setRefreshGeneration((current) => current + 1);
+  }, []);
+
+  const refreshBalances = useCallback(() => {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => {
+      triggerBalanceRefresh();
+      refreshTimer.current = undefined;
+    }, 1000);
+  }, [triggerBalanceRefresh]);
+
+  useEffect(() => {
+    const refreshWhenPageBecomesActive = () => {
+      if (document.visibilityState === 'visible') {
+        triggerBalanceRefresh();
+      }
+    };
+
+    window.addEventListener('focus', triggerBalanceRefresh);
+    document.addEventListener('visibilitychange', refreshWhenPageBecomesActive);
+
+    return () => {
+      window.removeEventListener('focus', triggerBalanceRefresh);
+      document.removeEventListener('visibilitychange', refreshWhenPageBecomesActive);
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    };
+  }, [triggerBalanceRefresh]);
 
   return (
     <div className="content-container credit-management credit-balance-redesign">
@@ -159,17 +190,22 @@ export const CreditBalancePage = () => {
                 selectedOrganizations={selectedOrganizations}
                 selectedProjects={selectedProjects}
                 onFilterOptionsChange={onProjectFilterOptionsChange}
+                refreshGeneration={refreshGeneration}
+                onBalanceChanged={refreshBalances}
               />
             ) : canViewOrganization ? (
               <CreditBalanceByOrganizationTable
                 selectedOrganizations={selectedOrganizations}
                 onFilterOptionsChange={onOrganizationFilterOptionsChange}
+                refreshGeneration={refreshGeneration}
               />
             ) : (
               <CreditBalanceByProjectTable
                 selectedOrganizations={selectedOrganizations}
                 selectedProjects={selectedProjects}
                 onFilterOptionsChange={onProjectFilterOptionsChange}
+                refreshGeneration={refreshGeneration}
+                onBalanceChanged={refreshBalances}
               />
             )}
           </section>

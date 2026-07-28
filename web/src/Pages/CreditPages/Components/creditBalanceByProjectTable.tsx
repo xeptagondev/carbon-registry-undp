@@ -56,6 +56,8 @@ interface ProjectBalance {
 export interface CreditBalanceByProjectTableProps {
   selectedOrganizations: string[];
   selectedProjects: string[];
+  refreshGeneration: number;
+  onBalanceChanged: () => void;
   onFilterOptionsChange?: (options: {
     organizations: string[];
     projects: string[];
@@ -348,6 +350,8 @@ const columns: ColumnsType<ProjectBalance> = [
 export const CreditBalanceByProjectTable = ({
   selectedOrganizations,
   selectedProjects,
+  refreshGeneration,
+  onBalanceChanged,
   onFilterOptionsChange,
 }: CreditBalanceByProjectTableProps) => {
   const { t } = useTranslation(['creditPages']);
@@ -360,7 +364,6 @@ export const CreditBalanceByProjectTable = ({
   const [rows, setRows] = useState<ProjectBalance[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [refreshGeneration, setRefreshGeneration] = useState(0);
   const projectRequestGeneration = useRef(0);
   const selectedOrganizationsKey = selectedOrganizations.join('\u0000');
   const selectedProjectsKey = selectedProjects.join('\u0000');
@@ -589,7 +592,7 @@ export const CreditBalanceByProjectTable = ({
         ? 'creditTransferInitiated'
         : 'creditRetirementSubmitted'));
       setModalActionVisible(false);
-      setRefreshGeneration((current) => current + 1);
+      onBalanceChanged();
     } catch (error: unknown) {
       const errorMessage = typeof error === 'object'
         && error !== null
