@@ -1,4 +1,4 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { InfoCircle } from 'react-bootstrap-icons';
 import {
   useEffect,
   useLayoutEffect,
@@ -24,12 +24,13 @@ export const TimedPageInfoTitle = ({
   titleClassName = 'body-title',
 }: TimedPageInfoTitleProps) => {
   const [pageInfoState, setPageInfoState] = useState<PageInfoState>('waiting');
+  const [displayCycle, setDisplayCycle] = useState(0);
   const [expandedWidth, setExpandedWidth] = useState(245);
   const messageRef = useRef<HTMLSpanElement>(null);
 
   useLayoutEffect(() => {
     if (!messageRef.current) return;
-    setExpandedWidth(Math.min(Math.ceil(messageRef.current.scrollWidth) + 26, 720));
+    setExpandedWidth(Math.min(Math.ceil(messageRef.current.scrollWidth) + 38, 900));
   }, [description]);
 
   useEffect(() => {
@@ -41,7 +42,12 @@ export const TimedPageInfoTitle = ({
     }, delay);
 
     return () => window.clearTimeout(timer);
-  }, [pageInfoState]);
+  }, [displayCycle, pageInfoState]);
+
+  const showPageInfo = () => {
+    setPageInfoState('expanded');
+    setDisplayCycle((current) => current + 1);
+  };
 
   return (
     <div className={`${titleClassName} timed-page-info-title`}>
@@ -64,9 +70,9 @@ export const TimedPageInfoTitle = ({
           type="button"
           className="timed-page-info__button"
           aria-label={infoButtonLabel}
-          onClick={() => setPageInfoState('expanded')}
+          onClick={showPageInfo}
         >
-          <InfoCircleOutlined />
+          <InfoCircle />
         </button>
       </div>
       <span className="timed-page-info__announcement" aria-live="polite">
