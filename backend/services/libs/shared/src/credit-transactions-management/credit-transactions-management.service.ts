@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { User } from "../entities/user.entity";
+import { Company } from "../entities/company.entity";
 import { CreditTransferDto } from "../dto/credit.transfer.dto";
 import { CompanyRole } from "../enum/company.role.enum";
 import { HelperService } from "../util/helpers.service";
@@ -1171,7 +1172,7 @@ export class CreditTransactionsManagementService {
       })
     );
 
-    const companyNames = await this.resolveCompanyNames(companyIds);
+    const companies = await this.resolveCompanies(companyIds);
 
     return rows.map((row) => {
       let firstTransfer: CreditBlockExplorerFirstTransferDto | null = null;
@@ -1199,15 +1200,18 @@ export class CreditTransactionsManagementService {
             }
           }
           if (match) {
+            const fromCompany =
+              match.fromOrganizationId != null
+                ? companies.get(match.fromOrganizationId)
+                : undefined;
+            const toCompany = companies.get(match.toOrganizationId);
             firstTransfer = {
               fromOrganizationId: match.fromOrganizationId,
-              fromOrganizationName:
-                match.fromOrganizationId != null
-                  ? companyNames.get(match.fromOrganizationId) ?? null
-                  : null,
+              fromOrganizationName: fromCompany?.name ?? null,
+              fromOrganizationLogo: fromCompany?.logo ?? null,
               toOrganizationId: match.toOrganizationId,
-              toOrganizationName:
-                companyNames.get(match.toOrganizationId) ?? null,
+              toOrganizationName: toCompany?.name ?? null,
+              toOrganizationLogo: toCompany?.logo ?? null,
               amount: match.amount,
               serialNumber: match.serialNumber,
               transferTime: match.txTime,
@@ -1366,18 +1370,29 @@ export class CreditTransactionsManagementService {
     return undefined;
   }
 
-  private async resolveCompanyNames(
+  private async resolveCompanies(
     companyIds: Set<number>
-  ): Promise<Map<number, string>> {
-    const names = new Map<number, string>();
+  ): Promise<Map<number, Company>> {
+    const companies = new Map<number, Company>();
     await Promise.all(
       Array.from(companyIds).map(async (id) => {
         const company = await this.companyService.findByCompanyId(id);
         if (company) {
-          names.set(id, company.name);
+          companies.set(id, company);
         }
       })
     );
+    return companies;
+  }
+
+  private async resolveCompanyNames(
+    companyIds: Set<number>
+  ): Promise<Map<number, string>> {
+    const companies = await this.resolveCompanies(companyIds);
+    const names = new Map<number, string>();
+    for (const [id, company] of companies) {
+      names.set(id, company.name);
+    }
     return names;
   }
 

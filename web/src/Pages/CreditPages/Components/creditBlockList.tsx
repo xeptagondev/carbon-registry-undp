@@ -60,7 +60,7 @@ interface ExplorerQueryRow {
   reserved: number;
   status: string;
   updatedTime: number | string;
-  firstTransfer: { toOrganizationName: string } | null;
+  firstTransfer: { toOrganizationName: string; toOrganizationLogo: string | null } | null;
 }
 
 const mapExplorerRow = (row: ExplorerQueryRow): CreditBlockInterface => ({
@@ -76,6 +76,7 @@ const mapExplorerRow = (row: ExplorerQueryRow): CreditBlockInterface => ({
   projectName: row.projectName,
   currentStatus: row.status as CreditBlockStatus,
   firstTransfer: row.firstTransfer ? row.firstTransfer.toOrganizationName : "-",
+  firstTransferLogo: row.firstTransfer ? row.firstTransfer.toOrganizationLogo ?? null : null,
   vintage: vintageFromSerial(row.serialNumber),
 });
 
@@ -351,7 +352,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
           <Row justify="center" align="middle">
             <Tooltip title={record.firstTransfer}>
               <span>
-                <ProfileIcon icon={null} bg={"rgba(185, 226, 244, 0.56)"} name={record.firstTransfer} />
+                <ProfileIcon icon={record.firstTransferLogo} bg={"rgba(185, 226, 244, 0.56)"} name={record.firstTransfer} />
               </span>
             </Tooltip>
           </Row>

@@ -8,8 +8,10 @@
 export class CreditBlockExplorerFirstTransferDto {
   fromOrganizationId: number;
   fromOrganizationName: string;
+  fromOrganizationLogo: string;
   toOrganizationId: number;
   toOrganizationName: string;
+  toOrganizationLogo: string;
   amount: number;
   serialNumber: string;
   transferTime: number;
