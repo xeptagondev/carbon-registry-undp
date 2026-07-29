@@ -138,16 +138,17 @@ const OrganizationCell = ({
 const getSerialColumns = (
   openActions?: (row: CreditSerialBalance) => ReactNode,
 ): ColumnsType<CreditSerialBalance> => [
-  { title: 'Serial Number', dataIndex: 'serialNumber', key: 'serialNumber', align: 'left', width: 280, render: (value) => <span className="credit-balance-serial-number">{value}</span> },
-  { title: 'Organization', key: 'organization', align: 'left', render: (_, row) => <OrganizationCell name={row.organization} color={row.organizationColor} logo={row.organizationLogo} /> },
-  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', width: 180, render: (value) => <span className="credit-balance-detail-date">{value}</span> },
-  { title: 'Credit Balance', dataIndex: 'balance', key: 'balance', align: 'right', render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
-  { title: 'Reserved Credits', dataIndex: 'reserved', key: 'reserved', align: 'right', render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  { title: 'Serial Number', dataIndex: 'serialNumber', key: 'serialNumber', align: 'left', width: 280, sorter: (a, b) => a.serialNumber.localeCompare(b.serialNumber), render: (value) => <span className="credit-balance-serial-number">{value}</span> },
+  { title: 'Organization', key: 'organization', align: 'left', sorter: (a, b) => a.organization.localeCompare(b.organization), render: (_, row) => <OrganizationCell name={row.organization} color={row.organizationColor} logo={row.organizationLogo} /> },
+  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', width: 180, sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt), render: (value) => <span className="credit-balance-detail-date">{value}</span> },
+  { title: 'Credit Balance', dataIndex: 'balance', key: 'balance', align: 'right', sorter: (a, b) => a.balance - b.balance, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  { title: 'Reserved Credits', dataIndex: 'reserved', key: 'reserved', align: 'right', sorter: (a, b) => a.reserved - b.reserved, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
   {
     title: 'Issue or Received',
     dataIndex: 'type',
     key: 'type',
     align: 'center',
+    sorter: (a, b) => a.type.localeCompare(b.type),
     render: (value: IssuedOrReceivedOptions) => (
       <Tag color={value === IssuedOrReceivedOptions.RECEIVED ? 'success' : 'processing'}>
         {value === IssuedOrReceivedOptions.RECEIVED ? 'Received' : 'Issued'}
@@ -616,6 +617,11 @@ export const CreditBalanceByProjectTable = ({
         loading={loading}
         tableLayout="fixed"
         scroll={{ x: 1050 }}
+        onChange={(_pagination, _filters, _sorter, extra) => {
+          if (extra.action === 'sort' && expandedProjectId) {
+            toggleExpandedProject(expandedProjectId, true);
+          }
+        }}
         expandable={{
           expandedRowRender: (row) => (
             <div className={`credit-balance-detail-panel${collapsingProjectId === row.id ? ' credit-balance-detail-panel--collapsing' : ''}`}>

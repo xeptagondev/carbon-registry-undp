@@ -30,7 +30,7 @@ export const TimedPageInfoTitle = ({
 
   useLayoutEffect(() => {
     if (!messageRef.current) return;
-    setExpandedWidth(Math.min(Math.ceil(messageRef.current.scrollWidth) + 38, 900));
+    setExpandedWidth(Math.min(Math.ceil(messageRef.current.scrollWidth) + 34, 900));
   }, [description]);
 
   useEffect(() => {
@@ -44,7 +44,12 @@ export const TimedPageInfoTitle = ({
     return () => window.clearTimeout(timer);
   }, [displayCycle, pageInfoState]);
 
-  const showPageInfo = () => {
+  const togglePageInfo = () => {
+    if (pageInfoState === 'expanded') {
+      setPageInfoState('collapsed');
+      return;
+    }
+
     setPageInfoState('expanded');
     setDisplayCycle((current) => current + 1);
   };
@@ -70,7 +75,8 @@ export const TimedPageInfoTitle = ({
           type="button"
           className="timed-page-info__button"
           aria-label={infoButtonLabel}
-          onClick={showPageInfo}
+          aria-expanded={pageInfoState === 'expanded'}
+          onClick={togglePageInfo}
         >
           <InfoCircle />
         </button>

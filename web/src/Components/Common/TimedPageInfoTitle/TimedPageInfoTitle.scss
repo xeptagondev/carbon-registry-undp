@@ -30,25 +30,31 @@
   &::before {
     position: absolute;
     z-index: 0;
-    top: 0;
-    left: -6px;
-    width: calc(var(--timed-page-info-expanded-width, 245px) + 6px);
-    height: 30px;
+    top: 3px;
+    left: 0;
+    width: 24px;
+    height: 24px;
     box-sizing: border-box;
-    border: 1px solid #e6e8ec;
-    border-radius: 5px;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+    border: 1px solid rgba(variables.$primary-color, 0.12);
+    border-radius: 6px;
+    background: rgba(variables.$primary-color, 0.08);
+    box-shadow: none;
     content: '';
-    opacity: 0;
-    transform: scaleX(0.08);
-    transform-origin: left center;
-    transition: opacity 120ms ease, transform 260ms ease;
+    opacity: 1;
+    transition:
+      top 260ms ease,
+      left 260ms ease,
+      width 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      height 260ms ease,
+      border-radius 260ms ease;
+    will-change: width, height, top, left;
   }
 
   &--expanded::before {
-    opacity: 1;
-    transform: scaleX(1);
+    top: 0;
+    left: -2px;
+    width: calc(var(--timed-page-info-expanded-width, 245px) + 6px);
+    height: 30px;
   }
 
   &__message,
@@ -62,10 +68,10 @@
   &__message {
     box-sizing: border-box;
     top: 0;
-    left: 32px;
+    left: 28px;
     width: max-content;
     height: 30px;
-    color: #3a3541;
+    color: variables.$primary-color;
     font-size: 12.8px;
     font-weight: 400;
     line-height: 20px;
@@ -74,13 +80,14 @@
   }
 
   &__button {
-    inset: 0 auto auto 0;
+    inset: 3px auto auto 0;
     justify-content: center;
     width: 24px;
-    height: 30px;
+    height: 24px;
+    box-sizing: border-box;
     padding: 0;
     border: 0;
-    border-radius: 50%;
+    border-radius: 6px;
     background: transparent;
     color: variables.$primary-color;
     cursor: pointer;
@@ -104,12 +111,14 @@
   &--expanded &__message {
     opacity: 1;
     transform: translateX(0);
+    transition-delay: 120ms;
   }
 
   &--waiting &__message,
   &--collapsed &__message {
     opacity: 0;
     transform: translateX(-10px);
+    transition-delay: 0ms;
   }
 
   &--waiting &__button,
