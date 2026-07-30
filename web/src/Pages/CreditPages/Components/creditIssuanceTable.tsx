@@ -29,8 +29,9 @@ import { CreditHistoryGraph } from "../../../Components/CreditHistoryGraph/Credi
 import { ProjectDetailsLink } from "./ProjectDetailsLink";
 import {
   FilterBar,
+  FilterValue,
   FilterValues,
-  usePaginatedSelectOptions,
+  usePaginatedEntityFilter,
 } from "../../../Components/Common/FilterBar";
 
 enum CreditIssuanceColumns {
@@ -108,32 +109,30 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
   const [filterValues, setFilterValues] = useState<FilterValues>(INITIAL_FILTER_VALUES);
 
   // Org & Project dropdowns load lazily, page-by-page, and search server-side
-  // (see usePaginatedSelectOptions) rather than preloading the whole list.
-  const orgSelect = usePaginatedSelectOptions({
-    selectedValues: filterValues.organization as (string | number)[],
-    fetchPage: async ({ search, page, size }) => {
-      const response: any = await post(API_PATHS.ORGANIZATION_NAMES, {
-        page,
-        size,
-        filterAnd: search ? [{ key: "name", operation: "like", value: `%${search}%` }] : undefined,
-        sort: { key: "name", order: "ASC" },
-      });
-      return (response?.data ?? []).map((d: any) => ({ label: d.name, value: d.companyId }));
-    },
+  // (see usePaginatedEntityFilter) rather than preloading the whole list.
+  const orgFilter = usePaginatedEntityFilter({
+    endpoint: API_PATHS.ORGANIZATION_NAMES,
+    id: "organization",
+    mode: "multiple",
+    placeholder: t("filterByOrganization"),
+    labelKey: "name",
+    valueKey: "companyId",
+    sortKey: "name",
+    selectedValues: filterValues.organization as FilterValue[],
   });
 
-  const projectSelect = usePaginatedSelectOptions({
-    selectedValues: filterValues.project as (string | number)[],
-    fetchPage: async ({ search, page, size }) => {
-      const response: any = await post(API_PATHS.GET_PROJECT, {
-        page,
-        size,
-        filterAnd: search ? [{ key: "title", operation: "like", value: `%${search}%` }] : undefined,
-        sort: { key: "title", order: "ASC" },
-      });
-      // The issuances view's projectId column is the project's refId.
-      return (response?.data ?? []).map((d: any) => ({ label: d.title, value: d.refId }));
-    },
+  // The issuances view's projectId column is the project's refId; only
+  // projects with at least one issued credit are worth offering here.
+  const projectFilter = usePaginatedEntityFilter({
+    endpoint: API_PATHS.GET_PROJECT,
+    id: "project",
+    mode: "multiple",
+    placeholder: t("filterByProject"),
+    labelKey: "title",
+    valueKey: "refId",
+    sortKey: "title",
+    extraFilters: [{ key: "creditIssued", operation: ">", value: 0 }],
+    selectedValues: filterValues.project as FilterValue[],
   });
 
   const getQueryData = async () => {
@@ -333,7 +332,6 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
 
   useEffect(() => {
     getQueryData();
-    isInitialRender.current = true;
   }, []);
 
   useEffect(() => {
@@ -352,37 +350,22 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
     }
   }, [sortField, sortOrder, filterValues.organization, filterValues.project, filterValues.vintage]);
 
+  // Declared last so it runs after the two effects above on the initial
+  // mount pass (effects fire in declaration order within the same commit) —
+  // flipping this here, rather than inside the first effect, is what keeps
+  // their `isInitialRender.current` check false during that mount pass, so
+  // they don't also redundantly re-fetch alongside the unconditional mount
+  // fetch above.
+  useEffect(() => {
+    isInitialRender.current = true;
+  }, []);
+
   return (
     <div className="content-card">
       <FilterBar
         controls={[
-          {
-            id: "organization",
-            type: "select",
-            mode: "multiple",
-            visible: !isProjectDeveloper,
-            placeholder: t("filterByOrganization"),
-            options: orgSelect.options,
-            width: 220,
-            serverSearch: true,
-            loading: orgSelect.loading,
-            onSearch: orgSelect.onSearch,
-            onPopupScroll: orgSelect.onPopupScroll,
-            onDropdownVisibleChange: (open) => open && orgSelect.onDropdownOpen(),
-          },
-          {
-            id: "project",
-            type: "select",
-            mode: "multiple",
-            placeholder: t("filterByProject"),
-            options: projectSelect.options,
-            width: 220,
-            serverSearch: true,
-            loading: projectSelect.loading,
-            onSearch: projectSelect.onSearch,
-            onPopupScroll: projectSelect.onPopupScroll,
-            onDropdownVisibleChange: (open) => open && projectSelect.onDropdownOpen(),
-          },
+          { ...orgFilter.control, visible: !isProjectDeveloper },
+          projectFilter.control,
           {
             id: "vintage",
             type: "year",

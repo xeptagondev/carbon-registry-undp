@@ -31,7 +31,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
       SELECT ct."senderId" AS "organizationId", SUM(ct."amount") AS "creditRetired"
       FROM "credit_transactions_entity" ct
       WHERE ct."type" = 'Retired'
-      AND ct.status != 'Pending'
+      AND ct.status = 'Completed'
       GROUP BY ct."senderId"
     ) ret ON ret."organizationId" = c."companyId"
     LEFT JOIN (

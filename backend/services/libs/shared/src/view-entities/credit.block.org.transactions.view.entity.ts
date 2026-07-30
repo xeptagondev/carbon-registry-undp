@@ -98,7 +98,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
       LEFT JOIN company s ON ct."senderId" = s."companyId"
       LEFT JOIN company r ON ct."recieverId" = r."companyId"
       WHERE ct."type" = 'Retired'
-      AND ct.status != 'Pending'
+      AND ct.status = 'Completed'
     `,
 })
 export class CreditBlockOrgTransactionsViewEntity {
