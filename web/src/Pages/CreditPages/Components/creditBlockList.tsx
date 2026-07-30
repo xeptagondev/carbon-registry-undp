@@ -32,7 +32,7 @@ import {
   FilterBar,
   FilterValue,
   FilterValues,
-  usePaginatedSelectOptions,
+  usePaginatedEntityFilter,
 } from "../../../Components/Common/FilterBar";
 import { getCreditBlockStatusTagColor } from "./creditTableHelpers";
 
@@ -208,32 +208,30 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
   const [historyEntries, setHistoryEntries] = useState<CreditHistoryEntry[]>([]);
 
   // Org & Project dropdowns load lazily, page-by-page, and search server-side
-  // (see usePaginatedSelectOptions) rather than preloading the whole list.
-  const orgSelect = usePaginatedSelectOptions({
+  // (see usePaginatedEntityFilter) rather than preloading the whole list.
+  const orgFilter = usePaginatedEntityFilter({
+    endpoint: API_PATHS.ORGANIZATION_NAMES,
+    id: "organization",
+    mode: "multiple",
+    placeholder: t("filterByOrganization"),
+    labelKey: "name",
+    valueKey: "companyId",
+    sortKey: "name",
     selectedValues: filterValues.organization as FilterValue[],
-    fetchPage: async ({ search, page, size }) => {
-      const response: any = await post(API_PATHS.ORGANIZATION_NAMES, {
-        page,
-        size,
-        filterAnd: search ? [{ key: "name", operation: "like", value: `%${search}%` }] : undefined,
-        sort: { key: "name", order: "ASC" },
-      });
-      return (response?.data ?? []).map((d: any) => ({ label: d.name, value: d.companyId }));
-    },
   });
 
-  const projectSelect = usePaginatedSelectOptions({
+  // The explorer view's projectId column is the project's refId; only
+  // projects with at least one issued credit are worth offering here.
+  const projectFilter = usePaginatedEntityFilter({
+    endpoint: API_PATHS.GET_PROJECT,
+    id: "project",
+    mode: "multiple",
+    placeholder: t("filterByProject"),
+    labelKey: "title",
+    valueKey: "refId",
+    sortKey: "title",
+    extraFilters: [{ key: "creditIssued", operation: ">", value: 0 }],
     selectedValues: filterValues.project as FilterValue[],
-    fetchPage: async ({ search, page, size }) => {
-      const response: any = await post(API_PATHS.GET_PROJECT, {
-        page,
-        size,
-        filterAnd: search ? [{ key: "title", operation: "like", value: `%${search}%` }] : undefined,
-        sort: { key: "title", order: "ASC" },
-      });
-      // The explorer view's projectId column is the project's refId.
-      return (response?.data ?? []).map((d: any) => ({ label: d.title, value: d.refId }));
-    },
   });
 
   const getQueryData = async () => {
@@ -496,7 +494,6 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
 
   useEffect(() => {
     getQueryData();
-    isInitialRender.current = true;
   }, []);
 
   useEffect(() => {
@@ -521,6 +518,16 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
     filterValues.project,
     appliedSerialSearch,
   ]);
+
+  // Declared last so it runs after the two effects above on the initial
+  // mount pass (effects fire in declaration order within the same commit) —
+  // flipping this here, rather than inside the first effect, is what keeps
+  // their `isInitialRender.current` check false during that mount pass, so
+  // they don't also redundantly re-fetch alongside the unconditional mount
+  // fetch above.
+  useEffect(() => {
+    isInitialRender.current = true;
+  }, []);
 
   const allStatusesSelected = (filterValues.status as string[]).includes(STATUS_ALL);
 
@@ -567,32 +574,8 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
               content: <SerialSearchInfoContent t={t} />,
             },
           },
-          {
-            id: "organization",
-            type: "select",
-            mode: "multiple",
-            placeholder: t("filterByOrganization"),
-            options: orgSelect.options,
-            width: 220,
-            serverSearch: true,
-            loading: orgSelect.loading,
-            onSearch: orgSelect.onSearch,
-            onPopupScroll: orgSelect.onPopupScroll,
-            onDropdownVisibleChange: (open) => open && orgSelect.onDropdownOpen(),
-          },
-          {
-            id: "project",
-            type: "select",
-            mode: "multiple",
-            placeholder: t("filterByProject"),
-            options: projectSelect.options,
-            width: 220,
-            serverSearch: true,
-            loading: projectSelect.loading,
-            onSearch: projectSelect.onSearch,
-            onPopupScroll: projectSelect.onPopupScroll,
-            onDropdownVisibleChange: (open) => open && projectSelect.onDropdownOpen(),
-          },
+          orgFilter.control,
+          projectFilter.control,
         ]}
         values={filterValues}
         appliedValues={{ serialSearch: appliedSerialSearch }}

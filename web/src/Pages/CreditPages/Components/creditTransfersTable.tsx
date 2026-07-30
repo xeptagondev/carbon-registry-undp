@@ -273,7 +273,6 @@ export const CreditTransfersTableComponent = (props: any) => {
 
   useEffect(() => {
     getQueryData();
-    isInitialRender.current = true;
   }, []);
 
   useEffect(() => {
@@ -291,6 +290,16 @@ export const CreditTransfersTableComponent = (props: any) => {
       }
     }
   }, [sortField, sortOrder, search]);
+
+  // Declared last so it runs after the two effects above on the initial
+  // mount pass (effects fire in declaration order within the same commit) —
+  // flipping this here, rather than inside the first effect, is what keeps
+  // their `isInitialRender.current` check false during that mount pass, so
+  // they don't also redundantly re-fetch alongside the unconditional mount
+  // fetch above.
+  useEffect(() => {
+    isInitialRender.current = true;
+  }, []);
   // MARK: Main JSX START
 
   return (

@@ -19,6 +19,7 @@ import {
   areNodesMeasured,
   effectiveChildren,
   fitGraphToScreen,
+  FIT_EXTRA_TOP,
   measureNoteWidth,
   mixHexColor,
   pathSegmentProgress,
@@ -553,9 +554,9 @@ export const TimelineGraphView = ({
             measureNoteWidth(
               `${n.data?.creditMarker ? `${n.data.creditMarker}    ` : ""}${n.data?.notePrefix ?? ""}${n.data?.companyName ?? ""}${n.data?.updateTime ? ` | ${n.data.updateTime}` : ""}`
             ),
-          // Headroom so the path-only fit doesn't tuck the top node under the
-          // floating mode-toggle.
-          extraTop: useScope ? 40 : 0,
+          // Headroom so the fit doesn't tuck the top node under the floating
+          // mode-toggle — needed regardless of fit scope.
+          extraTop: FIT_EXTRA_TOP,
           filter: useScope ? (n) => initialFitIds.has(n.id) : undefined,
         }
       );

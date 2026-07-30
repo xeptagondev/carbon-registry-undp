@@ -18,3 +18,9 @@ export type {
   PaginatedSelectOptions,
   UsePaginatedSelectOptionsParams,
 } from "./usePaginatedSelectOptions";
+export { usePaginatedEntityFilter } from "./usePaginatedEntityFilter";
+export type {
+  FilterEntry,
+  PaginatedEntityFilter,
+  UsePaginatedEntityFilterParams,
+} from "./usePaginatedEntityFilter";

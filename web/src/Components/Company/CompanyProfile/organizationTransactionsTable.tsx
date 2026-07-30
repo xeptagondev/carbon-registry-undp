@@ -12,7 +12,7 @@ import {
   FilterBar,
   FilterValue,
   FilterValues,
-  usePaginatedSelectOptions,
+  usePaginatedEntityFilter,
 } from '../../Common/FilterBar';
 
 export enum OrganizationTransactionStatus {
@@ -109,19 +109,19 @@ export const OrganizationTransactionsTable = ({
   const [filterValues, setFilterValues] = useState<FilterValues>(INITIAL_FILTER_VALUES);
 
   // Project dropdown loads lazily, page-by-page, and searches server-side
-  // (see usePaginatedSelectOptions) rather than preloading the whole list.
-  const projectSelect = usePaginatedSelectOptions({
+  // (see usePaginatedEntityFilter) rather than preloading the whole list.
+  // The transactions view's projectId column is the project's refId; only
+  // projects with at least one issued credit are worth offering here.
+  const projectFilter = usePaginatedEntityFilter({
+    endpoint: API_PATHS.GET_PROJECT,
+    id: 'project',
+    mode: 'multiple',
+    placeholder: t('filterByProject'),
+    labelKey: 'title',
+    valueKey: 'refId',
+    sortKey: 'title',
+    extraFilters: [{ key: 'creditIssued', operation: '>', value: 0 }],
     selectedValues: filterValues.project as FilterValue[],
-    fetchPage: async ({ search, page, size }) => {
-      const response: any = await post(API_PATHS.GET_PROJECT, {
-        page,
-        size,
-        filterAnd: search ? [{ key: 'title', operation: 'like', value: `%${search}%` }] : undefined,
-        sort: { key: 'title', order: 'ASC' },
-      });
-      // The transactions view's projectId column is the project's refId.
-      return (response?.data ?? []).map((d: any) => ({ label: d.title, value: d.refId }));
-    },
   });
 
   const getQueryData = async () => {
@@ -231,7 +231,13 @@ export const OrganizationTransactionsTable = ({
       title: t('companyProfile:updatedDateTime'),
       key: 'updatedDate',
       sorter: true,
-      defaultSortOrder: 'descend' as const,
+      // No defaultSortOrder: antd would report this column as already
+      // actively sorted on the very first table interaction (including a
+      // plain page turn), which falsely looks like a user-driven sort
+      // change to the effect below and resets currentPage back to 1 —
+      // breaking the first pagination click. The default DESC ordering is
+      // already applied server-side (see getQueryData's `sort` fallback)
+      // without needing this visual hint.
       align: 'left' as const,
       render: (record: OrganizationTransactionInterface) => (
         <span>{moment(Number(record.updatedDate)).format('YYYY-MM-DD HH:mm:ss')}</span>
@@ -262,7 +268,6 @@ export const OrganizationTransactionsTable = ({
 
   useEffect(() => {
     getQueryData();
-    isInitialRender.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -283,6 +288,16 @@ export const OrganizationTransactionsTable = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortOrder, companyId, filterValues.status, filterValues.project]);
+
+  // Declared last so it runs after the two effects above on the initial
+  // mount pass (effects fire in declaration order within the same commit) —
+  // flipping this here, rather than inside the first effect, is what keeps
+  // their `isInitialRender.current` check false during that mount pass, so
+  // they don't also redundantly re-fetch alongside the unconditional mount
+  // fetch above.
+  useEffect(() => {
+    isInitialRender.current = true;
+  }, []);
 
   const allStatusesSelected = (filterValues.status as string[]).includes(STATUS_ALL);
 
@@ -313,21 +328,7 @@ export const OrganizationTransactionsTable = ({
           // as an applied-filter chip.
           isApplied: () => !allStatusesSelected,
         }}
-        controls={[
-          {
-            id: 'project',
-            type: 'select',
-            mode: 'multiple',
-            placeholder: t('filterByProject'),
-            options: projectSelect.options,
-            width: 220,
-            serverSearch: true,
-            loading: projectSelect.loading,
-            onSearch: projectSelect.onSearch,
-            onPopupScroll: projectSelect.onPopupScroll,
-            onDropdownVisibleChange: (open) => open && projectSelect.onDropdownOpen(),
-          },
-        ]}
+        controls={[projectFilter.control]}
         values={filterValues}
         onChange={(id, value) => setFilterValues((prev) => ({ ...prev, [id]: value }))}
         onClearAll={() => setFilterValues(INITIAL_FILTER_VALUES)}

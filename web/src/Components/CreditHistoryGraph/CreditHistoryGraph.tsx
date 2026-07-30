@@ -13,6 +13,8 @@ import {
   findDefaultTarget,
   findNodeByRange,
   fitGraphToScreen,
+  FIT_EXTRA_TOP,
+  FIT_EXTRA_RIGHT_TOOLBAR,
   getPathToRoot,
   measureNoteWidth,
   withFitMaxZoom,
@@ -224,7 +226,8 @@ const GraphToolbarAndView = ({
   const storeApi = useStoreApi();
   // getExtraRight: reserve room for Timeline's overflowing note text (Binary
   // Tree keeps info inside the node). extraRight: fixed gap for the floating
-  // toolbar, only needed in Binary Tree.
+  // toolbar, only needed in Binary Tree. extraTop: clearance for the
+  // floating mode-toggle/toolbar, needed regardless of mode.
   const fitToScreen = () =>
     fitGraphToScreen(
       getNodes,
@@ -239,7 +242,8 @@ const GraphToolbarAndView = ({
                   `${n.data?.creditMarker ? `${n.data.creditMarker}    ` : ""}${n.data?.notePrefix ?? ""}${n.data?.companyName ?? ""}${n.data?.updateTime ? ` | ${n.data.updateTime}` : ""}`
                 )
             : undefined,
-        extraRight: mode === "binary" ? 60 : 0,
+        extraTop: FIT_EXTRA_TOP,
+        extraRight: mode === "binary" ? FIT_EXTRA_RIGHT_TOOLBAR : 0,
       }
     );
 

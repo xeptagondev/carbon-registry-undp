@@ -17,6 +17,8 @@ import {
   areNodesMeasured,
   effectiveChildren,
   fitGraphToScreen,
+  FIT_EXTRA_TOP,
+  FIT_EXTRA_RIGHT_TOOLBAR,
   mixHexColor,
   pathSegmentProgress,
   withFitMaxZoom,
@@ -26,8 +28,6 @@ const elk = new ELK();
 const NODE_HEIGHT = 100;
 // Matches the <ReactFlow maxZoom> below — restored after a fit's zoom cap.
 const DEFAULT_MAX_ZOOM = 3;
-// Fixed clearance reserved for the floating toolbar when fitting.
-const TOOLBAR_CLEARANCE = 60;
 // Per-level stagger of the path-highlight cascade.
 const PATH_STAGGER_MS = 90;
 const PATH_TRANSITION_MS = 260;
@@ -464,9 +464,9 @@ export const BinaryTreeGraphView = ({
         getNodes,
         withFitMaxZoom(fitBounds, (z) => storeApi.getState().setMaxZoom(z), maxZoom, DEFAULT_MAX_ZOOM),
         {
-          extraTop: 40,
+          extraTop: FIT_EXTRA_TOP,
           // Clearance so the top-right node isn't tucked under the toolbar.
-          extraRight: TOOLBAR_CLEARANCE,
+          extraRight: FIT_EXTRA_RIGHT_TOOLBAR,
           filter: useScope ? (n) => initialFitIds.has(n.id) : undefined,
         }
       );

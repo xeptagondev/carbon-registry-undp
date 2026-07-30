@@ -204,6 +204,12 @@ export const pathSegmentProgress = (segmentIndex: number, totalSegments: number,
   return easeOutCubic(segT);
 };
 
+// Fixed clearance reserved when fitting so content doesn't tuck under the
+// floating mode-toggle (top-left) / vertical toolbar (top-right). Shared by
+// every fitGraphToScreen call site so the two never drift out of sync again.
+export const FIT_EXTRA_TOP = 40;
+export const FIT_EXTRA_RIGHT_TOOLBAR = 60;
+
 interface FitGraphNode {
   id: string;
   position: { x: number; y: number };
