@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CreditHistoryGraph } from "../../Components/CreditHistoryGraph/CreditHistoryGraph";
-import { CreditHistoryEntry } from "../../Components/CreditHistoryGraph/creditHistoryGraph.types";
+import { CreditHistoryEntry, GraphMode } from "../../Components/CreditHistoryGraph/creditHistoryGraph.types";
 
 // TODO: remove once the credit-block backend endpoint exists — there's no
 // way to re-fetch a block's history by serial number yet, so the data is
@@ -33,6 +33,10 @@ export const CreditHistoryViewPage = () => {
   const highlightCredit = highlightCreditParam !== null && /^\d+$/.test(highlightCreditParam)
     ? Number(highlightCreditParam)
     : undefined;
+  const parseMode = (value: string | null): GraphMode | undefined =>
+    value === "binary" || value === "timeline" ? value : undefined;
+  const defaultMode = parseMode(searchParams.get("defaultMode"));
+  const initialMode = parseMode(searchParams.get("initialMode"));
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", padding: 24, boxSizing: "border-box" }}>
@@ -48,6 +52,8 @@ export const CreditHistoryViewPage = () => {
             interactiveSelection={interactiveSelection}
             collapseStrategy={collapseStrategy}
             defaultSelection={defaultSelection}
+            defaultMode={defaultMode}
+            initialMode={initialMode}
             showOpenInNewTab={false}
             height="100%"
             highlightCredit={highlightCredit}

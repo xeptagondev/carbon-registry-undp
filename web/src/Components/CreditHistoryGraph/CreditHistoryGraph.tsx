@@ -38,7 +38,7 @@ const indexTree = (root: HistoryTreeNode): Map<string, HistoryTreeNode> => {
 
 interface GraphShellProps {
   entries: CreditHistoryEntry[];
-  onOpenFullView: () => void;
+  onOpenFullView: (mode: GraphMode) => void;
   focusRange?: string;
   interactiveSelection: boolean;
   collapseStrategy: "depth" | "pathOnly";
@@ -47,6 +47,7 @@ interface GraphShellProps {
   showModeToggle: boolean;
   defaultSelection: "auto" | "none";
   defaultMode: GraphMode;
+  initialMode: GraphMode;
   initialFitScope: "all" | "path";
   highlightCredit?: number;
   maxZoom?: number;
@@ -67,13 +68,14 @@ const GraphShell = ({
   showModeToggle,
   defaultSelection,
   defaultMode,
+  initialMode,
   initialFitScope,
   highlightCredit,
   maxZoom,
 }: GraphShellProps) => {
   const root = useMemo(() => buildHistoryTree(entries), [entries]);
   const nodeIndex = useMemo(() => (root ? indexTree(root) : null), [root]);
-  const [mode, setMode] = useState<GraphMode>(defaultMode);
+  const [mode, setMode] = useState<GraphMode>(initialMode);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Binary Tree's per-node detail panels — IDs currently expanded. Master
@@ -196,7 +198,7 @@ interface GraphToolbarAndViewProps {
   mode: GraphMode;
   defaultMode: GraphMode;
   onToggleMode: () => void;
-  onOpenFullView: () => void;
+  onOpenFullView: (mode: GraphMode) => void;
   showOpenInNewTab: boolean;
   showModeToggle: boolean;
   onResetView: () => void;
@@ -307,7 +309,7 @@ const GraphToolbarAndView = ({
             )}
             {showOpenInNewTab && (
               <Tooltip title="Open in new tab" placement="bottom" overlayClassName="chg-toolbar-tooltip">
-                <button className="chg-icon-btn" onClick={onOpenFullView}>
+                <button className="chg-icon-btn" onClick={() => onOpenFullView(mode)}>
                   <Icon.ArrowsFullscreen />
                 </button>
               </Tooltip>
@@ -348,8 +350,14 @@ export interface CreditHistoryGraphProps {
   /** "auto" (default): highlight on open. "none": nothing until a click
    * (`focusRange` still wins). */
   defaultSelection?: "auto" | "none";
-  /** Which view the graph opens in. Defaults to "timeline". */
+  /** Which view the graph opens in, and — together with `showModeToggle` —
+   * the Timeline/Binary Tree button order. Defaults to "timeline". */
   defaultMode?: GraphMode;
+  /** Which mode is actually selected on open. Defaults to `defaultMode`; the
+   * fullscreen tab sets this to whatever the popup was last toggled to
+   * (`defaultMode` there stays the page's own default so button order still
+   * matches the popup). */
+  initialMode?: GraphMode;
   /** Scope of the first fit. "all" (default) fits every visible node; "path"
    * fits only the traced path (for Explorer's pathOnly tree). Later re-fits
    * always use "all". */
@@ -374,6 +382,7 @@ export const CreditHistoryGraph = ({
   showModeToggle = true,
   defaultSelection = "auto",
   defaultMode = "timeline",
+  initialMode,
   initialFitScope = "all",
   highlightCredit,
   maxZoom,
@@ -382,7 +391,12 @@ export const CreditHistoryGraph = ({
   // window.open() copies the opener's sessionStorage at open time) rather than
   // a query param, so the URL stays short. No noopener — that would break the
   // sessionStorage inheritance this relies on.
-  const onOpenNewTab = () => {
+  // `mode` is the toggle the inline graph is *currently* showing, passed
+  // through as `initialMode` so the full view opens pre-selected there.
+  // `defaultMode` is sent as-is (the page's own static default) so button
+  // order in the fullscreen tab matches the popup regardless of what's
+  // currently selected.
+  const onOpenNewTab = (mode: GraphMode) => {
     const key = crypto.randomUUID();
     sessionStorage.setItem(`history-${key}`, JSON.stringify(entries));
     const params = new URLSearchParams();
@@ -392,6 +406,8 @@ export const CreditHistoryGraph = ({
     params.set("interactiveSelection", String(interactiveSelection));
     params.set("collapseStrategy", collapseStrategy);
     params.set("defaultSelection", defaultSelection);
+    params.set("defaultMode", defaultMode);
+    params.set("initialMode", mode);
     if (highlightCredit !== undefined) params.set("highlightCredit", String(highlightCredit));
     window.open(`/credits/historyView?${params.toString()}`, "_blank");
   };
@@ -409,6 +425,7 @@ export const CreditHistoryGraph = ({
         showModeToggle={showModeToggle}
         defaultSelection={defaultSelection}
         defaultMode={defaultMode}
+        initialMode={initialMode ?? defaultMode}
         initialFitScope={initialFitScope}
         highlightCredit={highlightCredit}
         maxZoom={maxZoom}

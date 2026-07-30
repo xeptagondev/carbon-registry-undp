@@ -674,6 +674,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
                 collapseStrategy="pathOnly"
                 showOpenInNewTab={true}
                 showModeToggle={true}
+                defaultMode="timeline"
                 initialFitScope="path"
                 height="50vh"
                 highlightCredit={searchedCredit}
