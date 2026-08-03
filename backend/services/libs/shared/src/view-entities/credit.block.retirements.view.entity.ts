@@ -16,6 +16,7 @@ import { CreditTransactionStatusEnum } from "../enum/credit.transaction.status.e
         ct."organizationName",
         ct."remarks",
         p."title" AS "projectName",
+        p."companyId" AS "projectOwnerId",
         ct."senderId" AS "senderId",
         s."name" AS "senderName",
         s."logo" AS "senderLogo"
@@ -50,6 +51,9 @@ export class CreditBlockRetirementsViewEntity {
 
   @ViewColumn()
   projectName: string;
+
+  @ViewColumn()
+  projectOwnerId: number;
 
   @ViewColumn()
   senderId: number;

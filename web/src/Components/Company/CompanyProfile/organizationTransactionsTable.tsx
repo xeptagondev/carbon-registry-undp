@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import '../../../Styles/common.table.scss';
 import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
 import { ProfileIcon } from '../../IconComponents/ProfileIcon/profile.icon';
+import { ProjectDetailsLink } from '../../ProjectDetailsLink/projectDetailsLink';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
 import { API_PATHS } from '../../../Config/apiConfig';
 import {
@@ -24,7 +25,9 @@ export enum OrganizationTransactionStatus {
 
 export interface OrganizationTransactionInterface {
   id: string;
+  projectId: string;
   projectName: string;
+  projectOwnerId: number;
   serialNumber: string;
   currentStatus: OrganizationTransactionStatus;
   senderName?: string | null;
@@ -43,6 +46,7 @@ interface OrgTransactionQueryRow {
   serialNumber: string;
   projectId: string;
   projectName: string;
+  projectOwnerId: number;
   senderName: string | null;
   senderLogo: string | null;
   receiverName: string | null;
@@ -53,7 +57,9 @@ interface OrgTransactionQueryRow {
 
 const mapRow = (row: OrgTransactionQueryRow): OrganizationTransactionInterface => ({
   id: row.id,
+  projectId: row.projectId,
   projectName: row.projectName,
+  projectOwnerId: row.projectOwnerId,
   serialNumber: row.serialNumber,
   currentStatus: row.currentStatus as OrganizationTransactionStatus,
   senderName: row.senderName,
@@ -212,7 +218,13 @@ export const OrganizationTransactionsTable = ({
       key: 'projectName',
       sorter: true,
       align: 'left' as const,
-      render: (record: OrganizationTransactionInterface) => <span>{record.projectName}</span>,
+      render: (record: OrganizationTransactionInterface) => (
+      <ProjectDetailsLink
+        projectId={record.projectId}
+        projectName={record.projectName}
+        projectOwnerId={record.projectOwnerId}
+      />
+    ),
     },
     {
       title: t('companyProfile:serialNo'),

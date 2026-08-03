@@ -8,6 +8,7 @@ export interface CreditRetirementInterface {
   status: string;
   projectId: number;
   projectName: string;
+  projectOwnerId: number;
   senderId: number;
   senderName: string;
   senderLogo: string;
