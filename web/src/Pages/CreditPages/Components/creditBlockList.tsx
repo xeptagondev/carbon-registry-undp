@@ -17,6 +17,7 @@ import {
 import { EllipsisOutlined } from "@ant-design/icons";
 import { useEffect, useRef, useState } from "react";
 import { useConnection } from "../../../Context/ConnectionContext/connectionContext";
+import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
 import { API_PATHS } from "../../../Config/apiConfig";
 import { ProfileIcon } from "../../../Components/IconComponents/ProfileIcon/profile.icon";
 import "../creditPageStyles.scss";
@@ -217,6 +218,10 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
     labelKey: "name",
     valueKey: "companyId",
     sortKey: "name",
+    extraFilters: [
+      { key: "companyRole", operation: "=", value: CompanyRole.PROJECT_DEVELOPER },
+      { key: "state", operation: "=", value: "1" },
+    ],
     selectedValues: filterValues.organization as FilterValue[],
   });
 
@@ -565,7 +570,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
             id: "serialSearch",
             type: "search",
             placeholder: t("searchBySerialNumber"),
-            width: 240,
+            width: 260,
             onSearch: (value: string) => setAppliedSerialSearch(value.trim()),
             infoVisible: true,
             infoDescription: t("serialSearchInfo.infoDescription"),
@@ -649,7 +654,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
                   // response doesn't carry an issuance date.
                   label: "Issued date",
                   value: historyEntries[0]?.info?.timestamp
-                    ? moment(historyEntries[0].info.timestamp, "YYYY-MM-DD HH:mm").format("MMM DD, YYYY")
+                    ? moment(historyEntries[0].info.timestamp).format("MMM DD, YYYY")
                     : "-",
                 },
                 { label: "Vintage", value: viewModalRecord.vintage || "-" },

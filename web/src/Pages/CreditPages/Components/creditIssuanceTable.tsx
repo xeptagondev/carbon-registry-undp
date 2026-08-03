@@ -118,6 +118,10 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
     labelKey: "name",
     valueKey: "companyId",
     sortKey: "name",
+    extraFilters: [
+      { key: "companyRole", operation: "=", value: CompanyRole.PROJECT_DEVELOPER },
+      { key: "state", operation: "=", value: "1" },
+    ],
     selectedValues: filterValues.organization as FilterValue[],
   });
 
@@ -370,7 +374,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
             id: "vintage",
             type: "year",
             placeholder: t("filterByVintage"),
-            width: 150,
+            width: 180,
           },
         ]}
         values={filterValues}

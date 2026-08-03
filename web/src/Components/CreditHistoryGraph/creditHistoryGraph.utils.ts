@@ -1,8 +1,14 @@
+import moment from "moment";
 import { addCommSep } from "../../Definitions/Definitions/programme.definitions";
 import { CreditBlockHistoryActionInfo, CreditHistoryEntry, HistoryTreeNode } from "./creditHistoryGraph.types";
 
 let counter = 0;
 const nextId = () => `n${counter++}`;
+
+// Formats the raw epoch-ms timestamp in the viewer's own local timezone
+// (matches every other date display in the app, e.g. creditIssuanceTable).
+const formatUpdateTime = (timestamp: number): string =>
+  moment(timestamp).format("YYYY-MM-DD HH:mm");
 
 /** Node's display note from its action info — no range (the node shows it). */
 export const formatActionNote = (info: CreditBlockHistoryActionInfo): string => {
@@ -38,7 +44,7 @@ export const buildHistoryTree = (entries: CreditHistoryEntry[]): HistoryTreeNode
     id: nextId(),
     range: entries[0].range,
     note: rootInfo ? formatActionNote(rootInfo) : undefined,
-    updateTime: rootInfo?.timestamp,
+    updateTime: rootInfo ? formatUpdateTime(rootInfo.timestamp) : undefined,
     ...(rootInfo ? noteCompany(rootInfo) : {}),
     label: entries[0].range,
     depth: 0,
@@ -53,7 +59,7 @@ export const buildHistoryTree = (entries: CreditHistoryEntry[]): HistoryTreeNode
       id: nextId(),
       range,
       note,
-      updateTime: info.timestamp,
+      updateTime: formatUpdateTime(info.timestamp),
       ...noteCompany(info),
       label: note,
       depth: parent.depth + 1,

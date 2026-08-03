@@ -19,7 +19,6 @@ interface OrganizationBalance {
 export interface CreditBalanceByOrganizationTableProps {
   selectedOrganizations: string[];
   refreshGeneration: number;
-  onFilterOptionsChange?: (organizations: string[]) => void;
 }
 
 interface OrganizationBalanceApiRow {
@@ -88,7 +87,6 @@ const columns: ColumnsType<OrganizationBalance> = [
 export const CreditBalanceByOrganizationTable = ({
   selectedOrganizations,
   refreshGeneration,
-  onFilterOptionsChange,
 }: CreditBalanceByOrganizationTableProps) => {
   const { post } = useConnection();
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,7 +136,6 @@ export const CreditBalanceByOrganizationTable = ({
         }));
         setRows(mappedRows);
         setTotal(response.response?.data?.total ?? mappedRows.length);
-        onFilterOptionsChange?.(mappedRows.map(({ name }) => name));
       })
       .catch((error: { message?: string }) => {
         if (requestGenerationRef.current !== requestGeneration) return;
@@ -157,7 +154,6 @@ export const CreditBalanceByOrganizationTable = ({
     };
   }, [
     currentPage,
-    onFilterOptionsChange,
     pageSize,
     post,
     refreshGeneration,

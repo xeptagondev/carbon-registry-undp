@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next';
 import {
   FilterBar,
   type FilterControlValue,
+  type FilterValue,
   type FilterValues,
+  usePaginatedEntityFilter,
 } from '../../Components/Common/FilterBar';
+import { API_PATHS } from '../../Config/apiConfig';
 import { useUserContext } from '../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../Definitions/Enums/company.role.enum';
 import {
@@ -26,17 +29,22 @@ export const CreditBalancePage = () => {
   const [filterValues, setFilterValues] = useState<FilterValues>({});
   const [refreshGeneration, setRefreshGeneration] = useState(0);
   const refreshTimer = useRef<ReturnType<typeof setTimeout>>();
-  const [projectOptions, setProjectOptions] = useState<string[]>([]);
-  const [projectOrganizationOptions, setProjectOrganizationOptions] = useState<string[]>([]);
-  const [organizationOptions, setOrganizationOptions] = useState<string[]>([]);
   const canViewOrganization =
     userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY;
+  // The "By Organization" tab (balances aggregated across every org) stays
+  // DNA-only, but the organization filter in "By Project" just narrows by
+  // project owner — PDs can use that too.
+  const canFilterOrganization =
+    canViewOrganization || userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER;
 
   useEffect(() => {
-    if (!canViewOrganization) {
-      if (view === 'organization') {
-        setView('project');
-      }
+    if (!canViewOrganization && view === 'organization') {
+      setView('project');
+    }
+  }, [canViewOrganization, view]);
+
+  useEffect(() => {
+    if (!canFilterOrganization) {
       setFilterValues((current) => {
         const organizations = current.organizations;
         return Array.isArray(organizations) && organizations.length === 0
@@ -44,9 +52,9 @@ export const CreditBalancePage = () => {
           : { ...current, organizations: [] };
       });
     }
-  }, [canViewOrganization, view]);
+  }, [canFilterOrganization]);
 
-  const selectedOrganizations = canViewOrganization
+  const selectedOrganizations = canFilterOrganization
     && Array.isArray(filterValues.organizations)
     ? filterValues.organizations.map(String)
     : [];
@@ -58,26 +66,31 @@ export const CreditBalancePage = () => {
     setFilterValues((current) => ({ ...current, [id]: value }));
   };
 
-  const onProjectFilterOptionsChange = useCallback((options: {
-    organizations: string[];
-    projects: string[];
-  }) => {
-    setProjectOptions((current) => {
-      const next = Array.from(new Set([...current, ...options.projects]));
-      return next.length === current.length ? current : next;
-    });
-    setProjectOrganizationOptions((current) => {
-      const next = Array.from(new Set([...current, ...options.organizations]));
-      return next.length === current.length ? current : next;
-    });
-  }, []);
+  const orgFilter = usePaginatedEntityFilter({
+    endpoint: API_PATHS.ORGANIZATION_NAMES,
+    id: 'organizations',
+    mode: 'multiple',
+    placeholder: t('selectOrganization'),
+    labelKey: 'name',
+    valueKey: 'name',
+    sortKey: 'name',
+    extraFilters: [
+      { key: 'companyRole', operation: '=', value: CompanyRole.PROJECT_DEVELOPER },
+      { key: 'state', operation: '=', value: '1' },
+    ],
+    selectedValues: (filterValues.organizations as FilterValue[]) ?? [],
+  });
 
-  const onOrganizationFilterOptionsChange = useCallback((organizations: string[]) => {
-    setOrganizationOptions((current) => {
-      const next = Array.from(new Set([...current, ...organizations]));
-      return next.length === current.length ? current : next;
-    });
-  }, []);
+  const projectFilter = usePaginatedEntityFilter({
+    endpoint: API_PATHS.GET_PROJECT,
+    id: 'projects',
+    mode: 'multiple',
+    placeholder: t('selectProject'),
+    labelKey: 'title',
+    valueKey: 'title',
+    sortKey: 'title',
+    selectedValues: (filterValues.projects as FilterValue[]) ?? [],
+  });
 
   const triggerBalanceRefresh = useCallback(() => {
     setRefreshGeneration((current) => current + 1);
@@ -151,31 +164,8 @@ export const CreditBalancePage = () => {
                 className="credit-balance-filter-bar"
                 values={filterValues}
                 controls={[
-                  {
-                    id: 'organizations',
-                    type: 'select',
-                    mode: 'multiple',
-                    placeholder: t('selectOrganization'),
-                    width: 240,
-                    options: (view === 'project'
-                      ? projectOrganizationOptions
-                      : organizationOptions
-                    ).map((name) => ({ label: name, value: name })),
-                    clearValue: [],
-                    showAsApplied: false,
-                    visible: canViewOrganization,
-                  },
-                  {
-                    id: 'projects',
-                    type: 'select',
-                    mode: 'multiple',
-                    placeholder: t('selectProject'),
-                    width: 280,
-                    options: projectOptions.map((name) => ({ label: name, value: name })),
-                    clearValue: [],
-                    showAsApplied: false,
-                    visible: view === 'project',
-                  },
+                  { ...orgFilter.control, width: 240, visible: canFilterOrganization },
+                  { ...projectFilter.control, width: 280, visible: view === 'project' },
                 ]}
                 onChange={onFilterChange}
                 appliedFiltersLabel="Applied filters"
@@ -189,21 +179,18 @@ export const CreditBalancePage = () => {
               <CreditBalanceByProjectTable
                 selectedOrganizations={selectedOrganizations}
                 selectedProjects={selectedProjects}
-                onFilterOptionsChange={onProjectFilterOptionsChange}
                 refreshGeneration={refreshGeneration}
                 onBalanceChanged={refreshBalances}
               />
             ) : canViewOrganization ? (
               <CreditBalanceByOrganizationTable
                 selectedOrganizations={selectedOrganizations}
-                onFilterOptionsChange={onOrganizationFilterOptionsChange}
                 refreshGeneration={refreshGeneration}
               />
             ) : (
               <CreditBalanceByProjectTable
                 selectedOrganizations={selectedOrganizations}
                 selectedProjects={selectedProjects}
-                onFilterOptionsChange={onProjectFilterOptionsChange}
                 refreshGeneration={refreshGeneration}
                 onBalanceChanged={refreshBalances}
               />

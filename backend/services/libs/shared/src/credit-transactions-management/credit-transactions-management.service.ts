@@ -45,7 +45,6 @@ import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.e
 import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 import { CreditBlockHistoryRequestDto } from "../dto/credit.block.history.request.dto";
 import { CreditBlockExplorerFirstTransferDto } from "../dto/credit.block.explorer.first.transfer.dto";
-import * as moment from "moment";
 
 /**
  * One block's parsed ledger version, as seen by the credit-block
@@ -77,7 +76,10 @@ interface CreditBlockLedgerVersion {
 interface CreditBlockHistoryActionInfo {
   companyId: number | null;
   companyName: string | null;
-  timestamp: string;
+  /** Raw epoch ms — formatted client-side in the viewer's own local
+   * timezone, rather than baked into a string on the server (which would
+   * bake in the server's timezone instead, e.g. UTC when deployed). */
+  timestamp: number;
   amount: number;
   action: "ISSUE" | "RETAIN" | "TRANSFER" | "RETIRE";
 }
@@ -1396,10 +1398,6 @@ export class CreditTransactionsManagementService {
     return names;
   }
 
-  private formatCreditBlockHistoryTime(epochMs: number): string {
-    return moment(epochMs).format("YYYY-MM-DD HH:mm");
-  }
-
   private formatCreditBlockRange(range: {
     start: number;
     end: number;
@@ -1426,7 +1424,7 @@ export class CreditTransactionsManagementService {
     ownerName: (companyId?: number) => string
   ): CreditBlockHistoryActionInfo {
     const amount = range.end - range.start + 1;
-    const timestamp = this.formatCreditBlockHistoryTime(version.txTime);
+    const timestamp = version.txTime;
     if (version.ownerCompanyId === 0) {
       const retiringCompanyId = version.previousOwnerCompanyId ?? null;
       return {
@@ -1495,7 +1493,7 @@ export class CreditTransactionsManagementService {
       info: {
         companyId: rootFirst.ownerCompanyId,
         companyName: ownerName(rootFirst.ownerCompanyId),
-        timestamp: this.formatCreditBlockHistoryTime(rootFirst.txTime),
+        timestamp: rootFirst.txTime,
         amount: rootFirst.creditAmount,
         action: "ISSUE",
       },
@@ -1526,7 +1524,7 @@ export class CreditTransactionsManagementService {
             info: {
               companyId: after.ownerCompanyId,
               companyName: ownerName(after.ownerCompanyId),
-              timestamp: this.formatCreditBlockHistoryTime(after.txTime),
+              timestamp: after.txTime,
               amount: lowRange.end - lowRange.start + 1,
               action: "RETAIN",
             },
