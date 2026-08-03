@@ -79,6 +79,23 @@ const getTransactionStatusTagColor = (status: OrganizationTransactionStatus) => 
   }
 };
 
+// Hex equivalents of the antd Tag colors above (antd doesn't expose these as
+// tokens) — keeps the status filter's checkbox fill matching its table pill.
+const getTransactionStatusHexColor = (status: OrganizationTransactionStatus) => {
+  switch (status) {
+    case OrganizationTransactionStatus.ISSUED:
+      return '#1890ff';
+    case OrganizationTransactionStatus.TRANSFERRED:
+      return '#722ed1';
+    case OrganizationTransactionStatus.RECEIVED:
+      return '#52c41a';
+    case OrganizationTransactionStatus.RETIRED:
+      return '#faad14';
+    default:
+      return undefined;
+  }
+};
+
 // FilterBar's "select all" pseudo-option for the status checkbox group —
 // never sent to the backend (stripped in getQueryData).
 const STATUS_ALL = 'All';
@@ -322,6 +339,7 @@ export const OrganizationTransactionsTable = ({
             ...Object.values(OrganizationTransactionStatus).map((status) => ({
               label: t(status),
               value: status,
+              color: getTransactionStatusHexColor(status),
             })),
           ],
           // "Every status" is the default, not a narrowing — don't show it

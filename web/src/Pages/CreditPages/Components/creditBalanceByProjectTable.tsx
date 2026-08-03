@@ -58,10 +58,6 @@ export interface CreditBalanceByProjectTableProps {
   selectedProjects: string[];
   refreshGeneration: number;
   onBalanceChanged: () => void;
-  onFilterOptionsChange?: (options: {
-    organizations: string[];
-    projects: string[];
-  }) => void;
 }
 
 interface ProjectBalanceApiRow {
@@ -353,7 +349,6 @@ export const CreditBalanceByProjectTable = ({
   selectedProjects,
   refreshGeneration,
   onBalanceChanged,
-  onFilterOptionsChange,
 }: CreditBalanceByProjectTableProps) => {
   const { t } = useTranslation(['creditPages']);
   const { post } = useConnection();
@@ -432,10 +427,6 @@ export const CreditBalanceByProjectTable = ({
         }));
         setRows(mappedRows);
         setTotal(response.response?.data?.total ?? mappedRows.length);
-        onFilterOptionsChange?.({
-          organizations: mappedRows.map(({ owner }) => owner),
-          projects: mappedRows.map(({ name }) => name),
-        });
       })
       .catch((error: { message?: string }) => {
         if (projectRequestGeneration.current !== requestGeneration) return;
@@ -454,7 +445,6 @@ export const CreditBalanceByProjectTable = ({
     };
   }, [
     currentPage,
-    onFilterOptionsChange,
     pageSize,
     post,
     refreshGeneration,

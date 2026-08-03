@@ -3,8 +3,9 @@
 export interface CreditBlockHistoryActionInfo {
   companyId: number | null;
   companyName: string | null;
-  /** "YYYY-MM-DD HH:mm". */
-  timestamp: string;
+  /** Raw epoch ms — format client-side (in the viewer's local timezone)
+   * rather than trusting a server-baked string. */
+  timestamp: number;
   /** Size of this leaf's own range (end - start + 1), not the parent block. */
   amount: number;
   action: "ISSUE" | "RETAIN" | "TRANSFER" | "RETIRE";
