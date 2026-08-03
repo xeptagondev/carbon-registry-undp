@@ -106,6 +106,14 @@ export default () => ({
     enable: process.env.CADTRUST_ENABLE === "true" ? true : false,
     endpoint: process.env.CADTRUST_ENDPOINT,
   },
+  // CADT v2 client (@app/cadtrust). Separate from the legacy v1 `cadTrust` block
+  // above — v1 and v2 are isolated on the node and can run side by side.
+  cadTrustV2: {
+    enable: process.env.CADT_V2_ENABLE === "true" ? true : false,
+    baseUrl: process.env.CADT_V2_BASE_URL || "http://localhost:31310/v2",
+    apiKey: process.env.CADT_V2_API_KEY,
+    timeoutMs: Number(process.env.CADT_V2_TIMEOUT_MS || 30000),
+  },
   systemType: process.env.SYSTEM_TYPE || "CARBON_UNIFIED_SYSTEM",
   systemName: process.env.SYSTEM_NAME || "SystemX",
   environmentalManagementActHyperlink:
