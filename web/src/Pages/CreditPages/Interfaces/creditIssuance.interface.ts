@@ -10,6 +10,7 @@ export interface CreditIssuanceInterface {
   issuanceDate: string; // epoch ms, as a string
   projectId: string;
   projectName: string;
+  projectOwnerId: number;
   organizationId: number;
   organizationName: string;
   organizationLogo: string | null;

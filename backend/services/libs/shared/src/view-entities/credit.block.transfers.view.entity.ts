@@ -9,6 +9,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
         ct."createTime" AS "createdDate",
         ct."projectRefId" AS "projectId",
         p."title" AS "projectName",
+        p."companyId" AS "projectOwnerId",
         ct."recieverId" AS "recieverId",
         r."name" AS "receiverName",
         r."logo" AS "receiverLogo",
@@ -52,6 +53,9 @@ export class CreditBlockTransfersViewEntity {
 
   @ViewColumn()
   projectName: string;
+
+  @ViewColumn()
+  projectOwnerId: number;
 
   @ViewColumn()
   recieverId: number;

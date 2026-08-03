@@ -24,6 +24,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
         ct."serialNumber" AS "serialNumber",
         ct."projectRefId" AS "projectId",
         p."title" AS "projectName",
+        p."companyId" AS "projectOwnerId",
         s."name" AS "senderName",
         s."logo" AS "senderLogo",
         r."name" AS "receiverName",
@@ -45,6 +46,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
         ct."serialNumber" AS "serialNumber",
         ct."projectRefId" AS "projectId",
         p."title" AS "projectName",
+        p."companyId" AS "projectOwnerId",
         s."name" AS "senderName",
         s."logo" AS "senderLogo",
         r."name" AS "receiverName",
@@ -66,6 +68,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
         ct."serialNumber" AS "serialNumber",
         ct."projectRefId" AS "projectId",
         p."title" AS "projectName",
+        p."companyId" AS "projectOwnerId",
         s."name" AS "senderName",
         s."logo" AS "senderLogo",
         r."name" AS "receiverName",
@@ -87,6 +90,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
         ct."serialNumber" AS "serialNumber",
         ct."projectRefId" AS "projectId",
         p."title" AS "projectName",
+        p."companyId" AS "projectOwnerId",
         s."name" AS "senderName",
         s."logo" AS "senderLogo",
         r."name" AS "receiverName",
@@ -121,6 +125,9 @@ export class CreditBlockOrgTransactionsViewEntity {
 
   @ViewColumn()
   projectName: string;
+
+  @ViewColumn()
+  projectOwnerId: number;
 
   @ViewColumn()
   senderName: string;

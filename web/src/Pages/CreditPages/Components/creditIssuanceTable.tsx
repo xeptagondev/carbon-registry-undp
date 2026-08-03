@@ -26,7 +26,7 @@ import { addCommSep } from "../../../Definitions/Definitions/programme.definitio
 import { CreditIssuanceInterface } from "../Interfaces/creditIssuance.interface";
 import { CreditHistoryEntry } from "../../../Components/CreditHistoryGraph/creditHistoryGraph.types";
 import { CreditHistoryGraph } from "../../../Components/CreditHistoryGraph/CreditHistoryGraph";
-import { ProjectDetailsLink } from "./ProjectDetailsLink";
+import { ProjectDetailsLink } from "../../../Components/ProjectDetailsLink/projectDetailsLink";
 import {
   FilterBar,
   FilterValue,
@@ -50,6 +50,7 @@ interface IssuanceQueryRow {
   issuanceDate: number | string;
   projectId: string;
   projectName: string;
+  projectOwnerId: number;
   organizationId: number;
   organizationName: string;
   organizationLogo: string | null;
@@ -69,6 +70,7 @@ const mapIssuanceRow = (row: IssuanceQueryRow): CreditIssuanceInterface => ({
   issuanceDate: String(row.issuanceDate),
   projectId: row.projectId,
   projectName: row.projectName,
+  projectOwnerId: row.projectOwnerId,
   organizationId: row.organizationId,
   organizationName: row.organizationName,
   organizationLogo: row.organizationLogo,
@@ -241,6 +243,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
           <ProjectDetailsLink
             projectId={record.projectId}
             projectName={record.projectName}
+            projectOwnerId={record.projectOwnerId}
           />
         );
       },

@@ -27,7 +27,7 @@ import moment from "moment";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
 import { CreditBlockInterface } from "../Interfaces/creditBlock.interface";
 import { CreditHistoryEntry } from "../../../Components/CreditHistoryGraph/creditHistoryGraph.types";
-import { ProjectDetailsLink } from "./ProjectDetailsLink";
+import { ProjectDetailsLink } from "../../../Components/ProjectDetailsLink/projectDetailsLink";
 import { CreditHistoryGraph } from "../../../Components/CreditHistoryGraph/CreditHistoryGraph";
 import {
   FilterBar,

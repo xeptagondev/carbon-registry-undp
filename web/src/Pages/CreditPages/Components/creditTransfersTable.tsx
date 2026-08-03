@@ -20,7 +20,7 @@ import moment from "moment";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
 import { useUserContext } from "../../../Context/UserInformationContext/userInformationContext";
 import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
-import { ProjectDetailsLink } from "./ProjectDetailsLink";
+import { ProjectDetailsLink } from "../../../Components/ProjectDetailsLink/projectDetailsLink";
 
 const { Search } = Input;
 
@@ -139,6 +139,7 @@ export const CreditTransfersTableComponent = (props: any) => {
           <ProjectDetailsLink
             projectId={item.projectId}
             projectName={item.projectName}
+            projectOwnerId={item.projectOwnerId}
           />
         );
       },
