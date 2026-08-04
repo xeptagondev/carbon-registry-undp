@@ -41,8 +41,8 @@ enum CreditBlockColumns {
   SERIAL_NO = "serialNo",
   ORGANIZATION_NAME = "organization",
   PROJECT_NAME = "projectName",
-  CREDITS = "noOfCredits",
-  RESERVED = "reserved",
+  CREDITS = "balance",
+  RESERVED = "reservedCredits",
   UPDATE_DATE = "updateDate",
   CURRENT_STATUS = "currentStatus",
   FIRST_TRANSFER = "firstTransfer",
@@ -353,6 +353,15 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
       sorter: true,
       align: "center" as const,
       render: (record: CreditBlockInterface) => {
+        if ( !record?.organizationName) {
+          return (
+            <div className="org-list">
+              <Row justify="center" align="middle">
+                <span>-</span>
+              </Row>
+            </div>
+          );
+        }
         return (
           <div className="org-list">
             <Row justify="center" align="middle">
