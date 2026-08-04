@@ -100,9 +100,11 @@ export class ProjectManagementService {
       )
       .orderBy(
         query?.sort?.key &&
-          `"document_entity".${this.helperService.generateSortCol(
-            query?.sort?.key
-          )}`,
+          (query.sort.key === "projectProposalStage"
+            ? `"document_entity"."projectProposalStage"::text`
+            : `"document_entity".${this.helperService.generateSortCol(
+                query?.sort?.key
+              )}`),
         query?.sort?.order,
         query?.sort?.nullFirst !== undefined
           ? query?.sort?.nullFirst === true

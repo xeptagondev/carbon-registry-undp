@@ -590,7 +590,7 @@ export const DashboardComponent = (props: any) => {
             statusColor: "rgba(229, 217, 126, 1)",
           },
           {
-            key: "WASTE_FROM_FUELS",
+            key: "FUGITIVE_EMISSIONS_FUELS",
             name: "Fugitive Emissions from fuels (Solid, Oil and Gas)",
             statusColor: "rgba(27, 79, 114, 1)",
           },
