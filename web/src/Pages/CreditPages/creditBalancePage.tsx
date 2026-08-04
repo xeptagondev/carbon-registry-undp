@@ -81,14 +81,23 @@ export const CreditBalancePage = () => {
     selectedValues: (filterValues.organizations as FilterValue[]) ?? [],
   });
 
+  // Sourced from the same endpoint as the table, not projectManagement/query:
+  // that one is scoped by project ownership (companyId) while the table is
+  // scoped by credit holding (holderId), so a PD holding credits in a project
+  // it doesn't own saw the row but couldn't select it. This also offers only
+  // projects that actually have credit blocks, so no selection lands empty.
+  // Keyed on projectId rather than the title, which isn't unique.
   const projectFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.GET_PROJECT,
+    endpoint: API_PATHS.CREDIT_BALANCE_BY_PROJECT_QUERY,
     id: 'projects',
     mode: 'multiple',
     placeholder: t('selectProject'),
-    labelKey: 'title',
-    valueKey: 'title',
-    sortKey: 'title',
+    labelKey: 'projectName',
+    valueKey: 'projectId',
+    sortKey: 'projectName',
+    // No creditIssued filter: it isn't a column on the balance views, and the
+    // restriction is already structural — both views are built FROM
+    // credit_blocks_entity, so a project only appears once credits exist for it.
     selectedValues: (filterValues.projects as FilterValue[]) ?? [],
   });
 

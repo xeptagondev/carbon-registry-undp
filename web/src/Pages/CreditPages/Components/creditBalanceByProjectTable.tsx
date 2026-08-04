@@ -400,7 +400,7 @@ export const CreditBalanceByProjectTable = ({
     }
     if (projects.length > 0) {
       filterAnd.push({
-        key: 'projectName',
+        key: 'projectId',
         operation: 'in',
         value: projects,
       });
