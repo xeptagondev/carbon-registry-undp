@@ -34,6 +34,8 @@ export const API_PATHS = {
   CREDIT_BALANCE_QUERY: "national/creditTransactionsManagement/queryBalance",
   CREDIT_BALANCE_BY_PROJECT_QUERY:
     "national/creditTransactionsManagement/queryBalanceByProject",
+  CREDIT_BALANCE_PROJECT_NAMES:
+    "national/creditTransactionsManagement/queryBalanceProjectNames",
   CREDIT_BALANCE_BY_ORGANIZATION_QUERY:
     "national/creditTransactionsManagement/queryBalanceByOrganization",
   CREDIT_TRANSFERS_QUERY:

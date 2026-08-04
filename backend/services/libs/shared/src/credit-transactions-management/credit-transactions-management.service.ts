@@ -23,6 +23,7 @@ import { QueryDto } from "../dto/query.dto";
 import { DataListResponseDto } from "../dto/data.list.response";
 import { CreditBlockBalancesViewEntity } from "../view-entities/credit.block.balances.view.entity";
 import { FilterEntry } from "../dto/filter.entry";
+import { ProjectEntity } from "../entities/projects.entity";
 import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.transfers.view.entity";
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
 import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.explorer.view.entity";
@@ -801,6 +802,54 @@ export class CreditTransactionsManagementService {
       resp.length > 0 ? resp[0] : undefined,
       resp.length > 1 ? resp[1] : undefined
     );
+  }
+
+  public async queryBalanceProjectNames(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    query.page = query.page || 1;
+    query.size = query.size || 10;
+    if (user.companyRole == CompanyRole.INDEPENDENT_CERTIFIER) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.unauthorized",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const scopeFilters: FilterEntry[] = [
+      { key: "ownerCompanyId", operation: "!=", value: 0 },
+    ];
+    if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
+      scopeFilters.push({
+        key: "ownerCompanyId",
+        operation: "=",
+        value: user.companyId,
+      });
+    }
+    query.filterAnd
+      ? query.filterAnd.push(...scopeFilters)
+      : (query.filterAnd = scopeFilters);
+
+    const resp = await this.creditBlocksEntityRepository
+      .createQueryBuilder("cb")
+      .innerJoin(ProjectEntity, "p", 'cb."projectRefId" = p."refId"')
+      .select('p."title"', "projectName")
+      .addSelect(
+        `string_agg(DISTINCT cb."projectRefId", ',' ORDER BY cb."projectRefId")`,
+        "projectIds"
+      )
+      .groupBy('p."title"')
+      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+      .orderBy(query?.sort?.key && `"${query?.sort?.key}"`, query?.sort?.order)
+      .offset(query.size * query.page - query.size)
+      .limit(query.size)
+      .getRawMany();
+    return new DataListResponseDto(resp, undefined);
   }
 
   public async queryTransfers(

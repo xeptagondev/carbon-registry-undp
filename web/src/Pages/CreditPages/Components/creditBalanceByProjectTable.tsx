@@ -399,10 +399,12 @@ export const CreditBalanceByProjectTable = ({
       });
     }
     if (projects.length > 0) {
+      // Each selected value is one name's comma-joined project ids, so a single
+      // selection can expand to several projects.
       filterAnd.push({
         key: 'projectId',
         operation: 'in',
-        value: projects,
+        value: projects.flatMap((value) => value.split(',')),
       });
     }
 
