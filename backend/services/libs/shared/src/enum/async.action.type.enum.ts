@@ -15,5 +15,14 @@ export enum AsyncActionType {
   CADTCertify,
   CADTTransferCredit,
   CompanyUpdate,
-  NationalInvestment
+  NationalInvestment,
+
+  // CAD Trust v2 sync (@app/cadtrust + libs/shared/src/cadtrust-sync).
+  // APPEND ONLY — these are numeric ordinals persisted as Postgres enum LABELS
+  // ('0'..'19'). Reordering or inserting renumbers existing async_action_entity
+  // rows, and every new member needs an `ALTER TYPE ... ADD VALUE` migration or
+  // the insert fails with "invalid input value for enum".
+  CADTV2ProjectCreate,
+  CADTV2ProjectUpdate,
+  CADTV2Commit,
 }

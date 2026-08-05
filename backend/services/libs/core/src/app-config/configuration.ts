@@ -113,6 +113,11 @@ export default () => ({
     baseUrl: process.env.CADT_V2_BASE_URL || "http://localhost:31310/v2",
     apiKey: process.env.CADT_V2_API_KEY,
     timeoutMs: Number(process.env.CADT_V2_TIMEOUT_MS || 30000),
+    // Sent as CAD Trust's `projectRegistryName` — the name this registry is
+    // published under on the network, not the CADT node's own identity.
+    registryName: process.env.CADT_V2_REGISTRY_NAME || process.env.SYSTEM_NAME || "SystemX",
+    // Recorded as the `author` on each staging commit.
+    commitAuthor: process.env.CADT_V2_COMMIT_AUTHOR || process.env.SYSTEM_NAME || "SystemX",
   },
   systemType: process.env.SYSTEM_TYPE || "CARBON_UNIFIED_SYSTEM",
   systemName: process.env.SYSTEM_NAME || "SystemX",

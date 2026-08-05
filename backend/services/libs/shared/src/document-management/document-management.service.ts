@@ -46,6 +46,7 @@ import { PositiveIntegerValidationDto } from "../dto/positive.integer.validation
 import { ActivityVintageCreditsArrayDto } from "../dto/activty.vintage.credits.array.dto";
 import { SECTOR_TO_SCOPES_MAP } from "../constants/inf.sector.sectoralScope.mapping.const";
 import { CompanyState } from "../enum/company.state.enum";
+import { CadTrustSyncEnqueueService } from "../cadtrust-sync/cadtrust-sync.enqueue.service";
 
 @Injectable()
 export class DocumentManagementService {
@@ -69,7 +70,8 @@ export class DocumentManagementService {
     private entityManager: EntityManager,
     private readonly serialNumberManagementService: SerialNumberManagementService,
     private readonly counterService: CounterService,
-    private readonly noObjectionLetterGenerateService: NoObjectionLetterGenerateService
+    private readonly noObjectionLetterGenerateService: NoObjectionLetterGenerateService,
+    private readonly cadTrustSyncEnqueue: CadTrustSyncEnqueueService
   ) {}
 
   async addDocument(addDocumentDto: BaseDocumentDto, user: User) {
@@ -233,6 +235,11 @@ export class DocumentManagementService {
             ProjectAuditLogType.PENDING,
             user.id
           );
+
+          // Queue the CAD Trust v2 sync. Dropped by AddAction when CADT_V2_ENABLE
+          // is off, and never throws, so it cannot affect this response.
+          await this.cadTrustSyncEnqueue.enqueueProjectCreate(project.refId);
+
           return new DataResponseDto(HttpStatus.OK, {
             ...savedProgramme,
             createdTime: savedProgramme.createTime,
@@ -1147,6 +1154,10 @@ private getFileExtension = (file: string): string => {
         txRef,
         data
       );
+
+    // Single funnel for every lifecycle transition (INF approve/reject, all PDD
+    // steps, validation, authorisation), so one hook covers them all.
+    await this.cadTrustSyncEnqueue.enqueueProjectUpdate(refId, txType);
 
     return updatedProject;
   }
