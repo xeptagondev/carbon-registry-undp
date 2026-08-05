@@ -983,16 +983,34 @@ export class CreditTransactionsManagementService {
     } else if (vintagePredicate) {
       qb.where(vintagePredicate.sql, vintagePredicate.params);
     }
-    const resp = await qb
-      .orderBy(
+    const nulls =
+      query?.sort?.nullFirst !== undefined
+        ? query?.sort?.nullFirst === true
+          ? "NULLS FIRST"
+          : "NULLS LAST"
+        : undefined;
+    if (query?.sort?.key === "serialNumber") {
+      // Same fix as queryExplorer: "serialNumber" is a single formatted
+      // string (CA0NNN-NG-XX-{projectId}-{blockStart}-{blockEnd}-{vintage}),
+      // so a plain text ORDER BY sorts it lexicographically. Sort by its
+      // numeric project ID and block start instead.
+      qb.orderBy(
+        this.serialProjectIdNumericExpr("creditTx"),
+        query.sort.order,
+        nulls
+      ).addOrderBy(
+        this.serialRangeStartExpr("creditTx"),
+        query.sort.order,
+        nulls
+      );
+    } else {
+      qb.orderBy(
         query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
-        query?.sort?.nullFirst !== undefined
-          ? query?.sort?.nullFirst === true
-            ? "NULLS FIRST"
-            : "NULLS LAST"
-          : undefined
-      )
+        nulls
+      );
+    }
+    const resp = await qb
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
@@ -1031,18 +1049,35 @@ export class CreditTransactionsManagementService {
       ? query.filterAnd.push(orgFilter)
       : (query.filterAnd = [orgFilter]);
 
-    const resp = await this.creditBlockOrgTransactionsViewEntityRepository
+    const qb = this.creditBlockOrgTransactionsViewEntityRepository
       .createQueryBuilder("orgTx")
-      .where(this.helperService.generateWhereSQL(query, abilityCondition))
-      .orderBy(
+      .where(this.helperService.generateWhereSQL(query, abilityCondition));
+    const order = query?.sort?.order ?? "DESC";
+    const nulls =
+      query?.sort?.nullFirst !== undefined
+        ? query?.sort?.nullFirst === true
+          ? "NULLS FIRST"
+          : "NULLS LAST"
+        : undefined;
+    if (query?.sort?.key === "serialNumber") {
+      // Same fix as queryExplorer/queryIssuances: "serialNumber" is a
+      // single formatted string
+      // (CA0NNN-NG-XX-{projectId}-{blockStart}-{blockEnd}-{vintage}), so a
+      // plain text ORDER BY sorts it lexicographically. Sort by its
+      // numeric project ID and block start instead.
+      qb.orderBy(
+        this.serialProjectIdNumericExpr("orgTx"),
+        order,
+        nulls
+      ).addOrderBy(this.serialRangeStartExpr("orgTx"), order, nulls);
+    } else {
+      qb.orderBy(
         query?.sort?.key ? `"${query?.sort?.key}"` : `"updatedDate"`,
-        query?.sort?.order ?? "DESC",
-        query?.sort?.nullFirst !== undefined
-          ? query?.sort?.nullFirst === true
-            ? "NULLS FIRST"
-            : "NULLS LAST"
-          : undefined
-      )
+        order,
+        nulls
+      );
+    }
+    const resp = await qb
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
@@ -1095,16 +1130,28 @@ export class CreditTransactionsManagementService {
     } else if (serialPredicate) {
       qb.where(serialPredicate.sql, serialPredicate.params);
     }
-    const resp = await qb
-      .orderBy(
+    const nulls =
+      query?.sort?.nullFirst !== undefined
+        ? query?.sort?.nullFirst === true
+          ? "NULLS FIRST"
+          : "NULLS LAST"
+        : undefined;
+    if (query?.sort?.key === "serialNumber") {
+      // "serialNumber" is a single formatted string
+      // (CA0NNN-NG-XX-{projectId}-{blockStart}-{blockEnd}-{vintage}), so a
+      // plain text ORDER BY sorts it lexicographically (e.g. "26" ends up
+      // after "252"). Sort by its numeric segments instead, in the same
+      // left-to-right order they appear in the visible serial number.
+      qb.orderBy(this.serialProjectIdNumericExpr(), query.sort.order, nulls)
+        .addOrderBy(this.serialRangeStartExpr(), query.sort.order, nulls);
+    } else {
+      qb.orderBy(
         query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
-        query?.sort?.nullFirst !== undefined
-          ? query?.sort?.nullFirst === true
-            ? "NULLS FIRST"
-            : "NULLS LAST"
-          : undefined
-      )
+        nulls
+      );
+    }
+    const resp = await qb
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
@@ -1949,8 +1996,8 @@ export class CreditTransactionsManagementService {
     return `(${this.serialRangeStartExpr()} <= :serialHi AND ${this.serialRangeEndExpr()} >= :serialLo)`;
   }
 
-  private serialRangeStartExpr(): string {
-    return `CASE WHEN split_part("creditBlock"."serialNumber", '-', 5) ~ '^[0-9]+$' THEN split_part("creditBlock"."serialNumber", '-', 5)::int END`;
+  private serialRangeStartExpr(alias: string = "creditBlock"): string {
+    return `CASE WHEN split_part("${alias}"."serialNumber", '-', 5) ~ '^[0-9]+$' THEN split_part("${alias}"."serialNumber", '-', 5)::int END`;
   }
 
   private serialRangeEndExpr(): string {
@@ -1963,6 +2010,10 @@ export class CreditTransactionsManagementService {
 
   private serialProjectIdExpr(): string {
     return `split_part("creditBlock"."serialNumber", '-', 4)`;
+  }
+
+  private serialProjectIdNumericExpr(alias: string = "creditBlock"): string {
+    return `CASE WHEN split_part("${alias}"."serialNumber", '-', 4) ~ '^[0-9]+$' THEN split_part("${alias}"."serialNumber", '-', 4)::int END`;
   }
 
   private serialCreditIdExpr(): string {
