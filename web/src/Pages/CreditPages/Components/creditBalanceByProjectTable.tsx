@@ -10,6 +10,7 @@ import { API_PATHS } from '../../../Config/apiConfig';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
 import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
+import { Role } from '../../../Definitions/Enums/role.enum';
 import { CreditActionType } from '../Enums/creditActionType.enum';
 import { IssuedOrReceivedOptions } from '../Enums/creditEventEnum';
 import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedType.enum';
@@ -359,7 +360,8 @@ export const CreditBalanceByProjectTable = ({
   const { post } = useConnection();
   const { userInfoState } = useUserContext();
   const canManageCredits =
-    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER;
+    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+    userInfoState?.userRole === Role.Admin;
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [rows, setRows] = useState<ProjectBalance[]>([]);

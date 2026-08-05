@@ -169,10 +169,10 @@ export const CreditBalancePage = () => {
                   { ...projectFilter.control, width: 280, visible: view === 'project' },
                 ]}
                 onChange={onFilterChange}
-                appliedFiltersLabel="Applied filters"
-                clearAllLabel="Clear all"
+                appliedFiltersLabel={t('appliedFilters')}
+                clearAllLabel={t('clearAll')}
+                selectAllLabel={t('selectAll')}
                 onClearAll={() => setFilterValues({ organizations: [], projects: [] })}
-                showAppliedFilters={false}
               />
             </div>
 

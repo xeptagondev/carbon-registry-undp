@@ -10,6 +10,11 @@ const SCROLL_THRESHOLD_PX = 24;
 // `onPopupScroll`) ever appears — each fresh load keeps fetching until it has
 // this many (or the backend is exhausted). A no-op once page size >= this.
 const DEFAULT_MIN_FILL = 10;
+// "Select All" sweeps every page in one go, so it uses a bigger page than
+// scroll paging — a few hundred options then cost a handful of requests
+// rather than dozens. The cap stops a runaway list from selecting forever.
+const SELECT_ALL_PAGE_SIZE = 100;
+const MAX_SELECT_ALL_OPTIONS = 1000;
 
 export interface FetchPageParams {
   search: string;
@@ -40,6 +45,10 @@ export interface PaginatedSelectOptions {
   onPopupScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   /** Fetch page 1 the first time the dropdown opens (lazy initial load). */
   onDropdownOpen: () => void;
+  /** Fetches every remaining page for the current search term and resolves
+   * with the complete option list — backs the dropdown's "Select All", which
+   * can't just take `options` (that holds only the pages loaded so far). */
+  loadAllOptions: () => Promise<FilterOption[]>;
 }
 
 const dedupeByValue = (options: FilterOption[]): FilterOption[] => {
@@ -142,6 +151,47 @@ export const usePaginatedSelectOptions = ({
     resetAndLoad("");
   }, [resetAndLoad]);
 
+  const loadAllOptions = useCallback(async (): Promise<FilterOption[]> => {
+    // Taking over: bumping the token drops whatever page load was in flight,
+    // since this sweep replaces the whole list anyway.
+    requestTokenRef.current += 1;
+    const token = requestTokenRef.current;
+    setLoading(true);
+    loadingRef.current = true;
+    // Sweeping the *current* term is what makes "Select All" mean "all
+    // matches" once the user has typed something.
+    const search = searchRef.current;
+    const collected: FilterOption[] = [];
+    try {
+      for (let page = 1; collected.length < MAX_SELECT_ALL_OPTIONS; page += 1) {
+        const fetched = await fetchPage({ search, page, size: SELECT_ALL_PAGE_SIZE });
+        if (token !== requestTokenRef.current) return []; // superseded
+        collected.push(...fetched);
+        if (fetched.length < SELECT_ALL_PAGE_SIZE) break;
+      }
+      const all = dedupeByValue(collected).slice(0, MAX_SELECT_ALL_OPTIONS);
+      all.forEach((option) => cacheRef.current.set(option.value, option));
+      loadedValuesRef.current = new Set(all.map((option) => option.value));
+      pageRef.current = 0;
+      // Everything (up to the cap) is loaded, so scrolling has nothing left to
+      // fetch until the next search resets paging.
+      hasMoreRef.current = false;
+      initializedRef.current = true;
+      setPageOptions(all);
+      return all;
+    } catch (error) {
+      if (token !== requestTokenRef.current) return [];
+      console.error("Error loading paginated select options", error);
+      hasMoreRef.current = false;
+      return [];
+    } finally {
+      if (token === requestTokenRef.current) {
+        setLoading(false);
+        loadingRef.current = false;
+      }
+    }
+  }, [fetchPage]);
+
   const onSearch = useCallback(
     (text: string) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -185,5 +235,5 @@ export const usePaginatedSelectOptions = ({
     return dedupeByValue([...selected, ...pageOptions]);
   }, [selectedValues, pageOptions]);
 
-  return { options, loading, onSearch, onPopupScroll, onDropdownOpen };
+  return { options, loading, onSearch, onPopupScroll, onDropdownOpen, loadAllOptions };
 };

@@ -276,19 +276,23 @@
   }
 
   .credit-balance-filter-bar {
-    align-self: center;
-    flex: 1 1 520px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-bottom: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
+    display: contents;
 
-    .filter-bar__toolbar,
+    .filter-bar__toolbar {
+      flex: 1 1 320px;
+      min-width: 0;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
     .filter-bar__controls {
       align-items: center;
       justify-content: flex-end;
+    }
+
+    .filter-bar__applied {
+      flex: 1 1 100%;
+      margin-top: 0;
     }
   }
 
@@ -497,7 +501,6 @@
 
   @media (max-width: 900px) {
     .credit-balance-toolbar { align-items: stretch; }
-    .credit-balance-filter-bar { flex-basis: 100%; max-width: none; margin-left: 0; }
   }
 
   @media (max-width: 600px) {

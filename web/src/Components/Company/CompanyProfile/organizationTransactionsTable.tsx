@@ -365,6 +365,7 @@ export const OrganizationTransactionsTable = ({
         disabled={loading}
         appliedFiltersLabel={t('appliedFilters')}
         clearAllLabel={t('clearAll')}
+        selectAllLabel={t('selectAll')}
       />
       <div className="credit-table-container">
         <Table
