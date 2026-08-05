@@ -77,6 +77,7 @@ export interface MultiSelectFilterControl extends ControlBase, AsyncSelectContro
   clearValue?: FilterValue[];
   options: FilterOption[];
   onChange?: (value: FilterValue[]) => void;
+  onSelectAll?: () => Promise<FilterOption[]>;
 }
 
 /** A single year picker (e.g. credit vintage) — stores the picked year as a
@@ -129,6 +130,7 @@ export interface FilterBarProps {
   appliedFiltersLabel: ReactNode;
   clearAllLabel: ReactNode;
   onClearAll: () => void;
+  selectAllLabel?: ReactNode;
   showAppliedFilters?: boolean;
   className?: string;
 }
@@ -155,6 +157,7 @@ export const FilterBar = ({
   appliedFiltersLabel,
   clearAllLabel,
   onClearAll,
+  selectAllLabel = "Select All",
   showAppliedFilters = true,
   className = "",
 }: FilterBarProps) => {
@@ -165,6 +168,7 @@ export const FilterBar = ({
   const [overflowExpanded, setOverflowExpanded] = useState(false);
   const [openInfoPopoverId, setOpenInfoPopoverId] = useState<string>();
   const [openInfoDetails, setOpenInfoDetails] = useState<FilterInfoLearnMore>();
+  const [selectAllLoadingId, setSelectAllLoadingId] = useState<string>();
   const visibleRadioConfig = radioGroup?.visible !== false ? radioGroup : undefined;
   const visibleRadio = visibleRadioConfig
     ? { ...visibleRadioConfig, value: values[visibleRadioConfig.id] ?? visibleRadioConfig.clearValue }
@@ -195,6 +199,26 @@ export const FilterBar = ({
   };
   const changeRadio = (value: FilterValue | FilterValue[]) =>
     emitChange(visibleRadio?.id ?? "", value, visibleRadio?.onChange as ((value: never) => void) | undefined);
+  const isAllSelected = (control: MultiSelectFilterControl & { value: FilterValue[] }) =>
+    control.value.length > 0
+    && control.options.length > 0
+    && control.options.every((option) => control.value.includes(option.value));
+  const toggleSelectAll = async (
+    control: MultiSelectFilterControl & { value: FilterValue[] }
+  ) => {
+    const onControlChange = control.onChange as ((value: never) => void) | undefined;
+    if (isAllSelected(control)) {
+      emitChange(control.id, control.clearValue ?? [], onControlChange);
+      return;
+    }
+    setSelectAllLoadingId(control.id);
+    try {
+      const options = (await control.onSelectAll?.()) ?? control.options;
+      emitChange(control.id, options.map((option) => option.value), onControlChange);
+    } finally {
+      setSelectAllLoadingId(undefined);
+    }
+  };
 
   if (
     visibleRadio &&
@@ -666,6 +690,33 @@ export const FilterBar = ({
                         notFoundContent: control.loading ? <Spin size="small" /> : undefined,
                       }
                     : { optionFilterProp: "label" as const })}
+                  {...(control.mode === "multiple" && !(disabled || control.disabled)
+                    ? {
+                        dropdownClassName: "filter-bar__dropdown",
+                        dropdownRender: (menu: ReactNode) => (
+                          <>
+                            <div
+                              className={`filter-bar__select-all${
+                                isAllSelected(control) ? " filter-bar__select-all--selected" : ""
+                              }`}
+                              role="button"
+                              tabIndex={0}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => void toggleSelectAll(control)}
+                              onKeyDown={(event) => {
+                                if (event.key !== "Enter" && event.key !== " ") return;
+                                event.preventDefault();
+                                void toggleSelectAll(control);
+                              }}
+                            >
+                              <span>{selectAllLabel}</span>
+                              {selectAllLoadingId === control.id && <Spin size="small" />}
+                            </div>
+                            {menu}
+                          </>
+                        ),
+                      }
+                    : {})}
                   listHeight={control.listHeight}
                   value={control.value}
                   options={control.options}

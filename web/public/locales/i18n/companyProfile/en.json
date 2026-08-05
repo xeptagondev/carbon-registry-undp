@@ -41,6 +41,7 @@
     "filterByProject": "Filter by Project",
     "appliedFilters": "Applied Filters",
     "clearAll": "Clear All",
+    "selectAll": "Select All",
     "deauthoriseConfirmHeaderText": "Are you sure you want to deactivate this organisation?",
     "deauthoriseConfirmText":"Organisation will still be visible but no further action will be able to take place.\n Note: all users associated with the organisation will also be deactivated.",
     "activeStatus": "Active",

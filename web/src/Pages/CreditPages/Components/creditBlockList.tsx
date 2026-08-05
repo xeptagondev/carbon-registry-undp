@@ -601,6 +601,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
         disabled={loading}
         appliedFiltersLabel={t("appliedFilters")}
         clearAllLabel={t("clearAll")}
+        selectAllLabel={t("selectAll")}
       />
       <Row>
         <Col span={24}>

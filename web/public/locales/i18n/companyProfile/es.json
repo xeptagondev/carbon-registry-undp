@@ -48,5 +48,6 @@
   "all": "Todos",
   "filterByProject": "Filtrar por proyecto",
   "appliedFilters": "Filtros aplicados",
-  "clearAll": "Borrar todo"
+  "clearAll": "Borrar todo",
+  "selectAll": "Seleccionar todo"
 }
