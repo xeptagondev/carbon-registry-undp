@@ -82,13 +82,14 @@ export const CreditBalancePage = () => {
   });
 
   const projectFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.GET_PROJECT,
+    endpoint: API_PATHS.CREDIT_BALANCE_PROJECT_NAMES,
     id: 'projects',
     mode: 'multiple',
     placeholder: t('selectProject'),
-    labelKey: 'title',
-    valueKey: 'title',
-    sortKey: 'title',
+    labelKey: 'projectName',
+    valueKey: 'projectIds',
+    searchKey: 'title',
+    sortKey: 'projectName',
     selectedValues: (filterValues.projects as FilterValue[]) ?? [],
   });
 

@@ -76,8 +76,8 @@ export const usePaginatedSelectOptions = ({
   const hasMoreRef = useRef(true);
   const loadingRef = useRef(false);
   const initializedRef = useRef(false);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-  const loadedCountRef = useRef(0); // loaded so far this search — drives minFill
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadedValuesRef = useRef<Set<FilterValue>>(new Set());
   // Every option ever loaded, so selected values keep their labels.
   const cacheRef = useRef<Map<FilterValue, FilterOption>>(new Map());
   // Bumps per search/reset; a fetch resolving with a stale token is dropped.
@@ -91,19 +91,22 @@ export const usePaginatedSelectOptions = ({
       try {
         let page = startPage;
         let appendPage = append;
-        // Fetch pages until >= minFill options (scrollable) or the backend
-        // runs out; loops once when a single page already meets minFill.
+        // Fetch pages until >= minFill distinct options (scrollable) or the
+        // backend runs out; loops once when a single page already meets minFill.
         for (;;) {
           const search = searchRef.current;
           const isAppend = appendPage;
           const fetched = await fetchPage({ search, page, size: pageSize });
           if (token !== requestTokenRef.current) return; // superseded
-          fetched.forEach((option) => cacheRef.current.set(option.value, option));
+          if (!isAppend) loadedValuesRef.current.clear();
+          fetched.forEach((option) => {
+            cacheRef.current.set(option.value, option);
+            loadedValuesRef.current.add(option.value);
+          });
           pageRef.current = page;
           hasMoreRef.current = fetched.length === pageSize;
-          loadedCountRef.current = isAppend ? loadedCountRef.current + fetched.length : fetched.length;
           setPageOptions((prev) => (isAppend ? [...prev, ...fetched] : fetched));
-          if (!hasMoreRef.current || loadedCountRef.current >= minFill) break;
+          if (!hasMoreRef.current || loadedValuesRef.current.size >= minFill) break;
           page += 1;
           appendPage = true;
         }
@@ -127,7 +130,7 @@ export const usePaginatedSelectOptions = ({
       searchRef.current = search;
       pageRef.current = 0;
       hasMoreRef.current = true;
-      loadedCountRef.current = 0;
+      loadedValuesRef.current.clear();
       loadPage(1, false);
     },
     [loadPage]
