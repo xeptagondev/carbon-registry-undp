@@ -878,7 +878,9 @@ export class CreditTransactionsManagementService {
       .createQueryBuilder("creditTx")
       .where(this.helperService.generateWhereSQL(query, abilityCondition))
       .orderBy(
-        query?.sort?.key && `"${query?.sort?.key}"`,
+        query?.sort?.key === "id"
+          ? this.idNumericExpr("creditTx")
+          : query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
         query?.sort?.nullFirst !== undefined
           ? query?.sort?.nullFirst === true
@@ -1974,6 +1976,16 @@ export class CreditTransactionsManagementService {
       return null;
     }
     return { sql: `(${conditions.join(" AND ")})`, params };
+  }
+
+  /**
+   * credit_transactions_entity.id is a PrimaryColumn typed as `string`, but
+   * its values are unpadded CounterService-generated integers ("1", "2",
+   * ..., "10", ...), not a naturally sortable text ID - a plain text
+   * ORDER BY puts "10" before "2". Cast it for numeric sort instead.
+   */
+  private idNumericExpr(alias: string): string {
+    return `CASE WHEN "${alias}"."id" ~ '^[0-9]+$' THEN "${alias}"."id"::bigint END`;
   }
 
   /**

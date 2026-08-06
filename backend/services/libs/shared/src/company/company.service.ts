@@ -16,7 +16,10 @@ import { CompanyRole } from "../enum/company.role.enum";
 import { QueryDto } from "../dto/query.dto";
 import { DataListResponseDto } from "../dto/data.list.response";
 import { BasicResponseDto } from "../dto/basic.response.dto";
-import { CompanyState } from "../enum/company.state.enum";
+import {
+  CompanyState,
+  COMPANY_STATE_ALPHABETICAL_ORDER,
+} from "../enum/company.state.enum";
 import { HelperService } from "../util/helpers.service";
 import { FindOrganisationQueryDto } from "../dto/find.organisation.dto";
 import { ProgrammeLedgerService } from "../programme-ledger/programme-ledger.service";
@@ -624,7 +627,9 @@ export class CompanyService {
         )
       )
       .orderBy(
-        query?.sort?.key && `"${query?.sort?.key}"`,
+        query?.sort?.key === "state"
+          ? this.stateAlphabeticalExpr()
+          : query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
         query?.sort?.nullFirst !== undefined
           ? query?.sort?.nullFirst === true
@@ -1435,5 +1440,21 @@ export class CompanyService {
     });
 
     return companies && companies.length > 0 ? companies[0] : undefined;
+  }
+
+  /**
+   * "state" is a native Postgres enum (company_state_enum), so a plain
+   * ORDER BY sorts by its declared ordinal (0,1,2,3), not by the displayed
+   * label ("Active"/"Deactivated"/"Pending"/"Rejected"). Sort by each
+   * state's position in COMPANY_STATE_ALPHABETICAL_ORDER instead. An
+   * unmapped value (e.g. a new CompanyState added without updating that
+   * list) falls into the ELSE bucket and sorts last, rather than breaking
+   * the query.
+   */
+  private stateAlphabeticalExpr(): string {
+    const whenClauses = COMPANY_STATE_ALPHABETICAL_ORDER.map(
+      (state, idx) => `WHEN '${state}' THEN ${idx}`
+    ).join(" ");
+    return `CASE "state" ${whenClauses} ELSE ${COMPANY_STATE_ALPHABETICAL_ORDER.length} END`;
   }
 }

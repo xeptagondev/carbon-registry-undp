@@ -22,6 +22,9 @@ describe("CreditTransactionsManagementService", () => {
       take: jest.fn().mockReturnThis(),
       getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
     };
+    const creditBlockTransfersViewEntityRepository: any = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+    };
     const creditBlockExplorerViewEntityRepository: any = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
     };
@@ -44,7 +47,7 @@ describe("CreditTransactionsManagementService", () => {
       {} as any, // creditTransactionsEntityRepository
       {} as any, // documentManagementService
       {} as any, // creditBlockBalancesViewEntityRepository
-      {} as any, // creditBlockTransfersViewEntityRepository
+      creditBlockTransfersViewEntityRepository,
       {} as any, // creditBlockRetirementsViewEntityRepository
       creditBlockExplorerViewEntityRepository,
       creditBlockIssuancesViewEntityRepository,
@@ -60,6 +63,36 @@ describe("CreditTransactionsManagementService", () => {
 
   it("should be defined", () => {
     expect(service).toBeDefined();
+  });
+
+  describe("queryTransfers sorting", () => {
+    const user: any = { companyRole: CompanyRole.DESIGNATED_NATIONAL_AUTHORITY };
+
+    it("sorts id numerically instead of lexicographically", async () => {
+      await service.queryTransfers(
+        { size: 10, page: 1, sort: { key: "id", order: "ASC" } } as any,
+        undefined,
+        user
+      );
+
+      expect(orderByCalls).toHaveLength(1);
+      expect(orderByCalls[0][0]).toBe(
+        `CASE WHEN "creditTx"."id" ~ '^[0-9]+$' THEN "creditTx"."id"::bigint END`
+      );
+      expect(orderByCalls[0][1]).toBe("ASC");
+    });
+
+    it("keeps unrelated sort keys on the plain-column path (no regression)", async () => {
+      await service.queryTransfers(
+        { size: 10, page: 1, sort: { key: "createdDate", order: "DESC" } } as any,
+        undefined,
+        user
+      );
+
+      expect(orderByCalls).toHaveLength(1);
+      expect(orderByCalls[0][0]).toBe(`"createdDate"`);
+      expect(orderByCalls[0][1]).toBe("DESC");
+    });
   });
 
   describe("queryExplorer sorting", () => {
