@@ -93,7 +93,7 @@ export const INF_SECTORAL_SCOPE: { [key: string]: string } = {
   CHEMICAL_INDUSTRIES: "Chemical Industries",
   METAL_PRODUCTION: "Metal Production",
   TRANSPORT: "Transport",
-  FUGITIVE_EMISSIONS_FUELS: "Fugitive Emissions from Fuels (Solid, Oil and Gas) ",
+  WASTE_FROM_FUELS: "Fugitive Emissions from Fuels (Solid, Oil and Gas) ",
   WASTE_HANDLING_AND_DISPOSAL: "Waste Handling and Disposal",
   CONSTRUCTION: "Construction",
   MINING_MINERAL_PRODUCTION: "Mining/Mineral Production",
@@ -112,7 +112,7 @@ export const SECTOR_TO_SCOPES_MAP: { [key: string]: string[] } = {
     "METAL_PRODUCTION",
   ],
   TRANSPORT: ["TRANSPORT"],
-  WASTE: ["WASTE_HANDLING_AND_DISPOSAL", "FUGITIVE_EMISSIONS_FUELS"],
+  WASTE: ["WASTE_HANDLING_AND_DISPOSAL", "WASTE_FROM_FUELS"],
   OTHER: [
     "CONSTRUCTION",
     "MINING_MINERAL_PRODUCTION",
