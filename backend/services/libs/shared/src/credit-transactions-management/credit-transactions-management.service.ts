@@ -45,6 +45,8 @@ import { BasicResponseDto } from "../dto/basic.response.dto";
 import { AefReportManagementService } from "../aef-report-management/aef-report-management.service";
 import { Role } from "../casl/role.enum";
 import { CompanyState } from "../enum/company.state.enum";
+import { CooperativeApproach } from "../entities/cooperative.approach.entity";
+import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
 import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 import { CreditBlockHistoryRequestDto } from "../dto/credit.block.history.request.dto";
 import { CreditBlockExplorerFirstTransferDto } from "../dto/credit.block.explorer.first.transfer.dto";
@@ -129,6 +131,10 @@ export class CreditTransactionsManagementService {
     @InjectRepository(CreditBlockOrgTransactionsViewEntity)
     private creditBlockOrgTransactionsViewEntityRepository: Repository<CreditBlockOrgTransactionsViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
+    // ITMO authorization requests must reference an Active cooperative
+    // approach.
+    @InjectRepository(CooperativeApproach)
+    private cooperativeApproachRepo: Repository<CooperativeApproach>,
     private readonly serialNumberManagementService: SerialNumberManagementService
   ) {}
 
@@ -553,6 +559,35 @@ export class CreditTransactionsManagementService {
           this.helperService.formatReqMessagesString(
             "creditTransaction.blockAlreadyItmoAuthorized",
             [creditBlock.creditBlockId]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      // ITMO authorization must happen under an Active cooperative
+      // approach.
+      const cooperativeApproach =
+        await this.cooperativeApproachRepo.findOneBy({
+          cooperativeApproachId: itmoAuthRequestDto.cooperativeApproachId,
+        });
+      if (!cooperativeApproach) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.itmoAuthCaNotFound",
+            [itmoAuthRequestDto.cooperativeApproachId]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      if (
+        cooperativeApproach.status !== CooperativeApproachStatus.ACTIVE
+      ) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.itmoAuthCaNotActive",
+            [
+              itmoAuthRequestDto.cooperativeApproachId,
+              cooperativeApproach.status,
+            ]
           ),
           HttpStatus.BAD_REQUEST
         );

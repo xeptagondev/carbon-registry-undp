@@ -42,6 +42,13 @@ export class CooperativeApproach extends EntitySubject {
   })
   status: CooperativeApproachStatus;
 
+  // Mocked CARP-style reference number (e.g. "CA0001"), issued from an
+  // incremental counter the first time the approach becomes Active. In
+  // the real Article 6.2 flow this arrives from the UNFCCC Secretariat
+  // after initial-report review.
+  @Column({ type: "text", nullable: true, unique: true })
+  caReferenceNumber?: string;
+
   @Column({ nullable: true })
   authorizationDocumentUrl: string;
 

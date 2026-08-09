@@ -16,6 +16,8 @@
   "blockNotInHoldingAccount": "Credit block {} is not in a holding account, so it cannot be ITMO authorized.",
   "itmoAuthReqCreated": "ITMO authorization request created.",
   "itmoAuthReqAction": "ITMO authorization request {}ed",
+  "itmoAuthCaNotFound": "Cooperative approach {} does not exist — ITMO authorization requests must reference an existing cooperative approach.",
+  "itmoAuthCaNotActive": "Cooperative approach {} is {} — only Active cooperative approaches can be used for ITMO authorization.",
   "itmoAuthRequestNotExists": "The specified ITMO authorization request does not exist.",
   "itmoAuthRequestNotPending": "The ITMO authorization request is not in pending state.",
   "notOwnItmoAuthRequest": "You can only cancel your own organisation's ITMO authorization requests.",

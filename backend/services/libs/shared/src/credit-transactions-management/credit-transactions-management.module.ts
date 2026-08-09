@@ -7,6 +7,7 @@ import { ProgrammeLedgerModule } from "../programme-ledger/programme-ledger.modu
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
+import { CooperativeApproach } from "../entities/cooperative.approach.entity";
 import { CreditBlockBalancesViewEntity } from "../view-entities/credit.block.balances.view.entity";
 import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.transfers.view.entity";
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
@@ -30,6 +31,7 @@ import { SerialNumberManagementModule } from "../serial-number-management/serial
     TypeOrmModule.forFeature([
       CreditTransactionsEntity,
       CreditBlocksEntity,
+      CooperativeApproach,
       CreditBlockBalancesViewEntity,
       CreditBlockTransfersViewEntity,
       CreditBlockRetirementsViewEntity,

@@ -88,4 +88,16 @@ export class InitialReportController {
       );
     return { hasSubmittedReport: exists };
   }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Read, InitialReport)
+  )
+  @Get("versions")
+  getVersions(
+    @Query("cooperativeApproachId") cooperativeApproachId: string
+  ) {
+    return this.initialReportService.getVersions(cooperativeApproachId);
+  }
 }

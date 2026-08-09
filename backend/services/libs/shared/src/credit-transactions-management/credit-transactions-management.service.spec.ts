@@ -56,6 +56,7 @@ describe("CreditTransactionsManagementService", () => {
       {} as any, // creditBlockProjectHolderBalancesViewEntityRepository
       creditBlockOrgTransactionsViewEntityRepository,
       {} as any, // aefReportManagementService
+      {} as any, // cooperativeApproachRepo
       {} as any // serialNumberManagementService
     );
   });

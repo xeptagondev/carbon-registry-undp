@@ -25,10 +25,12 @@ export class CreditItmoAuthRequestDto {
   @IsNotEmpty()
   amount: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  // The cooperative approach the ITMOs are authorized under — must be
+  // an Active CA (validated in the service).
+  @ApiProperty()
+  @IsNotEmpty()
   @IsString()
-  cooperativeApproachId?: string;
+  cooperativeApproachId: string;
 
   @ApiPropertyOptional({ enum: AuthorizationPurpose })
   @IsOptional()
