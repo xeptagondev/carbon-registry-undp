@@ -22,11 +22,8 @@ import { ViewColumn, ViewEntity } from "typeorm";
         WHEN cb."isNotTransferred" = TRUE THEN 'issued'
         ELSE 'received'
       END AS "type",
-      cb."cooperativeApproachId" AS "cooperativeApproachId",
-      cb."authorizationPurpose"::text AS "authorizationPurpose",
       cb."accountType"::text AS "accountType",
-      COALESCE(cb."omgeDeductedAtIssuance", FALSE) AS "omgeDeductedAtIssuance",
-      COALESCE(cb."sopDeductedAtIssuance", FALSE) AS "sopDeductedAtIssuance"
+      cb."itmoAuthorizationRecord" AS "itmoAuthorizationRecord"
     FROM credit_blocks_entity cb
     LEFT JOIN project_entity p ON cb."projectRefId" = p."refId"
     LEFT JOIN company r ON cb."ownerCompanyId" = r."companyId"
@@ -84,17 +81,10 @@ export class CreditBlockBalancesViewEntity {
   type: string;
 
   @ViewColumn()
-  cooperativeApproachId: string;
-
-  @ViewColumn()
-  authorizationPurpose: string;
-
-  @ViewColumn()
   accountType: string;
 
+  // Non-null ⇒ the block is ITMO authorized (id of the authorizing
+  // transaction record).
   @ViewColumn()
-  omgeDeductedAtIssuance: boolean;
-
-  @ViewColumn()
-  sopDeductedAtIssuance: boolean;
+  itmoAuthorizationRecord: string;
 }

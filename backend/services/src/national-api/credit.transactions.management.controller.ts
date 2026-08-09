@@ -6,6 +6,8 @@ import { PoliciesGuard } from "@app/shared/casl/policy.guard";
 import { CreditTransactionsManagementService } from "@app/shared/credit-transactions-management/credit-transactions-management.service";
 import { CreditRetireActionDto } from "@app/shared/dto/credit.retire.action.dto";
 import { CreditRetireRequestDto } from "@app/shared/dto/credit.retire.request.dto";
+import { CreditItmoAuthActionDto } from "@app/shared/dto/credit.itmo.auth.action.dto";
+import { CreditItmoAuthRequestDto } from "@app/shared/dto/credit.itmo.auth.request.dto";
 import { CreditTransferDto } from "@app/shared/dto/credit.transfer.dto";
 import { CreditBlockHistoryRequestDto } from "@app/shared/dto/credit.block.history.request.dto";
 import { OrgCreditBlocksRequestDto } from "@app/shared/dto/org.credit.blocks.request.dto";
@@ -61,6 +63,38 @@ export class CreditTransactionsManagementController {
   ) {
     return await this.creditTransactionsManagementService.creditRetirementAction(
       retirementAction,
+      req.user
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Update, ProjectEntity)
+  )
+  @Post("itmoAuthRequest")
+  async itmoAuthRequest(
+    @Body() itmoAuthRequestDto: CreditItmoAuthRequestDto,
+    @Request() req
+  ) {
+    return await this.creditTransactionsManagementService.createItmoAuthRequest(
+      itmoAuthRequestDto,
+      req.user
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(Action.Update, ProjectEntity)
+  )
+  @Post("performItmoAuthAction")
+  async performItmoAuthAction(
+    @Body() itmoAuthAction: CreditItmoAuthActionDto,
+    @Request() req
+  ) {
+    return await this.creditTransactionsManagementService.itmoAuthorizationAction(
+      itmoAuthAction,
       req.user
     );
   }

@@ -57,7 +57,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
       LEFT JOIN project_entity p ON ct."projectRefId" = p."refId"
       LEFT JOIN company s ON ct."senderId" = s."companyId"
       LEFT JOIN company r ON ct."recieverId" = r."companyId"
-      WHERE ct."type" IN ('Transfered', 'FirstTransfer')
+      WHERE ct."type" = 'Transfered'
 
       UNION ALL
 
@@ -79,7 +79,7 @@ import { ViewColumn, ViewEntity } from "typeorm";
       LEFT JOIN project_entity p ON ct."projectRefId" = p."refId"
       LEFT JOIN company s ON ct."senderId" = s."companyId"
       LEFT JOIN company r ON ct."recieverId" = r."companyId"
-      WHERE ct."type" IN ('Transfered', 'FirstTransfer')
+      WHERE ct."type" = 'Transfered'
 
       UNION ALL
 

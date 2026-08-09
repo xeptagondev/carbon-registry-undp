@@ -110,8 +110,9 @@ export class CreditBlocksManagementService {
             ownerCompanyId: toCompanyId,
             projectRefId: creditBlock.projectRefId,
             serialNumber: secondSerialNumber,
-            // Draft -/CMA.5 para 132 — itmoSerial stable through splits
             itmoSerial: childItmoSerial,
+            // Splits of an ITMO-authorized block stay ITMO.
+            itmoAuthorizationRecord: creditBlock.itmoAuthorizationRecord,
             vintage: creditBlock.vintage,
             creditAmount: transferredCreditAmountFromBlock,
             reservedCreditAmount: 0,
@@ -188,8 +189,9 @@ export class CreditBlocksManagementService {
             ownerCompanyId: toCompanyId,
             projectRefId: creditBlock.projectRefId,
             serialNumber: secondSerialNumber,
-            // Draft -/CMA.5 para 132 — itmoSerial stable through splits
             itmoSerial: childItmoSerial,
+            // Splits of an ITMO-authorized block stay ITMO.
+            itmoAuthorizationRecord: creditBlock.itmoAuthorizationRecord,
             vintage: creditBlock.vintage,
             creditAmount: transferredCreditAmountFromBlock,
             reservedCreditAmount: 0,
@@ -266,8 +268,6 @@ export class CreditBlocksManagementService {
       transactionRecords: [],
       isNotTransferred: true,
       accountType: AccountType.HOLDING,
-      cooperativeApproachId: project.cooperativeApproachId || null,
-      authorizationPurpose: project.authorizationPurpose || null,
     });
     return newBlock;
   }

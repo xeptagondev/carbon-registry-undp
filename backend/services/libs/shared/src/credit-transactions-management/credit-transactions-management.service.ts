@@ -13,11 +13,15 @@ import { TxType } from "../enum/txtype.enum";
 import { plainToClass } from "class-transformer";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
 import { CreditTransactionTypesEnum } from "../enum/credit.transaction.types.enum";
+import { CreditTransactionSubTypesEnum } from "../enum/credit.transaction.sub.types.enum";
 import { CreditTransactionStatusEnum } from "../enum/credit.transaction.status.enum";
+import { CreditTransactionData } from "../dto/credit.transaction.data.types";
 import { CreditRetireRequestDto } from "../dto/credit.retire.request.dto";
 import { CounterService } from "../util/counter.service";
 import { CounterType } from "../util/counter.type.enum";
 import { CreditRetireActionDto } from "../dto/credit.retire.action.dto";
+import { CreditItmoAuthRequestDto } from "../dto/credit.itmo.auth.request.dto";
+import { CreditItmoAuthActionDto } from "../dto/credit.itmo.auth.action.dto";
 import { RetirementACtionEnum } from "../enum/retirement.action.enum";
 import { QueryDto } from "../dto/query.dto";
 import { DataListResponseDto } from "../dto/data.list.response";
@@ -41,8 +45,6 @@ import { BasicResponseDto } from "../dto/basic.response.dto";
 import { AefReportManagementService } from "../aef-report-management/aef-report-management.service";
 import { Role } from "../casl/role.enum";
 import { CompanyState } from "../enum/company.state.enum";
-import { CooperativeApproach } from "../entities/cooperative.approach.entity";
-import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
 import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 import { CreditBlockHistoryRequestDto } from "../dto/credit.block.history.request.dto";
 import { CreditBlockExplorerFirstTransferDto } from "../dto/credit.block.explorer.first.transfer.dto";
@@ -127,11 +129,6 @@ export class CreditTransactionsManagementService {
     @InjectRepository(CreditBlockOrgTransactionsViewEntity)
     private creditBlockOrgTransactionsViewEntityRepository: Repository<CreditBlockOrgTransactionsViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
-    // Draft -/CMA.5 paras 20-21 guard: refuse /transfer when the block's
-    // linked cooperative approach has been revoked. Mirrors the
-    // authorizeProgramme guard in programme.service.ts.
-    @InjectRepository(CooperativeApproach)
-    private cooperativeApproachRepo: Repository<CooperativeApproach>,
     private readonly serialNumberManagementService: SerialNumberManagementService
   ) {}
 
@@ -193,9 +190,8 @@ export class CreditTransactionsManagementService {
           HttpStatus.BAD_REQUEST
         );
       }
-      // Article 6.2 semantics: sender != receiver. Without this guard the
-      // ledger silently flips ownerCompanyId to itself and emits a
-      // spurious AEF row / CA-ADJ double-count.
+      // Sender and receiver must differ; otherwise the ledger silently
+      // flips ownerCompanyId to itself and emits a spurious AEF row.
       if (Number(companyId) === Number(creditTransferDto.receiverOrgId)) {
         throw new HttpException(
           this.helperService.formatReqMessagesString(
@@ -238,29 +234,17 @@ export class CreditTransactionsManagementService {
           HttpStatus.BAD_REQUEST
         );
       }
-      // Draft -/CMA.5 para 21: "no further ITMOs shall be first
-      // transferred" after a CA is revoked. Mirrors the authorizeProgramme
-      // guard (programme.service.ts :6435). Pre-Article-6 blocks without
-      // a cooperativeApproachId skip this check silently — no CA, no
-      // revocation state to enforce.
-      if (creditBlock.cooperativeApproachId) {
-        const ca = await this.cooperativeApproachRepo.findOne({
-          where: {
-            cooperativeApproachId: creditBlock.cooperativeApproachId,
-          },
-        });
-        if (ca && ca.status === CooperativeApproachStatus.REVOKED) {
-          throw new HttpException(
-            this.helperService.formatReqMessagesString(
-              "creditTransaction.transferFromRevokedCa",
-              [
-                creditBlock.creditBlockId,
-                creditBlock.cooperativeApproachId,
-              ]
-            ),
-            HttpStatus.BAD_REQUEST
-          );
-        }
+      // Transfers are only for mitigation-outcome (MO) blocks. An
+      // ITMO-authorized block (itmoAuthorizationRecord set) leaves the
+      // domestic-transfer flow entirely.
+      if (creditBlock.itmoAuthorizationRecord) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.transferOnlyForMo",
+            [creditBlock.creditBlockId]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
       }
       await this.programmeLedgerService.transferCredits(
         creditTransferDto,
@@ -374,7 +358,7 @@ export class CreditTransactionsManagementService {
         {
           amount: creditRetireRequestDto.amount,
           remarks: creditRetireRequestDto.remarks,
-          retirementType: creditRetireRequestDto.retirementType,
+          subType: creditRetireRequestDto.subType,
           fromCompanyId: companyId,
         }
       );
@@ -494,7 +478,7 @@ export class CreditTransactionsManagementService {
         {
           amount: creditRetireRequest.amount,
           remarks: retirementAction.remarks,
-          retirementType: creditRetireRequest.retirementType,
+          subType: creditRetireRequest.subType,
           fromCompanyId: creditRetireRequest.senderId,
         }
       );
@@ -506,6 +490,237 @@ export class CreditTransactionsManagementService {
         ),
         {
           amount: creditRetireRequest.amount,
+        }
+      );
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  public async createItmoAuthRequest(
+    itmoAuthRequestDto: CreditItmoAuthRequestDto,
+    user: User
+  ) {
+    try {
+      // Initiated by an Admin of the organization that owns the block.
+      if (
+        user.companyRole != CompanyRole.PROJECT_DEVELOPER ||
+        user.role != Role.Admin
+      ) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.noItmoAuthPermission",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      const companyId = user.companyId;
+      const company = await this.companyService.findByCompanyId(companyId);
+      if (!company) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "project.noCompanyExistingInSystem",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      const creditBlock = await this.creditBlocksEntityRepository.findOne({
+        where: { creditBlockId: itmoAuthRequestDto.blockId },
+      });
+      if (!creditBlock) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.creditBlockNotExists",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      if (creditBlock.ownerCompanyId != companyId) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.creditBlockDoesNotOwnBySender",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      // Only MO (not yet ITMO-authorized) blocks can be authorized.
+      if (creditBlock.itmoAuthorizationRecord) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.blockAlreadyItmoAuthorized",
+            [creditBlock.creditBlockId]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      if (
+        creditBlock.creditAmount - creditBlock.reservedCreditAmount <
+        itmoAuthRequestDto.amount
+      ) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.notEnoughCreditAmount",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      const newAuthId = await this.counterService.incrementCount(
+        CounterType.CREDIT_TRANSACTIONS,
+        0
+      );
+      await this.programmeLedgerService.addItmoAuthRequest(
+        newAuthId,
+        itmoAuthRequestDto,
+        user
+      );
+
+      await this.documentManagementService.logProjectStage(
+        creditBlock.projectRefId,
+        ProjectAuditLogType.ITMO_AUTH_REQUESTED,
+        user.id,
+        undefined,
+        {
+          amount: itmoAuthRequestDto.amount,
+          remarks: itmoAuthRequestDto.remarks,
+          cooperativeApproachId: itmoAuthRequestDto.cooperativeApproachId,
+          authorizationPurpose: itmoAuthRequestDto.authorizationPurpose,
+          fromCompanyId: companyId,
+        }
+      );
+      return new DataResponseMessageDto(
+        HttpStatus.OK,
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.itmoAuthReqCreated",
+          []
+        ),
+        {
+          id: newAuthId,
+          amount: itmoAuthRequestDto.amount,
+        }
+      );
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  public async itmoAuthorizationAction(
+    itmoAuthAction: CreditItmoAuthActionDto,
+    user: User
+  ) {
+    try {
+      const itmoAuthRequest =
+        await this.creditTransactionsEntityRepository.findOne({
+          where: { id: itmoAuthAction.transactionId },
+        });
+      if (
+        !itmoAuthRequest ||
+        itmoAuthRequest.type != CreditTransactionTypesEnum.ITMO_AUTHORIZED
+      ) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.itmoAuthRequestNotExists",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      if (itmoAuthRequest.status != CreditTransactionStatusEnum.PENDING) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.itmoAuthRequestNotPending",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      const requestingCompany = await this.companyService.findByCompanyId(
+        itmoAuthRequest.senderId
+      );
+      if (requestingCompany.state == CompanyState.SUSPENDED) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "project.companyInDeactivatedState",
+            []
+          ),
+          HttpStatus.UNAUTHORIZED
+        );
+      }
+      if (
+        itmoAuthAction.action == RetirementACtionEnum.ACCEPT ||
+        itmoAuthAction.action == RetirementACtionEnum.REJECT
+      ) {
+        // Government (DNA) Admin/Root approves or rejects.
+        if (
+          user.companyRole != CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
+          ![Role.Admin, Role.Root].includes(user.role)
+        ) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "creditTransaction.noItmoAuthActionPermission",
+              []
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+      } else if (itmoAuthAction.action == RetirementACtionEnum.CANCEL) {
+        if (
+          user.companyRole != CompanyRole.PROJECT_DEVELOPER ||
+          user.role != Role.Admin
+        ) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "project.notAuthorizedProjectParticipant",
+              []
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        if (user.companyId != itmoAuthRequest.senderId) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "creditTransaction.notOwnItmoAuthRequest",
+              []
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+      }
+      await this.programmeLedgerService.itmoAuthRequestAction(
+        itmoAuthRequest,
+        itmoAuthAction,
+        user
+      );
+
+      const auditLogTypes: Record<RetirementACtionEnum, ProjectAuditLogType> = {
+        [RetirementACtionEnum.ACCEPT]: ProjectAuditLogType.ITMO_AUTH_APPROVED,
+        [RetirementACtionEnum.REJECT]: ProjectAuditLogType.ITMO_AUTH_REJECTED,
+        [RetirementACtionEnum.CANCEL]: ProjectAuditLogType.ITMO_AUTH_CANCELLED,
+      };
+
+      await this.documentManagementService.logProjectStage(
+        itmoAuthRequest.projectRefId,
+        auditLogTypes[itmoAuthAction.action],
+        user.id,
+        undefined,
+        {
+          amount: itmoAuthRequest.amount,
+          remarks: itmoAuthAction.remarks,
+          fromCompanyId: itmoAuthRequest.senderId,
+        }
+      );
+      return new DataResponseMessageDto(
+        HttpStatus.OK,
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.itmoAuthReqAction",
+          [itmoAuthAction.action.toLowerCase()]
+        ),
+        {
+          amount: itmoAuthRequest.amount,
         }
       );
     } catch (error) {
@@ -533,11 +748,6 @@ export class CreditTransactionsManagementService {
         serialNumber: creditBlock.serialNumber,
         amount: creditBlock.creditAmount,
         projectRefId: creditBlock.projectRefId,
-        // Propagate Phase 2 Article 6.2 metadata from the block so
-        // annual AEF tables (Dec 4/CMA.6 Annex II Actions + Holdings)
-        // can surface them without a join against credit_blocks_entity.
-        cooperativeApproachId: creditBlock.cooperativeApproachId,
-        authorizationPurpose: creditBlock.authorizationPurpose,
         toAccountType: creditBlock.accountType,
       });
       await em.save(CreditTransactionsEntity, newIssueRecord);
@@ -546,32 +756,16 @@ export class CreditTransactionsManagementService {
         CounterType.CREDIT_TRANSACTIONS,
         0
       );
-      // Dec 2/CMA.3 Annex para 1(a) and Dec 4/CMA.6 Annex II Actions
-      // table both distinguish a "first transfer" from subsequent
-      // transfers because the first transfer is the event that
-      // finalises authorization and triggers the corresponding
-      // adjustment obligation. We infer "first transfer" from the
-      // pre-update block state: a block is being first-transferred
-      // iff it had isNotTransferred === true before this update and
-      // the tx type is TRANSFER.
-      const isFirstTransfer = Boolean(
-        previousCreditBlock && previousCreditBlock.isNotTransferred === true
-      );
       const newTranferRecord = plainToClass(CreditTransactionsEntity, {
         id: id,
         senderId: creditBlock.previousOwnerCompanyId,
         recieverId: creditBlock.ownerCompanyId,
-        type: isFirstTransfer
-          ? CreditTransactionTypesEnum.FIRST_TRANSFER
-          : CreditTransactionTypesEnum.TRANSFERED,
+        type: CreditTransactionTypesEnum.TRANSFERED,
         status: CreditTransactionStatusEnum.COMPLETED,
         creditBlockId: creditBlock.creditBlockId,
         serialNumber: creditBlock.serialNumber,
         amount: creditBlock.creditAmount,
         projectRefId: creditBlock.projectRefId,
-        isFirstTransfer,
-        cooperativeApproachId: creditBlock.cooperativeApproachId,
-        authorizationPurpose: creditBlock.authorizationPurpose,
         fromAccountType: previousCreditBlock?.accountType,
         toAccountType: creditBlock.accountType,
       });
@@ -587,15 +781,13 @@ export class CreditTransactionsManagementService {
         senderId: creditBlock.ownerCompanyId,
         recieverId: 0,
         type: CreditTransactionTypesEnum.RETIRED,
+        subType: txData.subType,
         status: CreditTransactionStatusEnum.PENDING,
         creditBlockId: creditBlock.creditBlockId,
         serialNumber: creditBlock.serialNumber,
         amount: txData.amount,
         projectRefId: creditBlock.projectRefId,
-        retirementType: txData.retirementType,
-        remarks: txData.remarks,
-        country: txData.country,
-        organizationName: txData.organizationName,
+        data: this.buildRetirementData(txData),
       });
       await em.save(CreditTransactionsEntity, newTranferRecord);
     } else if (creditBlock.txType == TxType.RETIRE) {
@@ -622,12 +814,75 @@ export class CreditTransactionsManagementService {
         { id: txData.transactionId },
         updatedTranferRecord
       );
+    } else if (creditBlock.txType == TxType.ITMO_AUTH_REQ) {
+      const newAuthReq =
+        creditBlock.transactionRecords[
+          creditBlock.transactionRecords.length - 1
+        ];
+      const txData: CreditItmoAuthRequestDto = creditBlock.txData;
+      const newAuthRecord = plainToClass(CreditTransactionsEntity, {
+        id: newAuthReq.id,
+        senderId: creditBlock.ownerCompanyId,
+        recieverId: creditBlock.ownerCompanyId,
+        type: CreditTransactionTypesEnum.ITMO_AUTHORIZED,
+        status: CreditTransactionStatusEnum.PENDING,
+        creditBlockId: creditBlock.creditBlockId,
+        serialNumber: creditBlock.serialNumber,
+        amount: txData.amount,
+        projectRefId: creditBlock.projectRefId,
+        data: {
+          cooperativeApproachId: txData.cooperativeApproachId,
+          authorizationPurpose: txData.authorizationPurpose,
+          remarks: txData.remarks,
+        },
+      });
+      await em.save(CreditTransactionsEntity, newAuthRecord);
+    } else if (creditBlock.txType == TxType.ITMO_AUTH) {
+      const txData: CreditItmoAuthActionDto = creditBlock.txData;
+      const transactionRecordIndex = creditBlock.transactionRecords.findIndex(
+        (e) => e.id == txData.transactionId
+      );
+      const authRequestRecord =
+        creditBlock.transactionRecords[transactionRecordIndex];
+      let updatedAuthRecord: CreditTransactionsEntity;
+      if (authRequestRecord.status == CreditTransactionStatusEnum.COMPLETED) {
+        // On approval the completed record points at the block that
+        // now carries the authorization (the child block on a partial
+        // authorization split).
+        updatedAuthRecord = plainToClass(CreditTransactionsEntity, {
+          status: authRequestRecord.status,
+          creditBlockId: creditBlock.creditBlockId,
+          serialNumber: creditBlock.serialNumber,
+        });
+      } else {
+        updatedAuthRecord = plainToClass(CreditTransactionsEntity, {
+          status: authRequestRecord.status,
+        });
+      }
+      await em.update(
+        CreditTransactionsEntity,
+        { id: txData.transactionId },
+        updatedAuthRecord
+      );
     }
-    await this.aefReportManagementService.handleAefRecord(
-      creditBlock,
-      em,
-      previousCreditBlock
-    );
+    await this.aefReportManagementService.handleAefRecord(creditBlock, em);
+  }
+
+  // Type+subType-specific payload for a RETIRED transaction record; see
+  // credit.transaction.data.types.ts.
+  private buildRetirementData(
+    txData: CreditRetireRequestDto
+  ): CreditTransactionData {
+    if (
+      txData.subType === CreditTransactionSubTypesEnum.CROSS_BORDER_TRANSACTIONS
+    ) {
+      return {
+        country: txData.country,
+        organizationName: txData.organizationName,
+        remarks: txData.remarks,
+      };
+    }
+    return { remarks: txData.remarks };
   }
 
   public async queryCreditBalances(

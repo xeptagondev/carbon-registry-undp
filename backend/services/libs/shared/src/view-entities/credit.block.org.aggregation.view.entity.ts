@@ -6,8 +6,8 @@ import { ViewColumn, ViewEntity } from "typeorm";
 // org appears even after it has transferred or retired everything away.
 //   - creditIssued      = SUM(amount) of Issued txns received (recieverId)
 //   - creditRetired     = SUM(amount) of Retired txns performed (senderId)
-//   - creditTransferred = SUM(amount) of Transfered/FirstTransfer txns sent (senderId)
-//   - creditReceived    = SUM(amount) of Transfered/FirstTransfer txns received (recieverId)
+//   - creditTransferred = SUM(amount) of Transfered txns sent (senderId)
+//   - creditReceived    = SUM(amount) of Transfered txns received (recieverId)
 //   - creditReserved    = SUM(reservedCreditAmount) of currently-owned blocks
 //   - creditBalance     = SUM(creditAmount - reservedCreditAmount) of currently-owned blocks
 @ViewEntity({
@@ -37,13 +37,13 @@ import { ViewColumn, ViewEntity } from "typeorm";
     LEFT JOIN (
       SELECT ct."senderId" AS "organizationId", SUM(ct."amount") AS "creditTransferred"
       FROM "credit_transactions_entity" ct
-      WHERE ct."type" IN ('Transfered', 'FirstTransfer')
+      WHERE ct."type" = 'Transfered'
       GROUP BY ct."senderId"
     ) tr ON tr."organizationId" = c."companyId"
     LEFT JOIN (
       SELECT ct."recieverId" AS "organizationId", SUM(ct."amount") AS "creditReceived"
       FROM "credit_transactions_entity" ct
-      WHERE ct."type" IN ('Transfered', 'FirstTransfer')
+      WHERE ct."type" = 'Transfered'
       GROUP BY ct."recieverId"
     ) rec ON rec."organizationId" = c."companyId"
     LEFT JOIN (

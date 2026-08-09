@@ -9,6 +9,15 @@
   "noRetireActionPermission": "You do not have permission to approve or reject credit retirement requests.",
   "creditRetirementReqAction": "Credit retirement request {}ed",
   "selfTransferRejected": "You cannot transfer credits to your own organisation. Pick a different recipient.",
-  "transferFromRevokedCa": "Credit block {} was issued under cooperative approach {}, which has since been Revoked. ITMO transfers from a Revoked CA are not permitted (Draft -/CMA.5 para 21).",
+  "transferOnlyForMo": "Credit block {} is ITMO authorized. Only mitigation outcome (MO) credit blocks can be transferred.",
+  "noItmoAuthPermission": "You do not have permission to request ITMO authorization.",
+  "noItmoAuthActionPermission": "You do not have permission to approve or reject ITMO authorization requests.",
+  "blockAlreadyItmoAuthorized": "Credit block {} is already ITMO authorized.",
+  "blockNotInHoldingAccount": "Credit block {} is not in a holding account, so it cannot be ITMO authorized.",
+  "itmoAuthReqCreated": "ITMO authorization request created.",
+  "itmoAuthReqAction": "ITMO authorization request {}ed",
+  "itmoAuthRequestNotExists": "The specified ITMO authorization request does not exist.",
+  "itmoAuthRequestNotPending": "The ITMO authorization request is not in pending state.",
+  "notOwnItmoAuthRequest": "You can only cancel your own organisation's ITMO authorization requests.",
   "unauthorized": "You are not authorized to perform this action."
 }
