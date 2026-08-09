@@ -857,6 +857,23 @@ export class ProgrammeLedgerService {
                 creditBlock.serialNumber,
                 retireRequestRecord.amount
               );
+            // An already-ITMO block's itmoSerial has the same shape as
+            // its regular serial, so it splits with the same helper —
+            // the retained (parent) portion keeps the low end of the
+            // range, the retiring (child) portion takes the high end.
+            // MO blocks retiring through this same path have no
+            // itmoSerial to split.
+            let parentItmoSerial: string | undefined;
+            let childItmoSerial: string | undefined;
+            if (creditBlock.itmoSerial) {
+              const splitItmoSerial =
+                this.serialNumberManagementService.splitCreditBlockSerialNumber(
+                  creditBlock.itmoSerial,
+                  retireRequestRecord.amount
+                );
+              parentItmoSerial = splitItmoSerial.firstSerialNumber;
+              childItmoSerial = splitItmoSerial.secondSerialNumber;
+            }
             updateMap[this.ledger.creditBlocksTable] = {
               txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
                 TxType.CREDIT_BLOCK_SPLIT,
@@ -873,6 +890,7 @@ export class ProgrammeLedgerService {
               serialNumber: firstSerialNumber,
               creditAmount:
                 creditBlock.creditAmount - retireRequestRecord.amount,
+              ...(parentItmoSerial ? { itmoSerial: parentItmoSerial } : {}),
             };
             const newBlockId =
               this.serialNumberManagementService.getCreditBlockId(
@@ -907,7 +925,7 @@ export class ProgrammeLedgerService {
                 ],
                 isNotTransferred: false,
                 accountType: accountTypeForRetirement,
-                itmoSerial: creditBlock.itmoSerial,
+                itmoSerial: childItmoSerial,
                 itmoAuthorizationRecord: creditBlock.itmoAuthorizationRecord,
               });
           }
@@ -1067,7 +1085,8 @@ export class ProgrammeLedgerService {
   public async itmoAuthRequestAction(
     itmoAuthRequest: CreditTransactionsEntity,
     itmoAuthAction: CreditItmoAuthActionDto,
-    user: User
+    user: User,
+    caReferenceNumber?: string
   ) {
     const getQueries = {};
     getQueries[this.ledger.creditBlocksTable] = {
@@ -1138,7 +1157,15 @@ export class ProgrammeLedgerService {
           ) {
             // The whole block becomes an ITMO — ownership does not
             // change, the block is only linked to its authorization
-            // record.
+            // record and gets its itmoSerial assigned for the first
+            // time (see SerialNumberManagementService.getItmoSerial).
+            const wholeBlockRange = this.serialNumberManagementService.getBlockRange(
+              creditBlock.serialNumber
+            );
+            const wholeBlockProjectId =
+              this.serialNumberManagementService.getProjectIdFromSerial(
+                creditBlock.serialNumber
+              );
             updateMap[this.ledger.creditBlocksTable] = {
               txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
                 TxType.ITMO_AUTH,
@@ -1152,6 +1179,13 @@ export class ProgrammeLedgerService {
               reservedCreditAmount: 0,
               transactionRecords: creditBlock.transactionRecords,
               itmoAuthorizationRecord: authRequestRecord.id,
+              itmoSerial: this.serialNumberManagementService.getItmoSerial(
+                caReferenceNumber,
+                wholeBlockProjectId,
+                wholeBlockRange.start,
+                wholeBlockRange.end,
+                creditBlock.vintage
+              ),
             };
           } else {
             // Partial authorization — split the block: the parent
@@ -1183,6 +1217,17 @@ export class ProgrammeLedgerService {
               this.serialNumberManagementService.getCreditBlockId(
                 secondSerialNumber
               );
+            // The newly authorized child's itmoSerial range is derived
+            // from its own regular serial (secondSerialNumber) so the
+            // two are guaranteed consistent; the retained parent stays
+            // an MO and gets no itmoSerial.
+            const childRange = this.serialNumberManagementService.getBlockRange(
+              secondSerialNumber
+            );
+            const childProjectId =
+              this.serialNumberManagementService.getProjectIdFromSerial(
+                secondSerialNumber
+              );
             insertMap[this.ledger.creditBlocksTable + "#" + newBlockId] =
               plainToClass(CreditBlocksEntity, {
                 creditBlockId: newBlockId,
@@ -1212,7 +1257,13 @@ export class ProgrammeLedgerService {
                 ],
                 isNotTransferred: creditBlock.isNotTransferred,
                 accountType: AccountType.HOLDING,
-                itmoSerial: creditBlock.itmoSerial,
+                itmoSerial: this.serialNumberManagementService.getItmoSerial(
+                  caReferenceNumber,
+                  childProjectId,
+                  childRange.start,
+                  childRange.end,
+                  creditBlock.vintage
+                ),
                 itmoAuthorizationRecord: authRequestRecord.id,
               });
           }

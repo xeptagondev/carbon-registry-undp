@@ -62,10 +62,9 @@ import { CreditBlockExplorerFirstTransferDto } from "../dto/credit.block.explore
 /**
  * One block's parsed ledger version, as seen by the credit-block
  * history-tree reconstruction (see CreditTransactionsManagementService.
- * getCreditBlockHistoryTree). `range` is derived from `serialNumber`
- * since that's the only field carrying the live [start, end] through a
- * split (itmoSerial is not reliably kept in sync on a retired split -
- * see ProgrammeLedgerService.retirementRequestAction Case B).
+ * getCreditBlockHistoryTree). `range` is derived from `serialNumber`,
+ * which every block carries; `itmoSerial` is only present once a block
+ * has been ITMO-authorized (see ProgrammeLedgerService.getItmoSerial).
  */
 interface CreditBlockLedgerVersion {
   creditBlockId: string;
@@ -909,10 +908,32 @@ export class CreditTransactionsManagementService {
           );
         }
       }
+      // itmoSerial (SerialNumberManagementService.getItmoSerial) is
+      // only assigned on approval, and needs the block's ITMO-authorized
+      // cooperative approach's real caReferenceNumber — resolve it here
+      // (domain-level lookup) rather than in the ledger service.
+      let caReferenceNumber: string | undefined;
+      if (itmoAuthAction.action == RetirementACtionEnum.ACCEPT) {
+        const authData = (itmoAuthRequest.data ?? {}) as ItmoAuthorizationData;
+        const ca = await this.cooperativeApproachRepo.findOneBy({
+          cooperativeApproachId: authData.cooperativeApproachId,
+        });
+        if (!ca?.caReferenceNumber) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "creditTransaction.itmoAuthCaMissingReference",
+              [authData.cooperativeApproachId ?? ""]
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        caReferenceNumber = ca.caReferenceNumber;
+      }
       await this.programmeLedgerService.itmoAuthRequestAction(
         itmoAuthRequest,
         itmoAuthAction,
-        user
+        user,
+        caReferenceNumber
       );
 
       const auditLogTypes: Record<RetirementACtionEnum, ProjectAuditLogType> = {
