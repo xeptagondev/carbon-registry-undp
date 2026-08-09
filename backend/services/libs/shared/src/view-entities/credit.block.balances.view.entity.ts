@@ -23,11 +23,14 @@ import { ViewColumn, ViewEntity } from "typeorm";
         ELSE 'received'
       END AS "type",
       cb."accountType"::text AS "accountType",
-      cb."itmoAuthorizationRecord" AS "itmoAuthorizationRecord"
+      cb."itmoAuthorizationRecord" AS "itmoAuthorizationRecord",
+      itmoauth."data"->>'cooperativeApproachId' AS "itmoCooperativeApproachId",
+      itmoauth."data"->>'authorizationPurpose' AS "itmoAuthorizationPurpose"
     FROM credit_blocks_entity cb
     LEFT JOIN project_entity p ON cb."projectRefId" = p."refId"
     LEFT JOIN company r ON cb."ownerCompanyId" = r."companyId"
     LEFT JOIN company s ON cb."previousOwnerCompanyId" = s."companyId"
+    LEFT JOIN credit_transactions_entity itmoauth ON cb."itmoAuthorizationRecord" = itmoauth."id"
     WHERE cb."ownerCompanyId" != 0`,
 })
 export class CreditBlockBalancesViewEntity {
@@ -87,4 +90,14 @@ export class CreditBlockBalancesViewEntity {
   // transaction record).
   @ViewColumn()
   itmoAuthorizationRecord: string;
+
+  // Resolved from the ITMO authorization record's data — the
+  // cooperative approach the block was authorized under, and the
+  // authorization purpose (NDC / OIMP / Other). Both null for MO
+  // blocks. Drives which retirement subtypes the frontend offers.
+  @ViewColumn()
+  itmoCooperativeApproachId: string;
+
+  @ViewColumn()
+  itmoAuthorizationPurpose: string;
 }

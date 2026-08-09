@@ -13,7 +13,7 @@ import { CreditTransactionStatusEnum } from "../enum/credit.transaction.status.e
         ct."status" AS "status",
         ct."projectRefId" AS "projectId",
         country."name" AS "country",
-        ct."data"->>'organizationName' AS "organizationName",
+        ct."data"->>'entityName' AS "entityName",
         ct."data"->>'remarks' AS "remarks",
         p."title" AS "projectName",
         p."companyId" AS "projectOwnerId",
@@ -64,11 +64,16 @@ export class CreditBlockRetirementsViewEntity {
   @ViewColumn()
   senderLogo: string;
 
+  // Destination counterparty country, resolved server-side for ITMO
+  // Use-Towards-NDC / Use-For-OIMP retirements from the block's
+  // ITMO-authorized cooperative approach.
   @ViewColumn()
   country?: string;
 
+  // Authorized entity name, populated only for Use-For-OIMP
+  // retirements.
   @ViewColumn()
-  organizationName?: string;
+  entityName?: string;
 
   @ViewColumn()
   remarks?: string;

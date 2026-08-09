@@ -16,10 +16,17 @@
   "blockNotInHoldingAccount": "Credit block {} is not in a holding account, so it cannot be ITMO authorized.",
   "itmoAuthReqCreated": "ITMO authorization request created.",
   "itmoAuthReqAction": "ITMO authorization request {}ed",
-  "itmoAuthCaNotFound": "Cooperative approach {} does not exist — ITMO authorization requests must reference an existing cooperative approach.",
+  "itmoAuthCaNotFound": "Cooperative approach {} does not exist.",
   "itmoAuthCaNotActive": "Cooperative approach {} is {} — only Active cooperative approaches can be used for ITMO authorization.",
   "itmoAuthRequestNotExists": "The specified ITMO authorization request does not exist.",
   "itmoAuthRequestNotPending": "The ITMO authorization request is not in pending state.",
   "notOwnItmoAuthRequest": "You can only cancel your own organisation's ITMO authorization requests.",
+  "subTypeNotAllowedForMo": "{} is not available for a mitigation outcome (MO) block — only ITMO-authorized blocks can be used for OIMP.",
+  "subTypeNotAllowedForPurpose": "{} is not available for this block — its ITMO authorization purpose ({}) does not permit it.",
+  "retireCaHasNoCounterparty": "Cooperative approach {} has no counterparty party to retire ITMOs towards.",
+  "retireCountryRequired": "This cooperative approach has more than one counterparty — specify the destination country.",
+  "retireCountryInvalid": "{} is not a counterparty party of this block's cooperative approach.",
+  "authorizedEntityRequired": "Retiring ITMOs for OIMP requires selecting an authorized entity.",
+  "authorizedEntityInvalid": "{} is not an Active authorized entity of this block's cooperative approach.",
   "unauthorized": "You are not authorized to perform this action."
 }

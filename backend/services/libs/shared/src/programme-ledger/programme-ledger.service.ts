@@ -61,11 +61,7 @@ function mapSubTypeToAccountType(
       return AccountType.CANCELLATION_OMGE;
     case CreditTransactionSubTypesEnum.VOLUNTARY_CANCELLATION:
       return AccountType.CANCELLATION_VOLUNTARY;
-    case CreditTransactionSubTypesEnum.CROSS_BORDER_TRANSACTIONS:
     default:
-      // Cross-border credits move to another Party's registry rather
-      // than a local cancellation bucket. Retain Holding so the local
-      // account-type filter doesn't misclassify it as a cancellation.
       return AccountType.HOLDING;
   }
 }

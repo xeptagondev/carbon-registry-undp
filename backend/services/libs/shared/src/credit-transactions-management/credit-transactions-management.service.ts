@@ -15,7 +15,15 @@ import { CreditTransactionsEntity } from "../entities/credit.transactions.entity
 import { CreditTransactionTypesEnum } from "../enum/credit.transaction.types.enum";
 import { CreditTransactionSubTypesEnum } from "../enum/credit.transaction.sub.types.enum";
 import { CreditTransactionStatusEnum } from "../enum/credit.transaction.status.enum";
-import { CreditTransactionData } from "../dto/credit.transaction.data.types";
+import {
+  CreditTransactionData,
+  ItmoAuthorizationData,
+  ResolvedRetireRequestFields,
+  RetirementUseData,
+} from "../dto/credit.transaction.data.types";
+import { AuthorizationPurpose } from "../enum/authorization.purpose.enum";
+import { CaAuthorizedEntity } from "../entities/ca.authorized.entity.entity";
+import { AuthorizedEntityStatus } from "../enum/authorized.entity.status.enum";
 import { CreditRetireRequestDto } from "../dto/credit.retire.request.dto";
 import { CounterService } from "../util/counter.service";
 import { CounterType } from "../util/counter.type.enum";
@@ -132,9 +140,12 @@ export class CreditTransactionsManagementService {
     private creditBlockOrgTransactionsViewEntityRepository: Repository<CreditBlockOrgTransactionsViewEntity>,
     private readonly aefReportManagementService: AefReportManagementService,
     // ITMO authorization requests must reference an Active cooperative
-    // approach.
+    // approach; ITMO retirements resolve their destination country /
+    // authorized entity from the same cooperative approach.
     @InjectRepository(CooperativeApproach)
     private cooperativeApproachRepo: Repository<CooperativeApproach>,
+    @InjectRepository(CaAuthorizedEntity)
+    private caAuthorizedEntityRepo: Repository<CaAuthorizedEntity>,
     private readonly serialNumberManagementService: SerialNumberManagementService
   ) {}
 
@@ -346,13 +357,23 @@ export class CreditTransactionsManagementService {
           HttpStatus.BAD_REQUEST
         );
       }
+
+      const { resolvedCountry, resolvedEntityName } =
+        await this.resolveRetirementUseFields(creditBlock, creditRetireRequestDto);
+
       const newRetireId = await this.counterService.incrementCount(
         CounterType.CREDIT_TRANSACTIONS,
         0
       );
+      const enrichedDto: CreditRetireRequestDto & ResolvedRetireRequestFields =
+        {
+          ...creditRetireRequestDto,
+          resolvedCountry,
+          resolvedEntityName,
+        };
       await this.programmeLedgerService.addRetireRequest(
         newRetireId,
-        creditRetireRequestDto,
+        enrichedDto,
         user
       );
 
@@ -382,6 +403,169 @@ export class CreditTransactionsManagementService {
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  /**
+   * Validates and resolves the MO/ITMO-specific fields of a retirement
+   * request before it is written to the ledger:
+   *  - MO blocks may never retire with subType USE_FOR_OIMP.
+   *  - ITMO blocks: USE_TOWARDS_NDC requires the block's ITMO
+   *    authorization purpose to be NDC; USE_FOR_OIMP requires purpose
+   *    OIMP or OTHER. VOLUNTARY_CANCELLATION / OMGE_CANCELLATION are
+   *    always allowed regardless of purpose, for both MO and ITMO.
+   *  - For an ITMO "use" retirement, resolves the destination country
+   *    from the block's ITMO-authorized cooperative approach (its
+   *    participating parties minus the host party) — a single
+   *    counterparty is stamped automatically, several require the
+   *    caller to name one. USE_FOR_OIMP additionally requires naming
+   *    one of the CA's Active authorized entities.
+   */
+  private async resolveRetirementUseFields(
+    creditBlock: CreditBlocksEntity,
+    dto: CreditRetireRequestDto
+  ): Promise<{ resolvedCountry?: string; resolvedEntityName?: string }> {
+    const isItmo = !!creditBlock.itmoAuthorizationRecord;
+    const subType = dto.subType;
+
+    if (!isItmo && subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.subTypeNotAllowedForMo",
+          [subType]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const isUseSubType =
+      subType === CreditTransactionSubTypesEnum.USE_TOWARDS_NDC ||
+      subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP;
+    if (!isItmo || !isUseSubType) {
+      // MO use-towards-NDC is domestic (no counterparty); voluntary and
+      // OMGE cancellations never cross the border either way.
+      return {};
+    }
+
+    const authRecord = await this.creditTransactionsEntityRepository.findOne({
+      where: { id: creditBlock.itmoAuthorizationRecord },
+    });
+    const authData = (authRecord?.data ?? {}) as ItmoAuthorizationData;
+    const purpose = authData.authorizationPurpose ?? AuthorizationPurpose.NDC;
+
+    if (
+      subType === CreditTransactionSubTypesEnum.USE_TOWARDS_NDC &&
+      purpose !== AuthorizationPurpose.NDC
+    ) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.subTypeNotAllowedForPurpose",
+          [subType, purpose]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    if (
+      subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP &&
+      purpose === AuthorizationPurpose.NDC
+    ) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.subTypeNotAllowedForPurpose",
+          [subType, purpose]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    if (!authData.cooperativeApproachId) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.itmoAuthCaNotFound",
+          [""]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    const ca = await this.cooperativeApproachRepo.findOne({
+      where: { cooperativeApproachId: authData.cooperativeApproachId },
+    });
+    if (!ca) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.itmoAuthCaNotFound",
+          [authData.cooperativeApproachId]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const counterparties = (ca.participatingParties || []).filter(
+      (p) => p !== ca.hostParty
+    );
+    let resolvedCountry: string;
+    if (counterparties.length === 0) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.retireCaHasNoCounterparty",
+          [ca.cooperativeApproachId]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    } else if (counterparties.length === 1) {
+      resolvedCountry = counterparties[0];
+    } else {
+      if (!dto.country) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.retireCountryRequired",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      if (!counterparties.includes(dto.country)) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.retireCountryInvalid",
+            [dto.country]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      resolvedCountry = dto.country;
+    }
+
+    let resolvedEntityName: string | undefined;
+    if (subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP) {
+      if (!dto.authorizedEntityId) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.authorizedEntityRequired",
+            []
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      const entity = await this.caAuthorizedEntityRepo.findOne({
+        where: {
+          id: dto.authorizedEntityId,
+          cooperativeApproachId: ca.cooperativeApproachId,
+          status: AuthorizedEntityStatus.ACTIVE,
+        },
+      });
+      if (!entity) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.authorizedEntityInvalid",
+            [dto.authorizedEntityId]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      resolvedEntityName = entity.entityName;
+    }
+
+    return { resolvedCountry, resolvedEntityName };
   }
 
   public async creditRetirementAction(
@@ -810,7 +994,8 @@ export class CreditTransactionsManagementService {
         creditBlock.transactionRecords[
           creditBlock.transactionRecords.length - 1
         ];
-      const txData: CreditRetireRequestDto = creditBlock.txData;
+      const txData: CreditRetireRequestDto & ResolvedRetireRequestFields =
+        creditBlock.txData;
       const newTranferRecord = plainToClass(CreditTransactionsEntity, {
         id: newRetireReq.id,
         senderId: creditBlock.ownerCompanyId,
@@ -834,10 +1019,25 @@ export class CreditTransactionsManagementService {
         creditBlock.transactionRecords[transactionRecordIndex];
       let updatedTranferRecord: CreditTransactionsEntity;
       if (retireRequestRecord.status == CreditTransactionStatusEnum.COMPLETED) {
+        // First transfer occurs at the moment ITMO credits leave the
+        // country — i.e. approval of an ITMO block's Use-Towards-NDC
+        // or Use-For-OIMP retirement. MO blocks and voluntary/OMGE
+        // cancellations never cross the border.
+        const retireTransaction =
+          await this.creditTransactionsEntityRepository.findOne({
+            where: { id: txData.transactionId },
+          });
+        const isFirstTransfer =
+          !!creditBlock.itmoAuthorizationRecord &&
+          (retireTransaction?.subType ===
+            CreditTransactionSubTypesEnum.USE_TOWARDS_NDC ||
+            retireTransaction?.subType ===
+              CreditTransactionSubTypesEnum.USE_FOR_OIMP);
         updatedTranferRecord = plainToClass(CreditTransactionsEntity, {
           status: retireRequestRecord.status,
           creditBlockId: creditBlock.creditBlockId,
           serialNumber: creditBlock.serialNumber,
+          isFirstTransfer,
         });
       } else {
         updatedTranferRecord = plainToClass(CreditTransactionsEntity, {
@@ -904,18 +1104,27 @@ export class CreditTransactionsManagementService {
   }
 
   // Type+subType-specific payload for a RETIRED transaction record; see
-  // credit.transaction.data.types.ts.
+  // credit.transaction.data.types.ts. country/authorizedEntityId/
+  // entityName are only ever populated for ITMO Use-Towards-NDC /
+  // Use-For-OIMP retirements, resolved server-side in
+  // resolveRetirementUseFields and merged onto txData before it was
+  // persisted to the ledger.
   private buildRetirementData(
-    txData: CreditRetireRequestDto
+    txData: CreditRetireRequestDto & ResolvedRetireRequestFields
   ): CreditTransactionData {
     if (
-      txData.subType === CreditTransactionSubTypesEnum.CROSS_BORDER_TRANSACTIONS
+      txData.subType === CreditTransactionSubTypesEnum.USE_TOWARDS_NDC ||
+      txData.subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP
     ) {
-      return {
-        country: txData.country,
-        organizationName: txData.organizationName,
-        remarks: txData.remarks,
-      };
+      const data: RetirementUseData = { remarks: txData.remarks };
+      if (txData.resolvedCountry) {
+        data.country = txData.resolvedCountry;
+      }
+      if (txData.resolvedEntityName) {
+        data.authorizedEntityId = txData.authorizedEntityId;
+        data.entityName = txData.resolvedEntityName;
+      }
+      return data;
     }
     return { remarks: txData.remarks };
   }
