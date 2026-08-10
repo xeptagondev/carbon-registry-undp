@@ -30,6 +30,7 @@ import { CounterType } from "../util/counter.type.enum";
 import { CreditRetireActionDto } from "../dto/credit.retire.action.dto";
 import { CreditItmoAuthRequestDto } from "../dto/credit.itmo.auth.request.dto";
 import { CreditItmoAuthActionDto } from "../dto/credit.itmo.auth.action.dto";
+import { CreditBlockItmoAuthorizationsViewEntity } from "../view-entities/credit.block.itmo.authorizations.view.entity";
 import { RetirementACtionEnum } from "../enum/retirement.action.enum";
 import { QueryDto } from "../dto/query.dto";
 import { DataListResponseDto } from "../dto/data.list.response";
@@ -125,6 +126,8 @@ export class CreditTransactionsManagementService {
     private creditBlockTransfersViewEntityRepository: Repository<CreditBlockTransfersViewEntity>,
     @InjectRepository(CreditBlockRetirementsViewEntity)
     private creditBlockRetirementsViewEntityRepository: Repository<CreditBlockRetirementsViewEntity>,
+    @InjectRepository(CreditBlockItmoAuthorizationsViewEntity)
+    private creditBlockItmoAuthorizationsViewEntityRepository: Repository<CreditBlockItmoAuthorizationsViewEntity>,
     @InjectRepository(CreditBlockExplorerViewEntity)
     private creditBlockExplorerViewEntityRepository: Repository<CreditBlockExplorerViewEntity>,
     @InjectRepository(CreditBlockIssuancesViewEntity)
@@ -357,7 +360,7 @@ export class CreditTransactionsManagementService {
         );
       }
 
-      const { resolvedCountry, resolvedEntityName } =
+      const { resolvedCountry, resolvedEntityName, resolvedCooperativeApproachId } =
         await this.resolveRetirementUseFields(creditBlock, creditRetireRequestDto);
 
       const newRetireId = await this.counterService.incrementCount(
@@ -369,6 +372,7 @@ export class CreditTransactionsManagementService {
           ...creditRetireRequestDto,
           resolvedCountry,
           resolvedEntityName,
+          resolvedCooperativeApproachId,
         };
       await this.programmeLedgerService.addRetireRequest(
         newRetireId,
@@ -422,7 +426,11 @@ export class CreditTransactionsManagementService {
   private async resolveRetirementUseFields(
     creditBlock: CreditBlocksEntity,
     dto: CreditRetireRequestDto
-  ): Promise<{ resolvedCountry?: string; resolvedEntityName?: string }> {
+  ): Promise<{
+    resolvedCountry?: string;
+    resolvedEntityName?: string;
+    resolvedCooperativeApproachId?: string;
+  }> {
     const isItmo = !!creditBlock.itmoAuthorizationRecord;
     const subType = dto.subType;
 
@@ -564,7 +572,11 @@ export class CreditTransactionsManagementService {
       resolvedEntityName = entity.entityName;
     }
 
-    return { resolvedCountry, resolvedEntityName };
+    return {
+      resolvedCountry,
+      resolvedEntityName,
+      resolvedCooperativeApproachId: ca.cooperativeApproachId,
+    };
   }
 
   public async creditRetirementAction(
@@ -1145,6 +1157,9 @@ export class CreditTransactionsManagementService {
         data.authorizedEntityId = txData.authorizedEntityId;
         data.entityName = txData.resolvedEntityName;
       }
+      if (txData.resolvedCooperativeApproachId) {
+        data.cooperativeApproachId = txData.resolvedCooperativeApproachId;
+      }
       return data;
     }
     return { remarks: txData.remarks };
@@ -1441,6 +1456,52 @@ export class CreditTransactionsManagementService {
       );
     }
     const resp = await this.creditBlockRetirementsViewEntityRepository
+      .createQueryBuilder("creditTx")
+      .where(this.helperService.generateWhereSQL(query, abilityCondition))
+      .orderBy(
+        query?.sort?.key && query.sort.key == "status"
+          ? `"${query.sort.key}"::text`
+          : `"${query.sort.key}"`,
+        query?.sort?.order,
+        query?.sort?.nullFirst !== undefined
+          ? query?.sort?.nullFirst === true
+            ? "NULLS FIRST"
+            : "NULLS LAST"
+          : undefined
+      )
+      .skip(query.size * query.page - query.size)
+      .take(query.size)
+      .getManyAndCount();
+    return new DataListResponseDto(
+      resp.length > 0 ? resp[0] : undefined,
+      resp.length > 1 ? resp[1] : undefined
+    );
+  }
+
+  public async queryItmoAuthorizations(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
+      const onlyOwn: FilterEntry = {
+        key: "senderId",
+        value: user.companyId,
+        operation: "=",
+      };
+      query.filterAnd
+        ? query.filterAnd.push(onlyOwn)
+        : (query.filterAnd = [onlyOwn]);
+    } else if (user.companyRole == CompanyRole.INDEPENDENT_CERTIFIER) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.unauthorized",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    const resp = await this.creditBlockItmoAuthorizationsViewEntityRepository
       .createQueryBuilder("creditTx")
       .where(this.helperService.generateWhereSQL(query, abilityCondition))
       .orderBy(

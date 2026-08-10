@@ -10,10 +10,14 @@ import { AuthorizationPurpose } from "../enum/authorization.purpose.enum";
 // names the authorized entity the credits are used for. `country` is
 // resolved server-side from the block's cooperative approach — supplied
 // by the requester only when the CA has more than one counterparty.
+// `cooperativeApproachId` is denormalized from the block's ITMO
+// authorization record so CA-scoped queries (e.g. corresponding
+// adjustment calculations) don't need to join back through the block.
 export interface RetirementUseData {
   country?: string;
   authorizedEntityId?: string;
   entityName?: string;
+  cooperativeApproachId?: string;
   remarks?: string;
 }
 
@@ -48,4 +52,5 @@ export type CreditTransactionData =
 export interface ResolvedRetireRequestFields {
   resolvedCountry?: string;
   resolvedEntityName?: string;
+  resolvedCooperativeApproachId?: string;
 }

@@ -12,6 +12,7 @@ import { CaAuthorizedEntity } from "../entities/ca.authorized.entity.entity";
 import { CreditBlockBalancesViewEntity } from "../view-entities/credit.block.balances.view.entity";
 import { CreditBlockTransfersViewEntity } from "../view-entities/credit.block.transfers.view.entity";
 import { CreditBlockRetirementsViewEntity } from "../view-entities/credit.block.retirements.view.entity";
+import { CreditBlockItmoAuthorizationsViewEntity } from "../view-entities/credit.block.itmo.authorizations.view.entity";
 import { CreditBlockExplorerViewEntity } from "../view-entities/credit.block.explorer.view.entity";
 import { CreditBlockIssuancesViewEntity } from "../view-entities/credit.block.issuances.view.entity";
 import { CreditBlockOrgBalancesViewEntity } from "../view-entities/credit.block.org.balances.view.entity";
@@ -37,6 +38,7 @@ import { SerialNumberManagementModule } from "../serial-number-management/serial
       CreditBlockBalancesViewEntity,
       CreditBlockTransfersViewEntity,
       CreditBlockRetirementsViewEntity,
+      CreditBlockItmoAuthorizationsViewEntity,
       CreditBlockExplorerViewEntity,
       CreditBlockIssuancesViewEntity,
       CreditBlockOrgBalancesViewEntity,

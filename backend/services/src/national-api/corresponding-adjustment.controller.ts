@@ -15,6 +15,7 @@ import { PoliciesGuardEx } from "@app/shared/casl/policy.guard";
 import { CorrespondingAdjustmentService } from "@app/shared/corresponding-adjustment/corresponding-adjustment.service";
 import { CorrespondingAdjustment } from "@app/shared/entities/corresponding.adjustment.entity";
 import { CaCalculateDto } from "@app/shared/dto/ca.calculate.dto";
+import { CorrespondingAdjustmentUpdateDto } from "@app/shared/dto/corresponding.adjustment.update.dto";
 import { QueryDto } from "@app/shared/dto/query.dto";
 
 @ApiTags("Corresponding Adjustment")
@@ -37,9 +38,18 @@ export class CorrespondingAdjustmentController {
       dto.cooperativeApproachId,
       dto.ndcType,
       dto.caMethod,
-      dto.ndcTarget,
       req.user
     );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Update, CorrespondingAdjustment)
+  )
+  @Put("update")
+  update(@Body() dto: CorrespondingAdjustmentUpdateDto, @Request() req) {
+    return this.caService.update(dto, req.user);
   }
 
   @ApiBearerAuth()
@@ -50,6 +60,16 @@ export class CorrespondingAdjustmentController {
   @Post("query")
   query(@Body() query: QueryDto, @Request() req) {
     return this.caService.query(query, req.abilityCondition);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Read, CorrespondingAdjustment)
+  )
+  @Get("reconciliation")
+  getReconciliation() {
+    return this.caService.getReconciliationSummary();
   }
 
   @ApiBearerAuth()
@@ -70,5 +90,15 @@ export class CorrespondingAdjustmentController {
   @Put("submit")
   submit(@Query("id") caId: string, @Request() req) {
     return this.caService.submit(caId, req.user);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Update, CorrespondingAdjustment)
+  )
+  @Put("approve")
+  approve(@Query("id") caId: string, @Request() req) {
+    return this.caService.approve(caId, req.user);
   }
 }
