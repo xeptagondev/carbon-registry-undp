@@ -411,17 +411,23 @@ export class CreditTransactionsManagementService {
   /**
    * Validates and resolves the MO/ITMO-specific fields of a retirement
    * request before it is written to the ledger:
-   *  - MO blocks may never retire with subType USE_FOR_OIMP.
-   *  - ITMO blocks: USE_TOWARDS_NDC requires the block's ITMO
-   *    authorization purpose to be NDC; USE_FOR_OIMP requires purpose
-   *    OIMP or OTHER. VOLUNTARY_CANCELLATION / OMGE_CANCELLATION are
-   *    always allowed regardless of purpose, for both MO and ITMO.
-   *  - For an ITMO "use" retirement, resolves the destination country
-   *    from the block's ITMO-authorized cooperative approach (its
-   *    participating parties minus the host party) — a single
+   *  - MO blocks may never retire with subType
+   *    FIRST_TRANSFER_TOWARDS_NDC or FIRST_TRANSFER_FOR_OIMP — those
+   *    are inherently international, and require the block to be
+   *    ITMO-authorized first.
+   *  - ITMO blocks may never retire with subType USE_TOWARDS_NDC —
+   *    that subType is domestic-only; an ITMO retires for one of the
+   *    two FIRST_TRANSFER_* subtypes instead, gated by the block's
+   *    ITMO authorization purpose: FIRST_TRANSFER_TOWARDS_NDC requires
+   *    purpose NDC; FIRST_TRANSFER_FOR_OIMP requires purpose OIMP or
+   *    OTHER. VOLUNTARY_CANCELLATION / OMGE_CANCELLATION are always
+   *    allowed regardless of purpose, for both MO and ITMO.
+   *  - For an ITMO first-transfer retirement, resolves the destination
+   *    country from the block's ITMO-authorized cooperative approach
+   *    (its participating parties minus the host party) — a single
    *    counterparty is stamped automatically, several require the
-   *    caller to name one. USE_FOR_OIMP additionally requires naming
-   *    one of the CA's Active authorized entities.
+   *    caller to name one. FIRST_TRANSFER_FOR_OIMP additionally
+   *    requires naming one of the CA's Active authorized entities.
    */
   private async resolveRetirementUseFields(
     creditBlock: CreditBlocksEntity,
@@ -434,7 +440,11 @@ export class CreditTransactionsManagementService {
     const isItmo = !!creditBlock.itmoAuthorizationRecord;
     const subType = dto.subType;
 
-    if (!isItmo && subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP) {
+    const isFirstTransferSubType =
+      subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC ||
+      subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP;
+
+    if (!isItmo && isFirstTransferSubType) {
       throw new HttpException(
         this.helperService.formatReqMessagesString(
           "creditTransaction.subTypeNotAllowedForMo",
@@ -444,10 +454,17 @@ export class CreditTransactionsManagementService {
       );
     }
 
-    const isUseSubType =
-      subType === CreditTransactionSubTypesEnum.USE_TOWARDS_NDC ||
-      subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP;
-    if (!isItmo || !isUseSubType) {
+    if (isItmo && subType === CreditTransactionSubTypesEnum.USE_TOWARDS_NDC) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "creditTransaction.subTypeNotAllowedForItmo",
+          [subType]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    if (!isItmo || !isFirstTransferSubType) {
       // MO use-towards-NDC is domestic (no counterparty); voluntary and
       // OMGE cancellations never cross the border either way.
       return {};
@@ -460,7 +477,7 @@ export class CreditTransactionsManagementService {
     const purpose = authData.authorizationPurpose ?? AuthorizationPurpose.NDC;
 
     if (
-      subType === CreditTransactionSubTypesEnum.USE_TOWARDS_NDC &&
+      subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC &&
       purpose !== AuthorizationPurpose.NDC
     ) {
       throw new HttpException(
@@ -472,7 +489,7 @@ export class CreditTransactionsManagementService {
       );
     }
     if (
-      subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP &&
+      subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP &&
       purpose === AuthorizationPurpose.NDC
     ) {
       throw new HttpException(
@@ -543,7 +560,7 @@ export class CreditTransactionsManagementService {
     }
 
     let resolvedEntityName: string | undefined;
-    if (subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP) {
+    if (subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP) {
       if (!dto.authorizedEntityId) {
         throw new HttpException(
           this.helperService.formatReqMessagesString(
@@ -1053,9 +1070,10 @@ export class CreditTransactionsManagementService {
       let updatedTranferRecord: CreditTransactionsEntity;
       if (retireRequestRecord.status == CreditTransactionStatusEnum.COMPLETED) {
         // First transfer occurs at the moment ITMO credits leave the
-        // country — i.e. approval of an ITMO block's Use-Towards-NDC
-        // or Use-For-OIMP retirement. MO blocks and voluntary/OMGE
-        // cancellations never cross the border.
+        // country — i.e. approval of an ITMO block's
+        // First-Transfer-Towards-NDC or First-Transfer-For-OIMP
+        // retirement. MO blocks (incl. domestic Use-Towards-NDC) and
+        // voluntary/OMGE cancellations never cross the border.
         const retireTransaction =
           await this.creditTransactionsEntityRepository.findOne({
             where: { id: txData.transactionId },
@@ -1063,9 +1081,9 @@ export class CreditTransactionsManagementService {
         const isFirstTransfer =
           !!creditBlock.itmoAuthorizationRecord &&
           (retireTransaction?.subType ===
-            CreditTransactionSubTypesEnum.USE_TOWARDS_NDC ||
+            CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC ||
             retireTransaction?.subType ===
-              CreditTransactionSubTypesEnum.USE_FOR_OIMP);
+              CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP);
         updatedTranferRecord = plainToClass(CreditTransactionsEntity, {
           status: retireRequestRecord.status,
           creditBlockId: creditBlock.creditBlockId,
@@ -1138,16 +1156,17 @@ export class CreditTransactionsManagementService {
 
   // Type+subType-specific payload for a RETIRED transaction record; see
   // credit.transaction.data.types.ts. country/authorizedEntityId/
-  // entityName are only ever populated for ITMO Use-Towards-NDC /
-  // Use-For-OIMP retirements, resolved server-side in
-  // resolveRetirementUseFields and merged onto txData before it was
-  // persisted to the ledger.
+  // entityName are only ever populated for ITMO
+  // First-Transfer-Towards-NDC / First-Transfer-For-OIMP retirements,
+  // resolved server-side in resolveRetirementUseFields and merged onto
+  // txData before it was persisted to the ledger.
   private buildRetirementData(
     txData: CreditRetireRequestDto & ResolvedRetireRequestFields
   ): CreditTransactionData {
     if (
-      txData.subType === CreditTransactionSubTypesEnum.USE_TOWARDS_NDC ||
-      txData.subType === CreditTransactionSubTypesEnum.USE_FOR_OIMP
+      txData.subType ===
+        CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC ||
+      txData.subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP
     ) {
       const data: RetirementUseData = { remarks: txData.remarks };
       if (txData.resolvedCountry) {

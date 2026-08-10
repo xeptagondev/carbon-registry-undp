@@ -31,19 +31,20 @@ export class CreditRetireRequestDto {
   @IsNotEmpty()
   subType: CreditTransactionSubTypesEnum;
 
-  // Destination counterparty country for an ITMO "use" retirement
-  // (USE_TOWARDS_NDC / USE_FOR_OIMP). Only required when the block's
-  // cooperative approach has more than one counterparty party — the
-  // service resolves and validates it; a single-counterparty CA is
-  // stamped automatically. Ignored for MO blocks / other subtypes.
+  // Destination counterparty country for an ITMO first-transfer
+  // retirement (FIRST_TRANSFER_TOWARDS_NDC / FIRST_TRANSFER_FOR_OIMP).
+  // Only required when the block's cooperative approach has more than
+  // one counterparty party — the service resolves and validates it; a
+  // single-counterparty CA is stamped automatically. Ignored for MO
+  // blocks / other subtypes.
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   country?: string;
 
   // Authorized entity the ITMOs are used for — required for
-  // USE_FOR_OIMP, validated against the block's cooperative approach's
-  // Active authorized entities in the service.
+  // FIRST_TRANSFER_FOR_OIMP, validated against the block's cooperative
+  // approach's Active authorized entities in the service.
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

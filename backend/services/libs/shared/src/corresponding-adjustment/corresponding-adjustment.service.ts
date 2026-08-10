@@ -440,7 +440,7 @@ export class CorrespondingAdjustmentService {
           if (tx.isFirstTransfer) {
             firstTransferredItmos += Number(tx.amount);
           }
-          if (tx.subType === CreditTransactionSubTypesEnum.USE_TOWARDS_NDC) {
+          if (tx.subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC) {
             usedTowardsNdcItmos += Number(tx.amount);
           } else if (
             tx.subType === CreditTransactionSubTypesEnum.VOLUNTARY_CANCELLATION ||

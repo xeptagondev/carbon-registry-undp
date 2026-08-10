@@ -22,12 +22,13 @@
   "itmoAuthRequestNotExists": "The specified ITMO authorization request does not exist.",
   "itmoAuthRequestNotPending": "The ITMO authorization request is not in pending state.",
   "notOwnItmoAuthRequest": "You can only cancel your own organisation's ITMO authorization requests.",
-  "subTypeNotAllowedForMo": "{} is not available for a mitigation outcome (MO) block — only ITMO-authorized blocks can be used for OIMP.",
+  "subTypeNotAllowedForMo": "{} is not available for a mitigation outcome (MO) block — only ITMO-authorized blocks can perform a first transfer.",
+  "subTypeNotAllowedForItmo": "{} is not available for an ITMO-authorized block — domestic Use Towards NDC only applies to mitigation outcome (MO) blocks. Retire this block as a first transfer instead.",
   "subTypeNotAllowedForPurpose": "{} is not available for this block — its ITMO authorization purpose ({}) does not permit it.",
   "retireCaHasNoCounterparty": "Cooperative approach {} has no counterparty party to retire ITMOs towards.",
   "retireCountryRequired": "This cooperative approach has more than one counterparty — specify the destination country.",
   "retireCountryInvalid": "{} is not a counterparty party of this block's cooperative approach.",
-  "authorizedEntityRequired": "Retiring ITMOs for OIMP requires selecting an authorized entity.",
+  "authorizedEntityRequired": "A first transfer for OIMP requires selecting an authorized entity.",
   "authorizedEntityInvalid": "{} is not an Active authorized entity of this block's cooperative approach.",
   "unauthorized": "You are not authorized to perform this action."
 }

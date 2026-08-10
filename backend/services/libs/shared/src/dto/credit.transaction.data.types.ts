@@ -4,15 +4,16 @@ import { AuthorizationPurpose } from "../enum/authorization.purpose.enum";
 // transaction's type + subType. Type-specific fields live here instead
 // of dedicated nullable columns.
 
-// RETIRED + USE_TOWARDS_NDC / USE_FOR_OIMP (ITMO blocks only): the
-// credits cross the country boundary into the ITMO-authorized
-// cooperative approach's counterparty country. USE_FOR_OIMP additionally
-// names the authorized entity the credits are used for. `country` is
-// resolved server-side from the block's cooperative approach — supplied
-// by the requester only when the CA has more than one counterparty.
-// `cooperativeApproachId` is denormalized from the block's ITMO
-// authorization record so CA-scoped queries (e.g. corresponding
-// adjustment calculations) don't need to join back through the block.
+// RETIRED + FIRST_TRANSFER_TOWARDS_NDC / FIRST_TRANSFER_FOR_OIMP (ITMO
+// blocks only): the credits cross the country boundary into the
+// ITMO-authorized cooperative approach's counterparty country.
+// FIRST_TRANSFER_FOR_OIMP additionally names the authorized entity the
+// credits are used for. `country` is resolved server-side from the
+// block's cooperative approach — supplied by the requester only when
+// the CA has more than one counterparty. `cooperativeApproachId` is
+// denormalized from the block's ITMO authorization record so CA-scoped
+// queries (e.g. corresponding adjustment calculations) don't need to
+// join back through the block.
 export interface RetirementUseData {
   country?: string;
   authorizedEntityId?: string;

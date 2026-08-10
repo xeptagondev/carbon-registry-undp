@@ -47,15 +47,18 @@ import { CreditTransactionSubTypesEnum } from "../enum/credit.transaction.sub.ty
 
 /**
  * Map a retirement subType to the account bucket the retired credits
- * land in.
+ * land in. Domestic Use-Towards-NDC (MO) and First-Transfer-Towards-NDC
+ * (ITMO) both land in the same NDC bucket — the account type tracks
+ * what the credit was used for, not whether it crossed a border.
  */
 function mapSubTypeToAccountType(
   subType: CreditTransactionSubTypesEnum
 ): AccountType {
   switch (subType) {
     case CreditTransactionSubTypesEnum.USE_TOWARDS_NDC:
+    case CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC:
       return AccountType.RETIREMENT_NDC;
-    case CreditTransactionSubTypesEnum.USE_FOR_OIMP:
+    case CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP:
       return AccountType.RETIREMENT_OIMP;
     case CreditTransactionSubTypesEnum.OMGE_CANCELLATION:
       return AccountType.CANCELLATION_OMGE;
