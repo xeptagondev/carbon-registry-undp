@@ -26,33 +26,32 @@
       color: colors.$title-sub;
     }
 
-    .report-type-selector {
-      width: 100%;
+  }
 
-      .ant-select-selector {
-        padding: 10px;
+  /*
+   * Sits between the Submission card and the four tables it controls, so it is
+   * a sibling of the cards rather than part of the page header.
+   */
+  .report-type-checkboxes {
+    align-items: center;
+    background-color: white;
+    border-radius: 10px;
+    column-gap: 24px;
+    margin: 15px 0;
+    padding: 14px 20px;
+    row-gap: 8px;
 
-        .ant-select-selection-item {
-          background-color: color.scale(
-            $color: variables.$primary-color,
-            $lightness: 85%
-          );
+    .ant-checkbox-wrapper {
+      color: colors.$title-sub;
+      font-size: 0.9rem;
+      margin-inline-start: 0;
+    }
 
-          color: color.scale($color: variables.$primary-color, $lightness: 10%);
-
-          padding: 0px 16px;
-
-          border-radius: 6px;
-
-          border-width: 0px;
-
-          margin: 0px 6px;
-
-          .anticon {
-            color: color.scale(variables.$primary-color, $lightness: 10%);
-          }
-        }
-      }
+    .ant-checkbox-group {
+      column-gap: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      row-gap: 8px;
     }
   }
 }
@@ -128,6 +127,31 @@
   }
 }
 
+
+/* CARP fills these in; greyed so "blank" reads as expected rather than missing. */
+.carp-populated {
+  color: #8c8c8c;
+  font-style: italic;
+}
+
+.submit-modal-summary {
+  margin-bottom: 16px;
+}
+
+.submit-modal-alert {
+  margin-bottom: 16px;
+}
+
+.submit-modal-form {
+  margin-bottom: 8px;
+}
+
+.report-card {
+  .provisional-tag {
+    margin-left: 12px;
+    vertical-align: middle;
+  }
+}
 
 .no-reports {
   background-color: white;
