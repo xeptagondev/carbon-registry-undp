@@ -154,15 +154,16 @@ const getSerialColumns = (
   t: (key: string) => string,
   openActions?: (row: CreditSerialBalance) => ReactNode,
 ): ColumnsType<CreditSerialBalance> => [
-  { title: 'Serial Number', dataIndex: 'serialNumber', key: 'serialNumber', align: 'left', width: 280, sorter: (a, b) => a.serialNumber.localeCompare(b.serialNumber), render: (value) => <span className="credit-balance-serial-number">{value}</span> },
-  { title: 'Organization', key: 'organization', align: 'left', sorter: (a, b) => a.organization.localeCompare(b.organization), render: (_, row) => <OrganizationCell name={row.organization} color={row.organizationColor} logo={row.organizationLogo} /> },
-  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', width: 180, sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt), render: (value) => <span className="credit-balance-detail-date">{value}</span> },
-  { title: 'Balance', dataIndex: 'balance', key: 'balance', align: 'right', sorter: (a, b) => a.balance - b.balance, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
-  { title: 'Reserved', dataIndex: 'reserved', key: 'reserved', align: 'right', sorter: (a, b) => a.reserved - b.reserved, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  { title: 'Serial Number', dataIndex: 'serialNumber', key: 'serialNumber', align: 'left', width: openActions ? '21%' : '22%', sorter: (a, b) => a.serialNumber.localeCompare(b.serialNumber), render: (value) => <span className="credit-balance-serial-number">{value}</span> },
+  { title: 'Credit Owner', key: 'organization', align: 'left', width: openActions ? '15%' : '16%', sorter: (a, b) => a.organization.localeCompare(b.organization), render: (_, row) => <OrganizationCell name={row.organization} color={row.organizationColor} logo={row.organizationLogo} /> },
+  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'center', width: openActions ? '15%' : '16%', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt), render: (value) => <span className="credit-balance-detail-date">{value}</span> },
+  { title: 'Balance', dataIndex: 'balance', key: 'balance', align: 'right', width: openActions ? '10%' : '11%', sorter: (a, b) => a.balance - b.balance, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  { title: 'Reserved', dataIndex: 'reserved', key: 'reserved', align: 'right', width: openActions ? '10%' : '11%', sorter: (a, b) => a.reserved - b.reserved, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
   {
     title: t('creditType'),
     key: 'creditType',
     align: 'center',
+    width: openActions ? '10%' : '11%',
     sorter: (a, b) => Number(!!a.itmoAuthorizationRecord) - Number(!!b.itmoAuthorizationRecord),
     render: (_, row) => (
       <CreditTypePill
@@ -177,6 +178,7 @@ const getSerialColumns = (
     dataIndex: 'type',
     key: 'type',
     align: 'center',
+    width: openActions ? '15%' : '13%',
     sorter: (a, b) => a.type.localeCompare(b.type),
     render: (value: IssuedOrReceivedOptions) => (
       <Tag color={value === IssuedOrReceivedOptions.RECEIVED ? 'success' : 'processing'}>
@@ -188,7 +190,7 @@ const getSerialColumns = (
     title: '',
     key: 'action',
     align: 'center' as const,
-    width: 90,
+    width: '4%',
     render: (_value: unknown, row: CreditSerialBalance) => openActions(row),
   }] : []),
 ];
@@ -349,9 +351,7 @@ const CreditBalanceSerialTable = ({
         pagination={false}
         tableLayout="fixed"
         loading={loading && rows.length === 0}
-        scroll={openActions
-          ? { x: 1080, y: SERIAL_BODY_HEIGHT }
-          : { x: 1030, y: SERIAL_BODY_HEIGHT }}
+        scroll={{ y: SERIAL_BODY_HEIGHT }}
       />
       {loading && rows.length > 0 && (
         <div className="credit-balance-serial-loading" aria-label="Loading more credit balances">
@@ -381,11 +381,11 @@ const columns: ColumnsType<ProjectBalance> = [
     ),
   },
   { title: 'Project Owner', key: 'owner', align: 'left', sorter: (a, b) => a.owner.localeCompare(b.owner), render: (_, row) => <OrganizationCell name={row.owner} color={row.ownerColor} logo={row.ownerLogo} /> },
-  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'left', sorter: (a, b) => a.moBalance - b.moBalance, render: formatCredits },
-  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'left', sorter: (a, b) => a.moReserved - b.moReserved, render: formatCredits },
-  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'left', sorter: (a, b) => a.itmoBalance - b.itmoBalance, render: formatCredits },
-  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReserved', align: 'left', sorter: (a, b) => a.itmoReserved - b.itmoReserved, render: formatCredits },
-  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
+  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'right', sorter: (a, b) => a.moBalance - b.moBalance, render: formatCredits },
+  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'right', sorter: (a, b) => a.moReserved - b.moReserved, render: formatCredits },
+  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'right', sorter: (a, b) => a.itmoBalance - b.itmoBalance, render: formatCredits },
+  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReserved', align: 'right', sorter: (a, b) => a.itmoReserved - b.itmoReserved, render: formatCredits },
+  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'center', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
 ];
 
 export const CreditBalanceByProjectTable = ({
@@ -735,7 +735,6 @@ export const CreditBalanceByProjectTable = ({
         columns={columns}
         loading={loading}
         tableLayout="fixed"
-        scroll={{ x: 1250 }}
         onChange={(_pagination, _filters, _sorter, extra) => {
           if (extra.action === 'sort' && expandedProjectId) {
             toggleExpandedProject(expandedProjectId, true);

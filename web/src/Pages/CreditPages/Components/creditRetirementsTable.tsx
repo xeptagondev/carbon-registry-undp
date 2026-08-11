@@ -331,7 +331,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
       title: t(CrediRetirementsColumns.DATE),
       key: "createdDate",
       sorter: true,
-      align: "left" as const,
+      align: "center" as const,
       render: (item: CreditRetirementInterface) => {
         return (
           <span>
@@ -345,13 +345,9 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.CREDITS),
       key: CrediRetirementsColumns.CREDITS,
-      align: "left" as const,
+      align: "right" as const,
       render: (item: CreditRetirementInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(item?.creditAmount))}
-          </span>
-        );
+        return <span>{addCommSep(String(item?.creditAmount))}</span>;
       },
     },
     {
