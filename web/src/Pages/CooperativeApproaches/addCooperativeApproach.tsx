@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
+import { useCountryOptions } from "../../Components/Common/hooks/useCountryOptions";
+import { API_PATHS } from "../../Config/apiConfig";
 import {
   Button,
   Col,
@@ -10,23 +12,73 @@ import {
   Input,
   Row,
   Select,
+  Tag,
   message,
 } from "antd";
 import "./cooperativeApproaches.scss";
 
 const { TextArea } = Input;
-const { Option } = Select;
 
 const AddCooperativeApproach = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation(["common"]);
-  const { post, put } = useConnection();
+  const { get, post, put } = useConnection();
+  const { options: countryOptions } = useCountryOptions();
   const [loading, setLoading] = useState(false);
+  const [hostParty, setHostParty] = useState<{
+    alpha2: string;
+    name: string;
+  } | null>(null);
   const [form] = Form.useForm();
 
   const existingRecord = (location.state as any)?.record;
   const isEdit = !!existingRecord;
+
+  // Host party is derived server-side from the registry's own country
+  // (systemCountry) — it isn't user-editable. Fetched for display, and
+  // (in create mode) to pre-select/lock it in Participating Parties.
+  useEffect(() => {
+    const loadHostParty = async () => {
+      const response = await get(API_PATHS.CA_HOST_PARTY);
+      const host = response?.data;
+      if (!host) return;
+      setHostParty(host);
+      if (!isEdit) {
+        form.setFieldValue("participatingParties", [host.alpha2]);
+      }
+    };
+    loadHostParty();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // The host party can never be removed from Participating Parties.
+  const handlePartiesChange = (values: string[]) => {
+    const next =
+      hostParty && !values.includes(hostParty.alpha2)
+        ? [...values, hostParty.alpha2]
+        : values;
+    form.setFieldValue("participatingParties", next);
+  };
+
+  const partiesTagRender = (props: {
+    label: ReactNode;
+    value: string;
+    closable: boolean;
+    onClose: () => void;
+  }) => {
+    const { label, value, closable, onClose } = props;
+    const isHost = hostParty?.alpha2 === value;
+    return (
+      <Tag
+        closable={!isHost && closable}
+        onClose={onClose}
+        style={{ marginRight: 3 }}
+      >
+        {label}
+      </Tag>
+    );
+  };
 
   const onFinish = async (values: any) => {
     setLoading(true);
@@ -87,7 +139,7 @@ const AddCooperativeApproach = () => {
                   startDate: undefined,
                   endDate: undefined,
                 }
-              : { hostParty: import.meta.env.VITE_APP_COUNTRY_CODE || "" }
+              : undefined
           }
         >
           <Row gutter={24}>
@@ -106,17 +158,15 @@ const AddCooperativeApproach = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                name="hostParty"
-                label="Host Party (Country Code)"
-                rules={[
-                  {
-                    required: true,
-                    message: "Host party is required",
-                  },
-                ]}
-              >
-                <Input placeholder="e.g. GH" />
+              <Form.Item label="Host Party">
+                <Input
+                  disabled
+                  value={
+                    hostParty
+                      ? `${hostParty.name} (${hostParty.alpha2})`
+                      : "Loading…"
+                  }
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -124,7 +174,7 @@ const AddCooperativeApproach = () => {
             <Col span={12}>
               <Form.Item
                 name="participatingParties"
-                label="Participating Parties (Country Codes)"
+                label="Participating Parties"
                 rules={[
                   {
                     required: true,
@@ -132,8 +182,16 @@ const AddCooperativeApproach = () => {
                   },
                 ]}
               >
-                <Select mode="tags" placeholder="Enter country codes (e.g. CH, SE)">
-                </Select>
+                <Select
+                  mode="multiple"
+                  showSearch
+                  optionFilterProp="label"
+                  maxTagCount="responsive"
+                  placeholder="Select participating countries"
+                  options={countryOptions}
+                  tagRender={partiesTagRender}
+                  onChange={handlePartiesChange}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>

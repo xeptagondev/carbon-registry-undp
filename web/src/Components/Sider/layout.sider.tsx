@@ -98,6 +98,11 @@ const LayoutSider = (props: LayoutSiderProps) => {
         t("nav:retirements"),
         "credits/retirements",
         <Icon.ClockHistory />
+      ),
+      getItem(
+        t("nav:itmoAuthorizations"),
+        "credits/itmoAuthorizations",
+        <Icon.GlobeAmericas />
       )
     );
     items.splice(

@@ -18,44 +18,43 @@ import { useEffect, useRef, useState } from "react";
 import { CheckboxValueType } from "antd/lib/checkbox/Group";
 import { CheckboxChangeEvent } from "antd/lib/checkbox";
 import { useConnection } from "../../../Context/ConnectionContext/connectionContext";
-import { UserTableDataType } from "../../../Definitions/Definitions/userManagement.definitions";
 import { useUserContext } from "../../../Context/UserInformationContext/userInformationContext";
 import { API_PATHS } from "../../../Config/apiConfig";
 import { ProfileIcon } from "../../../Components/IconComponents/ProfileIcon/profile.icon";
 import "../creditPageStyles.scss";
 import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
-import { CreditActionType } from "../Enums/creditActionType.enum";
 import { ActionResponseType } from "../../../Definitions/Enums/actionResponse.enum";
 import { ProjectDetailsLink } from "../../../Components/ProjectDetailsLink/projectDetailsLink";
 import * as Icon from "react-bootstrap-icons";
-import { CreditActionModal } from "./creditActionModal";
+import { ItmoAuthProceedModal } from "./itmoAuthProceedModal";
 import { ActionResponseModal } from "../../../Components/Models/actionResponseModal";
 import { HttpStatusCode } from "axios";
 import {
   CreditRetirementProceedAction,
   RetirementActionEnum,
 } from "../Enums/creditRetirementProceedType.enum";
-import { CreditRetirementInterface } from "../Interfaces/creditRetirement.interface";
+import { CreditItmoAuthorizationInterface } from "../Interfaces/creditItmoAuthorization.interface";
 import moment from "moment";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
 import { Role } from "../../../Definitions/Enums/role.enum";
 import { COLOR_CONFIGS } from "../../../Config/colorConfigs";
-import { CreditTypePill } from "./creditTypePill";
+import { getStatusColor } from "./creditRetirementsTable";
 
 const { Search } = Input;
 
-enum CrediRetirementsColumns {
+enum CreditItmoAuthColumns {
   PROJECT_NAME = "projectName",
   ORGANIZATION_NAME = "organizationName",
   SERIAL_NO = "serialNo",
+  ITMO_SERIAL = "itmoSerial",
   REFERENCE = "reference",
   DATE = "date",
   CREDITS = "credits",
   STATUS = "status",
-  CREDIT_TYPE = "creditType",
-  RETIREMENT_TYPE = "retirementType",
+  COOPERATIVE_APPROACH = "cooperativeApproach",
   ACTION = "action",
 }
+
 enum StatusOptions {
   ACCEPTED = "Completed",
   REJECTED = "Rejected",
@@ -63,30 +62,17 @@ enum StatusOptions {
   CANCELLED = "Cancelled",
 }
 
-export const getStatusColor = (status: string) => {
-  switch (status) {
-    case StatusOptions.ACCEPTED:
-      return "processing";
-    case StatusOptions.REJECTED:
-      return "orange";
-    case StatusOptions.PENDING:
-      return "purple";
-    case StatusOptions.CANCELLED:
-      return "error";
-    default:
-      return "default";
-  }
-};
-
-export const CreditRetirementsTableComponent = (props: any) => {
+export const CreditItmoAuthorizationsTableComponent = (props: any) => {
   const { t } = props;
 
   const { post } = useConnection();
   const { userInfoState } = useUserContext();
   const isInitialRender = useRef(false);
-  const [totalProgramme, setTotalProgramme] = useState<number>();
+  const [totalRecords, setTotalRecords] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
-  const [tableData, setTableData] = useState<UserTableDataType[]>([]);
+  const [tableData, setTableData] = useState<CreditItmoAuthorizationInterface[]>(
+    []
+  );
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [search, setSearch] = useState<string>();
@@ -106,15 +92,13 @@ export const CreditRetirementsTableComponent = (props: any) => {
   const [modalActionData, setModalActionData] = useState<{
     icon: any;
     title: string;
-    type: CreditActionType;
     actionBtnText?: string;
     remarkRequired: boolean;
     proceedAction: CreditRetirementProceedAction;
-    data: CreditRetirementInterface;
+    data: CreditItmoAuthorizationInterface;
   }>();
   const [modalResponseVisible, setModalResponseVisible] =
     useState<boolean>(false);
-
   const [modalResponseData, setModalResponseData] = useState<{
     type: ActionResponseType;
     icon: any;
@@ -159,7 +143,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     }
 
     try {
-      const response: any = await post(API_PATHS.CREDIT_RETIREMENT_QUERY, {
+      const response: any = await post(API_PATHS.ITMO_AUTH_QUERY, {
         page: currentPage,
         size: pageSize,
         filterAnd: filter,
@@ -168,16 +152,16 @@ export const CreditRetirementsTableComponent = (props: any) => {
       });
       if (checkBoxOptions?.length <= 0) {
         setTableData([]);
-        setTotalProgramme(0);
+        setTotalRecords(0);
         return true;
       }
       setTableData(response?.data ? response.data : []);
-      setTotalProgramme(
+      setTotalRecords(
         response.response?.data?.total ? response.response?.data?.total : 0
       );
       isInitialRender.current = true;
     } catch (error: any) {
-      console.log("Error in getting Credit Retirements", error);
+      console.log("Error in getting ITMO Authorizations", error);
       message.open({
         type: "error",
         content: error.message,
@@ -189,7 +173,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     }
   };
 
-  const actionMenu = (record: CreditRetirementInterface) => {
+  const actionMenu = (record: CreditItmoAuthorizationInterface) => {
     return userInfoState?.companyRole ===
       CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ? (
       <List
@@ -206,8 +190,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
                     color={COLOR_CONFIGS.PRIMARY_THEME_COLOR}
                   />
                 ),
-                title: t("acceptCreditRetireRequest"),
-                type: CreditActionType.RETIREMENT,
+                title: t("areYouSureWantToAcceptItmoAuthorization"),
                 actionBtnText: t("proceed"),
                 remarkRequired: false,
                 proceedAction: CreditRetirementProceedAction.ACCEPT,
@@ -222,8 +205,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
             click: () => {
               setModalActionData({
                 icon: <Icon.XOctagon color="#ff4d4f" />,
-                title: t("areYouSureWantToReject"),
-                type: CreditActionType.RETIREMENT,
+                title: t("areYouSureWantToRejectItmoAuthorization"),
                 actionBtnText: t("reject"),
                 remarkRequired: true,
                 proceedAction: CreditRetirementProceedAction.REJECT,
@@ -254,7 +236,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
               setModalActionData({
                 icon: <Icon.XOctagon color="#ff4d4f" />,
                 title: t("areYouSureWantToCancel"),
-                type: CreditActionType.RETIREMENT,
                 actionBtnText: t("proceed"),
                 remarkRequired: true,
                 proceedAction: CreditRetirementProceedAction.CANCEL,
@@ -278,19 +259,19 @@ export const CreditRetirementsTableComponent = (props: any) => {
 
   const columns = [
     {
-      title: t(CrediRetirementsColumns.REFERENCE),
-      key: CrediRetirementsColumns.REFERENCE,
+      title: t(CreditItmoAuthColumns.REFERENCE),
+      key: CreditItmoAuthColumns.REFERENCE,
       align: "left" as const,
-      render: (item: CreditRetirementInterface) => {
+      render: (item: CreditItmoAuthorizationInterface) => {
         return <span style={{ marginLeft: "20px" }}>{item?.id}</span>;
       },
     },
     {
-      title: t(CrediRetirementsColumns.PROJECT_NAME),
+      title: t(CreditItmoAuthColumns.PROJECT_NAME),
       key: "projectName",
       sorter: true,
       align: "left" as const,
-      render: (item: CreditRetirementInterface) => {
+      render: (item: CreditItmoAuthorizationInterface) => {
         return (
           <ProjectDetailsLink
             projectId={item.projectId}
@@ -301,11 +282,11 @@ export const CreditRetirementsTableComponent = (props: any) => {
       },
     },
     {
-      title: t(CrediRetirementsColumns.ORGANIZATION_NAME),
+      title: t(CreditItmoAuthColumns.ORGANIZATION_NAME),
       key: "senderName",
       sorter: true,
       align: "left" as const,
-      render: (item: CreditRetirementInterface) => {
+      render: (item: CreditItmoAuthorizationInterface) => {
         const elements = (
           <Row>
             <ProfileIcon
@@ -320,19 +301,35 @@ export const CreditRetirementsTableComponent = (props: any) => {
       },
     },
     {
-      title: t(CrediRetirementsColumns.SERIAL_NO),
-      key: CrediRetirementsColumns.SERIAL_NO,
+      title: t(CreditItmoAuthColumns.SERIAL_NO),
+      key: CreditItmoAuthColumns.SERIAL_NO,
       align: "left" as const,
-      render: (item: CreditRetirementInterface) => {
+      render: (item: CreditItmoAuthorizationInterface) => {
         return <span>{item?.serialNumber}</span>;
       },
     },
     {
-      title: t(CrediRetirementsColumns.DATE),
+      title: t(CreditItmoAuthColumns.ITMO_SERIAL),
+      key: CreditItmoAuthColumns.ITMO_SERIAL,
+      align: "left" as const,
+      render: (item: CreditItmoAuthorizationInterface) => {
+        return <span>{item?.itmoSerial || "—"}</span>;
+      },
+    },
+    {
+      title: t(CreditItmoAuthColumns.COOPERATIVE_APPROACH),
+      key: "cooperativeApproachId",
+      align: "left" as const,
+      render: (item: CreditItmoAuthorizationInterface) => {
+        return <span>{item?.caReferenceNumber || "—"}</span>;
+      },
+    },
+    {
+      title: t(CreditItmoAuthColumns.DATE),
       key: "createdDate",
       sorter: true,
       align: "left" as const,
-      render: (item: CreditRetirementInterface) => {
+      render: (item: CreditItmoAuthorizationInterface) => {
         return (
           <span>
             {moment(parseInt(String(item?.createdDate))).format(
@@ -343,10 +340,10 @@ export const CreditRetirementsTableComponent = (props: any) => {
       },
     },
     {
-      title: t(CrediRetirementsColumns.CREDITS),
-      key: CrediRetirementsColumns.CREDITS,
+      title: t(CreditItmoAuthColumns.CREDITS),
+      key: CreditItmoAuthColumns.CREDITS,
       align: "left" as const,
-      render: (item: CreditRetirementInterface) => {
+      render: (item: CreditItmoAuthorizationInterface) => {
         return (
           <span style={{ marginLeft: "20px" }}>
             {addCommSep(String(item?.creditAmount))}
@@ -355,41 +352,20 @@ export const CreditRetirementsTableComponent = (props: any) => {
       },
     },
     {
-      title: t(CrediRetirementsColumns.STATUS),
+      title: t(CreditItmoAuthColumns.STATUS),
       key: "status",
       sorter: true,
       align: "center" as const,
-      render: (item: CreditRetirementInterface) => {
+      render: (item: CreditItmoAuthorizationInterface) => {
         return <Tag color={getStatusColor(item.status)}>{item.status}</Tag>;
-      },
-    },
-    {
-      title: t(CrediRetirementsColumns.CREDIT_TYPE),
-      key: CrediRetirementsColumns.CREDIT_TYPE,
-      align: "center" as const,
-      render: (item: CreditRetirementInterface) => (
-        <CreditTypePill
-          isItmo={!!item?.itmoAuthorizationRecord}
-          itmoSerial={item?.itmoSerial}
-          t={t}
-        />
-      ),
-    },
-    {
-      title: t(CrediRetirementsColumns.RETIREMENT_TYPE),
-      key: "subType",
-      sorter: true,
-      align: "center" as const,
-      render: (item: CreditRetirementInterface) => {
-        return <span>{item?.subType}</span>;
       },
     },
     {
       title: t(""),
       width: 6,
       align: "right" as const,
-      key: CrediRetirementsColumns.ACTION,
-      render: (record: CreditRetirementInterface) => {
+      key: CreditItmoAuthColumns.ACTION,
+      render: (record: CreditItmoAuthorizationInterface) => {
         const menu = actionMenu(record);
         return (
           record.status === StatusOptions.PENDING &&
@@ -450,7 +426,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
         : undefined
     );
     setSortField(sorter.columnKey);
-    // setCurrentPage(1);
   };
 
   useEffect(() => {
@@ -473,15 +448,11 @@ export const CreditRetirementsTableComponent = (props: any) => {
     }
   }, [sortField, sortOrder, search, checkBoxOptions]);
 
-  // Declared last so it runs after the two effects above on the initial
-  // mount pass (effects fire in declaration order within the same commit) —
-  // flipping this here, rather than inside the first effect, is what keeps
-  // their `isInitialRender.current` check false during that mount pass, so
-  // they don't also redundantly re-fetch alongside the unconditional mount
-  // fetch above.
+  // See creditRetirementsTable.tsx for why this effect is declared last.
   useEffect(() => {
     isInitialRender.current = true;
   }, []);
+
   const onFinishAction = async (
     transactionId: any,
     action: RetirementActionEnum,
@@ -490,7 +461,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
     try {
       setModalActionLoading(true);
 
-      const response = await post(API_PATHS.CREDIT_RETIREMENT_PERFROM, {
+      const response = await post(API_PATHS.ITMO_AUTH_PERFORM, {
         transactionId: transactionId,
         action: action,
         remarks: remark,
@@ -501,16 +472,10 @@ export const CreditRetirementsTableComponent = (props: any) => {
           type:
             action === RetirementActionEnum.ACCEPT
               ? ActionResponseType.SUCCESS
-              : action === RetirementActionEnum.REJECT
-              ? ActionResponseType.PROCESSSED
               : ActionResponseType.PROCESSSED,
           icon:
             action === RetirementActionEnum.ACCEPT ? (
               <Icon.CheckCircle color={COLOR_CONFIGS.SUCCESS_RESPONSE_COLOR} />
-            ) : action === RetirementActionEnum.REJECT ? (
-              <Icon.CheckCircle
-                color={COLOR_CONFIGS.PROCESSED_RESPONSE_COLOR}
-              />
             ) : (
               <Icon.CheckCircle
                 color={COLOR_CONFIGS.PROCESSED_RESPONSE_COLOR}
@@ -518,10 +483,10 @@ export const CreditRetirementsTableComponent = (props: any) => {
             ),
           title: t(
             action === RetirementActionEnum.ACCEPT
-              ? "creditRetireAcceptedSuccessfully"
+              ? "itmoAuthAcceptedSuccessfully"
               : action === RetirementActionEnum.REJECT
-              ? "creditRetireRejectedSuccessfully"
-              : "creditRetireCancelledSuccessfully"
+              ? "itmoAuthRejectedSuccessfully"
+              : "itmoAuthCancelledSuccessfully"
           ),
           buttonText: t("okay"),
         });
@@ -533,12 +498,11 @@ export const CreditRetirementsTableComponent = (props: any) => {
               color={COLOR_CONFIGS.FAILED_RESPONSE_COLOR}
             />
           ),
-          title: t("creditRetirementSubmittedFailed"),
+          title: t("itmoAuthorizationRequestSubmittedFailed"),
           buttonText: t("okay"),
         });
       }
     } catch (error: any) {
-      // message.error(error.message || t("somethingWentWrong"));
       setModalResponseData({
         type: ActionResponseType.FAILED,
         icon: (
@@ -553,8 +517,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
       setModalResponseVisible(true);
     }
   };
-
-  console.log('--------modalResponseData----------', modalResponseData);
 
   return (
     <div className="content-card">
@@ -607,12 +569,12 @@ export const CreditRetirementsTableComponent = (props: any) => {
               pagination={{
                 current: currentPage,
                 pageSize: pageSize,
-                total: totalProgramme,
+                total: totalRecords,
                 showQuickJumper: true,
                 showSizeChanger: true,
                 onChange: onPaginationChange,
               }}
-              // eslint-disable-next-line no-unused-vars
+               
               onChange={(val: any, _: any, sorter: any) =>
                 onHandleTableChange(val, sorter)
               }
@@ -621,7 +583,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
                   <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                     description={
-                      tableData.length === 0 ? t("noRetirements") : null
+                      tableData.length === 0 ? t("noItmoAuthorizations") : null
                     }
                   />
                 ),
@@ -630,7 +592,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
           </div>
         </Col>
       </Row>
-      <CreditActionModal
+      <ItmoAuthProceedModal
         onFinish={onFinishAction}
         onCancel={() => setModalActionVisible(false)}
         t={t}
@@ -639,8 +601,6 @@ export const CreditRetirementsTableComponent = (props: any) => {
         loading={modalActionLoading}
         icon={modalActionData?.icon}
         title={modalActionData?.title}
-        isProceed={true}
-        type={modalActionData?.type}
         remarkRequired={modalActionData?.remarkRequired}
         data={modalActionData?.data}
         proceedAction={modalActionData?.proceedAction}

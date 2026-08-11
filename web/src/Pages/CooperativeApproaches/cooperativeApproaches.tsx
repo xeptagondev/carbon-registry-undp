@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
 import { useUserContext } from "../../Context/UserInformationContext/userInformationContext";
+import { useCountryOptions } from "../../Components/Common/hooks/useCountryOptions";
 import { Button, Row, Col, Table, Tag, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { CompanyRole } from "../../Definitions/Enums/company.role.enum";
@@ -20,6 +21,7 @@ const CooperativeApproaches = () => {
   const { t } = useTranslation(["common"]);
   const { post } = useConnection();
   const { userInfoState } = useUserContext();
+  const { byCode: countryNameByCode } = useCountryOptions();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -39,6 +41,13 @@ const CooperativeApproaches = () => {
       sorter: true,
     },
     {
+      title: "CA Reference",
+      dataIndex: "caReferenceNumber",
+      key: "caReferenceNumber",
+      render: (ref: string) =>
+        ref ? <Tag color="green">{ref}</Tag> : <span>—</span>,
+    },
+    {
       title: "Title",
       dataIndex: "title",
       key: "title",
@@ -48,6 +57,7 @@ const CooperativeApproaches = () => {
       title: "Host Party",
       dataIndex: "hostParty",
       key: "hostParty",
+      render: (code: string) => countryNameByCode.get(code) ?? code,
     },
     {
       title: "Participating Parties",
@@ -56,7 +66,7 @@ const CooperativeApproaches = () => {
       render: (parties: string[]) => (
         <>
           {parties?.map((p) => (
-            <Tag key={p}>{p}</Tag>
+            <Tag key={p}>{countryNameByCode.get(p) ?? p}</Tag>
           ))}
         </>
       ),

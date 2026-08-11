@@ -23,6 +23,11 @@ export class CaAuthorizedEntity extends EntitySubject {
   @Column({ type: "text", nullable: true })
   authorizingParty?: string;
 
+  // Country the entity is incorporated in. Required at the DTO layer
+  // for new rows; nullable here so pre-existing rows survive.
+  @Column({ type: "text", nullable: true })
+  countryOfIncorporation?: string;
+
   @Column({ type: "bigint", nullable: true })
   authorizationDate?: number;
 

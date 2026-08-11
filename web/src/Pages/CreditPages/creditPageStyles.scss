@@ -649,3 +649,42 @@
     .credit-action-model .ant-radio-group { grid-template-columns: 1fr; }
   }
 }
+
+// MO/ITMO classifier pill (creditTypePill.tsx) — only ITMO pills with a
+// resolved itmoSerial get this class, signalling the hover/click
+// popover revealing the serial.
+.credit-type-pill--interactive {
+  display: inline-flex;
+  cursor: pointer;
+
+  .ant-tag {
+    transition: opacity 0.15s ease;
+  }
+
+  &:hover .ant-tag,
+  &:focus-visible .ant-tag {
+    opacity: 0.75;
+  }
+}
+
+.credit-type-pill-popover {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 260px;
+
+  &__label {
+    color: #3a3541;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  &__serial {
+    font-family: monospace;
+    font-size: 13px;
+    color: #111;
+    word-break: break-all;
+  }
+}

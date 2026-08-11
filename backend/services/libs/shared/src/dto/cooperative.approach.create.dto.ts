@@ -2,12 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   ArrayMinSize,
   IsArray,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from "class-validator";
-import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
+import { IsValidCountry } from "../decorators/validcountry.decorator";
 
 export class CooperativeApproachCreateDto {
   @ApiProperty()
@@ -15,17 +14,16 @@ export class CooperativeApproachCreateDto {
   @IsString()
   title: string;
 
+  // The host party (this registry's own country) is derived server-side
+  // from the `systemCountry` config and always unioned in — clients
+  // supply only the other participating parties.
   @ApiProperty()
   @IsNotEmpty({ each: true })
   @IsArray()
   @IsString({ each: true })
   @ArrayMinSize(1)
+  @IsValidCountry({ each: true })
   participatingParties: string[];
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  hostParty: string;
 
   @ApiPropertyOptional()
   @IsOptional()

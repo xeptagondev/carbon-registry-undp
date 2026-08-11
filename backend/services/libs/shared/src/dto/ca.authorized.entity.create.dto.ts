@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsValidCountry } from "../decorators/validcountry.decorator";
 
 export class CaAuthorizedEntityCreateDto {
   @ApiProperty()
@@ -17,10 +18,15 @@ export class CaAuthorizedEntityCreateDto {
   @IsString()
   entityIdentifier?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  // Country the authorized entity is incorporated in — must be one of
+  // the cooperative approach's participatingParties (validated in the
+  // service, which knows the specific CA). authorizingParty is not
+  // client-supplied; it's derived server-side from the host party.
+  @ApiProperty()
+  @IsNotEmpty()
   @IsString()
-  authorizingParty?: string;
+  @IsValidCountry()
+  countryOfIncorporation: string;
 
   @ApiPropertyOptional()
   @IsOptional()

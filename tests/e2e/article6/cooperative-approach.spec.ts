@@ -13,9 +13,12 @@
  */
 import { test, expect } from "./support/fixtures";
 import { BASE_URL, login } from "./support/auth";
+import { ApiClient } from "./support/api-client";
 import {
   createCooperativeApproach,
+  generateInitialReport,
   queryCooperativeApproaches,
+  submitInitialReport,
   uniqueSuffix,
 } from "./support/factories";
 
@@ -40,7 +43,6 @@ test.describe("Cooperative Approach - Article 6.2", () => {
       const res = await apiDna.post("national/cooperativeApproach/create", {
         title,
         participatingParties: ["GH", "CH"],
-        hostParty: "GH",
       });
       expect(res.status()).toBe(201);
       const body = await apiDna.json<any>(res);
@@ -50,8 +52,12 @@ test.describe("Cooperative Approach - Article 6.2", () => {
       // Backend forces DRAFT on create even if caller tries otherwise.
       expect(entity.status).toBe("Draft");
       expect(Array.isArray(entity.participatingParties)).toBe(true);
-      expect(entity.participatingParties).toEqual(["GH", "CH"]);
-      expect(entity.hostParty).toBe("GH");
+      // Host party (systemCountryCode=NG in the e2e stack) is derived
+      // server-side and always unioned into participatingParties.
+      expect(entity.participatingParties).toEqual(
+        expect.arrayContaining(["GH", "CH", "NG"])
+      );
+      expect(entity.hostParty).toBe("NG");
       expect(Number(entity.createdTime)).toBeGreaterThan(0);
     });
 
@@ -65,7 +71,6 @@ test.describe("Cooperative Approach - Article 6.2", () => {
       // drift, but flag anything outside that range as a regression.
       const res = await apiDna.post("national/cooperativeApproach/create", {
         title: `CA Invalid ${uniqueSuffix()}`,
-        hostParty: "GH",
         // participatingParties intentionally omitted
       });
       expect(res.ok()).toBe(false);
@@ -349,15 +354,21 @@ test.describe("Cooperative Approach - Article 6.2", () => {
 
       await dnaPage.locator("input#title").fill(title);
 
-      // hostParty defaults to VITE_APP_COUNTRY_CODE. Set explicitly
-      // so the test is environment-independent.
-      await dnaPage.locator("input#hostParty").fill("");
-      await dnaPage.locator("input#hostParty").fill("GH");
+      // Host Party is no longer user-editable — it's fetched from
+      // GET cooperativeApproach/hostParty and rendered as a disabled
+      // field. Just wait for it to populate (loading text is replaced).
+      await expect(
+        dnaPage.locator(".ant-form-item")
+          .filter({ hasText: /Host Party/i })
+          .locator("input")
+      ).not.toHaveValue(/Loading/);
 
-      // participatingParties is an Ant Design Select in "tags" mode.
-      // Ant Design doesn't put the id on the inner <input>; it is on the
-      // wrapping combobox. The actual input is .ant-select-selection-search-input
+      // participatingParties is an Ant Design Select in "multiple"
+      // mode with real country options (server-fed). Ant Design
+      // doesn't put the id on the inner <input>; it is on the wrapping
+      // combobox. The actual input is .ant-select-selection-search-input
       // inside the form-item whose label contains "Participating Parties".
+      // The host country (NG) is pre-selected and locked by the form.
       const partiesItem = dnaPage
         .locator(".ant-form-item")
         .filter({ hasText: /Participating Parties/i });
@@ -365,10 +376,14 @@ test.describe("Cooperative Approach - Article 6.2", () => {
       const partiesInput = partiesItem.locator(
         ".ant-select-selection-search-input"
       );
-      await partiesInput.fill("GH");
-      await partiesInput.press("Enter");
-      await partiesInput.fill("CH");
-      await partiesInput.press("Enter");
+      for (const countryName of ["Ghana", "Switzerland"]) {
+        await partiesInput.fill(countryName);
+        await dnaPage
+          .locator(".ant-select-item-option")
+          .filter({ hasText: countryName })
+          .first()
+          .click();
+      }
 
       // Submit via the primary "Create" button inside the form.
       await dnaPage.getByRole("button", { name: /^create$/i }).click();
@@ -383,8 +398,9 @@ test.describe("Cooperative Approach - Article 6.2", () => {
       const { items } = await queryCooperativeApproaches(apiDna, 1, 50);
       const match = items.find((i: any) => i.title === title);
       expect(match, `expected to find CA with title ${title}`).toBeTruthy();
+      // GH/CH selected via the UI, plus the host (NG) auto-included.
       expect(match.participatingParties).toEqual(
-        expect.arrayContaining(["GH", "CH"])
+        expect.arrayContaining(["GH", "CH", "NG"])
       );
     });
 
@@ -457,6 +473,75 @@ test.describe("Cooperative Approach - Article 6.2", () => {
   });
 
   // ------------------------------------------------------------------
+  // API: Authorized entities — authorizingParty is derived server-side
+  // from the host party (never client-supplied), and
+  // countryOfIncorporation must be one of the CA's participatingParties.
+  // ------------------------------------------------------------------
+  test.describe("API: Authorized Entities", () => {
+    // Authorized entities can only be added to an Active CA, and
+    // activation requires a submitted initial report (Dec 2/CMA.3
+    // Annex para 18) — spin both up before each case.
+    async function createActiveCa(
+      apiDna: ApiClient,
+      participatingParties: string[]
+    ): Promise<string> {
+      const created = await createCooperativeApproach(apiDna, {
+        title: `CA Entities ${uniqueSuffix()}`,
+        participatingParties,
+      });
+      const ir = await generateInitialReport(apiDna, {
+        cooperativeApproachId: created.cooperativeApproachId,
+      });
+      await submitInitialReport(apiDna, ir.reportId);
+      const activateRes = await apiDna.put(
+        "national/cooperativeApproach/update",
+        {
+          cooperativeApproachId: created.cooperativeApproachId,
+          status: "Active",
+        }
+      );
+      expect(activateRes.status()).toBe(200);
+      return created.cooperativeApproachId;
+    }
+
+    test("addAuthorizedEntity derives authorizingParty from the host regardless of client input", async ({
+      apiDna,
+    }) => {
+      const caId = await createActiveCa(apiDna, ["GH", "CH"]);
+      const res = await apiDna.post(
+        "national/cooperativeApproach/authorizedEntity/add",
+        {
+          cooperativeApproachId: caId,
+          entityName: `Entity ${uniqueSuffix()}`,
+          countryOfIncorporation: "GH",
+        }
+      );
+      expect(res.status()).toBe(201);
+      const entity = unwrap(await apiDna.json<any>(res));
+      // systemCountryCode=NG in the e2e stack — always the authorizing
+      // party, regardless of what the client sends (or omits).
+      expect(entity.authorizingParty).toBe("NG");
+      expect(entity.countryOfIncorporation).toBe("GH");
+    });
+
+    test("addAuthorizedEntity rejects a countryOfIncorporation outside the CA's participatingParties", async ({
+      apiDna,
+    }) => {
+      const caId = await createActiveCa(apiDna, ["GH", "CH"]);
+      const res = await apiDna.post(
+        "national/cooperativeApproach/authorizedEntity/add",
+        {
+          cooperativeApproachId: caId,
+          entityName: `Entity ${uniqueSuffix()}`,
+          countryOfIncorporation: "US",
+        }
+      );
+      expect(res.ok()).toBe(false);
+      expect(res.status()).toBe(400);
+    });
+  });
+
+  // ------------------------------------------------------------------
   // Permissions: PD is read-only at both UI and API layers
   // ------------------------------------------------------------------
   test.describe("Permissions: PD is read-only", () => {
@@ -482,7 +567,6 @@ test.describe("Cooperative Approach - Article 6.2", () => {
       const res = await apiPd.post("national/cooperativeApproach/create", {
         title: `PD Should Fail ${uniqueSuffix()}`,
         participatingParties: ["GH", "CH"],
-        hostParty: "GH",
       });
       expect(res.ok()).toBe(false);
       // CASL PoliciesGuardEx rejects as 403. Defensive window: any

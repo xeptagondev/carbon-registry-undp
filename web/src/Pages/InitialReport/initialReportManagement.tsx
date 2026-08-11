@@ -34,6 +34,12 @@ const InitialReportManagement = () => {
       key: "cooperativeApproachId",
     },
     {
+      title: "Version",
+      dataIndex: "version",
+      key: "version",
+      render: (version: number) => <span>v{version ?? 1}</span>,
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",

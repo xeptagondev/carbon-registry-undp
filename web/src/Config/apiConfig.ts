@@ -53,6 +53,11 @@ export const API_PATHS = {
   CREDIT_BLOCK_HISTORY: "national/creditTransactionsManagement/creditBlockHistory",
   CREDIT_ISSUANCES_QUERY: "national/creditTransactionsManagement/queryIssuances",
   ORG_CREDIT_BLOCKS: "national/creditTransactionsManagement/orgCreditBlocks",
+  ITMO_AUTH_QUERY:
+    "national/creditTransactionsManagement/queryItmoAuthorizations",
+  ITMO_AUTH_REQUEST: "national/creditTransactionsManagement/itmoAuthRequest",
+  ITMO_AUTH_PERFORM:
+    "national/creditTransactionsManagement/performItmoAuthAction",
   //LOCATION
   PROVINCES: "national/location/province",
   DISTRICTS: "national/location/district",
@@ -179,5 +184,7 @@ export const API_PATHS = {
   POPUP_ACTION: (endpoint: string) => `national/programme/${endpoint}`,
   // AEF RECORDS:
   QUERY_AEF_RECORDS: `national/reportsManagement/queryAefRecords`,
-  DOWNLOAD_AEF_RECORDS: `national/reportsManagement/downloadAefReport`
+  DOWNLOAD_AEF_RECORDS: `national/reportsManagement/downloadAefReport`,
+  // COOPERATIVE APPROACH
+  CA_HOST_PARTY: "national/cooperativeApproach/hostParty",
 };

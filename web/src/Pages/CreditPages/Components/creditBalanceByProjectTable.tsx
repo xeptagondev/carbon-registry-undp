@@ -17,6 +17,8 @@ import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedT
 import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
 import type { CreditBalanceInterface } from '../Interfaces/creditBalance.interface';
 import { CreditActionModal } from './creditActionModal';
+import { CreditTypePill } from './creditTypePill';
+import { ItmoAuthRequestModal } from './itmoAuthRequestModal';
 import { ProjectDetailsLink } from '../../../Components/ProjectDetailsLink/projectDetailsLink';
 import '../creditPageStyles.scss';
 
@@ -30,6 +32,10 @@ interface CreditSerialBalance {
   balance: number;
   reserved: number;
   type: IssuedOrReceivedOptions;
+  itmoAuthorizationRecord?: string | null;
+  itmoCooperativeApproachId?: string | null;
+  itmoAuthorizationPurpose?: string | null;
+  itmoSerial?: string | null;
 }
 
 interface CreditSerialBalancePage {
@@ -50,8 +56,13 @@ interface ProjectBalance {
   owner: string;
   ownerLogo: string;
   ownerColor: string;
-  balance: number;
-  reserved: number;
+  // MO/ITMO are disjoint subsets that sum to the project's total
+  // balance/reserved amount — derived client-side from the API's
+  // grand-total + ITMO-only figures.
+  moBalance: number;
+  moReserved: number;
+  itmoBalance: number;
+  itmoReserved: number;
   updatedAt: string;
 }
 
@@ -70,6 +81,8 @@ interface ProjectBalanceApiRow {
   projectOwnerLogo: string | null;
   creditBalance: string | number;
   reservedCredits: string | number;
+  itmoBalance: string | number;
+  itmoReservedCredits: string | number;
   updatedTime: string | number;
 }
 
@@ -82,6 +95,10 @@ interface CreditBalanceApiRow {
   receiverName: string;
   receiverLogo: string | null;
   type: IssuedOrReceivedOptions;
+  itmoAuthorizationRecord?: string | null;
+  itmoCooperativeApproachId?: string | null;
+  itmoAuthorizationPurpose?: string | null;
+  itmoSerial?: string | null;
 }
 
 interface ConnectionResponse<T> {
@@ -134,13 +151,27 @@ const OrganizationCell = ({
 );
 
 const getSerialColumns = (
+  t: (key: string) => string,
   openActions?: (row: CreditSerialBalance) => ReactNode,
 ): ColumnsType<CreditSerialBalance> => [
   { title: 'Serial Number', dataIndex: 'serialNumber', key: 'serialNumber', align: 'left', width: 280, sorter: (a, b) => a.serialNumber.localeCompare(b.serialNumber), render: (value) => <span className="credit-balance-serial-number">{value}</span> },
   { title: 'Organization', key: 'organization', align: 'left', sorter: (a, b) => a.organization.localeCompare(b.organization), render: (_, row) => <OrganizationCell name={row.organization} color={row.organizationColor} logo={row.organizationLogo} /> },
   { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', width: 180, sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt), render: (value) => <span className="credit-balance-detail-date">{value}</span> },
-  { title: 'Credit Balance', dataIndex: 'balance', key: 'balance', align: 'right', sorter: (a, b) => a.balance - b.balance, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
-  { title: 'Reserved Credits', dataIndex: 'reserved', key: 'reserved', align: 'right', sorter: (a, b) => a.reserved - b.reserved, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  { title: 'Balance', dataIndex: 'balance', key: 'balance', align: 'right', sorter: (a, b) => a.balance - b.balance, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  { title: 'Reserved', dataIndex: 'reserved', key: 'reserved', align: 'right', sorter: (a, b) => a.reserved - b.reserved, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  {
+    title: t('creditType'),
+    key: 'creditType',
+    align: 'center',
+    sorter: (a, b) => Number(!!a.itmoAuthorizationRecord) - Number(!!b.itmoAuthorizationRecord),
+    render: (_, row) => (
+      <CreditTypePill
+        isItmo={!!row.itmoAuthorizationRecord}
+        itmoSerial={row.itmoSerial}
+        t={t}
+      />
+    ),
+  },
   {
     title: 'Issue or Received',
     dataIndex: 'type',
@@ -173,6 +204,7 @@ const CreditBalanceSerialTable = ({
   openActions,
   refreshGeneration,
 }: CreditBalanceSerialTableProps) => {
+  const { t } = useTranslation(['creditPages']);
   const { post } = useConnection();
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
@@ -214,6 +246,10 @@ const CreditBalanceSerialTable = ({
         balance: Number(row.creditAmount) || 0,
         reserved: Number(row.reservedCredits) || 0,
         type: row.type,
+        itmoAuthorizationRecord: row.itmoAuthorizationRecord,
+        itmoCooperativeApproachId: row.itmoCooperativeApproachId,
+        itmoAuthorizationPurpose: row.itmoAuthorizationPurpose,
+        itmoSerial: row.itmoSerial,
       })),
       total: responseTotal,
       hasMore: pageNumber * SERIAL_PAGE_SIZE < responseTotal,
@@ -309,13 +345,13 @@ const CreditBalanceSerialTable = ({
         }`}
         rowKey="serialNumber"
         dataSource={rows}
-        columns={getSerialColumns(openActions)}
+        columns={getSerialColumns(t, openActions)}
         pagination={false}
         tableLayout="fixed"
         loading={loading && rows.length === 0}
         scroll={openActions
-          ? { x: 1050, y: SERIAL_BODY_HEIGHT }
-          : { y: SERIAL_BODY_HEIGHT }}
+          ? { x: 1080, y: SERIAL_BODY_HEIGHT }
+          : { x: 1030, y: SERIAL_BODY_HEIGHT }}
       />
       {loading && rows.length > 0 && (
         <div className="credit-balance-serial-loading" aria-label="Loading more credit balances">
@@ -345,8 +381,10 @@ const columns: ColumnsType<ProjectBalance> = [
     ),
   },
   { title: 'Project Owner', key: 'owner', align: 'left', sorter: (a, b) => a.owner.localeCompare(b.owner), render: (_, row) => <OrganizationCell name={row.owner} color={row.ownerColor} logo={row.ownerLogo} /> },
-  { title: 'Total Credit Balance', dataIndex: 'balance', key: 'balance', align: 'left', sorter: (a, b) => a.balance - b.balance, render: formatCredits },
-  { title: 'Total Reserved Credits', dataIndex: 'reserved', key: 'reserved', align: 'left', sorter: (a, b) => a.reserved - b.reserved, render: formatCredits },
+  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'left', sorter: (a, b) => a.moBalance - b.moBalance, render: formatCredits },
+  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'left', sorter: (a, b) => a.moReserved - b.moReserved, render: formatCredits },
+  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'left', sorter: (a, b) => a.itmoBalance - b.itmoBalance, render: formatCredits },
+  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReserved', align: 'left', sorter: (a, b) => a.itmoReserved - b.itmoReserved, render: formatCredits },
   { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
 ];
 
@@ -379,6 +417,14 @@ export const CreditBalanceByProjectTable = ({
     icon: ReactNode;
     title: string;
     type: CreditActionType;
+    actionBtnText: string;
+    data: CreditBalanceInterface;
+  }>();
+  const [itmoModalVisible, setItmoModalVisible] = useState(false);
+  const [itmoModalLoading, setItmoModalLoading] = useState(false);
+  const [itmoModalData, setItmoModalData] = useState<{
+    icon: ReactNode;
+    title: string;
     actionBtnText: string;
     data: CreditBalanceInterface;
   }>();
@@ -424,17 +470,25 @@ export const CreditBalanceByProjectTable = ({
       .then((response) => {
         if (projectRequestGeneration.current !== requestGeneration) return;
         const apiRows = response.data ?? [];
-        const mappedRows = apiRows.map((row): ProjectBalance => ({
-          id: row.projectId,
-          name: row.projectName,
-          ownerId: row.projectOwnerId,
-          owner: row.projectOwnerName,
-          ownerLogo: row.projectOwnerLogo ?? '',
-          ownerColor: avatarColor(row.projectOwnerName),
-          balance: Number(row.creditBalance) || 0,
-          reserved: Number(row.reservedCredits) || 0,
-          updatedAt: formatTimestamp(row.updatedTime),
-        }));
+        const mappedRows = apiRows.map((row): ProjectBalance => {
+          const creditBalance = Number(row.creditBalance) || 0;
+          const reservedCredits = Number(row.reservedCredits) || 0;
+          const itmoBalance = Number(row.itmoBalance) || 0;
+          const itmoReserved = Number(row.itmoReservedCredits) || 0;
+          return {
+            id: row.projectId,
+            name: row.projectName,
+            ownerId: row.projectOwnerId,
+            owner: row.projectOwnerName,
+            ownerLogo: row.projectOwnerLogo ?? '',
+            ownerColor: avatarColor(row.projectOwnerName),
+            moBalance: creditBalance - itmoBalance,
+            moReserved: reservedCredits - itmoReserved,
+            itmoBalance,
+            itmoReserved,
+            updatedAt: formatTimestamp(row.updatedTime),
+          };
+        });
         setRows(mappedRows);
         setTotal(response.response?.data?.total ?? mappedRows.length);
       })
@@ -503,6 +557,10 @@ export const CreditBalanceByProjectTable = ({
     senderName: serial.organization,
     senderLogo: null,
     type: serial.type,
+    itmoAuthorizationRecord: serial.itmoAuthorizationRecord,
+    itmoCooperativeApproachId: serial.itmoCooperativeApproachId,
+    itmoAuthorizationPurpose: serial.itmoAuthorizationPurpose,
+    itmoSerial: serial.itmoSerial,
   });
 
   const openActionModal = (
@@ -524,16 +582,43 @@ export const CreditBalanceByProjectTable = ({
     setModalActionVisible(true);
   };
 
+  const openItmoAuthModal = (serial: CreditSerialBalance, project: ProjectBalance) => {
+    if (!canManageCredits) return;
+    setItmoModalData({
+      icon: <Icon.GlobeAmericas color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
+      title: t('requestItmoAuthorization'),
+      actionBtnText: t('submit'),
+      data: toCreditBalanceRecord(serial, project),
+    });
+    setItmoModalVisible(true);
+  };
+
   const actionMenu = (serial: CreditSerialBalance, project: ProjectBalance) => (
     <List
       className="action-menu"
       size="small"
       dataSource={[
-        { text: t('transfer'), icon: <Icon.ArrowLeftRight color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />, type: CreditActionType.TRANSFER },
-        { text: t('retire'), icon: <Icon.ClockHistory color="#FF4D4F" />, type: CreditActionType.RETIREMENT },
+        // MO blocks only — ITMO blocks cannot be transferred.
+        ...(!serial.itmoAuthorizationRecord
+          ? [{
+              text: t('transfer'),
+              icon: <Icon.ArrowLeftRight color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
+              click: () => openActionModal(serial, project, CreditActionType.TRANSFER),
+            }]
+          : []),
+        { text: t('retire'), icon: <Icon.ClockHistory color="#FF4D4F" />, click: () => openActionModal(serial, project, CreditActionType.RETIREMENT) },
+        // MO blocks only — an already ITMO-authorized block cannot be
+        // re-authorized.
+        ...(!serial.itmoAuthorizationRecord
+          ? [{
+              text: t('itmoAuthorization'),
+              icon: <Icon.GlobeAmericas color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
+              click: () => openItmoAuthModal(serial, project),
+            }]
+          : []),
       ]}
       renderItem={(item) => (
-        <List.Item onClick={() => openActionModal(serial, project, item.type)}>
+        <List.Item onClick={item.click}>
           <Typography.Text className="action-icon color-primary">{item.icon}</Typography.Text>
           <span>{item.text}</span>
         </List.Item>
@@ -550,7 +635,7 @@ export const CreditBalanceByProjectTable = ({
   );
 
   const onFinishAction = async (
-    receiveParty: string | { country?: string; organization?: string },
+    receiveParty: string | { country?: string; authorizedEntityId?: string },
     blockId: string,
     creditAmount: number,
     remark?: string,
@@ -568,19 +653,15 @@ export const CreditBalanceByProjectTable = ({
           remarks: remark,
         }) as ConnectionResponse<unknown>;
       } else {
-        const crossBorderParty = typeof receiveParty === 'object'
+        const useParty = typeof receiveParty === 'object'
           ? receiveParty
           : undefined;
         response = await post(API_PATHS.CREDIT_RETIREMENT_REQUEST, {
           blockId,
           remarks: remark,
-          retirementType,
-          ...(retirementType === CreditRetirementTypeEmnum.CROSS_BORDER_TRANSACTIONS
-            ? {
-              country: crossBorderParty?.country,
-              organizationName: crossBorderParty?.organization?.trim(),
-            }
-            : {}),
+          subType: retirementType,
+          country: useParty?.country,
+          authorizedEntityId: useParty?.authorizedEntityId,
           amount: Number(creditAmount),
         }) as ConnectionResponse<unknown>;
       }
@@ -607,6 +688,44 @@ export const CreditBalanceByProjectTable = ({
     }
   };
 
+  const onFinishItmoAuthRequest = async (
+    blockId: string,
+    amount: number,
+    cooperativeApproachId: string,
+    authorizationPurpose: string | undefined,
+    remarks: string | undefined,
+  ) => {
+    if (!canManageCredits) return;
+    setItmoModalLoading(true);
+    try {
+      const response = await (post(API_PATHS.ITMO_AUTH_REQUEST, {
+        blockId,
+        amount,
+        cooperativeApproachId,
+        authorizationPurpose,
+        remarks,
+      }) as Promise<ConnectionResponse<unknown>>);
+
+      if (response.status !== 201) {
+        throw new Error(t('somethingWentWrong'));
+      }
+
+      message.success(t('itmoAuthorizationRequestSubmitted'));
+      setItmoModalVisible(false);
+      onBalanceChanged();
+    } catch (error: unknown) {
+      const errorMessage = typeof error === 'object'
+        && error !== null
+        && 'message' in error
+        && typeof error.message === 'string'
+        ? error.message
+        : t('somethingWentWrong');
+      message.error(errorMessage);
+    } finally {
+      setItmoModalLoading(false);
+    }
+  };
+
   return (
     <div className="credit-table-container credit-balance-project-table">
       <Table<ProjectBalance>
@@ -616,7 +735,7 @@ export const CreditBalanceByProjectTable = ({
         columns={columns}
         loading={loading}
         tableLayout="fixed"
-        scroll={{ x: 1050 }}
+        scroll={{ x: 1250 }}
         onChange={(_pagination, _filters, _sorter, extra) => {
           if (extra.action === 'sort' && expandedProjectId) {
             toggleExpandedProject(expandedProjectId, true);
@@ -649,7 +768,7 @@ export const CreditBalanceByProjectTable = ({
           ),
           columnTitle: 'Action',
           columnWidth: 80,
-          expandIconColumnIndex: 5,
+          expandIconColumnIndex: 7,
           fixed: false,
         }}
         pagination={{
@@ -681,6 +800,19 @@ export const CreditBalanceByProjectTable = ({
           remarkRequired={false}
           proceedAction={CreditRetirementProceedAction.ACCEPT}
           data={modalActionData?.data}
+        />
+      )}
+      {canManageCredits && (
+        <ItmoAuthRequestModal
+          onFinish={onFinishItmoAuthRequest}
+          onCancel={() => setItmoModalVisible(false)}
+          t={t}
+          actionBtnText={itmoModalData?.actionBtnText}
+          openModal={itmoModalVisible}
+          loading={itmoModalLoading}
+          icon={itmoModalData?.icon}
+          title={itmoModalData?.title}
+          data={itmoModalData?.data}
         />
       )}
     </div>

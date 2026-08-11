@@ -61,11 +61,15 @@ const PD_COMPANY_ID = 1;
 // backend/services/libs/shared/src/enum/credit.retirement.type.enum.ts).
 // Kept in sync with RETIREMENT_TYPE_WIRE in factories.ts; declared here
 // because the pending-tx RDBMS seed stores the wire string directly.
+// USE_TOWARDS_NDC is MO-only (domestic); FIRST_TRANSFER_TOWARDS_NDC /
+// FIRST_TRANSFER_FOR_OIMP are ITMO-only, gated by the block's ITMO
+// authorization purpose — see credit.transaction.sub.types.enum.ts.
 const RETIREMENT_TYPE_WIRE: Record<CreditRetirementType, string> = {
   CROSS_BORDER_TRANSACTIONS: "Cross-Border Transactions",
   VOLUNTARY_CANCELLATIONS: "Voluntary Cancellations",
   USE_TOWARDS_NDC: "Use Towards NDC",
-  USE_FOR_OIMP: "Use For OIMP",
+  FIRST_TRANSFER_TOWARDS_NDC: "First Transfer Towards NDC",
+  FIRST_TRANSFER_FOR_OIMP: "First Transfer For OIMP",
   OMGE_CANCELLATION: "OMGE Cancellation",
   SOP_ADAPTATION: "SOP Adaptation",
 };
@@ -76,11 +80,15 @@ const RETIREMENT_TYPE_WIRE: Record<CreditRetirementType, string> = {
 // CROSS_BORDER_TRANSACTIONS falls through to the default Holding branch
 // because cross-border transfer routes credits to another Party rather
 // than landing them in a Dec 2/CMA.3 para 29 cancellation bucket.
+// USE_TOWARDS_NDC and FIRST_TRANSFER_TOWARDS_NDC share the same
+// RetirementNDC bucket — the account type tracks what the credit was
+// used for, not whether it crossed a border.
 const EXPECTED_ACCOUNT_TYPE: Record<CreditRetirementType, string> = {
   CROSS_BORDER_TRANSACTIONS: "Holding",
   VOLUNTARY_CANCELLATIONS: "CancellationVoluntary",
   USE_TOWARDS_NDC: "RetirementNDC",
-  USE_FOR_OIMP: "RetirementOIMP",
+  FIRST_TRANSFER_TOWARDS_NDC: "RetirementNDC",
+  FIRST_TRANSFER_FOR_OIMP: "RetirementOIMP",
   OMGE_CANCELLATION: "CancellationOMGE",
   SOP_ADAPTATION: "CancellationSOP",
 };
@@ -107,7 +115,8 @@ test.describe("Credit retirement - /retireRequest + /performRetireAction", () =>
       "CROSS_BORDER_TRANSACTIONS",
       "VOLUNTARY_CANCELLATIONS",
       "USE_TOWARDS_NDC",
-      "USE_FOR_OIMP",
+      "FIRST_TRANSFER_TOWARDS_NDC",
+      "FIRST_TRANSFER_FOR_OIMP",
       "OMGE_CANCELLATION",
       "SOP_ADAPTATION",
     ];

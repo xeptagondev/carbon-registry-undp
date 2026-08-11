@@ -36,6 +36,7 @@ import {
   usePaginatedEntityFilter,
 } from "../../../Components/Common/FilterBar";
 import { getCreditBlockStatusTagColor } from "./creditTableHelpers";
+import { CreditTypePill } from "./creditTypePill";
 
 enum CreditBlockColumns {
   SERIAL_NO = "serialNo",
@@ -43,6 +44,7 @@ enum CreditBlockColumns {
   PROJECT_NAME = "projectName",
   CREDITS = "balance",
   RESERVED = "reservedCredits",
+  CREDIT_TYPE = "creditType",
   UPDATE_DATE = "updateDate",
   CURRENT_STATUS = "currentStatus",
   FIRST_TRANSFER = "firstTransfer",
@@ -53,6 +55,8 @@ enum CreditBlockColumns {
 interface ExplorerQueryRow {
   id: string;
   serialNumber: string;
+  itmoSerial: string | null;
+  itmoAuthorizationRecord: string | null;
   organizationId: number;
   organizationName: string;
   organizationLogo: string | null;
@@ -68,6 +72,8 @@ interface ExplorerQueryRow {
 const mapExplorerRow = (row: ExplorerQueryRow): CreditBlockInterface => ({
   id: row.id,
   serialNumber: row.serialNumber,
+  itmoSerial: row.itmoSerial,
+  itmoAuthorizationRecord: row.itmoAuthorizationRecord,
   creditBalance: row.balance,
   reserved: row.reserved,
   updateDate: String(row.updatedTime),
@@ -432,6 +438,18 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
       },
     },
     {
+      title: t(CreditBlockColumns.CREDIT_TYPE),
+      key: "creditType",
+      align: "center" as const,
+      render: (record: CreditBlockInterface) => (
+        <CreditTypePill
+          isItmo={!!record?.itmoAuthorizationRecord}
+          itmoSerial={record?.itmoSerial}
+          t={t}
+        />
+      ),
+    },
+    {
       title: t(CreditBlockColumns.FIRST_TRANSFER),
       // Not a real DB column (computed in-memory per page by the backend's
       // enrichExplorerRowsWithFirstTransfer) — not sortable server-side.
@@ -655,6 +673,8 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
               {[
                 { label: "Current Holder", value: viewModalRecord.organizationName?viewModalRecord.organizationName: "-" },
                 { label: "Serial Number", value: viewModalRecord.serialNumber },
+                { label: "Type", value: viewModalRecord.itmoAuthorizationRecord ? t("itmo") : t("mo") },
+                { label: "ITMO Serial", value: viewModalRecord.itmoSerial || "-" },
                 { label: "Current Status", value: t(viewModalRecord.currentStatus) },
                 { label: "No. of Credits", value: addCommSep(String(viewModalRecord.creditBalance)) },
                 { label: "Project Issued to", value: viewModalRecord.projectName },

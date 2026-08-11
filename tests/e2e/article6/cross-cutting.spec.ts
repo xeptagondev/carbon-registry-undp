@@ -130,7 +130,6 @@ test.describe("Article 6.2 - Cross-cutting Integration", () => {
       const ca = await createCooperativeApproach(apiDna, {
         title: caTitle,
         participatingParties: ["NG", "CH"],
-        hostParty: "NG",
         description: `Flagship CA ${suffix}`,
         expectedMitigationOutcomes: "250000",
         environmentalIntegrityAssessment: "Baseline conservatively set",
@@ -357,7 +356,6 @@ test.describe("Article 6.2 - Cross-cutting Integration", () => {
         {
           title: `PD Forbidden ${uniqueSuffix()}`,
           participatingParties: ["NG", "CH"],
-          hostParty: "NG",
         }
       );
       expect(createRes.ok()).toBe(false);
@@ -429,7 +427,6 @@ test.describe("Article 6.2 - Cross-cutting Integration", () => {
         {
           title: `IC Forbidden ${uniqueSuffix()}`,
           participatingParties: ["NG", "CH"],
-          hostParty: "NG",
         }
       );
       expect(createRes.ok()).toBe(false);

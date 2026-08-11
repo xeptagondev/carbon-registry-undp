@@ -423,11 +423,20 @@ export class CreditTransactionsManagementService {
    *    OTHER. VOLUNTARY_CANCELLATION / OMGE_CANCELLATION are always
    *    allowed regardless of purpose, for both MO and ITMO.
    *  - For an ITMO first-transfer retirement, resolves the destination
-   *    country from the block's ITMO-authorized cooperative approach
-   *    (its participating parties minus the host party) — a single
-   *    counterparty is stamped automatically, several require the
-   *    caller to name one. FIRST_TRANSFER_FOR_OIMP additionally
-   *    requires naming one of the CA's Active authorized entities.
+   *    country from a pool of candidate parties on the block's
+   *    ITMO-authorized cooperative approach — a single candidate is
+   *    stamped automatically, several require the caller to name one.
+   *    FIRST_TRANSFER_TOWARDS_NDC's pool is the CA's participating
+   *    parties minus the host (guaranteed non-empty — ITMO
+   *    authorization already rejects host-only CAs for NDC purpose,
+   *    see createItmoAuthRequest); an empty pool here is defensive
+   *    only. FIRST_TRANSFER_FOR_OIMP's pool is the CA's full
+   *    participating-parties list *including* the host — OIMP never
+   *    requires crossing a border, so the host is always a valid
+   *    acquiring "country" alongside any real counterparties.
+   *    FIRST_TRANSFER_FOR_OIMP additionally requires naming one of the
+   *    CA's Active authorized entities incorporated in the resolved
+   *    country.
    */
   private async resolveRetirementUseFields(
     creditBlock: CreditBlocksEntity,
@@ -526,8 +535,21 @@ export class CreditTransactionsManagementService {
     const counterparties = (ca.participatingParties || []).filter(
       (p) => p !== ca.hostParty
     );
+    // OIMP never requires a foreign counterparty — the host itself is
+    // always a valid acquiring "country" for OIMP, alongside any real
+    // counterparties. NDC's pool stays counterparties-only, since a
+    // domestic NDC use is USE_TOWARDS_NDC (MO-only), not a first
+    // transfer.
+    const countryPool =
+      subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP
+        ? ca.participatingParties || []
+        : counterparties;
+
     let resolvedCountry: string;
-    if (counterparties.length === 0) {
+    if (countryPool.length === 0) {
+      // Only reachable for NDC in practice (OIMP's pool always
+      // includes the host, so it's never empty) — kept defensive in
+      // case a CA's participatingParties is ever malformed.
       throw new HttpException(
         this.helperService.formatReqMessagesString(
           "creditTransaction.retireCaHasNoCounterparty",
@@ -535,8 +557,8 @@ export class CreditTransactionsManagementService {
         ),
         HttpStatus.BAD_REQUEST
       );
-    } else if (counterparties.length === 1) {
-      resolvedCountry = counterparties[0];
+    } else if (countryPool.length === 1) {
+      resolvedCountry = countryPool[0];
     } else {
       if (!dto.country) {
         throw new HttpException(
@@ -547,7 +569,7 @@ export class CreditTransactionsManagementService {
           HttpStatus.BAD_REQUEST
         );
       }
-      if (!counterparties.includes(dto.country)) {
+      if (!countryPool.includes(dto.country)) {
         throw new HttpException(
           this.helperService.formatReqMessagesString(
             "creditTransaction.retireCountryInvalid",
@@ -575,6 +597,10 @@ export class CreditTransactionsManagementService {
           id: dto.authorizedEntityId,
           cooperativeApproachId: ca.cooperativeApproachId,
           status: AuthorizedEntityStatus.ACTIVE,
+          // Must be incorporated in the resolved acquiring country —
+          // an OIMP entity from a different counterparty isn't valid
+          // for this particular transfer.
+          countryOfIncorporation: resolvedCountry,
         },
       });
       if (!entity) {
@@ -800,6 +826,25 @@ export class CreditTransactionsManagementService {
               itmoAuthRequestDto.cooperativeApproachId,
               cooperativeApproach.status,
             ]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      // A cooperative approach with no counterparty besides the host
+      // has nowhere for an NDC first transfer to go — it can only be
+      // used to authorize ITMOs for OIMP/Other purposes. An omitted
+      // purpose defaults to NDC downstream (resolveRetirementUseFields),
+      // so it's treated as NDC here too.
+      const authorizationPurpose =
+        itmoAuthRequestDto.authorizationPurpose ?? AuthorizationPurpose.NDC;
+      const hasCounterparty = cooperativeApproach.participatingParties.some(
+        (p) => p !== cooperativeApproach.hostParty
+      );
+      if (authorizationPurpose === AuthorizationPurpose.NDC && !hasCounterparty) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.itmoAuthNdcRequiresCounterparty",
+            [itmoAuthRequestDto.cooperativeApproachId]
           ),
           HttpStatus.BAD_REQUEST
         );

@@ -197,25 +197,25 @@ const getLogDescription = (log: any, t: any) => {
     case ProjectActivityStage.RETIRE_REQUESTED:
       return formatString(
         "slcfProgrammeTimeline:retireRequestedDescription",
-        [log.data.amount, log.fromCompanyName, log.data.retirementType],
+        [log.data.amount, log.fromCompanyName, (log.data.subType ?? log.data.retirementType)],
         t
       );
     case ProjectActivityStage.RETIRE_CANCELLED:
       return formatString(
         "slcfProgrammeTimeline:retirementCancelledDescription",
-        [log.data.retirementType, log.data.amount, log.fromCompanyName],
+        [(log.data.subType ?? log.data.retirementType), log.data.amount, log.fromCompanyName],
         t
       );
     case ProjectActivityStage.RETIRE_APPROVED:
       return formatString(
         "slcfProgrammeTimeline:retirementApprovedDescription",
-        [log.data.retirementType, log.data.amount, log.fromCompanyName],
+        [(log.data.subType ?? log.data.retirementType), log.data.amount, log.fromCompanyName],
         t
       );
     case ProjectActivityStage.RETIRE_REJECTED:
       return formatString(
         "slcfProgrammeTimeline:retirementRejectedDescription",
-        [log.data.retirementType, log.data.amount, log.fromCompanyName],
+        [(log.data.subType ?? log.data.retirementType), log.data.amount, log.fromCompanyName],
         t
       );
     default:

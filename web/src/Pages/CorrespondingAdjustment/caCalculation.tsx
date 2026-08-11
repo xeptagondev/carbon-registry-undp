@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
 import {
@@ -19,10 +19,41 @@ const CaCalculation = () => {
   const { post } = useConnection();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [cooperativeApproaches, setCooperativeApproaches] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [casLoading, setCasLoading] = useState(false);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    const loadCas = async () => {
+      setCasLoading(true);
+      try {
+        const response = await post("national/cooperativeApproach/query", {
+          page: 1,
+          size: 200,
+          sort: { key: "createdTime", order: "DESC" },
+        });
+        const rows: any[] = response?.data ?? [];
+        setCooperativeApproaches(
+          rows.map((ca) => ({
+            value: ca.cooperativeApproachId,
+            label: `${ca.cooperativeApproachId} — ${ca.title} (${ca.status})`,
+          }))
+        );
+      } catch {
+        // the calculation can still proceed registry-wide without a CA filter
+      } finally {
+        setCasLoading(false);
+      }
+    };
+    loadCas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onFinish = async (values: any) => {
     setLoading(true);
+    setResult(null);
     try {
       const response = await post(
         "national/correspondingAdjustment/calculate",
@@ -33,7 +64,12 @@ const CaCalculation = () => {
         message.success("CA calculation completed");
       }
     } catch (error) {
-      message.error("Failed to calculate corresponding adjustment");
+      const serverMsg = (error as any)?.message;
+      message.error(
+        serverMsg && typeof serverMsg === "string"
+          ? serverMsg
+          : "Failed to calculate corresponding adjustment"
+      );
     } finally {
       setLoading(false);
     }
@@ -80,6 +116,7 @@ const CaCalculation = () => {
                 name="ndcType"
                 label="NDC Type"
                 rules={[{ required: true }]}
+                extra="Must match the NDC target defined for the selected year."
               >
                 <Select placeholder="Select NDC type">
                   <Select.Option value="SingleYear">
@@ -111,23 +148,23 @@ const CaCalculation = () => {
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item name="ndcTarget" label="NDC Target (tCO2eq)">
-                <InputNumber
-                  style={{ width: "100%" }}
-                  placeholder="e.g. 500000"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={24}>
-            <Col span={12}>
               <Form.Item
                 name="cooperativeApproachId"
-                label="Cooperative Approach ID (optional)"
+                label="Cooperative Approach (optional)"
               >
-                <Select allowClear placeholder="All approaches">
-                  {/* Populated dynamically in a full implementation */}
-                </Select>
+                <Select
+                  allowClear
+                  showSearch
+                  loading={casLoading}
+                  placeholder="All approaches"
+                  options={cooperativeApproaches}
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toString()
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -186,7 +223,7 @@ const CaCalculation = () => {
               <Descriptions.Item label="Acquired ITMOs">
                 {Number(result.acquiredItmos).toFixed(2)}
               </Descriptions.Item>
-              <Descriptions.Item label="Used Towards NDC">
+              <Descriptions.Item label="Used Towards NDC (domestic + international)">
                 {Number(result.usedTowardsNdcItmos).toFixed(2)}
               </Descriptions.Item>
               <Descriptions.Item label="Cancelled ITMOs">
@@ -195,13 +232,32 @@ const CaCalculation = () => {
               <Descriptions.Item label="Emissions Balance">
                 {Number(result.emissionsBalance).toFixed(2)}
               </Descriptions.Item>
+              {result.ndcType === "MultiYear" && (
+                <>
+                  <Descriptions.Item label="Cumulative First Transferred (period to date)">
+                    {result.cumulativeFirstTransferred !== null &&
+                    result.cumulativeFirstTransferred !== undefined
+                      ? Number(result.cumulativeFirstTransferred).toFixed(2)
+                      : "N/A"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Indicative Annual Adjustment">
+                    {result.indicativeAnnualAdjustment !== null &&
+                    result.indicativeAnnualAdjustment !== undefined
+                      ? Number(result.indicativeAnnualAdjustment).toFixed(2)
+                      : "N/A"}
+                  </Descriptions.Item>
+                </>
+              )}
               <Descriptions.Item label="Adjusted Emissions">
-                {result.adjustedEmissions !== null
+                {result.adjustedEmissions !== null &&
+                result.adjustedEmissions !== undefined
                   ? Number(result.adjustedEmissions).toFixed(2)
                   : "N/A"}
               </Descriptions.Item>
-              <Descriptions.Item label="NDC Target">
-                {result.ndcTarget || "N/A"}
+              <Descriptions.Item label="NDC Target (resolved)">
+                {result.ndcTarget !== null && result.ndcTarget !== undefined
+                  ? result.ndcTarget
+                  : "N/A"}
               </Descriptions.Item>
             </Descriptions>
           </div>

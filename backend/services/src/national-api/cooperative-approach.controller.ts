@@ -60,6 +60,16 @@ export class CooperativeApproachController {
   @ApiBearerAuth()
   @UseGuards(
     JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Read, CooperativeApproach)
+  )
+  @Get("hostParty")
+  getHostParty() {
+    return this.cooperativeApproachService.getHostParty();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
     PoliciesGuardEx(true, Action.Update, CooperativeApproach)
   )
   @Put("update")

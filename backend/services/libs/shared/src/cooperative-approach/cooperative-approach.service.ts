@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { ConfigService } from "@nestjs/config";
 import { Repository } from "typeorm";
 import { CooperativeApproach } from "../entities/cooperative.approach.entity";
 import { InitialReport } from "../entities/initial.report.entity";
@@ -18,6 +19,7 @@ import { DataResponseDto } from "../dto/data.response.dto";
 import { HelperService } from "../util/helpers.service";
 import { CounterService } from "../util/counter.service";
 import { CounterType } from "../util/counter.type.enum";
+import { CountryService } from "../util/country.service";
 import { User } from "../entities/user.entity";
 
 // Allowed manual status transitions. Draft -> Active carries the extra
@@ -51,7 +53,9 @@ export class CooperativeApproachService {
     @InjectRepository(CaAuthorizedEntity)
     private authorizedEntityRepo: Repository<CaAuthorizedEntity>,
     private readonly helperService: HelperService,
-    private readonly counterService: CounterService
+    private readonly counterService: CounterService,
+    private readonly countryService: CountryService,
+    private readonly configService: ConfigService
   ) {}
 
   // Cooperative approaches are managed by the government (DNA) Admin /
@@ -69,6 +73,19 @@ export class CooperativeApproachService {
         HttpStatus.FORBIDDEN
       );
     }
+  }
+
+  // The registry's own country — always the CA's host party and the
+  // authorizing party for any authorized entity added under it.
+  private get hostParty(): string {
+    return this.configService.get("systemCountry");
+  }
+
+  async getHostParty(): Promise<DataResponseDto> {
+    return new DataResponseDto(HttpStatus.OK, {
+      alpha2: this.hostParty,
+      name: await this.countryService.getCountryName(this.hostParty),
+    });
   }
 
   async create(
@@ -94,8 +111,12 @@ export class CooperativeApproachService {
     const approach = new CooperativeApproach();
     approach.cooperativeApproachId = `CA-${id}`;
     approach.title = dto.title;
-    approach.participatingParties = dto.participatingParties;
-    approach.hostParty = dto.hostParty;
+    // Host party is derived server-side and always included among the
+    // participating parties — never taken from the client.
+    approach.hostParty = this.hostParty;
+    approach.participatingParties = Array.from(
+      new Set([this.hostParty, ...dto.participatingParties])
+    );
     approach.description = dto.description;
     approach.startDate = dto.startDate;
     approach.endDate = dto.endDate;
@@ -188,8 +209,36 @@ export class CooperativeApproachService {
     }
 
     if (dto.title !== undefined) approach.title = dto.title;
-    if (dto.participatingParties !== undefined)
-      approach.participatingParties = dto.participatingParties;
+    if (dto.participatingParties !== undefined) {
+      // The host party can never be dropped from the set.
+      const nextParties = Array.from(
+        new Set([this.hostParty, ...dto.participatingParties])
+      );
+      const removed = approach.participatingParties.filter(
+        (p) => !nextParties.includes(p)
+      );
+      if (removed.length > 0) {
+        const activeEntities = await this.authorizedEntityRepo.find({
+          where: {
+            cooperativeApproachId: approach.cooperativeApproachId,
+            status: AuthorizedEntityStatus.ACTIVE,
+          },
+        });
+        const stillInUse = activeEntities.find((e) =>
+          removed.includes(e.countryOfIncorporation)
+        );
+        if (stillInUse) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "cooperativeApproach.participatingPartyInUse",
+              [stillInUse.countryOfIncorporation, approach.cooperativeApproachId]
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+      }
+      approach.participatingParties = nextParties;
+    }
     if (dto.description !== undefined) approach.description = dto.description;
     if (dto.startDate !== undefined) approach.startDate = dto.startDate;
     if (dto.endDate !== undefined) approach.endDate = dto.endDate;
@@ -311,11 +360,23 @@ export class CooperativeApproachService {
         HttpStatus.BAD_REQUEST
       );
     }
+    if (!approach.participatingParties.includes(dto.countryOfIncorporation)) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "cooperativeApproach.countryOfIncorporationNotParticipating",
+          [dto.countryOfIncorporation, dto.cooperativeApproachId]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
     const entity = new CaAuthorizedEntity();
     entity.cooperativeApproachId = dto.cooperativeApproachId;
     entity.entityName = dto.entityName;
     entity.entityIdentifier = dto.entityIdentifier;
-    entity.authorizingParty = dto.authorizingParty;
+    // Authorizing party is always the registry's own (host) country —
+    // never client-supplied.
+    entity.authorizingParty = this.hostParty;
+    entity.countryOfIncorporation = dto.countryOfIncorporation;
     entity.authorizationDate = dto.authorizationDate;
     entity.authorizationReference = dto.authorizationReference;
     entity.status = AuthorizedEntityStatus.ACTIVE;

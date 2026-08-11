@@ -61,10 +61,13 @@ const CreateInitialReport = () => {
     const loadCas = async () => {
       setCasLoading(true);
       try {
+        // Initial reports can only be created for Draft cooperative
+        // approaches.
         const response = await post("national/cooperativeApproach/query", {
           page: 1,
           size: 200,
           sort: { key: "createdTime", order: "DESC" },
+          filterAnd: [{ key: "status", operation: "=", value: "Draft" }],
         });
         const rows: CooperativeApproach[] = response?.data ?? [];
         setCas(rows);
@@ -194,9 +197,9 @@ const CreateInitialReport = () => {
                           "Cooperative approach not found in the loaded list — refresh and try again."
                         );
                       }
-                      if (ca.status !== "Active") {
+                      if (ca.status !== "Draft") {
                         throw new Error(
-                          `Cooperative approach ${value} is ${ca.status}; only Active cooperative approaches accept a new initial report.`
+                          `Cooperative approach ${value} is ${ca.status}; only Draft cooperative approaches accept a new initial report.`
                         );
                       }
                       // Preflight: an IR (Draft or Submitted) for this CA
@@ -250,13 +253,13 @@ const CreateInitialReport = () => {
           {selectedCa && (
             <Row gutter={24} style={{ marginBottom: 16 }}>
               <Col span={24}>
-                {selectedCa.status !== "Active" && (
+                {selectedCa.status !== "Draft" && (
                   <Alert
                     type="error"
                     showIcon
                     style={{ marginBottom: 12 }}
                     message={`Cooperative approach ${selectedCa.cooperativeApproachId} is ${selectedCa.status}.`}
-                    description="An initial report can only be generated for an Active cooperative approach. Reactivate the CA or pick a different one."
+                    description="An initial report can only be generated for a Draft cooperative approach. Pick a different one, or submit its existing initial report to move it toward Active."
                   />
                 )}
                 <Descriptions
@@ -482,7 +485,7 @@ const CreateInitialReport = () => {
                 htmlType="submit"
                 loading={loading}
                 disabled={
-                  !!selectedCa && selectedCa.status !== "Active"
+                  !!selectedCa && selectedCa.status !== "Draft"
                 }
               >
                 Generate Draft
