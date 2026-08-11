@@ -67,7 +67,7 @@ export const CreditBalancePage = () => {
   };
 
   const orgFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.ORGANIZATION_NAMES,
+    endpoint: API_PATHS.ORGANIZATION_DETAILS,
     id: 'organizations',
     mode: 'multiple',
     placeholder: t('selectOrganization'),
@@ -76,7 +76,7 @@ export const CreditBalancePage = () => {
     sortKey: 'name',
     extraFilters: [
       { key: 'companyRole', operation: '=', value: CompanyRole.PROJECT_DEVELOPER },
-      { key: 'state', operation: '=', value: '1' },
+      { key: 'state', operation: 'in', value: ['0', '1'] },
     ],
     selectedValues: (filterValues.organizations as FilterValue[]) ?? [],
   });
