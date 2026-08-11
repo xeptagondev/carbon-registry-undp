@@ -8,7 +8,7 @@ import { CompanyService } from "../company/company.service";
 import { ProgrammeLedgerService } from "../programme-ledger/programme-ledger.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager, In, Repository } from "typeorm";
 import { TxType } from "../enum/txtype.enum";
 import { plainToClass } from "class-transformer";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
@@ -1537,10 +1537,85 @@ export class CreditTransactionsManagementService {
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
-    return new DataListResponseDto(
-      resp.length > 0 ? resp[0] : undefined,
-      resp.length > 1 ? resp[1] : undefined
+    const rows = resp.length > 0 ? resp[0] : [];
+    const total = resp.length > 1 ? resp[1] : undefined;
+    if (!rows || rows.length === 0) {
+      return new DataListResponseDto(rows, total);
+    }
+    const enrichedRows = await this.enrichItmoAuthorizationRows(rows);
+    return new DataListResponseDto(enrichedRows, total);
+  }
+
+  /**
+   * ITMO Authorizations enrichment: attach the human CA reference number
+   * and the ITMO serial actually assigned to this specific authorization
+   * action.
+   *
+   * itmoSerial is deliberately NOT sourced from a join to
+   * credit_blocks_entity — that block row keeps getting re-split by
+   * later, unrelated retirements/transfers, so a live join drifts away
+   * from what this authorization actually generated. ct.serialNumber,
+   * by contrast, is stamped once on approval (re-pointed at the child
+   * block on a partial-authorization split — see
+   * handleTransactionRecords' TxType.ITMO_AUTH branch) and never
+   * touched again, so it's always the exact narrow range this action
+   * covers. Every non-CA input getItmoSerial needs (projectId,
+   * blockStart, blockEnd, vintage) is a pure function of that frozen
+   * serial string — the same derivation programmeLedgerService uses at
+   * approval time (see itmoAuthRequestAction, both the whole-block and
+   * partial-split branches) — so recomputing it here reproduces the
+   * real value exactly, permanently, with no risk of drift.
+   */
+  private async enrichItmoAuthorizationRows(
+    rows: CreditBlockItmoAuthorizationsViewEntity[]
+  ): Promise<
+    Array<
+      CreditBlockItmoAuthorizationsViewEntity & {
+        caReferenceNumber: string | null;
+        itmoSerial: string | null;
+      }
+    >
+  > {
+    const cooperativeApproachIds = Array.from(
+      new Set(
+        rows
+          .map((row) => row.cooperativeApproachId)
+          .filter((id): id is string => !!id)
+      )
     );
+    const cooperativeApproaches = cooperativeApproachIds.length
+      ? await this.cooperativeApproachRepo.find({
+          where: { cooperativeApproachId: In(cooperativeApproachIds) },
+        })
+      : [];
+    const caByid = new Map(
+      cooperativeApproaches.map((ca) => [ca.cooperativeApproachId, ca])
+    );
+
+    return rows.map((row) => {
+      const ca = row.cooperativeApproachId
+        ? caByid.get(row.cooperativeApproachId)
+        : undefined;
+      const caReferenceNumber = ca?.caReferenceNumber ?? null;
+      const itmoSerial =
+        row.status === CreditTransactionStatusEnum.COMPLETED &&
+        caReferenceNumber
+          ? this.serialNumberManagementService.getItmoSerial(
+              caReferenceNumber,
+              this.serialNumberManagementService.getProjectIdFromSerial(
+                row.serialNumber
+              ),
+              this.serialNumberManagementService.getBlockRange(
+                row.serialNumber
+              ).start,
+              this.serialNumberManagementService.getBlockRange(
+                row.serialNumber
+              ).end,
+              this.serialNumberManagementService.getVintage(row.serialNumber)
+            )
+          : null;
+      return { ...row, caReferenceNumber, itmoSerial };
+    });
   }
 
   public async queryIssuances(
