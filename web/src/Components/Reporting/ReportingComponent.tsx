@@ -25,14 +25,6 @@ import { API_PATHS } from "../../Config/apiConfig";
 import { AEF_CONFIG } from "../../Config/aefConfig";
 import { Loading } from "../Loading/loading";
 import { TimedPageInfoTitle } from "../Common/TimedPageInfoTitle/TimedPageInfoTitle";
-import {
-  AEF_V2_DUMMY_ACTIONS,
-  AEF_V2_DUMMY_AUTHORIZATIONS,
-  AEF_V2_DUMMY_AUTHORIZED_ENTITIES,
-  AEF_V2_DUMMY_HOLDINGS,
-  AEF_V2_DUMMY_SUBMISSIONS,
-  AEF_V2_LAST_SNAPSHOT_YEAR,
-} from "./aefV2DummyData";
 
 /**
  * AEF V2 reporting — the five tables of Decision 4/CMA.6, Annex II.
@@ -93,8 +85,11 @@ const ReportingComponent = (props: { translator: i18n }) => {
    * Holdings for a year that has not been snapshotted are live and still
    * moving. They must not be presented identically to a filed snapshot — that
    * is how a half-year balance gets mistaken for a year-end one.
+   *
+   * TODO: read this off the AEF V2 Holdings response (`provisional`) once the
+   * backend lands. Until then, the current year is the only one assumed open.
    */
-  const holdingsProvisional = reportedYear > AEF_V2_LAST_SNAPSHOT_YEAR;
+  const holdingsProvisional = reportedYear >= moment().year();
 
   const setTable = (type: REPORT_TYPES, patch: Partial<TableState>) =>
     setTableState((prev) => ({ ...prev, [type]: { ...prev[type], ...patch } }));
@@ -105,23 +100,16 @@ const ReportingComponent = (props: { translator: i18n }) => {
   /**
    * TODO: replace with the AEF V2 query endpoint once the backend lands.
    *
-   * Submission is filtered to the selected year — one row — while the other
-   * tables return everything the fixture holds.
+   * Tables are empty until then — there is no live data source yet for any of
+   * the five.
    */
   const rowsFor = (type: REPORT_TYPES): Record<string, unknown>[] => {
     switch (type) {
-      case REPORT_TYPES.SUBMISSION: {
-        const record = AEF_V2_DUMMY_SUBMISSIONS[reportedYear];
-        return record ? [record] : [];
-      }
+      case REPORT_TYPES.SUBMISSION:
       case REPORT_TYPES.AUTHORIZATIONS:
-        return AEF_V2_DUMMY_AUTHORIZATIONS;
       case REPORT_TYPES.ACTIONS:
-        return AEF_V2_DUMMY_ACTIONS;
       case REPORT_TYPES.HOLDINGS:
-        return AEF_V2_DUMMY_HOLDINGS;
       case REPORT_TYPES.AUTHORIZED_ENTITIES:
-        return AEF_V2_DUMMY_AUTHORIZED_ENTITIES;
       default:
         return [];
     }
