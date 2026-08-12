@@ -8,8 +8,10 @@ import { AccountType } from "../../enum/account.type.enum";
 import { CreditBlocksEntity } from "../../entities/credit.blocks.entity";
 import { ProjectEntity } from "../../entities/projects.entity";
 import { SerialNumberManagementService } from "../../serial-number-management/serial-number-management.service";
+import { resolvePartyItmoRegistryId } from "../aef-v2-defaults.factory";
 import { AEF_SUBMISSION_DEFAULTS } from "../aef-v2.tokens";
 import { mapCreditBlockToAefBlockFields } from "../mappers/aef-block.mapper";
+import { AEF_V2_T4_HOLDINGS_ALWAYS_NA } from "../mappers/aef-code.maps";
 
 /**
  * Computes Table 4 holdings from this registry's own `CreditBlocksEntity`.
@@ -66,7 +68,10 @@ export class RegistryHoldingsProvider implements HoldingsProvider {
 
     const ctx = {
       party: this.defaults.aefT1SubmissionParty,
-      partyItmoRegistryId: this.configService.get<string>("AEF_V2.partyItmoRegistryId"),
+      partyItmoRegistryId: resolvePartyItmoRegistryId(
+        this.configService,
+        this.defaults.aefT1SubmissionParty
+      ),
       defaultMitigationType: this.configService.get<string>("AEF_V2.defaultMitigationType"),
     };
 
@@ -94,6 +99,7 @@ export class RegistryHoldingsProvider implements HoldingsProvider {
         aefT4HoldingsQuantityTCo2: fields.quantityTCo2,
         aefT4HoldingsMitigationType: fields.mitigationType,
         aefT4HoldingsVintageYear: fields.vintageYear,
+        ...AEF_V2_T4_HOLDINGS_ALWAYS_NA,
         projectId: fields.projectId,
         unitId: fields.unitId,
       });

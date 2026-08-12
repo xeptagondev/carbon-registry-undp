@@ -80,13 +80,23 @@ describe("mapItmoAuthorizationToAefAuthorization", () => {
     expect(result.aefT2AuthorizationsActivityType).toBe("Agriculture");
   });
 
-  it("leaves the activity type blank for a sectoral scope with no confident mapping", () => {
+  it("maps a sectoral scope with no confident 1:1 fit to the registry-extension Other value", () => {
     const result = mapItmoAuthorizationToAefAuthorization(
-      baseInput({ project: { sector: "ENERGY", sectoralScope: "ENERGY_INDUSTRIES", refId: "P0001" } }),
+      baseInput({ project: { sector: "ENERGY", sectoralScope: "NOT_APPLICABLE", refId: "P0001" } }),
       "01/01/2026"
     );
 
-    expect(result.aefT2AuthorizationsActivityType).toBeUndefined();
+    expect(result.aefT2AuthorizationsActivityType).toBe("Other");
+  });
+
+  it("falls back to Other for a sector/scope not in the registry enum", () => {
+    const result = mapItmoAuthorizationToAefAuthorization(
+      baseInput({ project: { sector: "SOMETHING_UNKNOWN", sectoralScope: "SOMETHING_UNKNOWN", refId: "P0001" } }),
+      "01/01/2026"
+    );
+
+    expect(result.aefT2AuthorizationsSector).toBe("Other");
+    expect(result.aefT2AuthorizationsActivityType).toBe("Other");
   });
 
   it("sets the static fields the registry does not resolve from real data", () => {
@@ -101,7 +111,7 @@ describe("mapItmoAuthorizationToAefAuthorization", () => {
     expect(result.aefT2AuthorizationsAuthorizationTerms).toBe(
       "Cannot make modifications to authorization conditions"
     );
-    expect(result.aefT2AuthorizationsAuthorizationDocumentation).toBe("NA");
+    expect(result.aefT2AuthorizationsAuthorizationDocumentation).toBeUndefined();
     expect(result.aefT2AuthorizationsAdditionalInformation).toBe("NA");
   });
 

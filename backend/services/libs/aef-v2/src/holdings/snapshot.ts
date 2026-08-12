@@ -231,6 +231,18 @@ export async function getHoldingsForYear(
     }
   }
 
+  // No frozen snapshot exists for this year. Only the currently open year has
+  // a meaningful "live" figure to fall back to — a past year that was never
+  // snapshotted (nothing was ever tracked, or the system started after it
+  // ended) has no true holdings to report, and a future year hasn't happened
+  // yet. Falling through unconditionally here used to return *today's* live
+  // holdings mislabeled as whatever past/future year was asked for, which
+  // doesn't match Submission/Authorizations/Actions — they already return
+  // nothing for a year with no Submission record.
+  if (year !== currentYear(clock)) {
+    return { reportedYear: year, rows: [], provisional: false };
+  }
+
   const live = await getCurrentYearHoldings(provider, year, clock);
   return { reportedYear: year, rows: live.rows, provisional: true };
 }

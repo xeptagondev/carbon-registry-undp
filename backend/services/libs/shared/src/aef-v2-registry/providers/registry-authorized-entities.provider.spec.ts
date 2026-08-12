@@ -1,4 +1,5 @@
 import { AuthorizedEntityStatus } from "../../enum/authorized.entity.status.enum";
+import { NOT_APPLICABLE } from "../mappers/aef-code.maps";
 import { RegistryAuthorizedEntitiesProvider } from "./registry-authorized-entities.provider";
 
 // The exclusion/inclusion behaviour of the WHERE clause itself can only be
@@ -101,5 +102,16 @@ describe("RegistryAuthorizedEntitiesProvider", () => {
     expect(rows[0].aefT5AuthorizedEntitiesChangeConditions).toBe(
       "Entity can be set to Active/Inactive by authorities."
     );
+  });
+
+  it("marks Additional explanatory information NA — this registry has nothing further to add", async () => {
+    const { provider } = buildProvider([entityWithDate]);
+
+    const rows = await provider.getAuthorizedEntities({
+      reportedYear: 2025,
+      asOf: new Date("2025-12-31T23:59:59.999Z"),
+    });
+
+    expect(rows[0].aefT5AuthorizedEntitiesAdditionalInformation).toBe(NOT_APPLICABLE);
   });
 });

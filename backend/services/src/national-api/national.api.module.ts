@@ -15,7 +15,6 @@ import { ProjectManagementController } from "./project-management.controller";
 import { DocumentManagementController } from "./document.controller";
 import { AnalyticsController } from "./analytics.controller";
 import { CreditTransactionsManagementController } from "./credit.transactions.management.controller";
-import { ReportsManagementController } from "./reports.management.controller";
 import { AefV2Controller } from "./aef-v2.controller";
 import { AefV2SchedulerService } from "./aef-v2.scheduler";
 import { CooperativeApproachController } from "./cooperative-approach.controller";
@@ -45,7 +44,6 @@ import { AdminController } from "./admin.controller";
     DocumentManagementController,
     AnalyticsController,
     CreditTransactionsManagementController,
-    ReportsManagementController,
     AefV2Controller,
     CooperativeApproachController,
     CorrespondingAdjustmentController,

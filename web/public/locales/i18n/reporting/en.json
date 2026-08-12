@@ -24,8 +24,9 @@
   "statusUNDER_REVIEW": "Under review",
   "statusSUPERSEDED": "Superseded",
   "carpPending": "Populated by CARP",
+  "notApplicable": "NA",
   "carpPopulatedHint": "This field is populated by the CARP and must be left empty on submission.",
-  "notYetSubmitted": "Not yet submitted",
+  "notYetSubmitted": "Not Submitted",
 
   "actionsColumn": "ACTIONS",
   "cancel": "Cancel",

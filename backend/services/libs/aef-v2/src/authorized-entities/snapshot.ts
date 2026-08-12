@@ -251,6 +251,17 @@ export async function getAuthorizedEntitiesForYear(
     }
   }
 
+  // Mirrors the fix in getHoldingsForYear (holdings/snapshot.ts) — only the
+  // currently open year has a meaningful "live" figure to fall back to. A
+  // past year with no versions at all (nothing was ever tracked, or the
+  // system started after it ended) has no true entity list to report, and a
+  // future year hasn't happened yet; falling through unconditionally here
+  // used to return *today's* live entities mislabeled as whatever
+  // past/future year was asked for.
+  if (year !== currentYear(clock)) {
+    return { reportedYear: year, rows: [], provisional: false };
+  }
+
   const live = await getCurrentYearAuthorizedEntities(provider, year, clock);
   return { reportedYear: year, rows: live.rows, provisional: true };
 }

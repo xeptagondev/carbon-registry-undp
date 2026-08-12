@@ -49,13 +49,13 @@ describe("CreditTransactionsManagementService", () => {
       {} as any, // creditBlockBalancesViewEntityRepository
       creditBlockTransfersViewEntityRepository,
       {} as any, // creditBlockRetirementsViewEntityRepository
+      {} as any, // creditBlockItmoAuthorizationsViewEntityRepository
       creditBlockExplorerViewEntityRepository,
       creditBlockIssuancesViewEntityRepository,
       {} as any, // creditBlockOrgBalancesViewEntityRepository
       {} as any, // creditBlockProjectBalancesViewEntityRepository
       {} as any, // creditBlockProjectHolderBalancesViewEntityRepository
       creditBlockOrgTransactionsViewEntityRepository,
-      {} as any, // aefReportManagementService
       {} as any, // cooperativeApproachRepo
       {} as any, // caAuthorizedEntityRepo
       {} as any, // serialNumberManagementService

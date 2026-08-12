@@ -5,7 +5,12 @@ import { AuthorizedEntityStatus } from "../enum/authorized.entity.status.enum";
 import { CreditTransactionStatusEnum } from "../enum/credit.transaction.status.enum";
 import { CreditTransactionSubTypesEnum } from "../enum/credit.transaction.sub.types.enum";
 import { TxType } from "../enum/txtype.enum";
+import { CaAuthorizedEntity } from "../entities/ca.authorized.entity.entity";
+import { CooperativeApproach } from "../entities/cooperative.approach.entity";
+import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
+import { ProjectEntity } from "../entities/projects.entity";
 import { AefV2WriteService } from "./aef-v2-write.service";
+import { NOT_APPLICABLE } from "./mappers/aef-code.maps";
 
 // AefV2WriteService is constructed by hand rather than through Nest's
 // TestingModule — its dependencies are all narrow, single-method surfaces
@@ -20,7 +25,6 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
     aefT1SubmissionNdcLastYear: 2030,
   };
   const clock = fixedClock(new Date("2026-06-01T12:00:00.000Z"));
-  const em = {} as EntityManager;
 
   const entity = {
     id: "entity-uuid-1",
@@ -80,19 +84,40 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
     };
     const storeFactory = { forManager: () => store };
 
+    // Stands in for the replicator's transactional EntityManager. Every
+    // repository read in the service must go through this (em.getRepository),
+    // never a separately-injected default-connection repo — that mismatch is
+    // the actual production bug this refactor fixes (a same-transaction
+    // status flip via em.update was invisible to a read through a different
+    // connection), so routing every repo through here is what makes this
+    // spec exercise the real code path instead of masking the bug the way
+    // the previous constructor-injected mocks did.
+    const em = {
+      getRepository: (target: unknown) => {
+        switch (target) {
+          case ProjectEntity:
+            return projectRepo;
+          case CreditTransactionsEntity:
+            return creditTransactionsRepo;
+          case CooperativeApproach:
+            return cooperativeApproachRepo;
+          case CaAuthorizedEntity:
+            return authorizedEntityRepo;
+          default:
+            throw new Error(`Unexpected entity in em.getRepository: ${String(target)}`);
+        }
+      },
+    } as unknown as EntityManager;
+
     const service = new AefV2WriteService(
       storeFactory as any,
       defaults,
       configService as any,
       serialNumberManagementService as any,
-      countryService as any,
-      projectRepo as any,
-      creditTransactionsRepo as any,
-      cooperativeApproachRepo as any,
-      authorizedEntityRepo as any
+      countryService as any
     );
 
-    return { service, creditTransactionsRepo, authorizedEntityRepo };
+    return { service, em, creditTransactionsRepo, authorizedEntityRepo };
   }
 
   function oimpCreditBlock(overrides: Partial<Record<string, unknown>> = {}) {
@@ -127,7 +152,7 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
 
   it("writes a Table 5 row in real time for an OIMP retirement, keyed consistently with Table 3", async () => {
     const store = new InMemoryAefStore(undefined, clock);
-    const { service, creditTransactionsRepo } = buildService(store);
+    const { service, em, creditTransactionsRepo } = buildService(store);
     creditTransactionsRepo.findOneBy.mockResolvedValue(oimpRetireTx());
 
     await service.recordCreditBlockEvent(oimpCreditBlock(), em);
@@ -152,11 +177,15 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
     expect(entities[0].aefT5AuthorizedEntitiesChangeConditions).toBe(
       "Entity can be set to Active/Inactive by authorities."
     );
+    // This registry has nothing further to add — never the entity's
+    // authorizationReference or an inactive-status note (both dropped;
+    // status is already carried by aefT5AuthorizedEntitiesConditions above).
+    expect(entities[0].aefT5AuthorizedEntitiesAdditionalInformation).toBe(NOT_APPLICABLE);
   });
 
   it("falls back to createdTime for a legacy entity with no authorizationDate", async () => {
     const store = new InMemoryAefStore(undefined, clock);
-    const { service, creditTransactionsRepo, authorizedEntityRepo } = buildService(store);
+    const { service, em, creditTransactionsRepo, authorizedEntityRepo } = buildService(store);
     authorizedEntityRepo.findOneBy.mockResolvedValue(legacyEntity);
     creditTransactionsRepo.findOneBy.mockResolvedValue(
       oimpRetireTx({ data: { country: "CH", authorizedEntityId: legacyEntity.id, cooperativeApproachId: "CA0004" } })
@@ -171,7 +200,7 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
 
   it("updates the same row rather than duplicating it on a second reference in the same year", async () => {
     const store = new InMemoryAefStore(undefined, clock);
-    const { service, creditTransactionsRepo } = buildService(store);
+    const { service, em, creditTransactionsRepo } = buildService(store);
     creditTransactionsRepo.findOneBy.mockResolvedValue(oimpRetireTx());
 
     await service.recordCreditBlockEvent(oimpCreditBlock({ creditBlockId: "block-1" }), em);
@@ -192,7 +221,7 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
 
   it("links the Table 2 and Table 5 rows via the circular FK when a Table 2 row exists", async () => {
     const store = new InMemoryAefStore(undefined, clock);
-    const { service, creditTransactionsRepo } = buildService(store);
+    const { service, em, creditTransactionsRepo } = buildService(store);
     creditTransactionsRepo.findOneBy.mockResolvedValue(oimpRetireTx());
 
     // Pre-seed the Table 2 row this authorization would already have, per
@@ -216,9 +245,9 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
     expect(t5.aefT2AuthorizationsId).toBe(t2.id);
   });
 
-  it("does not write a Table 5 row for an NDC first-transfer retirement", async () => {
+  it("does not write a Table 5 row for an NDC first-transfer retirement, and marks the OIMP-only fields NA", async () => {
     const store = new InMemoryAefStore(undefined, clock);
-    const { service, creditTransactionsRepo } = buildService(store);
+    const { service, em, creditTransactionsRepo } = buildService(store);
     creditTransactionsRepo.findOneBy.mockResolvedValue(
       oimpRetireTx({
         subType: CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC,
@@ -228,8 +257,59 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
 
     await service.recordCreditBlockEvent(oimpCreditBlock(), em);
 
+    const action = store.all("t3Actions")[0];
     expect(store.all("t5AuthorizedEntities")).toHaveLength(0);
-    expect(store.all("t3Actions")[0].aefT3ActionsUsingAuthorizedEntityId).toBeUndefined();
-    expect(store.all("t3Actions")[0].aefT3ActionsPurposeOfUseOimp).toBeUndefined();
+    // Only meaningful for OIMP — NA on an NDC row rather than left blank.
+    expect(action.aefT3ActionsUsingAuthorizedEntityId).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsPurposeOfUseOimp).toBe(NOT_APPLICABLE);
+    // Genuinely applicable to a first transfer — real values, unaffected.
+    expect(action.aefT3ActionsAcquiringPartyId).toBe("CHE");
+    expect(action.aefT3ActionsUsingParticipatingPartyId).toBe("CHE");
+    // Never populated by any retirement subtype.
+    expect(action.aefT3ActionsAdditionalInformation).toBe(NOT_APPLICABLE);
+  });
+
+  it("marks the transfer/use-only fields NA for a voluntary cancellation", async () => {
+    const store = new InMemoryAefStore(undefined, clock);
+    const { service, em, creditTransactionsRepo } = buildService(store);
+    creditTransactionsRepo.findOneBy.mockResolvedValue(
+      oimpRetireTx({
+        subType: CreditTransactionSubTypesEnum.VOLUNTARY_CANCELLATION,
+        // A cancellation never resolves a country or authorized entity —
+        // buildRetirementData only populates those for the two
+        // first-transfer subtypes.
+        data: {},
+      })
+    );
+
+    await service.recordCreditBlockEvent(oimpCreditBlock(), em);
+
+    const action = store.all("t3Actions")[0];
+    expect(store.all("t5AuthorizedEntities")).toHaveLength(0);
+    expect(action.aefT3ActionsAcquiringPartyId).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsUsingParticipatingPartyId).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsUsingAuthorizedEntityId).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsPurposeOfUseOimp).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsAdditionalInformation).toBe(NOT_APPLICABLE);
+  });
+
+  it("marks the transfer/use-only fields NA for an OMGE cancellation", async () => {
+    const store = new InMemoryAefStore(undefined, clock);
+    const { service, em, creditTransactionsRepo } = buildService(store);
+    creditTransactionsRepo.findOneBy.mockResolvedValue(
+      oimpRetireTx({
+        subType: CreditTransactionSubTypesEnum.OMGE_CANCELLATION,
+        data: {},
+      })
+    );
+
+    await service.recordCreditBlockEvent(oimpCreditBlock(), em);
+
+    const action = store.all("t3Actions")[0];
+    expect(action.aefT3ActionsAcquiringPartyId).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsUsingParticipatingPartyId).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsUsingAuthorizedEntityId).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsPurposeOfUseOimp).toBe(NOT_APPLICABLE);
+    expect(action.aefT3ActionsAdditionalInformation).toBe(NOT_APPLICABLE);
   });
 });
