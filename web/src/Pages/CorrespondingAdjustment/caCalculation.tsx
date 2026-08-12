@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
+import { TimedPageInfoTitle } from "../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle";
 import {
   Button,
   Col,
@@ -13,9 +15,11 @@ import {
   Tag,
   Alert,
 } from "antd";
+import "./caManagement.scss";
 
 const CaCalculation = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["common", "correspondingAdjust"]);
   const { post } = useConnection();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -76,25 +80,19 @@ const CaCalculation = () => {
   };
 
   return (
-    <div style={{ padding: "0 24px" }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: "1.4rem", fontWeight: 600 }}>
-          Calculate Corresponding Adjustment
-        </div>
-        <div style={{ fontSize: "0.875rem", color: "rgba(58,53,65,0.6)" }}>
-          Per Decision 2/CMA.3 Chapter III — Application of corresponding
-          adjustments
-        </div>
+    <div className="corresponding-adjustment-container">
+      <div className="title-bar">
+        <TimedPageInfoTitle
+          title={t("correspondingAdjust:calculateCorrespondingAdjustment")}
+          description={t(
+            "correspondingAdjust:calculateCorrespondingAdjustmentDesc"
+          )}
+          infoButtonLabel={t(
+            "correspondingAdjust:showCalculateCorrespondingAdjustmentDesc"
+          )}
+        />
       </div>
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 8,
-          padding: 24,
-          boxShadow:
-            "0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px rgba(0,0,0,0.14), 0px 1px 3px rgba(0,0,0,0.12)",
-        }}
-      >
+      <div className="content-card">
         <Form form={form} layout="vertical" onFinish={onFinish}>
           <Row gutter={24}>
             <Col span={6}>
