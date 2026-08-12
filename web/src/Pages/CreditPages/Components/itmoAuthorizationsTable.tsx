@@ -328,7 +328,7 @@ export const CreditItmoAuthorizationsTableComponent = (props: any) => {
       title: t(CreditItmoAuthColumns.DATE),
       key: "createdDate",
       sorter: true,
-      align: "left" as const,
+      align: "center" as const,
       render: (item: CreditItmoAuthorizationInterface) => {
         return (
           <span>
@@ -342,13 +342,9 @@ export const CreditItmoAuthorizationsTableComponent = (props: any) => {
     {
       title: t(CreditItmoAuthColumns.CREDITS),
       key: CreditItmoAuthColumns.CREDITS,
-      align: "left" as const,
+      align: "right" as const,
       render: (item: CreditItmoAuthorizationInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(item?.creditAmount))}
-          </span>
-        );
+        return <span>{addCommSep(String(item?.creditAmount))}</span>;
       },
     },
     {

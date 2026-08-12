@@ -281,7 +281,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
       title: t(CreditIssuanceColumns.ISSUANCE_DATE),
       key: "issuanceDate",
       sorter: true,
-      align: "left" as const,
+      align: "center" as const,
       render: (record: CreditIssuanceInterface) => {
         return <span>{moment(Number(record?.issuanceDate)).format("YYYY-MM-DD HH:mm:ss")}</span>;
       },
@@ -290,13 +290,9 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
       title: t(CreditIssuanceColumns.CREDITS),
       key: "creditAmount",
       sorter: true,
-      align: "left" as const,
+      align: "right" as const,
       render: (record: CreditIssuanceInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(record?.creditAmount))}
-          </span>
-        );
+        return <span>{addCommSep(String(record?.creditAmount))}</span>;
       },
     },
     {

@@ -403,26 +403,18 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
       title: t(CreditBlockColumns.CREDITS),
       key: "balance",
       sorter: true,
-      align: "left" as const,
+      align: "right" as const,
       render: (record: CreditBlockInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(record?.creditBalance))}
-          </span>
-        );
+        return <span>{addCommSep(String(record?.creditBalance))}</span>;
       },
     },
     {
       title: t(CreditBlockColumns.RESERVED),
       key: "reserved",
       sorter: true,
-      align: "left" as const,
+      align: "right" as const,
       render: (record: CreditBlockInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(record?.reserved ?? 0))}
-          </span>
-        );
+        return <span>{addCommSep(String(record?.reserved ?? 0))}</span>;
       },
     },
     {
@@ -477,7 +469,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
       title: t(CreditBlockColumns.UPDATE_DATE),
       key: "updatedTime",
       sorter: true,
-      align: "left" as const,
+      align: "center" as const,
       render: (item: CreditBlockInterface) => {
         return (
           <span>
