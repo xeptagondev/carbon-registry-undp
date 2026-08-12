@@ -1,0 +1,11 @@
+{
+    "initialReports": "Initial Reports",
+    "initialReportDescription" :"Article 6.2 initial reports required per Decision 2/CMA.3 para. 18 before first ITMO authorization",
+    "showInitialReportDescription" : "Show information about Initial Reports",
+    "generateReport" : "Generate Report",
+    "columnReportId": "Report ID",
+    "columnCooperativeApproach": "Cooperative Approach",
+    "columnVersion": "Version",
+    "columnStatus": "Status",
+    "columnCreated": "Created"
+}

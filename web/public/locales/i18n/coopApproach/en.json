@@ -1,0 +1,12 @@
+{
+    "cooperativeApproaches": "Cooperative Approaches",
+    "coopApproachDescription" :"Article 6.2 bilateral and multilateral cooperative approaches",
+    "showCoopApproachDescription" : "Show information about Cooperative Approaches",
+    "addNew" : "Add New",
+    "columnId": "ID",
+    "columnCaReference": "CA Reference",
+    "columnTitle": "Title",
+    "columnHostParty": "Host Party",
+    "columnParticipatingParties": "Participating Parties",
+    "columnStatus": "Status"
+}
