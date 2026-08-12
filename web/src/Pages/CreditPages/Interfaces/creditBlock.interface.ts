@@ -17,8 +17,10 @@ export interface CreditBlockInterface {
   projectId: string;
   projectName: string; // Issued to this project initially
   currentStatus: CreditBlockStatus;
-  firstTransfer: string; // Name of the first organization this block was transferred to, or "-"
-  firstTransferLogo: string | null; // Logo of that org, null when unset — ProfileIcon falls back to its initial
+  // Acquiring Party's ISO alpha-2 code from the block's Article 6 "first
+  // transfer" (an ITMO crossing to another Party — not a domestic
+  // org-to-org transfer), or "-" if it hasn't been first transferred.
+  firstTransfer: string;
   // TODO: not part of queryExplorer's response yet — kept optional until the
   // backend adds it directly; Overview falls back to "-" while undefined.
   issuanceDate?: string;

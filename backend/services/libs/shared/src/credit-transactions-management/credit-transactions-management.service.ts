@@ -58,14 +58,17 @@ import { CooperativeApproach } from "../entities/cooperative.approach.entity";
 import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
 import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 import { CreditBlockHistoryRequestDto } from "../dto/credit.block.history.request.dto";
-import { CreditBlockExplorerFirstTransferDto } from "../dto/credit.block.explorer.first.transfer.dto";
 
 /**
  * One block's parsed ledger version, as seen by the credit-block
  * history-tree reconstruction (see CreditTransactionsManagementService.
  * getCreditBlockHistoryTree). `range` is derived from `serialNumber`,
- * which every block carries; `itmoSerial` is only present once a block
- * has been ITMO-authorized (see ProgrammeLedgerService.getItmoSerial).
+ * which every block carries; `itmoSerial`/`itmoAuthorizationRecord` are
+ * only present once a block has been ITMO-authorized (see
+ * ProgrammeLedgerService.getItmoSerial), and are then inherited by every
+ * later version of that block and by any block split off it. Each
+ * version's own `itmoSerial` always covers exactly that version's
+ * `range`, so it is safe to surface per node.
  */
 interface CreditBlockLedgerVersion {
   creditBlockId: string;
@@ -76,6 +79,8 @@ interface CreditBlockLedgerVersion {
   previousOwnerCompanyId?: number;
   creditAmount: number;
   vintage: string;
+  itmoSerial?: string;
+  itmoAuthorizationRecord?: string;
 }
 
 /**
@@ -84,7 +89,14 @@ interface CreditBlockLedgerVersion {
  * RETIRE, companyId/companyName deliberately identify the company that
  * *performed* the retirement (the block's previousOwnerCompanyId) rather
  * than the resulting owner (always 0 - retired credits have no owner),
- * so a retire action isn't shown as belonging to no one.
+ * so a retire action isn't shown as belonging to no one. ITMO_AUTH is the
+ * one action that never moves credits between companies - the block stays
+ * with its owner and only changes character (MO -> ITMO) - so its
+ * companyId/companyName are simply that unchanged owner.
+ *
+ * isItmo/itmoSerial are set on *every* action, not just ITMO_AUTH:
+ * ITMO-ness is an attribute of the credits rather than of the action, so
+ * a later RETIRE/TRANSFER/RETAIN of authorized credits still carries it.
  */
 interface CreditBlockHistoryActionInfo {
   companyId: number | null;
@@ -94,7 +106,16 @@ interface CreditBlockHistoryActionInfo {
    * bake in the server's timezone instead, e.g. UTC when deployed). */
   timestamp: number;
   amount: number;
-  action: "ISSUE" | "RETAIN" | "TRANSFER" | "RETIRE";
+  action: "ISSUE" | "RETAIN" | "TRANSFER" | "RETIRE" | "ITMO_AUTH";
+  /** Whether these credits were ITMO-authorized as at this action. */
+  isItmo?: boolean;
+  /** Dec 6/CMA.4 Annex I para 5 identifier, covering exactly this node's
+   * range (each ledger version carries its own, kept in sync by splits). */
+  itmoSerial?: string | null;
+  /** ITMO_AUTH only - the purpose the credits were authorized for. */
+  authorizationPurpose?: string | null;
+  /** RETIRE only - which Article 6 use the retirement was made for. */
+  retireSubType?: string | null;
 }
 
 interface CreditBlockHistoryNode {
@@ -1803,10 +1824,101 @@ export class CreditTransactionsManagementService {
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
-    return new DataListResponseDto(
-      resp.length > 0 ? resp[0] : undefined,
-      resp.length > 1 ? resp[1] : undefined
+    const rows = resp.length > 0 ? resp[0] : [];
+    const total = resp.length > 1 ? resp[1] : undefined;
+    const enrichedRows = await this.enrichOrgTransactionRowsWithItmoSerial(
+      rows
     );
+    return new DataListResponseDto(enrichedRows, total);
+  }
+
+  /**
+   * Org transactions enrichment: attach the ITMO serial for rows whose
+   * units are ITMOs (itmoAuthorizationRecord set by the view's join to
+   * credit_blocks_entity).
+   *
+   * As in enrichItmoAuthorizationRows, the serial is deliberately NOT
+   * joined from credit_blocks_entity - that block row keeps getting
+   * re-split by later retirements/transfers, so a live join drifts away
+   * from the range the row's own action actually covered (an
+   * authorization of 2417-3916 whose block has since narrowed to
+   * 2417-2906 would render the wrong serial). The view's serialNumber
+   * comes from the transaction, which is stamped once on completion -
+   * re-pointed at the resulting child block on a partial split - and
+   * never touched again, so recomputing from it reproduces the real
+   * value exactly. getItmoSerial's only non-serial input is the
+   * cooperative approach's reference number, reached from the block's
+   * authorization record.
+   */
+  private async enrichOrgTransactionRowsWithItmoSerial(
+    rows: CreditBlockOrgTransactionsViewEntity[]
+  ): Promise<
+    Array<CreditBlockOrgTransactionsViewEntity & { itmoSerial: string | null }>
+  > {
+    const authorizationRecordIds = Array.from(
+      new Set(
+        rows
+          .map((row) => row.itmoAuthorizationRecord)
+          .filter((id): id is string => !!id)
+      )
+    );
+    // The common all-MO page short-circuits without touching the DB again.
+    if (authorizationRecordIds.length === 0) {
+      return rows.map((row) => ({ ...row, itmoSerial: null }));
+    }
+
+    const authorizations = await this.creditTransactionsEntityRepository.find({
+      where: { id: In(authorizationRecordIds) },
+    });
+    const caIdByAuthId = new Map<string, string>();
+    for (const authorization of authorizations) {
+      const caId = (authorization.data as ItmoAuthorizationData)
+        ?.cooperativeApproachId;
+      if (caId) {
+        caIdByAuthId.set(authorization.id, caId);
+      }
+    }
+    const cooperativeApproachIds = Array.from(
+      new Set(Array.from(caIdByAuthId.values()))
+    );
+    const cooperativeApproaches = cooperativeApproachIds.length
+      ? await this.cooperativeApproachRepo.find({
+          where: { cooperativeApproachId: In(cooperativeApproachIds) },
+        })
+      : [];
+    const caReferenceById = new Map(
+      cooperativeApproaches.map((ca) => [
+        ca.cooperativeApproachId,
+        ca.caReferenceNumber,
+      ])
+    );
+
+    return rows.map((row) => {
+      const caId = row.itmoAuthorizationRecord
+        ? caIdByAuthId.get(row.itmoAuthorizationRecord)
+        : undefined;
+      const caReferenceNumber = caId ? caReferenceById.get(caId) : undefined;
+      if (!caReferenceNumber) {
+        // MO row, or an authorization whose CA reference can't be
+        // resolved - degrade to null rather than a half-built serial.
+        return { ...row, itmoSerial: null };
+      }
+      const range = this.serialNumberManagementService.getBlockRange(
+        row.serialNumber
+      );
+      return {
+        ...row,
+        itmoSerial: this.serialNumberManagementService.getItmoSerial(
+          caReferenceNumber,
+          this.serialNumberManagementService.getProjectIdFromSerial(
+            row.serialNumber
+          ),
+          range.start,
+          range.end,
+          this.serialNumberManagementService.getVintage(row.serialNumber)
+        ),
+      };
+    });
   }
 
   public async queryExplorer(
@@ -1882,167 +1994,48 @@ export class CreditTransactionsManagementService {
     if (!rows || rows.length === 0) {
       return new DataListResponseDto(rows, total);
     }
-    const enrichedRows = await this.enrichExplorerRowsWithFirstTransfer(rows);
+    const enrichedRows =
+      await this.enrichExplorerRowsWithFirstTransferCountry(rows);
     return new DataListResponseDto(enrichedRows, total);
   }
 
   /**
-   * Explorer enrichment: attach each row's first transfer (the transfer
-   * that first moved the block's credits out of the issuing
-   * organisation), computed in-memory over just the returned page rather
-   * than baked into the view SQL, to avoid recomputing lineage for the
-   * whole table on every query.
+   * Explorer enrichment: attach each row's first-transfer acquiring
+   * country (Article 6's "first transfer" is a defined term - an ITMO
+   * crossing to another Party - not a domestic org-to-org transfer).
    *
-   * This is derived straight from the append-only ledger
-   * (ProgrammeLedgerService.getCreditBlockLedgerHistory - the same source
-   * getCreditBlockHistoryTree's drill-down uses) rather than from a
-   * FIRST_TRANSFER CreditTransactionsEntity row. A CreditTransactionsEntity
-   * row can only be tagged FIRST_TRANSFER when handleTransactionRecords
-   * finds the pre-update block by creditBlockId with isNotTransferred ===
-   * true - which holds for a whole-block transfer, but not for a partial
-   * transfer, where the transferred portion is sheared off into a
-   * brand-new creditBlockId
-   * (CreditBlocksManagementService.transferCreditAmountFromBlocks) that has
-   * no "previous" row to look up. Partial transfers are the common case,
-   * so relying on that row left firstTransfer null for most transferred
-   * blocks - including ones transferred long before this fix, which a
-   * write-path correction alone could never backfill.
-   *
-   * Definition used instead: the first transfer is the EARLIEST
-   * (min txTime) ledger revision, in the same project and vintage, whose
-   * txType is TRANSFER (ownerCompanyId != 0 - excludes RETIRE, which also
-   * clears the sender's balance but isn't a transfer) and whose serial
-   * range contains the row's range. Splits always shear credits off the
-   * TOP of a block's range (SerialNumberManagementService.
-   * splitCreditBlockSerialNumber) and every block starts out issuer-held,
-   * so the earliest TRANSFER revision covering a range is unambiguously
-   * the event that first moved those credits out of the issuer - and a
-   * further-split/re-transferred descendant still resolves to that same
-   * original transfer (not its later, narrower one), since the earliest
-   * containing revision is always the outermost one.
+   * `CreditTransactionsEntity.isFirstTransfer` is stamped true on exactly
+   * the completed RETIRE row that performed this (see
+   * `handleTransactionRecords`'s TxType.RETIRE branch), for ITMO blocks
+   * retired under FIRST_TRANSFER_TOWARDS_NDC / FIRST_TRANSFER_FOR_OIMP,
+   * and that same row's `data` (RetirementUseData) already carries the
+   * resolved acquiring Party as an alpha-2 code - so this is a single
+   * indexed lookup keyed by creditBlockId, not a lineage walk. A
+   * first-transferred block is terminal (ownerCompanyId 0) and can only
+   * be retired once, so creditBlockId alone is an exact match: no range/
+   * vintage containment logic needed, unlike the history-tree
+   * reconstruction (getCreditBlockHistoryTree) which has to walk splits
+   * because non-terminal blocks keep narrowing.
    */
-  private async enrichExplorerRowsWithFirstTransfer(
+  private async enrichExplorerRowsWithFirstTransferCountry(
     rows: CreditBlockExplorerViewEntity[]
-  ): Promise<Array<CreditBlockExplorerViewEntity & { firstTransfer: CreditBlockExplorerFirstTransferDto | null }>> {
-    const projectIds = Array.from(new Set(rows.map((r) => r.projectId)));
-
-    interface ParsedTransfer {
-      range: { start: number; end: number };
-      vintage: string;
-      txTime: number;
-      fromOrganizationId?: number;
-      toOrganizationId: number;
-      amount: number;
-      serialNumber: string;
-    }
-    const byProject = new Map<string, ParsedTransfer[]>();
-    const companyIds = new Set<number>();
-
-    await Promise.all(
-      projectIds.map(async (projectId) => {
-        const ledgerVersions =
-          await this.programmeLedgerService.getCreditBlockLedgerHistory(
-            projectId
-          );
-        const parsedTransfers: ParsedTransfer[] = [];
-        for (const version of ledgerVersions || []) {
-          if (
-            version.txType !== TxType.TRANSFER ||
-            Number(version.ownerCompanyId) === 0
-          ) {
-            continue; // not a real org-to-org transfer (e.g. a retirement)
-          }
-          let range: { start: number; end: number };
-          let vintage: string;
-          try {
-            range = this.serialNumberManagementService.getBlockRange(
-              version.serialNumber
-            );
-            vintage = this.serialNumberManagementService.getVintage(
-              version.serialNumber
-            );
-          } catch {
-            continue; // malformed/legacy serial - skip, never throw
-          }
-          if (
-            !Number.isFinite(range?.start) ||
-            !Number.isFinite(range?.end) ||
-            !vintage
-          ) {
-            continue;
-          }
-          parsedTransfers.push({
-            range,
-            vintage,
-            txTime: Number(version.txTime),
-            fromOrganizationId:
-              version.previousOwnerCompanyId != null
-                ? Number(version.previousOwnerCompanyId)
-                : undefined,
-            toOrganizationId: Number(version.ownerCompanyId),
-            amount: version.creditAmount,
-            serialNumber: version.serialNumber,
-          });
-          if (version.previousOwnerCompanyId != null) {
-            companyIds.add(Number(version.previousOwnerCompanyId));
-          }
-          companyIds.add(Number(version.ownerCompanyId));
-        }
-        byProject.set(projectId, parsedTransfers);
-      })
-    );
-
-    const companies = await this.resolveCompanies(companyIds);
-
-    return rows.map((row) => {
-      let firstTransfer: CreditBlockExplorerFirstTransferDto | null = null;
-      const candidates = byProject.get(row.projectId);
-      if (candidates && candidates.length > 0) {
-        try {
-          const rowRange = this.serialNumberManagementService.getBlockRange(
-            row.serialNumber
-          );
-          const rowVintage = this.serialNumberManagementService.getVintage(
-            row.serialNumber
-          );
-          // Among every transfer whose range contains this row's range,
-          // the earliest one is the first transfer - a descendant of a
-          // later re-transfer still resolves to the original.
-          let match: ParsedTransfer | undefined;
-          for (const c of candidates) {
-            if (
-              c.vintage === rowVintage &&
-              c.range.start <= rowRange.start &&
-              c.range.end >= rowRange.end &&
-              (!match || c.txTime < match.txTime)
-            ) {
-              match = c;
-            }
-          }
-          if (match) {
-            const fromCompany =
-              match.fromOrganizationId != null
-                ? companies.get(match.fromOrganizationId)
-                : undefined;
-            const toCompany = companies.get(match.toOrganizationId);
-            firstTransfer = {
-              fromOrganizationId: match.fromOrganizationId,
-              fromOrganizationName: fromCompany?.name ?? null,
-              fromOrganizationLogo: fromCompany?.logo ?? null,
-              toOrganizationId: match.toOrganizationId,
-              toOrganizationName: toCompany?.name ?? null,
-              toOrganizationLogo: toCompany?.logo ?? null,
-              amount: match.amount,
-              serialNumber: match.serialNumber,
-              transferTime: match.txTime,
-            };
-          }
-        } catch {
-          // malformed/legacy row serial - leave firstTransfer null
-        }
+  ): Promise<Array<CreditBlockExplorerViewEntity & { firstTransfer: string | null }>> {
+    const blockIds = rows.map((r) => r.id);
+    const firstTransferTransactions =
+      await this.creditTransactionsEntityRepository.find({
+        where: { creditBlockId: In(blockIds), isFirstTransfer: true },
+      });
+    const countryByBlockId = new Map<string, string>();
+    for (const tx of firstTransferTransactions) {
+      const country = (tx.data as RetirementUseData)?.country;
+      if (country) {
+        countryByBlockId.set(tx.creditBlockId, country);
       }
-      return { ...row, firstTransfer };
-    });
+    }
+    return rows.map((row) => ({
+      ...row,
+      firstTransfer: countryByBlockId.get(row.id) ?? null,
+    }));
   }
 
   // ---------------------------------------------------------------------
@@ -2107,6 +2100,11 @@ export class CreditTransactionsManagementService {
     }
 
     const ownerCompanyIds = new Set<number>();
+    // Both extra lookups below hang off fields that only ITMO/retired
+    // blocks carry, so they stay empty (and skip their query) for a
+    // lineage that never involved either.
+    const authorizationRecordIds = new Set<string>();
+    const retiredBlockIds = new Set<string>();
     for (const versions of groups.values()) {
       for (const v of versions) {
         if (v.ownerCompanyId) {
@@ -2118,14 +2116,27 @@ export class CreditTransactionsManagementService {
         if (v.previousOwnerCompanyId) {
           ownerCompanyIds.add(v.previousOwnerCompanyId);
         }
+        if (v.txType === TxType.ITMO_AUTH && v.itmoAuthorizationRecord) {
+          authorizationRecordIds.add(v.itmoAuthorizationRecord);
+        }
+        if (v.ownerCompanyId === 0) {
+          retiredBlockIds.add(v.creditBlockId);
+        }
       }
     }
-    const ownerNames = await this.resolveCompanyNames(ownerCompanyIds);
+    const [ownerNames, authorizationPurposes, retireSubTypes] =
+      await Promise.all([
+        this.resolveCompanyNames(ownerCompanyIds),
+        this.resolveItmoAuthorizationPurposes(authorizationRecordIds),
+        this.resolveRetireSubTypes(retiredBlockIds),
+      ]);
 
     const history = this.buildCreditBlockHistoryTree(
       groups,
       rootVersions,
-      ownerNames
+      ownerNames,
+      authorizationPurposes,
+      retireSubTypes
     );
     return new DataResponseDto(HttpStatus.OK, { history });
   }
@@ -2155,6 +2166,8 @@ export class CreditTransactionsManagementService {
             : undefined,
         creditAmount: version.creditAmount,
         vintage: version.vintage,
+        itmoSerial: version.itmoSerial,
+        itmoAuthorizationRecord: version.itmoAuthorizationRecord,
       };
       if (!groups.has(parsed.creditBlockId)) {
         groups.set(parsed.creditBlockId, []);
@@ -2216,6 +2229,62 @@ export class CreditTransactionsManagementService {
     return names;
   }
 
+  /**
+   * The authorization purpose behind each ITMO_AUTH action, keyed by the
+   * block's itmoAuthorizationRecord - which is the id of the
+   * ITMO_AUTHORIZED CreditTransactionsEntity that authorized it. The
+   * purpose lives on that transaction's `data`, not on the block, so it
+   * has to be looked up; batched here rather than per node.
+   */
+  private async resolveItmoAuthorizationPurposes(
+    authorizationRecordIds: Set<string>
+  ): Promise<Map<string, string>> {
+    const purposes = new Map<string, string>();
+    if (authorizationRecordIds.size === 0) {
+      return purposes;
+    }
+    const transactions = await this.creditTransactionsEntityRepository.find({
+      where: { id: In(Array.from(authorizationRecordIds)) },
+    });
+    for (const transaction of transactions) {
+      const purpose = (transaction.data as any)?.authorizationPurpose;
+      if (purpose) {
+        purposes.set(transaction.id, purpose);
+      }
+    }
+    return purposes;
+  }
+
+  /**
+   * The retirement subType (which Article 6 use the credits were retired
+   * for) of each retired block, keyed by creditBlockId. On completion the
+   * retiring transaction is re-pointed at the block that actually ended up
+   * retired - the newly split-off child for a partial retirement, or the
+   * block itself for a whole-block one - and a block can only be retired
+   * once, so creditBlockId is a unique key here.
+   */
+  private async resolveRetireSubTypes(
+    retiredBlockIds: Set<string>
+  ): Promise<Map<string, string>> {
+    const subTypes = new Map<string, string>();
+    if (retiredBlockIds.size === 0) {
+      return subTypes;
+    }
+    const transactions = await this.creditTransactionsEntityRepository.find({
+      where: {
+        creditBlockId: In(Array.from(retiredBlockIds)),
+        type: CreditTransactionTypesEnum.RETIRED,
+        status: CreditTransactionStatusEnum.COMPLETED,
+      },
+    });
+    for (const transaction of transactions) {
+      if (transaction.subType) {
+        subTypes.set(transaction.creditBlockId, transaction.subType);
+      }
+    }
+    return subTypes;
+  }
+
   private formatCreditBlockRange(range: {
     start: number;
     end: number;
@@ -2235,14 +2304,24 @@ export class CreditTransactionsManagementService {
    * alone to tell a real retirement apart from a rejected one. For a
    * RETIRE, companyId/companyName identify the *retiring* company
    * (previousOwnerCompanyId) rather than the resulting owner (always 0).
+   *
+   * ITMO_AUTH sits between the two: it is the only action that leaves
+   * ownership untouched (the block just becomes an ITMO), so it would
+   * otherwise fall through to TRANSFER and read as a transfer to the
+   * company that already owned it. Checking it *after* the retirement
+   * test keeps that invariant intact - an ITMO block later retires with
+   * ownerCompanyId 0, and that is a RETIRE, not an authorization.
    */
   private buildCreditBlockActionInfo(
     range: { start: number; end: number },
     version: CreditBlockLedgerVersion,
-    ownerName: (companyId?: number) => string
+    ownerName: (companyId?: number) => string,
+    authorizationPurposes: Map<string, string>,
+    retireSubTypes: Map<string, string>
   ): CreditBlockHistoryActionInfo {
     const amount = range.end - range.start + 1;
     const timestamp = version.txTime;
+    const itmo = this.buildCreditBlockItmoInfo(version);
     if (version.ownerCompanyId === 0) {
       const retiringCompanyId = version.previousOwnerCompanyId ?? null;
       return {
@@ -2251,6 +2330,21 @@ export class CreditTransactionsManagementService {
         timestamp,
         amount,
         action: "RETIRE",
+        ...itmo,
+        retireSubType: retireSubTypes.get(version.creditBlockId) ?? null,
+      };
+    }
+    if (version.txType === TxType.ITMO_AUTH) {
+      return {
+        companyId: version.ownerCompanyId,
+        companyName: ownerName(version.ownerCompanyId),
+        timestamp,
+        amount,
+        action: "ITMO_AUTH",
+        ...itmo,
+        authorizationPurpose: version.itmoAuthorizationRecord
+          ? authorizationPurposes.get(version.itmoAuthorizationRecord) ?? null
+          : null,
       };
     }
     return {
@@ -2259,6 +2353,23 @@ export class CreditTransactionsManagementService {
       timestamp,
       amount,
       action: "TRANSFER",
+      ...itmo,
+    };
+  }
+
+  /**
+   * The MO/ITMO character of one ledger version, shared by every action
+   * (a retirement or transfer of authorized credits is still ITMO). The
+   * itmoSerial is taken from the version itself rather than from the
+   * block's current row, which keeps narrowing as the block is re-split -
+   * each version's own serial covers exactly that version's range.
+   */
+  private buildCreditBlockItmoInfo(
+    version: CreditBlockLedgerVersion
+  ): Pick<CreditBlockHistoryActionInfo, "isItmo" | "itmoSerial"> {
+    return {
+      isItmo: version.itmoAuthorizationRecord != null,
+      itmoSerial: version.itmoSerial ?? null,
     };
   }
 
@@ -2284,17 +2395,27 @@ export class CreditTransactionsManagementService {
   private buildCreditBlockHistoryTree(
     groups: Map<string, CreditBlockLedgerVersion[]>,
     rootVersions: CreditBlockLedgerVersion[],
-    ownerNames: Map<number, string>
+    ownerNames: Map<number, string>,
+    authorizationPurposes: Map<string, string>,
+    retireSubTypes: Map<string, string>
   ): CreditBlockHistoryNode[] {
     const history: CreditBlockHistoryNode[] = [];
 
     // Index every non-issuance group by the (vintage, start, txTime) of
     // its first version, i.e. the split event that created it as a "high"
-    // child - so a shrink can look up the sibling it produced.
+    // child - so a shrink can look up the sibling it produced. Every group
+    // is split-produced *except* an issuance root (no previousOwnerCompanyId
+    // and txType ISSUE) - checking previousOwnerCompanyId alone used to
+    // miss ITMO-authorization splits, whose child inherits the parent's
+    // previousOwnerCompanyId (null for a never-transferred parent) since
+    // authorization doesn't change ownership. That silently orphaned the
+    // child's entire subtree - see credit-block-history-tree-examples.md.
     const childIndex = new Map<string, CreditBlockLedgerVersion[]>();
     for (const versions of groups.values()) {
       const first = versions[0];
-      if (first.previousOwnerCompanyId != null) {
+      const isIssuanceRoot =
+        first.txType === TxType.ISSUE && first.previousOwnerCompanyId == null;
+      if (!isIssuanceRoot) {
         childIndex.set(
           `${first.vintage}#${first.range.start}#${first.txTime}`,
           versions
@@ -2304,6 +2425,17 @@ export class CreditTransactionsManagementService {
 
     const ownerName = (companyId?: number): string =>
       companyId ? ownerNames.get(companyId) ?? `Company ${companyId}` : "";
+    const buildInfo = (
+      range: { start: number; end: number },
+      version: CreditBlockLedgerVersion
+    ) =>
+      this.buildCreditBlockActionInfo(
+        range,
+        version,
+        ownerName,
+        authorizationPurposes,
+        retireSubTypes
+      );
 
     const rootFirst = rootVersions[0];
     history.push({
@@ -2314,6 +2446,7 @@ export class CreditTransactionsManagementService {
         timestamp: rootFirst.txTime,
         amount: rootFirst.creditAmount,
         action: "ISSUE",
+        ...this.buildCreditBlockItmoInfo(rootFirst),
       },
       children: [],
     });
@@ -2345,6 +2478,7 @@ export class CreditTransactionsManagementService {
               timestamp: after.txTime,
               amount: lowRange.end - lowRange.start + 1,
               action: "RETAIN",
+              ...this.buildCreditBlockItmoInfo(after),
             },
           };
           let highChild: CreditBlockHistoryChildNode;
@@ -2352,11 +2486,7 @@ export class CreditTransactionsManagementService {
             const highFirst = highVersions[0];
             highChild = {
               range: this.formatCreditBlockRange(highRange),
-              info: this.buildCreditBlockActionInfo(
-                highRange,
-                highFirst,
-                ownerName
-              ),
+              info: buildInfo(highRange, highFirst),
             };
             pendingChildBranches.push(highVersions);
           } else {
@@ -2366,7 +2496,7 @@ export class CreditTransactionsManagementService {
             // there's no separate highFirst version to draw from.
             highChild = {
               range: this.formatCreditBlockRange(highRange),
-              info: this.buildCreditBlockActionInfo(highRange, after, ownerName),
+              info: buildInfo(highRange, after),
             };
           }
 
@@ -2380,21 +2510,34 @@ export class CreditTransactionsManagementService {
         // Whole-block transition: the entire remaining balance was
         // transferred or retired in one action, so the block kept its
         // creditBlockId and range - no new group to recurse into, just a
-        // single-child node recording the new owner. Anything else with
-        // an unchanged range (a pending retire request, or one that was
-        // rejected/cancelled) leaves ownerCompanyId untouched and is
-        // silently skipped here.
+        // single-child node recording the new owner.
         const isWholeBlockTransition =
           after.range.start === before.range.start &&
           after.range.end === before.range.end &&
           after.ownerCompanyId !== before.ownerCompanyId;
-        if (!isWholeBlockTransition) {
+        // Whole-block ITMO authorization: same range, ownership unchanged,
+        // so it can't be told apart from a no-op via ownerCompanyId - the
+        // itmoAuthorizationRecord going from unset to set is the only
+        // signal a real authorization actually happened here (txType alone
+        // isn't enough: a rejected/cancelled request also writes
+        // ITMO_AUTH, see ProgrammeLedgerService.itmoAuthRequestAction's
+        // REJECT/CANCEL branch).
+        const isWholeBlockItmoAuth =
+          after.range.start === before.range.start &&
+          after.range.end === before.range.end &&
+          before.itmoAuthorizationRecord == null &&
+          after.itmoAuthorizationRecord != null;
+        // Anything else with an unchanged range (a pending retire/ITMO-auth
+        // request, or one that was rejected/cancelled) leaves both
+        // ownerCompanyId and itmoAuthorizationRecord untouched and is
+        // silently skipped here.
+        if (!isWholeBlockTransition && !isWholeBlockItmoAuth) {
           continue;
         }
 
         const transitionChild: CreditBlockHistoryChildNode = {
           range: this.formatCreditBlockRange(after.range),
-          info: this.buildCreditBlockActionInfo(after.range, after, ownerName),
+          info: buildInfo(after.range, after),
         };
         history.push({
           range: this.formatCreditBlockRange(after.range),

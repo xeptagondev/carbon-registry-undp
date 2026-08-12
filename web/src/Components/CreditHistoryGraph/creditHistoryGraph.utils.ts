@@ -1,5 +1,6 @@
 import moment from "moment";
 import { addCommSep } from "../../Definitions/Definitions/programme.definitions";
+import { AUTHORIZATION_PURPOSE_LABELS, AuthorizationPurpose } from "../../Definitions/Enums/authorizationPurpose.enum";
 import { CreditBlockHistoryActionInfo, CreditHistoryEntry, HistoryTreeNode } from "./creditHistoryGraph.types";
 
 let counter = 0;
@@ -10,7 +11,18 @@ const nextId = () => `n${counter++}`;
 const formatUpdateTime = (timestamp: number): string =>
   moment(timestamp).format("YYYY-MM-DD HH:mm");
 
-/** Node's display note from its action info — no range (the node shows it). */
+/** `info.authorizationPurpose` is the raw AuthorizationPurpose wire value
+ * (e.g. "UseTowardsNDC") — same convention as everywhere else this field is
+ * transmitted (see CreditBlockItmoAuthorizationsViewEntity). Translate here
+ * rather than on the server, matching itmoAuthRequestModal's dropdown.
+ * Falls back to the raw value for anything not in the map. */
+const formatAuthorizationPurpose = (purpose: string): string =>
+  AUTHORIZATION_PURPOSE_LABELS[purpose as AuthorizationPurpose] ?? purpose;
+
+/** Node's display note from its action info — no range (the node shows it).
+ * Every case must end with `info.companyName` — TimelineGraphView strips the
+ * trailing company name off this string to render it as a clickable profile
+ * link, and silently degrades to plain text otherwise. */
 export const formatActionNote = (info: CreditBlockHistoryActionInfo): string => {
   const amount = addCommSep(String(info.amount));
   switch (info.action) {
@@ -22,6 +34,10 @@ export const formatActionNote = (info: CreditBlockHistoryActionInfo): string => 
       return `Transferred ${amount} to ${info.companyName}`;
     case "RETIRE":
       return `Retired ${amount} by ${info.companyName}`;
+    case "ITMO_AUTH":
+      return info.authorizationPurpose
+        ? `Authorized ${amount} ITMOs (${formatAuthorizationPurpose(info.authorizationPurpose)}) by ${info.companyName}`
+        : `Authorized ${amount} ITMOs by ${info.companyName}`;
     default:
       return info.action;
   }
@@ -36,8 +52,16 @@ export const buildHistoryTree = (entries: CreditHistoryEntry[]): HistoryTreeNode
   if (!entries || entries.length === 0) return null;
   counter = 0;
 
-  // Company carried alongside `note` so a view can link it without re-parsing.
-  const noteCompany = (info: CreditBlockHistoryActionInfo) => ({ companyId: info.companyId, companyName: info.companyName });
+  // Fields carried alongside `note` so a view can read them without
+  // re-parsing the note text — company (for the profile link), and ITMO
+  // status/serial/retire subType (for node coloring and the detail panel).
+  const noteFields = (info: CreditBlockHistoryActionInfo) => ({
+    companyId: info.companyId,
+    companyName: info.companyName,
+    isItmo: info.isItmo,
+    itmoSerial: info.itmoSerial,
+    retireSubType: info.retireSubType,
+  });
 
   const rootInfo = entries[0].info;
   const root: HistoryTreeNode = {
@@ -45,7 +69,7 @@ export const buildHistoryTree = (entries: CreditHistoryEntry[]): HistoryTreeNode
     range: entries[0].range,
     note: rootInfo ? formatActionNote(rootInfo) : undefined,
     updateTime: rootInfo ? formatUpdateTime(rootInfo.timestamp) : undefined,
-    ...(rootInfo ? noteCompany(rootInfo) : {}),
+    ...(rootInfo ? noteFields(rootInfo) : {}),
     label: entries[0].range,
     depth: 0,
     children: [],
@@ -60,7 +84,7 @@ export const buildHistoryTree = (entries: CreditHistoryEntry[]): HistoryTreeNode
       range,
       note,
       updateTime: formatUpdateTime(info.timestamp),
-      ...noteCompany(info),
+      ...noteFields(info),
       label: note,
       depth: parent.depth + 1,
       children: [],
@@ -79,6 +103,73 @@ export const buildHistoryTree = (entries: CreditHistoryEntry[]): HistoryTreeNode
   }
 
   return root;
+};
+
+// Violet palette for ITMO — shared by node fills/borders (getNodeColors),
+// the selected-node glow, the off-path/on-path accent stripe, and edges
+// leading into an ITMO node, so all four stay a consistent violet rather
+// than each picking its own shade.
+export const ITMO_VIOLET_600 = "#7c3aed"; // selected fill / accent stripe
+export const ITMO_VIOLET_700 = "#6d28d9"; // selected border / on-path text
+export const ITMO_VIOLET_500 = "#8b5cf6"; // on-path border / path edges
+
+export interface NodeColors {
+  background: string;
+  color: string;
+  borderColor: string;
+  /** Left-edge accent stripe, in the node's own "selected" color (violet
+   * for ITMO, blue otherwise) — every unselected state, on-path or off.
+   * `undefined` once selected, since the whole node already repaints in
+   * that same color via `background`/`borderColor` at that point, so a
+   * same-color stripe on top would be invisible; leaving it `undefined`
+   * (rather than matching it) lets the caller's own `border` shorthand
+   * apply unmodified on that side too. */
+  accentBorderLeft?: string;
+}
+
+/**
+ * Shared node palette for both graph views (`BinaryTreeGraphView`,
+ * `TimelineGraphView`) — extracted so the state precedence stays a single
+ * source of truth, and so the ITMO palette only has to be taught once.
+ * `isRoot` only matters for the default (unselected, off-path) non-ITMO
+ * text color — Binary Tree's issuance node reads darker than the rest;
+ * Timeline renders its root as a wholly separate component and never
+ * passes it.
+ *
+ * ITMO runs a violet palette parallel to the default blue one, at every
+ * selection state (UNCR-468: MO vs ITMO must stay visible wherever blocks
+ * are listed) — unlike an accent-only treatment, `selected`/`onPath` here
+ * still change look for an ITMO node, just within violet instead of blue,
+ * so selection/path-tracing remains just as legible as it is for MO nodes.
+ */
+export const getNodeColors = ({
+  selected,
+  onPath,
+  isRoot,
+  isItmo,
+}: {
+  selected: boolean;
+  onPath: boolean;
+  isRoot?: boolean;
+  isItmo?: boolean;
+}): NodeColors => {
+  if (isItmo) {
+    return {
+      background: selected ? ITMO_VIOLET_600 : onPath ? "#ede9fe" : "#fff",
+      color: selected ? "#fff" : onPath ? ITMO_VIOLET_700 : "#334155",
+      borderColor: selected ? ITMO_VIOLET_700 : onPath ? ITMO_VIOLET_500 : "#c4b5fd",
+      accentBorderLeft: selected ? undefined : `4px solid ${ITMO_VIOLET_600}`,
+    };
+  }
+  return {
+    background: selected ? "#1890ff" : onPath ? "#e6f4ff" : "#fff",
+    color: selected ? "#fff" : onPath ? "#0b6dc7" : isRoot ? "#12172b" : "#334155",
+    borderColor: selected ? "#0b6dc7" : onPath ? "#1890ff" : "#cbd5e1",
+    // Mirrors the ITMO accent stripe for consistency - same rule (every
+    // unselected state, on-path or off), same color as the node's own
+    // "selected" fill.
+    accentBorderLeft: selected ? undefined : "4px solid #1890ff",
+  };
 };
 
 export const effectiveChildren = (node: HistoryTreeNode, collapsed: Set<string>): HistoryTreeNode[] =>
