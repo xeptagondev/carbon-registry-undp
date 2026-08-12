@@ -120,7 +120,7 @@ const submitActionCol = (t: Translate, onSubmit: (row: Record<string, unknown>) 
   title: t("reporting:actionsColumn"),
   key: "rowActions",
   fixed: "right" as const,
-  width: 140,
+  width: 100,
   render: (_value: unknown, row: Record<string, unknown>) =>
     createElement(
       Button,
@@ -128,8 +128,12 @@ const submitActionCol = (t: Translate, onSubmit: (row: Record<string, unknown>) 
         type: "primary",
         size: "small",
         // Only a draft can be filed. A submitted or superseded row has already
-        // had its moment, and re-filing is a revision, not a submit.
-        disabled: row.status !== "DRAFT",
+        // had its moment, and re-filing is a revision, not a submit. The
+        // reported year also has to be over — the current year's AEF cannot
+        // be filed until next year, so it stays disabled even while DRAFT.
+        disabled:
+          row.status !== "DRAFT" ||
+          Number(row.aefT1SubmissionReportYear) >= new Date().getFullYear(),
         onClick: () => onSubmit(row),
       },
       t("reporting:submitAef")
@@ -153,7 +157,10 @@ export const getSubmissionReportColumns = (
   carpCol(t, "referenceToTerReport", "aefT1SubmissionReferenceReviewReport", 260),
   statusCol(t),
   ...(onSubmit ? [submitActionCol(t, onSubmit)] : []),
-];
+  // Submission-only: centers cell values while leaving the headers left-aligned.
+  // `align` would center both, so this sets the body cell's style directly
+  // instead. The other four tables keep the default left alignment.
+].map((column) => ({ ...column, onCell: () => ({ style: { textAlign: "center" } }) }));
 
 // ---------------------------------------------------------------------------
 // Table 2 — Authorizations (19 fields)

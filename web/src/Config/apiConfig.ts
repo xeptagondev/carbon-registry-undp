@@ -179,5 +179,6 @@ export const API_PATHS = {
   POPUP_ACTION: (endpoint: string) => `national/programme/${endpoint}`,
   // AEF RECORDS:
   QUERY_AEF_RECORDS: `national/reportsManagement/queryAefRecords`,
-  DOWNLOAD_AEF_RECORDS: `national/reportsManagement/downloadAefReport`
+  DOWNLOAD_AEF_RECORDS: `national/reportsManagement/downloadAefReport`,
+  AEF_HOST_PARTY: `national/cooperativeApproach/hostParty`
 };

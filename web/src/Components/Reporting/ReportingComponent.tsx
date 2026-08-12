@@ -22,7 +22,6 @@ import {
 } from "./reportTypes";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
 import { API_PATHS } from "../../Config/apiConfig";
-import { AEF_CONFIG } from "../../Config/aefConfig";
 import { Loading } from "../Loading/loading";
 import { TimedPageInfoTitle } from "../Common/TimedPageInfoTitle/TimedPageInfoTitle";
 
@@ -69,7 +68,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
   const { translator } = props;
   const t = translator.t;
 
-  const { post } = useConnection();
+  const { get, post } = useConnection();
 
   const [selectedYear, setSelectedYear] = useState<Moment>(moment());
   const [selectedReports, setSelectedReports] = useState<REPORT_TYPES[]>([
@@ -78,8 +77,26 @@ const ReportingComponent = (props: { translator: i18n }) => {
   const [tableState, setTableState] = useState<Record<string, TableState>>(initialTableState);
   const [submitTarget, setSubmitTarget] = useState<Record<string, unknown> | undefined>();
   const [submitting, setSubmitting] = useState(false);
+  const [partyName, setPartyName] = useState<string>();
 
   const reportedYear = selectedYear.year();
+
+  /**
+   * The reporting Party's display name, e.g. `"Nigeria"` for host party `NG`.
+   * Read from the cooperative approach host party rather than an env var, so
+   * it reflects this deployment's actual registry data.
+   */
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await get(API_PATHS.AEF_HOST_PARTY);
+        setPartyName(response?.data?.name);
+      } catch (error) {
+        console.error("Failed to load AEF host party", error);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Holdings for a year that has not been snapshotted are live and still
@@ -217,7 +234,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
       title={t(`reporting:${type}`)}
       reportType={type}
       /* Submission carries Party and Reported year as columns already. */
-      party={type === REPORT_TYPES.SUBMISSION ? undefined : AEF_CONFIG.party}
+      party={type === REPORT_TYPES.SUBMISSION ? undefined : partyName ?? "-"}
       year={type === REPORT_TYPES.SUBMISSION ? undefined : reportedYear}
       provisional={type === REPORT_TYPES.HOLDINGS && holdingsProvisional}
       columns={
@@ -278,6 +295,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
       */}
       <Row className="report-type-checkboxes">
         <Checkbox
+          className="all-check"
           indeterminate={someSelected}
           checked={allSelected}
           onChange={(e) =>
