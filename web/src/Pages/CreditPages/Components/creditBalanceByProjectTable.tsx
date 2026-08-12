@@ -18,7 +18,10 @@ import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
 import type { CreditBalanceInterface } from '../Interfaces/creditBalance.interface';
 import { CreditActionModal } from './creditActionModal';
 import { CreditTypePill } from './creditTypePill';
-import { ItmoAuthRequestModal } from './itmoAuthRequestModal';
+import {
+  ItmoAuthRequestModal,
+  ItmoAuthRequestModalFinishPayload,
+} from './itmoAuthRequestModal';
 import { ProjectDetailsLink } from '../../../Components/ProjectDetailsLink/projectDetailsLink';
 import '../creditPageStyles.scss';
 
@@ -689,22 +692,14 @@ export const CreditBalanceByProjectTable = ({
   };
 
   const onFinishItmoAuthRequest = async (
-    blockId: string,
-    amount: number,
-    cooperativeApproachId: string,
-    authorizationPurpose: string | undefined,
-    remarks: string | undefined,
+    payload: ItmoAuthRequestModalFinishPayload,
   ) => {
     if (!canManageCredits) return;
     setItmoModalLoading(true);
     try {
-      const response = await (post(API_PATHS.ITMO_AUTH_REQUEST, {
-        blockId,
-        amount,
-        cooperativeApproachId,
-        authorizationPurpose,
-        remarks,
-      }) as Promise<ConnectionResponse<unknown>>);
+      const response = await (post(API_PATHS.ITMO_AUTH_REQUEST, payload) as Promise<
+        ConnectionResponse<unknown>
+      >);
 
       if (response.status !== 201) {
         throw new Error(t('somethingWentWrong'));

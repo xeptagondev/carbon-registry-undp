@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import moment from "moment";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
@@ -140,9 +141,7 @@ const CooperativeApproachDetails = () => {
         entityName: values.entityName,
         entityIdentifier: values.entityIdentifier || undefined,
         countryOfIncorporation: values.countryOfIncorporation,
-        authorizationDate: values.authorizationDate
-          ? values.authorizationDate.valueOf()
-          : undefined,
+        authorizationDate: values.authorizationDate.valueOf(),
         authorizationReference: values.authorizationReference || undefined,
       });
       message.success("Authorized entity added");
@@ -433,8 +432,19 @@ const CooperativeApproachDetails = () => {
               }))}
             />
           </Form.Item>
-          <Form.Item name="authorizationDate" label="Authorization Date">
-            <DatePicker style={{ width: "100%" }} />
+          <Form.Item
+            name="authorizationDate"
+            label="Authorization Date"
+            rules={[
+              { required: true, message: "Authorization date is required" },
+            ]}
+          >
+            <DatePicker
+              style={{ width: "100%" }}
+              disabledDate={(currentDate: any) =>
+                currentDate > moment().endOf("day")
+              }
+            />
           </Form.Item>
           <Form.Item
             name="authorizationReference"

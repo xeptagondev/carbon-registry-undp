@@ -7,8 +7,6 @@ import {
   HoldingsProvider,
   loadSubmissionBundle,
   openReportingYear,
-  SnapshotOptions,
-  snapshotHoldingsForYear,
   SubmitOptions,
   submitAefReport,
   toAefSubmissionExport,
@@ -103,18 +101,13 @@ export class AefV2ReportService {
     return submitAefReport(this.deps(), this.defaults, reportedYear, options);
   }
 
+  /**
+   * The start-of-year rollover. Deliberately not exposed over HTTP — see
+   * AefV2SchedulerService (in-process cron) and src/aef-rollover (the
+   * serverless one-shot trigger), both of which call this and nothing else.
+   */
   async rollover(options: AefRolloverOptions = {}) {
     return openReportingYear(this.deps(), this.defaults, options);
-  }
-
-  async snapshotHoldings(reportedYear: number, options: SnapshotOptions = {}) {
-    return snapshotHoldingsForYear(
-      this.storeFactory.forManager(),
-      this.holdings,
-      this.defaults,
-      reportedYear,
-      options
-    );
   }
 
   config(): AefSubmissionDefaults {

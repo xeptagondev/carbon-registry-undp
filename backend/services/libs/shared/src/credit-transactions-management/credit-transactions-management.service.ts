@@ -834,11 +834,10 @@ export class CreditTransactionsManagementService {
       }
       // A cooperative approach with no counterparty besides the host
       // has nowhere for an NDC first transfer to go — it can only be
-      // used to authorize ITMOs for OIMP/Other purposes. An omitted
-      // purpose defaults to NDC downstream (resolveRetirementUseFields),
-      // so it's treated as NDC here too.
-      const authorizationPurpose =
-        itmoAuthRequestDto.authorizationPurpose ?? AuthorizationPurpose.NDC;
+      // used to authorize ITMOs for OIMP/Other purposes. authorizationPurpose
+      // is mandatory on the DTO (class-validator rejects a missing value
+      // before this method runs), so no NDC fallback is needed here anymore.
+      const authorizationPurpose = itmoAuthRequestDto.authorizationPurpose;
       const hasCounterparty = cooperativeApproach.participatingParties.some(
         (p) => p !== cooperativeApproach.hostParty
       );
@@ -847,6 +846,23 @@ export class CreditTransactionsManagementService {
           this.helperService.formatReqMessagesString(
             "creditTransaction.itmoAuthNdcRequiresCounterparty",
             [itmoAuthRequestDto.cooperativeApproachId]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      if (
+        itmoAuthRequestDto.authorizedTimeframeStartYear !== undefined &&
+        itmoAuthRequestDto.authorizedTimeframeEndYear !== undefined &&
+        itmoAuthRequestDto.authorizedTimeframeStartYear >
+          itmoAuthRequestDto.authorizedTimeframeEndYear
+      ) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.itmoAuthTimeframeInverted",
+            [
+              itmoAuthRequestDto.authorizedTimeframeStartYear.toString(),
+              itmoAuthRequestDto.authorizedTimeframeEndYear.toString(),
+            ]
           ),
           HttpStatus.BAD_REQUEST
         );
@@ -1166,6 +1182,8 @@ export class CreditTransactionsManagementService {
         data: {
           cooperativeApproachId: txData.cooperativeApproachId,
           authorizationPurpose: txData.authorizationPurpose,
+          authorizedTimeframeStartYear: txData.authorizedTimeframeStartYear,
+          authorizedTimeframeEndYear: txData.authorizedTimeframeEndYear,
           remarks: txData.remarks,
         },
       });

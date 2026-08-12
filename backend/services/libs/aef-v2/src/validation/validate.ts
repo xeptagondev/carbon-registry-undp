@@ -310,6 +310,38 @@ export function validateSubmission(
   checkAuthorizationRef('t3Actions', 'aefT3ActionsAuthorizationId', actions);
   checkAuthorizationRef('t4Holdings', 'aefT4HoldingsAuthorizationId', holdings);
 
+  // -- Every Action's Authorized entity reference must resolve in Table 5 ---
+  //
+  // Deliberately scoped to t3Actions only. Table 2's own entity-identifier
+  // field (aefT2AuthorizationsAuthoziedEntityId) is a static descriptive
+  // label, not a real reference — checking it here would always
+  // false-positive.
+  const knownEntities = new Set(
+    authorizedEntities
+      .map((record) => record.aefT5AuthorizedEntitiesId)
+      .filter((value): value is string => typeof value === 'string'),
+  );
+
+  for (const record of actions) {
+    const id = record.aefT3ActionsUsingAuthorizedEntityId;
+    if (typeof id !== 'string' || id.length === 0) {
+      continue; // absence is already reported as `required`/`conditional-required`
+    }
+    if (!knownEntities.has(id)) {
+      issues.push(
+        issue(
+          'missing-entity',
+          't3Actions',
+          `Authorized entity "${id}" is referenced but is not present in Table 5`,
+          {
+            key: 'aefT3ActionsUsingAuthorizedEntityId',
+            recordId: typeof record.id === 'string' ? record.id : undefined,
+          },
+        ),
+      );
+    }
+  }
+
   // -- Block ranges ---------------------------------------------------------
   const actionRanges = actions
     .map((record) =>

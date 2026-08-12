@@ -1,12 +1,7 @@
 import { AefV2ReportService } from "@app/shared/aef-v2-registry/aef-v2-report.service";
 import { AefV2ExportDto } from "@app/shared/aef-v2-registry/dto/aef.v2.export.dto";
 import { AefV2QueryDto } from "@app/shared/aef-v2-registry/dto/aef.v2.query.dto";
-import {
-  AefV2RolloverDto,
-  AefV2SnapshotDto,
-  AefV2SubmitDto,
-  AefV2YearDto,
-} from "@app/shared/aef-v2-registry/dto/aef.v2.submit.dto";
+import { AefV2SubmitDto, AefV2YearDto } from "@app/shared/aef-v2-registry/dto/aef.v2.submit.dto";
 import { JwtAuthGuard } from "@app/shared/auth/guards/jwt-auth.guard";
 import { Action } from "@app/shared/casl/action.enum";
 import { AppAbility } from "@app/shared/casl/casl-ability.factory";
@@ -21,6 +16,11 @@ import { ApiBearerAuth } from "@nestjs/swagger";
 // ReportsManagementController while V1 is phased out. See the module
 // docblock on AefV2RegistryModule for the write-side wiring; this controller
 // is read/orchestration only, forwarding to AefV2ReportService.
+//
+// The start-of-year rollover (new Table 1 Submission + frozen Table 4/5
+// snapshots) is deliberately NOT exposed here or anywhere else over HTTP —
+// it is cron-only. See AefV2SchedulerService (in-process, container
+// deployments) and src/aef-rollover (one-shot, serverless deployments).
 @Controller("aefV2")
 export class AefV2Controller {
   constructor(private readonly aefV2ReportService: AefV2ReportService) {}
@@ -61,31 +61,6 @@ export class AefV2Controller {
   @Post("download")
   async download(@Body() dto: AefV2ExportDto): Promise<DataResponseDto> {
     const result = await this.aefV2ReportService.download(dto.reportedYear, dto.fileType, dto.table);
-    return new DataResponseDto(HttpStatus.OK, result);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, PoliciesGuard)
-  @CheckPolicies((ability: AppAbility) => ability.can(Action.Manage, AefReport))
-  @Post("snapshotHoldings")
-  async snapshotHoldings(@Body() dto: AefV2SnapshotDto): Promise<DataResponseDto> {
-    const result = await this.aefV2ReportService.snapshotHoldings(dto.reportedYear, {
-      asOf: dto.asOf,
-      force: dto.force,
-    });
-    return new DataResponseDto(HttpStatus.OK, result);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, PoliciesGuard)
-  @CheckPolicies((ability: AppAbility) => ability.can(Action.Manage, AefReport))
-  @Post("rollover")
-  async rollover(@Body() dto: AefV2RolloverDto): Promise<DataResponseDto> {
-    const result = await this.aefV2ReportService.rollover({
-      openYear: dto.openYear,
-      asOf: dto.asOf,
-      force: dto.force,
-    });
     return new DataResponseDto(HttpStatus.OK, result);
   }
 

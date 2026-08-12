@@ -20,6 +20,7 @@
   "itmoAuthCaMissingReference": "Cooperative approach {} has no reference number yet — it must be Active before ITMOs can be authorized under it.",
   "itmoAuthCaNotActive": "Cooperative approach {} is {} — only Active cooperative approaches can be used for ITMO authorization.",
   "itmoAuthNdcRequiresCounterparty": "Cooperative approach {} has no counterparty besides the host — it can only authorize ITMOs for Other International Mitigation Purposes or Other Purposes, not Use Towards NDC.",
+  "itmoAuthTimeframeInverted": "The authorized timeframe's start year ({}) must not be after its end year ({}).",
   "itmoAuthRequestNotExists": "The specified ITMO authorization request does not exist.",
   "itmoAuthRequestNotPending": "The ITMO authorization request is not in pending state.",
   "notOwnItmoAuthRequest": "You can only cancel your own organisation's ITMO authorization requests.",

@@ -2,6 +2,7 @@ import { AefT5AuthorizedEntitiesCreateInput } from "@app/aef-v2";
 
 import { AuthorizedEntityStatus } from "../../enum/authorized.entity.status.enum";
 import { CaAuthorizedEntity } from "../../entities/ca.authorized.entity.entity";
+import { AUTHORIZED_ENTITY_CHANGE_CONDITIONS_LABEL } from "./aef-code.maps";
 
 // CaAuthorizedEntity was modelled on AEF Table 5 to begin with, so this map
 // is close to 1:1. Country resolution (alpha-2 -> alpha-3) is async and is
@@ -21,6 +22,13 @@ export function mapCaAuthorizedEntityToAef(
     // cost of a value CARP did not assign — flag if this proves wrong.
     aefT5AuthorizedEntitiesId: entity.entityIdentifier ?? entity.id,
     aefT5AuthorizedEntitiesCooperativeApproachId: caReferenceNumber,
+    // The entity's current status. Written at whatever instant this mapper
+    // runs — a real-time write records it as of that action, and the
+    // year-end snapshot's reconciliation (snapshotAuthorizedEntitiesForYear)
+    // re-runs this same mapper and updates the row in place, so a status
+    // change later in the year is picked up before the row is frozen.
+    aefT5AuthorizedEntitiesConditions: entity.status,
+    aefT5AuthorizedEntitiesChangeConditions: AUTHORIZED_ENTITY_CHANGE_CONDITIONS_LABEL,
     // AEF has no revocation column; a soft-deactivated entity is surfaced
     // here rather than silently dropped from the export.
     aefT5AuthorizedEntitiesAdditionalInformation: [

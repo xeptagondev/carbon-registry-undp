@@ -202,5 +202,12 @@ export default () => ({
       apiKey: process.env.AEF_SUBMISSION_API_KEY,
       timeoutMs: parseInt(process.env.AEF_SUBMISSION_TIMEOUT_MS) || 30000,
     },
+    // In-process start-of-year rollover cron (national-api container
+    // deployments, see AefV2SchedulerService). Turn off where the rollover
+    // is driven externally instead (the serverless `aef-rollover` schedule)
+    // or where more than one national-api replica runs — the snapshot steps
+    // are read-then-write, so concurrent ticks could double-insert Table 4/5
+    // rows.
+    rolloverCronEnabled: process.env.AEF_ROLLOVER_CRON_ENABLED !== "false",
   },
 });

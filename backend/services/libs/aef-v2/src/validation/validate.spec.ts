@@ -246,6 +246,41 @@ describe('validateSubmission', () => {
     expect(codes(issues)).toContain('missing-authorization');
   });
 
+  const authorizedEntity = {
+    id: 'entity-row',
+    aefT5AuthorizedEntitiesId: 'ENT-001',
+    aefT5AuthorizedEntitiesAuthorizationDate: '01/03/2024',
+    aefT5AuthorizedEntitiesName: 'Alpine Carbon Markets',
+    aefT5AuthorizedEntitiesIncorporationCountry: 'CHE',
+    aefT5AuthorizedEntitiesCooperativeApproachId: 'CA0004',
+  };
+
+  it('reports an action referencing an unknown authorized entity', () => {
+    const issues = validateSubmission({
+      authorizations: [authorization],
+      actions: [{ ...validAction, aefT3ActionsUsingAuthorizedEntityId: 'ENT-999' }],
+      authorizedEntities: [authorizedEntity],
+    });
+    expect(codes(issues)).toContain('missing-entity');
+  });
+
+  it('does not report an action referencing a known authorized entity', () => {
+    const issues = validateSubmission({
+      authorizations: [authorization],
+      actions: [{ ...validAction, aefT3ActionsUsingAuthorizedEntityId: 'ENT-001' }],
+      authorizedEntities: [authorizedEntity],
+    });
+    expect(codes(issues)).not.toContain('missing-entity');
+  });
+
+  it('does not check Table 2’s own entity-identifier field against Table 5', () => {
+    const issues = validateSubmission({
+      authorizations: [{ ...authorization, aefT2AuthorizationsAuthoziedEntityId: 'Cooperative Approach Entities' }],
+      actions: [{ ...validAction, id: 'action-row' }],
+    });
+    expect(codes(issues)).not.toContain('missing-entity');
+  });
+
   it('reports an inverted block range', () => {
     const issues = validateSubmission({
       authorizations: [authorization],

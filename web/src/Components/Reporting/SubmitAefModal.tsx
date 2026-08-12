@@ -28,6 +28,13 @@ interface ISubmitAefModal {
   onCancel: () => void;
   onConfirm: (submissionDate: Moment) => void;
   confirming?: boolean;
+  /**
+   * `submitAefReport` refuses to file a year with outstanding
+   * `validateSubmission` issues — it returns them rather than mutating
+   * anything. Surfaced here so a blocked submission is legible rather than
+   * silently doing nothing.
+   */
+  issues?: string[];
 }
 
 const SubmitAefModal = ({
@@ -37,6 +44,7 @@ const SubmitAefModal = ({
   onCancel,
   onConfirm,
   confirming,
+  issues,
 }: ISubmitAefModal) => {
   const [form] = Form.useForm();
 
@@ -89,6 +97,22 @@ const SubmitAefModal = ({
           showIcon
           className="submit-modal-alert"
           message={t("reporting:submitAefLate", { date: deadline.format("D MMMM YYYY") })}
+        />
+      )}
+
+      {issues && issues.length > 0 && (
+        <Alert
+          type="error"
+          showIcon
+          className="submit-modal-alert"
+          message={t("reporting:submitAefBlocked")}
+          description={
+            <ul className="submit-modal-issues">
+              {issues.map((issue, index) => (
+                <li key={index}>{issue}</li>
+              ))}
+            </ul>
+          }
         />
       )}
 

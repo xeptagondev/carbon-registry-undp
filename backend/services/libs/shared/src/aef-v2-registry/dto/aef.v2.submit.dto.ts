@@ -20,43 +20,6 @@ export class AefV2SubmitDto {
   force?: boolean;
 }
 
-export class AefV2RolloverDto {
-  @ApiPropertyOptional({ description: "The year being opened. Defaults to the current calendar year." })
-  @IsOptional()
-  @IsInt()
-  @IsPositive()
-  openYear?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  asOf?: Date;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  force?: boolean;
-}
-
-export class AefV2SnapshotDto {
-  @ApiProperty()
-  @IsInt()
-  @IsPositive()
-  reportedYear: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  asOf?: Date;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  force?: boolean;
-}
-
 export class AefV2YearDto {
   @ApiProperty()
   @IsInt()

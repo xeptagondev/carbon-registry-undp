@@ -7,17 +7,21 @@ import { AuthorizationPurpose } from "../../../Definitions/Enums/authorizationPu
 import { useConnection } from "../../../Context/ConnectionContext/connectionContext";
 import { COLOR_CONFIGS } from "../../../Config/colorConfigs";
 
+export interface ItmoAuthRequestModalFinishPayload {
+  blockId: string;
+  amount: number;
+  cooperativeApproachId: string;
+  authorizationPurpose: string;
+  authorizedTimeframeStartYear: number | undefined;
+  authorizedTimeframeEndYear: number | undefined;
+  remarks: string | undefined;
+}
+
 interface ItmoAuthRequestModalProps {
   icon?: any;
   title?: string;
   onCancel: any;
-  onFinish: (
-    blockId: string,
-    amount: number,
-    cooperativeApproachId: string,
-    authorizationPurpose: string | undefined,
-    remarks: string | undefined
-  ) => void;
+  onFinish: (payload: ItmoAuthRequestModalFinishPayload) => void;
   loading: boolean;
   actionBtnText?: string;
   openModal: boolean;
@@ -36,6 +40,8 @@ interface CooperativeApproachRow {
   title: string;
   hostParty: string;
   participatingParties: string[];
+  startDate?: number;
+  endDate?: number;
 }
 
 export const ItmoAuthRequestModal = (props: ItmoAuthRequestModalProps) => {
@@ -57,7 +63,13 @@ export const ItmoAuthRequestModal = (props: ItmoAuthRequestModalProps) => {
 
   const amountRef = useRef<number | undefined>(undefined);
   const cooperativeApproachIdRef = useRef<string | undefined>(undefined);
-  const authorizationPurposeRef = useRef<string | undefined>(undefined);
+  // Defaults to NDC — the popup should not submit with no purpose picked;
+  // see createItmoAuthRequest, which used to silently default a missing
+  // purpose to NDC server-side. That fallback is gone now that the field is
+  // mandatory on the DTO, so the UI carries the default instead.
+  const authorizationPurposeRef = useRef<string | undefined>(AuthorizationPurpose.NDC);
+  const authorizedTimeframeStartYearRef = useRef<number | undefined>(undefined);
+  const authorizedTimeframeEndYearRef = useRef<number | undefined>(undefined);
   const remarksRef = useRef<string>("");
 
   const cooperativeApproaches = cooperativeApproachRows.map((ca) => ({
@@ -98,6 +110,8 @@ export const ItmoAuthRequestModal = (props: ItmoAuthRequestModalProps) => {
             title: ca.title,
             hostParty: ca.hostParty,
             participatingParties: ca.participatingParties ?? [],
+            startDate: ca.startDate,
+            endDate: ca.endDate,
           }))
       );
     } catch {
@@ -115,13 +129,17 @@ export const ItmoAuthRequestModal = (props: ItmoAuthRequestModalProps) => {
         project: data?.projectName,
         serialNumber: data?.serialNumber,
         cooperativeApproachId: undefined,
-        authorizationPurpose: undefined,
+        authorizationPurpose: AuthorizationPurpose.NDC,
+        authorizedTimeframeStartYear: undefined,
+        authorizedTimeframeEndYear: undefined,
         amount: undefined,
         remarks: "",
       });
       amountRef.current = undefined;
       cooperativeApproachIdRef.current = undefined;
-      authorizationPurposeRef.current = undefined;
+      authorizationPurposeRef.current = AuthorizationPurpose.NDC;
+      authorizedTimeframeStartYearRef.current = undefined;
+      authorizedTimeframeEndYearRef.current = undefined;
       remarksRef.current = "";
       setSelectedCaId(undefined);
       setActionDisable(true);
@@ -133,16 +151,22 @@ export const ItmoAuthRequestModal = (props: ItmoAuthRequestModalProps) => {
     amountRef.current = allValues.amount;
     cooperativeApproachIdRef.current = allValues.cooperativeApproachId;
     authorizationPurposeRef.current = allValues.authorizationPurpose;
+    authorizedTimeframeStartYearRef.current = allValues.authorizedTimeframeStartYear;
+    authorizedTimeframeEndYearRef.current = allValues.authorizedTimeframeEndYear;
     remarksRef.current = allValues.remarks || "";
 
     if (allValues.cooperativeApproachId !== selectedCaId) {
       setSelectedCaId(allValues.cooperativeApproachId);
-      // The purpose field may hold a now-invalid "Use Towards NDC" for
-      // the newly-picked CA — clear it rather than let a client-side
-      // choice silently fail server-side.
       const newCa = cooperativeApproachRows.find(
         (ca) => ca.cooperativeApproachId === allValues.cooperativeApproachId
       );
+
+      // The purpose field may hold a now-invalid "Use Towards NDC" for
+      // the newly-picked CA — clear it rather than let a client-side
+      // choice silently fail server-side. Now that purpose is mandatory,
+      // this leaves the field genuinely empty (not defaulted back to NDC),
+      // forcing the PD to explicitly pick OIMP/Other rather than have one
+      // silently substituted.
       const newCaNdcAvailable =
         !newCa ||
         newCa.participatingParties.some((p) => p !== newCa.hostParty);
@@ -153,11 +177,28 @@ export const ItmoAuthRequestModal = (props: ItmoAuthRequestModalProps) => {
         form.setFieldsValue({ authorizationPurpose: undefined });
         authorizationPurposeRef.current = undefined;
       }
+
+      // Convenience prefill of the authorized-timeframe years from the
+      // newly-picked CA's own dates — still editable, matching what the
+      // AEF mapper used to derive automatically before this change.
+      const startYear = newCa?.startDate
+        ? new Date(newCa.startDate).getUTCFullYear()
+        : undefined;
+      const endYear = newCa?.endDate
+        ? new Date(newCa.endDate).getUTCFullYear()
+        : undefined;
+      form.setFieldsValue({
+        authorizedTimeframeStartYear: startYear,
+        authorizedTimeframeEndYear: endYear,
+      });
+      authorizedTimeframeStartYearRef.current = startYear;
+      authorizedTimeframeEndYearRef.current = endYear;
     }
 
     const amountNum = Number(amountRef.current);
     let valid = true;
     if (!cooperativeApproachIdRef.current) valid = false;
+    if (!authorizationPurposeRef.current) valid = false;
     if (
       !Number.isInteger(amountNum) ||
       amountNum <= 0 ||
@@ -171,13 +212,15 @@ export const ItmoAuthRequestModal = (props: ItmoAuthRequestModalProps) => {
 
   const handleSubmit = () => {
     if (!data) return;
-    onFinish(
-      data.id,
-      Number(amountRef.current),
-      cooperativeApproachIdRef.current as string,
-      authorizationPurposeRef.current,
-      remarksRef.current
-    );
+    onFinish({
+      blockId: data.id,
+      amount: Number(amountRef.current),
+      cooperativeApproachId: cooperativeApproachIdRef.current as string,
+      authorizationPurpose: authorizationPurposeRef.current as string,
+      authorizedTimeframeStartYear: authorizedTimeframeStartYearRef.current,
+      authorizedTimeframeEndYear: authorizedTimeframeEndYearRef.current,
+      remarks: remarksRef.current,
+    });
   };
 
   return (
@@ -244,11 +287,39 @@ export const ItmoAuthRequestModal = (props: ItmoAuthRequestModalProps) => {
                 <Form.Item
                   label={t("authorizationPurpose")}
                   name="authorizationPurpose"
+                  rules={[{ required: true, message: t("required") }]}
                 >
                   <Select
-                    allowClear
-                    placeholder={t("selectAuthorizationPurposeOptional")}
+                    placeholder={t("selectAuthorizationPurpose")}
                     options={purposeOptions}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={8}>
+              <Col span={12}>
+                <Form.Item
+                  label={t("authorizedTimeframeStartYear")}
+                  name="authorizedTimeframeStartYear"
+                >
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    min={1900}
+                    max={2100}
+                    placeholder={t("authorizedTimeframeStartYear")}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={t("authorizedTimeframeEndYear")}
+                  name="authorizedTimeframeEndYear"
+                >
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    min={1900}
+                    max={2100}
+                    placeholder={t("authorizedTimeframeEndYear")}
                   />
                 </Form.Item>
               </Col>

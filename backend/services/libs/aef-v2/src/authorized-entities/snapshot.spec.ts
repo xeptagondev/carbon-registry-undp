@@ -1,6 +1,6 @@
 import { fixedClock } from '../clock';
 import { toRows } from '../export/rows';
-import { AefSubmissionDefaults } from '../submission/bootstrap';
+import { AefSubmissionDefaults, ensureSubmissionForYear } from '../submission/bootstrap';
 import { InMemoryAefStore } from '../testing/in-memory-store';
 import { AefT5AuthorizedEntitiesCreateInput } from '../tables/aefT5AuthorizedEntities';
 import { AuthorizedEntitiesProvider } from './provider';
@@ -141,6 +141,47 @@ describe('snapshotAuthorizedEntitiesForYear', () => {
     );
 
     expect(result.created).toBe(true);
+  });
+
+  it('updates a real-time-written unfrozen row in place instead of duplicating it', async () => {
+    const store = newStore();
+    const { provider } = stubProvider([entityRow('Alpine Carbon Markets')]);
+
+    // Simulate a real-time write mid-year: the same submission, the same
+    // business key, no snapshotAt — exactly what an Action-triggered ensure
+    // would leave behind before the year-end snapshot ever runs.
+    const { record: submission } = await ensureSubmissionForYear(store, defaults, 2025, clock);
+    const realTimeRow = await store.create('t5AuthorizedEntities', {
+      ...entityRow('Alpine Carbon Markets'),
+      aefT1SubmissionId: submission.id,
+    });
+
+    const result = await snapshotAuthorizedEntitiesForYear(store, provider, defaults, 2025, {}, clock);
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0].id).toBe(realTimeRow.id); // same row, updated in place
+    expect(result.rows[0].snapshotAt).toBe('2026-03-01T12:00:00.000Z');
+    expect(store.all('t5AuthorizedEntities')).toHaveLength(1); // not duplicated
+  });
+
+  it('freezes a leftover real-time row the live query no longer returns', async () => {
+    const store = newStore();
+    // The live provider returns nothing for this year (e.g. the entity's
+    // authorizationDate is unset, so RegistryAuthorizedEntitiesProvider's
+    // own query excludes it) — but a real-time write still put a row there.
+    const { provider } = stubProvider([]);
+
+    const { record: submission } = await ensureSubmissionForYear(store, defaults, 2025, clock);
+    const realTimeRow = await store.create('t5AuthorizedEntities', {
+      ...entityRow('Orphaned Entity'),
+      aefT1SubmissionId: submission.id,
+    });
+
+    const result = await snapshotAuthorizedEntitiesForYear(store, provider, defaults, 2025, {}, clock);
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0].id).toBe(realTimeRow.id);
+    expect(result.rows[0].snapshotAt).toBe('2026-03-01T12:00:00.000Z');
   });
 });
 

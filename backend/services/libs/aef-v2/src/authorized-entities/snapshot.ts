@@ -89,6 +89,18 @@ export interface AuthorizedEntitiesSnapshotOptions {
  * Ensures the year's Submission exists first, because CMA.6 gives Table 5 no
  * reported-year column either — the year association runs through
  * `aefT1SubmissionId`, exactly as for Table 4.
+ *
+ * **Reconciles by business key rather than inserting a fresh batch.** A host
+ * may write an unfrozen row mid-year — e.g. when an Action needs to reference
+ * an Authorized entity, before this year's snapshot has run at all — and this
+ * function is the only place that would otherwise collide with it. For every
+ * entity the provider computes, an existing unfrozen row sharing its
+ * `aefT5AuthorizedEntitiesId` is updated in place (fresh field values plus
+ * `snapshotAt`) instead of a second row being created. Any unfrozen row left
+ * over after that — one the provider's own live query didn't independently
+ * return, e.g. because the entity's `authorizationDate` is unset — is frozen
+ * as-is rather than silently discarded, since it is still a real record for
+ * this year.
  */
 export async function snapshotAuthorizedEntitiesForYear(
   store: AefStore,
@@ -127,19 +139,54 @@ export async function snapshotAuthorizedEntitiesForYear(
     }
   }
 
+  // Rows still unfrozen after the deletion above — real-time writes this
+  // year, keyed by business key so the loop below can match against them.
+  const unfrozenByKey = new Map<string, AefT5AuthorizedEntitiesRecord>();
+  for (const row of existing.data) {
+    if (row.snapshotAt !== undefined) {
+      continue; // was frozen; either returned above, or just deleted under force
+    }
+    if (typeof row.aefT5AuthorizedEntitiesId === 'string') {
+      unfrozenByKey.set(row.aefT5AuthorizedEntitiesId, row);
+    }
+  }
+
   const asOf = options.asOf ?? clock.now();
   const snapshotAt = clock.now().toISOString();
   const computed = await provider.getAuthorizedEntities({ reportedYear: year, asOf });
 
   const rows: AefT5AuthorizedEntitiesRecord[] = [];
+  const matchedKeys = new Set<string>();
   for (const row of computed) {
-    rows.push(
-      await store.create('t5AuthorizedEntities', {
-        ...row,
-        snapshotAt,
-        aefT1SubmissionId: submission.id,
-      }),
-    );
+    const key = row.aefT5AuthorizedEntitiesId;
+    const existingRow = typeof key === 'string' ? unfrozenByKey.get(key) : undefined;
+    if (existingRow) {
+      matchedKeys.add(key as string);
+      rows.push(
+        await store.update('t5AuthorizedEntities', existingRow.id, {
+          ...row,
+          snapshotAt,
+          aefT1SubmissionId: submission.id,
+        }),
+      );
+    } else {
+      rows.push(
+        await store.create('t5AuthorizedEntities', {
+          ...row,
+          snapshotAt,
+          aefT1SubmissionId: submission.id,
+        }),
+      );
+    }
+  }
+
+  // Real-time rows the live query didn't independently return this pass —
+  // still real for this year, so filed rather than left unfrozen forever.
+  for (const [key, row] of unfrozenByKey) {
+    if (matchedKeys.has(key)) {
+      continue;
+    }
+    rows.push(await store.update('t5AuthorizedEntities', row.id, { snapshotAt }));
   }
 
   return { reportedYear: year, rows, created: true };

@@ -37,7 +37,11 @@ export class RegistryAuthorizedEntitiesProvider implements AuthorizedEntitiesPro
 
     const entities = await this.authorizedEntityRepo
       .createQueryBuilder("entity")
-      .where("entity.authorizationDate IS NOT NULL AND entity.authorizationDate <= :asOf", {
+      // authorizationDate is mandatory going forward (see
+      // CaAuthorizedEntityCreateDto), but rows created before that became
+      // true may still have it null — createdTime is always present, so it
+      // is the fallback rather than a reason to exclude the entity.
+      .where("COALESCE(entity.authorizationDate, entity.createdTime) <= :asOf", {
         asOf: asOfMs,
       })
       .andWhere("(entity.status = :active OR entity.updatedTime > :asOf)", {
@@ -60,9 +64,9 @@ export class RegistryAuthorizedEntitiesProvider implements AuthorizedEntitiesPro
       const alpha3 = entity.countryOfIncorporation
         ? await this.countryService.getAlpha3(entity.countryOfIncorporation)
         : undefined;
-      const authorizationDate = entity.authorizationDate
-        ? formatSubmissionDate(new Date(Number(entity.authorizationDate)))
-        : undefined;
+      const authorizationDate = formatSubmissionDate(
+        new Date(Number(entity.authorizationDate ?? entity.createdTime))
+      );
 
       rows.push(mapCaAuthorizedEntityToAef(entity, ca?.caReferenceNumber, alpha3, authorizationDate));
     }
