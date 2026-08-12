@@ -7,3 +7,4 @@
 export * from './rows';
 export * from './csv';
 export * from './submission';
+export * from './operation';

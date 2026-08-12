@@ -42,10 +42,21 @@ export interface AefT5AuthorizedEntitiesData {
   aefT5AuthorizedEntitiesAdditionalInformation?: string;
 }
 
-export type AefT5AuthorizedEntitiesCreateInput =
-  AefCreateInput<AefT5AuthorizedEntitiesData> & AefT5AuthorizedEntitiesLinks;
+export type AefT5AuthorizedEntitiesCreateInput = AefCreateInput<AefT5AuthorizedEntitiesData> &
+  AefT5AuthorizedEntitiesLinks & {
+    /** Library metadata. Set by `snapshotAuthorizedEntitiesForYear` when a year is frozen. */
+    snapshotAt?: string;
+  };
 
 export interface AefT5AuthorizedEntitiesRecord
   extends AefT5AuthorizedEntitiesData,
     AefT5AuthorizedEntitiesLinks,
-    AefRecordMeta {}
+    AefRecordMeta {
+  /**
+   * When this snapshot was frozen. Library metadata, excluded from export.
+   *
+   * Absent means the row has not been snapshotted — a provisional figure for
+   * the still-open year. Mirrors `AefT4HoldingsRecord.snapshotAt`.
+   */
+  snapshotAt?: string;
+}

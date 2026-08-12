@@ -63,3 +63,8 @@ export function exportFileName(
   const year = reportedYear === undefined ? '' : `-${reportedYear}`;
   return `aef-v2-${table}${year}.${extension}`;
 }
+
+/** Suggested filename for the whole-submission export, e.g. `aef-v2-submission-2025.xlsx`. */
+export function submissionExportFileName(reportedYear: number, extension: 'csv' | 'xlsx'): string {
+  return `aef-v2-submission-${reportedYear}.${extension}`;
+}
