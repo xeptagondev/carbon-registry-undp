@@ -40,6 +40,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/core/tsconfig.lib.json"
       }
+    },
+    "aef-v2": {
+      "type": "library",
+      "root": "libs/aef-v2",
+      "entryFile": "index",
+      "sourceRoot": "libs/aef-v2/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/aef-v2/tsconfig.lib.json"
+      }
     }
   }
 }

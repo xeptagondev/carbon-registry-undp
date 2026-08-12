@@ -22,6 +22,7 @@ import { CreditBlockOrgTransactionsViewEntity } from "../view-entities/credit.bl
 import { CreditBlockOrgAggregationViewEntity } from "../view-entities/credit.block.org.aggregation.view.entity";
 import { DocumentManagementModule } from "../document-management/document-management.module";
 import { AefReportManagementModule } from "../aef-report-management/aef-report-management.module";
+import { AefV2RegistryModule } from "../aef-v2-registry/aef-v2-registry.module";
 import { SerialNumberManagementModule } from "../serial-number-management/serial-number-management.module";
 
 @Module({
@@ -49,6 +50,7 @@ import { SerialNumberManagementModule } from "../serial-number-management/serial
     ]),
     DocumentManagementModule,
     AefReportManagementModule,
+    AefV2RegistryModule,
   ],
   providers: [CreditTransactionsManagementService],
   exports: [CreditTransactionsManagementService],

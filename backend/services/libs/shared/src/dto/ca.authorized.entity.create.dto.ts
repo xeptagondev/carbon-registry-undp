@@ -28,10 +28,13 @@ export class CaAuthorizedEntityCreateDto {
   @IsValidCountry()
   countryOfIncorporation: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  // Mandatory: this is the AEF Table 5 authorization date (see
+  // aef-authorized-entity.mapper.ts). Not-future-dated is enforced in
+  // addAuthorizedEntity, which knows "now" — a decorator can't.
+  @ApiProperty()
+  @IsNotEmpty()
   @IsNumber()
-  authorizationDate?: number;
+  authorizationDate: number;
 
   @ApiPropertyOptional()
   @IsOptional()

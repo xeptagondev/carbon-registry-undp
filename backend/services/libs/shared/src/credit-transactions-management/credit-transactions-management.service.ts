@@ -52,6 +52,7 @@ import { DataResponseDto } from "../dto/data.response.dto";
 import { DataResponseMessageDto } from "../dto/data.response.message";
 import { BasicResponseDto } from "../dto/basic.response.dto";
 import { AefReportManagementService } from "../aef-report-management/aef-report-management.service";
+import { AefV2WriteService } from "../aef-v2-registry/aef-v2-write.service";
 import { Role } from "../casl/role.enum";
 import { CompanyState } from "../enum/company.state.enum";
 import { CooperativeApproach } from "../entities/cooperative.approach.entity";
@@ -169,7 +170,8 @@ export class CreditTransactionsManagementService {
     private cooperativeApproachRepo: Repository<CooperativeApproach>,
     @InjectRepository(CaAuthorizedEntity)
     private caAuthorizedEntityRepo: Repository<CaAuthorizedEntity>,
-    private readonly serialNumberManagementService: SerialNumberManagementService
+    private readonly serialNumberManagementService: SerialNumberManagementService,
+    private readonly aefV2WriteService: AefV2WriteService
   ) {}
 
   public async transferCredits(
@@ -853,11 +855,10 @@ export class CreditTransactionsManagementService {
       }
       // A cooperative approach with no counterparty besides the host
       // has nowhere for an NDC first transfer to go — it can only be
-      // used to authorize ITMOs for OIMP/Other purposes. An omitted
-      // purpose defaults to NDC downstream (resolveRetirementUseFields),
-      // so it's treated as NDC here too.
-      const authorizationPurpose =
-        itmoAuthRequestDto.authorizationPurpose ?? AuthorizationPurpose.NDC;
+      // used to authorize ITMOs for OIMP/Other purposes. authorizationPurpose
+      // is mandatory on the DTO (class-validator rejects a missing value
+      // before this method runs), so no NDC fallback is needed here anymore.
+      const authorizationPurpose = itmoAuthRequestDto.authorizationPurpose;
       const hasCounterparty = cooperativeApproach.participatingParties.some(
         (p) => p !== cooperativeApproach.hostParty
       );
@@ -866,6 +867,23 @@ export class CreditTransactionsManagementService {
           this.helperService.formatReqMessagesString(
             "creditTransaction.itmoAuthNdcRequiresCounterparty",
             [itmoAuthRequestDto.cooperativeApproachId]
+          ),
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      if (
+        itmoAuthRequestDto.authorizedTimeframeStartYear !== undefined &&
+        itmoAuthRequestDto.authorizedTimeframeEndYear !== undefined &&
+        itmoAuthRequestDto.authorizedTimeframeStartYear >
+          itmoAuthRequestDto.authorizedTimeframeEndYear
+      ) {
+        throw new HttpException(
+          this.helperService.formatReqMessagesString(
+            "creditTransaction.itmoAuthTimeframeInverted",
+            [
+              itmoAuthRequestDto.authorizedTimeframeStartYear.toString(),
+              itmoAuthRequestDto.authorizedTimeframeEndYear.toString(),
+            ]
           ),
           HttpStatus.BAD_REQUEST
         );
@@ -1185,6 +1203,8 @@ export class CreditTransactionsManagementService {
         data: {
           cooperativeApproachId: txData.cooperativeApproachId,
           authorizationPurpose: txData.authorizationPurpose,
+          authorizedTimeframeStartYear: txData.authorizedTimeframeStartYear,
+          authorizedTimeframeEndYear: txData.authorizedTimeframeEndYear,
           remarks: txData.remarks,
         },
       });
@@ -1218,6 +1238,11 @@ export class CreditTransactionsManagementService {
       );
     }
     await this.aefReportManagementService.handleAefRecord(creditBlock, em);
+    // AEF V2 (@app/aef-v2) — coexists with the V1 call above. Different
+    // event set: see AefV2WriteService's docblock for why a V1 ISSUE is not
+    // a V2 Action. Runs in this same transaction/EntityManager so a V2
+    // write and its ledger row commit or roll back together.
+    await this.aefV2WriteService.recordCreditBlockEvent(creditBlock, em, previousCreditBlock);
   }
 
   // Type+subType-specific payload for a RETIRED transaction record; see

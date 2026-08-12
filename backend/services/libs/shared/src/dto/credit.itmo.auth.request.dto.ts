@@ -6,6 +6,8 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  Max,
+  Min,
 } from "class-validator";
 import { AuthorizationPurpose } from "../enum/authorization.purpose.enum";
 
@@ -32,10 +34,31 @@ export class CreditItmoAuthRequestDto {
   @IsString()
   cooperativeApproachId: string;
 
-  @ApiPropertyOptional({ enum: AuthorizationPurpose })
-  @IsOptional()
+  // Mandatory: AEF Table 2's PurposeForAuthorization is a required field
+  // (aefT2AuthorizationsPurposesForAuthorization), so this can no longer be
+  // left for the service to silently default to NDC — see
+  // createItmoAuthRequest, which used to do exactly that.
+  @ApiProperty({ enum: AuthorizationPurpose })
+  @IsNotEmpty()
   @IsEnum(AuthorizationPurpose)
-  authorizationPurpose?: AuthorizationPurpose;
+  authorizationPurpose: AuthorizationPurpose;
+
+  // Feeds aefT2AuthorizationsAuthorizedTimeframe ("dddd - dddd"). Optional —
+  // left blank when either is missing, same as every other optional AEF
+  // field. Cross-field ordering (start <= end) is checked in the service.
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1900)
+  @Max(2100)
+  authorizedTimeframeStartYear?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1900)
+  @Max(2100)
+  authorizedTimeframeEndYear?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

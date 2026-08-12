@@ -1,6 +1,7 @@
 import { CoreModule } from "@app/core";
 import { SharedModule } from "@app/shared";
 import { Logger, Module } from "@nestjs/common";
+import { ScheduleModule } from "@nestjs/schedule";
 import { RateLimiterModule } from "nestjs-rate-limiter";
 import { AuthController } from "./auth.controller";
 import { CompanyController } from "./company.controller";
@@ -15,6 +16,8 @@ import { DocumentManagementController } from "./document.controller";
 import { AnalyticsController } from "./analytics.controller";
 import { CreditTransactionsManagementController } from "./credit.transactions.management.controller";
 import { ReportsManagementController } from "./reports.management.controller";
+import { AefV2Controller } from "./aef-v2.controller";
+import { AefV2SchedulerService } from "./aef-v2.scheduler";
 import { CooperativeApproachController } from "./cooperative-approach.controller";
 import { CorrespondingAdjustmentController } from "./corresponding-adjustment.controller";
 import { InitialReportController } from "./initial-report.controller";
@@ -28,6 +31,7 @@ import { AdminController } from "./admin.controller";
     }),
     SharedModule,
     CoreModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [
     NationalAPIController,
@@ -42,12 +46,13 @@ import { AdminController } from "./admin.controller";
     AnalyticsController,
     CreditTransactionsManagementController,
     ReportsManagementController,
+    AefV2Controller,
     CooperativeApproachController,
     CorrespondingAdjustmentController,
     InitialReportController,
     ItmoAccountController,
     AdminController,
   ],
-  providers: [NationalAPIService, Logger],
+  providers: [NationalAPIService, Logger, AefV2SchedulerService],
 })
 export class NationalAPIModule {}

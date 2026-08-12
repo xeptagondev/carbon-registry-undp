@@ -86,11 +86,11 @@ const columns: ColumnsType<OrganizationBalance> = [
       </div>
     ),
   },
-  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'left', sorter: (a, b) => a.moBalance - b.moBalance, render: formatCredits },
-  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'left', sorter: (a, b) => a.moReserved - b.moReserved, render: formatCredits },
-  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'left', sorter: (a, b) => a.itmoBalance - b.itmoBalance, render: formatCredits },
-  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReserved', align: 'left', sorter: (a, b) => a.itmoReserved - b.itmoReserved, render: formatCredits },
-  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
+  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'right', sorter: (a, b) => a.moBalance - b.moBalance, render: formatCredits },
+  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'right', sorter: (a, b) => a.moReserved - b.moReserved, render: formatCredits },
+  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'right', sorter: (a, b) => a.itmoBalance - b.itmoBalance, render: formatCredits },
+  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReserved', align: 'right', sorter: (a, b) => a.itmoReserved - b.itmoReserved, render: formatCredits },
+  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'center', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
 ];
 
 export const CreditBalanceByOrganizationTable = ({

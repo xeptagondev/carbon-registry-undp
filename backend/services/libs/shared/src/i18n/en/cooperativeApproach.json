@@ -7,6 +7,7 @@
   "entityRequiresActiveCa": "Authorized entities can only be added to an Active cooperative approach ({} is not Active).",
   "authorizedEntityNotFound": "Authorized entity {} not found.",
   "countryOfIncorporationNotParticipating": "Country of incorporation {} is not a participating party of cooperative approach {}.",
+  "authorizationDateInFuture": "The authorization date cannot be in the future.",
   "participatingPartyInUse": "Participating party {} cannot be removed from cooperative approach {} — an active authorized entity is incorporated there.",
   "transitionFromCompleted": "Cooperative approach {} is Completed — its lifecycle has ended and its status cannot change. To start a new bilateral arrangement, create a fresh cooperative approach.",
   "transitionFromRevoked": "Cooperative approach {} was Revoked under Draft -/CMA.5 paras 20-21. Revoked is terminal; no further status changes are permitted.",

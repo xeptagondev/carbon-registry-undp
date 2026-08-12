@@ -169,4 +169,45 @@ export default () => ({
     actionBy: process.env.NOT_APPLICABLE_LABEL || "NA",
     party: process.env.PARTY || "Sri Lanka",
   },
+  // AEF V2 (@app/aef-v2) config. Deliberately separate from `AEF` above:
+  // that block's `party` is a display name ("Sri Lanka"), not usable as
+  // `aefT1SubmissionParty`, which the AEF nomenclature requires as ISO
+  // 3166-1 alpha-3. Left undefined here when unset — the registry adaptor
+  // falls back to an alpha-3 lookup of `systemCountry` at startup.
+  AEF_V2: {
+    party: process.env.AEF_PARTY,
+    // Alpha-3 + 2 digits, e.g. "VUT01". No registry source for this today.
+    partyItmoRegistryId: process.env.AEF_PARTY_ITMO_REGISTRY_ID,
+    ndcFirstYear: parseInt(process.env.AEF_NDC_FIRST_YEAR) || 2021,
+    ndcLastYear: parseInt(process.env.AEF_NDC_LAST_YEAR) || 2030,
+    // Interim default for AefT2/T3/T4 MitigationType, which this registry has
+    // no per-project source for yet (ProjectEntity has sector/sectoralScope
+    // only). See sectoralScopeMitigationType in aef-code.maps.ts for the
+    // partial override.
+    defaultMitigationType:
+      process.env.AEF_DEFAULT_MITIGATION_TYPE || "Emission reductions",
+    // "blocks": reconstructs holdings from current CreditBlocksEntity state
+    // (approximate as-at reconstruction — see RegistryHoldingsProvider).
+    // "actions": replays this registry's own aef_v2_t3_actions rows, exact
+    // but only correct for years written after the write hook landed.
+    holdingsSource: process.env.AEF_HOLDINGS_SOURCE || "blocks",
+    // When true (default), an unexpected error deriving an AEF V2 row from a
+    // ledger event fails the whole replicator transaction rather than being
+    // logged and skipped — an ITMO movement silently missing its AEF row is
+    // a defect in a legally filed report.
+    strictWrite: process.env.AEF_STRICT_WRITE !== "false",
+    submission: {
+      enabled: process.env.AEF_SUBMISSION_ENABLED === "true",
+      endpoint: process.env.AEF_SUBMISSION_ENDPOINT,
+      apiKey: process.env.AEF_SUBMISSION_API_KEY,
+      timeoutMs: parseInt(process.env.AEF_SUBMISSION_TIMEOUT_MS) || 30000,
+    },
+    // In-process start-of-year rollover cron (national-api container
+    // deployments, see AefV2SchedulerService). Turn off where the rollover
+    // is driven externally instead (the serverless `aef-rollover` schedule)
+    // or where more than one national-api replica runs — the snapshot steps
+    // are read-then-write, so concurrent ticks could double-insert Table 4/5
+    // rows.
+    rolloverCronEnabled: process.env.AEF_ROLLOVER_CRON_ENABLED !== "false",
+  },
 });

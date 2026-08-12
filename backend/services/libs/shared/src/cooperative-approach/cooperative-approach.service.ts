@@ -369,6 +369,15 @@ export class CooperativeApproachService {
         HttpStatus.BAD_REQUEST
       );
     }
+    if (dto.authorizationDate > Date.now()) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "cooperativeApproach.authorizationDateInFuture",
+          []
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
     const entity = new CaAuthorizedEntity();
     entity.cooperativeApproachId = dto.cooperativeApproachId;
     entity.entityName = dto.entityName;

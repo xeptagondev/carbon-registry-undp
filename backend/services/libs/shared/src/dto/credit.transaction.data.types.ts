@@ -34,6 +34,8 @@ export interface RetirementCancellationData {
 export interface ItmoAuthorizationData {
   cooperativeApproachId?: string;
   authorizationPurpose?: AuthorizationPurpose;
+  authorizedTimeframeStartYear?: number;
+  authorizedTimeframeEndYear?: number;
   remarks?: string;
 }
 
