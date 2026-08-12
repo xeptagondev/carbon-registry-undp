@@ -58,7 +58,8 @@ describe("CreditTransactionsManagementService", () => {
       {} as any, // aefReportManagementService
       {} as any, // cooperativeApproachRepo
       {} as any, // caAuthorizedEntityRepo
-      {} as any // serialNumberManagementService
+      {} as any, // serialNumberManagementService
+      {} as any // aefV2WriteService
     );
   });
 

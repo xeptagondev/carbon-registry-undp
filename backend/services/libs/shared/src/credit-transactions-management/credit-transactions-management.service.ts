@@ -52,6 +52,7 @@ import { DataResponseDto } from "../dto/data.response.dto";
 import { DataResponseMessageDto } from "../dto/data.response.message";
 import { BasicResponseDto } from "../dto/basic.response.dto";
 import { AefReportManagementService } from "../aef-report-management/aef-report-management.service";
+import { AefV2WriteService } from "../aef-v2-registry/aef-v2-write.service";
 import { Role } from "../casl/role.enum";
 import { CompanyState } from "../enum/company.state.enum";
 import { CooperativeApproach } from "../entities/cooperative.approach.entity";
@@ -148,7 +149,8 @@ export class CreditTransactionsManagementService {
     private cooperativeApproachRepo: Repository<CooperativeApproach>,
     @InjectRepository(CaAuthorizedEntity)
     private caAuthorizedEntityRepo: Repository<CaAuthorizedEntity>,
-    private readonly serialNumberManagementService: SerialNumberManagementService
+    private readonly serialNumberManagementService: SerialNumberManagementService,
+    private readonly aefV2WriteService: AefV2WriteService
   ) {}
 
   public async transferCredits(
@@ -1197,6 +1199,11 @@ export class CreditTransactionsManagementService {
       );
     }
     await this.aefReportManagementService.handleAefRecord(creditBlock, em);
+    // AEF V2 (@app/aef-v2) — coexists with the V1 call above. Different
+    // event set: see AefV2WriteService's docblock for why a V1 ISSUE is not
+    // a V2 Action. Runs in this same transaction/EntityManager so a V2
+    // write and its ledger row commit or roll back together.
+    await this.aefV2WriteService.recordCreditBlockEvent(creditBlock, em, previousCreditBlock);
   }
 
   // Type+subType-specific payload for a RETIRED transaction record; see

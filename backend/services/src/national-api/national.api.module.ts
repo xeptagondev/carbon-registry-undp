@@ -15,6 +15,7 @@ import { DocumentManagementController } from "./document.controller";
 import { AnalyticsController } from "./analytics.controller";
 import { CreditTransactionsManagementController } from "./credit.transactions.management.controller";
 import { ReportsManagementController } from "./reports.management.controller";
+import { AefV2Controller } from "./aef-v2.controller";
 import { CooperativeApproachController } from "./cooperative-approach.controller";
 import { CorrespondingAdjustmentController } from "./corresponding-adjustment.controller";
 import { InitialReportController } from "./initial-report.controller";
@@ -42,6 +43,7 @@ import { AdminController } from "./admin.controller";
     AnalyticsController,
     CreditTransactionsManagementController,
     ReportsManagementController,
+    AefV2Controller,
     CooperativeApproachController,
     CorrespondingAdjustmentController,
     InitialReportController,
