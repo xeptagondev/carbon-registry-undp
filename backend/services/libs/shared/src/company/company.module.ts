@@ -20,6 +20,7 @@ import { CompanyViewEntity } from "../view-entities/company.view.entity";
 import { User } from "../entities/user.entity";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
 import { CreditBlockOrgAggregationViewEntity } from "../view-entities/credit.block.org.aggregation.view.entity";
+import { CreditBlockOrgBalancesViewEntity } from "../view-entities/credit.block.org.balances.view.entity";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CreditBlockOrgAggregationViewEntity } from "../view-entities/credit.blo
       CompanyViewEntity,
       CreditBlocksEntity,
       CreditBlockOrgAggregationViewEntity,
+      CreditBlockOrgBalancesViewEntity,
     ]),
     CaslModule,
     UtilModule,

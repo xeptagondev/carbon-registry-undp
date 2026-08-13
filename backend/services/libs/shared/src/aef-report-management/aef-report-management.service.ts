@@ -12,7 +12,8 @@ import { CreditRetireActionDto } from "../dto/credit.retire.action.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
 import { RetirementACtionEnum } from "../enum/retirement.action.enum";
-import { CreditRetirementTypeEnum } from "../enum/credit.retirement.type.enum";
+import { CreditTransactionSubTypesEnum } from "../enum/credit.transaction.sub.types.enum";
+import { RetirementUseData } from "../dto/credit.transaction.data.types";
 import { ConfigService } from "@nestjs/config";
 import { QueryDto } from "../dto/query.dto";
 import { User } from "../entities/user.entity";
@@ -79,8 +80,7 @@ export class AefReportManagementService {
 
   public async handleAefRecord(
     creditBlock: CreditBlocksEntity,
-    em: EntityManager,
-    previousCreditBlock?: CreditBlocksEntity
+    em: EntityManager
   ) {
     if (![TxType.ISSUE, TxType.TRANSFER, TxType.RETIRE].includes(creditBlock.txType)) {
       return;
@@ -104,16 +104,6 @@ export class AefReportManagementService {
     if (!project.projectAuthorizationTime) {
       return;
     }
-    // Dec 2/CMA.3 Annex para 1(a) + Dec 4/CMA.6 Annex II Actions table:
-    // a transfer is the "first transfer" of a block iff the block was
-    // not yet transferred at the moment the transfer began. The pre-
-    // update state lives in previousCreditBlock; the post-update state
-    // already has isNotTransferred=false (flipped by the transfer), so
-    // inspecting the live block's flag would always evaluate false.
-    const isFirstTransfer = Boolean(
-      creditBlock.txType === TxType.TRANSFER &&
-        previousCreditBlock?.isNotTransferred === true
-    );
     const newAefActionRecord = plainToClass(AefActionsTableEntity, {
       creditBlockStartId: this.serialNumberManagementService.getBlockStartId(
         creditBlock.serialNumber
@@ -135,18 +125,13 @@ export class AefReportManagementService {
       authorizationId: project.authorizationId,
       actionTime: creditBlock.txTime,
       aquiringParty: this.configService.get("AEF.defaultAquiringParty"),
-      cooperativeApproachId: creditBlock.cooperativeApproachId || null,
-      authorizationPurpose: creditBlock.authorizationPurpose || null,
-      acquiringPartyCountryCode: project.acquiringPartyCountryCode || null,
-      isFirstTransfer,
+      acquiringPartyCountryCode: null,
       reportingYear: new Date(creditBlock.txTime).getFullYear(),
     });
     if (creditBlock.txType == TxType.ISSUE) {
       newAefActionRecord.actionType = AefActionTypeEnum.AUTHORIZATION;
     } else if (creditBlock.txType == TxType.TRANSFER) {
-      newAefActionRecord.actionType = isFirstTransfer
-        ? AefActionTypeEnum.FIRST_TRANSFER
-        : AefActionTypeEnum.TRANSFER;
+      newAefActionRecord.actionType = AefActionTypeEnum.TRANSFER;
     } else if (creditBlock.txType == TxType.RETIRE) {
       const txData: CreditRetireActionDto = creditBlock.txData;
       if (txData && txData.action == RetirementACtionEnum.ACCEPT) {
@@ -155,24 +140,39 @@ export class AefReportManagementService {
         });
         if (!retireTrasaction) {
           newAefActionRecord.actionType = AefActionTypeEnum.RETIRE;
-        } else if (retireTrasaction.retirementType == CreditRetirementTypeEnum.CROSS_BORDER_TRANSACTIONS) {
-          newAefActionRecord.actionType = AefActionTypeEnum.CROSS_BOARDER_TRANSFER;
-          newAefActionRecord.aquiringParty = retireTrasaction.country;
-          newAefActionRecord.acquiringPartyCountryCode = retireTrasaction.country;
-        } else if (retireTrasaction.retirementType == CreditRetirementTypeEnum.USE_TOWARDS_NDC) {
+        } else if (
+          retireTrasaction.subType == CreditTransactionSubTypesEnum.USE_TOWARDS_NDC ||
+          retireTrasaction.subType == CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC
+        ) {
+          // AefActionTypeEnum keeps a single USE_TOWARDS_NDC bucket for
+          // both the MO-domestic and ITMO-first-transfer sub-types;
+          // isFirstTransfer below is what distinguishes them in AEF
+          // reporting.
+          const useData = retireTrasaction.data as RetirementUseData;
           newAefActionRecord.actionType = AefActionTypeEnum.USE_TOWARDS_NDC;
-        } else if (retireTrasaction.retirementType == CreditRetirementTypeEnum.USE_FOR_OIMP) {
+          if (useData?.country) {
+            newAefActionRecord.aquiringParty = useData.country;
+            newAefActionRecord.acquiringPartyCountryCode = useData.country;
+          }
+          // First transfer is the moment ITMO credits leave the
+          // country — this only fires for ITMO blocks; MO domestic
+          // NDC-use retirements never carry an ITMO authorization.
+          newAefActionRecord.isFirstTransfer = !!creditBlock.itmoAuthorizationRecord;
+        } else if (retireTrasaction.subType == CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP) {
+          const useData = retireTrasaction.data as RetirementUseData;
           newAefActionRecord.actionType = AefActionTypeEnum.USE_FOR_OIMP;
-        } else if (retireTrasaction.retirementType == CreditRetirementTypeEnum.VOLUNTARY_CANCELLATIONS) {
+          if (useData?.country) {
+            newAefActionRecord.aquiringParty = useData.country;
+            newAefActionRecord.acquiringPartyCountryCode = useData.country;
+          }
+          newAefActionRecord.isFirstTransfer = !!creditBlock.itmoAuthorizationRecord;
+        } else if (retireTrasaction.subType == CreditTransactionSubTypesEnum.VOLUNTARY_CANCELLATION) {
           newAefActionRecord.actionType = AefActionTypeEnum.VOLUNTARY_CANCELLATION;
-        } else if (retireTrasaction.retirementType == CreditRetirementTypeEnum.OMGE_CANCELLATION) {
+        } else if (retireTrasaction.subType == CreditTransactionSubTypesEnum.OMGE_CANCELLATION) {
           newAefActionRecord.actionType = AefActionTypeEnum.OMGE_CANCELLATION;
         } else {
           newAefActionRecord.actionType = AefActionTypeEnum.RETIRE;
         }
-      } else if (!txData) {
-        // Retirement via retireToAccount (no txData with action field)
-        newAefActionRecord.actionType = AefActionTypeEnum.RETIRE;
       } else {
         return;
       }

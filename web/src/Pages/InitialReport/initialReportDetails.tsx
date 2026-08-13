@@ -7,12 +7,14 @@ import {
   Col,
   Descriptions,
   Row,
+  Select,
   Skeleton,
   Tag,
   message,
 } from "antd";
 import { CheckCircleOutlined, EditOutlined } from "@ant-design/icons";
 import { CompanyRole } from "../../Definitions/Enums/company.role.enum";
+import { Role } from "../../Definitions/Enums/role.enum";
 import "./initialReports.scss";
 
 const statusColors: Record<string, string> = {
@@ -26,32 +28,39 @@ const yesNo = (v: any) => (v ? "Yes" : "No");
 const InitialReportDetails = () => {
   const { reportId = "" } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
-  const { post, put } = useConnection();
+  const { get, put } = useConnection();
   const { userInfoState } = useUserContext();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [data, setData] = useState<any>(null);
+  const [versions, setVersions] = useState<any[]>([]);
 
+  // Initial reports are managed by government (DNA) Admin/Root only.
   const canManage =
     userInfoState?.companyRole ===
-      CompanyRole.DESIGNATED_NATIONAL_AUTHORITY ||
-    userInfoState?.companyRole === CompanyRole.MINISTRY;
+      CompanyRole.DESIGNATED_NATIONAL_AUTHORITY &&
+    (userInfoState?.userRole === Role.Admin ||
+      userInfoState?.userRole === Role.Root);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await post("national/initialReport/query", {
-        page: 1,
-        size: 1,
-        filterAnd: [{ key: "reportId", operation: "=", value: reportId }],
-      });
-      const row = response?.data?.[0];
+      const response = await get(
+        `national/initialReport/get?id=${encodeURIComponent(reportId)}`
+      );
+      const row = response?.data;
       if (!row) {
         message.error(`Initial report ${reportId} not found`);
         navigate("/initialReports/viewAll");
         return;
       }
       setData(row);
+      const versionsResponse = await get(
+        `national/initialReport/versions?cooperativeApproachId=${encodeURIComponent(
+          row.cooperativeApproachId
+        )}`
+      );
+      setVersions(versionsResponse?.data ?? []);
     } catch (error) {
       message.error("Failed to load initial report");
     } finally {
@@ -86,7 +95,10 @@ const InitialReportDetails = () => {
   if (!data) return <div>Not found</div>;
 
   const isDraft = data.status === "Draft";
-  const isPublished = data.status === "Published";
+  // Versions come back newest-first; edits/submission only apply to
+  // the latest version — older versions are read-only history.
+  const isLatestVersion =
+    versions.length === 0 || versions[0]?.reportId === data.reportId;
 
   const pd = data.participationDemonstration ?? {};
   const itmo = data.itmoMetrics ?? {};
@@ -111,7 +123,18 @@ const InitialReportDetails = () => {
             </div>
           </Col>
           <Col>
-            {canManage && !isPublished && (
+            {versions.length > 0 && (
+              <Select
+                value={data.reportId}
+                onChange={(rid) => navigate(`/initialReports/view/${rid}`)}
+                style={{ width: 220, marginRight: 8 }}
+                options={versions.map((v) => ({
+                  value: v.reportId,
+                  label: `Version ${v.version} — ${v.status}`,
+                }))}
+              />
+            )}
+            {canManage && isDraft && isLatestVersion && (
               <Button
                 icon={<EditOutlined />}
                 onClick={() =>
@@ -122,7 +145,7 @@ const InitialReportDetails = () => {
                 Edit
               </Button>
             )}
-            {canManage && isDraft && (
+            {canManage && isDraft && isLatestVersion && (
               <Button
                 type="primary"
                 icon={<CheckCircleOutlined />}
@@ -148,6 +171,9 @@ const InitialReportDetails = () => {
           </Descriptions.Item>
           <Descriptions.Item label="Cooperative Approach">
             {data.cooperativeApproachId}
+          </Descriptions.Item>
+          <Descriptions.Item label="Version">
+            v{data.version ?? 1}
           </Descriptions.Item>
           <Descriptions.Item label="Created">
             {data.createdTime

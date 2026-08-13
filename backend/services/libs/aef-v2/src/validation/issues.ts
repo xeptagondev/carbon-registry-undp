@@ -17,6 +17,8 @@ export type AefIssueCode =
   | 'carp-populated'
   /** Cross-record: an Action or Holding references a missing Authorization. */
   | 'missing-authorization'
+  /** Cross-record: an Action references an Authorized entity missing from Table 5. */
+  | 'missing-entity'
   /** Cross-record: an immutable block attribute changes across its lifecycle. */
   | 'inconsistent-block'
   /** Cross-record: `ItmoFirstId` is greater than `ItmoLastId`. */

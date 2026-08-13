@@ -266,7 +266,7 @@ self-transfer, and Revoked-CA transfer each surface their specific rejection.
 
 On the Holding row click **⋯** → **Retire**. The modal shows all six
 retirement-type radios (`Cross-Border Transactions`, `Voluntary
-Cancellations`, `Use Towards NDC`, `Use For OIMP`, `OMGE Cancellation`, `SOP
+Cancellations`, `Use Towards NDC`, `First Transfer For OIMP`, `OMGE Cancellation`, `SOP
 Adaptation`), Country/Organisation fields (only required for Cross-Border),
 amount + remark, and a "pending DNA approval" checkbox.
 

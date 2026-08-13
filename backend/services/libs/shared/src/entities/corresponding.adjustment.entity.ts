@@ -50,6 +50,17 @@ export class CorrespondingAdjustment extends EntitySubject {
   @Column({ type: "decimal", precision: 15, scale: 5, default: 0 })
   emissionsBalance: number;
 
+  // MultiYear only: cumulative first-transferred ITMOs (net of
+  // acquired) from the budget period's start year through this
+  // record's year, inclusive.
+  @Column({ type: "decimal", precision: 15, scale: 5, nullable: true })
+  cumulativeFirstTransferred?: number;
+
+  // MultiYear only: cumulativeFirstTransferred / elapsed years —
+  // Decision 2/CMA.3's indicative annual corresponding adjustment.
+  @Column({ type: "decimal", precision: 15, scale: 5, nullable: true })
+  indicativeAnnualAdjustment?: number;
+
   @Column({ type: "decimal", precision: 15, scale: 5, nullable: true })
   ndcTarget: number;
 
@@ -61,6 +72,11 @@ export class CorrespondingAdjustment extends EntitySubject {
 
   @Column({ type: "text", nullable: true })
   safeguardNotes: string;
+
+  // Free-text admin annotation, editable while Draft — distinct from
+  // the system-computed safeguardNotes.
+  @Column({ type: "text", nullable: true })
+  remarks?: string;
 
   @Column({
     type: "enum",

@@ -39,11 +39,17 @@ export * from './clock';
 export type { AefStore, AefQuery, AefPage, AefSortOrder } from './store/aef-store.port';
 export { AEF_STORE, DEFAULT_PAGE_SIZE } from './store/aef-store.port';
 export type { HoldingsProvider } from './holdings/snapshot';
+export type { AuthorizedEntitiesProvider } from './authorized-entities/provider';
 
 // ---- Operations the host calls -------------------------------------------
 export * from './validation';
 export * from './submission/bootstrap';
+export * from './submission/rollover';
+export * from './submission/bundle';
+export * from './submission/submit';
+export * from './records/write';
 export * from './holdings/snapshot';
+export * from './authorized-entities/snapshot';
 export * from './export';
 
 // ---- Test support --------------------------------------------------------

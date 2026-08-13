@@ -16,3 +16,9 @@ export const getCreditBlockStatusTagColor = (status: CreditBlockStatus) => {
       return "default";
   }
 };
+
+// MO/ITMO classifier pill color — kept separate from status colors
+// ("purple" is already used for retirement/authorization "Pending"
+// status in the same rows).
+export const getCreditTypeTagColor = (isItmo: boolean) =>
+  isItmo ? "gold" : "default";

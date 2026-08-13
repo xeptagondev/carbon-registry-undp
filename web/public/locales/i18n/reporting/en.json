@@ -24,8 +24,9 @@
   "statusUNDER_REVIEW": "Under review",
   "statusSUPERSEDED": "Superseded",
   "carpPending": "Populated by CARP",
+  "notApplicable": "NA",
   "carpPopulatedHint": "This field is populated by the CARP and must be left empty on submission.",
-  "notYetSubmitted": "Not yet submitted",
+  "notYetSubmitted": "Not Submitted",
 
   "actionsColumn": "ACTIONS",
   "cancel": "Cancel",
@@ -34,6 +35,7 @@
   "submitAefConfirm": "Submit AEF",
   "submitAefLate": "Annual information for this reporting year was due by {{date}}.",
   "submitAefAdvisory": "Submitting records the filing date and marks the year as submitted. It does not lock the data — later edits will not be reflected in what has already been filed with the CARP.",
+  "submitAefBlocked": "This year cannot be submitted yet — the following issues must be resolved first:",
   "dateOfSubmissionRequired": "A submission date is required.",
   "dateOfSubmissionFootnote": "The date the AEF is filed. Empty until submission — it is not knowable when the record is created.",
 

@@ -47,6 +47,13 @@ export class AefV2T5AuthorizedEntitiesEntity {
   @Column({ type: 'text', nullable: true })
   aefT5AuthorizedEntitiesAdditionalInformation?: string;
 
+  /**
+   * Library metadata: when this snapshot was frozen. Absent means provisional.
+   * Mirrors `AefV2T4HoldingsEntity.snapshotAt`.
+   */
+  @Column({ type: 'timestamptz', nullable: true })
+  snapshotAt?: Date;
+
   // ---- Relationships ------------------------------------------------------
 
   /** CASCADE — a Submission is the reporting year; its rows go with it. */

@@ -122,7 +122,15 @@ const ReportCard = (props: IReportCard) => {
         <Table
           dataSource={data}
           columns={columns}
-          rowKey={(record) => String(record.id)}
+          // Submission/Authorizations/Actions rows always come from stored
+          // records (always carry an `id`). Holdings/Authorized-entities rows
+          // for a reporting year with no frozen snapshot yet come straight
+          // from the live provider instead — a CreateInput shape with no
+          // `id` at all. Falling through to `record.id` alone would collapse
+          // every one of those rows onto the same "undefined" key, which
+          // breaks React's reconciliation across re-renders (year switches,
+          // refetches) rather than just failing to look unique on paper.
+          rowKey={(record, index) => (record.id ? String(record.id) : `row-${index}`)}
           scroll={{ x: 1000 }}
           pagination={{
             ...pagination,

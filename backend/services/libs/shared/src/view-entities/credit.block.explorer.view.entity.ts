@@ -6,14 +6,18 @@ import { ViewColumn, ViewEntity } from "typeorm";
 // needs the reserved amount as its own column and must surface retired
 // blocks, since retirement re-parents the block to ownerCompanyId = 0
 // rather than deleting it (see programme-ledger.service.ts). Columns are
-// scoped to exactly what the Explorer table renders; carry-over fields
-// (itmoSerial, vintage, accountType, etc.) belong to the future detail-modal
+// scoped to exactly what the Explorer table renders; itmoSerial /
+// itmoAuthorizationRecord are included so the Explorer can show an
+// MO/ITMO pill and the ITMO identifier — other carry-over fields
+// (vintage, accountType, etc.) still belong to the future detail-modal
 // endpoint, not here.
 @ViewEntity({
   expression: `
     SELECT
       cb."creditBlockId" AS "id",
       cb."serialNumber" AS "serialNumber",
+      cb."itmoSerial" AS "itmoSerial",
+      cb."itmoAuthorizationRecord" AS "itmoAuthorizationRecord",
       cb."ownerCompanyId" AS "organizationId",
       o."name" AS "organizationName",
       o."logo" AS "organizationLogo",
@@ -36,6 +40,15 @@ export class CreditBlockExplorerViewEntity {
 
   @ViewColumn()
   serialNumber: string;
+
+  // Dec 6/CMA.4 Annex I para 5 ITMO identifier. Null for MO blocks.
+  @ViewColumn()
+  itmoSerial: string;
+
+  // Non-null ⇒ the block is ITMO authorized (id of the authorizing
+  // transaction record).
+  @ViewColumn()
+  itmoAuthorizationRecord: string;
 
   @ViewColumn()
   organizationId: number;

@@ -71,9 +71,10 @@ For each section below, record **Pass / Fail / N/A**, tester initials, and a one
    - From a Revoked CA, attempt any change. Toast: `Cooperative approach <id> was Revoked under Draft -/CMA.5 paras 20-21. Revoked is terminal; no further status changes are permitted.` (key `cooperativeApproach.transitionFromRevoked`)
    - Force a `revert-to-Draft` via API call against a non-Draft CA. Toast: `Cooperative approach <id> cannot revert from <oldStatus> to Draft. Once a CA leaves Draft, its working version is fixed.` (key `cooperativeApproach.transitionRevertToDraft`)
 7. **Negative — not found.** Navigate to `/cooperativeApproaches/view/CA-DOES-NOT-EXIST`. Toast: `Cooperative approach CA-DOES-NOT-EXIST not found.` (key `cooperativeApproach.notFound`)
-8. From the list page, click **Add New** → fill title + parties + host → submit → returns to list with new row.
+8. From the list page, click **Add New**. Host Party is a disabled field showing the registry's own configured country (`systemCountryCode`, e.g. `NG`) — it cannot be edited. Fill title + pick one or more Participating Parties from the country dropdown (the host country is pre-selected and cannot be removed) → submit → returns to list with new row.
+9. On an **Active** CA's detail page, click **Add Authorized Entity**. Authorizing Party is shown read-only as the host country. **Country of Incorporation** is a required dropdown restricted to that CA's Participating Parties — confirm a country outside that set isn't offered, and that submitting without selecting one is blocked client-side.
 
-**Pass criteria**: 3 seeded rows visible; Active↔Suspended transitions persist; Draft is not a downstream option; terminal-state and not-found error toasts surface the new specific text; Add New creates a new row.
+**Pass criteria**: 3 seeded rows visible; Active↔Suspended transitions persist; Draft is not a downstream option; terminal-state and not-found error toasts surface the new specific text; Add New creates a new row with the host country locked in; Add Authorized Entity enforces Country of Incorporation ⊆ Participating Parties.
 
 ---
 
@@ -159,7 +160,7 @@ For each section below, record **Pass / Fail / N/A**, tester initials, and a one
 1. Sidebar → **Credits ▸ Credit Balance**. On the Holding row → **⋯** → **Retire**. Modal opens.
 2. Verify modal has **6** retirement type radios:
    - `USE_TOWARDS_NDC`
-   - `USE_FOR_OIMP`
+   - `FIRST_TRANSFER_FOR_OIMP`
    - `VOLUNTARY_CANCELLATIONS`
    - `OMGE_CANCELLATION`
    - `SOP_ADAPTATION`

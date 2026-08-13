@@ -1,6 +1,5 @@
 import { BeforeInsert, Column, Entity, PrimaryColumn } from "typeorm";
 import { TxType } from "../enum/txtype.enum";
-import { AuthorizationPurpose } from "../enum/authorization.purpose.enum";
 import { AccountType } from "../enum/account.type.enum";
 import { CreditTransactionLedgerRecordDto } from "../dto/credit.transaction.ledger.record.dto";
 
@@ -63,17 +62,6 @@ export class CreditBlocksEntity {
   @Column({ type: "bigint" })
   createTime: number;
 
-  @Column({ nullable: true })
-  cooperativeApproachId: string;
-
-  @Column({
-    type: "enum",
-    enum: AuthorizationPurpose,
-    array: false,
-    nullable: true,
-  })
-  authorizationPurpose: AuthorizationPurpose;
-
   @Column({
     type: "enum",
     enum: AccountType,
@@ -82,11 +70,12 @@ export class CreditBlocksEntity {
   })
   accountType: AccountType;
 
-  @Column({ type: "boolean", default: false })
-  omgeDeductedAtIssuance: boolean;
-
-  @Column({ type: "boolean", default: false })
-  sopDeductedAtIssuance: boolean;
+  // Id of the ITMO_AUTHORIZED CreditTransactionsEntity record that
+  // authorized this block. Null ⇒ the block is a plain mitigation
+  // outcome (MO); non-null ⇒ the block is an ITMO. Splits of an ITMO
+  // block inherit this so authorized credits never lose that status.
+  @Column({ type: "text", nullable: true })
+  itmoAuthorizationRecord?: string;
 
   @BeforeInsert()
   async timestampAtInsert() {

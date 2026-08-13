@@ -66,6 +66,7 @@ import { IDNameResponse } from "../dto/id-name.response.dto";
 import { Role } from "../casl/role.enum";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
 import { CreditBlockOrgAggregationViewEntity } from "../view-entities/credit.block.org.aggregation.view.entity";
+import { CreditBlockOrgBalancesViewEntity } from "../view-entities/credit.block.org.balances.view.entity";
 
 @Injectable()
 export class CompanyService {
@@ -96,7 +97,9 @@ export class CompanyService {
     @InjectRepository(CreditBlocksEntity)
     private creditBlocksEntityRepository: Repository<CreditBlocksEntity>,
     @InjectRepository(CreditBlockOrgAggregationViewEntity)
-    private creditBlockOrgAggregationViewEntityRepository: Repository<CreditBlockOrgAggregationViewEntity>
+    private creditBlockOrgAggregationViewEntityRepository: Repository<CreditBlockOrgAggregationViewEntity>,
+    @InjectRepository(CreditBlockOrgBalancesViewEntity)
+    private creditBlockOrgBalancesViewEntityRepository: Repository<CreditBlockOrgBalancesViewEntity>
   ) {}
 
   async suspend(
@@ -651,30 +654,55 @@ export class CompanyService {
   }
 
   // Attaches the per-org credit totals (issued / received / retired /
-  // transferred / reserved / balance) from CreditBlockOrgAggregationViewEntity
-  // onto each company, so the View Organisations table (creditIssued /
-  // creditRetired) and the profile summary card can read them off the
-  // response. Orgs with no credit activity default to 0.
+  // transferred / reserved / balance, plus the ITMO-only subset of
+  // reserved/balance) onto each company, so the View Organisations table
+  // (creditIssued / creditRetired) and the profile summary card can read
+  // them off the response. Orgs with no credit activity default to 0.
+  //
+  // Two different views back this, on two different grains:
+  //  - CreditBlockOrgAggregationViewEntity is FROM company (LEFT JOINed to
+  //    credit activity), so every org has a row - including ones with zero
+  //    credit history.
+  //  - CreditBlockOrgBalancesViewEntity is FROM credit_blocks_entity
+  //    directly (see ItmoVisibilityViews1787300000000), so an org holding
+  //    no blocks at all has NO row - itmoBalance/itmoReservedCredits must
+  //    default to 0 explicitly rather than assuming a match.
+  // itmoBalance/itmoReservedCredits are the ITMO-only subset of
+  // creditBalance/creditReserved (not additional totals) - MO is derived
+  // client-side as creditBalance - itmoBalance, matching the convention
+  // already used by the Credits -> Balance tables.
   private async attachCreditAggregation(companies: Company[]): Promise<void> {
     if (!companies || companies.length === 0) {
       return;
     }
     const companyIds = companies.map((c) => c.companyId);
-    const aggregations =
-      await this.creditBlockOrgAggregationViewEntityRepository.find({
+    const [aggregations, balances] = await Promise.all([
+      this.creditBlockOrgAggregationViewEntityRepository.find({
         where: { organizationId: In(companyIds) },
-      });
+      }),
+      this.creditBlockOrgBalancesViewEntityRepository.find({
+        where: { organizationId: In(companyIds) },
+      }),
+    ]);
     const byOrgId = new Map<number, CreditBlockOrgAggregationViewEntity>(
       aggregations.map((a) => [Number(a.organizationId), a])
     );
+    const balancesByOrgId = new Map<number, CreditBlockOrgBalancesViewEntity>(
+      balances.map((b) => [Number(b.organizationId), b])
+    );
     for (const company of companies) {
       const agg = byOrgId.get(Number(company.companyId));
+      const bal = balancesByOrgId.get(Number(company.companyId));
       (company as any).creditIssued = Number(agg?.creditIssued ?? 0);
       (company as any).creditReceived = Number(agg?.creditReceived ?? 0);
       (company as any).creditRetired = Number(agg?.creditRetired ?? 0);
       (company as any).creditTransferred = Number(agg?.creditTransferred ?? 0);
       (company as any).creditReserved = Number(agg?.creditReserved ?? 0);
       (company as any).creditBalance = Number(agg?.creditBalance ?? 0);
+      (company as any).itmoBalance = Number(bal?.itmoBalance ?? 0);
+      (company as any).itmoReservedCredits = Number(
+        bal?.itmoReservedCredits ?? 0
+      );
     }
   }
 

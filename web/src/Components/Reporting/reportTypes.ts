@@ -37,6 +37,20 @@ export const SELECTABLE_REPORT_TYPES: REPORT_TYPES[] = [
 ];
 
 /**
+ * This card's `REPORT_TYPES` key, as the backend's `AefTableName` — the
+ * `table` value `national/aefV2/query` expects. Kept here rather than
+ * inlined at the call site so the one place this repo names both is a
+ * constant, not a string literal buried in a fetch call.
+ */
+export const AEF_V2_TABLE_NAME: Record<REPORT_TYPES, string> = {
+  [REPORT_TYPES.SUBMISSION]: "t1Submission",
+  [REPORT_TYPES.AUTHORIZATIONS]: "t2Authorizations",
+  [REPORT_TYPES.ACTIONS]: "t3Actions",
+  [REPORT_TYPES.HOLDINGS]: "t4Holdings",
+  [REPORT_TYPES.AUTHORIZED_ENTITIES]: "t5AuthorizedEntities",
+};
+
+/**
  * Local workflow state, mirroring the backend's `AefSubmissionStatus`.
  *
  * Not an AEF field — neither CMA.6 nor CAD Trust has one — so it appears on

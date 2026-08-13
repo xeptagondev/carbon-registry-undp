@@ -746,8 +746,10 @@ export function seedEmissionRowDirect(input: {
 
 export interface CooperativeApproachOverrides {
   title?: string;
+  // Host party is derived server-side from systemCountryCode (NG in the
+  // e2e stack) and always unioned into participatingParties — it is not
+  // client-settable, so it's intentionally absent here.
   participatingParties?: string[];
-  hostParty?: string;
   description?: string;
   startDate?: number;
   endDate?: number;
@@ -765,7 +767,6 @@ export async function createCooperativeApproach(
   const body = {
     title,
     participatingParties: overrides.participatingParties ?? ["NG", "CH"],
-    hostParty: overrides.hostParty ?? "NG",
     description: overrides.description ?? "E2E-generated cooperative approach",
     ...overrides,
   };
@@ -1131,18 +1132,24 @@ export type CreditRetirementType =
   | "CROSS_BORDER_TRANSACTIONS"
   | "VOLUNTARY_CANCELLATIONS"
   | "USE_TOWARDS_NDC"
-  | "USE_FOR_OIMP"
+  | "FIRST_TRANSFER_TOWARDS_NDC"
+  | "FIRST_TRANSFER_FOR_OIMP"
   | "OMGE_CANCELLATION"
   | "SOP_ADAPTATION";
 
 // Wire values from backend CreditRetirementTypeEnum. The DTO validates
 // against the *string values* (e.g. "Cross-Border Transactions"), not
 // the TypeScript enum keys, so we map here before POSTing.
+//
+// USE_TOWARDS_NDC is MO-only (domestic); FIRST_TRANSFER_TOWARDS_NDC /
+// FIRST_TRANSFER_FOR_OIMP are ITMO-only and gated by the block's ITMO
+// authorization purpose — see credit.transaction.sub.types.enum.ts.
 const RETIREMENT_TYPE_WIRE: Record<CreditRetirementType, string> = {
   CROSS_BORDER_TRANSACTIONS: "Cross-Border Transactions",
   VOLUNTARY_CANCELLATIONS: "Voluntary Cancellations",
   USE_TOWARDS_NDC: "Use Towards NDC",
-  USE_FOR_OIMP: "Use For OIMP",
+  FIRST_TRANSFER_TOWARDS_NDC: "First Transfer Towards NDC",
+  FIRST_TRANSFER_FOR_OIMP: "First Transfer For OIMP",
   OMGE_CANCELLATION: "OMGE Cancellation",
   SOP_ADAPTATION: "SOP Adaptation",
 };

@@ -37,6 +37,7 @@ import { CooperativeApproach } from "../entities/cooperative.approach.entity";
 import { CorrespondingAdjustment } from "../entities/corresponding.adjustment.entity";
 import { InitialReport } from "../entities/initial.report.entity";
 import { ItmoAccount } from "../entities/itmo.account.entity";
+import { AefReport } from "../dto/aef.report";
 
 type Subjects = InferSubjects<typeof EntitySubject> | "all";
 
@@ -174,6 +175,9 @@ export class CaslAbilityFactory {
         // Party's ITMO accounts (holding + retirement + cancellation
         // buckets) so AEF Holdings reports can be produced.
         can(Action.Read, ItmoAccount);
+        // AEF V2 reporting (@app/aef-v2). See dto/aef.report.ts for why this
+        // is a registry-side marker rather than a library entity.
+        can(Action.Read, AefReport);
 
         if (user.role !== Role.ViewOnly) {
           can(Action.Create, Emission);
@@ -187,6 +191,7 @@ export class CaslAbilityFactory {
           can(Action.Manage, CooperativeApproach);
           can(Action.Manage, CorrespondingAdjustment);
           can(Action.Manage, InitialReport);
+          can(Action.Manage, AefReport);
         }
 
         if (user.role === Role.Root) {
@@ -214,6 +219,7 @@ export class CaslAbilityFactory {
         can(Action.Read, CooperativeApproach);
         can(Action.Read, CorrespondingAdjustment);
         can(Action.Read, InitialReport);
+        can(Action.Read, AefReport);
 
         if (user.role !== Role.ViewOnly) {
           can(Action.Create, Emission);

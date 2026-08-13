@@ -31,7 +31,16 @@ export type ControlledValueKey =
 /** Table 12(b). */
 export const METRICS = ['GHG', 'non-GHG'] as const;
 
-/** Table 15(b). */
+/**
+ * Table 15(b).
+ *
+ * REGISTRY EXTENSION: `Other` is not in the source table. This registry's own
+ * sector vocabulary is wider than the nomenclature's nine values, so sectors
+ * with no confident counterpart need somewhere to land rather than being
+ * forced onto an ill-fitting one. Pending confirmation with CARP, after which
+ * the sectors currently routed here should get their exact mappings — see
+ * AEF_V2_SECTOR in libs/shared/src/aef-v2-registry/mappers/aef-code.maps.ts.
+ */
 export const SECTORS = [
   'Agriculture',
   'Building and construction',
@@ -42,6 +51,7 @@ export const SECTORS = [
   'Transportation',
   'Urban development',
   'Waste management',
+  'Other',
 ] as const;
 
 /** Table 16(b). */
@@ -154,6 +164,9 @@ export const MITIGATION_TYPES = [
  * verbatim because the value list must match what CARP accepts — correcting it
  * would be the bug.
  */
+// REGISTRY EXTENSION: `Other` (last entry) is not in the source table — see
+// the SECTORS docblock above for why this registry adds one; same reasoning
+// applies to activity types via AEF_V2_SECTORAL_SCOPE_ACTIVITY_TYPE.
 export const ACTIVITY_TYPES = [
   'Afforestation',
   'Agriculture',
@@ -182,6 +195,7 @@ export const ACTIVITY_TYPES = [
   'Transport',
   'Waste',
   'Wind',
+  'Other',
 ] as const;
 
 /**

@@ -14,10 +14,10 @@ import {
   Translate,
 } from "./reportingColumns";
 import {
+  AEF_V2_TABLE_NAME,
   FILE_TYPES,
   REPORT_TYPES,
   SELECTABLE_REPORT_TYPES,
-  SUBMISSION_STATUS,
   TABULAR_REPORT_TYPES,
 } from "./reportTypes";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
@@ -78,8 +78,7 @@ const ReportingComponent = (props: { translator: i18n }) => {
   const [submitTarget, setSubmitTarget] = useState<Record<string, unknown> | undefined>();
   const [submitting, setSubmitting] = useState(false);
   const [partyName, setPartyName] = useState<string>();
-
-  const reportedYear = selectedYear.year();
+  const [submitIssues, setSubmitIssues] = useState<string[]>([]);
 
   /**
    * The reporting Party's display name, e.g. `"Nigeria"` for host party `NG`.
@@ -97,16 +96,17 @@ const ReportingComponent = (props: { translator: i18n }) => {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   /**
    * Holdings for a year that has not been snapshotted are live and still
    * moving. They must not be presented identically to a filed snapshot — that
-   * is how a half-year balance gets mistaken for a year-end one.
-   *
-   * TODO: read this off the AEF V2 Holdings response (`provisional`) once the
-   * backend lands. Until then, the current year is the only one assumed open.
+   * is how a half-year balance gets mistaken for a year-end one. Read off the
+   * Holdings response's own `provisional` flag rather than guessed from the
+   * calendar year, since a year can be snapshotted (or force-recomputed)
+   * ahead of 31 December.
    */
-  const holdingsProvisional = reportedYear >= moment().year();
+  const [holdingsProvisional, setHoldingsProvisional] = useState(true);
+
+  const reportedYear = selectedYear.year();
 
   const setTable = (type: REPORT_TYPES, patch: Partial<TableState>) =>
     setTableState((prev) => ({ ...prev, [type]: { ...prev[type], ...patch } }));
@@ -114,55 +114,50 @@ const ReportingComponent = (props: { translator: i18n }) => {
   const handlePaginationInfoChange = (page: number, pageSize: number, type: REPORT_TYPES) =>
     setTable(type, { page, pageSize });
 
-  /**
-   * TODO: replace with the AEF V2 query endpoint once the backend lands.
-   *
-   * Tables are empty until then — there is no live data source yet for any of
-   * the five.
-   */
-  const rowsFor = (type: REPORT_TYPES): Record<string, unknown>[] => {
-    switch (type) {
-      case REPORT_TYPES.SUBMISSION:
-      case REPORT_TYPES.AUTHORIZATIONS:
-      case REPORT_TYPES.ACTIONS:
-      case REPORT_TYPES.HOLDINGS:
-      case REPORT_TYPES.AUTHORIZED_ENTITIES:
-      default:
-        return [];
-    }
-  };
-
   /** One fetcher for every table; the V1 pair differed only in two literals. */
   const fetchTable = async (type: REPORT_TYPES) => {
     setTable(type, { loading: true });
     try {
-      const rows = rowsFor(type);
+      const res = await post(API_PATHS.AEF_V2_QUERY, {
+        table: AEF_V2_TABLE_NAME[type],
+        reportedYear,
+      });
+      const rows: Record<string, unknown>[] =
+        res?.statusText === "SUCCESS" ? res.data?.data ?? [] : [];
       setTable(type, { data: rows, total: rows.length });
+      if (type === REPORT_TYPES.HOLDINGS && res?.statusText === "SUCCESS") {
+        setHoldingsProvisional(!!res.data?.provisional);
+      }
     } finally {
       setTable(type, { loading: false });
     }
   };
 
   /**
-   * Files the AEF: sets the status to SUBMITTED and stamps the submission date,
-   * which is deliberately empty until this point.
-   *
-   * TODO: call the backend's markSubmitted once the API lands. Until then the
-   * change is local so the flow is reviewable end to end.
+   * Files the AEF. The backend validates before it mutates anything —
+   * `submitAefReport` returns `{ submitted: false, issues }` for an
+   * incomplete year rather than filing a partial one, so a blocked
+   * submission is surfaced back into the modal instead of silently closing.
    */
   const confirmSubmit = async (submissionDate: Moment) => {
     if (!submitTarget) {
       return;
     }
     setSubmitting(true);
+    setSubmitIssues([]);
     try {
-      const updated = {
-        ...submitTarget,
-        status: SUBMISSION_STATUS.SUBMITTED,
-        aefT1SubmissionSubmissionDate: submissionDate.format("DD/MM/YYYY"),
-      };
-      setTable(REPORT_TYPES.SUBMISSION, { data: [updated], total: 1 });
-      setSubmitTarget(undefined);
+      const res = await post(API_PATHS.AEF_V2_SUBMIT, {
+        reportedYear,
+        submissionDate: submissionDate.toISOString(),
+      });
+
+      if (res?.statusText === "SUCCESS" && res.data?.submitted) {
+        await fetchTable(REPORT_TYPES.SUBMISSION);
+        setSubmitTarget(undefined);
+      } else {
+        const issues: { message: string }[] = res?.data?.issues ?? [];
+        setSubmitIssues(issues.map((issue) => issue.message));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -180,15 +175,11 @@ const ReportingComponent = (props: { translator: i18n }) => {
    *
    * There is deliberately no per-table export: a CARP submission is the five
    * tables together, so a single table's file was never the deliverable.
-   *
-   * Still wired to the existing endpoint, which serves V1 shapes — so this will
-   * fail until the V2 API wiring follow-up. Left wired rather than stubbed, so
-   * that follow-up cannot quietly forget to restore it.
    */
   const downloadSubmission = async (fileType: FILE_TYPES) => {
     setTable(REPORT_TYPES.SUBMISSION, { loading: true });
     try {
-      const res = await post(API_PATHS.DOWNLOAD_AEF_RECORDS, {
+      const res = await post(API_PATHS.AEF_V2_DOWNLOAD, {
         fileType,
         reportedYear,
       });
@@ -329,7 +320,11 @@ const ReportingComponent = (props: { translator: i18n }) => {
         open={submitTarget !== undefined}
         submission={submitTarget}
         confirming={submitting}
-        onCancel={() => setSubmitTarget(undefined)}
+        issues={submitIssues}
+        onCancel={() => {
+          setSubmitTarget(undefined);
+          setSubmitIssues([]);
+        }}
         onConfirm={confirmSubmit}
       />
     </div>

@@ -11,8 +11,13 @@ interface OrganizationBalance {
   name: string;
   logo: string;
   avatarColor: string;
-  balance: number;
-  reserved: number;
+  // MO/ITMO are disjoint subsets that sum to the organization's total
+  // balance/reserved amount — derived client-side from the API's
+  // grand-total + ITMO-only figures.
+  moBalance: number;
+  moReserved: number;
+  itmoBalance: number;
+  itmoReserved: number;
   updatedAt: string;
 }
 
@@ -27,6 +32,8 @@ interface OrganizationBalanceApiRow {
   organizationLogo: string | null;
   creditBalance: string | number;
   reservedCredits: string | number;
+  itmoBalance: string | number;
+  itmoReservedCredits: string | number;
   updatedTime: string | number;
 }
 
@@ -79,9 +86,11 @@ const columns: ColumnsType<OrganizationBalance> = [
       </div>
     ),
   },
-  { title: 'Credit Balance', dataIndex: 'balance', key: 'balance', align: 'left', sorter: (a, b) => a.balance - b.balance, render: formatCredits },
-  { title: 'Credits Reserved', dataIndex: 'reserved', key: 'reserved', align: 'left', sorter: (a, b) => a.reserved - b.reserved, render: formatCredits },
-  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
+  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'right', sorter: (a, b) => a.moBalance - b.moBalance, render: formatCredits },
+  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'right', sorter: (a, b) => a.moReserved - b.moReserved, render: formatCredits },
+  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'right', sorter: (a, b) => a.itmoBalance - b.itmoBalance, render: formatCredits },
+  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReserved', align: 'right', sorter: (a, b) => a.itmoReserved - b.itmoReserved, render: formatCredits },
+  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'center', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
 ];
 
 export const CreditBalanceByOrganizationTable = ({
@@ -125,15 +134,23 @@ export const CreditBalanceByOrganizationTable = ({
     ) as Promise<ConnectionResponse<OrganizationBalanceApiRow[]>>)
       .then((response) => {
         if (requestGenerationRef.current !== requestGeneration) return;
-        const mappedRows = (response.data ?? []).map((row): OrganizationBalance => ({
-          id: row.organizationId,
-          name: row.organizationName,
-          logo: row.organizationLogo ?? '',
-          avatarColor: avatarColor(row.organizationName),
-          balance: Number(row.creditBalance) || 0,
-          reserved: Number(row.reservedCredits) || 0,
-          updatedAt: formatTimestamp(row.updatedTime),
-        }));
+        const mappedRows = (response.data ?? []).map((row): OrganizationBalance => {
+          const creditBalance = Number(row.creditBalance) || 0;
+          const reservedCredits = Number(row.reservedCredits) || 0;
+          const itmoBalance = Number(row.itmoBalance) || 0;
+          const itmoReserved = Number(row.itmoReservedCredits) || 0;
+          return {
+            id: row.organizationId,
+            name: row.organizationName,
+            logo: row.organizationLogo ?? '',
+            avatarColor: avatarColor(row.organizationName),
+            moBalance: creditBalance - itmoBalance,
+            moReserved: reservedCredits - itmoReserved,
+            itmoBalance,
+            itmoReserved,
+            updatedAt: formatTimestamp(row.updatedTime),
+          };
+        });
         setRows(mappedRows);
         setTotal(response.response?.data?.total ?? mappedRows.length);
       })
@@ -168,7 +185,7 @@ export const CreditBalanceByOrganizationTable = ({
         dataSource={rows}
         columns={columns}
         loading={loading}
-        scroll={{ x: 760 }}
+        scroll={{ x: 960 }}
         pagination={{
           current: currentPage,
           pageSize,

@@ -2,7 +2,7 @@
 
 The five tables of the updated draft Agreed Electronic Format (Decision 4/CMA.6, Annex II) — Submission, Authorizations, Actions, Holdings, Authorized entities — as a **movable** library.
 
-Types, the field spec, validation, controlled values, per-table CSV/XLSX export, and the two stateful operations a reporting year needs.
+Types, the field spec, validation, controlled values, per-table CSV/XLSX export, and the stateful operations a reporting year needs — opening it, writing to it, reading it back as a bundle, exporting it, and filing it.
 
 ---
 
@@ -15,14 +15,18 @@ Types, the field spec, validation, controlled values, per-table CSV/XLSX export,
 - Per-record and cross-record validation
 - CSV and XLSX export, per table and for the whole submission
 - Bootstrapping the Submission row for a year, and its draft/submitted lifecycle
-- Freezing the 31 December Holdings snapshot
+- Freezing the 31 December Holdings and Authorized entities snapshots
+- Orchestrating the start-of-year rollover (open the new year, freeze the last one)
+- Writing Actions/Authorizations/Authorized entities through the library, linked to their year
+- Assembling one reporting year's five tables into a single bundle, for export or validation
+- Filing a completed year — validating it, then handing a rendered export to an optional transport
 
 ### Out of scope — do not add these here
 
 - Deciding *when* to write an AEF row
 - Computing balances from a registry's own credit blocks
 - Mapping any particular registry's data model onto AEF
-- CARP submission
+- Actually delivering a filed submission anywhere — CARP or otherwise. `submitAefReport` validates, marks the row filed, and renders an export, but the network call is a `AefSubmissionTransport` the host supplies.
 - Anything with a UI
 
 If you are writing a "when a credit block moves, emit an Action" rule, you are in the wrong package. That is a per-registry adaptor built *on top of* this one.
@@ -33,8 +37,11 @@ If you are writing a "when a credit block moves, emit an Action" rule, you are i
 
 ```ts
 import {
-  ensureSubmissionForYear,
-  snapshotHoldingsForYear,
+  openReportingYear,
+  recordAction,
+  loadSubmissionBundle,
+  exportSubmission,
+  submitAefReport,
   validateSubmission,
   toCsv,
 } from '@app/aef-v2';
@@ -45,15 +52,23 @@ const defaults = {
   aefT1SubmissionNdcLastYear: 2030,
 };
 
-// Once a year. Both idempotent, so a cron and a button can both call them.
-await ensureSubmissionForYear(store, defaults);
-await snapshotHoldingsForYear(store, holdingsProvider, defaults, 2025);
+// Once a year, cron or button. Idempotent end to end: opens the new year's
+// draft Submission and freezes last year's Holdings and Authorized entities.
+await openReportingYear({ store, holdings: holdingsProvider, authorizedEntities }, defaults);
+
+// Any time an ITMO moves. The library resolves — or, given `submissionId`,
+// skips resolving — the year's Submission; the registry never touches it.
+await recordAction(store, defaults, actionInput);
+
+// One fetch, both formats. `format: 'xlsx'` needs a renderer — see below.
+const bundle = await loadSubmissionBundle({ store, holdings: holdingsProvider, authorizedEntities }, defaults, 2025);
+const file = await exportSubmission({ store, holdings: holdingsProvider, authorizedEntities }, defaults, 2025, { format: 'csv' });
 
 // Any time.
-const issues = validateSubmission(bundle);   // [] means submittable
+const issues = validateSubmission(toValidationBundle(bundle));   // [] means submittable
 
-// The deliverable: all five tables in one file.
-const csv = toSubmissionCsv({ t1Submission, t2Authorizations, t3Actions, t4Holdings, t5AuthorizedEntities });
+// After the year ends: validates, stamps the submission date, files it.
+const result = await submitAefReport({ store, holdings: holdingsProvider, authorizedEntities }, defaults, 2025);
 
 // A single table, for an on-screen export.
 const actionsCsv = toCsv('t3Actions', actions);
@@ -70,7 +85,7 @@ import { AefV2Module, AefTypeOrmStore } from '@app/aef-v2/typeorm';
 
 ---
 
-## Four ports, and nothing else
+## Five ports, and nothing else
 
 Everything external arrives through one of these. A new external need means a new port, not an import.
 
@@ -78,8 +93,10 @@ Everything external arrives through one of these. A new external need means a ne
 |---|---|---|
 | `AefStore` | host (or use the shipped TypeORM / in-memory ones) | persistence is not this library's business |
 | `HoldingsProvider` | **host, always** | only the registry knows what a credit block is |
+| `AuthorizedEntitiesProvider` | **host, always** | only the registry knows who it has currently authorized |
 | `RefResolver` | host, optionally | resolving a project reference needs the registry's data |
 | `ControlledValueProvider` | host, optionally | cooperative approaches are registry data, not spec data |
+| `AefSubmissionTransport` | host, optionally | delivering a filed submission somewhere is registry infrastructure, not this library's business — see `submitAefReport` |
 
 ---
 
@@ -157,6 +174,20 @@ Four rules the implementation enforces:
 
 Because CMA.6 gives Table 4 no reported-year column, the year association runs through each row's `aefT1SubmissionId` — `snapshotHoldingsForYear` ensures the Submission exists first.
 
+**Table 5 works identically**, via `getCurrentYearAuthorizedEntities` / `snapshotAuthorizedEntitiesForYear` / `getAuthorizedEntitiesForYear` and its own `AuthorizedEntitiesProvider` — same four rules, same reasoning: who was authorized on 31 December is a balance at an instant too, once an authorization can later be revoked.
+
+---
+
+## The year rollover, and writing through the library
+
+`openReportingYear(deps, defaults, options?)` is the single entry point a cron or an operator button calls once a year: it opens next year's draft Submission with `ensureSubmissionForYear`, then freezes the year that just ended with `snapshotHoldingsForYear` and `snapshotAuthorizedEntitiesForYear`. Unlike those two, it **does** default `asOf` to `endOfYearUtc(closedYear)` — the whole point of calling it is "close last year", so leaving the boundary to guess would defeat the point. Pass an explicit `asOf` to override. The whole operation is idempotent, the same way each of its three steps already is.
+
+Between rollovers, `recordAction` / `recordAuthorization` / `recordAuthorizedEntity` are how the registry writes rows **through** the library rather than around it: each resolves the record's reporting year from its own date field and links it to that year's Submission, creating the Submission on first write. A host with a hot write path — an event hook running inside its own transaction — passes `{ submissionId }` to skip the lookup: two concurrent writers in a fresh year both missing the Submission and both trying to create it is a real race, guarded by the `(party, reportYear, version)` unique constraint, and the escape hatch exists so the host resolves that id once, out of band, rather than relying on the constraint to arbitrate. `recordActions` is the bulk form, grouping by year so a batch resolves each year's Submission once. `linkAuthorizationToEntity` resolves the circular Table 2 ↔ Table 5 pair described above — call it once both rows exist.
+
+`loadSubmissionBundle(deps, defaults, year)` is the read side: Tables 1–3 always come from the store, scoped across every Submission version for the year; Tables 4–5 follow `getHoldingsForYear` / `getAuthorizedEntitiesForYear` — stored and frozen for a closed year, live and `provisional` for the year still being aggregated. `toAefSubmissionExport` and `toValidationBundle` reshape the same bundle for `exportSubmission`/`toSubmissionCsv` and `validateSubmission` respectively, so one fetch serves both without the caller reshaping anything twice.
+
+`exportSubmission(deps, defaults, year, { format })` fetches and renders in one call. CSV needs nothing extra; XLSX needs a `renderers.xlsxSubmission` (or `renderers.xlsxTable`, for a single table) — an **injected** function, not a direct call to `toXlsxBuffer`, because importing ExcelJS here would defeat the whole point of keeping it behind the `@app/aef-v2/export/xlsx` subpath. Pass `toSubmissionXlsxBuffer` from there.
+
 ---
 
 ## Submission status is local, not AEF
@@ -168,6 +199,8 @@ Neither CMA.6 nor CAD Trust has a draft/submitted state, so `AefSubmissionStatus
 Status is **advisory**: nothing refuses to edit a submitted year, and holdings `force` is not blocked by it. Corrections stay unconstrained, at the cost that a filed year can drift from what CARP holds.
 
 A revision creates a **new row** for the same year, which is why the unique constraint spans `(party, reportYear, version)` rather than just party and year — and why `ensureSubmissionForYear` looks for the latest *non-superseded* row.
+
+`markSubmitted` is the low-level primitive — it sets the submission date and flips status, given a Submission id. `submitAefReport(deps, defaults, year, options?)` is what a registry should actually call: it refuses a year that has not ended (unless `force`), loads the bundle, validates a *candidate* record with the submission date already applied — validating the stored record would always fail on the one field this operation exists to fill in — and returns the issues **without mutating anything** if there are any. Only once validation passes does it call `markSubmitted`, apply any additional `patch` (rejecting outright any of the three CARP-populated fields in it), and, if an `AefSubmissionTransport` was supplied, render the export and hand it off. No transport configured means the submission is filed locally only, which is the default — CARP delivery, like every other outward call, is a port the host may or may not implement.
 
 ---
 

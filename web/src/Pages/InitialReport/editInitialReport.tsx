@@ -42,7 +42,7 @@ const arr = (v: any): string[] =>
 const EditInitialReport = () => {
   const navigate = useNavigate();
   const { reportId = "" } = useParams<{ reportId: string }>();
-  const { post, put } = useConnection();
+  const { get, put } = useConnection();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,15 +51,20 @@ const EditInitialReport = () => {
   const fetchIr = async () => {
     setLoading(true);
     try {
-      const res = await post("national/initialReport/query", {
-        page: 1,
-        size: 1,
-        filterAnd: [{ key: "reportId", operation: "=", value: reportId }],
-      });
-      const row = res?.data?.[0];
+      const res = await get(
+        `national/initialReport/get?id=${encodeURIComponent(reportId)}`
+      );
+      const row = res?.data;
       if (!row) {
         message.error(`Initial report ${reportId} not found`);
         navigate("/initialReports/viewAll");
+        return;
+      }
+      if (row.status !== "Draft") {
+        message.warning(
+          "Only the latest Draft version of an initial report can be edited"
+        );
+        navigate(`/initialReports/view/${reportId}`);
         return;
       }
       setIr(row);
@@ -158,9 +163,15 @@ const EditInitialReport = () => {
   const onFinish = async (values: any) => {
     setSaving(true);
     try {
-      await put("national/initialReport/update", buildPayload(values));
-      message.success("Initial report updated successfully");
-      navigate(`/initialReports/view/${reportId}`);
+      // Edits are append-only: the backend saves the changes as a new
+      // version row and returns it.
+      const res = await put(
+        "national/initialReport/update",
+        buildPayload(values)
+      );
+      const newReportId = res?.data?.reportId ?? reportId;
+      message.success("Initial report saved as a new version");
+      navigate(`/initialReports/view/${newReportId}`);
     } catch (e: any) {
       message.error(
         e?.response?.data?.message ?? "Failed to update initial report"

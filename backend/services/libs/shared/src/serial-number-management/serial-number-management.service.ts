@@ -150,63 +150,43 @@ export class SerialNumberManagementService {
   }
 
   /**
-   * Compose a structured ITMO serial conforming to Decision 6/CMA.4
-   * Annex I paragraph 5. Unique identifier consists of:
-   *   (1) Originating Party
-   *   (2) ITMO type (GHG or a named non-GHG metric)
-   *   (3) Vintage (calendar year of the underlying mitigation)
-   *   (4) Mitigation activity / programme identifier (projectId)
-   *   (5) Unique sequence number (range start:end for block serials)
+   * Compose an ITMO serial in the same shape as the regular credit
+   * block serial (getCreditBlockSerialNumber) — same separator, same
+   * positions for project id / block range / vintage — but with the
+   * mock creditIdentifier and firstTransferringPartyId components
+   * replaced by real data: the block's ITMO-authorized cooperative
+   * approach's real caReferenceNumber, and the config system country
+   * in both the originating-party and first-transferring-party slots
+   * (the host/origin country IS the first transferring Party for an
+   * ITMO under this registry).
    *
-   * Separator: "-". Sequence range uses ":" so the 5 UNFCCC components
-   * remain unambiguously parseable by simple splitting even when the
-   * activity identifier contains embedded dashes.
+   * Format: "{caReferenceNumber}-{country}-{country}-{projectId}-{blockStart}-{blockEnd}-{vintage}"
    *
-   * Format: "{party}-{itmoType}-{vintage}-{activityId}-{start}:{end}"
-   *
-   * The ITMO serial is immutable per Draft -/CMA.5 paragraph 132 — a
-   * block that is transferred or retired produces NEW blocks with
-   * their own serials (the registry's split-not-mutate pattern); the
-   * original serial is never rewritten.
+   * Because this mirrors the regular serial's shape exactly,
+   * splitCreditBlockSerialNumber/getBlockRange/getVintage all work on
+   * itmoSerial strings unchanged — no separate parsing/split logic is
+   * needed to keep it in sync through block splits.
    */
   public getItmoSerial(
-    activityId: string,
-    vintage: string,
+    caReferenceNumber: string,
+    projectId: string,
     blockStart: number,
     blockEnd: number,
-    itmoType?: string
+    vintage: string
   ): string {
-    const party = this.configService.get("systemCountryCode") ?? this.configService.get("systemCountry");
-    const typeComponent = itmoType && itmoType.trim() ? itmoType : "GHG";
-    return `${party}-${typeComponent}-${vintage}-${activityId}-${blockStart}:${blockEnd}`;
+    const originatingPartyId = this.configService.get("systemCountry");
+    const sep = this.configService.get("serialNumber.seperator");
+    return `${caReferenceNumber}${sep}${originatingPartyId}${sep}${originatingPartyId}${sep}${projectId}${sep}${blockStart}${sep}${blockEnd}${sep}${vintage}`;
   }
 
   /**
-   * Parse the 5 components out of an ITMO serial. Returns null for
-   * strings that don't match the structured format so callers can
-   * detect legacy opaque serials and fall back gracefully.
+   * Pulls the project id straight out of an existing (regular or ITMO)
+   * serial string, avoiding a project-row fetch when the caller already
+   * has the block's serial in hand.
    */
-  public parseItmoSerial(itmoSerial: string | null | undefined):
-    | {
-        party: string;
-        itmoType: string;
-        vintage: string;
-        activityId: string;
-        rangeStart: number;
-        rangeEnd: number;
-      }
-    | null {
-    if (!itmoSerial) return null;
-    const parts = itmoSerial.split("-");
-    if (parts.length < 5) return null;
-    const rangeStr = parts[parts.length - 1];
-    const [startStr, endStr] = rangeStr.split(":");
-    const rangeStart = Number(startStr);
-    const rangeEnd = Number(endStr);
-    if (!Number.isFinite(rangeStart) || !Number.isFinite(rangeEnd)) return null;
-    const [party, itmoType, vintage, ...activityParts] = parts;
-    const activityId = activityParts.slice(0, activityParts.length - 1).join("-");
-    return { party, itmoType, vintage, activityId, rangeStart, rangeEnd };
+  public getProjectIdFromSerial(serialNumber: string): string {
+    const sep = this.configService.get("serialNumber.seperator");
+    return serialNumber.split(sep)[3];
   }
 
   public getAuthorizationId(projectId: string, authTime: number) {
