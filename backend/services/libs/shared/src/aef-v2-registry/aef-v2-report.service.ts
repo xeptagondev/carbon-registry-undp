@@ -15,8 +15,14 @@ import {
   toValidationBundle,
   validateSubmission,
 } from "@app/aef-v2";
-import { toSubmissionXlsxBuffer, toXlsxBuffer } from "@app/aef-v2/export/xlsx";
+import {
+  AEF_FULL_REPORT_TEMPLATE,
+  toSubmissionTemplateXlsxBuffer,
+  toXlsxBuffer,
+} from "@app/aef-v2/export/xlsx";
 import { Inject, Injectable } from "@nestjs/common";
+import * as fs from "fs";
+import * as path from "path";
 
 import { ExportFileType } from "../enum/export.file.type.enum";
 import { FileHandlerInterface } from "../file-handler/filehandler.interface";
@@ -130,7 +136,13 @@ export class AefV2ReportService {
     if (fileType === ExportFileType.XLSX) {
       const buffer = table
         ? await toXlsxBuffer(table, exportData[table] ?? [])
-        : await toSubmissionXlsxBuffer(exportData);
+        : // The full report goes into the official CARP workbook rather than a
+          // generated grid — see toSubmissionTemplateXlsxBuffer.
+          await toSubmissionTemplateXlsxBuffer(exportData, {
+            templatePath: this.fullReportTemplatePath(),
+            party: this.defaults.aefT1SubmissionParty,
+            reportedYear,
+          });
       content = buffer.toString("base64");
     } else {
       const csv = table ? toCsv(table, exportData[table] ?? []) : toSubmissionCsv(exportData);
@@ -139,5 +151,33 @@ export class AefV2ReportService {
 
     const url = await this.fileHandler.uploadFile("documents/exports/" + outputFileName, content);
     return { url, outputFileName };
+  }
+
+  /**
+   * Locates the CARP full-report workbook that ships inside `@app/aef-v2`.
+   *
+   * The library declares its own layout ({@link AEF_FULL_REPORT_TEMPLATE});
+   * only the `dist/aef-v2/src` prefix is this repo's business, and it comes
+   * from nest-cli.json's asset rule for `libs/aef-v2/src/export/templates/**`
+   * plus the fact that the webpack bundle's `__dirname` is `dist`. Same shape
+   * as `AefReportManagementService.fillTemplate` uses for the V1 templates.
+   *
+   * Checked explicitly so a packaging slip fails with the missing path rather
+   * than ExcelJS's bare ENOENT.
+   */
+  private fullReportTemplatePath(): string {
+    const templatePath = path.resolve(
+      __dirname,
+      "aef-v2",
+      "src",
+      ...AEF_FULL_REPORT_TEMPLATE.segments
+    );
+    if (!fs.existsSync(templatePath)) {
+      throw new Error(
+        `AEF V2 full-report template not found at ${templatePath}. ` +
+          `Check that nest-cli.json still copies libs/aef-v2/src/export/templates into the build output.`
+      );
+    }
+    return templatePath;
   }
 }
