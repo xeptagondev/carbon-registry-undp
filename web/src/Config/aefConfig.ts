@@ -4,16 +4,12 @@
  * Per-country deployment setting, so it belongs here alongside the other
  * customisation touchpoints rather than being hardcoded in a component.
  *
- * The Party value replaces the `"Sri Lanka"` literal the V1 report cards
- * carried. That was wrong twice over: it hardcoded one deployment into a
- * toolkit meant to be deployed per country, and it used a display name where
- * the AEF requires an **ISO 3166-1 alpha-3 code** (Common Nomenclature Table 1 —
- * `LKA`, `VUT`, `CHE`, plus exceptionally reserved codes such as `EUE`).
+ * The reporting Party's display name is **not** configured here: it is read
+ * from `national/cooperativeApproach/hostParty` at runtime (see
+ * `ReportingComponent`), because that endpoint is the registry's actual
+ * source of truth for which country this deployment represents.
  */
 export const AEF_CONFIG = {
-  /** ISO 3166-1 alpha-3 code of the reporting Party. */
-  party: import.meta.env.VITE_AEF_PARTY ?? "VUT",
-
   /**
    * Party ITMO registry identifier — alpha-3 code plus a two-digit registry
    * number (Common Nomenclature Table 28).
