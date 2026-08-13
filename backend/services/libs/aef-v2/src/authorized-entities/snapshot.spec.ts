@@ -221,6 +221,24 @@ describe('getAuthorizedEntitiesForYear', () => {
     expect(result.provisional).toBe(true);
     expect(result.snapshotAt).toBeUndefined();
   });
+
+  it('returns nothing for a past year with no Submission at all, rather than falling back to live', async () => {
+    const store = newStore();
+    const { provider, calls } = stubProvider();
+
+    // clock is fixed at 2026-03-01 — 2024 is a genuinely past, never-tracked
+    // year (distinct from the "frozen snapshot for a closed year" case
+    // above, which explicitly snapshots 2025 first).
+    const result = await getAuthorizedEntitiesForYear(store, provider, defaults, 2024, clock);
+
+    expect(result.rows).toEqual([]);
+    expect(result.provisional).toBe(false);
+    expect(result.snapshotAt).toBeUndefined();
+    // The live provider must not be asked at all — it has no concept of
+    // "as of 2024", only "as of now", so calling it here would silently
+    // mislabel today's entities as 2024's.
+    expect(calls).toHaveLength(0);
+  });
 });
 
 describe('export exclusion', () => {

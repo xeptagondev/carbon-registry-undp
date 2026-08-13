@@ -10,8 +10,7 @@ import {
 } from "@app/aef-v2";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InjectRepository } from "@nestjs/typeorm";
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager } from "typeorm";
 
 import { AuthorizationPurpose } from "../enum/authorization.purpose.enum";
 import { CreditTransactionStatusEnum } from "../enum/credit.transaction.status.enum";
@@ -26,8 +25,14 @@ import { ProjectEntity } from "../entities/projects.entity";
 import { CountryService } from "../util/country.service";
 import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 import { AefStoreFactory } from "./aef-v2-store.factory";
+import { resolvePartyItmoRegistryId } from "./aef-v2-defaults.factory";
 import { AEF_SUBMISSION_DEFAULTS } from "./aef-v2.tokens";
-import { AEF_V2_ACTION_BY_SUBTYPE } from "./mappers/aef-code.maps";
+import {
+  AEF_V2_ACTION_BY_SUBTYPE,
+  AEF_V2_T3_ACTIONS_ALWAYS_NA,
+  AEF_V2_T3_AUTHORIZATION_ACTION_NA,
+  NOT_APPLICABLE,
+} from "./mappers/aef-code.maps";
 import { AefBlockMapperContext, mapCreditBlockToAefBlockFields } from "./mappers/aef-block.mapper";
 import { mapItmoAuthorizationToAefAuthorization } from "./mappers/aef-authorization.mapper";
 import { mapCaAuthorizedEntityToAef } from "./mappers/aef-authorized-entity.mapper";
@@ -52,7 +57,14 @@ import { mapCaAuthorizedEntityToAef } from "./mappers/aef-authorized-entity.mapp
  * Called from `CreditTransactionsManagementService.handleTransactionRecords`
  * alongside — not instead of — the V1 call, inside the replicator's own
  * transaction. See `AefStoreFactory` for why the store must be bound to that
- * transaction's `EntityManager`.
+ * transaction's `EntityManager` — every repository read in this class must
+ * be too, via `em.getRepository(...)` rather than an `@InjectRepository`
+ * bound to the default connection. Retirement approval is the case that
+ * actually bites: `CreditTransactionsManagementService.handleTransactionRecords`
+ * flips the retirement's status to COMPLETED via `em.update(...)` earlier in
+ * this *same* transaction, and a read through a differently-connected repo
+ * cannot see that write until it commits — so a status check against it
+ * would always see the pre-approval value.
  */
 @Injectable()
 export class AefV2WriteService {
@@ -63,15 +75,7 @@ export class AefV2WriteService {
     @Inject(AEF_SUBMISSION_DEFAULTS) private readonly defaults: AefSubmissionDefaults,
     private readonly configService: ConfigService,
     private readonly serialNumberManagementService: SerialNumberManagementService,
-    private readonly countryService: CountryService,
-    @InjectRepository(ProjectEntity)
-    private readonly projectRepo: Repository<ProjectEntity>,
-    @InjectRepository(CreditTransactionsEntity)
-    private readonly creditTransactionsRepo: Repository<CreditTransactionsEntity>,
-    @InjectRepository(CooperativeApproach)
-    private readonly cooperativeApproachRepo: Repository<CooperativeApproach>,
-    @InjectRepository(CaAuthorizedEntity)
-    private readonly authorizedEntityRepo: Repository<CaAuthorizedEntity>
+    private readonly countryService: CountryService
   ) {}
 
   async recordCreditBlockEvent(
@@ -118,7 +122,10 @@ export class AefV2WriteService {
   private blockContext(): AefBlockMapperContext {
     return {
       party: this.defaults.aefT1SubmissionParty,
-      partyItmoRegistryId: this.configService.get<string>("AEF_V2.partyItmoRegistryId"),
+      partyItmoRegistryId: resolvePartyItmoRegistryId(
+        this.configService,
+        this.defaults.aefT1SubmissionParty
+      ),
       defaultMitigationType: this.configService.get<string>("AEF_V2.defaultMitigationType"),
     };
   }
@@ -138,7 +145,9 @@ export class AefV2WriteService {
       return;
     }
 
-    const project = await this.projectRepo.findOneBy({ refId: creditBlock.projectRefId });
+    const project = await em
+      .getRepository(ProjectEntity)
+      .findOneBy({ refId: creditBlock.projectRefId });
     if (!project) {
       this.logger.warn(
         `Skipping AEF V2 authorization: no project ${creditBlock.projectRefId} for credit block ${creditBlock.creditBlockId}`
@@ -146,9 +155,9 @@ export class AefV2WriteService {
       return;
     }
 
-    const authRequest = await this.creditTransactionsRepo.findOneBy({
-      id: creditBlock.itmoAuthorizationRecord,
-    });
+    const authRequest = await em
+      .getRepository(CreditTransactionsEntity)
+      .findOneBy({ id: creditBlock.itmoAuthorizationRecord });
     if (!authRequest) {
       this.logger.warn(
         `Skipping AEF V2 authorization: no request record ${creditBlock.itmoAuthorizationRecord}`
@@ -163,9 +172,9 @@ export class AefV2WriteService {
       authorizedTimeframeEndYear?: number;
     };
     const ca = requestData.cooperativeApproachId
-      ? await this.cooperativeApproachRepo.findOneBy({
-          cooperativeApproachId: requestData.cooperativeApproachId,
-        })
+      ? await em
+          .getRepository(CooperativeApproach)
+          .findOneBy({ cooperativeApproachId: requestData.cooperativeApproachId })
       : undefined;
 
     const store = this.storeFactory.forManager(em);
@@ -227,6 +236,8 @@ export class AefV2WriteService {
       aefT3ActionsQuantityTCo2: blockFields.quantityTCo2,
       aefT3ActionsMitigationType: blockFields.mitigationType,
       aefT3ActionsVintageYear: blockFields.vintageYear,
+      ...AEF_V2_T3_ACTIONS_ALWAYS_NA,
+      ...AEF_V2_T3_AUTHORIZATION_ACTION_NA,
       projectId: blockFields.projectId,
       unitId: blockFields.unitId,
       aefT2AuthorizationsId: authorization.id,
@@ -244,7 +255,9 @@ export class AefV2WriteService {
       return;
     }
 
-    const retireTx = await this.creditTransactionsRepo.findOneBy({ id: txData.transactionId });
+    const retireTx = await em
+      .getRepository(CreditTransactionsEntity)
+      .findOneBy({ id: txData.transactionId });
     if (!retireTx || retireTx.status !== CreditTransactionStatusEnum.COMPLETED) {
       // Not yet approved, or this ledger event is a reject/cancel outcome —
       // nothing actually moved.
@@ -264,7 +277,9 @@ export class AefV2WriteService {
       );
       return;
     }
-    const project = await this.projectRepo.findOneBy({ refId: creditBlock.projectRefId });
+    const project = await em
+      .getRepository(ProjectEntity)
+      .findOneBy({ refId: creditBlock.projectRefId });
     if (!project) {
       this.logger.warn(
         `Skipping AEF V2 action: no project ${creditBlock.projectRefId} for credit block ${creditBlock.creditBlockId}`
@@ -319,7 +334,8 @@ export class AefV2WriteService {
       const ensured = await this.ensureAuthorizedEntityRecorded(
         store,
         useData.authorizedEntityId,
-        submission.id
+        submission.id,
+        em
       );
       if (ensured) {
         usingAuthorizedEntityId = ensured.key;
@@ -331,6 +347,13 @@ export class AefV2WriteService {
         purposeOfUseOimp = `First transferred to ${ensured.name}`;
       }
     }
+
+    // Cancellations (voluntary or OMGE) never cross a border and never
+    // involve an authorized entity — drives the NA overrides below, which
+    // apply to both cancellation subtypes identically.
+    const isCancellation =
+      retireTx.subType === CreditTransactionSubTypesEnum.VOLUNTARY_CANCELLATION ||
+      retireTx.subType === CreditTransactionSubTypesEnum.OMGE_CANCELLATION;
 
     await recordAction(
       store,
@@ -349,13 +372,30 @@ export class AefV2WriteService {
         aefT3ActionsQuantityTCo2: blockFields.quantityTCo2,
         aefT3ActionsMitigationType: blockFields.mitigationType,
         aefT3ActionsVintageYear: blockFields.vintageYear,
-        aefT3ActionsAcquiringPartyId: acquiringParty,
+        ...AEF_V2_T3_ACTIONS_ALWAYS_NA,
+        // Acquiring participating Party ID: only applicable to "first
+        // transfer" (NDC or OIMP, both cross a border) — never to a
+        // cancellation, which stays entirely domestic.
+        aefT3ActionsAcquiringPartyId: isCancellation ? NOT_APPLICABLE : acquiringParty,
+        // Using/cancelling participating Party ID: only meaningful for a
+        // domestic NDC first-transfer (the acquiring Party *is* the "using"
+        // Party there) — NA for cancellations and for OIMP, where the OIMP
+        // authorized entity fills the equivalent role instead (below).
         aefT3ActionsUsingParticipatingPartyId:
           retireTx.subType === CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC
             ? acquiringParty
-            : undefined,
-        aefT3ActionsUsingAuthorizedEntityId: usingAuthorizedEntityId,
-        aefT3ActionsPurposeOfUseOimp: purposeOfUseOimp,
+            : NOT_APPLICABLE,
+        // Using/cancelling authorized entity ID: only ever computed above
+        // for an OIMP first-transfer with a resolved entity — already
+        // undefined for every other subtype, so this NA-falls-back exactly
+        // where requested (cancellations and NDC) without needing its own
+        // subtype check.
+        aefT3ActionsUsingAuthorizedEntityId: usingAuthorizedEntityId ?? NOT_APPLICABLE,
+        // Purpose for which the ITMO has been used towards/cancelled for
+        // OIMP: only ever computed above for an OIMP first-transfer —
+        // already undefined for cancellations and NDC, so this NA-falls-back
+        // exactly where requested, same pattern as UsingAuthorizedEntityId above.
+        aefT3ActionsPurposeOfUseOimp: purposeOfUseOimp ?? NOT_APPLICABLE,
         projectId: blockFields.projectId,
         unitId: blockFields.unitId,
         aefT2AuthorizationsId: existingAuthorization.data[0]?.id,
@@ -391,17 +431,18 @@ export class AefV2WriteService {
   private async ensureAuthorizedEntityRecorded(
     store: AefStore,
     entityId: string,
-    submissionId: string
+    submissionId: string,
+    em: EntityManager
   ): Promise<{ id: string; key: string; name: string } | undefined> {
-    const entity = await this.authorizedEntityRepo.findOneBy({ id: entityId });
+    const entity = await em.getRepository(CaAuthorizedEntity).findOneBy({ id: entityId });
     if (!entity) {
       this.logger.warn(`Skipping AEF V2 authorized-entity write: no entity ${entityId}`);
       return undefined;
     }
 
-    const ca = await this.cooperativeApproachRepo.findOneBy({
-      cooperativeApproachId: entity.cooperativeApproachId,
-    });
+    const ca = await em
+      .getRepository(CooperativeApproach)
+      .findOneBy({ cooperativeApproachId: entity.cooperativeApproachId });
     const alpha3 = entity.countryOfIncorporation
       ? await this.countryService.getAlpha3(entity.countryOfIncorporation)
       : undefined;

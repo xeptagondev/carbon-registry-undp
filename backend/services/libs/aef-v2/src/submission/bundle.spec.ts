@@ -103,9 +103,14 @@ describe('toAefSubmissionExport / toValidationBundle', () => {
   it('reshape a loaded bundle so it can feed export and validation without further work', async () => {
     const store = new InMemoryAefStore(undefined, clock);
     const bag = deps(store);
-    await ensureSubmissionForYear(store, defaults, 2020, clock);
+    // Must be the clock's current year (2026), not a past one — a past year
+    // with no frozen T4/T5 snapshot correctly returns nothing (see
+    // getHoldingsForYear/getAuthorizedEntitiesForYear's "only the open year
+    // falls back to live" behaviour), so this reshape test needs the live
+    // path to actually have holdings/entities to reshape.
+    await ensureSubmissionForYear(store, defaults, 2026, clock);
 
-    const bundle = await loadSubmissionBundle(bag, defaults, 2020, clock);
+    const bundle = await loadSubmissionBundle(bag, defaults, 2026, clock);
 
     const exportData = toAefSubmissionExport(bundle);
     expect(exportData.t1Submission).toHaveLength(1);

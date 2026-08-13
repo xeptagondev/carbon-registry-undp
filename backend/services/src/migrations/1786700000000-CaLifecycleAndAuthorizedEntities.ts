@@ -16,6 +16,12 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 //   - Entities authorized under an Active cooperative approach (AEF v2
 //     "Authorized entities" table shape). Removal soft-flips status to
 //     'Inactive' so authorization history is retained.
+//   - "countryOfIncorporation" (text, nullable): the country the entity is
+//     incorporated in. Required at the DTO layer; nullable here so it can
+//     stay unset for entities that predate this becoming mandatory
+//     (folded directly into the table here rather than living in its own
+//     later migration — squashed as part of the UNCR-468 migration
+//     cleanup, since neither migration had ever been run).
 //
 // Written by hand rather than via `migration:generate` - the local dev
 // DB runs with synchronize=true (NODE_ENV=dev) and has already
@@ -46,6 +52,7 @@ export class CaLifecycleAndAuthorizedEntities1786700000000
         "entityName" character varying NOT NULL,
         "entityIdentifier" text,
         "authorizingParty" text,
+        "countryOfIncorporation" text,
         "authorizationDate" bigint,
         "authorizationReference" text,
         "status" "public"."ca_authorized_entity_status_enum" NOT NULL DEFAULT 'Active',

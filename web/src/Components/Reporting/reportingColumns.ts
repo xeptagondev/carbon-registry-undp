@@ -1,6 +1,6 @@
 import { Button, Tag, Tooltip } from "antd";
 import { TFunction } from "i18next";
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 
 /** The translator shape used throughout this module. */
 export type Translate = TFunction<string[], undefined, string[]>;
@@ -38,6 +38,14 @@ const header = (t: Translate, key: string, footnoteKey?: string) => {
 };
 
 /**
+ * The grey/italic "this isn't really data" treatment — shared by every value
+ * that reads as intentionally absent rather than missing: a literal "NA"
+ * written to the database (whichever column it lands in), CARP-populated
+ * fields, and the Submission date before a year is actually filed.
+ */
+const naSpan = (text: string) => createElement("span", { className: "carp-populated" }, text);
+
+/**
  * `width` is optional and given per column rather than uniformly.
  *
  * Where supplied it sizes that column alone — a long heading gets room to wrap
@@ -59,21 +67,41 @@ const col = (
   dataIndex,
   key: dataIndex,
   ...(width ? { width } : {}),
+  // A column can hold the literal string "NA" (this registry writes it for
+  // fields that never apply here — see aef-code.maps.ts's NOT_APPLICABLE
+  // uses) without going through emptyStateCol/carpCol, which only ever get
+  // opted into individually. Catching it here means every NA-capable column,
+  // present and future, reads the same grey/italic way with no per-column
+  // wiring — every other value renders exactly as before (antd's default).
+  render: (value: unknown) => (value === "NA" ? naSpan(value) : (value as ReactNode)),
 });
 
-/** CARP fills these; the registry leaves them blank. Greyed so that reads as intended. */
-const carpCol = (t: Translate, key: string, dataIndex: string, width?: number) => ({
-  title: header(t, key, "carpPopulatedHint"),
+/**
+ * Shared empty-state renderer: greys and italicizes a column whose value can
+ * legitimately be unset, with its own label rather than reading as missing
+ * data. `carpCol` (CARP-populated fields) is the original user of this; the
+ * Submission date column, which is genuinely unset until actually filed,
+ * reuses the same visual treatment with its own copy and footnote.
+ */
+const emptyStateCol = (
+  t: Translate,
+  key: string,
+  dataIndex: string,
+  emptyLabelKey: string,
+  footnoteKey?: string,
+  width?: number
+) => ({
+  title: header(t, key, footnoteKey),
   dataIndex,
   key: dataIndex,
   ...(width ? { width } : {}),
   render: (value: unknown) =>
-    createElement(
-      "span",
-      { className: "carp-populated" },
-      value === undefined || value === null ? t("reporting:carpPending") : String(value)
-    ),
+    naSpan(value === undefined || value === null ? t(`reporting:${emptyLabelKey}`) : String(value)),
 });
+
+/** CARP fills these; the registry leaves them blank. Greyed so that reads as intended. */
+const carpCol = (t: Translate, key: string, dataIndex: string, width?: number) =>
+  emptyStateCol(t, key, dataIndex, "carpPending", "carpPopulatedHint", width);
 
 const group = (t: Translate, key: string, children: ReportColumn[]) => ({
   title: t(`reporting:${key}`),
@@ -145,7 +173,14 @@ export const getSubmissionReportColumns = (
   col(t, "party", "aefT1SubmissionParty", undefined, 90),
   col(t, "submissionVersion", "aefT1SubmissionVersion", undefined, 100),
   col(t, "reportedYear", "aefT1SubmissionReportYear", undefined, 120),
-  col(t, "dateOfSubmission", "aefT1SubmissionSubmissionDate", "dateOfSubmissionFootnote", 160),
+  emptyStateCol(
+    t,
+    "dateOfSubmission",
+    "aefT1SubmissionSubmissionDate",
+    "notYetSubmitted",
+    "dateOfSubmissionFootnote",
+    160
+  ),
   carpCol(t, "reviewStatusOfInitialReport", "aefT1SubmissionReviewStatus", 220),
   carpCol(t, "resultOfConsistencyCheck", "aefT1SubmissionResultCheck", 260),
   col(t, "ndcFirstYear", "aefT1SubmissionNdcFirstYear", undefined, 170),
@@ -208,8 +243,12 @@ export const getActionsReportColumns = (t: Translate) => [
   ]),
   group(t, "underlyingUnit", [
     col(t, "underlyingUnitRegistryId", "aefT3ActionsUnitRegistryId", "underlyingUnitRegistryFootnote"),
-    col(t, "firstUnitId", "aefT3ActionsUnitFirstId"),
-    col(t, "lastUnitId", "aefT3ActionsUnitLastId"),
+    // Integer-typed columns — this registry has no underlying-unit-registry
+    // concept, so they're never populated at the DB layer (unlike
+    // aefT3ActionsUnitRegistryId above, which can and does hold the literal
+    // string "NA"). Fall back to an NA display instead.
+    emptyStateCol(t, "firstUnitId", "aefT3ActionsUnitFirstId", "notApplicable"),
+    emptyStateCol(t, "lastUnitId", "aefT3ActionsUnitLastId", "notApplicable"),
   ]),
   group(t, "metricAndQuantity", [
     col(t, "metric", "aefT3ActionsMetric"),
@@ -227,7 +266,9 @@ export const getActionsReportColumns = (t: Translate) => [
     col(t, "usingCancellingEntityId", "aefT3ActionsUsingAuthorizedEntityId", "usingCancellingEntityFootnote"),
   ]),
   col(t, "purposeItmoUsedForOimp", "aefT3ActionsPurposeOfUseOimp", "purposeItmoUsedForOimpFootnote"),
-  col(t, "yearItmoUsedTowardsNdc", "aefT3ActionsItmoUsedYear", "yearItmoUsedTowardsNdcFootnote"),
+  // Integer-typed and dead on every row this registry writes today
+  // (Authorization or retirement-derived) — NA display, not a backend write.
+  emptyStateCol(t, "yearItmoUsedTowardsNdc", "aefT3ActionsItmoUsedYear", "notApplicable", "yearItmoUsedTowardsNdcFootnote"),
   carpCol(t, "resultOfConsistencyChecks", "aefT3ActionsConsistencyCheckResult"),
   col(t, "additionalInformation", "aefT3ActionsAdditionalInformation"),
 ];
@@ -247,8 +288,13 @@ export const getHoldingsReportColumns = (t: Translate) => [
   ]),
   group(t, "underlyingUnit", [
     col(t, "underlyingUnitRegistryId", "aefT4HoldingsUnitRegistryId", "underlyingUnitRegistryFootnote"),
-    col(t, "firstUnitId", "aefT4HoldingsUnitFirstId"),
-    col(t, "lastUnitId", "aefT4HoldingsUnitLastId"),
+    // Integer-typed columns — this registry has no underlying-unit-registry
+    // concept, so they're never populated at the DB layer (unlike
+    // aefT4HoldingsUnitRegistryId above, which can and does hold the literal
+    // string "NA"). Fall back to an NA display instead — mirrors Table 3's
+    // aefT3ActionsUnitFirstId/UnitLastId.
+    emptyStateCol(t, "firstUnitId", "aefT4HoldingsUnitFirstId", "notApplicable"),
+    emptyStateCol(t, "lastUnitId", "aefT4HoldingsUnitLastId", "notApplicable"),
   ]),
   group(t, "metricAndQuantity", [
     col(t, "metric", "aefT4HoldingsMetric"),

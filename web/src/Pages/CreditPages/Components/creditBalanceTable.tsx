@@ -26,7 +26,10 @@ import "../creditPageStyles.scss";
 import { IssuedOrReceivedOptions } from "../Enums/creditEventEnum";
 import { CreditActionType } from "../Enums/creditActionType.enum";
 import { CreditActionModal } from "./creditActionModal";
-import { ItmoAuthRequestModal } from "./itmoAuthRequestModal";
+import {
+  ItmoAuthRequestModal,
+  ItmoAuthRequestModalFinishPayload,
+} from "./itmoAuthRequestModal";
 import { ProjectDetailsLink } from "../../../Components/ProjectDetailsLink/projectDetailsLink";
 import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
 import { HttpStatusCode } from "axios";
@@ -564,21 +567,11 @@ export const CreditBalanceTableComponent = (props: any) => {
   };
 
   const onFinishItmoAuthRequest = async (
-    blockId: string,
-    amount: number,
-    cooperativeApproachId: string,
-    authorizationPurpose: string | undefined,
-    remarks: string | undefined
+    payload: ItmoAuthRequestModalFinishPayload
   ) => {
     try {
       setItmoModalLoading(true);
-      const response: any = await post(API_PATHS.ITMO_AUTH_REQUEST, {
-        blockId,
-        amount,
-        cooperativeApproachId,
-        authorizationPurpose,
-        remarks,
-      });
+      const response: any = await post(API_PATHS.ITMO_AUTH_REQUEST, payload);
       if (response.status === HttpStatusCode.Created) {
         setModalResponseData({
           type: ActionResponseType.SUCCESS,

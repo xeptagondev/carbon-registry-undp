@@ -182,9 +182,6 @@ export const API_PATHS = {
   REJECT_VALIDATION: "national/programmeSl/validation/reject",
   APPROVE_VALIDATION: "national/programmeSl/validation/approve",
   POPUP_ACTION: (endpoint: string) => `national/programme/${endpoint}`,
-  // AEF RECORDS (V1 — coexists with V2 below while V1 is phased out):
-  QUERY_AEF_RECORDS: `national/reportsManagement/queryAefRecords`,
-  DOWNLOAD_AEF_RECORDS: `national/reportsManagement/downloadAefReport`,
   // AEF V2 (@app/aef-v2):
   AEF_V2_QUERY: `national/aefV2/query`,
   AEF_V2_VALIDATE: `national/aefV2/validate`,

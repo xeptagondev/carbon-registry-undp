@@ -7,10 +7,14 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 //     ItmoAuthorized / Acquired. Historical rows written with the
 //     removed values are remapped: FirstTransfer -> Transfered,
 //     UseTowardsNDC / UseForOIMP / VoluntaryCancellation /
-//     OMGECancellation -> Retired + the matching "subType",
-//     Authorized -> ItmoAuthorized.
-//   - "retirementType" replaced by the new "subType" enum column
-//     (SOP Adaptation had no successor subtype and maps to NULL).
+//     OMGECancellation -> Retired + the matching "subType".
+//   - "retirementType" replaced by the new "subType" enum column:
+//     'Voluntary Cancellations' | 'Use Towards NDC' |
+//     'First Transfer Towards NDC' | 'First Transfer For OIMP' |
+//     'OMGE Cancellation'. SOP Adaptation had no successor subtype and
+//     maps to NULL. The two First-Transfer-* values are ITMO-only
+//     (the credits cross the host country's border); plain "Use Towards
+//     NDC" stays MO-only (domestic use) — see the classification below.
 //   - the type-specific columns remarks / country / organizationName /
 //     cooperativeApproachId / authorizationPurpose are folded into a
 //     new "data" jsonb column (see credit.transaction.data.types.ts).
@@ -26,10 +30,43 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 // current view-entity SQL, since ALTER COLUMN TYPE cannot run under a
 // dependent view.
 //
+// SQUASHED (UNCR-468 migration cleanup): this single migration now does
+// what used to be split across three — 1786600000000 (this one),
+// 1786800000000-MoItmoRetirementRules.ts (both since deleted), and
+// 1787200000000-FirstTransferRetirementSubTypes.ts. None of the three had
+// ever been run against a real database, so the intermediate schema states
+// they produced (a "Cross-Border Transactions" subType value that existed
+// only to be immediately remapped away; an undifferentiated "Use Towards
+// NDC"/"Use For OIMP" pair later split into MO/ITMO variants) were never
+// observed by anything — the subType enum is created here directly with
+// its final 5 values, and the historical backfill classifies straight to
+// them in one pass. This is behaviourally identical to running the
+// original three migrations back-to-back with no real usage in between
+// (which is exactly what would have happened, since none had run): the
+// original ITMO/MO split also checked credit_blocks_entity.itmoAuthorizationRecord
+// alongside isFirstTransfer, but that column starts NULL for every row
+// regardless of when it's added and nothing populates it for historical
+// blocks in either version — so only "isFirstTransfer" (an existing,
+// already-populated column) ever actually distinguished historical rows
+// in practice. The check below omits the always-false half of that OR
+// rather than reference a column this migration hasn't added yet at this
+// point (see step 4's comment).
+//
+// credit_block_retirements_view_entity and credit_block_balances_view_entity
+// are each created here exactly once, in their near-final shape (entityName,
+// not the transitional organizationName; the final subType values; balances'
+// itmoCooperativeApproachId/itmoAuthorizationPurpose join) — the versions
+// MoItmoRetirementRules and FirstTransferRetirementSubTypes used to
+// (re)create along the way are gone, since nothing ever observed them.
+// credit_block_retirements_view_entity still gets one more legitimate
+// drop+recreate later, in 1787300000000-ItmoVisibilityViews.ts, which adds
+// the itmoSerial/itmoAuthorizationRecord join — that is genuinely new
+// content introduced there, not duplicated here.
+//
 // Written by hand rather than via `migration:generate` - the local dev
 // DB runs with synchronize=true (NODE_ENV=dev) and has already
-// auto-synced this schema, leaving nothing for the generator to diff.
-// Same convention as 1785500000000-AddProjectOwnerToCreditViews.ts.
+// auto-synced this schema. Same convention as
+// 1785500000000-AddProjectOwnerToCreditViews.ts.
 export class CreditTxSubTypeAndItmoAuth1786600000000
   implements MigrationInterface
 {
@@ -41,9 +78,11 @@ export class CreditTxSubTypeAndItmoAuth1786600000000
       await dropView(queryRunner, view);
     }
 
-    // 2. credit_transactions_entity: new subType + data columns.
+    // 2. credit_transactions_entity: new subType + data columns. subType
+    //    is created directly with its final 5 values — see the module
+    //    docblock on why no intermediate enum shape is needed.
     await queryRunner.query(
-      `CREATE TYPE "public"."credit_transactions_entity_subtype_enum" AS ENUM('Cross-Border Transactions', 'Voluntary Cancellations', 'Use Towards NDC', 'Use For OIMP', 'OMGE Cancellation')`
+      `CREATE TYPE "public"."credit_transactions_entity_subtype_enum" AS ENUM('Voluntary Cancellations', 'Use Towards NDC', 'First Transfer Towards NDC', 'First Transfer For OIMP', 'OMGE Cancellation')`
     );
     await queryRunner.query(
       `ALTER TABLE "credit_transactions_entity" ADD "subType" "public"."credit_transactions_entity_subtype_enum"`
@@ -52,16 +91,7 @@ export class CreditTxSubTypeAndItmoAuth1786600000000
       `ALTER TABLE "credit_transactions_entity" ADD "data" jsonb`
     );
 
-    // 3. Backfill subType from retirementType (values are identical
-    //    strings except SOP Adaptation, which has no successor).
-    await queryRunner.query(
-      `UPDATE "credit_transactions_entity"
-       SET "subType" = "retirementType"::text::"public"."credit_transactions_entity_subtype_enum"
-       WHERE "retirementType" IS NOT NULL
-         AND "retirementType"::text <> 'SOP Adaptation'`
-    );
-
-    // 4. Backfill data from the dropped per-type columns.
+    // 3. Backfill data from the dropped per-type columns.
     await queryRunner.query(
       `UPDATE "credit_transactions_entity"
        SET "data" = jsonb_strip_nulls(jsonb_build_object(
@@ -81,6 +111,37 @@ export class CreditTxSubTypeAndItmoAuth1786600000000
       `UPDATE "credit_transactions_entity" SET "data" = NULL WHERE "data" = '{}'::jsonb`
     );
 
+    // 4. Backfill subType for rows already typed 'Retired', from the old
+    //    "retirementType" column — classified straight to final values.
+    //    "Cross-Border Transactions" and "Use Towards NDC" both resolve
+    //    through the same ITMO/MO check the historical
+    //    FirstTransferRetirementSubTypes migration used — except that
+    //    check originally also looked at credit_blocks_entity.itmoAuthorizationRecord,
+    //    a column this migration doesn't add until step 8. Deliberately
+    //    dropped here rather than reordered: that column starts NULL for
+    //    every row regardless of when it's added (nothing populates it
+    //    for historical blocks in either the squashed or original
+    //    sequential migrations — see the module docblock), so the two
+    //    conditions were never actually distinguishable; "isFirstTransfer"
+    //    alone is behaviourally identical. "Use For OIMP" was always
+    //    ITMO-only (a pure rename, no check needed); SOP Adaptation has no
+    //    successor and stays NULL.
+    await queryRunner.query(
+      `UPDATE "credit_transactions_entity" ct
+       SET "subType" = (CASE
+         WHEN ct."retirementType"::text IN ('Cross-Border Transactions', 'Use Towards NDC') THEN
+           (CASE
+             WHEN ct."isFirstTransfer" = TRUE THEN 'First Transfer Towards NDC'
+             ELSE 'Use Towards NDC'
+           END)
+         WHEN ct."retirementType"::text = 'Use For OIMP' THEN 'First Transfer For OIMP'
+         WHEN ct."retirementType"::text = 'Voluntary Cancellations' THEN 'Voluntary Cancellations'
+         WHEN ct."retirementType"::text = 'OMGE Cancellation' THEN 'OMGE Cancellation'
+         ELSE NULL
+       END)::"public"."credit_transactions_entity_subtype_enum"
+       WHERE ct."retirementType" IS NOT NULL`
+    );
+
     // 5. Remap the removed "type" values, working on text so both the
     //    removed source values and the new ItmoAuthorized target are
     //    representable during the swap.
@@ -93,20 +154,42 @@ export class CreditTxSubTypeAndItmoAuth1786600000000
     await queryRunner.query(
       `UPDATE "credit_transactions_entity" SET "type" = 'ItmoAuthorized' WHERE "type" = 'Authorized'`
     );
-    const retiredRemaps: Array<[string, string]> = [
+
+    // 6. The even-older generation of rows, which encoded retirement
+    //    flavour directly in "type" rather than via "retirementType" —
+    //    remapped to type='Retired' with subType classified the same way
+    //    as step 4 (COALESCE guards a row step 4 already classified,
+    //    though the WHERE clauses here are already mutually exclusive by
+    //    "type" with step 4's, which only ever matched 'Retired' rows).
+    const legacyTypeRemaps: Array<[string, string]> = [
       ["UseTowardsNDC", "Use Towards NDC"],
-      ["UseForOIMP", "Use For OIMP"],
+      ["UseForOIMP", "First Transfer For OIMP"],
       ["VoluntaryCancellation", "Voluntary Cancellations"],
       ["OMGECancellation", "OMGE Cancellation"],
     ];
-    for (const [oldType, subType] of retiredRemaps) {
-      await queryRunner.query(
-        `UPDATE "credit_transactions_entity"
-         SET "type" = 'Retired',
-             "subType" = COALESCE("subType", $1::"public"."credit_transactions_entity_subtype_enum")
-         WHERE "type" = $2`,
-        [subType, oldType]
-      );
+    for (const [oldType, finalSubType] of legacyTypeRemaps) {
+      if (oldType === "UseTowardsNDC") {
+        // Needs the same ITMO/MO check as step 4 — can't use a flat
+        // COALESCE-to-constant like the other three.
+        await queryRunner.query(
+          `UPDATE "credit_transactions_entity" ct
+           SET "type" = 'Retired',
+               "subType" = COALESCE(ct."subType", (CASE
+                 WHEN ct."isFirstTransfer" = TRUE THEN 'First Transfer Towards NDC'
+                 ELSE 'Use Towards NDC'
+               END)::"public"."credit_transactions_entity_subtype_enum")
+           WHERE ct."type" = $1`,
+          [oldType]
+        );
+      } else {
+        await queryRunner.query(
+          `UPDATE "credit_transactions_entity"
+           SET "type" = 'Retired',
+               "subType" = COALESCE("subType", $1::"public"."credit_transactions_entity_subtype_enum")
+           WHERE "type" = $2`,
+          [finalSubType, oldType]
+        );
+      }
     }
     await queryRunner.query(
       `DROP TYPE "public"."credit_transactions_entity_type_enum"`
@@ -118,7 +201,7 @@ export class CreditTxSubTypeAndItmoAuth1786600000000
       `ALTER TABLE "credit_transactions_entity" ALTER COLUMN "type" TYPE "public"."credit_transactions_entity_type_enum" USING "type"::"public"."credit_transactions_entity_type_enum"`
     );
 
-    // 6. Drop the folded-in columns and their orphaned enum types.
+    // 7. Drop the folded-in columns and their orphaned enum types.
     await queryRunner.query(
       `ALTER TABLE "credit_transactions_entity"
          DROP COLUMN "retirementType",
@@ -135,7 +218,7 @@ export class CreditTxSubTypeAndItmoAuth1786600000000
       `DROP TYPE "public"."credit_transactions_entity_authorizationpurpose_enum"`
     );
 
-    // 7. credit_blocks_entity: drop the Article 6.2 metadata columns,
+    // 8. credit_blocks_entity: drop the Article 6.2 metadata columns,
     //    add the ITMO authorization linkage.
     await queryRunner.query(
       `ALTER TABLE "credit_blocks_entity"
@@ -151,7 +234,7 @@ export class CreditTxSubTypeAndItmoAuth1786600000000
       `ALTER TABLE "credit_blocks_entity" ADD "itmoAuthorizationRecord" text`
     );
 
-    // 8. Recreate the views from the current view-entity SQL.
+    // 9. Recreate the views from the current view-entity SQL.
     await createView(queryRunner, "credit_block_transfers_view_entity", TRANSFERS_SQL);
     await createView(queryRunner, "credit_block_retirements_view_entity", RETIREMENTS_SQL);
     await createView(queryRunner, "credit_block_balances_view_entity", BALANCES_SQL);
@@ -201,7 +284,10 @@ async function createView(
 }
 
 // The SQL below is copied verbatim from each view entity's
-// `expression` in libs/shared/src/view-entities/.
+// `expression` in libs/shared/src/view-entities/, as of this migration's
+// point in the timeline (credit_block_retirements_view_entity gets one
+// more legitimate touch later, in ItmoVisibilityViews, adding the
+// itmoSerial/itmoAuthorizationRecord join).
 
 const TRANSFERS_SQL = `
       SELECT
@@ -229,6 +315,11 @@ const TRANSFERS_SQL = `
       WHERE ct."type" = 'Transfered'
     `;
 
+// Final shape as of 1786800000000-MoItmoRetirementRules.ts /
+// 1787200000000-FirstTransferRetirementSubTypes.ts (both now folded in
+// here) — entityName (not the transitional organizationName), selecting
+// the final subType values. ItmoVisibilityViews recreates this again
+// later to add the itmoSerial/itmoAuthorizationRecord join.
 const RETIREMENTS_SQL = `
       SELECT
         ct."id" AS "id",
@@ -239,7 +330,7 @@ const RETIREMENTS_SQL = `
         ct."status" AS "status",
         ct."projectRefId" AS "projectId",
         country."name" AS "country",
-        ct."data"->>'organizationName' AS "organizationName",
+        ct."data"->>'entityName' AS "entityName",
         ct."data"->>'remarks' AS "remarks",
         p."title" AS "projectName",
         p."companyId" AS "projectOwnerId",
@@ -253,6 +344,9 @@ const RETIREMENTS_SQL = `
       WHERE ct."type" = 'Retired'
     `;
 
+// Final shape as of 1786800000000-MoItmoRetirementRules.ts (now folded in
+// here) — includes the ITMO authorization join. Nothing later ever
+// changes this view again.
 const BALANCES_SQL = `
     SELECT
       cb."creditBlockId" AS "id",
@@ -275,11 +369,14 @@ const BALANCES_SQL = `
         ELSE 'received'
       END AS "type",
       cb."accountType"::text AS "accountType",
-      cb."itmoAuthorizationRecord" AS "itmoAuthorizationRecord"
+      cb."itmoAuthorizationRecord" AS "itmoAuthorizationRecord",
+      itmoauth."data"->>'cooperativeApproachId' AS "itmoCooperativeApproachId",
+      itmoauth."data"->>'authorizationPurpose' AS "itmoAuthorizationPurpose"
     FROM credit_blocks_entity cb
     LEFT JOIN project_entity p ON cb."projectRefId" = p."refId"
     LEFT JOIN company r ON cb."ownerCompanyId" = r."companyId"
     LEFT JOIN company s ON cb."previousOwnerCompanyId" = s."companyId"
+    LEFT JOIN credit_transactions_entity itmoauth ON cb."itmoAuthorizationRecord" = itmoauth."id"
     WHERE cb."ownerCompanyId" != 0`;
 
 const ISSUANCES_SQL = `

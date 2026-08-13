@@ -24,7 +24,6 @@ import { SerialNumberManagementModule } from "./serial-number-management/serial-
 import { CreditBlocksManagementModule } from "./credit-blocks-management/credit-blocks-management.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { CreditTransactionsManagementModule } from "./credit-transactions-management/credit-transactions-management.module";
-import { AefReportManagementModule } from "./aef-report-management/aef-report-management.module";
 import { AefV2RegistryModule } from "./aef-v2-registry/aef-v2-registry.module";
 import { CooperativeApproachModule } from "./cooperative-approach/cooperative-approach.module";
 import { CorrespondingAdjustmentModule } from "./corresponding-adjustment/corresponding-adjustment.module";
@@ -57,7 +56,6 @@ import { ItmoAccountModule } from "./itmo-account/itmo-account.module";
     CreditBlocksManagementModule,
     AnalyticsModule,
     CreditTransactionsManagementModule,
-    AefReportManagementModule,
     AefV2RegistryModule,
     CooperativeApproachModule,
     CorrespondingAdjustmentModule,
@@ -91,7 +89,6 @@ import { ItmoAccountModule } from "./itmo-account/itmo-account.module";
     CreditBlocksManagementModule,
     AnalyticsModule,
     CreditTransactionsManagementModule,
-    AefReportManagementModule,
     AefV2RegistryModule,
     CooperativeApproachModule,
     CorrespondingAdjustmentModule,

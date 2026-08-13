@@ -1,6 +1,8 @@
 import { AefT2AuthorizationsCreateInput } from "@app/aef-v2";
 
 import { AuthorizationPurpose } from "../../enum/authorization.purpose.enum";
+import { InfSectorEnum } from "../../enum/inf.sector.enum";
+import { InfSectoralScopeEnum } from "../../enum/inf.sectoral.scope.enum";
 import { CooperativeApproach } from "../../entities/cooperative.approach.entity";
 import { CreditItmoAuthRequestDto } from "../../dto/credit.itmo.auth.request.dto";
 import { ProjectEntity } from "../../entities/projects.entity";
@@ -27,6 +29,13 @@ import {
 // later. "NA" is always validation-safe here: @app/aef-v2's isProvided()
 // treats it as absent, so it never trips a carp-populated or not-applicable
 // issue regardless of what else is set on the record.
+//
+// aefT2AuthorizationsAuthorizationDocumentation is different: it is
+// carp-populated (see field-spec.ts), not merely inapplicable, so it is left
+// unset rather than written as "NA". @app/aef-v2's validator rejects any
+// value at all on a carp-populated field; the frontend already renders an
+// unset carp-populated cell as "Populated by CARP" (reportingColumns.ts's
+// carpCol), which is the label this field should show.
 
 export interface AefAuthorizationMapperInput {
   /** The ITMO_AUTHORIZED request's `id` — this is `creditBlock.itmoAuthorizationRecord`. */
@@ -59,8 +68,14 @@ export function mapItmoAuthorizationToAefAuthorization(
     aefT2AuthorizationsMetric: GHG_METRIC,
     aefT2AuthorizationsGwpValue: NOT_APPLICABLE,
     aefT2AuthorizationsApplicableNonGhgMetric: NOT_APPLICABLE,
-    aefT2AuthorizationsSector: AEF_V2_SECTOR[input.project.sector],
-    aefT2AuthorizationsActivityType: AEF_V2_SECTORAL_SCOPE_ACTIVITY_TYPE[input.project.sectoralScope],
+    // Both maps are total over their registry enums; the `?? "Other"` is a
+    // runtime fallback only, for a stored sector/scope that predates the enum
+    // member it's cast to (e.g. legacy data) rather than a case TS expects.
+    aefT2AuthorizationsSector:
+      AEF_V2_SECTOR[input.project.sector as InfSectorEnum] ?? "Other",
+    aefT2AuthorizationsActivityType:
+      AEF_V2_SECTORAL_SCOPE_ACTIVITY_TYPE[input.project.sectoralScope as InfSectoralScopeEnum] ??
+      "Other",
     aefT2AuthorizationsPurposesForAuthorization: purpose
       ? AEF_V2_AUTHORIZATION_PURPOSE[purpose]
       : undefined,
@@ -75,7 +90,6 @@ export function mapItmoAuthorizationToAefAuthorization(
         ? `${input.authorizedTimeframeStartYear} - ${input.authorizedTimeframeEndYear}`
         : undefined,
     aefT2AuthorizationsAuthorizationTerms: AUTHORIZATION_TERMS_LABEL,
-    aefT2AuthorizationsAuthorizationDocumentation: NOT_APPLICABLE,
     aefT2AuthorizationsFirstTransferDefinitionOimp: isOimp
       ? FIRST_TRANSFER_DEFINITION_OIMP_LABEL
       : NOT_APPLICABLE,

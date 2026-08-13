@@ -176,7 +176,10 @@ export default () => ({
   // falls back to an alpha-3 lookup of `systemCountry` at startup.
   AEF_V2: {
     party: process.env.AEF_PARTY,
-    // Alpha-3 + 2 digits, e.g. "VUT01". No registry source for this today.
+    // Alpha-3 + 2 digits, e.g. "VUT01". No registry source for this today —
+    // leave unset to derive `${party}01` (see resolvePartyItmoRegistryId in
+    // aef-v2-defaults.factory.ts); set explicitly only to override that with
+    // a real CARP-assigned ID.
     partyItmoRegistryId: process.env.AEF_PARTY_ITMO_REGISTRY_ID,
     ndcFirstYear: parseInt(process.env.AEF_NDC_FIRST_YEAR) || 2021,
     ndcLastYear: parseInt(process.env.AEF_NDC_LAST_YEAR) || 2030,
