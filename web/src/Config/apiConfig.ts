@@ -190,4 +190,5 @@ export const API_PATHS = {
   AEF_V2_CONFIG: `national/aefV2/config`,
   // COOPERATIVE APPROACH
   CA_HOST_PARTY: "national/cooperativeApproach/hostParty",
+  AEF_HOST_PARTY: `national/cooperativeApproach/hostParty`
 };
