@@ -19,9 +19,12 @@ import {
   fitGraphToScreen,
   FIT_EXTRA_TOP,
   FIT_EXTRA_RIGHT_TOOLBAR,
+  getNodeColors,
+  ITMO_VIOLET_500,
   mixHexColor,
   pathSegmentProgress,
   withFitMaxZoom,
+  ITMO_VIOLET_700,
 } from "./creditHistoryGraph.utils";
 
 const elk = new ELK();
@@ -45,7 +48,7 @@ const measureWidth = (label: string) => Math.min(MAX_NODE_WIDTH, Math.max(110, l
 const ELK_LAYOUT_OPTIONS: Record<string, string> = {
   "elk.algorithm": "org.eclipse.elk.mrtree",
   "elk.direction": "DOWN",
-  "elk.spacing.nodeNode": "30",
+  "elk.spacing.nodeNode": "50",
   "elk.spacing.componentComponent": "40",
   "org.eclipse.elk.mrtree.spacing.nodeNode": "30",
   "org.eclipse.elk.mrtree.spacing.levelLevel": "70",
@@ -110,6 +113,9 @@ interface BinaryTreeNodeData {
   range: string;
   note?: string;
   updateTime?: string;
+  isItmo?: boolean;
+  itmoSerial?: string | null;
+  retireSubType?: string | null;
   isRoot: boolean;
   hasChildren: boolean;
   collapsed: boolean;
@@ -137,6 +143,9 @@ const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
     range,
     note,
     updateTime,
+    isItmo,
+    itmoSerial,
+    retireSubType,
     isRoot,
     hasChildren,
     collapsed,
@@ -156,9 +165,7 @@ const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
   // range, so the eye toggle builds the same text to show it in the same spot.
   const displayLabel = showInfo && !onPath && noteText ? `${range} | ${noteText}` : label;
 
-  const background = selected ? "#1890ff" : onPath ? "#e6f4ff" : "#fff";
-  const color = selected ? "#fff" : onPath ? "#0b6dc7" : isRoot ? "#12172b" : "#334155";
-  const borderColor = selected ? "#0b6dc7" : onPath ? "#1890ff" : "#cbd5e1";
+  const { background, color, borderColor, accentBorderLeft } = getNodeColors({ selected, onPath, isRoot, isItmo });
 
   return (
     <div
@@ -174,13 +181,14 @@ const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
         padding: "10px 18px",
         borderRadius: 10,
         border: `${selected ? 2 : 1.4}px solid ${borderColor}`,
+        ...(accentBorderLeft ? { borderLeft: accentBorderLeft } : {}),
         background,
         color,
         fontSize: 14,
         fontWeight: isRoot ? 700 : onPath ? 600 : 500,
         cursor: interactiveSelection ? "pointer" : "default",
         maxWidth: MAX_NODE_WIDTH,
-        boxShadow: selected ? "0 0 0 4px rgba(24,144,255,0.15)" : "none",
+        boxShadow: selected ? (isItmo ? "0 0 0 4px rgba(124,58,237,0.15)" : "0 0 0 4px rgba(24,144,255,0.15)") : "none",
         transition: PATH_TRANSITION,
         // Delay only while *becoming* on-path (the cascade); clear instantly
         // when leaving the path so it doesn't linger past the new selection.
@@ -228,8 +236,13 @@ const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
           }}
         >
           {/* The note shows next to the range via label/displayLabel, so this
-           * panel only adds the update time. */}
+           * panel only adds the update time plus, when relevant, the ITMO
+           * serial and retirement subType — neither of which can live in
+           * the note itself without breaking TimelineGraphView's
+           * trailing-company-name link (see formatActionNote). */}
           <span>{updateTime || "No update time available"}</span>
+          {itmoSerial && <span>ITMO Serial: {itmoSerial}</span>}
+          {retireSubType && <span>Retired for: {retireSubType}</span>}
         </div>
       )}
       <Handle type="source" position={Position.Bottom} style={{ visibility: "hidden" }} />
@@ -249,8 +262,8 @@ const BinaryTreeNode = ({ data }: { data: BinaryTreeNodeData }) => {
             width: 18,
             height: 18,
             borderRadius: "50%",
-            border: `1.3px solid ${collapsed ? "#0b6dc7" : "#94a3b8"}`,
-            background: collapsed ? "#1890ff" : "#fff",
+            border: `1.3px solid ${collapsed ? isItmo? ITMO_VIOLET_700  :  "#0b6dc7" : "#94a3b8"}`,
+            background: collapsed ? isItmo? ITMO_VIOLET_500  : "#1890ff" : "#fff",
             color: collapsed ? "#fff" : "#64748b",
             display: "flex",
             alignItems: "center",
@@ -382,6 +395,9 @@ export const BinaryTreeGraphView = ({
           range: n.range,
           note: n.note,
           updateTime: n.updateTime,
+          isItmo: n.isItmo,
+          itmoSerial: n.itmoSerial,
+          retireSubType: n.retireSubType,
           isRoot: n.depth === 0,
           hasChildren: showCollapseToggle && n.children.length > 0,
           collapsed: collapsed.has(n.id),
@@ -409,10 +425,17 @@ export const BinaryTreeGraphView = ({
     ]
   );
 
-  // Per-edge depth lookup, for the highlight cascade timing.
+  // Per-edge depth lookup, for the highlight cascade timing; per-edge ITMO
+  // lookup, so the path highlight can turn violet on the segments leading
+  // into an ITMO node instead of the default blue.
   const depthById = useMemo(() => {
     const map = new Map<string, number>();
     (layout?.nodes ?? []).forEach((n) => map.set(n.id, n.depth));
+    return map;
+  }, [layout]);
+  const isItmoById = useMemo(() => {
+    const map = new Map<string, boolean>();
+    (layout?.nodes ?? []).forEach((n) => map.set(n.id, !!n.isItmo));
     return map;
   }, [layout]);
 
@@ -424,6 +447,12 @@ export const BinaryTreeGraphView = ({
           // targetDepth - 1 → 0-based segment index in the root→selected chain.
           const targetDepth = depthById.get(e.targetId) ?? 0;
           const alpha = onPath ? pathSegmentProgress(targetDepth - 1, pathTotalSegments, pathAnimProgress) : 0;
+          // An edge represents the action that produced its target, so it's
+          // "ITMO" when the target is - e.g. the edge into an ITMO_AUTH node,
+          // or into a later RETIRE/TRANSFER of already-authorized credits.
+          const targetIsItmo = isItmoById.get(e.targetId) ?? false;
+          const pathColor = targetIsItmo ? ITMO_VIOLET_500 : "#1890ff";
+          const glowRgb = targetIsItmo ? "139, 92, 246" : "24, 144, 255";
           return {
             id: e.id,
             source: e.sourceId,
@@ -431,16 +460,16 @@ export const BinaryTreeGraphView = ({
             type: "binaryTree",
             onPath,
             style: {
-              stroke: onPath ? mixHexColor("#aab1bd", "#1890ff", alpha) : "#aab1bd",
+              stroke: onPath ? mixHexColor("#aab1bd", pathColor, alpha) : "#aab1bd",
               strokeWidth: onPath ? 1.4 + (2.6 - 1.4) * alpha : 1.4,
               // Glow that fades in with the segment (same alpha as color/width).
-              filter: onPath ? `drop-shadow(0 0 3px rgba(24, 144, 255, ${(0.65 * alpha).toFixed(2)}))` : "none",
+              filter: onPath ? `drop-shadow(0 0 3px rgba(${glowRgb}, ${(0.65 * alpha).toFixed(2)}))` : "none",
             },
           };
         })
         // SVG paints in order — sort on-path edges last so they stay on top.
         .sort((a, b) => Number(a.onPath) - Number(b.onPath)),
-    [layout, pathIds, depthById, pathTotalSegments, pathAnimProgress]
+    [layout, pathIds, depthById, isItmoById, pathTotalSegments, pathAnimProgress]
   );
 
   // Fits on mount and every layout change, via our own fitGraphToScreen (to

@@ -1,6 +1,6 @@
 @use '../../Styles/variables.scss';
 
-.initial-reports-container {
+.corresponding-adjustment-container {
   padding: 0 24px;
 
   .title-bar {
@@ -27,17 +27,6 @@
     .table-title {
       font-size: 1rem;
       font-weight: 600;
-    }
-
-    .section-title {
-      font-size: 1rem;
-      font-weight: 600;
-      margin: 24px 0 12px;
-      color: rgba(58, 53, 65, 0.87);
-
-      &:first-child {
-        margin-top: 0;
-      }
     }
   }
 }

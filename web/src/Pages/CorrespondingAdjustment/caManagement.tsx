@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
 import { useUserContext } from "../../Context/UserInformationContext/userInformationContext";
 import {
@@ -17,6 +18,9 @@ import {
 import { PlusOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { CompanyRole } from "../../Definitions/Enums/company.role.enum";
 import { Role } from "../../Definitions/Enums/role.enum";
+import "./caManagement.scss";
+import "../../Styles/common.table.scss";
+import { TimedPageInfoTitle } from "../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle";
 
 const statusColors: Record<string, string> = {
   Draft: "default",
@@ -33,6 +37,7 @@ interface ReconciliationSummary {
 
 const CaManagement = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["common", "correspondingAdjust"]);
   const { post, get, put } = useConnection();
   const { userInfoState } = useUserContext();
   const [loading, setLoading] = useState(false);
@@ -83,7 +88,7 @@ const CaManagement = () => {
         setTotalRecords(response.response?.data?.total || response.data.length);
       }
     } catch {
-      message.error("Failed to load corresponding adjustments");
+      message.error(t("correspondingAdjust:loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -99,7 +104,7 @@ const CaManagement = () => {
     setApprovingId(caId);
     try {
       await put(`national/correspondingAdjustment/approve?id=${caId}`, {});
-      message.success("Corresponding adjustment approved");
+      message.success(t("correspondingAdjust:approveSuccess"));
       fetchData(currentPage, pageSize);
       fetchReconciliation();
     } catch (error) {
@@ -107,7 +112,7 @@ const CaManagement = () => {
       message.error(
         serverMsg && typeof serverMsg === "string"
           ? serverMsg
-          : "Failed to approve corresponding adjustment"
+          : t("correspondingAdjust:approveFailed")
       );
     } finally {
       setApprovingId(null);
@@ -118,34 +123,49 @@ const CaManagement = () => {
     val !== undefined && val !== null ? Number(val).toFixed(2) : "0.00";
 
   const columns = [
-    { title: "ID", dataIndex: "caId", key: "caId" },
-    { title: "Year", dataIndex: "year", key: "year", sorter: true },
+    { title: t("correspondingAdjust:columnId"), dataIndex: "caId", key: "caId" },
     {
-      title: "Cooperative Approach",
+      title: t("correspondingAdjust:columnYear"),
+      dataIndex: "year",
+      key: "year",
+      sorter: true,
+    },
+    {
+      title: t("correspondingAdjust:columnCooperativeApproach"),
       dataIndex: "cooperativeApproachId",
       key: "cooperativeApproachId",
       render: (v: string) => v || "—",
     },
-    { title: "NDC Type", dataIndex: "ndcType", key: "ndcType" },
-    { title: "CA Method", dataIndex: "caMethod", key: "caMethod" },
     {
-      title: "Emissions Balance",
+      title: t("correspondingAdjust:columnNdcType"),
+      dataIndex: "ndcType",
+      key: "ndcType",
+    },
+    {
+      title: t("correspondingAdjust:columnCaMethod"),
+      dataIndex: "caMethod",
+      key: "caMethod",
+    },
+    {
+      title: t("correspondingAdjust:columnEmissionsBalance"),
       dataIndex: "emissionsBalance",
       key: "emissionsBalance",
       render: (val: number) => fmt(val),
     },
     {
-      title: "Safeguard",
+      title: t("correspondingAdjust:columnSafeguard"),
       dataIndex: "safeguardCheckPassed",
       key: "safeguardCheckPassed",
       render: (passed: boolean) => (
         <Tag color={passed ? "green" : "red"}>
-          {passed ? "Passed" : "Failed"}
+          {passed
+            ? t("correspondingAdjust:safeguardPassed")
+            : t("correspondingAdjust:safeguardFailed")}
         </Tag>
       ),
     },
     {
-      title: "Status",
+      title: t("correspondingAdjust:columnStatus"),
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
@@ -160,7 +180,7 @@ const CaManagement = () => {
             render: (record: any) =>
               record.status === "Submitted" ? (
                 <Popconfirm
-                  title="Approve this corresponding adjustment?"
+                  title={t("correspondingAdjust:approveConfirmTitle")}
                   onConfirm={(e) => {
                     e?.stopPropagation();
                     handleApprove(record.caId);
@@ -174,7 +194,7 @@ const CaManagement = () => {
                     loading={approvingId === record.caId}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    Approve
+                    {t("correspondingAdjust:approve")}
                   </Button>
                 </Popconfirm>
               ) : null,
@@ -186,40 +206,47 @@ const CaManagement = () => {
   const gap = reconciliation?.outstandingGap ?? 0;
 
   return (
-    <div style={{ padding: "0 24px" }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: "1.4rem", fontWeight: 600 }}>
-          Corresponding Adjustments
-        </div>
-        <div style={{ fontSize: "0.875rem", color: "rgba(58,53,65,0.6)" }}>
-          Article 6.2 corresponding adjustment calculations per Decision
-          2/CMA.3 para. 7-10
-        </div>
+    <div className="corresponding-adjustment-container">
+      <div className="title-bar">
+        <TimedPageInfoTitle
+          title={t("correspondingAdjust:correspondingAdjustments")}
+          description={t("correspondingAdjust:correspondingAdjustmentsDesc", {
+            defaultValue:
+              "Article 6.2 corresponding adjustment calculations per Decision 2/CMA.3 para. 7-10",
+          })}
+          infoButtonLabel={t(
+            "correspondingAdjust:showCorrespondingAdjustmentsDesc",
+            {
+              defaultValue:
+                "Show information about Corresponding Adjustments",
+            }
+          )}
+        />
       </div>
 
       <Card style={{ marginBottom: 24 }} loading={reconciliationLoading}>
         <Row gutter={24}>
           <Col span={6}>
             <Statistic
-              title="First Transferred ITMOs (all-time)"
+              title={t("correspondingAdjust:firstTransfITMOs")}
               value={fmt(reconciliation?.totalFirstTransferredItmos)}
             />
           </Col>
           <Col span={6}>
             <Statistic
-              title="Acquired ITMOs (all-time)"
+              title={t("correspondingAdjust:acquiredITMOs")}
               value={fmt(reconciliation?.totalAcquiredItmos)}
             />
           </Col>
           <Col span={6}>
             <Statistic
-              title="Recorded Corresponding Adjustments"
+              title={t("correspondingAdjust:recordedCorrespondingAdjust")}
               value={fmt(reconciliation?.totalRecordedCAdj)}
             />
           </Col>
           <Col span={6}>
             <Statistic
-              title="Outstanding Gap"
+              title={t("correspondingAdjust:outstandingGap")}
               value={fmt(gap)}
               valueStyle={{ color: gap === 0 ? "#3f8600" : "#cf1322" }}
             />
@@ -232,8 +259,12 @@ const CaManagement = () => {
             showIcon
             message={
               gap > 0
-                ? `${fmt(gap)} tCO2e of first-transferred ITMOs still need a corresponding adjustment recorded.`
-                : `${fmt(Math.abs(gap))} tCO2e of corresponding adjustments have been over-recorded relative to actual first-transfer/acquire activity — review the records above.`
+                ? `${fmt(gap)} ${t(
+                    "correspondingAdjust:stillNeedCorrespondingAdjust"
+                  )}`
+                : `${fmt(Math.abs(gap))} ${t(
+                    "correspondingAdjust:overloadedDescription"
+                  )}`
             }
           />
         )}
@@ -242,26 +273,13 @@ const CaManagement = () => {
             style={{ marginTop: 16 }}
             type="success"
             showIcon
-            message="Fully reconciled — every first-transferred ITMO (net of acquired) has a recorded corresponding adjustment."
+            message={t("correspondingAdjust:fullyReconciled")}
           />
         )}
       </Card>
 
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 8,
-          padding: 24,
-          boxShadow:
-            "0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px rgba(0,0,0,0.14), 0px 1px 3px rgba(0,0,0,0.12)",
-        }}
-      >
+      <div className="content-card">
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-          <Col>
-            <div style={{ fontSize: "1rem", fontWeight: 600 }}>
-              All CA Records
-            </div>
-          </Col>
           <Col>
             {canManage && (
               <Button
@@ -269,7 +287,7 @@ const CaManagement = () => {
                 icon={<PlusOutlined />}
                 onClick={() => navigate("/correspondingAdjustments/calculate")}
               >
-                Calculate CA
+                {t("correspondingAdjust:calculateCA")}
               </Button>
             )}
           </Col>
@@ -277,6 +295,7 @@ const CaManagement = () => {
         <Table
           dataSource={data}
           columns={columns}
+          className="common-table-class"
           rowKey="caId"
           loading={loading}
           pagination={{

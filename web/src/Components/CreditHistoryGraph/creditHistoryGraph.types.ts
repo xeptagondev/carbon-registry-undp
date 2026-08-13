@@ -8,7 +8,17 @@ export interface CreditBlockHistoryActionInfo {
   timestamp: number;
   /** Size of this leaf's own range (end - start + 1), not the parent block. */
   amount: number;
-  action: "ISSUE" | "RETAIN" | "TRANSFER" | "RETIRE";
+  action: "ISSUE" | "RETAIN" | "TRANSFER" | "RETIRE" | "ITMO_AUTH";
+  /** Whether these credits were ITMO-authorized as at this action — set on
+   * every action, not just ITMO_AUTH, since a later RETIRE/TRANSFER/RETAIN
+   * of already-authorized credits is still ITMO. */
+  isItmo?: boolean;
+  /** Dec 6/CMA.4 Annex I para 5 identifier, covering exactly this node's range. */
+  itmoSerial?: string | null;
+  /** ITMO_AUTH only — the purpose the credits were authorized for. */
+  authorizationPurpose?: string | null;
+  /** RETIRE only — which Article 6 use the retirement was made for. */
+  retireSubType?: string | null;
 }
 
 export interface CreditHistoryEntry {
@@ -32,6 +42,12 @@ export interface HistoryTreeNode {
    * without re-parsing. Empty for a split's "pre-split" node. */
   companyId?: number | null;
   companyName?: string | null;
+  /** `info.isItmo`/`itmoSerial`/`retireSubType` — drive node coloring (both
+   * views) and the Binary Tree detail panel. Empty for a split's "pre-split"
+   * node, like `note`. */
+  isItmo?: boolean;
+  itmoSerial?: string | null;
+  retireSubType?: string | null;
   label: string;
   depth: number;
   children: HistoryTreeNode[];

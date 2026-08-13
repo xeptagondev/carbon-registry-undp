@@ -16,13 +16,14 @@ import {
   message,
 } from "antd";
 import "./cooperativeApproaches.scss";
+import { TimedPageInfoTitle } from "../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle";
 
 const { TextArea } = Input;
 
 const AddCooperativeApproach = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation(["common"]);
+  const { t } = useTranslation(["common", "coopApproach"]);
   const { get, post, put } = useConnection();
   const { options: countryOptions } = useCountryOptions();
   const [loading, setLoading] = useState(false);
@@ -119,13 +120,15 @@ const AddCooperativeApproach = () => {
   return (
     <div className="cooperative-approaches-container">
       <div className="title-bar">
-        <div className="body-title">
-          {isEdit ? "Edit" : "Add"} Cooperative Approach
-        </div>
-        <div className="body-sub-title">
-          Define a bilateral or multilateral cooperative approach under Article
-          6.2
-        </div>
+        <TimedPageInfoTitle
+          title={
+            isEdit
+              ? t("coopApproach:editCoopApproach")
+              : t("coopApproach:addCoopApproach")
+          }
+          description={t("coopApproach:addCoopApproachDescription")}
+          infoButtonLabel={t("coopApproach:showAddCoopApproachDescription")}
+        />
       </div>
       <div className="content-card">
         <Form

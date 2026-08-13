@@ -37,6 +37,7 @@ import {
 } from "../../../Components/Common/FilterBar";
 import { getCreditBlockStatusTagColor } from "./creditTableHelpers";
 import { CreditTypePill } from "./creditTypePill";
+import { useCountryOptions } from "../../../Components/Common/hooks/useCountryOptions";
 
 enum CreditBlockColumns {
   SERIAL_NO = "serialNo",
@@ -51,7 +52,8 @@ enum CreditBlockColumns {
 }
 
 // Raw row from POST .../queryExplorer (CreditBlockExplorerViewEntity +
-// `firstTransfer`, which is null until the block is transferred).
+// `firstTransfer`: the acquiring Party's ISO alpha-2 code from the block's
+// Article 6 first transfer, null until it's been first transferred).
 interface ExplorerQueryRow {
   id: string;
   serialNumber: string;
@@ -66,7 +68,7 @@ interface ExplorerQueryRow {
   reserved: number;
   status: string;
   updatedTime: number | string;
-  firstTransfer: { toOrganizationName: string; toOrganizationLogo: string | null } | null;
+  firstTransfer: string | null;
 }
 
 const mapExplorerRow = (row: ExplorerQueryRow): CreditBlockInterface => ({
@@ -83,8 +85,7 @@ const mapExplorerRow = (row: ExplorerQueryRow): CreditBlockInterface => ({
   projectId: row.projectId,
   projectName: row.projectName,
   currentStatus: row.status as CreditBlockStatus,
-  firstTransfer: row.firstTransfer ? row.firstTransfer.toOrganizationName : "-",
-  firstTransferLogo: row.firstTransfer ? row.firstTransfer.toOrganizationLogo ?? null : null,
+  firstTransfer: row.firstTransfer ?? "-",
   vintage: vintageFromSerial(row.serialNumber),
 });
 
@@ -197,6 +198,10 @@ interface CreditBlockListTableProps {
 
 export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) => {
   const { post } = useConnection();
+  // Resolves the first-transfer column's stored ISO alpha-2 code to a country
+  // name — same hook (and same code -> name convention) the Cooperative
+  // Approaches tables use for host / participating parties.
+  const { byCode: countryNameByCode } = useCountryOptions();
   const isInitialRender = useRef(false);
   const [totalProgramme, setTotalProgramme] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -444,25 +449,21 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
     {
       title: t(CreditBlockColumns.FIRST_TRANSFER),
       // Not a real DB column (computed in-memory per page by the backend's
-      // enrichExplorerRowsWithFirstTransfer) — not sortable server-side.
+      // enrichExplorerRowsWithFirstTransferCountry) — not sortable server-side.
       key: "firstTransfer",
       align: "center" as const,
-      // The name of the first organization this block was transferred to —
-      // "-" when it hasn't been transferred yet (still with its original
-      // holder, or retired directly).
+      // The acquiring Party of the block's Article 6 first transfer (an ITMO
+      // crossing to another Party), as a country-name pill — "-" for every MO
+      // block, and for an ITMO block not yet first transferred. The API sends
+      // the stored ISO alpha-2 code; the name is resolved client-side via
+      // `countryNameByCode`, falling back to the raw code if the country list
+      // hasn't loaded yet or doesn't contain it.
       render: (record: CreditBlockInterface) => {
-        if (!record?.firstTransfer || record.firstTransfer === "-") {
+        const code = record?.firstTransfer;
+        if (!code || code === "-") {
           return <span>-</span>;
         }
-        return (
-          <Row justify="center" align="middle">
-            <Tooltip title={record.firstTransfer}>
-              <span>
-                <ProfileIcon icon={record.firstTransferLogo} bg={"rgba(185, 226, 244, 0.56)"} name={record.firstTransfer} />
-              </span>
-            </Tooltip>
-          </Row>
-        );
+        return <Tag>{countryNameByCode.get(code) ?? code}</Tag>;
       },
     },
     {

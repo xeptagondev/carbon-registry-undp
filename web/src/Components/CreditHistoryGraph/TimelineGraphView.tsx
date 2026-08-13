@@ -20,6 +20,9 @@ import {
   effectiveChildren,
   fitGraphToScreen,
   FIT_EXTRA_TOP,
+  getNodeColors,
+  ITMO_VIOLET_500,
+  ITMO_VIOLET_700,
   measureNoteWidth,
   mixHexColor,
   pathSegmentProgress,
@@ -31,7 +34,7 @@ const INDENT = 40;
 const TRUNK_OFFSET = 30;
 const ROOT_X = 70;
 const BRANCH_OFFSET = 17;
-const JOINT_GAP = 10;
+const JOINT_GAP = 7;
 // Matches the <ReactFlow maxZoom> below — restored after a fit's zoom cap.
 const DEFAULT_MAX_ZOOM = 3;
 
@@ -140,6 +143,7 @@ interface TimelineNodeData {
   companyName?: string;
   companyId?: number | null;
   updateTime?: string;
+  isItmo?: boolean;
   /** Only on the selected node — see `creditMarkerLabel` in GraphViewProps. */
   creditMarker?: string;
   hasChildren: boolean;
@@ -163,6 +167,7 @@ const TimelineNode = ({ data }: { data: TimelineNodeData }) => {
     companyName,
     companyId,
     updateTime,
+    isItmo,
     creditMarker,
     hasChildren,
     collapsed,
@@ -174,9 +179,7 @@ const TimelineNode = ({ data }: { data: TimelineNodeData }) => {
     onToggle,
   } = data;
 
-  const background = selected ? "#1890ff" : onPath ? "#e6f4ff" : "#fff";
-  const color = selected ? "#fff" : onPath ? "#0b6dc7" : "#334155";
-  const borderColor = selected ? "#0b6dc7" : onPath ? "#1890ff" : "#cbd5e1";
+  const { background, color, borderColor, accentBorderLeft } = getNodeColors({ selected, onPath, isItmo });
 
   return (
     <div
@@ -189,13 +192,14 @@ const TimelineNode = ({ data }: { data: TimelineNodeData }) => {
         padding: "1px 14px",
         borderRadius: 8,
         border: `${selected ? 2 : 1.4}px solid ${borderColor}`,
+        ...(accentBorderLeft ? { borderLeft: accentBorderLeft } : {}),
         background,
         color,
         fontSize: 13,
         fontWeight: onPath ? 600 : 500,
         cursor: interactiveSelection ? "pointer" : "default",
         whiteSpace: "nowrap",
-        boxShadow: selected ? "0 0 0 4px rgba(24,144,255,0.15)" : "none",
+        boxShadow: selected ? (isItmo ? "0 0 0 4px rgba(124,58,237,0.15)" : "0 0 0 4px rgba(24,144,255,0.15)") : "none",
         transition: PATH_TRANSITION,
         // Delay only while *becoming* on-path (the cascade); clear instantly
         // when leaving the path so it doesn't linger past the new selection.
@@ -228,8 +232,8 @@ const TimelineNode = ({ data }: { data: TimelineNodeData }) => {
             width: 18,
             height: 18,
             borderRadius: "50%",
-            border: `1.3px solid ${collapsed ? "#0b6dc7" : "#94a3b8"}`,
-            background: collapsed ? "#1890ff" : "#fff",
+            border: `1.3px solid ${collapsed ? isItmo? ITMO_VIOLET_700  :  "#0b6dc7" : "#94a3b8"}`,
+            background: collapsed ? isItmo? ITMO_VIOLET_500  :  "#1890ff" : "#fff",
             color: collapsed ? "#fff" : "#64748b",
             display: "flex",
             alignItems: "center",
@@ -464,6 +468,7 @@ export const TimelineGraphView = ({
             companyName,
             companyId,
             updateTime,
+            isItmo: n.isItmo,
             creditMarker,
             hasChildren: showCollapseToggle && n.children.length > 0,
             collapsed: collapsed.has(n.id),
@@ -490,6 +495,14 @@ export const TimelineGraphView = ({
     ]
   );
 
+  // Per-edge ITMO lookup, so the path highlight can turn violet on the
+  // segments leading into an ITMO node instead of the default blue.
+  const isItmoById = useMemo(() => {
+    const map = new Map<string, boolean>();
+    layout.nodes.forEach((n) => map.set(n.id, !!n.isItmo));
+    return map;
+  }, [layout]);
+
   const edges: Edge<TimelineEdgeData>[] = useMemo(
     () =>
       (layout.edges as (GraphLayout["edges"][number] & { data: TimelineEdgeData })[])
@@ -497,7 +510,13 @@ export const TimelineGraphView = ({
           const onPath = pathIds.has(e.sourceId) && pathIds.has(e.targetId);
           // targetDepth - 1 → 0-based segment index in the root→selected chain.
           const alpha = onPath ? pathSegmentProgress(e.data.targetDepth - 1, pathTotalSegments, pathAnimProgress) : 0;
-          const stroke = onPath ? mixHexColor("#aab1bd", "#1890ff", alpha) : "#aab1bd";
+          // An edge represents the action that produced its target, so it's
+          // "ITMO" when the target is - e.g. the edge into an ITMO_AUTH node,
+          // or into a later RETIRE/TRANSFER of already-authorized credits.
+          const targetIsItmo = isItmoById.get(e.targetId) ?? false;
+          const pathColor = targetIsItmo ? ITMO_VIOLET_500 : "#1890ff";
+          const glowRgb = targetIsItmo ? "139, 92, 246" : "24, 144, 255";
+          const stroke = onPath ? mixHexColor("#aab1bd", pathColor, alpha) : "#aab1bd";
           // Recentre the root's trunk on its measured width once known (see
           // `rootTrunkX`); every other node keeps its layout gutter trunk.
           const data =
@@ -513,7 +532,7 @@ export const TimelineGraphView = ({
               stroke,
               strokeWidth: onPath ? 1.4 + (2.6 - 1.4) * alpha : 1.4,
               // Glow that fades in with the segment (same alpha as color/width).
-              filter: onPath ? `drop-shadow(0 0 3px rgba(24, 144, 255, ${(0.65 * alpha).toFixed(2)}))` : "none",
+              filter: onPath ? `drop-shadow(0 0 3px rgba(${glowRgb}, ${(0.65 * alpha).toFixed(2)}))` : "none",
             },
             markerEnd: {
               type: MarkerType.ArrowClosed,
@@ -525,7 +544,7 @@ export const TimelineGraphView = ({
         })
         // SVG paints in order — sort on-path edges last so they stay on top.
         .sort((a, b) => Number(a.onPath) - Number(b.onPath)),
-    [layout, pathIds, pathTotalSegments, pathAnimProgress, rootTrunkX, root.id]
+    [layout, pathIds, isItmoById, pathTotalSegments, pathAnimProgress, rootTrunkX, root.id]
   );
 
   // Fits on mount and every layout change, via our own fitGraphToScreen (not

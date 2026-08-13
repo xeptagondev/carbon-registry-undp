@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
+import { TimedPageInfoTitle } from "../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle";
 import {
   Alert,
   Button,
@@ -48,6 +50,7 @@ const formatDate = (timestamp?: number | null) => {
 
 const CreateInitialReport = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["common", "InitialReport"]);
   const { post, get } = useConnection();
   const [loading, setLoading] = useState(false);
   const [casLoading, setCasLoading] = useState(true);
@@ -170,11 +173,13 @@ const CreateInitialReport = () => {
   return (
     <div className="initial-reports-container">
       <div className="title-bar">
-        <div className="body-title">Generate Initial Report</div>
-        <div className="body-sub-title">
-          Per Decision 2/CMA.3 para. 18 — required before first ITMO
-          authorization under a cooperative approach
-        </div>
+        <TimedPageInfoTitle
+          title={t("InitialReport:generateReport")}
+          description={t("InitialReport:generateInitialReportDescription")}
+          infoButtonLabel={t(
+            "InitialReport:showGenerateInitialReportDescription"
+          )}
+        />
       </div>
       <div className="content-card">
         <Form form={form} layout="vertical" onFinish={onFinish}>

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Col, Form, Input, InputNumber, Modal, Row, Select } from "antd";
 import { CreditBalanceInterface } from "../Interfaces/creditBalance.interface";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
-import { AuthorizationPurpose } from "../../../Definitions/Enums/authorizationPurpose.enum";
+import { AuthorizationPurpose, AUTHORIZATION_PURPOSE_LABELS } from "../../../Definitions/Enums/authorizationPurpose.enum";
 import { useConnection } from "../../../Context/ConnectionContext/connectionContext";
 import { COLOR_CONFIGS } from "../../../Config/colorConfigs";
 
@@ -29,11 +29,10 @@ interface ItmoAuthRequestModalProps {
   data?: CreditBalanceInterface;
 }
 
-const AUTHORIZATION_PURPOSE_OPTIONS = [
-  { value: AuthorizationPurpose.NDC, label: "Use Towards NDC" },
-  { value: AuthorizationPurpose.OIMP, label: "Other International Mitigation Purposes" },
-  { value: AuthorizationPurpose.OTHER, label: "Other Purposes" },
-];
+const AUTHORIZATION_PURPOSE_OPTIONS = Object.values(AuthorizationPurpose).map((value) => ({
+  value,
+  label: AUTHORIZATION_PURPOSE_LABELS[value],
+}));
 
 interface CooperativeApproachRow {
   cooperativeApproachId: string;

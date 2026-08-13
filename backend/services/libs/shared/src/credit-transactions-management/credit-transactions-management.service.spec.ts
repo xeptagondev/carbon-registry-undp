@@ -1,9 +1,17 @@
 import { CreditTransactionsManagementService } from "./credit-transactions-management.service";
 import { CompanyRole } from "../enum/company.role.enum";
+import { TxType } from "../enum/txtype.enum";
+import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 
 describe("CreditTransactionsManagementService", () => {
   let service: CreditTransactionsManagementService;
   let orderByCalls: any[][];
+  let programmeLedgerService: any;
+  let creditBlocksEntityRepository: any;
+  let companyService: any;
+  let creditTransactionsEntityRepository: any;
+  let cooperativeApproachRepo: any;
+  let creditBlockOrgTransactionsViewEntityRepository: any;
 
   beforeEach(() => {
     orderByCalls = [];
@@ -31,20 +39,45 @@ describe("CreditTransactionsManagementService", () => {
     const creditBlockIssuancesViewEntityRepository: any = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
     };
-    const creditBlockOrgTransactionsViewEntityRepository: any = {
+    creditBlockOrgTransactionsViewEntityRepository = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
     };
     const helperService: any = {
       generateWhereSQL: jest.fn().mockReturnValue(undefined),
     };
+    // getCreditBlockHistoryTree's dependencies - stubbed here with plain
+    // jest.fn()s, configured per-test below (ledger versions, the queried
+    // block, company names, and the two credit-transaction lookups).
+    programmeLedgerService = { getCreditBlockLedgerHistory: jest.fn() };
+    creditBlocksEntityRepository = { findOne: jest.fn() };
+    companyService = {
+      findByCompanyId: jest.fn(async (id: number) => ({ name: `Org ${id}` })),
+    };
+    creditTransactionsEntityRepository = { find: jest.fn().mockResolvedValue([]) };
+    cooperativeApproachRepo = { find: jest.fn().mockResolvedValue([]) };
+    // The real thing, not a stub - getCreditBlockHistoryTree's range/id
+    // parsing (groupCreditBlockLedgerVersions, findCreditBlockHistoryRoot)
+    // depends on its actual serial-parsing logic, not just its shape. Only
+    // "serialNumber.seperator" is read by the methods these tests exercise.
+    const configService: any = {
+      get: (key: string) => {
+        if (key === "serialNumber.seperator") return "-";
+        if (key === "systemCountry") return "XX"; // only read by getItmoSerial
+        return undefined;
+      },
+    };
+    const serialNumberManagementService = new SerialNumberManagementService(
+      configService,
+      {} as any
+    );
 
     service = new CreditTransactionsManagementService(
       helperService,
-      {} as any, // companyService
-      {} as any, // programmeLedgerService
-      {} as any, // creditBlocksEntityRepository
+      companyService,
+      programmeLedgerService,
+      creditBlocksEntityRepository,
       {} as any, // counterService
-      {} as any, // creditTransactionsEntityRepository
+      creditTransactionsEntityRepository,
       {} as any, // documentManagementService
       {} as any, // creditBlockBalancesViewEntityRepository
       creditBlockTransfersViewEntityRepository,
@@ -56,7 +89,8 @@ describe("CreditTransactionsManagementService", () => {
       {} as any, // creditBlockProjectBalancesViewEntityRepository
       {} as any, // creditBlockProjectHolderBalancesViewEntityRepository
       creditBlockOrgTransactionsViewEntityRepository,
-      {} as any, // cooperativeApproachRepo
+      {} as any, // aefReportManagementService
+      cooperativeApproachRepo,
       {} as any, // caAuthorizedEntityRepo
       {} as any, // serialNumberManagementService
       {} as any // aefV2WriteService
@@ -124,6 +158,70 @@ describe("CreditTransactionsManagementService", () => {
       expect(orderByCalls).toHaveLength(1);
       expect(orderByCalls[0][0]).toBe(`"projectName"`);
       expect(orderByCalls[0][1]).toBe("DESC");
+    });
+  });
+
+  describe("queryExplorer first-transfer country enrichment", () => {
+    const user: any = { companyRole: CompanyRole.DESIGNATED_NATIONAL_AUTHORITY };
+
+    // createQueryBuilder() always returns the same mock queryBuilder
+    // instance (mockReturnValue, not mockReturnValueOnce - see the shared
+    // beforeEach), so grabbing it here re-uses the exact object already
+    // wired into queryExplorer's query chain.
+    const setExplorerRows = (rows: any[]) => {
+      const qb = (service as any).creditBlockExplorerViewEntityRepository.createQueryBuilder();
+      qb.getManyAndCount.mockResolvedValueOnce([rows, rows.length]);
+    };
+
+    it("attaches the acquiring country from the block's isFirstTransfer=true transaction", async () => {
+      setExplorerRows([{ id: "BLOCK-1", serialNumber: "CA0NNN-NG-XX-1-1-1000-2024" }]);
+      creditTransactionsEntityRepository.find.mockResolvedValueOnce([
+        { creditBlockId: "BLOCK-1", isFirstTransfer: true, data: { country: "JP" } },
+      ]);
+
+      const result = await service.queryExplorer({ size: 10, page: 1 } as any, undefined, user);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]).toMatchObject({ id: "BLOCK-1", firstTransfer: "JP" });
+    });
+
+    it("returns null for a block with no isFirstTransfer transaction (the common MO case)", async () => {
+      setExplorerRows([{ id: "BLOCK-2", serialNumber: "CA0NNN-NG-XX-1-1-1000-2024" }]);
+      creditTransactionsEntityRepository.find.mockResolvedValueOnce([]);
+
+      const result = await service.queryExplorer({ size: 10, page: 1 } as any, undefined, user);
+
+      expect(result.data[0]).toMatchObject({ id: "BLOCK-2", firstTransfer: null });
+    });
+
+    it("returns null rather than crashing when the isFirstTransfer row has no country in its data", async () => {
+      setExplorerRows([{ id: "BLOCK-3", serialNumber: "CA0NNN-NG-XX-1-1-1000-2024" }]);
+      creditTransactionsEntityRepository.find.mockResolvedValueOnce([
+        { creditBlockId: "BLOCK-3", isFirstTransfer: true, data: {} },
+      ]);
+
+      const result = await service.queryExplorer({ size: 10, page: 1 } as any, undefined, user);
+
+      expect(result.data[0]).toMatchObject({ id: "BLOCK-3", firstTransfer: null });
+    });
+
+    it("matches each row to its own block's transaction only (no cross-row leakage)", async () => {
+      setExplorerRows([
+        { id: "BLOCK-4", serialNumber: "CA0NNN-NG-XX-1-1-1000-2024" },
+        { id: "BLOCK-5", serialNumber: "CA0NNN-NG-XX-1-1001-2000-2024" },
+      ]);
+      creditTransactionsEntityRepository.find.mockResolvedValueOnce([
+        { creditBlockId: "BLOCK-4", isFirstTransfer: true, data: { country: "JP" } },
+      ]);
+
+      const result = await service.queryExplorer({ size: 10, page: 1 } as any, undefined, user);
+
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: "BLOCK-4", firstTransfer: "JP" }),
+          expect.objectContaining({ id: "BLOCK-5", firstTransfer: null }),
+        ])
+      );
     });
   });
 
@@ -206,6 +304,408 @@ describe("CreditTransactionsManagementService", () => {
       expect(orderByCalls).toHaveLength(1);
       expect(orderByCalls[0][0]).toBe(`"updatedDate"`);
       expect(orderByCalls[0][1]).toBe("DESC");
+    });
+  });
+
+  describe("queryOrgCreditBlocks ITMO serial enrichment", () => {
+    const user: any = { companyRole: CompanyRole.DESIGNATED_NATIONAL_AUTHORITY };
+
+    // createQueryBuilder() always returns the same mock queryBuilder
+    // instance (mockReturnValue, not mockReturnValueOnce - see the shared
+    // beforeEach), so grabbing it here re-uses the exact object already
+    // wired into queryOrgCreditBlocks's query chain.
+    const setOrgTransactionRows = (rows: any[]) => {
+      const qb = creditBlockOrgTransactionsViewEntityRepository.createQueryBuilder();
+      qb.getManyAndCount.mockResolvedValueOnce([rows, rows.length]);
+    };
+
+    it("derives the serial from the row's own serialNumber - regression guard against a live block-join drift", async () => {
+      setOrgTransactionRows([
+        {
+          id: "8",
+          currentStatus: "ITMO Authorized",
+          organizationId: 1,
+          serialNumber: "CA0TEST-XX-YY-2-2417-3916-2026",
+          itmoAuthorizationRecord: "8",
+        },
+      ]);
+      creditTransactionsEntityRepository.find.mockResolvedValueOnce([
+        { id: "8", data: { cooperativeApproachId: "CA-001" } },
+      ]);
+      cooperativeApproachRepo.find.mockResolvedValueOnce([
+        { cooperativeApproachId: "CA-001", caReferenceNumber: "CA0001" },
+      ]);
+
+      const result = await service.queryOrgCreditBlocks(
+        { size: 10, page: 1, organizationId: 1 } as any,
+        undefined,
+        user
+      );
+
+      // The row's own range (2417-3916), not some other range a live join
+      // to the (possibly since-re-split) block might have produced.
+      expect(result.data[0]).toMatchObject({
+        id: "8",
+        itmoSerial: "CA0001-XX-XX-2-2417-3916-2026",
+      });
+    });
+
+    it("returns null and skips both lookups entirely for an MO row (the common case)", async () => {
+      setOrgTransactionRows([
+        {
+          id: "1",
+          currentStatus: "Issued",
+          organizationId: 1,
+          serialNumber: "CA0TEST-XX-YY-1-1-1000-2024",
+          itmoAuthorizationRecord: null,
+        },
+      ]);
+
+      const result = await service.queryOrgCreditBlocks(
+        { size: 10, page: 1, organizationId: 1 } as any,
+        undefined,
+        user
+      );
+
+      expect(result.data[0]).toMatchObject({ id: "1", itmoSerial: null });
+      expect(creditTransactionsEntityRepository.find).not.toHaveBeenCalled();
+      expect(cooperativeApproachRepo.find).not.toHaveBeenCalled();
+    });
+
+    it("degrades to null rather than throwing when the CA reference can't be resolved", async () => {
+      setOrgTransactionRows([
+        {
+          id: "9",
+          currentStatus: "ITMO Authorized",
+          organizationId: 1,
+          serialNumber: "CA0TEST-XX-YY-1-1897-2396-2026",
+          itmoAuthorizationRecord: "9",
+        },
+      ]);
+      creditTransactionsEntityRepository.find.mockResolvedValueOnce([
+        { id: "9", data: { cooperativeApproachId: "CA-999" } },
+      ]);
+      cooperativeApproachRepo.find.mockResolvedValueOnce([]); // no matching CA
+
+      const result = await service.queryOrgCreditBlocks(
+        { size: 10, page: 1, organizationId: 1 } as any,
+        undefined,
+        user
+      );
+
+      expect(result.data[0]).toMatchObject({ id: "9", itmoSerial: null });
+    });
+  });
+
+  describe("getCreditBlockHistoryTree", () => {
+    // "{prefix}-{country}-{party}-{projectId}-{start}-{end}-{vintage}" - the
+    // same 7-part shape SerialNumberManagementService expects. creditBlockId
+    // is the first 5 parts (up through {start}).
+    const serial = (projectId: string, start: number, end: number, vintage = "2024") =>
+      `CA0TEST-XX-YY-${projectId}-${start}-${end}-${vintage}`;
+    const blockId = (projectId: string, start: number) => `CA0TEST-XX-YY-${projectId}-${start}`;
+
+    it("reconstructs the full lineage through an ITMO-authorization split - regression: this used to orphan everything past the auth (self-labelled TRANSFER, subtree dropped)", async () => {
+      const versions = [
+        // Issued 1000 to Org 1.
+        {
+          creditBlockId: blockId("1", 1),
+          serialNumber: serial("1", 1, 1000),
+          txType: TxType.ISSUE,
+          txTime: 1000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 1000,
+          vintage: "2024",
+        },
+        // Org 1 partially authorizes 400 as ITMO - split, retained MO side.
+        {
+          creditBlockId: blockId("1", 1),
+          serialNumber: serial("1", 1, 600),
+          txType: TxType.CREDIT_BLOCK_SPLIT,
+          txTime: 2000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 600,
+          vintage: "2024",
+        },
+        // The new ITMO child - ownership unchanged (still Org 1), so its
+        // previousOwnerCompanyId inherits the never-transferred parent's
+        // null. This is exactly what used to make it invisible to
+        // childIndex.
+        {
+          creditBlockId: blockId("1", 601),
+          serialNumber: serial("1", 601, 1000),
+          txType: TxType.ITMO_AUTH,
+          txTime: 2000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 400,
+          vintage: "2024",
+          itmoAuthorizationRecord: "AUTH-1",
+          itmoSerial: "ITMO-XX-YY-1-601-1000-2024",
+        },
+        // Org 1 partially retires 300 of the ITMO credits - split, retained
+        // ITMO side stays isItmo.
+        {
+          creditBlockId: blockId("1", 601),
+          serialNumber: serial("1", 601, 700),
+          txType: TxType.CREDIT_BLOCK_SPLIT,
+          txTime: 3000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 100,
+          vintage: "2024",
+          itmoAuthorizationRecord: "AUTH-1",
+          itmoSerial: "ITMO-XX-YY-1-601-700-2024",
+        },
+        // The retired ITMO child.
+        {
+          creditBlockId: blockId("1", 701),
+          serialNumber: serial("1", 701, 1000),
+          txType: TxType.RETIRE,
+          txTime: 3000,
+          ownerCompanyId: 0,
+          previousOwnerCompanyId: 1,
+          creditAmount: 300,
+          vintage: "2024",
+          itmoAuthorizationRecord: "AUTH-1",
+          itmoSerial: "ITMO-XX-YY-1-701-1000-2024",
+        },
+      ];
+      programmeLedgerService.getCreditBlockLedgerHistory.mockResolvedValue(versions);
+      creditBlocksEntityRepository.findOne.mockResolvedValue({
+        creditBlockId: blockId("1", 701),
+        projectRefId: "PROJ1",
+        serialNumber: serial("1", 701, 1000),
+        vintage: "2024",
+      });
+      creditTransactionsEntityRepository.find.mockImplementation(async (options: any) => {
+        if (options.where.id) {
+          return [{ id: "AUTH-1", data: { authorizationPurpose: "UseTowardsNDC" } }];
+        }
+        return [
+          {
+            creditBlockId: blockId("1", 701),
+            subType: "First Transfer Towards NDC",
+          },
+        ];
+      });
+
+      const result = await service.getCreditBlockHistoryTree({ blockId: blockId("1", 701) } as any);
+      const history = (result as any).data.history;
+
+      // Regression: with the bug, this would stop at 2 nodes (root + the
+      // mislabelled "1-1000" split) and never reach the ITMO subtree.
+      expect(history).toHaveLength(3);
+
+      expect(history[0].info).toMatchObject({ action: "ISSUE", amount: 1000 });
+
+      const authSplit = history[1];
+      expect(authSplit.range).toBe("1-1000");
+      expect(authSplit.children[0].info).toMatchObject({ action: "RETAIN", amount: 600, isItmo: false });
+      expect(authSplit.children[1].range).toBe("601-1000");
+      expect(authSplit.children[1].info).toMatchObject({
+        action: "ITMO_AUTH",
+        companyId: 1,
+        companyName: "Org 1",
+        amount: 400,
+        isItmo: true,
+        itmoSerial: "ITMO-XX-YY-1-601-1000-2024",
+        authorizationPurpose: "UseTowardsNDC",
+      });
+
+      const retireSplit = history[2];
+      expect(retireSplit.range).toBe("601-1000");
+      expect(retireSplit.children[0].info).toMatchObject({ action: "RETAIN", amount: 100, isItmo: true });
+      expect(retireSplit.children[1].range).toBe("701-1000");
+      expect(retireSplit.children[1].info).toMatchObject({
+        action: "RETIRE",
+        companyId: 1, // the retiring company, not the resulting owner (0)
+        companyName: "Org 1",
+        amount: 300,
+        isItmo: true,
+        itmoSerial: "ITMO-XX-YY-1-701-1000-2024",
+        retireSubType: "First Transfer Towards NDC",
+      });
+    });
+
+    it("labels a whole-block ITMO authorization as ITMO_AUTH rather than dropping it as a no-op", async () => {
+      const versions = [
+        {
+          creditBlockId: blockId("2", 1),
+          serialNumber: serial("2", 1, 500),
+          txType: TxType.ISSUE,
+          txTime: 1000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 500,
+          vintage: "2024",
+        },
+        // Whole block authorized - same id, same range, owner unchanged;
+        // only itmoAuthorizationRecord/itmoSerial newly appear.
+        {
+          creditBlockId: blockId("2", 1),
+          serialNumber: serial("2", 1, 500),
+          txType: TxType.ITMO_AUTH,
+          txTime: 2000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 500,
+          vintage: "2024",
+          itmoAuthorizationRecord: "AUTH-2",
+          itmoSerial: "ITMO-XX-YY-2-1-500-2024",
+        },
+      ];
+      programmeLedgerService.getCreditBlockLedgerHistory.mockResolvedValue(versions);
+      creditBlocksEntityRepository.findOne.mockResolvedValue({
+        creditBlockId: blockId("2", 1),
+        projectRefId: "PROJ2",
+        serialNumber: serial("2", 1, 500),
+        vintage: "2024",
+      });
+      creditTransactionsEntityRepository.find.mockResolvedValue([
+        { id: "AUTH-2", data: { authorizationPurpose: "OtherPurposes" } },
+      ]);
+
+      const result = await service.getCreditBlockHistoryTree({ blockId: blockId("2", 1) } as any);
+      const history = (result as any).data.history;
+
+      expect(history).toHaveLength(2);
+      expect(history[1].range).toBe("1-500");
+      expect(history[1].children).toHaveLength(1);
+      expect(history[1].children[0].info).toMatchObject({
+        action: "ITMO_AUTH",
+        isItmo: true,
+        itmoSerial: "ITMO-XX-YY-2-1-500-2024",
+        authorizationPurpose: "OtherPurposes",
+      });
+    });
+
+    it("produces no node for a rejected/cancelled ITMO authorization request (txType alone can't tell it apart from a real one)", async () => {
+      const versions = [
+        {
+          creditBlockId: blockId("3", 1),
+          serialNumber: serial("3", 1, 500),
+          txType: TxType.ISSUE,
+          txTime: 1000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 500,
+          vintage: "2024",
+        },
+        // Reservation for the request.
+        {
+          creditBlockId: blockId("3", 1),
+          serialNumber: serial("3", 1, 500),
+          txType: TxType.ITMO_AUTH_REQ,
+          txTime: 2000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 500,
+          vintage: "2024",
+        },
+        // Rejected - writes txType ITMO_AUTH too, but itmoAuthorizationRecord
+        // never gets set and ownership never changes.
+        {
+          creditBlockId: blockId("3", 1),
+          serialNumber: serial("3", 1, 500),
+          txType: TxType.ITMO_AUTH,
+          txTime: 3000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 500,
+          vintage: "2024",
+        },
+      ];
+      programmeLedgerService.getCreditBlockLedgerHistory.mockResolvedValue(versions);
+      creditBlocksEntityRepository.findOne.mockResolvedValue({
+        creditBlockId: blockId("3", 1),
+        projectRefId: "PROJ3",
+        serialNumber: serial("3", 1, 500),
+        vintage: "2024",
+      });
+
+      const result = await service.getCreditBlockHistoryTree({ blockId: blockId("3", 1) } as any);
+      const history = (result as any).data.history;
+
+      // Only the issuance root - both the request and the rejection are
+      // silently skipped, exactly like a rejected retire request.
+      expect(history).toHaveLength(1);
+      expect(history[0].info.action).toBe("ISSUE");
+    });
+
+    it("keeps existing TRANSFER/whole-block-RETIRE behavior unchanged for blocks that never touch ITMO", async () => {
+      const versions = [
+        {
+          creditBlockId: blockId("4", 1),
+          serialNumber: serial("4", 1, 500),
+          txType: TxType.ISSUE,
+          txTime: 1000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 500,
+          vintage: "2024",
+        },
+        {
+          creditBlockId: blockId("4", 1),
+          serialNumber: serial("4", 1, 300),
+          txType: TxType.CREDIT_BLOCK_SPLIT,
+          txTime: 2000,
+          ownerCompanyId: 1,
+          previousOwnerCompanyId: undefined,
+          creditAmount: 300,
+          vintage: "2024",
+        },
+        {
+          creditBlockId: blockId("4", 301),
+          serialNumber: serial("4", 301, 500),
+          txType: TxType.TRANSFER,
+          txTime: 2000,
+          ownerCompanyId: 2,
+          previousOwnerCompanyId: 1,
+          creditAmount: 200,
+          vintage: "2024",
+        },
+        // Buyer (2) retires the whole transferred block in one action.
+        {
+          creditBlockId: blockId("4", 301),
+          serialNumber: serial("4", 301, 500),
+          txType: TxType.RETIRE,
+          txTime: 3000,
+          ownerCompanyId: 0,
+          previousOwnerCompanyId: 2,
+          creditAmount: 200,
+          vintage: "2024",
+        },
+      ];
+      programmeLedgerService.getCreditBlockLedgerHistory.mockResolvedValue(versions);
+      creditBlocksEntityRepository.findOne.mockResolvedValue({
+        creditBlockId: blockId("4", 301),
+        projectRefId: "PROJ4",
+        serialNumber: serial("4", 301, 500),
+        vintage: "2024",
+      });
+
+      const result = await service.getCreditBlockHistoryTree({ blockId: blockId("4", 301) } as any);
+      const history = (result as any).data.history;
+
+      expect(history).toHaveLength(3);
+      expect(history[1].children[1].info).toMatchObject({
+        action: "TRANSFER",
+        companyId: 2,
+        companyName: "Org 2",
+        amount: 200,
+        isItmo: false,
+      });
+      expect(history[2].children[0].info).toMatchObject({
+        action: "RETIRE",
+        companyId: 2, // the retiring company
+        companyName: "Org 2",
+        amount: 200,
+        isItmo: false,
+        retireSubType: null,
+      });
     });
   });
 });
