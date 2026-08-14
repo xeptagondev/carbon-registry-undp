@@ -27,7 +27,7 @@ describe('exportSubmission', () => {
 
     const result = await exportSubmission(deps(store), defaults, 2020, { format: 'csv' }, {}, clock);
 
-    expect(result.fileName).toBe('aef-v2-submission-2020.csv');
+    expect(result.fileName).toBe('aef-report-VUT-2020.csv');
     expect(result.contentType).toBe('text/csv');
     expect(typeof result.content).toBe('string');
     expect(result.content as string).toContain('Table 1: Submission');
@@ -73,7 +73,7 @@ describe('exportSubmission', () => {
     );
 
     expect(result.content).toBe(fakeBuffer);
-    expect(result.fileName).toBe('aef-v2-submission-2020.xlsx');
+    expect(result.fileName).toBe('aef-report-VUT-2020.xlsx');
     expect(result.contentType).toBe(
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );

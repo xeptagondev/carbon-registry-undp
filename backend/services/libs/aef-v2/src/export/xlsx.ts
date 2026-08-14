@@ -1,7 +1,7 @@
 import * as ExcelJS from 'exceljs';
 
 import { AEF_TABLE_ORDER, AefTableName } from '../tables';
-import { toRows } from './rows';
+import { TabularProjection, toRows } from './rows';
 import { AefSubmissionExport } from './submission';
 
 /**
@@ -199,28 +199,30 @@ export const AEF_TEMPLATE_SHEET_NAMES: Readonly<Record<AefTableName, string>> = 
   t5AuthorizedEntities: 'Table 5 Auth. entities',
 };
 
-/** Template cells carrying the reporting context, above every table's header block. */
-const TEMPLATE_PARTY_CELL = 'B2';
-const TEMPLATE_REPORTED_YEAR_CELL = 'B3';
-
 /**
- * How far down a sheet to look for the header row. The template's tables start
- * between rows 6 and 10 depending on how many banded sub-heading rows the table
- * has; 20 leaves room for a revision that adds more without needing a change here.
+ * How far down a sheet to look for the header row, and how far across to look
+ * for the label column. The template's tables start between rows 4 and 10
+ * depending on how many banded sub-heading rows each has, and every table is
+ * indented by a gutter column; these limits leave room for a revision that adds
+ * more without needing a change here.
  */
-const TEMPLATE_HEADER_SCAN_ROWS = 20;
+const TEMPLATE_HEADER_SCAN_ROWS = 25;
+const TEMPLATE_LABEL_SCAN_COLUMNS = 6;
 
 /**
- * Columns the template has but {@link toRows} does not emit.
+ * How each table is laid out in the template.
  *
- * Table 1's "Status" is the submission's own lifecycle state. `toRows` filters
- * it out because it is library metadata rather than a spec field, but the CARP
- * sheet does have a column for it, so it is filled from the record directly.
+ * Table 1 is **transposed**: it describes a single submission, so the template
+ * lists its nine field labels down a column with the values beside them, rather
+ * than as a header row with one record underneath. Every other table is a
+ * conventional header row with one row per record.
  */
-const TEMPLATE_ONLY_COLUMNS: Partial<
-  Record<AefTableName, ReadonlyArray<{ header: string; key: string }>>
-> = {
-  t1Submission: [{ header: 'Status', key: 'status' }],
+const TEMPLATE_LAYOUT: Readonly<Record<AefTableName, 'horizontal' | 'vertical'>> = {
+  t1Submission: 'vertical',
+  t2Authorizations: 'horizontal',
+  t3Actions: 'horizontal',
+  t4Holdings: 'horizontal',
+  t5AuthorizedEntities: 'horizontal',
 };
 
 export class AefTemplateError extends Error {
@@ -237,12 +239,23 @@ export interface SubmissionTemplateOptions {
    * {@link AEF_FULL_REPORT_TEMPLATE}.
    */
   templatePath: string;
-  /** Written to each sheet's Party cell. Skipped when absent. */
-  party?: string;
-  /** Written to each sheet's Reported year cell. Skipped when absent. */
-  reportedYear?: number;
   /** Overrides {@link AEF_TEMPLATE_SHEET_NAMES} for a renamed tab. */
   sheetNames?: Partial<Record<AefTableName, string>>;
+  /**
+   * Renders Table 1's Party cell as this string — a country name — instead of
+   * the stored alpha-3 code.
+   *
+   * **Display only, and deliberately narrow.** The field spec gives
+   * `aefT1SubmissionParty` `format: 'ISO 3166-1 alpha-3'` and validates it
+   * against `PARTY_CODE_PATTERN`, so the stored value, the CSV export and every
+   * other Party column in the workbook (Tables 3 and 4's transferring and
+   * acquiring Party IDs) stay as codes. Only this one presentation cell
+   * changes, and only when a host asks for it.
+   *
+   * The library cannot resolve the name itself: it holds no country data, by
+   * design — see `portability.spec.ts`.
+   */
+  partyDisplayName?: string;
 }
 
 /**
@@ -250,17 +263,27 @@ export interface SubmissionTemplateOptions {
  * preserving its headings, banding, column widths and print setup.
  *
  * The difference from {@link toSubmissionXlsxBuffer} is not cosmetic: that one
- * generates a plain grid whose columns are the spec's, in the spec's order,
- * one header row deep. The template's grid is the one CARP actually reads —
- * its tables start at different rows per sheet and two of them (Actions,
- * Holdings) carry an unlabelled spacer column mid-table, so a positional
- * "write column N" fill would silently shift every field after it.
+ * generates a plain grid whose columns are the spec's, in the spec's order, one
+ * header row deep. The template's grid is the one CARP actually reads, and it
+ * defeats a positional "write row 2, column N" fill in four separate ways:
  *
- * Columns are therefore located by matching the spec's own `aefLabel` against
- * the template's header row, and the header row itself is found by scanning.
- * Nothing is written until every one of a table's columns has been located; a
+ *  - every table is indented by a gutter column and starts at a different row;
+ *  - Actions, Authorizations and Holdings carry unlabelled spacer columns
+ *    mid-table, which would shift every field after them;
+ *  - Table 1 is transposed — labels down a column, values beside them;
+ *  - the data region ships pre-filled with the controlled vocabulary of several
+ *    columns (Metric's "GHG"/"non-GHG", Action type's five values...), which
+ *    would read as real rows in any export shorter than those lists.
+ *
+ * So fields are located by matching the spec's own `aefLabel` against the
+ * template's text, and the header row (or label column) is found by scanning.
+ * Nothing is written until every one of a table's fields has been located; a
  * template that has drifted raises {@link AefTemplateError} rather than
  * producing a partly-filled submission that looks fine until CARP rejects it.
+ *
+ * Fields the spec marks `carpPopulated` are left exactly as the template has
+ * them — those cells carry CARP's own "{Information in this field is populated
+ * by the CARP}" instructions, which are more useful to a reader than a blank.
  */
 export async function toSubmissionTemplateXlsxBuffer(
   bundle: AefSubmissionExport,
@@ -280,57 +303,93 @@ export async function toSubmissionTemplateXlsxBuffer(
     }
 
     const records = bundle[table] ?? [];
-    const { headers, rows } = toRows(table, records);
-    const headerRow = locateTemplateHeaderRow(sheet, sheetName, headers);
-    const columns = headers.map((header) => headerRow.columns.get(normalizeHeader(header))!);
+    const projection = toRows(table, records);
 
-    const extras = (TEMPLATE_ONLY_COLUMNS[table] ?? [])
-      .map((extra) => ({
-        key: extra.key,
-        column: headerRow.columns.get(normalizeHeader(extra.header)),
-      }))
-      .filter((extra): extra is { key: string; column: number } => extra.column !== undefined);
-
-    stampReportingContext(sheet, options);
-
-    const firstDataRow = headerRow.row + 1;
-    const writtenColumns = [...columns, ...extras.map((extra) => extra.column)];
-    // The shipped template leaves sample values under some headers (Actions'
-    // "Emission reductions" / "Removals" under Mitigation type). Clearing the
-    // whole data region first means those never survive into an export with
-    // fewer rows than samples, where they would read as real data.
-    clearTemplateDataRegion(sheet, firstDataRow, writtenColumns);
-
-    rows.forEach((row, offset) => {
-      const sheetRow = sheet.getRow(firstDataRow + offset);
-      row.forEach((value, index) => {
-        writeTemplateCell(sheetRow, columns[index], value);
-      });
-      extras.forEach((extra) => {
-        const value = (records[offset] as Record<string, unknown> | undefined)?.[extra.key];
-        writeTemplateCell(
-          sheetRow,
-          extra.column,
-          value === undefined || value === null ? null : String(value),
-        );
-      });
-      sheetRow.commit();
-    });
+    if (TEMPLATE_LAYOUT[table] === 'vertical') {
+      fillVerticalTable(sheet, sheetName, projection, options);
+    } else {
+      fillHorizontalTable(sheet, sheetName, projection);
+    }
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
 
-function writeTemplateCell(
-  row: ExcelJS.Row,
-  column: number,
-  value: string | number | null,
+/** One row per record, under a located header row. Tables 2 to 5. */
+function fillHorizontalTable(
+  sheet: ExcelJS.Worksheet,
+  sheetName: string,
+  { headers, columns, rows }: TabularProjection,
 ): void {
-  const cell = row.getCell(column);
+  const header = locateTemplateHeaderRow(sheet, sheetName, headers);
+  const cells = headers.map((label) => header.positions.get(normalizeHeader(label))!);
+
+  // Skipped entirely — never written, never cleared — so CARP's own
+  // placeholder text survives into the export.
+  const writable = cells.filter((_, index) => !columns[index]?.carpPopulated);
+
+  const firstDataRow = header.index + 1;
+  clearTemplateDataRegion(sheet, firstDataRow, writable);
+
+  rows.forEach((row, offset) => {
+    const sheetRow = sheet.getRow(firstDataRow + offset);
+    row.forEach((value, index) => {
+      if (columns[index]?.carpPopulated) {
+        return;
+      }
+      writeTemplateCell(sheetRow.getCell(cells[index]), value);
+    });
+    sheetRow.commit();
+  });
+}
+
+/**
+ * Labels down a column, values in the column beside them. Table 1 only.
+ *
+ * A reporting year has exactly one live submission — `loadSubmissionBundle`
+ * resolves versions before this point — and the transposed layout has room for
+ * precisely that one, so any record past the first is ignored rather than
+ * silently overwriting the previous one's values.
+ */
+function fillVerticalTable(
+  sheet: ExcelJS.Worksheet,
+  sheetName: string,
+  { headers, columns, rows }: TabularProjection,
+  options: SubmissionTemplateOptions,
+): void {
+  const labels = locateTemplateLabelColumn(sheet, sheetName, headers);
+  // The template pairs each label with the cell immediately to its right.
+  const valueColumn = labels.index + 1;
+  const record = rows[0];
+
+  headers.forEach((label, index) => {
+    const spec = columns[index];
+    if (spec?.carpPopulated) {
+      return;
+    }
+    const row = labels.positions.get(normalizeHeader(label))!;
+    const stored = record ? record[index] : null;
+    // See SubmissionTemplateOptions.partyDisplayName - presentation only, and
+    // only when the record actually carries a Party to substitute for.
+    const value =
+      spec?.key === 'aefT1SubmissionParty' && options.partyDisplayName && stored !== null
+        ? options.partyDisplayName
+        : stored;
+    writeTemplateCell(sheet.getRow(row).getCell(valueColumn), value);
+  });
+}
+
+function writeTemplateCell(cell: ExcelJS.Cell, value: string | number | null): void {
+  // Whatever the template already specifies wins — Table 1 right-aligns its
+  // value column, and overwriting that with the default left alignment left
+  // the filled values sitting under the labels instead of lined up with the
+  // CARP placeholders beside them. BODY_ALIGNMENT is only a fallback for cells
+  // the template leaves unstyled.
+  const templateAlignment = cell.alignment;
   cell.value = value === null ? '' : value;
   cell.font = BODY_FONT;
-  cell.alignment = BODY_ALIGNMENT;
+  cell.alignment = templateAlignment ?? BODY_ALIGNMENT;
 }
 
 /**
@@ -372,6 +431,14 @@ function normalizeHeader(value: string): string {
   return value.replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
+/** Where each of a table's labels sits, and the row/column the run was found on. */
+interface TemplateAxis {
+  /** Row number for a header row, column number for a label column. */
+  index: number;
+  /** Normalized label -> the perpendicular coordinate (column, or row). */
+  positions: Map<string, number>;
+}
+
 /**
  * Finds the row that carries a table's column headers, and each header's column.
  *
@@ -384,66 +451,81 @@ function locateTemplateHeaderRow(
   sheet: ExcelJS.Worksheet,
   sheetName: string,
   headers: readonly string[],
-): { row: number; columns: Map<string, number> } {
+): TemplateAxis {
   const wanted = new Set(headers.map(normalizeHeader));
   const lastColumn = Math.max(sheet.columnCount, headers.length);
-
-  let best: { row: number; columns: Map<string, number> } | undefined;
   const scanTo = Math.min(Math.max(sheet.rowCount, 1), TEMPLATE_HEADER_SCAN_ROWS);
 
+  let best: TemplateAxis | undefined;
   for (let rowNumber = 1; rowNumber <= scanTo; rowNumber += 1) {
     const row = sheet.getRow(rowNumber);
-    const columns = new Map<string, number>();
+    const positions = new Map<string, number>();
     for (let column = 1; column <= lastColumn; column += 1) {
       const label = normalizeHeader(templateCellText(row.getCell(column).value));
       // First occurrence wins: the banded sub-heading rows above repeat some
       // labels, but within the header row itself each one appears once.
-      if (label && wanted.has(label) && !columns.has(label)) {
-        columns.set(label, column);
+      if (label && wanted.has(label) && !positions.has(label)) {
+        positions.set(label, column);
       }
     }
-    if (!best || columns.size > best.columns.size) {
-      best = { row: rowNumber, columns };
+    if (!best || positions.size > best.positions.size) {
+      best = { index: rowNumber, positions };
     }
   }
 
-  if (!best || best.columns.size < wanted.size) {
-    const found = new Set(best?.columns.keys() ?? []);
-    const missing = headers.filter((header) => !found.has(normalizeHeader(header)));
-    throw new AefTemplateError(
-      `Worksheet "${sheetName}" is missing ${missing.length} expected column header(s): ` +
-        `${missing.join(' | ')}`,
-    );
-  }
-
-  // Table 1's "Status" and any other template-only column live on the same
-  // row, so pick them up now that the row is known.
-  const headerRow = sheet.getRow(best.row);
-  for (let column = 1; column <= lastColumn; column += 1) {
-    const label = normalizeHeader(templateCellText(headerRow.getCell(column).value));
-    if (label && !best.columns.has(label)) {
-      best.columns.set(label, column);
-    }
-  }
-
+  assertCompleteAxis(best, sheetName, headers, 'column header');
   return best;
 }
 
-/** Writes the Party / Reported year cells that head every template sheet. */
-function stampReportingContext(
+/**
+ * Finds the column that carries a transposed table's field labels, and each
+ * label's row. Table 1's layout — see {@link TEMPLATE_LAYOUT}.
+ *
+ * Mirrors {@link locateTemplateHeaderRow} exactly, one axis over: scan for the
+ * best-matching column, then insist the match is complete.
+ */
+function locateTemplateLabelColumn(
   sheet: ExcelJS.Worksheet,
-  options: SubmissionTemplateOptions,
-): void {
-  if (options.party !== undefined) {
-    const cell = sheet.getCell(TEMPLATE_PARTY_CELL);
-    cell.value = options.party;
-    cell.font = BODY_FONT;
+  sheetName: string,
+  headers: readonly string[],
+): TemplateAxis {
+  const wanted = new Set(headers.map(normalizeHeader));
+  const lastRow = Math.max(sheet.rowCount, headers.length);
+  const scanTo = Math.min(Math.max(sheet.columnCount, 1), TEMPLATE_LABEL_SCAN_COLUMNS);
+
+  let best: TemplateAxis | undefined;
+  for (let column = 1; column <= scanTo; column += 1) {
+    const positions = new Map<string, number>();
+    for (let rowNumber = 1; rowNumber <= lastRow; rowNumber += 1) {
+      const label = normalizeHeader(templateCellText(sheet.getRow(rowNumber).getCell(column).value));
+      if (label && wanted.has(label) && !positions.has(label)) {
+        positions.set(label, rowNumber);
+      }
+    }
+    if (!best || positions.size > best.positions.size) {
+      best = { index: column, positions };
+    }
   }
-  if (options.reportedYear !== undefined) {
-    const cell = sheet.getCell(TEMPLATE_REPORTED_YEAR_CELL);
-    cell.value = options.reportedYear;
-    cell.font = BODY_FONT;
+
+  assertCompleteAxis(best, sheetName, headers, 'field label');
+  return best;
+}
+
+function assertCompleteAxis(
+  axis: TemplateAxis | undefined,
+  sheetName: string,
+  headers: readonly string[],
+  kind: string,
+): asserts axis is TemplateAxis {
+  const found = new Set(axis?.positions.keys() ?? []);
+  if (found.size >= headers.length) {
+    return;
   }
+  const missing = headers.filter((header) => !found.has(normalizeHeader(header)));
+  throw new AefTemplateError(
+    `Worksheet "${sheetName}" is missing ${missing.length} expected ${kind}(s): ` +
+      `${missing.join(' | ')}`,
+  );
 }
 
 /** Blanks every column this fill owns, from the first data row to the sheet's end. */
