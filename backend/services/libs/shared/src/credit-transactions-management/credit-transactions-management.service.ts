@@ -1658,7 +1658,7 @@ export class CreditTransactionsManagementService {
     rows: CreditBlockItmoAuthorizationsViewEntity[]
   ): Promise<
     Array<
-      CreditBlockItmoAuthorizationsViewEntity & {
+      Omit<CreditBlockItmoAuthorizationsViewEntity, "serialNumber"> & {
         caReferenceNumber: string | null;
         itmoSerial: string | null;
       }
@@ -1702,7 +1702,12 @@ export class CreditTransactionsManagementService {
               this.serialNumberManagementService.getVintage(row.serialNumber)
             )
           : null;
-      return { ...row, caReferenceNumber, itmoSerial };
+      // serialNumber is dropped from the response: it is the internal,
+      // placeholder-prefixed registry serial (CA0NNN-...) that itmoSerial
+      // supersedes for this table, and no client consumes it. It stays on
+      // the view because the derivation above needs it.
+      const { serialNumber, ...rest } = row;
+      return { ...rest, caReferenceNumber, itmoSerial };
     });
   }
 

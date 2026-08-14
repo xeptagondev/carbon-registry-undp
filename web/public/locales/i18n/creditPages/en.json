@@ -293,6 +293,7 @@
     "itmo": "ITMO",
     "mo": "MO",
     "itmoSerial": "ITMO Serial",
+    "purposeOfAuthorization": "Purpose of Authorisation",
     "itmoSerialCopied": "ITMO serial copied to clipboard",
     "copy": "Copy",
     "serialSearchInfo": {

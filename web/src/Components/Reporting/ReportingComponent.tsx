@@ -1,7 +1,7 @@
 import { i18n } from "i18next";
 import { useEffect, useMemo, useState } from "react";
 import "./ReportingComponent.scss";
-import { Checkbox, DatePicker, Empty, Row } from "antd";
+import { Checkbox, DatePicker, Empty, message, Row } from "antd";
 import moment, { Moment } from "moment";
 import ReportCard from "./ReportCard";
 import SubmitAefModal from "./SubmitAefModal";
@@ -24,6 +24,7 @@ import { useConnection } from "../../Context/ConnectionContext/connectionContext
 import { API_PATHS } from "../../Config/apiConfig";
 import { Loading } from "../Loading/loading";
 import { TimedPageInfoTitle } from "../Common/TimedPageInfoTitle/TimedPageInfoTitle";
+import { downloadFileFromUrl } from "../../Utils/downloadFileFromUrl";
 
 /**
  * AEF V2 reporting — the five tables of Decision 4/CMA.6, Annex II.
@@ -175,6 +176,11 @@ const ReportingComponent = (props: { translator: i18n }) => {
    *
    * There is deliberately no per-table export: a CARP submission is the five
    * tables together, so a single table's file was never the deliverable.
+   *
+   * The endpoint returns a URL on the API host, not the file itself, so the
+   * bytes are fetched and saved via a blob — see downloadFileFromUrl for why an
+   * anchor pointed straight at that cross-origin URL opens the file instead of
+   * downloading it.
    */
   const downloadSubmission = async (fileType: FILE_TYPES) => {
     setTable(REPORT_TYPES.SUBMISSION, { loading: true });
@@ -185,17 +191,18 @@ const ReportingComponent = (props: { translator: i18n }) => {
       });
 
       if (res?.statusText === "SUCCESS") {
-        const url = res.data.url;
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = res.data.outputFileName;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        window.URL.revokeObjectURL(url);
+        await downloadFileFromUrl(res.data.url, res.data.outputFileName);
       }
     } catch (error) {
       console.error("AEF export failed", error);
+      message.open({
+        type: "error",
+        content: t("reporting:exportFailed", {
+          defaultValue: "Could not download the report. Please try again.",
+        }),
+        duration: 3,
+        style: { textAlign: "right", marginRight: 15, marginTop: 10 },
+      });
     } finally {
       setTable(REPORT_TYPES.SUBMISSION, { loading: false });
     }

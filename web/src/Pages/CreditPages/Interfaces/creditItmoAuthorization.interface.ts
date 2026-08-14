@@ -1,11 +1,15 @@
+// The internal registry serial (CA0NNN-...) is deliberately absent: the
+// ITMO Authorizations endpoint no longer returns it — itmoSerial below is
+// the identifier this table displays.
 export interface CreditItmoAuthorizationInterface {
   id: string;
-  serialNumber: string;
   creditAmount: number;
   createdDate: string;
   status: string;
   projectId: number;
   cooperativeApproachId?: string;
+  // Raw AuthorizationPurpose wire value; render through
+  // AUTHORIZATION_PURPOSE_LABELS (Definitions/Enums/authorizationPurpose.enum.ts).
   authorizationPurpose?: string;
   remarks?: string;
   projectName: string;
