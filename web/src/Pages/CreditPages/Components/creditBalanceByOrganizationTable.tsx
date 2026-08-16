@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ProfileIcon } from '../../../Components/IconComponents/ProfileIcon/profile.icon';
 import { API_PATHS } from '../../../Config/apiConfig';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
+import { toSortOrder, type SortOrder } from './creditTableHelpers';
 import '../creditPageStyles.scss';
 
 interface OrganizationBalance {
@@ -51,9 +52,9 @@ interface OrganizationBalanceQuery {
     value: string[];
   }>;
   sort: {
-    key: 'updatedTime';
-    order: 'DESC';
-    nullFirst: false;
+    key: string;
+    order: SortOrder;
+    nullFirst: boolean;
   };
 }
 
@@ -76,9 +77,9 @@ const columns: ColumnsType<OrganizationBalance> = [
   {
     title: 'Credit Owner',
     dataIndex: 'name',
-    key: 'name',
+    key: 'organizationName',
     align: 'left',
-    sorter: (a, b) => a.name.localeCompare(b.name),
+    sorter: true,
     render: (name, row) => (
       <div className="credit-balance-organization-cell">
         <ProfileIcon icon={row.logo} bg={row.avatarColor} name={name} />
@@ -86,11 +87,11 @@ const columns: ColumnsType<OrganizationBalance> = [
       </div>
     ),
   },
-  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'right', sorter: (a, b) => a.moBalance - b.moBalance, render: formatCredits },
-  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'right', sorter: (a, b) => a.moReserved - b.moReserved, render: formatCredits },
-  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'right', sorter: (a, b) => a.itmoBalance - b.itmoBalance, render: formatCredits },
-  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReserved', align: 'right', sorter: (a, b) => a.itmoReserved - b.itmoReserved, render: formatCredits },
-  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'center', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
+  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'right', sorter: true, render: formatCredits },
+  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'right', sorter: true, render: formatCredits },
+  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'right', sorter: true, render: formatCredits },
+  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReservedCredits', align: 'right', sorter: true, render: formatCredits },
+  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedTime', align: 'center', sorter: true },
 ];
 
 export const CreditBalanceByOrganizationTable = ({
@@ -100,6 +101,8 @@ export const CreditBalanceByOrganizationTable = ({
   const { post } = useConnection();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<string>();
+  const [sortOrder, setSortOrder] = useState<SortOrder>();
   const [rows, setRows] = useState<OrganizationBalance[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -124,7 +127,9 @@ export const CreditBalanceByOrganizationTable = ({
           value: organizations,
         }]
         : undefined,
-      sort: { key: 'updatedTime', order: 'DESC', nullFirst: false },
+      sort: sortField && sortOrder
+        ? { key: sortField, order: sortOrder, nullFirst: false }
+        : { key: 'updatedTime', order: 'DESC', nullFirst: false },
     };
 
     setLoading(true);
@@ -175,6 +180,8 @@ export const CreditBalanceByOrganizationTable = ({
     post,
     refreshGeneration,
     selectedOrganizationsKey,
+    sortField,
+    sortOrder,
   ]);
 
   return (
@@ -186,6 +193,14 @@ export const CreditBalanceByOrganizationTable = ({
         columns={columns}
         loading={loading}
         scroll={{ x: 960 }}
+        onChange={(_pagination, _filters, sorter, extra) => {
+          if (extra.action !== 'sort') return;
+          const sorted = Array.isArray(sorter) ? sorter[0] : sorter;
+          const order = toSortOrder(sorted?.order);
+          setSortOrder(order);
+          setSortField(order ? String(sorted.columnKey) : undefined);
+          setCurrentPage(1);
+        }}
         pagination={{
           current: currentPage,
           pageSize,

@@ -1,5 +1,10 @@
 import { CreditBlockStatus } from "../Enums/creditEventEnum";
 
+export type SortOrder = "ASC" | "DESC";
+
+export const toSortOrder = (antdOrder?: string | null): SortOrder | undefined =>
+  antdOrder === "ascend" ? "ASC" : antdOrder === "descend" ? "DESC" : undefined;
+
 export const compareStrings = (a?: string | null, b?: string | null) =>
   (a ?? "").localeCompare(b ?? "");
 
