@@ -64,7 +64,11 @@ export function exportFileName(
   return `aef-v2-${table}${year}.${extension}`;
 }
 
-/** Suggested filename for the whole-submission export, e.g. `aef-v2-submission-2025.xlsx`. */
-export function submissionExportFileName(reportedYear: number, extension: 'csv' | 'xlsx'): string {
-  return `aef-v2-submission-${reportedYear}.${extension}`;
+/** Suggested filename for the whole-submission export, e.g. `aef-report-VUT-2025.xlsx`. */
+export function submissionExportFileName(
+  party: string,
+  reportedYear: number,
+  extension: 'csv' | 'xlsx',
+): string {
+  return `aef-report-${party}-${reportedYear}.${extension}`;
 }

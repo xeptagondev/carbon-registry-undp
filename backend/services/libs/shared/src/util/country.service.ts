@@ -47,6 +47,16 @@ export class CountryService {
     )?.alpha3;
   }
 
+  // The reverse of getAlpha3, for display. AEF stores the Party as alpha-3;
+  // the full-report export renders Table 1's Party cell as the country name.
+  async getCountryNameByAlpha3(alpha3: string): Promise<string | undefined> {
+    return (
+      await this.countryRepo.findOneBy({
+        alpha3: alpha3,
+      })
+    )?.name;
+  }
+
   async getCountryList(query: QueryDto) {
     const resp = await this.countryRepo
       .createQueryBuilder()

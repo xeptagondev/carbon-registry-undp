@@ -94,9 +94,14 @@ export async function renderWholeSubmissionExport(
   format: AefExportFormat,
   renderers: AefExportRenderers = {},
 ): Promise<AefExportResult> {
+  // `submissionExportFileName` names the file after the reporting Party, which
+  // the submission itself carries — no extra parameter needed, and no way for a
+  // caller to label a file with a Party the contents disagree with.
+  const party = String(exportData.t1Submission?.[0]?.aefT1SubmissionParty ?? '');
+
   if (format === 'csv') {
     return {
-      fileName: submissionExportFileName(year, 'csv'),
+      fileName: submissionExportFileName(party, year, 'csv'),
       contentType: CSV_CONTENT_TYPE,
       content: toSubmissionCsv(exportData),
     };
@@ -108,7 +113,7 @@ export async function renderWholeSubmissionExport(
     );
   }
   return {
-    fileName: submissionExportFileName(year, 'xlsx'),
+    fileName: submissionExportFileName(party, year, 'xlsx'),
     contentType: XLSX_CONTENT_TYPE,
     content: await renderers.xlsxSubmission(exportData),
   };

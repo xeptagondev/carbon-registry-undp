@@ -150,6 +150,6 @@ describe('submitAefReport', () => {
 
     expect(result.transportReference).toBe('carp-ref-123');
     expect(submitted).toHaveLength(1);
-    expect(submitted[0].fileName).toBe('aef-v2-submission-2020.csv');
+    expect(submitted[0].fileName).toBe('aef-report-VUT-2020.csv');
   });
 });

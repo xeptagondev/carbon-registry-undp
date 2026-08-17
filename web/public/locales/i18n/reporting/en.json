@@ -6,7 +6,7 @@
   "noReports": "No tables selected",
   "noSubmission": "No submission record for this reporting year",
 
-  "SUBMISSION": "Submission",
+  "SUBMISSION": "Submissions",
   "AUTHORIZATIONS": "Authorizations",
   "ACTIONS": "Actions",
   "HOLDINGS": "Holdings",
@@ -16,6 +16,7 @@
   "reportedYearLabel": "Reported Year",
   "exportAsExcel": "Export full report as Excel",
   "exportAsCsv": "Export full report as CSV",
+  "exportFailed": "Could not download the report. Please try again.",
   "provisional": "Provisional — as at today, not a year-end snapshot",
 
   "submissionStatus": "STATUS",

@@ -12,6 +12,7 @@ describe("CreditTransactionsManagementService", () => {
   let creditTransactionsEntityRepository: any;
   let cooperativeApproachRepo: any;
   let creditBlockOrgTransactionsViewEntityRepository: any;
+  let creditBlockItmoAuthorizationsViewEntityRepository: any;
 
   beforeEach(() => {
     orderByCalls = [];
@@ -40,6 +41,9 @@ describe("CreditTransactionsManagementService", () => {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
     };
     creditBlockOrgTransactionsViewEntityRepository = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+    };
+    creditBlockItmoAuthorizationsViewEntityRepository = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
     };
     const creditBlockBalancesViewEntityRepository: any = {
@@ -94,7 +98,7 @@ describe("CreditTransactionsManagementService", () => {
       creditBlockBalancesViewEntityRepository,
       creditBlockTransfersViewEntityRepository,
       {} as any, // creditBlockRetirementsViewEntityRepository
-      {} as any, // creditBlockItmoAuthorizationsViewEntityRepository
+      creditBlockItmoAuthorizationsViewEntityRepository,
       creditBlockExplorerViewEntityRepository,
       creditBlockIssuancesViewEntityRepository,
       creditBlockOrgBalancesViewEntityRepository,
@@ -545,6 +549,77 @@ describe("CreditTransactionsManagementService", () => {
       );
 
       expect(result.data[0]).toMatchObject({ id: "9", itmoSerial: null });
+    });
+  });
+
+  describe("queryItmoAuthorizations response shape", () => {
+    const user: any = { companyRole: CompanyRole.DESIGNATED_NATIONAL_AUTHORITY };
+
+    const setItmoAuthorizationRows = (rows: any[]) => {
+      const qb =
+        creditBlockItmoAuthorizationsViewEntityRepository.createQueryBuilder();
+      qb.getManyAndCount.mockResolvedValueOnce([rows, rows.length]);
+    };
+
+    it("returns authorizationPurpose and the derived itmoSerial, and drops the internal serialNumber", async () => {
+      setItmoAuthorizationRows([
+        {
+          id: "8",
+          status: "Completed",
+          serialNumber: "CA0NNN-XX-YY-2-2417-3916-2026",
+          cooperativeApproachId: "CA-001",
+          authorizationPurpose: "UseTowardsNDC",
+        },
+      ]);
+      cooperativeApproachRepo.find.mockResolvedValueOnce([
+        { cooperativeApproachId: "CA-001", caReferenceNumber: "CA0001" },
+      ]);
+
+      const result = await service.queryItmoAuthorizations(
+        { size: 10, page: 1, sort: { key: "createdDate", order: "DESC" } } as any,
+        undefined,
+        user
+      );
+
+      expect(result.data[0]).toMatchObject({
+        id: "8",
+        // Drives the Purpose of Authorisation column; the frontend maps the
+        // raw wire value to its label.
+        authorizationPurpose: "UseTowardsNDC",
+        itmoSerial: "CA0001-XX-XX-2-2417-3916-2026",
+        caReferenceNumber: "CA0001",
+      });
+      // The Serial No column is gone; serialNumber stays on the view purely
+      // to derive itmoSerial above and must not reach the client.
+      expect(result.data[0]).not.toHaveProperty("serialNumber");
+    });
+
+    it("still omits serialNumber on a Pending row that has no itmoSerial yet", async () => {
+      setItmoAuthorizationRows([
+        {
+          id: "21",
+          status: "Pending",
+          serialNumber: "CA0NNN-XX-YY-2-1-1316-2026",
+          cooperativeApproachId: "CA-001",
+          authorizationPurpose: "OtherPurposes",
+        },
+      ]);
+      cooperativeApproachRepo.find.mockResolvedValueOnce([
+        { cooperativeApproachId: "CA-001", caReferenceNumber: "CA0001" },
+      ]);
+
+      const result = await service.queryItmoAuthorizations(
+        { size: 10, page: 1, sort: { key: "createdDate", order: "DESC" } } as any,
+        undefined,
+        user
+      );
+
+      expect(result.data[0]).toMatchObject({
+        id: "21",
+        authorizationPurpose: "OtherPurposes",
+        itmoSerial: null,
+      });
+      expect(result.data[0]).not.toHaveProperty("serialNumber");
     });
   });
 

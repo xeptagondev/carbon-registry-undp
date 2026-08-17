@@ -19,6 +19,10 @@
       {
         "include": "../libs/shared/src/templates/**/*",
         "outDir": "dist"
+      },
+      {
+        "include": "../libs/aef-v2/src/export/templates/**/*",
+        "outDir": "dist"
       }
     ]
   },

@@ -39,14 +39,18 @@ import { addCommSep } from "../../../Definitions/Definitions/programme.definitio
 import { Role } from "../../../Definitions/Enums/role.enum";
 import { COLOR_CONFIGS } from "../../../Config/colorConfigs";
 import { getStatusColor } from "./creditRetirementsTable";
+import {
+  AUTHORIZATION_PURPOSE_LABELS,
+  AuthorizationPurpose,
+} from "../../../Definitions/Enums/authorizationPurpose.enum";
 
 const { Search } = Input;
 
 enum CreditItmoAuthColumns {
   PROJECT_NAME = "projectName",
   ORGANIZATION_NAME = "organizationName",
-  SERIAL_NO = "serialNo",
   ITMO_SERIAL = "itmoSerial",
+  PURPOSE_OF_AUTHORIZATION = "purposeOfAuthorization",
   REFERENCE = "reference",
   DATE = "date",
   CREDITS = "credits",
@@ -301,19 +305,30 @@ export const CreditItmoAuthorizationsTableComponent = (props: any) => {
       },
     },
     {
-      title: t(CreditItmoAuthColumns.SERIAL_NO),
-      key: CreditItmoAuthColumns.SERIAL_NO,
-      align: "left" as const,
-      render: (item: CreditItmoAuthorizationInterface) => {
-        return <span>{item?.serialNumber}</span>;
-      },
-    },
-    {
       title: t(CreditItmoAuthColumns.ITMO_SERIAL),
       key: CreditItmoAuthColumns.ITMO_SERIAL,
       align: "left" as const,
       render: (item: CreditItmoAuthorizationInterface) => {
         return <span>{item?.itmoSerial || "—"}</span>;
+      },
+    },
+    {
+      // Not sortable: the column stores the raw AuthorizationPurpose wire
+      // value, so a server-side sort would order by "OtherPurposes" /
+      // "UseTowardsNDC" rather than by the labels shown here.
+      title: t(CreditItmoAuthColumns.PURPOSE_OF_AUTHORIZATION),
+      key: CreditItmoAuthColumns.PURPOSE_OF_AUTHORIZATION,
+      align: "left" as const,
+      render: (item: CreditItmoAuthorizationInterface) => {
+        return (
+          <span>
+            {item?.authorizationPurpose
+              ? AUTHORIZATION_PURPOSE_LABELS[
+                  item.authorizationPurpose as AuthorizationPurpose
+                ] ?? item.authorizationPurpose
+              : "—"}
+          </span>
+        );
       },
     },
     {
