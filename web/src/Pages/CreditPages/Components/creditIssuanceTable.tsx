@@ -130,7 +130,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
   // The issuances view's projectId column is the project's refId; only
   // projects with at least one issued credit are worth offering here.
   const projectFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.GET_PROJECT,
+    endpoint: API_PATHS.PROJECT_NAME_IDS,
     id: "project",
     mode: "multiple",
     placeholder: t("filterByProject"),

@@ -4,11 +4,18 @@ import { CompanyRole } from "../enum/company.role.enum";
 describe("ProjectManagementService", () => {
   let service: ProjectManagementService;
   let orderByArgs: any[];
+  let selectArgs: any;
+  let helperService: any;
 
   beforeEach(() => {
     orderByArgs = [];
+    selectArgs = undefined;
     const projectViewRepo: any = {
       createQueryBuilder: jest.fn().mockReturnValue({
+        select: jest.fn().mockImplementation(function (this: any, cols: any) {
+          selectArgs = cols;
+          return this;
+        }),
         where: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockImplementation((...args: any[]) => {
           orderByArgs = args;
@@ -16,11 +23,12 @@ describe("ProjectManagementService", () => {
             offset: jest.fn().mockReturnThis(),
             limit: jest.fn().mockReturnThis(),
             getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+            getRawMany: jest.fn().mockResolvedValue([]),
           };
         }),
       }),
     };
-    const helperService: any = {
+    helperService = {
       generateWhereSQL: jest.fn(),
       parseMongoQueryToSQLWithTable: jest.fn(),
       generateSortCol: jest.fn((col: string) => `"${col}"`),
@@ -98,6 +106,76 @@ describe("ProjectManagementService", () => {
         user
       );
       expect(orderByArgs[0]).toBe(`"document_entity"."createdTime"`);
+    });
+  });
+
+  describe("queryNameIds", () => {
+    const dna: any = { companyRole: CompanyRole.DESIGNATED_NATIONAL_AUTHORITY };
+
+    it("selects only the two columns a filter dropdown needs", async () => {
+      await service.queryNameIds({ size: 20, page: 1 } as any, undefined, dna);
+
+      expect(selectArgs).toEqual([
+        `"document_entity"."refId" AS "refId"`,
+        `"document_entity"."title" AS "title"`,
+      ]);
+    });
+
+    it("scopes a Project Developer to its own company, exactly as query() does", async () => {
+      const query: any = {
+        size: 20,
+        page: 1,
+        filterAnd: [{ key: "creditIssued", operation: ">", value: 0 }],
+      };
+
+      await service.queryNameIds(query, undefined, {
+        companyRole: CompanyRole.PROJECT_DEVELOPER,
+        companyId: 7,
+      } as any);
+
+      expect(query.filterAnd).toContainEqual({
+        key: "companyId",
+        operation: "=",
+        value: 7,
+      });
+    });
+
+    it("scopes an Independent Certifier to the projects it is assigned to", async () => {
+      const query: any = { size: 20, page: 1 };
+
+      await service.queryNameIds(query, undefined, {
+        companyRole: CompanyRole.INDEPENDENT_CERTIFIER,
+        companyId: 4,
+      } as any);
+
+      expect(query.filterAnd).toEqual([
+        { key: "independentCertifiers", operation: "@>", value: "{4}" },
+      ]);
+    });
+
+    it("adds no visibility filter for DNA, and keeps the caller's own filters", async () => {
+      const query: any = {
+        size: 20,
+        page: 1,
+        filterAnd: [{ key: "creditIssued", operation: ">", value: 0 }],
+      };
+
+      await service.queryNameIds(query, undefined, dna);
+
+      expect(query.filterAnd).toEqual([
+        { key: "creditIssued", operation: ">", value: 0 },
+      ]);
+    });
+
+    it("sorts on the aliased view column and defaults page/size", async () => {
+      await service.queryNameIds(
+        { sort: { key: "title", order: "ASC" } } as any,
+        undefined,
+        dna
+      );
+
+      expect(orderByArgs[0]).toBe(`"document_entity"."title"`);
+      expect(orderByArgs[1]).toBe("ASC");
     });
   });
 });
