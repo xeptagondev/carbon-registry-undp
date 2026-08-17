@@ -113,7 +113,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
   // Org & Project dropdowns load lazily, page-by-page, and search server-side
   // (see usePaginatedEntityFilter) rather than preloading the whole list.
   const orgFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.ORGANIZATION_DETAILS,
+    endpoint: API_PATHS.ORGANIZATION_NAME_IDS,
     id: "organization",
     mode: "multiple",
     placeholder: t("filterByOrganization"),

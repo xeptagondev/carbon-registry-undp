@@ -77,6 +77,7 @@ export const API_PATHS = {
   ORGANIZATION_DETAILS: "national/organisation/query",
   UPDATE_ORGANIZATION: "national/organisation/update",
   ORGANIZATION_NAMES: "national/organisation/queryNames",
+  ORGANIZATION_NAME_IDS: "national/organisation/queryNameIds",
   DOWNLOAD_ORGANIZATION_DATA: "national/organisation/download",
   ORGANIZATION_PROFILE_DETAILS: (companyId: string) =>
     `national/organisation/profile?id=${companyId}`,

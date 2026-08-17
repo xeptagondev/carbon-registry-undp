@@ -23,7 +23,7 @@ interface OrganizationBalance {
 }
 
 export interface CreditBalanceByOrganizationTableProps {
-  selectedOrganizations: string[];
+  selectedOrganizationIds: string[];
   refreshGeneration: number;
 }
 
@@ -47,7 +47,7 @@ interface OrganizationBalanceQuery {
   page: number;
   size: number;
   filterAnd?: Array<{
-    key: 'organizationName';
+    key: 'organizationId';
     operation: 'in';
     value: string[];
   }>;
@@ -95,7 +95,7 @@ const columns: ColumnsType<OrganizationBalance> = [
 ];
 
 export const CreditBalanceByOrganizationTable = ({
-  selectedOrganizations,
+  selectedOrganizationIds,
   refreshGeneration,
 }: CreditBalanceByOrganizationTableProps) => {
   const { post } = useConnection();
@@ -107,7 +107,7 @@ export const CreditBalanceByOrganizationTable = ({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const requestGenerationRef = useRef(0);
-  const selectedOrganizationsKey = selectedOrganizations.join('\u0000');
+  const selectedOrganizationsKey = selectedOrganizationIds.join('\u0000');
 
   useEffect(() => setCurrentPage(1), [selectedOrganizationsKey]);
 
@@ -122,7 +122,7 @@ export const CreditBalanceByOrganizationTable = ({
       size: pageSize,
       filterAnd: organizations.length > 0
         ? [{
-          key: 'organizationName',
+          key: 'organizationId',
           operation: 'in',
           value: organizations,
         }]

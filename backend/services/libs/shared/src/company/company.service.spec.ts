@@ -4,28 +4,47 @@ import { CompanyRole } from "../enum/company.role.enum";
 describe("CompanyService", () => {
   let service: CompanyService;
   let orderByArgs: any[];
+  let selectArgs: any[];
+  let offsetArg: number;
+  let limitArg: number;
   let companyRepo: any;
+  let helperService: any;
   let creditBlocksEntityRepository: any;
   let creditBlockOrgAggregationViewEntityRepository: any;
   let creditBlockOrgBalancesViewEntityRepository: any;
 
   beforeEach(() => {
     orderByArgs = [];
+    selectArgs = [];
+    offsetArg = undefined;
+    limitArg = undefined;
     companyRepo = {
       find: jest.fn().mockResolvedValue([]),
       createQueryBuilder: jest.fn().mockReturnValue({
+        select: jest.fn().mockImplementation(function (this: any, cols: any) {
+          selectArgs = cols;
+          return this;
+        }),
         where: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockImplementation((...args: any[]) => {
           orderByArgs = args;
-          return {
-            offset: jest.fn().mockReturnThis(),
-            limit: jest.fn().mockReturnThis(),
+          const tail: any = {
+            offset: jest.fn().mockImplementation((value: number) => {
+              offsetArg = value;
+              return tail;
+            }),
+            limit: jest.fn().mockImplementation((value: number) => {
+              limitArg = value;
+              return tail;
+            }),
             getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+            getRawMany: jest.fn().mockResolvedValue([]),
           };
+          return tail;
         }),
       }),
     };
-    const helperService: any = {
+    helperService = {
       generateWhereSQL: jest.fn(),
       parseMongoQueryToSQL: jest.fn(),
     };
@@ -92,6 +111,52 @@ describe("CompanyService", () => {
       );
 
       expect(orderByArgs[0]).toBe(`"name"`);
+    });
+  });
+
+  describe("queryNameIds", () => {
+    it("selects only the two columns a filter dropdown needs", async () => {
+      await service.queryNameIds({ size: 20, page: 1 } as any, undefined);
+
+      expect(selectArgs).toEqual(['"companyId"', '"name"']);
+    });
+
+    it("leaves the caller's filters alone - unlike queryNames, it pins no state", async () => {
+      const query: any = {
+        size: 20,
+        page: 1,
+        filterAnd: [{ key: "state", operation: "in", value: ["0", "1"] }],
+      };
+
+      await service.queryNameIds(query, undefined);
+
+      // queryNames would have appended its own `state in [1]` here, which
+      // would silently drop Pending organizations from the caller's list.
+      expect(query.filterAnd).toEqual([
+        { key: "state", operation: "in", value: ["0", "1"] },
+      ]);
+      expect(helperService.generateWhereSQL).toHaveBeenCalledWith(
+        query,
+        undefined
+      );
+    });
+
+    it("honours the requested sort and paginates from page/size", async () => {
+      await service.queryNameIds(
+        { size: 20, page: 3, sort: { key: "name", order: "ASC" } } as any,
+        undefined
+      );
+
+      expect(orderByArgs).toEqual([`"name"`, "ASC"]);
+      expect(offsetArg).toBe(40);
+      expect(limitArg).toBe(20);
+    });
+
+    it("defaults page/size so a bare request can't produce a NaN offset", async () => {
+      await service.queryNameIds({} as any, undefined);
+
+      expect(offsetArg).toBe(0);
+      expect(limitArg).toBe(10);
     });
   });
 

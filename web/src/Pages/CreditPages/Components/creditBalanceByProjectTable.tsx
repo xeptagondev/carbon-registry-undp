@@ -75,7 +75,7 @@ interface ProjectBalance {
 }
 
 export interface CreditBalanceByProjectTableProps {
-  selectedOrganizations: string[];
+  selectedOrganizationIds: string[];
   selectedProjects: string[];
   refreshGeneration: number;
   onBalanceChanged: () => void;
@@ -427,7 +427,7 @@ const columns: ColumnsType<ProjectBalance> = [
 ];
 
 export const CreditBalanceByProjectTable = ({
-  selectedOrganizations,
+  selectedOrganizationIds,
   selectedProjects,
   refreshGeneration,
   onBalanceChanged,
@@ -446,7 +446,7 @@ export const CreditBalanceByProjectTable = ({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const projectRequestGeneration = useRef(0);
-  const selectedOrganizationsKey = selectedOrganizations.join('\u0000');
+  const selectedOrganizationsKey = selectedOrganizationIds.join('\u0000');
   const selectedProjectsKey = selectedProjects.join('\u0000');
   const [expandedProjectId, setExpandedProjectId] = useState<string>();
   const [collapsingProjectId, setCollapsingProjectId] = useState<string>();
@@ -481,7 +481,7 @@ export const CreditBalanceByProjectTable = ({
 
     if (organizations.length > 0) {
       filterAnd.push({
-        key: 'projectOwnerName',
+        key: 'projectOwnerId',
         operation: 'in',
         value: organizations,
       });
