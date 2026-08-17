@@ -26,6 +26,7 @@
   "statusSUPERSEDED": "Superseded",
   "carpPending": "Populated by CARP",
   "notApplicable": "NA",
+  "notSet": "-",
   "carpPopulatedHint": "This field is populated by the CARP and must be left empty on submission.",
   "notYetSubmitted": "Not Submitted",
 
