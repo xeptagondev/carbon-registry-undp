@@ -1004,6 +1004,25 @@ export class CompanyService {
     return new DataListResponseDto(resp, undefined);
   }
 
+  async queryNameIds(query: QueryDto, abilityCondition: string): Promise<any> {
+    query.page = query.page || 1;
+    query.size = query.size || 10;
+    const resp = await this.companyRepo
+      .createQueryBuilder()
+      .select(['"companyId"', '"name"'])
+      .where(
+        this.helperService.generateWhereSQL(
+          query,
+          this.helperService.parseMongoQueryToSQL(abilityCondition)
+        )
+      )
+      .orderBy(query?.sort?.key && `"${query?.sort?.key}"`, query?.sort?.order)
+      .offset(query.size * query.page - query.size)
+      .limit(query.size)
+      .getRawMany();
+    return new DataListResponseDto(resp, undefined);
+  }
+
   async findByTaxId(taxId: string): Promise<Company | undefined> {
     if (!taxId) {
       return null;

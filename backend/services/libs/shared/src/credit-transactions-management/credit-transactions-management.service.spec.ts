@@ -46,6 +46,18 @@ describe("CreditTransactionsManagementService", () => {
     creditBlockItmoAuthorizationsViewEntityRepository = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
     };
+    const creditBlockBalancesViewEntityRepository: any = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+    };
+    const creditBlockOrgBalancesViewEntityRepository: any = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+    };
+    const creditBlockProjectBalancesViewEntityRepository: any = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+    };
+    const creditBlockProjectHolderBalancesViewEntityRepository: any = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+    };
     const helperService: any = {
       generateWhereSQL: jest.fn().mockReturnValue(undefined),
     };
@@ -83,15 +95,15 @@ describe("CreditTransactionsManagementService", () => {
       {} as any, // counterService
       creditTransactionsEntityRepository,
       {} as any, // documentManagementService
-      {} as any, // creditBlockBalancesViewEntityRepository
+      creditBlockBalancesViewEntityRepository,
       creditBlockTransfersViewEntityRepository,
       {} as any, // creditBlockRetirementsViewEntityRepository
       creditBlockItmoAuthorizationsViewEntityRepository,
       creditBlockExplorerViewEntityRepository,
       creditBlockIssuancesViewEntityRepository,
-      {} as any, // creditBlockOrgBalancesViewEntityRepository
-      {} as any, // creditBlockProjectBalancesViewEntityRepository
-      {} as any, // creditBlockProjectHolderBalancesViewEntityRepository
+      creditBlockOrgBalancesViewEntityRepository,
+      creditBlockProjectBalancesViewEntityRepository,
+      creditBlockProjectHolderBalancesViewEntityRepository,
       creditBlockOrgTransactionsViewEntityRepository,
       cooperativeApproachRepo,
       {} as any, // caAuthorizedEntityRepo
@@ -255,6 +267,146 @@ describe("CreditTransactionsManagementService", () => {
       expect(orderByCalls).toHaveLength(1);
       expect(orderByCalls[0][0]).toBe(`"issuanceDate"`);
       expect(orderByCalls[0][1]).toBe("DESC");
+    });
+  });
+
+  describe("queryBalanceByProject sorting", () => {
+    const dna: any = { companyRole: CompanyRole.DESIGNATED_NATIONAL_AUTHORITY };
+    const projectDeveloper: any = {
+      companyRole: CompanyRole.PROJECT_DEVELOPER,
+      companyId: 3,
+    };
+
+    it("sorts moBalance by the non-ITMO remainder, not a column of that name", async () => {
+      await service.queryBalanceByProject(
+        { size: 10, page: 1, sort: { key: "moBalance", order: "DESC" } } as any,
+        undefined,
+        dna
+      );
+
+      expect(orderByCalls[0][0]).toBe(
+        `("projectBalance"."creditBalance" - "projectBalance"."itmoBalance")`
+      );
+      expect(orderByCalls[0][1]).toBe("DESC");
+    });
+
+    it("sorts moReserved by the non-ITMO remainder of the reserved amount", async () => {
+      await service.queryBalanceByProject(
+        { size: 10, page: 1, sort: { key: "moReserved", order: "ASC" } } as any,
+        undefined,
+        dna
+      );
+
+      expect(orderByCalls[0][0]).toBe(
+        `("projectBalance"."reservedCredits" - "projectBalance"."itmoReservedCredits")`
+      );
+      expect(orderByCalls[0][1]).toBe("ASC");
+    });
+
+    it("maps the MO keys on the Project Developer's holder-scoped view too", async () => {
+      await service.queryBalanceByProject(
+        { size: 10, page: 1, sort: { key: "moBalance", order: "ASC" } } as any,
+        undefined,
+        projectDeveloper
+      );
+
+      expect(orderByCalls[0][0]).toBe(
+        `("projectBalance"."creditBalance" - "projectBalance"."itmoBalance")`
+      );
+    });
+
+    it("keeps unrelated sort keys on the plain-column path, with a stable tiebreaker", async () => {
+      await service.queryBalanceByProject(
+        { size: 10, page: 1, sort: { key: "projectName", order: "ASC" } } as any,
+        undefined,
+        dna
+      );
+
+      expect(orderByCalls).toHaveLength(2);
+      expect(orderByCalls[0][0]).toBe(`"projectName"`);
+      expect(orderByCalls[1][0]).toBe(`"projectBalance"."projectId"`);
+    });
+
+    it("adds no ordering at all when no sort key is given", async () => {
+      await service.queryBalanceByProject(
+        { size: 10, page: 1 } as any,
+        undefined,
+        dna
+      );
+
+      expect(orderByCalls).toHaveLength(1);
+      expect(orderByCalls[0][0]).toBeUndefined();
+    });
+  });
+
+  describe("queryBalanceByOrganization sorting", () => {
+    // DNA-only endpoint - any other role is rejected before the query runs.
+    const dna: any = { companyRole: CompanyRole.DESIGNATED_NATIONAL_AUTHORITY };
+
+    it("sorts moBalance by the non-ITMO remainder, not a column of that name", async () => {
+      await service.queryBalanceByOrganization(
+        { size: 10, page: 1, sort: { key: "moBalance", order: "DESC" } } as any,
+        undefined,
+        dna
+      );
+
+      expect(orderByCalls[0][0]).toBe(
+        `("orgBalance"."creditBalance" - "orgBalance"."itmoBalance")`
+      );
+      expect(orderByCalls[0][1]).toBe("DESC");
+    });
+
+    it("sorts moReserved by the non-ITMO remainder of the reserved amount", async () => {
+      await service.queryBalanceByOrganization(
+        { size: 10, page: 1, sort: { key: "moReserved", order: "ASC" } } as any,
+        undefined,
+        dna
+      );
+
+      expect(orderByCalls[0][0]).toBe(
+        `("orgBalance"."reservedCredits" - "orgBalance"."itmoReservedCredits")`
+      );
+    });
+
+    it("keeps unrelated sort keys on the plain-column path, with a stable tiebreaker", async () => {
+      await service.queryBalanceByOrganization(
+        { size: 10, page: 1, sort: { key: "organizationName", order: "ASC" } } as any,
+        undefined,
+        dna
+      );
+
+      expect(orderByCalls).toHaveLength(2);
+      expect(orderByCalls[0][0]).toBe(`"organizationName"`);
+      expect(orderByCalls[1][0]).toBe(`"orgBalance"."organizationId"`);
+    });
+  });
+
+  describe("queryCreditBalances sorting", () => {
+    const user: any = { companyRole: CompanyRole.DESIGNATED_NATIONAL_AUTHORITY };
+
+    it("sorts serialNumber by its numeric segments instead of lexicographically", async () => {
+      await service.queryCreditBalances(
+        { size: 10, page: 1, sort: { key: "serialNumber", order: "ASC" } } as any,
+        undefined,
+        user
+      );
+
+      const [projectId, blockStart] = orderByCalls.map((call) => call[0]);
+      expect(projectId).toContain("split_part(\"creditBlock\".\"serialNumber\", '-', 4)::int");
+      expect(blockStart).toContain("split_part(\"creditBlock\".\"serialNumber\", '-', 5)::int");
+    });
+
+    it("keeps unrelated sort keys on the plain-column path, with a stable tiebreaker", async () => {
+      await service.queryCreditBalances(
+        { size: 10, page: 1, sort: { key: "creditAmount", order: "DESC" } } as any,
+        undefined,
+        user
+      );
+
+      expect(orderByCalls).toHaveLength(2);
+      expect(orderByCalls[0][0]).toBe(`"creditAmount"`);
+      expect(orderByCalls[0][1]).toBe("DESC");
+      expect(orderByCalls[1][0]).toBe(`"creditBlock"."id"`);
     });
   });
 

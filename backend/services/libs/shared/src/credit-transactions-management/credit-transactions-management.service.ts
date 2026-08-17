@@ -8,7 +8,7 @@ import { CompanyService } from "../company/company.service";
 import { ProgrammeLedgerService } from "../programme-ledger/programme-ledger.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
-import { EntityManager, In, Repository } from "typeorm";
+import { EntityManager, In, Repository, SelectQueryBuilder } from "typeorm";
 import { TxType } from "../enum/txtype.enum";
 import { plainToClass } from "class-transformer";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
@@ -1295,18 +1295,33 @@ export class CreditTransactionsManagementService {
         HttpStatus.BAD_REQUEST
       );
     }
-    const resp = await this.creditBlockBalancesViewEntityRepository
+    const qb = this.creditBlockBalancesViewEntityRepository
       .createQueryBuilder("creditBlock")
-      .where(this.helperService.generateWhereSQL(query, abilityCondition))
-      .orderBy(
-        query?.sort?.key && `"${query?.sort?.key}"`,
-        query?.sort?.order,
-        query?.sort?.nullFirst !== undefined
-          ? query?.sort?.nullFirst === true
-            ? "NULLS FIRST"
-            : "NULLS LAST"
-          : undefined
-      )
+      .where(this.helperService.generateWhereSQL(query, abilityCondition));
+    const nulls =
+      query?.sort?.nullFirst !== undefined
+        ? query?.sort?.nullFirst === true
+          ? "NULLS FIRST"
+          : "NULLS LAST"
+        : undefined;
+    if (query?.sort?.key === "serialNumber") {
+      // Same fix as queryExplorer/queryIssuances: "serialNumber" is a single
+      // formatted string
+      // (CA0NNN-NG-XX-{projectId}-{blockStart}-{blockEnd}-{vintage}), so a
+      // plain text ORDER BY sorts it lexicographically. Sort by its numeric
+      // project ID and block start instead.
+      qb.orderBy(this.serialProjectIdNumericExpr(), query.sort.order, nulls)
+        .addOrderBy(this.serialRangeStartExpr(), query.sort.order, nulls);
+    } else {
+      qb.orderBy(query?.sort?.key && `"${query?.sort?.key}"`, query?.sort?.order, nulls);
+    }
+    if (query?.sort?.key) {
+      // Stable tiebreaker - the balance list is paged (and infinite-scrolled
+      // by the By Project detail table), so ties on a non-unique sort key
+      // must not let OFFSET/LIMIT repeat or drop blocks between pages.
+      qb.addOrderBy(`"creditBlock"."id"`, query?.sort?.order);
+    }
+    const resp = await qb
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
@@ -1340,18 +1355,11 @@ export class CreditTransactionsManagementService {
         HttpStatus.BAD_REQUEST
       );
     }
-    const resp = await this.creditBlockOrgBalancesViewEntityRepository
+    const qb = this.creditBlockOrgBalancesViewEntityRepository
       .createQueryBuilder("orgBalance")
-      .where(this.helperService.generateWhereSQL(query, abilityCondition))
-      .orderBy(
-        query?.sort?.key && `"${query?.sort?.key}"`,
-        query?.sort?.order,
-        query?.sort?.nullFirst !== undefined
-          ? query?.sort?.nullFirst === true
-            ? "NULLS FIRST"
-            : "NULLS LAST"
-          : undefined
-      )
+      .where(this.helperService.generateWhereSQL(query, abilityCondition));
+    this.applyBalanceAggregateOrder(qb, query, "orgBalance", "organizationId");
+    const resp = await qb
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
@@ -1404,18 +1412,16 @@ export class CreditTransactionsManagementService {
       query.filterAnd
         ? query.filterAnd.push(onlyOwn)
         : (query.filterAnd = [onlyOwn]);
-      const resp = await this.creditBlockProjectHolderBalancesViewEntityRepository
+      const holderQb = this.creditBlockProjectHolderBalancesViewEntityRepository
         .createQueryBuilder("projectBalance")
-        .where(this.helperService.generateWhereSQL(query, abilityCondition))
-        .orderBy(
-          query?.sort?.key && `"${query?.sort?.key}"`,
-          query?.sort?.order,
-          query?.sort?.nullFirst !== undefined
-            ? query?.sort?.nullFirst === true
-              ? "NULLS FIRST"
-              : "NULLS LAST"
-            : undefined
-        )
+        .where(this.helperService.generateWhereSQL(query, abilityCondition));
+      this.applyBalanceAggregateOrder(
+        holderQb,
+        query,
+        "projectBalance",
+        "projectId"
+      );
+      const resp = await holderQb
         .skip(query.size * query.page - query.size)
         .take(query.size)
         .getManyAndCount();
@@ -1425,18 +1431,11 @@ export class CreditTransactionsManagementService {
       );
     }
 
-    const resp = await this.creditBlockProjectBalancesViewEntityRepository
+    const qb = this.creditBlockProjectBalancesViewEntityRepository
       .createQueryBuilder("projectBalance")
-      .where(this.helperService.generateWhereSQL(query, abilityCondition))
-      .orderBy(
-        query?.sort?.key && `"${query?.sort?.key}"`,
-        query?.sort?.order,
-        query?.sort?.nullFirst !== undefined
-          ? query?.sort?.nullFirst === true
-            ? "NULLS FIRST"
-            : "NULLS LAST"
-          : undefined
-      )
+      .where(this.helperService.generateWhereSQL(query, abilityCondition));
+    this.applyBalanceAggregateOrder(qb, query, "projectBalance", "projectId");
+    const resp = await qb
       .skip(query.size * query.page - query.size)
       .take(query.size)
       .getManyAndCount();
@@ -1444,6 +1443,47 @@ export class CreditTransactionsManagementService {
       resp.length > 0 ? resp[0] : undefined,
       resp.length > 1 ? resp[1] : undefined
     );
+  }
+
+  /**
+   * ORDER BY for the three aggregate balance views (By Project for DNA and
+   * for a Project Developer, and By Organization) - they share the same
+   * creditBalance / reservedCredits / itmo* column names.
+   * "MO" figures are the non-ITMO remainder of those totals and have no
+   * column of their own - the frontend derives them as
+   * creditBalance - itmoBalance - so those two sort keys are mapped to the
+   * same expression here rather than quoted as plain columns.
+   * tiebreakerColumn (the view's grain: projectId / organizationId) is
+   * appended as a stable tiebreaker: without it, ties on an aggregate
+   * (many rows with a 0 balance) let OFFSET/LIMIT repeat or drop rows
+   * between pages.
+   */
+  private applyBalanceAggregateOrder(
+    qb: SelectQueryBuilder<any>,
+    query: QueryDto,
+    alias: string,
+    tiebreakerColumn: string
+  ): SelectQueryBuilder<any> {
+    const nulls =
+      query?.sort?.nullFirst !== undefined
+        ? query?.sort?.nullFirst === true
+          ? "NULLS FIRST"
+          : "NULLS LAST"
+        : undefined;
+    const key = query?.sort?.key;
+    const moExpressions = {
+      moBalance: `("${alias}"."creditBalance" - "${alias}"."itmoBalance")`,
+      moReserved: `("${alias}"."reservedCredits" - "${alias}"."itmoReservedCredits")`,
+    };
+    qb.orderBy(
+      key && (moExpressions[key] ?? `"${key}"`),
+      query?.sort?.order,
+      nulls
+    );
+    if (key) {
+      qb.addOrderBy(`"${alias}"."${tiebreakerColumn}"`, query?.sort?.order);
+    }
+    return qb;
   }
 
   public async queryBalanceProjectNames(

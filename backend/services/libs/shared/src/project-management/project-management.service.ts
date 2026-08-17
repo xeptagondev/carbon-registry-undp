@@ -60,11 +60,7 @@ export class ProjectManagementService {
     return await this.auditLogService.getLogs(refId);
   }
 
-  async query(
-    query: QueryDto,
-    abilityCondition: string,
-    user: User
-  ): Promise<DataListResponseDto> {
+  private applyProjectVisibilityScope(query: QueryDto, user: User): void {
     let permissionFilter: FilterEntry;
     if (user.companyRole == CompanyRole.PROJECT_DEVELOPER) {
       permissionFilter = {
@@ -86,6 +82,51 @@ export class ProjectManagementService {
         query.filterAnd = [permissionFilter];
       }
     }
+  }
+
+  async queryNameIds(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    query.page = query.page || 1;
+    query.size = query.size || 10;
+    this.applyProjectVisibilityScope(query, user);
+    const resp = await this.projectViewRepo
+      .createQueryBuilder("document_entity")
+      .select([
+        `"document_entity"."refId" AS "refId"`,
+        `"document_entity"."title" AS "title"`,
+      ])
+      .where(
+        this.helperService.generateWhereSQL(
+          query,
+          this.helperService.parseMongoQueryToSQLWithTable(
+            "document_entity",
+            abilityCondition
+          ),
+          "document_entity"
+        )
+      )
+      .orderBy(
+        query?.sort?.key &&
+          `"document_entity".${this.helperService.generateSortCol(
+            query?.sort?.key
+          )}`,
+        query?.sort?.order
+      )
+      .offset(query.size * query.page - query.size)
+      .limit(query.size)
+      .getRawMany();
+    return new DataListResponseDto(resp, undefined);
+  }
+
+  async query(
+    query: QueryDto,
+    abilityCondition: string,
+    user: User
+  ): Promise<DataListResponseDto> {
+    this.applyProjectVisibilityScope(query, user);
     const skip = query.size * query.page - query.size;
     let resp = await this.projectViewRepo
       .createQueryBuilder("document_entity")

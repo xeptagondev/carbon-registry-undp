@@ -18,6 +18,7 @@ export const API_PATHS = {
   //PROJECT
   PROJECT_CREATE: "national/projectManagement/create",
   GET_PROJECT: "national/projectManagement/query",
+  PROJECT_NAME_IDS: "national/projectManagement/queryNameIds",
   PROJECT_BY_ID: "national/programmeSl/getProjectById",
   ALL_PROJECTS: "national/programme/query",
   ADD_PROJECT_DOC: "national/programme/addDocument",
@@ -77,6 +78,7 @@ export const API_PATHS = {
   ORGANIZATION_DETAILS: "national/organisation/query",
   UPDATE_ORGANIZATION: "national/organisation/update",
   ORGANIZATION_NAMES: "national/organisation/queryNames",
+  ORGANIZATION_NAME_IDS: "national/organisation/queryNameIds",
   DOWNLOAD_ORGANIZATION_DATA: "national/organisation/download",
   ORGANIZATION_PROFILE_DETAILS: (companyId: string) =>
     `national/organisation/profile?id=${companyId}`,

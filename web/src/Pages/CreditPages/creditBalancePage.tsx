@@ -54,7 +54,7 @@ export const CreditBalancePage = () => {
     }
   }, [canFilterOrganization]);
 
-  const selectedOrganizations = canFilterOrganization
+  const selectedOrganizationIds = canFilterOrganization
     && Array.isArray(filterValues.organizations)
     ? filterValues.organizations.map(String)
     : [];
@@ -67,12 +67,12 @@ export const CreditBalancePage = () => {
   };
 
   const orgFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.ORGANIZATION_DETAILS,
+    endpoint: API_PATHS.ORGANIZATION_NAME_IDS,
     id: 'organizations',
     mode: 'multiple',
     placeholder: t('selectOrganization'),
     labelKey: 'name',
-    valueKey: 'name',
+    valueKey: 'companyId',
     sortKey: 'name',
     extraFilters: [
       { key: 'companyRole', operation: '=', value: CompanyRole.PROJECT_DEVELOPER },
@@ -178,19 +178,19 @@ export const CreditBalancePage = () => {
 
             {view === 'project' ? (
               <CreditBalanceByProjectTable
-                selectedOrganizations={selectedOrganizations}
+                selectedOrganizationIds={selectedOrganizationIds}
                 selectedProjects={selectedProjects}
                 refreshGeneration={refreshGeneration}
                 onBalanceChanged={refreshBalances}
               />
             ) : canViewOrganization ? (
               <CreditBalanceByOrganizationTable
-                selectedOrganizations={selectedOrganizations}
+                selectedOrganizationIds={selectedOrganizationIds}
                 refreshGeneration={refreshGeneration}
               />
             ) : (
               <CreditBalanceByProjectTable
-                selectedOrganizations={selectedOrganizations}
+                selectedOrganizationIds={selectedOrganizationIds}
                 selectedProjects={selectedProjects}
                 refreshGeneration={refreshGeneration}
                 onBalanceChanged={refreshBalances}

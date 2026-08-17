@@ -222,7 +222,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
   // Org & Project dropdowns load lazily, page-by-page, and search server-side
   // (see usePaginatedEntityFilter) rather than preloading the whole list.
   const orgFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.ORGANIZATION_DETAILS,
+    endpoint: API_PATHS.ORGANIZATION_NAME_IDS,
     id: "organization",
     mode: "multiple",
     placeholder: t("filterByOrganization"),
@@ -239,7 +239,7 @@ export const CreditBlockListTableComponent = ({ t }: CreditBlockListTableProps) 
   // The explorer view's projectId column is the project's refId; only
   // projects with at least one issued credit are worth offering here.
   const projectFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.GET_PROJECT,
+    endpoint: API_PATHS.PROJECT_NAME_IDS,
     id: "project",
     mode: "multiple",
     placeholder: t("filterByProject"),
