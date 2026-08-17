@@ -5,6 +5,7 @@ import {
   AefTableName,
   AuthorizedEntitiesProvider,
   exportFileName,
+  formatSubmissionDate,
   HoldingsProvider,
   loadSubmissionBundle,
   openReportingYear,
@@ -86,7 +87,7 @@ export class AefV2ReportService {
     const bundle = await this.loadBundle(reportedYear);
     const exportData = toAefSubmissionExport(bundle);
     return {
-      data: exportData[table] ?? [],
+      data: this.forDisplay(table, exportData[table] ?? []),
       provisional:
         table === "t4Holdings"
           ? bundle.provisional.holdings
@@ -100,6 +101,38 @@ export class AefV2ReportService {
             ? bundle.snapshotAt.authorizedEntities
             : undefined,
     };
+  }
+
+  /**
+   * Presentation shaping for the reporting tables, applied on the read path
+   * only — `download` deliberately does not call this.
+   *
+   * Table 3's Action date is stored as an ISO 8601 UTC datetime, which is what
+   * the AEF requires (`field-spec.ts` types it `datetime`, and `recordAction`
+   * derives the reporting year by parsing it), so the stored value and the CARP
+   * export keep the time. On screen it reads as the day alone, matching Table
+   * 2's Date of authorization, which the mapper already stores as `dd/mm/yyyy`.
+   *
+   * `formatSubmissionDate` is UTC-based, so the day shown is the day the action
+   * carries rather than the server's local rendering of that instant.
+   */
+  private forDisplay(table: AefTableName, rows: readonly Record<string, unknown>[]) {
+    if (table !== "t3Actions") {
+      return rows;
+    }
+    return rows.map((row) => {
+      const actionDate = row.aefT3ActionsDate;
+      if (typeof actionDate !== "string") {
+        return row;
+      }
+      const parsed = new Date(actionDate);
+      // A value that is not a parseable date is passed through untouched
+      // rather than turned into "NaN/NaN/NaN".
+      if (Number.isNaN(parsed.getTime())) {
+        return row;
+      }
+      return { ...row, aefT3ActionsDate: formatSubmissionDate(parsed) };
+    });
   }
 
   async validate(reportedYear: number) {
