@@ -131,6 +131,41 @@ describe("AefV2ReportService query sorting", () => {
   });
 
   /**
+   * Holdings overrides the `updatedAt` default: an open year's rows are computed
+   * live by the provider and carry no such key, so the default would be a no-op.
+   */
+  it("defaults Holdings to authorization id, descending", async () => {
+    const service = buildService({
+      holdings: [
+        { aefT4HoldingsAuthorizationId: "AUTH-002" },
+        { aefT4HoldingsAuthorizationId: "AUTH-003" },
+        { aefT4HoldingsAuthorizationId: "AUTH-001" },
+      ],
+    });
+
+    const result = await service.query("t4Holdings", 2026);
+
+    expect(result.data.map((row: any) => row.aefT4HoldingsAuthorizationId)).toEqual([
+      "AUTH-003",
+      "AUTH-002",
+      "AUTH-001",
+    ]);
+  });
+
+  it("leaves the other tables on the updatedAt default", async () => {
+    const service = buildService({
+      actions: [
+        { aefT3ActionsType: "older", updatedAt: "2026-01-05T00:00:00.000Z" },
+        { aefT3ActionsType: "newer", updatedAt: "2026-08-11T00:00:00.000Z" },
+      ],
+    });
+
+    const result = await service.query("t3Actions", 2026);
+
+    expect(result.data.map((row: any) => row.aefT3ActionsType)).toEqual(["newer", "older"]);
+  });
+
+  /**
    * The store hands back `Date` objects for the `timestamptz` metadata columns,
    * not the ISO strings `AefRecordMeta` types them as. Stringifying a Date gives
    * `"Sat Jan 03 2026 …"`, which collates by weekday name — so these two dates,
