@@ -47,6 +47,18 @@ export interface AefV2DownloadResult {
 /** Applied when the caller sends no `sort`. */
 const DEFAULT_SORT: SortEntry = { key: "updatedAt", order: "DESC" };
 
+/**
+ * Per-table overrides of {@link DEFAULT_SORT}.
+ *
+ * Holdings rows for an open year are computed live by the provider and never
+ * reach the store, so they carry no `updatedAt` for the default key to sort on —
+ * it orders by authorization id instead, which is present on both the live and
+ * the frozen path.
+ */
+const TABLE_DEFAULT_SORT: Partial<Record<AefTableName, SortEntry>> = {
+  t4Holdings: { key: "aefT4HoldingsAuthorizationId", order: "DESC" },
+};
+
 /** A full ISO 8601 instant — excludes bare dates/years and anything else `Date.parse` would guess at. */
 const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
@@ -106,12 +118,13 @@ export class AefV2ReportService {
    * for Holdings/Authorized entities, the live-vs-frozen split itself. The
    * bundle already does all of that.
    */
-  async query(table: AefTableName, reportedYear: number, sort: SortEntry = DEFAULT_SORT) {
+  async query(table: AefTableName, reportedYear: number, sort?: SortEntry) {
     const bundle = await this.loadBundle(reportedYear);
     const exportData = toAefSubmissionExport(bundle);
+    const effectiveSort = sort ?? TABLE_DEFAULT_SORT[table] ?? DEFAULT_SORT;
     return {
       // Sorted before forDisplay, which rewrites Table 3's date to dd/mm/yyyy.
-      data: this.forDisplay(table, this.sorted(exportData[table] ?? [], sort)),
+      data: this.forDisplay(table, this.sorted(exportData[table] ?? [], effectiveSort)),
       provisional:
         table === "t4Holdings"
           ? bundle.provisional.holdings

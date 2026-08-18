@@ -49,7 +49,7 @@ const initialTableState = (): Record<string, TableState> =>
   TABULAR_REPORT_TYPES.reduce(
     (acc, type) => ({
       ...acc,
-      [type]: { loading: false, data: [], total: 0, page: 1, pageSize: 10 },
+      [type]: { loading: false, data: [], total: 0, page: 1, pageSize: 5 },
     }),
     {} as Record<string, TableState>
   );
@@ -119,11 +119,11 @@ const ReportingComponent = (props: { translator: i18n }) => {
   const fetchTable = async (type: REPORT_TYPES) => {
     setTable(type, { loading: true });
     try {
+      // `sort` is left off so each table gets its own backend default — newest
+      // first for the store-backed tables, authorization id for Holdings.
       const res = await post(API_PATHS.AEF_V2_QUERY, {
         table: AEF_V2_TABLE_NAME[type],
         reportedYear,
-        // Newest first.
-        sort: { key: "updatedAt", order: "DESC" },
       });
       const rows: Record<string, unknown>[] =
         res?.statusText === "SUCCESS" ? res.data?.data ?? [] : [];
@@ -247,8 +247,8 @@ const ReportingComponent = (props: { translator: i18n }) => {
       pagination={{
         total: tableState[type]?.total ?? 0,
         current: tableState[type]?.page ?? 1,
-        pageSize: tableState[type]?.pageSize ?? 10,
-        pageSizeOptions: [10, 20, 30],
+        pageSize: tableState[type]?.pageSize ?? 5,
+        pageSizeOptions: [5, 10, 20, 30],
       }}
       downloadCSV={
         type === REPORT_TYPES.SUBMISSION ? () => downloadSubmission(FILE_TYPES.csv) : undefined
