@@ -122,6 +122,8 @@ const ReportingComponent = (props: { translator: i18n }) => {
       const res = await post(API_PATHS.AEF_V2_QUERY, {
         table: AEF_V2_TABLE_NAME[type],
         reportedYear,
+        // Newest first.
+        sort: { key: "updatedAt", order: "DESC" },
       });
       const rows: Record<string, unknown>[] =
         res?.statusText === "SUCCESS" ? res.data?.data ?? [] : [];
