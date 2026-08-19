@@ -18,4 +18,12 @@ export enum CadTrustResourceType {
   PROGRAM = "PROGRAM",
   /** /v2/methodology, primary key cadTrustMethodologyId. */
   METHODOLOGY = "METHODOLOGY",
+  /** /v2/stakeholder, primary key cadTrustStakeholderId. */
+  STAKEHOLDER = "STAKEHOLDER",
+  /** /v2/project-methodology, primary key cadTrustProjectMethodologyId. */
+  PROJECT_METHODOLOGY = "PROJECT_METHODOLOGY",
+  /** /v2/stakeholder-projects, primary key cadTrustStakeholderProjectId. */
+  STAKEHOLDER_PROJECT = "STAKEHOLDER_PROJECT",
+  /** /v2/location, primary key cadTrustLocationId. */
+  LOCATION = "LOCATION",
 }

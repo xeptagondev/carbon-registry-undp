@@ -5,8 +5,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AsyncOperationsModule } from "../async-operations/async-operations.module";
 import { CadTrustSyncRecordEntity } from "../entities/cadtrust.sync.record.entity";
+import { Company } from "../entities/company.entity";
 import { DocumentEntity } from "../entities/document.entity";
-import { ProjectEntity } from "../entities/projects.entity";
 import { CadTrustPicklistService } from "./cadtrust-picklist.service";
 import { CadTrustRegistryProfileService } from "./cadtrust-registry-profile.service";
 import {
@@ -19,7 +19,9 @@ import { CadTrustBootstrapHandler } from "./handlers/bootstrap.handler";
 import { CadTrustCommitHandler } from "./handlers/commit.handler";
 import { CadTrustProjectCreateHandler } from "./handlers/project-create.handler";
 import { CadTrustProjectUpdateHandler } from "./handlers/project-update.handler";
+import { CadTrustLocationMapper } from "./mappers/location.mapper";
 import { CadTrustProjectMapper } from "./mappers/project.mapper";
+import { CadTrustStakeholderMapper } from "./mappers/stakeholder.mapper";
 
 /**
  * CAD Trust v2 sync adaptor.
@@ -46,7 +48,10 @@ import { CadTrustProjectMapper } from "./mappers/project.mapper";
  *
  * `DocumentManagementService` enqueues these actions, so injecting it here would
  * make `DocumentManagementModule` and this module mutually dependent. Handlers
- * therefore read `ProjectEntity` / `DocumentEntity` through repositories.
+ * therefore read `DocumentEntity` / `Company` through repositories — never
+ * `ProjectEntity`, which the ledger replicator populates asynchronously and
+ * cannot be trusted to exist yet at sync time (see
+ * `handlers/project-create.handler.ts`'s class doc).
  */
 const SYNC_HANDLERS = [
   CadTrustBootstrapHandler,
@@ -60,7 +65,7 @@ const SYNC_HANDLERS = [
     ConfigModule,
     CadTrustModule,
     AsyncOperationsModule,
-    TypeOrmModule.forFeature([CadTrustSyncRecordEntity, ProjectEntity, DocumentEntity]),
+    TypeOrmModule.forFeature([CadTrustSyncRecordEntity, DocumentEntity, Company]),
   ],
   providers: [
     Logger,
@@ -69,6 +74,8 @@ const SYNC_HANDLERS = [
     CadTrustPicklistService,
     CadTrustRegistryProfileService,
     CadTrustProjectMapper,
+    CadTrustStakeholderMapper,
+    CadTrustLocationMapper,
     ...SYNC_HANDLERS,
     {
       provide: CADTRUST_SYNC_HANDLERS,

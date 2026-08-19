@@ -16,26 +16,31 @@ Unrelated to `libs/shared/src/cadt/`, which is the legacy **v1** integration aga
 
 ```
 DocumentManagementService                (producer, in the request path)
-  └─ CadTrustSyncEnqueueService.enqueueProjectCreate(refId)
+  └─ CadTrustSyncEnqueueService.enqueueProjectCreate(project)
        └─ AsyncOperationsInterface.AddAction({ actionType, actionProps })
             └─ async_action_entity row          (or SQS, under ASYNC_OPERATIONS_TYPE=Queue)
 
 async-operations-handler                 (consumer, in the replicator container)
   └─ AsyncOperationsHandlerService.handler(actionType, props)
        └─ CadTrustSyncDispatcherService.handle(...)
-            └─ CadTrustProjectCreateHandler.handle({ refId })
-                 ├─ CadTrustProjectMapper.toCreateInput(project, infContent)
-                 ├─ client.project.stageCreate(input)     -> PRIVATE to this node
-                 ├─ CadTrustSyncRecordService.markStaged(...)
-                 └─ enqueue CADTV2Commit
-
-            └─ CadTrustCommitHandler.handle()
-                 └─ client.staging.commit(...)            -> PUBLIC on the network
+            └─ CadTrustProjectCreateHandler.handle(props)
+                 ├─ ensureStakeholder(companyId)          -> stage the owning PD company, once per company
+                 ├─ ensureProject(props, infContent)       -> stage the project, link cadTrustProgramId
+                 ├─ ensureProjectMethodology(...)          -> link project <-> the bootstrapped methodology
+                 ├─ ensureStakeholderProject(...)          -> link project <-> its owning stakeholder
+                 ├─ ensureLocation(...)                    -> stage the project's site location, if the
+                 │                                             INF captured one                -> all PRIVATE to this node
+                 └─ CadTrustCommitHandler.handle()  -- called directly, in-process, if anything was staged
+                      └─ client.staging.commit(...)                                             -> PUBLIC on the network
 ```
 
-Nothing is visible to the CAD Trust network until the commit runs. Commit is a **separate queued
-action** on purpose: several staged records batch into one on-chain commit, and a slow or failing
-commit never blocks staging the next record.
+Nothing is visible to the CAD Trust network until the commit runs. Five resources can be staged in
+one project-create run (stakeholder, project, project_methodology, stakeholder_project, location) —
+each independently idempotent via `isAlreadySynced`, each self-catching so one failure never blocks
+the others — followed by a single inline commit, not a queued one. (Earlier versions of this handler
+queued the commit, matching the reasoning bootstrap's commit still documents below; once a single
+project-create run stages up to five resources itself, that in-run batch is already worth committing
+together immediately, and queueing added a round trip without adding any real batching benefit.)
 
 `CADTV2ProjectCreate` above is the steady-state flow. Before any project can sync, a one-time
 `CADTV2Bootstrap` action verifies the CAD Trust home organization and stages this registry's one
@@ -53,8 +58,15 @@ async-operations-handler                 (consumer, in the replicator container)
        │     none found -> markFailed(ORGANIZATION), stop
        ├─ client.program.stageCreate(...)      -> markStaged, if not already synced
        ├─ client.methodology.stageCreate(...)  -> markStaged, if not already synced
-       └─ enqueue CADTV2Commit, if anything was staged
+       └─ CadTrustCommitHandler.handle()  -- called directly, in-process, if anything was staged
 ```
+
+Note the last step: bootstrap calls `CadTrustCommitHandler.handle()` directly rather than enqueuing
+a `CADTV2Commit` action. `CadTrustProjectCreateHandler` now does the same, for the same underlying
+reason — see above. `CadTrustCommitHandler` itself is unchanged either way and remains a fully
+independent handler (a future path that does still want cross-run batching can enqueue
+`CADTV2Commit` and reach it that way). Calling it in-process is safe because it already satisfies
+the same never-throw contract this module requires everywhere.
 
 See `handlers/bootstrap.handler.ts` for why organization creation is deliberately out of scope —
 short version: it is node onboarding (~30 minutes), not a registry sync action, and calling
@@ -105,17 +117,38 @@ Nothing outside this module changes — not the dispatcher, and not the switch i
 
 ### Conventions worth keeping
 
-- **Payloads are identifiers, not entities.** The handler re-reads current state, so a queued action
-  can never publish a snapshot that was already stale when it was enqueued. (The legacy v1 CADT
-  actions enqueue whole `programme` objects and have exactly that problem.)
+- **Payloads are identifiers, not entities — with one documented exception.** The handler normally
+  re-reads current state, so a queued action can never publish a snapshot that was already stale when
+  it was enqueued. (The legacy v1 CADT actions enqueue whole `programme` objects unconditionally and
+  have exactly that problem.) `CadTrustProjectCreateSnapshot` breaks this deliberately: see the next
+  bullet for why "re-read current state" is itself sometimes the wrong call.
 - **Handlers are idempotent.** The queue is at-least-once and the database consumer re-runs a whole
   pass on failure, so re-delivery is routine. Check `CadTrustSyncRecordService.isAlreadySynced`
   before staging.
 - **Read through repositories, not domain services.** `DocumentManagementService` enqueues these
   actions; injecting it here would make the two modules mutually dependent.
-- **Respect CAD Trust's insert order.** `program → methodology → project → project_methodology →
-  verification → issuance → unit`. `INSERT_ORDER` is exported from `@app/cadtrust`. This module does
-  not enforce it — a handler that needs a parent must confirm the parent's `cadTrustId` exists first.
+- **Respect CAD Trust's insert order.** `program → methodology → stakeholder → project →
+  project_methodology → stakeholder_projects → ... → location → ... → verification → issuance →
+  unit`. `INSERT_ORDER` is exported from `@app/cadtrust`. This module does not enforce it — a
+  handler that needs a parent must confirm the parent's `cadTrustId` exists first.
+  `CadTrustProjectCreateHandler` follows it directly: `ensureStakeholder`/`ensureProject` can run in
+  either order (neither depends on the other), but `ensureProjectMethodology`/
+  `ensureStakeholderProject`/`ensureLocation` all wait for `ensureProject` to resolve a
+  `cadTrustProjectId` first, and `ensureProjectMethodology` additionally needs the singleton
+  METHODOLOGY sync record bootstrap already produced.
+- **Never read an operational-DB table that a replicator populates.** A sync action is enqueued at
+  ledger-write time, but the ledger replicator that fills tables like `project_entity` polls
+  independently — with no ordering guarantee relative to the async-operations consumer that runs
+  these handlers. A read that assumes the row is already there is a race, and it fails silently: see
+  `CadTrustProjectCreateHandler`'s doc for the exact failure mode this used to hit (project create
+  read `project_entity`, missed it under normal replication lag, logged an error and returned
+  without ever calling `markFailed` — no sync record, no retry, the project just never synced).
+  Read instead from something guaranteed to exist at handler-run time: a table written synchronously
+  in the same request (`document_entity`, via `getLatestInfContent`), a snapshot captured before the
+  ledger write and carried on the queue payload (`CadTrustProjectCreateSnapshot`), or the ledger
+  itself for a fresh read of current state (`programmeLedgerService.getProjectById`, not the
+  operational DB — see `CadTrustProjectUpdateHandler`'s doc for why this is the right choice once
+  update is actually implemented).
 
 ---
 
@@ -124,11 +157,10 @@ Nothing outside this module changes — not the dispatcher, and not the switch i
 | Action | Status |
 |---|---|
 | `CADTV2Bootstrap` | ✅ Implemented — verifies the home organization, stages the one program + methodology |
-| `CADTV2ProjectCreate` | ✅ Implemented — stages a project on INF submission |
+| `CADTV2ProjectCreate` | ✅ Implemented — stages a project on INF submission, linked to the program, plus its methodology link, its owning stakeholder + stakeholder-project link, and its site location |
 | `CADTV2ProjectUpdate` | ⏳ Enqueued on every lifecycle transition, handler is a documented no-op |
-| `CADTV2Commit` | ✅ Implemented |
-| `project_methodology` | ❌ Not started — the program and methodology now exist, but nothing links a project to either yet |
-| Credits (issuance / unit) | ❌ Not started — needs `project_methodology` and `verification` first, neither of which has a source in this registry yet |
+| `CADTV2Commit` | ✅ Implemented — called both from the queue and inline from `CADTV2Bootstrap`/`CADTV2ProjectCreate` |
+| Credits (issuance / unit) | ❌ Not started — needs `verification`, which nothing in this registry produces yet |
 
 `project-update.handler.ts` documents exactly what implementing it requires. The enqueue hook is
 already in place so that work is handler-only.
@@ -136,6 +168,12 @@ already in place so that work is handler-only.
 Organization creation itself is **out of scope everywhere** — `CADTV2Bootstrap` verifies a home
 organization exists and fails loudly if it doesn't; provisioning one is an operator action against
 the CADT node directly, not something this registry does.
+
+`CADTV2ProjectCreate`'s program and methodology links both assume bootstrap has already run.
+`cadTrustProgramId` on the project is optional on CAD Trust's side, so a missing program link is
+silently skipped (no error) if bootstrap hasn't run yet; the `project_methodology` link is required
+for issuance/unit sync to ever work, so a missing methodology link is instead recorded as a `FAILED`
+sync record with a message naming the likely cause, so it's visible rather than silently absent.
 
 ---
 
@@ -185,6 +223,11 @@ value that is not in them. It never blocks a sync — a stale local table is not
 to stop real data reaching CAD Trust, and the node's own rejection message is more useful than
 anything guessed here. **Watch the logs on the first real sync** and correct the map from what they
 say.
+
+Two fixed (not derived-from-a-registry-enum) values are also checked: `STAKEHOLDER_TYPE_DEVELOPER`
+(`"Developer"` — the PD company is always staged as this, a deliberate choice over CAD Trust's other
+sample values `"Owner"`/`"Consultant"`) and the location mapper's `locationCountry` (this registry's
+configured `systemCountryName`, checked against picklist `location_country`).
 
 ---
 

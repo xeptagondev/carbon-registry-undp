@@ -2,8 +2,8 @@ import { ProjectCreateInput } from "@app/cadtrust";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-import { ProjectEntity } from "../../entities/projects.entity";
 import { CadTrustPicklistService } from "../cadtrust-picklist.service";
+import { CadTrustProjectCreateSnapshot } from "../cadtrust-sync.enqueue.service";
 import {
   PICKLIST_KEYS,
   PROJECT_SECTOR_FALLBACK,
@@ -16,13 +16,20 @@ import {
 } from "./picklist.map";
 
 /**
- * `ProjectEntity` (+ the INF document's jsonb content) -> CAD Trust `ProjectCreateInput`.
+ * A project-creation snapshot (+ the INF document's jsonb content) -> CAD
+ * Trust `ProjectCreateInput`.
  *
- * Both inputs are needed because `project_entity` is thin: it has no description,
- * no dates, no country and no location. Those arrive from the frontend as
- * undeclared fields on the INF submission, survive validation (the DTO is built
- * without `excludeExtraneousValues`) and are persisted only into
- * `document_entity.content`. That jsonb is the de-facto project record for
+ * Both inputs are chosen deliberately for what they DON'T depend on: neither
+ * requires the operational-DB `project_entity` row, which is populated
+ * asynchronously by the ledger replicator and cannot be assumed to exist yet
+ * when this runs (see `CadTrustProjectCreateSnapshot`'s doc for why). The
+ * snapshot is captured pre-ledger-write by `DocumentManagementService`; the
+ * INF content comes from `document_entity`, written synchronously in the same
+ * request. `project_entity` itself has no description, no dates, no country
+ * and no location anyway — those arrive from the frontend as undeclared
+ * fields on the INF submission, survive validation (the DTO is built without
+ * `excludeExtraneousValues`) and are persisted only into
+ * `document_entity.content`, which is the de-facto project record for
  * everything outside the handful of typed columns.
  */
 @Injectable()
@@ -32,7 +39,10 @@ export class CadTrustProjectMapper {
     private readonly picklistService: CadTrustPicklistService
   ) {}
 
-  async toCreateInput(project: ProjectEntity, infContent?: any): Promise<ProjectCreateInput> {
+  async toCreateInput(
+    project: CadTrustProjectCreateSnapshot,
+    infContent?: any
+  ): Promise<ProjectCreateInput> {
     const sector = this.mapSector(project.sector);
     const type = this.mapType(project.sectoralScope);
     const status = this.mapStatus(project.projectProposalStage);

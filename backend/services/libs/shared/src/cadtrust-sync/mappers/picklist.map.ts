@@ -27,7 +27,20 @@ export const PICKLIST_KEYS = {
   unitMetric: "unit_metric",
   /** `methodologyType` is optional on MethodologyCreateInput — see program.ts. */
   methodologyType: "methodology_type",
+  /** Required on StakeholderCreateInput — see stakeholder.ts. */
+  stakeholderType: "stakeholder_type",
+  /** Required on LocationCreateInput — see location.ts. */
+  locationCountry: "location_country",
 } as const;
+
+/**
+ * `stakeholderType` this registry always stages the owning PD company as.
+ * Fixed, not derived from a registry enum — matches this registry's own
+ * "Project Developer" terminology. CAD Trust's documented sample values also
+ * include "Owner" and "Consultant"; "Developer" was chosen deliberately, not
+ * defaulted to.
+ */
+export const STAKEHOLDER_TYPE_DEVELOPER = "Developer";
 
 /**
  * `project_entity.sector` (InfSectorEnum) -> CAD Trust `projectSector`.

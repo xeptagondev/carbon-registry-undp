@@ -23,4 +23,23 @@ export enum CadTrustLocalEntityType {
    * the resolved `methodologyCode` from `CadTrustRegistryProfileService`.
    */
   METHODOLOGY = "METHODOLOGY",
+  /**
+   * The PD company that owns a project. `localId` is `String(companyId)` — one
+   * CAD Trust stakeholder per company, reused across every project that company
+   * creates. Not keyed by refId, unlike everything below.
+   */
+  STAKEHOLDER = "STAKEHOLDER",
+  /**
+   * The project <-> methodology relationship. `localId` is `refId` — this
+   * registry has exactly one methodology, so one project has exactly one of
+   * these.
+   */
+  PROJECT_METHODOLOGY = "PROJECT_METHODOLOGY",
+  /**
+   * The project <-> stakeholder (owning PD company) relationship. `localId` is
+   * `refId` — one owning stakeholder per project in this registry's model.
+   */
+  STAKEHOLDER_PROJECT = "STAKEHOLDER_PROJECT",
+  /** The project's site location. `localId` is `refId` — one location per project. */
+  LOCATION = "LOCATION",
 }

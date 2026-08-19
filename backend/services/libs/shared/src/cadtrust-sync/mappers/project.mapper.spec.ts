@@ -1,7 +1,7 @@
-import { ProjectEntity } from "../../entities/projects.entity";
 import { InfSectorEnum } from "../../enum/inf.sector.enum";
 import { InfSectoralScopeEnum } from "../../enum/inf.sectoral.scope.enum";
 import { ProjectProposalStage } from "../../enum/projectProposalStage.enum";
+import { CadTrustProjectCreateSnapshot } from "../cadtrust-sync.enqueue.service";
 import { CadTrustProjectMapper } from "./project.mapper";
 import { PROJECT_SECTOR_FALLBACK, PROJECT_TYPE_FALLBACK, PROJECT_UNIT_METRIC } from "./picklist.map";
 
@@ -23,7 +23,11 @@ function buildMapper(overrides: Record<string, any> = {}) {
   };
 }
 
-function buildProject(overrides: Partial<ProjectEntity> = {}): ProjectEntity {
+// A queue payload snapshot — see CadTrustProjectCreateSnapshot. The mapper has
+// no dependency on ProjectEntity or the operational DB at all.
+function buildProject(
+  overrides: Partial<CadTrustProjectCreateSnapshot> = {}
+): CadTrustProjectCreateSnapshot {
   return {
     refId: "0042",
     title: "Kunene Solar Farm",
@@ -32,8 +36,9 @@ function buildProject(overrides: Partial<ProjectEntity> = {}): ProjectEntity {
     projectProposalStage: ProjectProposalStage.PENDING,
     createTime: Date.UTC(2026, 0, 10),
     updateTime: Date.UTC(2026, 2, 15),
+    companyId: 7,
     ...overrides,
-  } as ProjectEntity;
+  };
 }
 
 describe("CadTrustProjectMapper", () => {

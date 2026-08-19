@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 import { CadTrustSyncRecordEntity } from "../entities/cadtrust.sync.record.entity";
 import { CadTrustLocalEntityType } from "../enum/cadtrust.local.entity.type.enum";
@@ -36,6 +36,31 @@ export class CadTrustSyncRecordService {
   /** The CAD Trust UUID for a local record, or undefined if it was never staged. */
   async getCadTrustId(key: CadTrustSyncKey): Promise<string | undefined> {
     const record = await this.find(key);
+    return record?.cadTrustId;
+  }
+
+  /**
+   * The CAD Trust UUID for a resource type this registry only ever creates one
+   * of — no `localId` filter, unlike every other lookup here. Used for PROGRAM
+   * and METHODOLOGY: this registry bootstraps exactly one of each by design
+   * (see `CadTrustRegistryProfileService`), so a project sync that needs to
+   * link to either doesn't need to know how bootstrap computed its `localId` —
+   * that stays bootstrap's concern. If this assumption is ever violated (a
+   * second program/methodology gets synced), this returns whichever row was
+   * staged/committed first; it does not detect or warn about the ambiguity.
+   */
+  async getSyncedCadTrustId(
+    localEntityType: CadTrustLocalEntityType,
+    cadTrustEntityType: CadTrustResourceType
+  ): Promise<string | undefined> {
+    const record = await this.syncRecordRepo.findOne({
+      where: {
+        localEntityType,
+        cadTrustEntityType,
+        syncStatus: In([CadTrustSyncStatus.STAGED, CadTrustSyncStatus.COMMITTED]),
+      },
+      order: { id: "ASC" },
+    });
     return record?.cadTrustId;
   }
 

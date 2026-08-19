@@ -199,4 +199,36 @@ describe("CadTrustSyncRecordService", () => {
     expect(await service.getCadTrustId(KEY)).toBe("cadt-1");
     expect(await buildService().service.getCadTrustId(KEY)).toBeUndefined();
   });
+
+  describe("getSyncedCadTrustId — the PROGRAM/METHODOLOGY singleton lookup", () => {
+    it("returns the cadTrustId with no localId filter, unlike every other lookup here", async () => {
+      const { service, repo } = buildService({
+        cadTrustId: "cadt-methodology-1",
+        syncStatus: CadTrustSyncStatus.COMMITTED,
+      });
+
+      const result = await service.getSyncedCadTrustId(
+        CadTrustLocalEntityType.METHODOLOGY,
+        CadTrustResourceType.METHODOLOGY
+      );
+
+      expect(result).toBe("cadt-methodology-1");
+      expect(repo.findOne).toHaveBeenCalledWith({
+        where: {
+          localEntityType: CadTrustLocalEntityType.METHODOLOGY,
+          cadTrustEntityType: CadTrustResourceType.METHODOLOGY,
+          syncStatus: expect.anything(), // In([STAGED, COMMITTED]) — a TypeORM FindOperator
+        },
+        order: { id: "ASC" },
+      });
+    });
+
+    it("returns undefined when nothing has been synced yet", async () => {
+      const { service } = buildService(null);
+
+      expect(
+        await service.getSyncedCadTrustId(CadTrustLocalEntityType.PROGRAM, CadTrustResourceType.PROGRAM)
+      ).toBeUndefined();
+    });
+  });
 });

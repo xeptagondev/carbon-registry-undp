@@ -238,7 +238,14 @@ export class DocumentManagementService {
 
           // Queue the CAD Trust v2 sync. Dropped by AddAction when CADT_V2_ENABLE
           // is off, and never throws, so it cannot affect this response.
-          await this.cadTrustSyncEnqueue.enqueueProjectCreate(project.refId);
+          //
+          // Passes the whole `project` object, not just its refId: the sync
+          // handler runs later, in a different process, after `project_entity`
+          // would need to have been populated by the (independently-polling)
+          // ledger replicator — which cannot be guaranteed by then. `project`
+          // already has everything the handler needs, captured here instead.
+          // See CadTrustProjectCreateSnapshot for the full reasoning.
+          await this.cadTrustSyncEnqueue.enqueueProjectCreate(project);
 
           return new DataResponseDto(HttpStatus.OK, {
             ...savedProgramme,
