@@ -100,6 +100,33 @@ describe("CadTrustSyncRecordService", () => {
     });
   });
 
+  describe("markCommitted", () => {
+    it("records the id as committed without ever having been staged", async () => {
+      const { service, repo } = buildService();
+
+      await service.markCommitted(KEY, { cadTrustId: "org-uid-1" });
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cadTrustId: "org-uid-1",
+          syncStatus: CadTrustSyncStatus.COMMITTED,
+          lastError: null,
+        })
+      );
+    });
+
+    it("is not swept up by markAllStagedAsCommitted, since it was never STAGED", async () => {
+      // markCommitted writes COMMITTED directly; markAllStagedAsCommitted only
+      // touches rows whose syncStatus is STAGED (asserted above), so a verified
+      // organization row is untouched by every later project commit.
+      const { service, repo } = buildService();
+
+      await service.markCommitted(KEY, { cadTrustId: "org-uid-1" });
+
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe("markFailed", () => {
     it("increments the attempt count and stores the message", async () => {
       const { service, repo } = buildService({ ...KEY, attemptCount: 2 });

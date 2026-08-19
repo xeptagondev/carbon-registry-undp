@@ -118,6 +118,40 @@ export default () => ({
     registryName: process.env.CADT_V2_REGISTRY_NAME || process.env.SYSTEM_NAME || "SystemX",
     // Recorded as the `author` on each staging commit.
     commitAuthor: process.env.CADT_V2_COMMIT_AUTHOR || process.env.SYSTEM_NAME || "SystemX",
+    // The registry's own CAD Trust organization name — used only for logging and
+    // the verify-only bootstrap check. The organization is never created by this
+    // codebase (see libs/shared/src/cadtrust-sync/handlers/bootstrap.handler.ts).
+    orgName:
+      process.env.CADT_V2_ORG_NAME ||
+      process.env.CADT_V2_REGISTRY_NAME ||
+      process.env.SYSTEM_NAME ||
+      "SystemX",
+    // This registry's one national crediting program and one methodology,
+    // staged once by CadTrustBootstrapHandler. See
+    // CadTrustRegistryProfileService.assertConfigured() for the guard that
+    // refuses to publish these under a placeholder value.
+    program: {
+      name:
+        process.env.CADT_V2_PROGRAM_NAME ||
+        `${process.env.systemCountryName || "CountryX"} National Carbon Crediting Program`,
+      registry:
+        process.env.CADT_V2_PROGRAM_REGISTRY ||
+        process.env.CADT_V2_REGISTRY_NAME ||
+        process.env.SYSTEM_NAME ||
+        "SystemX",
+      registryActivityId:
+        process.env.CADT_V2_PROGRAM_REGISTRY_ACTIVITY_ID || process.env.systemCountryCode || "NG",
+      registryProgramId: process.env.CADT_V2_PROGRAM_REGISTRY_PROGRAM_ID,
+      description: process.env.CADT_V2_PROGRAM_DESCRIPTION,
+    },
+    methodology: {
+      code: process.env.CADT_V2_METHODOLOGY_CODE || `${process.env.systemCountryCode || "NG"}-NCC`,
+      name: process.env.CADT_V2_METHODOLOGY_NAME || "National Carbon Crediting",
+      version: process.env.CADT_V2_METHODOLOGY_VERSION,
+      date: process.env.CADT_V2_METHODOLOGY_DATE,
+      link: process.env.CADT_V2_METHODOLOGY_LINK,
+      type: process.env.CADT_V2_METHODOLOGY_TYPE,
+    },
   },
   systemType: process.env.SYSTEM_TYPE || "CARBON_UNIFIED_SYSTEM",
   systemName: process.env.SYSTEM_NAME || "SystemX",

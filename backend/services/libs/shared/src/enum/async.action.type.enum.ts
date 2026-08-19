@@ -25,4 +25,7 @@ export enum AsyncActionType {
   CADTV2ProjectCreate,
   CADTV2ProjectUpdate,
   CADTV2Commit,
+  // Verifies the CAD Trust home organization and stages the registry's one-time
+  // program + methodology. See src/migrations/1785600000000-CadTrustV2Bootstrap.ts.
+  CADTV2Bootstrap,
 }

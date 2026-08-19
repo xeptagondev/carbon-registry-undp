@@ -49,6 +49,16 @@ export class CadTrustSyncEnqueueService {
     await this.enqueue(AsyncActionType.CADTV2Commit, {});
   }
 
+  /**
+   * Verifies the CAD Trust home organization and stages the registry's program
+   * and methodology if they are not already synced. Called once per national-api
+   * start (see main.ts) — the handler is idempotent, so a repeat enqueue on
+   * every restart just costs one no-op row once bootstrap has succeeded.
+   */
+  async enqueueBootstrap(): Promise<void> {
+    await this.enqueue(AsyncActionType.CADTV2Bootstrap, {});
+  }
+
   private async enqueue(actionType: AsyncActionType, actionProps: any): Promise<void> {
     try {
       // AddAction drops the action itself when cadTrustV2.enable is off.

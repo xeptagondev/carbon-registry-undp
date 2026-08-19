@@ -89,6 +89,28 @@ export class CadTrustSyncRecordService {
     return this.syncRecordRepo.save(record);
   }
 
+  /**
+   * Records a resource that is already committed on the network without ever
+   * having been staged by this registry — the CAD Trust home organization,
+   * verified rather than created. Marking it STAGED would be wrong (nothing was
+   * staged) and would get swept up by `markAllStagedAsCommitted()`'s bulk update.
+   */
+  async markCommitted(
+    key: CadTrustSyncKey,
+    ids: { cadTrustId: string }
+  ): Promise<CadTrustSyncRecordEntity> {
+    const record = await this.ensure(key);
+    const now = Date.now();
+
+    record.cadTrustId = ids.cadTrustId;
+    record.syncStatus = CadTrustSyncStatus.COMMITTED;
+    record.lastError = null;
+    record.lastAttemptTime = now;
+    record.updateTime = now;
+
+    return this.syncRecordRepo.save(record);
+  }
+
   /** Flips every currently-staged row to committed after a successful commit. */
   async markAllStagedAsCommitted(): Promise<number> {
     const now = Date.now();

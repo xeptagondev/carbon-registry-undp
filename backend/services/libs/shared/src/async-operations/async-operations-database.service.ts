@@ -74,6 +74,7 @@ export class AsyncOperationsDatabaseService implements AsyncOperationsInterface 
         AsyncActionType.CADTV2ProjectCreate,
         AsyncActionType.CADTV2ProjectUpdate,
         AsyncActionType.CADTV2Commit,
+        AsyncActionType.CADTV2Bootstrap,
       ].includes(action.actionType) &&
       !this.configService.get("cadTrustV2.enable")
     ) {

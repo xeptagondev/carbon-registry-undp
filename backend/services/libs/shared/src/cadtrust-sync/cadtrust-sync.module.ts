@@ -8,12 +8,14 @@ import { CadTrustSyncRecordEntity } from "../entities/cadtrust.sync.record.entit
 import { DocumentEntity } from "../entities/document.entity";
 import { ProjectEntity } from "../entities/projects.entity";
 import { CadTrustPicklistService } from "./cadtrust-picklist.service";
+import { CadTrustRegistryProfileService } from "./cadtrust-registry-profile.service";
 import {
   CADTRUST_SYNC_HANDLERS,
   CadTrustSyncDispatcherService,
 } from "./cadtrust-sync.dispatcher.service";
 import { CadTrustSyncEnqueueService } from "./cadtrust-sync.enqueue.service";
 import { CadTrustSyncRecordService } from "./cadtrust-sync-record.service";
+import { CadTrustBootstrapHandler } from "./handlers/bootstrap.handler";
 import { CadTrustCommitHandler } from "./handlers/commit.handler";
 import { CadTrustProjectCreateHandler } from "./handlers/project-create.handler";
 import { CadTrustProjectUpdateHandler } from "./handlers/project-update.handler";
@@ -47,6 +49,7 @@ import { CadTrustProjectMapper } from "./mappers/project.mapper";
  * therefore read `ProjectEntity` / `DocumentEntity` through repositories.
  */
 const SYNC_HANDLERS = [
+  CadTrustBootstrapHandler,
   CadTrustProjectCreateHandler,
   CadTrustProjectUpdateHandler,
   CadTrustCommitHandler,
@@ -64,6 +67,7 @@ const SYNC_HANDLERS = [
     CadTrustSyncRecordService,
     CadTrustSyncEnqueueService,
     CadTrustPicklistService,
+    CadTrustRegistryProfileService,
     CadTrustProjectMapper,
     ...SYNC_HANDLERS,
     {

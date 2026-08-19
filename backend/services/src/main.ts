@@ -2,6 +2,7 @@ import { handler } from "./ledger-replicator/handler";
 import { handler as asyncHandler } from "./async-operations-handler/handler";
 import { handler as importHandler } from "./data-importer/handler";
 import * as setupHandler from "@app/shared/setup/handler";
+import { CadTrustSyncEnqueueService } from "@app/shared/cadtrust-sync/cadtrust-sync.enqueue.service";
 import { NationalAPIModule } from "./national-api/national.api.module";
 import { join } from "path";
 import { AnalyticsAPIModule } from "./analytics-api/analytics.api.module";
@@ -64,6 +65,13 @@ async function bootstrap() {
       console.log("Static file path:", staticPath);
       app.useStaticAssets(staticPath);
       await setupHandler.handler();
+
+      // Verifies the CAD Trust home organization and stages the registry's
+      // program + methodology if not already synced. Enqueued on every start on
+      // purpose — CadTrustBootstrapHandler is idempotent, dropped entirely when
+      // CADT_V2_ENABLE is off, and runs in the replicator's
+      // async-operations-handler, not here. See libs/shared/src/cadtrust-sync/README.md.
+      await app.get(CadTrustSyncEnqueueService).enqueueBootstrap();
     }
     await app.listen(process.env.RUN_PORT || 3000);
     console.log("Module initiated", moduleName);

@@ -37,6 +37,29 @@ Nothing is visible to the CAD Trust network until the commit runs. Commit is a *
 action** on purpose: several staged records batch into one on-chain commit, and a slow or failing
 commit never blocks staging the next record.
 
+`CADTV2ProjectCreate` above is the steady-state flow. Before any project can sync, a one-time
+`CADTV2Bootstrap` action verifies the CAD Trust home organization and stages this registry's one
+program and one methodology, following the same staged-then-committed shape:
+
+```
+main.ts                                  (national-api start, after setupHandler.handler())
+  └─ CadTrustSyncEnqueueService.enqueueBootstrap()
+       └─ AsyncOperationsInterface.AddAction(...)         -> async_action_entity row
+
+async-operations-handler                 (consumer, in the replicator container)
+  └─ CadTrustBootstrapHandler.handle()
+       ├─ CadTrustRegistryProfileService.assertConfigured()  -> sentinel-default guard
+       ├─ client.organizations.list() -> find isHome         -> VERIFY ONLY, never creates
+       │     none found -> markFailed(ORGANIZATION), stop
+       ├─ client.program.stageCreate(...)      -> markStaged, if not already synced
+       ├─ client.methodology.stageCreate(...)  -> markStaged, if not already synced
+       └─ enqueue CADTV2Commit, if anything was staged
+```
+
+See `handlers/bootstrap.handler.ts` for why organization creation is deliberately out of scope —
+short version: it is node onboarding (~30 minutes), not a registry sync action, and calling
+`organizations.waitForCreation()` from inside this queue would stall every action behind it.
+
 ---
 
 ## Two rules that are not negotiable
@@ -100,13 +123,19 @@ Nothing outside this module changes — not the dispatcher, and not the switch i
 
 | Action | Status |
 |---|---|
+| `CADTV2Bootstrap` | ✅ Implemented — verifies the home organization, stages the one program + methodology |
 | `CADTV2ProjectCreate` | ✅ Implemented — stages a project on INF submission |
 | `CADTV2ProjectUpdate` | ⏳ Enqueued on every lifecycle transition, handler is a documented no-op |
 | `CADTV2Commit` | ✅ Implemented |
-| Credits (issuance / unit) | ❌ Not started — needs `program`, `methodology`, `project_methodology` and `verification` first, none of which has a source in this registry yet |
+| `project_methodology` | ❌ Not started — the program and methodology now exist, but nothing links a project to either yet |
+| Credits (issuance / unit) | ❌ Not started — needs `project_methodology` and `verification` first, neither of which has a source in this registry yet |
 
 `project-update.handler.ts` documents exactly what implementing it requires. The enqueue hook is
 already in place so that work is handler-only.
+
+Organization creation itself is **out of scope everywhere** — `CADTV2Bootstrap` verifies a home
+organization exists and fails loudly if it doesn't; provisioning one is an operator action against
+the CADT node directly, not something this registry does.
 
 ---
 
@@ -119,9 +148,28 @@ already in place so that work is handler-only.
 | `CADT_V2_API_KEY` | — | Only when the node was started with `CADT_API_KEY` |
 | `CADT_V2_REGISTRY_NAME` | `SYSTEM_NAME` | Published as `projectRegistryName` |
 | `CADT_V2_COMMIT_AUTHOR` | `SYSTEM_NAME` | Author recorded on each commit |
+| `CADT_V2_TIMEOUT_MS` | `30000` | Request timeout for every CAD Trust call |
+| `CADT_V2_ORG_NAME` | `CADT_V2_REGISTRY_NAME` | Verify-only — logging only, never used to create an org |
+| `CADT_V2_PROGRAM_NAME` | `"${systemCountryName} National Carbon Crediting Program"` | Required |
+| `CADT_V2_PROGRAM_REGISTRY` | `CADT_V2_REGISTRY_NAME` | Required |
+| `CADT_V2_PROGRAM_REGISTRY_ACTIVITY_ID` | `systemCountryCode` | Required |
+| `CADT_V2_PROGRAM_REGISTRY_PROGRAM_ID` | — | Optional |
+| `CADT_V2_PROGRAM_DESCRIPTION` | — | Optional |
+| `CADT_V2_METHODOLOGY_CODE` | `"${systemCountryCode}-NCC"` | Required |
+| `CADT_V2_METHODOLOGY_NAME` | `"National Carbon Crediting"` | Required |
+| `CADT_V2_METHODOLOGY_VERSION` / `_DATE` / `_LINK` | — | Optional |
+| `CADT_V2_METHODOLOGY_TYPE` | — | Optional, picklist `methodology_type` |
 
 The consumer runs wherever `RUN_MODULE` includes `async-operations-handler` — today that is the
 **replicator** container, not a service of its own.
+
+All of the program/methodology values above go through `CadTrustRegistryProfileService` — the
+single place they are read from, so a later move to a DB-backed profile (there isn't one today)
+touches one file rather than every mapper and handler. Its `assertConfigured()` refuses to stage
+anything while a *required* field would still resolve to a placeholder (`"CountryX"`, `"SystemX"`,
+or the hardcoded `"NG"` country-code fallback) with no explicit override set — publishing a
+program under one of those cannot be undone later the way a project can, since CAD Trust refuses
+to delete a program once any project references it.
 
 ---
 
@@ -137,6 +185,109 @@ value that is not in them. It never blocks a sync — a stale local table is not
 to stop real data reaching CAD Trust, and the node's own rejection message is more useful than
 anything guessed here. **Watch the logs on the first real sync** and correct the map from what they
 say.
+
+---
+
+## Going live against a real node
+
+The config split matters: `national-api` only ever reads `CADT_V2_ENABLE` (the
+enqueue gate); every other key — base URL, API key, registry name, commit
+author — is read inside the **replicator** container, because that's where
+`async-operations-handler` (and therefore this module's dispatcher) runs. See
+the CADT v2 blocks in `backend/services/.env.example`, `.env.replicator.example`
+and `.env.national.example` for the full per-key breakdown.
+
+**Order matters:**
+
+1. Run the migrations *before* enabling anything:
+   ```
+   cd backend/services
+   yarn migration:run
+   ```
+   Skipping this makes the first enqueued action fail with
+   `invalid input value for enum async_action_entity_actiontype_enum: "17"` —
+   the baseline migration only created labels `'0'..'16'`. There are two
+   CAD Trust migrations to run: `1785500000000-CadTrustV2Sync.ts` (labels
+   `17`–`19`, the `cadtrust_sync_record` table) and
+   `1785600000000-CadTrustV2Bootstrap.ts` (label `20`, plus `ORGANIZATION` /
+   `PROGRAM` / `METHODOLOGY` on the table's two entity-type enums).
+2. Confirm it landed:
+   ```sql
+   SELECT unnest(enum_range(NULL::async_action_entity_actiontype_enum));            -- includes 17..20
+   SELECT unnest(enum_range(NULL::cadtrust_sync_record_localentitytype_enum));      -- includes ORGANIZATION, PROGRAM, METHODOLOGY
+   SELECT to_regclass('public.cadtrust_sync_record');                               -- non-null
+   ```
+3. **Before touching any env var**, confirm a home organization already exists
+   on the target node — `CADTV2Bootstrap` verifies, it never creates one:
+   ```
+   curl -H "x-api-key: $CADT_V2_API_KEY" "$CADT_V2_BASE_URL/organizations" | jq 'to_entries[] | select(.value.isHome)'
+   ```
+   If that is empty, provision the organization on the node first (its own
+   onboarding flow, ~30 minutes) — enabling bootstrap against a node with no
+   home organization just produces a `FAILED` `ORGANIZATION` sync record.
+4. Set `CADT_V2_BASE_URL` / `CADT_V2_API_KEY` in `.env.replicator`. If the node
+   runs on the host machine and the replicator runs in a container, `localhost`
+   there means the container — use `host.docker.internal` or the host's LAN IP.
+5. Set `HOST` and `SYSTEM_NAME` in `.env.replicator` too, even though nothing
+   else in that container serves them. Left unset, `HOST` falls back to
+   `http://localhost:3030` and `SYSTEM_NAME` to the placeholder `"SystemX"` —
+   and both get published to the CAD Trust network as `projectLink` /
+   `projectRegistryName` without any error. This is the easiest mistake to make
+   and the hardest one to notice, since nothing fails.
+6. Set the `CADT_V2_PROGRAM_*` / `CADT_V2_METHODOLOGY_*` keys in
+   `.env.replicator` (see Configuration above) — or confirm `systemCountryName`
+   / `systemCountryCode` / `SYSTEM_NAME` are all real values, since every one of
+   these falls back to them. `CadTrustBootstrapHandler` refuses to stage
+   anything and logs exactly which variable is missing if it can't.
+7. Set `CADT_V2_ENABLE=true` in **both** `.env.national` and `.env.replicator`.
+
+**Verify bootstrap first** — it runs automatically on the next national-api
+restart once step 7 above is done:
+
+```sql
+-- bootstrap fired
+SELECT * FROM async_action_entity WHERE "actionType" = '20' ORDER BY "actionId" DESC LIMIT 5;
+
+-- all three rows COMMITTED, each with a cadTrustId (the org row's is the orgUid)
+SELECT "localEntityType", "localId", "syncStatus", "cadTrustId", "lastError"
+FROM cadtrust_sync_record
+WHERE "localEntityType" IN ('ORGANIZATION', 'PROGRAM', 'METHODOLOGY');
+```
+
+Restart the container two or three more times and re-run that query — the
+rows should not change, and no duplicate program or methodology should appear
+on the node. That is the idempotency this action relies on: it is enqueued
+on every start on purpose.
+
+**Verify end to end** — create a project through the UI (Add Programme → INF
+submit), then:
+
+```sql
+-- producer fired
+SELECT * FROM async_action_entity WHERE "actionType" = '17' ORDER BY "actionId" DESC LIMIT 5;
+
+-- consumer ran and the node accepted it
+SELECT "localId", "syncStatus", "cadTrustId", "lastError"
+FROM cadtrust_sync_record ORDER BY id DESC LIMIT 5;   -- expect COMMITTED, cadTrustId set
+
+-- the global cursor advanced
+SELECT * FROM counter WHERE id = 6;
+```
+
+Then check on the node itself (`GET {base}/project?page=1&limit=10`) that
+`projectLink` is a real URL and `projectRegistryName` isn't `"SystemX"`.
+
+**Do this once**: point `CADT_V2_BASE_URL` at a dead port, create a project,
+and confirm the sync record goes `FAILED` with `lastError` set **while the
+`counter` cursor still advances and email still sends**. That property — a
+dead CAD Trust node cannot stall anything else — is the entire reason rule 1
+above exists.
+
+**Do this once too**: point `CADT_V2_BASE_URL` at a node with no home
+organization, restart national-api, and confirm the `ORGANIZATION` sync record
+goes `FAILED` with a readable `lastError` — and that the `PROGRAM` and
+`METHODOLOGY` rows are never even attempted (`ensure()` never runs for them,
+so no row exists yet at all). Then confirm the queue keeps moving.
 
 ---
 

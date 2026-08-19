@@ -26,4 +26,8 @@ describe("AsyncActionType ordinals", () => {
   ])("%s is %i, matching the label added in the migration", (_name, actual, expected) => {
     expect(actual).toBe(expected);
   });
+
+  it("pins CADTV2Bootstrap to 20, matching the label added in 1785600000000-CadTrustV2Bootstrap.ts", () => {
+    expect(AsyncActionType.CADTV2Bootstrap).toBe(20);
+  });
 });

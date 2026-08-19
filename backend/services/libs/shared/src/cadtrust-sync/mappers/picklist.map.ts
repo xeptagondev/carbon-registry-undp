@@ -25,6 +25,8 @@ export const PICKLIST_KEYS = {
   projectType: "projectType",
   projectStatus: "projectStatus",
   unitMetric: "unit_metric",
+  /** `methodologyType` is optional on MethodologyCreateInput — see program.ts. */
+  methodologyType: "methodology_type",
 } as const;
 
 /**
