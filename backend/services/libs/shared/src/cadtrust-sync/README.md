@@ -72,6 +72,45 @@ See `handlers/bootstrap.handler.ts` for why organization creation is deliberatel
 short version: it is node onboarding (~30 minutes), not a registry sync action, and calling
 `organizations.waitForCreation()` from inside this queue would stall every action behind it.
 
+Two more flows, both triggered off `DocumentManagementService.updateProposalStage`'s single funnel
+for lifecycle transitions (INF approve/reject, all PDD steps, validation, authorisation) — but only
+3 of the 11 transitions that funnel through it actually reach CAD Trust, by design:
+
+```
+DocumentManagementService.updateProposalStage      (producer, in the request path — fires on ALL 11
+  └─ CadTrustSyncEnqueueService.enqueueProjectUpdate(refId, txType)   transitions unconditionally)
+       └─ async_action_entity row
+
+async-operations-handler
+  └─ CadTrustProjectUpdateHandler.handle({ refId, txType })
+       ├─ txType ∈ {APPROVE_INF, REJECT_INF, APPROVE_VALIDATION}?
+       │     no  -> log "ignored", stop                    (the other 8 transitions end here)
+       │     yes -> re-map the project from the LEDGER (not project_entity) + the INF's
+       │            document_entity.content, PUT it, markStaged, commit inline if staged
+       └─ CadTrustCommitHandler.handle()  -- called directly, in-process, if staged
+```
+
+```
+DocumentManagementService.performPDDAction /                 (producer, in the request path — only
+performValidationReportAction, DNA_APPROVED branch            on APPROVE_PDD_BY_DNA / APPROVE_VALIDATION)
+  └─ CadTrustSyncEnqueueService.enqueueValidation({ refId, documentType, documentVersion,
+       validationBodyName, creditPeriodStartDate?, creditPeriodEndDate?, validationDate })
+       └─ async_action_entity row     -- a fuller snapshot than usual; see the interface's own doc
+                                          for why the validating actor's identity can't safely be
+                                          re-derived inside the async handler
+
+async-operations-handler
+  └─ CadTrustValidationCreateHandler.handle(props)
+       ├─ already synced for this exact document version?  -> skip
+       ├─ project not yet synced to CAD Trust?              -> markFailed, stop
+       ├─ client.validation.stageCreate(...)  -> markStaged
+       └─ CadTrustCommitHandler.handle()  -- called directly, in-process
+```
+
+`APPROVE_VALIDATION` fires both flows from the same request: the project record moves to
+`"Authorized"` and a validation record is staged for the validation report, as two independent
+async actions.
+
 ---
 
 ## Two rules that are not negotiable
@@ -147,8 +186,18 @@ Nothing outside this module changes — not the dispatcher, and not the switch i
   in the same request (`document_entity`, via `getLatestInfContent`), a snapshot captured before the
   ledger write and carried on the queue payload (`CadTrustProjectCreateSnapshot`), or the ledger
   itself for a fresh read of current state (`programmeLedgerService.getProjectById`, not the
-  operational DB — see `CadTrustProjectUpdateHandler`'s doc for why this is the right choice once
-  update is actually implemented).
+  operational DB — this is exactly what `CadTrustProjectUpdateHandler` does).
+- **This applies to `document_entity` too, not just `project_entity`.** `document_entity.content` /
+  `.type` / `.version` / `.createdTime` are written synchronously, once, at document creation, and
+  are safe to re-read anytime. But `document_entity.status` and `.lastActionByUserId` are written
+  asynchronously by the ledger replicator's call into `DocumentManagementService.modifyDocumentEntity`
+  (`src/ledger-replicator/process.event.service.ts`) — the same lag class as `project_entity`. The
+  validating actor's identity for a CAD Trust validation record (`certifiedByUserDetails.Organisation.name`
+  / `vrSubmittedIC.Organisation.name` in `DocumentManagementService`) is resolved via
+  `.lastActionByUserId`, correctly, synchronously, in-request — but re-deriving it later inside
+  `CadTrustValidationCreateHandler` would race the replicator's own pending write for *this*
+  transition. That's why `CadTrustValidationSyncProps` carries a fuller snapshot than most payloads
+  in this module.
 
 ---
 
@@ -158,12 +207,10 @@ Nothing outside this module changes — not the dispatcher, and not the switch i
 |---|---|
 | `CADTV2Bootstrap` | ✅ Implemented — verifies the home organization, stages the one program + methodology |
 | `CADTV2ProjectCreate` | ✅ Implemented — stages a project on INF submission, linked to the program, plus its methodology link, its owning stakeholder + stakeholder-project link, and its site location |
-| `CADTV2ProjectUpdate` | ⏳ Enqueued on every lifecycle transition, handler is a documented no-op |
-| `CADTV2Commit` | ✅ Implemented — called both from the queue and inline from `CADTV2Bootstrap`/`CADTV2ProjectCreate` |
+| `CADTV2ProjectUpdate` | ✅ Implemented, deliberately narrow scope — of the 11 lifecycle transitions enqueued, only `APPROVE_INF` (→ `"Registered"`), `REJECT_INF` (→ `"Rejected"`), `APPROVE_VALIDATION` (→ `"Authorized"`) re-stage the project record; the other 8 are logged as ignored |
+| `CADTV2ValidationCreate` | ✅ Implemented — stages a CAD Trust `validation` record on `APPROVE_PDD_BY_DNA` and `APPROVE_VALIDATION`, keyed by document + version so a resubmitted-and-reapproved document gets its own record |
+| `CADTV2Commit` | ✅ Implemented — called both from the queue and inline from every other CAD Trust v2 handler |
 | Credits (issuance / unit) | ❌ Not started — needs `verification`, which nothing in this registry produces yet |
-
-`project-update.handler.ts` documents exactly what implementing it requires. The enqueue hook is
-already in place so that work is handler-only.
 
 Organization creation itself is **out of scope everywhere** — `CADTV2Bootstrap` verifies a home
 organization exists and fails loudly if it doesn't; provisioning one is an operator action against
@@ -174,6 +221,8 @@ the CADT node directly, not something this registry does.
 silently skipped (no error) if bootstrap hasn't run yet; the `project_methodology` link is required
 for issuance/unit sync to ever work, so a missing methodology link is instead recorded as a `FAILED`
 sync record with a message naming the likely cause, so it's visible rather than silently absent.
+`CADTV2ProjectUpdate` re-derives `cadTrustProgramId` the same way on every PUT, since CAD Trust's PUT
+is a full replace — omitting it when a program IS synced would silently unlink it.
 
 ---
 
@@ -214,20 +263,47 @@ to delete a program once any project references it.
 ## Picklists
 
 `mappers/picklist.map.ts` maps this registry's `UPPER_SNAKE` enums onto CAD Trust's title-case
-picklist values. **Every value in it is unverified against a live node.** CAD Trust's picklists are
-governed by its Technical Committee and change over time, which is why `@app/cadtrust` types those
-fields as plain `string`.
+picklist values. Every value is typed against `@app/cadtrust`'s `interfaces/picklistValues.ts` — a
+snapshot of `GET /v2/governance/meta/pickList` fetched against a live node (2026-08-20) — so a typo
+or an invented string is a **build failure**, not a silent node rejection weeks later. That is a
+compile-time aid layered on top of the runtime check below, not a replacement for it: CAD Trust's
+Technical Committee still governs and can change these values over time, which is why `@app/cadtrust`
+types the *transport-level* fields as plain `string` rather than a union — only this adaptor's own
+mapping tables are pinned to the snapshot.
+
+`validationBody` is the one picklist deliberately left untyped (plain `string`) even in the
+snapshot file — see `picklistValues.ts`'s doc comment for why.
 
 `CadTrustPicklistService` fetches the live lists (cached ~1h) and **logs a warning** for any mapped
-value that is not in them. It never blocks a sync — a stale local table is not a good enough reason
-to stop real data reaching CAD Trust, and the node's own rejection message is more useful than
-anything guessed here. **Watch the logs on the first real sync** and correct the map from what they
-say.
+value that is not in them — this is the runtime authority for drift after the snapshot ages. It
+never blocks a sync — a stale local table is not a good enough reason to stop real data reaching CAD
+Trust, and the node's own rejection message is more useful than anything guessed here. **Watch the
+logs on the first real sync** and regenerate `picklistValues.ts` from what they say if the node has
+moved on.
 
 Two fixed (not derived-from-a-registry-enum) values are also checked: `STAKEHOLDER_TYPE_DEVELOPER`
 (`"Developer"` — the PD company is always staged as this, a deliberate choice over CAD Trust's other
-sample values `"Owner"`/`"Consultant"`) and the location mapper's `locationCountry` (this registry's
-configured `systemCountryName`, checked against picklist `location_country`).
+sample values `"Owner"`/`"Consultant"`) and `VALIDATION_TYPE_PDD_APPROVAL`
+(`"Validation of Project Design Document"` — both `APPROVE_PDD_BY_DNA` and `APPROVE_VALIDATION` use
+this same value; CAD Trust's other two `validation_type` values are for later re-validation events
+this registry doesn't model).
+
+`locationCountry` is not a hardcoded map — it comes from the deployment's `systemCountryName` at
+runtime — so there's nothing to fix in code, but the match against CAD Trust's picklist is an
+**exact string match** (`"Viet Nam"` not `"Vietnam"`, `"Democratic People's Republic of Korea"` not
+`"North Korea"`). Confirm the configured `systemCountryName` matches one of `LOCATION_COUNTRY_VALUES`
+before going live.
+
+### `projectSector` / `projectType` source fields — swapped relative to their registry names
+
+`PROJECT_SECTOR_MAP` reads from `sectoralScope` (`InfSectoralScopeEnum`), not `sector`; `PROJECT_TYPE_MAP`
+reads from `sector` (`InfSectorEnum`), not `sectoralScope`. This looks backwards against the field
+names but isn't: `InfSectoralScopeEnum` is, member for member, the UNFCCC/CDM sectoral-scopes list,
+and so is CAD Trust's real `projectSector` picklist — 15 of 16 members match exactly. `InfSectorEnum`
+(this registry's coarser category field) has almost no honest overlap with either real CAD Trust list
+and is used as a best-effort source for `projectType` instead, which is itself a specific-technology
+taxonomy (Hydro vs. Solar vs. Wind) neither registry field captures precisely. See the doc comments
+on both maps in `picklist.map.ts` for the full member-by-member reasoning.
 
 ---
 
@@ -249,15 +325,22 @@ and `.env.national.example` for the full per-key breakdown.
    ```
    Skipping this makes the first enqueued action fail with
    `invalid input value for enum async_action_entity_actiontype_enum: "17"` —
-   the baseline migration only created labels `'0'..'16'`. There are two
-   CAD Trust migrations to run: `1785500000000-CadTrustV2Sync.ts` (labels
-   `17`–`19`, the `cadtrust_sync_record` table) and
+   the baseline migration only created labels `'0'..'16'`. There are four
+   CAD Trust migrations to run, in order: `1785500000000-CadTrustV2Sync.ts`
+   (labels `17`–`19`, the `cadtrust_sync_record` table),
    `1785600000000-CadTrustV2Bootstrap.ts` (label `20`, plus `ORGANIZATION` /
-   `PROGRAM` / `METHODOLOGY` on the table's two entity-type enums).
+   `PROGRAM` / `METHODOLOGY`), `1785700000000-CadTrustV2ProjectRelations.ts`
+   (no new action-type label — adds `STAKEHOLDER` / `PROJECT_METHODOLOGY` /
+   `STAKEHOLDER_PROJECT` / `LOCATION`), and `1785800000000-CadTrustV2Validation.ts`
+   (label `21`, plus `VALIDATION`).
 2. Confirm it landed:
    ```sql
-   SELECT unnest(enum_range(NULL::async_action_entity_actiontype_enum));            -- includes 17..20
-   SELECT unnest(enum_range(NULL::cadtrust_sync_record_localentitytype_enum));      -- includes ORGANIZATION, PROGRAM, METHODOLOGY
+   SELECT unnest(enum_range(NULL::async_action_entity_actiontype_enum));            -- includes 17..21
+   SELECT unnest(enum_range(NULL::cadtrust_sync_record_localentitytype_enum));      -- includes ORGANIZATION, PROGRAM,
+                                                                                     -- METHODOLOGY, STAKEHOLDER,
+                                                                                     -- PROJECT_METHODOLOGY,
+                                                                                     -- STAKEHOLDER_PROJECT, LOCATION,
+                                                                                     -- VALIDATION
    SELECT to_regclass('public.cadtrust_sync_record');                               -- non-null
    ```
 3. **Before touching any env var**, confirm a home organization already exists

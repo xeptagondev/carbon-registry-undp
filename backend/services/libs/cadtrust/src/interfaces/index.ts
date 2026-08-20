@@ -20,6 +20,7 @@
  */
 
 export * from './common';
+export * from './picklistValues';
 
 // Baseline data tables, in dependency (insert) order.
 export * from './program';

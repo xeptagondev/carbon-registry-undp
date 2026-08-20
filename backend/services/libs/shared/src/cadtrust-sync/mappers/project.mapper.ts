@@ -2,6 +2,9 @@ import { ProjectCreateInput } from "@app/cadtrust";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
+import { InfSectorEnum } from "../../enum/inf.sector.enum";
+import { InfSectoralScopeEnum } from "../../enum/inf.sectoral.scope.enum";
+import { ProjectProposalStage } from "../../enum/projectProposalStage.enum";
 import { CadTrustPicklistService } from "../cadtrust-picklist.service";
 import { CadTrustProjectCreateSnapshot } from "../cadtrust-sync.enqueue.service";
 import {
@@ -43,8 +46,12 @@ export class CadTrustProjectMapper {
     project: CadTrustProjectCreateSnapshot,
     infContent?: any
   ): Promise<ProjectCreateInput> {
-    const sector = this.mapSector(project.sector);
-    const type = this.mapType(project.sectoralScope);
+    // Source fields are swapped relative to their registry names: sectoralScope (the UNFCCC/CDM
+    // sectoral-scope taxonomy) is the honest match for CAD Trust's projectSector, and sector (this
+    // registry's coarser category) is the best-effort source for projectType. See picklist.map.ts's
+    // PROJECT_SECTOR_MAP/PROJECT_TYPE_MAP doc comments for the full reasoning.
+    const sector = this.mapSector(project.sectoralScope);
+    const type = this.mapType(project.sector);
     const status = this.mapStatus(project.projectProposalStage);
 
     // Warn-only: a stale local mapping must not stop data reaching CAD Trust.
@@ -91,16 +98,24 @@ export class CadTrustProjectMapper {
     return `${host}/programmeManagement/view/${refId}`;
   }
 
-  private mapSector(sector: string): string[] {
-    return [PROJECT_SECTOR_MAP[sector] ?? PROJECT_SECTOR_FALLBACK];
+  /**
+   * @param sectoralScope `project.sectoralScope` — despite the parameter name here matching the
+   *   CAD Trust field, the source is this registry's `sectoralScope` column, not `sector`. See
+   *   `PROJECT_SECTOR_MAP`'s doc comment in picklist.map.ts for why. Cast rather than typed as the
+   *   enum directly: an unrecognised string (legacy data, a future registry-side enum change) must
+   *   still fall through to the fallback rather than being a type error.
+   */
+  private mapSector(sectoralScope: string): string[] {
+    return [PROJECT_SECTOR_MAP[sectoralScope as InfSectoralScopeEnum] ?? PROJECT_SECTOR_FALLBACK];
   }
 
-  private mapType(sectoralScope: string): string[] {
-    return [PROJECT_TYPE_MAP[sectoralScope] ?? PROJECT_TYPE_FALLBACK];
+  /** @param sector `project.sector` — this registry's coarser field feeds CAD Trust's projectType. */
+  private mapType(sector: string): string[] {
+    return [PROJECT_TYPE_MAP[sector as InfSectorEnum] ?? PROJECT_TYPE_FALLBACK];
   }
 
   private mapStatus(stage: string): string {
-    return PROJECT_STATUS_MAP[stage] ?? PROJECT_STATUS_FALLBACK;
+    return PROJECT_STATUS_MAP[stage as ProjectProposalStage] ?? PROJECT_STATUS_FALLBACK;
   }
 
   /** Internal timestamps are epoch milliseconds; CAD Trust wants YYYY-MM-DD. */

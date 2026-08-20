@@ -7,6 +7,7 @@ import { AsyncOperationsModule } from "../async-operations/async-operations.modu
 import { CadTrustSyncRecordEntity } from "../entities/cadtrust.sync.record.entity";
 import { Company } from "../entities/company.entity";
 import { DocumentEntity } from "../entities/document.entity";
+import { ProgrammeLedgerModule } from "../programme-ledger/programme-ledger.module";
 import { CadTrustPicklistService } from "./cadtrust-picklist.service";
 import { CadTrustRegistryProfileService } from "./cadtrust-registry-profile.service";
 import {
@@ -19,9 +20,11 @@ import { CadTrustBootstrapHandler } from "./handlers/bootstrap.handler";
 import { CadTrustCommitHandler } from "./handlers/commit.handler";
 import { CadTrustProjectCreateHandler } from "./handlers/project-create.handler";
 import { CadTrustProjectUpdateHandler } from "./handlers/project-update.handler";
+import { CadTrustValidationCreateHandler } from "./handlers/validation-create.handler";
 import { CadTrustLocationMapper } from "./mappers/location.mapper";
 import { CadTrustProjectMapper } from "./mappers/project.mapper";
 import { CadTrustStakeholderMapper } from "./mappers/stakeholder.mapper";
+import { CadTrustValidationMapper } from "./mappers/validation.mapper";
 
 /**
  * CAD Trust v2 sync adaptor.
@@ -44,19 +47,22 @@ import { CadTrustStakeholderMapper } from "./mappers/stakeholder.mapper";
  * Nothing outside this module changes — not the dispatcher, and not the shared
  * `async-operations-handler.service.ts` switch.
  *
- * ## Why repositories rather than domain services
+ * ## Why repositories (and the ledger service) rather than domain services
  *
  * `DocumentManagementService` enqueues these actions, so injecting it here would
  * make `DocumentManagementModule` and this module mutually dependent. Handlers
- * therefore read `DocumentEntity` / `Company` through repositories — never
- * `ProjectEntity`, which the ledger replicator populates asynchronously and
- * cannot be trusted to exist yet at sync time (see
- * `handlers/project-create.handler.ts`'s class doc).
+ * therefore read `DocumentEntity` / `Company` through repositories, and current
+ * project state through `ProgrammeLedgerService` (imported via `ProgrammeLedgerModule`,
+ * confirmed dependency-cycle-free) — never `ProjectEntity`, which the ledger replicator
+ * populates asynchronously and cannot be trusted to exist yet, or to already reflect a
+ * just-written transition, at sync time (see `handlers/project-create.handler.ts`'s and
+ * `handlers/project-update.handler.ts`'s class docs).
  */
 const SYNC_HANDLERS = [
   CadTrustBootstrapHandler,
   CadTrustProjectCreateHandler,
   CadTrustProjectUpdateHandler,
+  CadTrustValidationCreateHandler,
   CadTrustCommitHandler,
 ];
 
@@ -65,6 +71,7 @@ const SYNC_HANDLERS = [
     ConfigModule,
     CadTrustModule,
     AsyncOperationsModule,
+    ProgrammeLedgerModule,
     TypeOrmModule.forFeature([CadTrustSyncRecordEntity, DocumentEntity, Company]),
   ],
   providers: [
@@ -76,6 +83,7 @@ const SYNC_HANDLERS = [
     CadTrustProjectMapper,
     CadTrustStakeholderMapper,
     CadTrustLocationMapper,
+    CadTrustValidationMapper,
     ...SYNC_HANDLERS,
     {
       provide: CADTRUST_SYNC_HANDLERS,

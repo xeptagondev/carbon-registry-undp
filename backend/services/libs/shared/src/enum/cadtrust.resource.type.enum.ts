@@ -26,4 +26,6 @@ export enum CadTrustResourceType {
   STAKEHOLDER_PROJECT = "STAKEHOLDER_PROJECT",
   /** /v2/location, primary key cadTrustLocationId. */
   LOCATION = "LOCATION",
+  /** /v2/validation, primary key cadTrustValidationId. */
+  VALIDATION = "VALIDATION",
 }

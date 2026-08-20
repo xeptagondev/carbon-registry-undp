@@ -57,8 +57,11 @@ describe("CadTrustProjectMapper", () => {
       projectStatusDate: "2026-03-15",
       projectUnitMetric: PROJECT_UNIT_METRIC,
     });
-    expect(input.projectSector).toEqual(["Electricity, gas, steam and air conditioning supply"]);
-    expect(input.projectType).toEqual(["Renewable Energy"]);
+    // projectSector is sourced from sectoralScope, not sector — see picklist.map.ts.
+    expect(input.projectSector).toEqual(["Energy industries (renewable-/ non renewable sources)"]);
+    // projectType is sourced from sector, not sectoralScope — ENERGY has no honest projectType
+    // match (the real list is per-technology), so it falls back.
+    expect(input.projectType).toEqual([PROJECT_TYPE_FALLBACK]);
   });
 
   it("wraps sector and type as arrays even though this registry stores one of each", async () => {
@@ -76,7 +79,7 @@ describe("CadTrustProjectMapper", () => {
     const input = await mapper.toCreateInput(
       buildProject({
         sector: "SOMETHING_UNMAPPED" as any,
-        sectoralScope: InfSectoralScopeEnum.SOLVENT_USE,
+        sectoralScope: InfSectoralScopeEnum.NOT_APPLICABLE,
         projectProposalStage: "LEGACY_STAGE" as any,
       })
     );
@@ -86,24 +89,42 @@ describe("CadTrustProjectMapper", () => {
     expect(input.projectStatus).toBe("Listed");
   });
 
-  it("maps the authorised stage to Registered", async () => {
+  it("maps a real projectType match when sector has one", async () => {
+    const { mapper } = buildMapper();
+
+    const input = await mapper.toCreateInput(buildProject({ sector: InfSectorEnum.AGRICULTURE }));
+
+    expect(input.projectType).toEqual(["Agriculture"]);
+  });
+
+  it("maps the authorised stage to Authorized", async () => {
     const { mapper } = buildMapper();
 
     const input = await mapper.toCreateInput(
       buildProject({ projectProposalStage: ProjectProposalStage.AUTHORISED })
     );
 
-    expect(input.projectStatus).toBe("Registered");
+    expect(input.projectStatus).toBe("Authorized");
   });
 
-  it("maps rejections to Withdrawn", async () => {
+  it("maps INF approval to Registered", async () => {
     const { mapper } = buildMapper();
 
     const input = await mapper.toCreateInput(
-      buildProject({ projectProposalStage: ProjectProposalStage.PDD_REJECTED_BY_DNA })
+      buildProject({ projectProposalStage: ProjectProposalStage.APPROVED })
     );
 
-    expect(input.projectStatus).toBe("Withdrawn");
+    expect(input.projectStatus).toBe("Registered");
+  });
+
+  it("maps rejections to Rejected", async () => {
+    const { mapper } = buildMapper();
+
+    const input = await mapper.toCreateInput(
+      buildProject({ projectProposalStage: ProjectProposalStage.REJECTED })
+    );
+
+    expect(input.projectStatus).toBe("Rejected");
   });
 
   describe("description", () => {

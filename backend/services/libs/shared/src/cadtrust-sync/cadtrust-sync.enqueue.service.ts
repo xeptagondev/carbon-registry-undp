@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 
 import { AsyncOperationsInterface } from "../async-operations/async-operations.interface";
 import { AsyncActionType } from "../enum/async.action.type.enum";
+import { DocumentTypeEnum } from "../enum/document.type.enum";
 import { ProjectProposalStage } from "../enum/projectProposalStage.enum";
 import { TxType } from "../enum/txtype.enum";
 
@@ -44,6 +45,33 @@ export interface CadTrustProjectCreateSnapshot {
    * the id itself needs to ride the payload.
    */
   companyId: number;
+}
+
+/**
+ * Queue payload for `CADTV2ValidationCreate` — a snapshot, not just an id, and for a different
+ * reason than `CadTrustProjectCreateSnapshot`'s: the validating body's identity
+ * (`certifiedByUserDetails.Organisation.name` / `vrSubmittedIC.Organisation.name` in
+ * `DocumentManagementService`) is resolved via `document.lastActionByUserId`, which is correct read
+ * synchronously in-request (the current actor, before this transition's own write) but would be a
+ * race if re-derived later inside the async handler — `document_entity.status` and
+ * `.lastActionByUserId` are themselves written asynchronously by the ledger replicator
+ * (`process.event.service.ts`'s call into `modifyDocumentEntity`), the same lag class as
+ * `project_entity`. `document_entity.content`/`.type`/`.version`/`.createdTime` ARE safe to re-read
+ * anytime (written synchronously, once, at document creation) — but rather than split the read
+ * across two different safety classes, every field travels on the payload together.
+ */
+export interface CadTrustValidationSyncProps {
+  refId: string;
+  /** Which document this validation record is for — drives the sync-record localId and the CAD Trust validationId. */
+  documentType: DocumentTypeEnum.PROJECT_DESIGN_DOCUMENT | DocumentTypeEnum.VALIDATION;
+  documentVersion: number;
+  /** The validating Independent Certifier's company name. Not a CAD Trust picklist match — see picklist.map.ts. */
+  validationBodyName: string;
+  /** ISO date. From the PDD's/validation report's crediting-period fields, when present. */
+  creditPeriodStartDate?: string;
+  creditPeriodEndDate?: string;
+  /** ISO date — the DNA-approval instant, captured request-side. No real user-entered validation date exists in either document. */
+  validationDate: string;
 }
 
 /**
@@ -104,6 +132,31 @@ export class CadTrustSyncEnqueueService {
 
   async enqueueProjectUpdate(refId: string, txType?: TxType): Promise<void> {
     await this.enqueue(AsyncActionType.CADTV2ProjectUpdate, { refId, txType });
+  }
+
+  /**
+   * Stages a CAD Trust validation record for a DNA-approved PDD or validation report. See
+   * `CadTrustValidationSyncProps` for why this carries a fuller snapshot than most payloads here.
+   */
+  async enqueueValidation(props: CadTrustValidationSyncProps): Promise<void> {
+    const {
+      refId,
+      documentType,
+      documentVersion,
+      validationBodyName,
+      creditPeriodStartDate,
+      creditPeriodEndDate,
+      validationDate,
+    } = props;
+    await this.enqueue(AsyncActionType.CADTV2ValidationCreate, {
+      refId,
+      documentType,
+      documentVersion,
+      validationBodyName,
+      creditPeriodStartDate,
+      creditPeriodEndDate,
+      validationDate,
+    });
   }
 
   /**

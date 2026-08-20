@@ -42,4 +42,11 @@ export enum CadTrustLocalEntityType {
   STAKEHOLDER_PROJECT = "STAKEHOLDER_PROJECT",
   /** The project's site location. `localId` is `refId` — one location per project. */
   LOCATION = "LOCATION",
+  /**
+   * A CAD Trust validation record for a specific approved document version. `localId` is
+   * `${refId}-${documentType}-v${documentVersion}` — a rejected-and-resubmitted PDD or validation
+   * report is a legitimately distinct validation event on re-approval, so the key includes the
+   * version rather than collapsing every version onto one record.
+   */
+  VALIDATION = "VALIDATION",
 }

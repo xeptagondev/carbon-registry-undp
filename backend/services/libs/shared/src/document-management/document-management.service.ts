@@ -1598,6 +1598,23 @@ private getFileExtension = (file: string): string => {
             user.id
           )
         );
+        // Stage a CAD Trust validation record for this PDD. certifiedByUserDetails is resolved
+        // above from document.lastActionByUserId while it's still correct (the IC who submitted
+        // it) — see CadTrustValidationSyncProps's doc for why that has to happen here, in-request,
+        // rather than being re-derived inside the async handler.
+        await this.cadTrustSyncEnqueue.enqueueValidation({
+          refId: project.refId,
+          documentType: DocumentTypeEnum.PROJECT_DESIGN_DOCUMENT,
+          documentVersion: document.version,
+          validationBodyName: certifiedByUserDetails.Organisation.name,
+          creditPeriodStartDate: this.cadTrustEpochSecondsToIsoDate(
+            document.content?.startDateCreditingPeriod?.projectCreditingPeriodStartDate
+          ),
+          creditPeriodEndDate: this.cadTrustEpochSecondsToIsoDate(
+            document.content?.startDateCreditingPeriod?.projectCreditingPeriodEndDate
+          ),
+          validationDate: new Date().toISOString().split("T")[0],
+        });
         await this.emailHelperService.sendEmailToPDAdmins(
           EmailTemplates.PDD_APPROVAL_DNA_TO_PD,
           null,
@@ -1753,6 +1770,23 @@ private getFileExtension = (file: string): string => {
             user.id
           )
         );
+        // Stage a CAD Trust validation record for this validation report — separate from the
+        // project-status update above, which enqueueProjectUpdate (inside updateProposalStage)
+        // already handles. vrSubmittedIC is resolved from document.lastActionByUserId while it's
+        // still correct (the IC who submitted the report) — see CadTrustValidationSyncProps's doc.
+        await this.cadTrustSyncEnqueue.enqueueValidation({
+          refId: project.refId,
+          documentType: DocumentTypeEnum.VALIDATION,
+          documentVersion: document.version,
+          validationBodyName: vrSubmittedIC.Organisation.name,
+          creditPeriodStartDate: this.cadTrustEpochSecondsToIsoDate(
+            document.content?.basicInformation?.creditingPeriodStart
+          ),
+          creditPeriodEndDate: this.cadTrustEpochSecondsToIsoDate(
+            document.content?.basicInformation?.creditingPeriodEnd
+          ),
+          validationDate: new Date().toISOString().split("T")[0],
+        });
         await this.emailHelperService.sendEmailToPDAdmins(
           EmailTemplates.VALIDATION_APPROVED_TO_PD,
           { icOrganizationName: vrSubmittedIC.Organisation.name },
@@ -2130,6 +2164,18 @@ private getFileExtension = (file: string): string => {
     return `${docType}#${documentId}${
       lastActionByUserId ? `#${lastActionByUserId}` : ``
     }`;
+  }
+
+  /**
+   * PDD/validation-report crediting-period dates are stored as unix seconds (frontend forms use
+   * `moment(...).unix()`), but CAD Trust's `validationCreditPeriodStartDate`/`EndDate` want ISO
+   * 8601 dates. Guards undefined/null/NaN — the field is optional on both sides.
+   */
+  private cadTrustEpochSecondsToIsoDate(epochSeconds?: number): string | undefined {
+    if (!epochSeconds || Number.isNaN(Number(epochSeconds))) {
+      return undefined;
+    }
+    return new Date(Number(epochSeconds) * 1000).toISOString().split("T")[0];
   }
 
   async query(query: DocumentQueryDto) {

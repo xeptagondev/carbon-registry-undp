@@ -28,4 +28,7 @@ export enum AsyncActionType {
   // Verifies the CAD Trust home organization and stages the registry's one-time
   // program + methodology. See src/migrations/1785600000000-CadTrustV2Bootstrap.ts.
   CADTV2Bootstrap,
+  // Stages a CAD Trust validation record for a DNA-approved PDD or validation report.
+  // See src/migrations/1785800000000-CadTrustV2Validation.ts.
+  CADTV2ValidationCreate,
 }
