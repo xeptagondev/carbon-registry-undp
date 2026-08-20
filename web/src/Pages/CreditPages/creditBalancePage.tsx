@@ -54,7 +54,7 @@ export const CreditBalancePage = () => {
     }
   }, [canFilterOrganization]);
 
-  const selectedOrganizations = canFilterOrganization
+  const selectedOrganizationIds = canFilterOrganization
     && Array.isArray(filterValues.organizations)
     ? filterValues.organizations.map(String)
     : [];
@@ -67,28 +67,29 @@ export const CreditBalancePage = () => {
   };
 
   const orgFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.ORGANIZATION_NAMES,
+    endpoint: API_PATHS.ORGANIZATION_NAME_IDS,
     id: 'organizations',
     mode: 'multiple',
     placeholder: t('selectOrganization'),
     labelKey: 'name',
-    valueKey: 'name',
+    valueKey: 'companyId',
     sortKey: 'name',
     extraFilters: [
       { key: 'companyRole', operation: '=', value: CompanyRole.PROJECT_DEVELOPER },
-      { key: 'state', operation: '=', value: '1' },
+      { key: 'state', operation: 'in', value: ['0', '1'] },
     ],
     selectedValues: (filterValues.organizations as FilterValue[]) ?? [],
   });
 
   const projectFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.GET_PROJECT,
+    endpoint: API_PATHS.CREDIT_BALANCE_PROJECT_NAMES,
     id: 'projects',
     mode: 'multiple',
     placeholder: t('selectProject'),
-    labelKey: 'title',
-    valueKey: 'title',
-    sortKey: 'title',
+    labelKey: 'projectName',
+    valueKey: 'projectIds',
+    searchKey: 'title',
+    sortKey: 'projectName',
     selectedValues: (filterValues.projects as FilterValue[]) ?? [],
   });
 
@@ -168,28 +169,28 @@ export const CreditBalancePage = () => {
                   { ...projectFilter.control, width: 280, visible: view === 'project' },
                 ]}
                 onChange={onFilterChange}
-                appliedFiltersLabel="Applied filters"
-                clearAllLabel="Clear all"
+                appliedFiltersLabel={t('appliedFilters')}
+                clearAllLabel={t('clearAll')}
+                selectAllLabel={t('selectAll')}
                 onClearAll={() => setFilterValues({ organizations: [], projects: [] })}
-                showAppliedFilters={false}
               />
             </div>
 
             {view === 'project' ? (
               <CreditBalanceByProjectTable
-                selectedOrganizations={selectedOrganizations}
+                selectedOrganizationIds={selectedOrganizationIds}
                 selectedProjects={selectedProjects}
                 refreshGeneration={refreshGeneration}
                 onBalanceChanged={refreshBalances}
               />
             ) : canViewOrganization ? (
               <CreditBalanceByOrganizationTable
-                selectedOrganizations={selectedOrganizations}
+                selectedOrganizationIds={selectedOrganizationIds}
                 refreshGeneration={refreshGeneration}
               />
             ) : (
               <CreditBalanceByProjectTable
-                selectedOrganizations={selectedOrganizations}
+                selectedOrganizationIds={selectedOrganizationIds}
                 selectedProjects={selectedProjects}
                 refreshGeneration={refreshGeneration}
                 onBalanceChanged={refreshBalances}

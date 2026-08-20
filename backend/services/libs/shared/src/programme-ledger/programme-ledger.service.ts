@@ -38,41 +38,33 @@ import { CreditTransactionTypesEnum } from "../enum/credit.transaction.types.enu
 import { CreditTransactionStatusEnum } from "../enum/credit.transaction.status.enum";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
 import { CreditRetireActionDto } from "../dto/credit.retire.action.dto";
+import { CreditItmoAuthRequestDto } from "../dto/credit.itmo.auth.request.dto";
+import { CreditItmoAuthActionDto } from "../dto/credit.itmo.auth.action.dto";
 import { RetirementACtionEnum } from "../enum/retirement.action.enum";
 import { SerialNumberManagementService } from "../serial-number-management/serial-number-management.service";
 import { AccountType } from "../enum/account.type.enum";
-import { AuthorizationPurpose } from "../enum/authorization.purpose.enum";
-import { CreditRetirementTypeEnum } from "../enum/credit.retirement.type.enum";
+import { CreditTransactionSubTypesEnum } from "../enum/credit.transaction.sub.types.enum";
 
 /**
- * Map a CreditRetirementTypeEnum selection to the Dec 2/CMA.3 Annex
- * para 29 account bucket the retired credits land in. Wiring this map
- * is the final piece of the retirement flow that closes the Phase 2
- * gap: prior to this commit, the four Article 6.2 retirement types
- * were accepted by the DTO but never caused the derived retirement
- * block to carry the right accountType, so AEF Actions rows did not
- * reflect the authorizing Party's intent.
+ * Map a retirement subType to the account bucket the retired credits
+ * land in. Domestic Use-Towards-NDC (MO) and First-Transfer-Towards-NDC
+ * (ITMO) both land in the same NDC bucket — the account type tracks
+ * what the credit was used for, not whether it crossed a border.
  */
-function mapRetirementTypeToAccountType(
-  retirementType: CreditRetirementTypeEnum
+function mapSubTypeToAccountType(
+  subType: CreditTransactionSubTypesEnum
 ): AccountType {
-  switch (retirementType) {
-    case CreditRetirementTypeEnum.USE_TOWARDS_NDC:
+  switch (subType) {
+    case CreditTransactionSubTypesEnum.USE_TOWARDS_NDC:
+    case CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC:
       return AccountType.RETIREMENT_NDC;
-    case CreditRetirementTypeEnum.USE_FOR_OIMP:
+    case CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP:
       return AccountType.RETIREMENT_OIMP;
-    case CreditRetirementTypeEnum.OMGE_CANCELLATION:
+    case CreditTransactionSubTypesEnum.OMGE_CANCELLATION:
       return AccountType.CANCELLATION_OMGE;
-    case CreditRetirementTypeEnum.SOP_ADAPTATION:
-      return AccountType.CANCELLATION_SOP;
-    case CreditRetirementTypeEnum.VOLUNTARY_CANCELLATIONS:
+    case CreditTransactionSubTypesEnum.VOLUNTARY_CANCELLATION:
       return AccountType.CANCELLATION_VOLUNTARY;
-    case CreditRetirementTypeEnum.CROSS_BORDER_TRANSACTIONS:
     default:
-      // Cross-border transfer doesn't live in a specific Dec 2/CMA.3
-      // para 29 bucket — the credits move to another Party's
-      // registry. Retain Holding so the local account-type filter
-      // doesn't misclassify it as a cancellation.
       return AccountType.HOLDING;
   }
 }
@@ -488,13 +480,6 @@ export class ProgrammeLedgerService {
             project.txTime,
             user
           );
-          // Mark blocks with OMGE/SOP deduction flags if auto-deduct is enabled
-          const autoDeduct = this.configService.get<boolean>("itmo.autoDeductAtIssuance");
-          if (autoDeduct) {
-            newBlock.omgeDeductedAtIssuance = true;
-            newBlock.sopDeductedAtIssuance = true;
-          }
-
           insertMap[
             this.ledger.creditBlocksTable + "#" + newBlock.creditBlockId
           ] = newBlock;
@@ -842,13 +827,11 @@ export class ProgrammeLedgerService {
         let updateWhereMap = {};
         let insertMap = {};
         if (retirementAction.action == RetirementACtionEnum.ACCEPT) {
-          // Dec 2/CMA.3 Annex para 29 + Draft -/CMA.5 para 80: the 6
-          // retirement / cancellation account types must end up on the
-          // retired block so AEF Actions rows report the correct
-          // action subtype. Map the retirementType chosen on the
-          // request to the AccountType bucket the credits land in.
-          const accountTypeForRetirement = mapRetirementTypeToAccountType(
-            creditRetirementRequest.retirementType
+          // The retirement subType chosen on the request decides which
+          // account bucket the retired block lands in, so downstream
+          // reports carry the correct action subtype.
+          const accountTypeForRetirement = mapSubTypeToAccountType(
+            creditRetirementRequest.subType
           );
           if (
             creditBlock.reservedCreditAmount == retireRequestRecord.amount &&
@@ -877,6 +860,23 @@ export class ProgrammeLedgerService {
                 creditBlock.serialNumber,
                 retireRequestRecord.amount
               );
+            // An already-ITMO block's itmoSerial has the same shape as
+            // its regular serial, so it splits with the same helper —
+            // the retained (parent) portion keeps the low end of the
+            // range, the retiring (child) portion takes the high end.
+            // MO blocks retiring through this same path have no
+            // itmoSerial to split.
+            let parentItmoSerial: string | undefined;
+            let childItmoSerial: string | undefined;
+            if (creditBlock.itmoSerial) {
+              const splitItmoSerial =
+                this.serialNumberManagementService.splitCreditBlockSerialNumber(
+                  creditBlock.itmoSerial,
+                  retireRequestRecord.amount
+                );
+              parentItmoSerial = splitItmoSerial.firstSerialNumber;
+              childItmoSerial = splitItmoSerial.secondSerialNumber;
+            }
             updateMap[this.ledger.creditBlocksTable] = {
               txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
                 TxType.CREDIT_BLOCK_SPLIT,
@@ -893,6 +893,7 @@ export class ProgrammeLedgerService {
               serialNumber: firstSerialNumber,
               creditAmount:
                 creditBlock.creditAmount - retireRequestRecord.amount,
+              ...(parentItmoSerial ? { itmoSerial: parentItmoSerial } : {}),
             };
             const newBlockId =
               this.serialNumberManagementService.getCreditBlockId(
@@ -926,14 +927,9 @@ export class ProgrammeLedgerService {
                   },
                 ],
                 isNotTransferred: false,
-                // Propagate the Dec 2/CMA.3 para 29 retirement account
-                // bucket + the Phase 2 CA linkage + authorization
-                // purpose to the derived retirement block so AEF
-                // Actions rows carry the correct Article 6.2 metadata.
                 accountType: accountTypeForRetirement,
-                cooperativeApproachId: creditBlock.cooperativeApproachId,
-                authorizationPurpose: creditBlock.authorizationPurpose,
-                itmoSerial: creditBlock.itmoSerial,
+                itmoSerial: childItmoSerial,
+                itmoAuthorizationRecord: creditBlock.itmoAuthorizationRecord,
               });
           }
           if (creditBlock.isNotTransferred) {
@@ -974,6 +970,324 @@ export class ProgrammeLedgerService {
         }
         updateWhereMap[this.ledger.creditBlocksTable] = {
           creditBlockId: creditRetirementRequest.creditBlockId,
+        };
+
+        return [updateMap, updateWhereMap, insertMap];
+      }
+    );
+  }
+
+  public async addItmoAuthRequest(
+    newAuthId: string,
+    itmoAuthReqDto: CreditItmoAuthRequestDto,
+    user: User
+  ) {
+    const getQueries = {};
+    getQueries[this.ledger.creditBlocksTable] = {
+      creditBlockId: itmoAuthReqDto.blockId,
+    };
+    await this.ledger.getAndUpdateTx(
+      getQueries,
+      (results: Record<string, dom.Value[]>) => {
+        const creditBlocks: CreditBlocksEntity[] = results[
+          this.ledger.creditBlocksTable
+        ].map((domValue) => {
+          return plainToClass(
+            CreditBlocksEntity,
+            JSON.parse(JSON.stringify(domValue))
+          );
+        });
+        if (creditBlocks.length <= 0) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "project.creditBlockNotExistWIthCreditBlockId",
+              [itmoAuthReqDto.blockId]
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        const creditBlock = creditBlocks[0];
+        if (user.companyId != creditBlock.ownerCompanyId) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "project.creditBlockNotBelongsToOwner",
+              [itmoAuthReqDto.blockId]
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        // Only mitigation-outcome (MO) blocks can be authorized as
+        // ITMOs, and only out of a holding account.
+        if (creditBlock.itmoAuthorizationRecord) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "creditTransaction.blockAlreadyItmoAuthorized",
+              [itmoAuthReqDto.blockId]
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        if (
+          creditBlock.accountType &&
+          creditBlock.accountType !== AccountType.HOLDING
+        ) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "creditTransaction.blockNotInHoldingAccount",
+              [itmoAuthReqDto.blockId]
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        if (
+          creditBlock.creditAmount - creditBlock.reservedCreditAmount <
+          itmoAuthReqDto.amount
+        ) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "project.notEnoughCreditAmount",
+              []
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        let updateMap = {};
+        let updateWhereMap = {};
+        let insertMap = {};
+        updateMap[this.ledger.creditBlocksTable] = {
+          txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
+            TxType.ITMO_AUTH_REQ,
+            user.companyId,
+            user.companyId,
+            user.id
+          ),
+          txData: itmoAuthReqDto,
+          txType: TxType.ITMO_AUTH_REQ,
+          txTime: new Date().getTime(),
+          reservedCreditAmount:
+            creditBlock.reservedCreditAmount + itmoAuthReqDto.amount,
+          transactionRecords: [
+            ...creditBlock.transactionRecords,
+            {
+              id: newAuthId,
+              type: CreditTransactionTypesEnum.ITMO_AUTHORIZED,
+              status: CreditTransactionStatusEnum.PENDING,
+              amount: itmoAuthReqDto.amount,
+            },
+          ],
+        };
+        updateWhereMap[this.ledger.creditBlocksTable] = {
+          creditBlockId: itmoAuthReqDto.blockId,
+        };
+
+        return [updateMap, updateWhereMap, insertMap];
+      }
+    );
+  }
+
+  public async itmoAuthRequestAction(
+    itmoAuthRequest: CreditTransactionsEntity,
+    itmoAuthAction: CreditItmoAuthActionDto,
+    user: User,
+    caReferenceNumber?: string
+  ) {
+    const getQueries = {};
+    getQueries[this.ledger.creditBlocksTable] = {
+      creditBlockId: itmoAuthRequest.creditBlockId,
+    };
+    await this.ledger.getAndUpdateTx(
+      getQueries,
+      (results: Record<string, dom.Value[]>) => {
+        const creditBlocks: CreditBlocksEntity[] = results[
+          this.ledger.creditBlocksTable
+        ].map((domValue) => {
+          return plainToClass(
+            CreditBlocksEntity,
+            JSON.parse(JSON.stringify(domValue))
+          );
+        });
+        if (creditBlocks.length <= 0) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "project.creditBlockNotExistWIthCreditBlockId",
+              [itmoAuthRequest.creditBlockId]
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        const creditBlock = creditBlocks[0];
+        const transactionRecordIndex = creditBlock.transactionRecords.findIndex(
+          (e) => e.id == itmoAuthAction.transactionId
+        );
+        if (transactionRecordIndex < 0) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "project.noTransactionRecord",
+              []
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        const authRequestRecord =
+          creditBlock.transactionRecords[transactionRecordIndex];
+        if (authRequestRecord.status != CreditTransactionStatusEnum.PENDING) {
+          throw new HttpException(
+            this.helperService.formatReqMessagesString(
+              "project.noPendingTransactionRecord",
+              []
+            ),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        const txTime = new Date().getTime();
+        if (itmoAuthAction.action == RetirementACtionEnum.ACCEPT) {
+          creditBlock.transactionRecords[transactionRecordIndex].status =
+            CreditTransactionStatusEnum.COMPLETED;
+        } else if (itmoAuthAction.action == RetirementACtionEnum.REJECT) {
+          creditBlock.transactionRecords[transactionRecordIndex].status =
+            CreditTransactionStatusEnum.REJECTED;
+        } else if (itmoAuthAction.action == RetirementACtionEnum.CANCEL) {
+          creditBlock.transactionRecords[transactionRecordIndex].status =
+            CreditTransactionStatusEnum.CANCELLED;
+        }
+        let updateMap = {};
+        let updateWhereMap = {};
+        let insertMap = {};
+        if (itmoAuthAction.action == RetirementACtionEnum.ACCEPT) {
+          if (
+            creditBlock.reservedCreditAmount == authRequestRecord.amount &&
+            creditBlock.creditAmount == authRequestRecord.amount
+          ) {
+            // The whole block becomes an ITMO — ownership does not
+            // change, the block is only linked to its authorization
+            // record and gets its itmoSerial assigned for the first
+            // time (see SerialNumberManagementService.getItmoSerial).
+            const wholeBlockRange = this.serialNumberManagementService.getBlockRange(
+              creditBlock.serialNumber
+            );
+            const wholeBlockProjectId =
+              this.serialNumberManagementService.getProjectIdFromSerial(
+                creditBlock.serialNumber
+              );
+            updateMap[this.ledger.creditBlocksTable] = {
+              txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
+                TxType.ITMO_AUTH,
+                creditBlock.ownerCompanyId,
+                creditBlock.ownerCompanyId,
+                user.id
+              ),
+              txData: itmoAuthAction,
+              txTime: txTime,
+              txType: TxType.ITMO_AUTH,
+              reservedCreditAmount: 0,
+              transactionRecords: creditBlock.transactionRecords,
+              itmoAuthorizationRecord: authRequestRecord.id,
+              itmoSerial: this.serialNumberManagementService.getItmoSerial(
+                caReferenceNumber,
+                wholeBlockProjectId,
+                wholeBlockRange.start,
+                wholeBlockRange.end,
+                creditBlock.vintage
+              ),
+            };
+          } else {
+            // Partial authorization — split the block: the parent
+            // keeps the remainder as an MO, the new child block covers
+            // the authorized amount and becomes an ITMO.
+            const { firstSerialNumber, secondSerialNumber } =
+              this.serialNumberManagementService.splitCreditBlockSerialNumber(
+                creditBlock.serialNumber,
+                authRequestRecord.amount
+              );
+            updateMap[this.ledger.creditBlocksTable] = {
+              txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
+                TxType.CREDIT_BLOCK_SPLIT,
+                creditBlock.ownerCompanyId,
+                creditBlock.ownerCompanyId,
+                user.id
+              ),
+              txData: itmoAuthAction,
+              txType: TxType.CREDIT_BLOCK_SPLIT,
+              txTime: txTime,
+              reservedCreditAmount:
+                creditBlock.reservedCreditAmount - authRequestRecord.amount,
+              transactionRecords: creditBlock.transactionRecords,
+              serialNumber: firstSerialNumber,
+              creditAmount:
+                creditBlock.creditAmount - authRequestRecord.amount,
+            };
+            const newBlockId =
+              this.serialNumberManagementService.getCreditBlockId(
+                secondSerialNumber
+              );
+            // The newly authorized child's itmoSerial range is derived
+            // from its own regular serial (secondSerialNumber) so the
+            // two are guaranteed consistent; the retained parent stays
+            // an MO and gets no itmoSerial.
+            const childRange = this.serialNumberManagementService.getBlockRange(
+              secondSerialNumber
+            );
+            const childProjectId =
+              this.serialNumberManagementService.getProjectIdFromSerial(
+                secondSerialNumber
+              );
+            insertMap[this.ledger.creditBlocksTable + "#" + newBlockId] =
+              plainToClass(CreditBlocksEntity, {
+                creditBlockId: newBlockId,
+                txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
+                  TxType.ITMO_AUTH,
+                  creditBlock.ownerCompanyId,
+                  creditBlock.ownerCompanyId,
+                  user.id
+                ),
+                txTime: txTime,
+                txType: TxType.ITMO_AUTH,
+                txData: itmoAuthAction,
+                previousOwnerCompanyId: creditBlock.previousOwnerCompanyId,
+                ownerCompanyId: creditBlock.ownerCompanyId,
+                projectRefId: creditBlock.projectRefId,
+                serialNumber: secondSerialNumber,
+                vintage: creditBlock.vintage,
+                creditAmount: authRequestRecord.amount,
+                reservedCreditAmount: 0,
+                transactionRecords: [
+                  {
+                    id: authRequestRecord.id,
+                    type: CreditTransactionTypesEnum.ITMO_AUTHORIZED,
+                    status: CreditTransactionStatusEnum.COMPLETED,
+                    amount: authRequestRecord.amount,
+                  },
+                ],
+                isNotTransferred: creditBlock.isNotTransferred,
+                accountType: AccountType.HOLDING,
+                itmoSerial: this.serialNumberManagementService.getItmoSerial(
+                  caReferenceNumber,
+                  childProjectId,
+                  childRange.start,
+                  childRange.end,
+                  creditBlock.vintage
+                ),
+                itmoAuthorizationRecord: authRequestRecord.id,
+              });
+          }
+        } else {
+          updateMap[this.ledger.creditBlocksTable] = {
+            txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
+              TxType.ITMO_AUTH,
+              creditBlock.ownerCompanyId,
+              creditBlock.ownerCompanyId,
+              user.id
+            ),
+            txData: itmoAuthAction,
+            txType: TxType.ITMO_AUTH,
+            txTime: txTime,
+            reservedCreditAmount:
+              creditBlock.reservedCreditAmount - authRequestRecord.amount,
+            transactionRecords: creditBlock.transactionRecords,
+          };
+        }
+        updateWhereMap[this.ledger.creditBlocksTable] = {
+          creditBlockId: itmoAuthRequest.creditBlockId,
         };
 
         return [updateMap, updateWhereMap, insertMap];
@@ -2690,231 +3004,6 @@ export class ProgrammeLedgerService {
   }
 
   /**
-   * Retire credits to a specific account type (NDC, OIMP, voluntary cancellation, etc.)
-   * This implements the Article 6.2 requirement for distinct ITMO lifecycle events.
-   */
-  public async retireToAccount(
-    creditBlockId: string,
-    targetAccountType: AccountType,
-    amount: number,
-    projectRefId: string,
-    user: User,
-    retirementType: CreditRetirementTypeEnum,
-    remarks?: string,
-    country?: string,
-    organizationName?: string
-  ) {
-    const getQueries = {};
-    getQueries[this.ledger.creditBlocksTable] = {
-      creditBlockId: creditBlockId,
-    };
-    getQueries[this.ledger.projectTable] = {
-      refId: projectRefId,
-    };
-
-    const resp = await this.ledger.getAndUpdateTx(
-      getQueries,
-      (results: Record<string, dom.Value[]>) => {
-        const creditBlocks: CreditBlocksEntity[] = results[
-          this.ledger.creditBlocksTable
-        ].map((domValue) => {
-          return plainToClass(
-            CreditBlocksEntity,
-            JSON.parse(JSON.stringify(domValue))
-          );
-        });
-        if (creditBlocks.length <= 0) {
-          throw new HttpException(
-            this.helperService.formatReqMessagesString(
-              "project.creditBlockNotExistWIthCreditBlockId",
-              [creditBlockId]
-            ),
-            HttpStatus.BAD_REQUEST
-          );
-        }
-        const creditBlock = creditBlocks[0];
-
-        if (creditBlock.accountType !== AccountType.HOLDING) {
-          throw new HttpException(
-            "Credits can only be retired from a HOLDING account",
-            HttpStatus.BAD_REQUEST
-          );
-        }
-
-        if (creditBlock.creditAmount - creditBlock.reservedCreditAmount < amount) {
-          throw new HttpException(
-            this.helperService.formatReqMessagesString(
-              "project.notEnoughCreditAmount",
-              []
-            ),
-            HttpStatus.BAD_REQUEST
-          );
-        }
-
-        const projects: ProjectEntity[] = results[this.ledger.projectTable].map(
-          (domValue) => {
-            return plainToClass(
-              ProjectEntity,
-              JSON.parse(JSON.stringify(domValue))
-            );
-          }
-        );
-        const project = projects.length > 0 ? projects[0] : null;
-
-        const txTime = new Date().getTime();
-        let updateMap = {};
-        let updateWhereMap = {};
-        let insertMap = {};
-
-        // Determine the transaction type based on target account
-        let txType: CreditTransactionTypesEnum;
-        switch (targetAccountType) {
-          case AccountType.RETIREMENT_NDC:
-            txType = CreditTransactionTypesEnum.USE_TOWARDS_NDC;
-            break;
-          case AccountType.RETIREMENT_OIMP:
-            txType = CreditTransactionTypesEnum.USE_FOR_OIMP;
-            break;
-          case AccountType.CANCELLATION_VOLUNTARY:
-            txType = CreditTransactionTypesEnum.VOLUNTARY_CANCELLATION;
-            break;
-          case AccountType.CANCELLATION_OMGE:
-            txType = CreditTransactionTypesEnum.OMGE_CANCELLATION;
-            break;
-          default:
-            txType = CreditTransactionTypesEnum.RETIRED;
-        }
-
-        if (creditBlock.creditAmount === amount) {
-          // Retire the entire block — update in place
-          updateMap[this.ledger.creditBlocksTable] = {
-            txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
-              TxType.RETIRE,
-              creditBlock.ownerCompanyId,
-              0,
-              user.id
-            ),
-            txType: TxType.RETIRE,
-            txTime: txTime,
-            previousOwnerCompanyId: creditBlock.ownerCompanyId,
-            ownerCompanyId: 0,
-            isNotTransferred: false,
-            reservedCreditAmount: 0,
-            accountType: targetAccountType,
-            transactionRecords: [
-              ...creditBlock.transactionRecords,
-              {
-                id: `retire-${txTime}`,
-                type: txType,
-                status: CreditTransactionStatusEnum.COMPLETED,
-                amount: amount,
-              },
-            ],
-          };
-        } else {
-          // Split the block
-          const { firstSerialNumber, secondSerialNumber } =
-            this.serialNumberManagementService.splitCreditBlockSerialNumber(
-              creditBlock.serialNumber,
-              amount
-            );
-          // Update original block (remaining in HOLDING)
-          updateMap[this.ledger.creditBlocksTable] = {
-            txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
-              TxType.CREDIT_BLOCK_SPLIT,
-              creditBlock.ownerCompanyId,
-              0,
-              user.id
-            ),
-            txType: TxType.CREDIT_BLOCK_SPLIT,
-            txTime: txTime,
-            creditAmount: creditBlock.creditAmount - amount,
-            serialNumber: firstSerialNumber,
-            transactionRecords: creditBlock.transactionRecords,
-          };
-          // Create new block in target account
-          const newBlockId =
-            this.serialNumberManagementService.getCreditBlockId(secondSerialNumber);
-          insertMap[this.ledger.creditBlocksTable + "#" + newBlockId] =
-            plainToClass(CreditBlocksEntity, {
-              creditBlockId: newBlockId,
-              txRef: this.creditBlocksManagementService.getCreditBlockTxRef(
-                TxType.RETIRE,
-                creditBlock.ownerCompanyId,
-                0,
-                user.id
-              ),
-              txTime: txTime,
-              txType: TxType.RETIRE,
-              previousOwnerCompanyId: creditBlock.ownerCompanyId,
-              ownerCompanyId: 0,
-              projectRefId: creditBlock.projectRefId,
-              serialNumber: secondSerialNumber,
-              vintage: creditBlock.vintage,
-              creditAmount: amount,
-              reservedCreditAmount: 0,
-              isNotTransferred: false,
-              accountType: targetAccountType,
-              cooperativeApproachId: creditBlock.cooperativeApproachId,
-              authorizationPurpose: creditBlock.authorizationPurpose,
-              transactionRecords: [
-                {
-                  id: `retire-${txTime}`,
-                  type: txType,
-                  status: CreditTransactionStatusEnum.COMPLETED,
-                  amount: amount,
-                },
-              ],
-            });
-        }
-
-        updateWhereMap[this.ledger.creditBlocksTable] = {
-          creditBlockId: creditBlockId,
-        };
-
-        // Update project balances if this is the first owner
-        if (project && creditBlock.isNotTransferred) {
-          updateMap[this.ledger.projectTable] = {
-            creditBalance: project.creditBalance - amount,
-            creditChange: amount,
-            creditRetired: project.creditRetired
-              ? Number(project.creditRetired) + amount
-              : amount,
-            txTime: txTime,
-            txType: TxType.RETIRE,
-          };
-          updateWhereMap[this.ledger.projectTable] = {
-            refId: projectRefId,
-          };
-        }
-
-        return [updateMap, updateWhereMap, insertMap];
-      }
-    );
-  }
-
-  /**
-   * Cancel credits for OMGE (Overall Mitigation in Global Emissions).
-   * Convenience wrapper around retireToAccount.
-   */
-  public async cancelForOMGE(
-    creditBlockId: string,
-    amount: number,
-    projectRefId: string,
-    user: User
-  ) {
-    return this.retireToAccount(
-      creditBlockId,
-      AccountType.CANCELLATION_OMGE,
-      amount,
-      projectRefId,
-      user,
-      CreditRetirementTypeEnum.OMGE_CANCELLATION,
-      "OMGE cancellation for overall mitigation in global emissions"
-    );
-  }
-
-  /**
    * Get the configured OMGE and SOP deduction percentages.
    * Returns { omgePercentage, sopPercentage, autoDeductAtIssuance }.
    */
@@ -2929,28 +3018,5 @@ export class ProgrammeLedgerService {
       autoDeductAtIssuance:
         this.configService.get<boolean>("itmo.autoDeductAtIssuance") !== false,
     };
-  }
-
-  /**
-   * Calculate OMGE and SOP deductions for a given credit amount.
-   * Returns the net amount after deductions.
-   */
-  public calculateDeductions(totalCredits: number): {
-    netCredits: number;
-    omgeAmount: number;
-    sopAmount: number;
-  } {
-    const config = this.getDeductionConfig();
-    if (!config.autoDeductAtIssuance) {
-      return { netCredits: totalCredits, omgeAmount: 0, sopAmount: 0 };
-    }
-    const omgeAmount = Math.floor(
-      (totalCredits * config.omgePercentage) / 100
-    );
-    const sopAmount = Math.floor(
-      (totalCredits * config.sopPercentage) / 100
-    );
-    const netCredits = totalCredits - omgeAmount - sopAmount;
-    return { netCredits, omgeAmount, sopAmount };
   }
 }

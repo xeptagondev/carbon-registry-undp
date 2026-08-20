@@ -24,6 +24,10 @@ export const AppDataSource = new DataSource({
   entities: [
     "libs/shared/src/entities/*.ts",
     "libs/shared/src/view-entities/*.ts",
+    // @app/aef-v2 keeps its entities inside the library so it stays movable.
+    // Runtime loading is handled by autoLoadEntities + forFeature; this entry
+    // exists so `migration:generate` can see them.
+    "libs/aef-v2/src/typeorm/entities/*.ts",
   ],
   migrations: ["src/migrations/*.ts"],
 

@@ -26,7 +26,7 @@ import "../creditPageStyles.scss";
 import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
 import { CreditActionType } from "../Enums/creditActionType.enum";
 import { ActionResponseType } from "../../../Definitions/Enums/actionResponse.enum";
-import { ProjectDetailsLink } from "./ProjectDetailsLink";
+import { ProjectDetailsLink } from "../../../Components/ProjectDetailsLink/projectDetailsLink";
 import * as Icon from "react-bootstrap-icons";
 import { CreditActionModal } from "./creditActionModal";
 import { ActionResponseModal } from "../../../Components/Models/actionResponseModal";
@@ -40,6 +40,7 @@ import moment from "moment";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
 import { Role } from "../../../Definitions/Enums/role.enum";
 import { COLOR_CONFIGS } from "../../../Config/colorConfigs";
+import { CreditTypePill } from "./creditTypePill";
 
 const { Search } = Input;
 
@@ -51,6 +52,7 @@ enum CrediRetirementsColumns {
   DATE = "date",
   CREDITS = "credits",
   STATUS = "status",
+  CREDIT_TYPE = "creditType",
   RETIREMENT_TYPE = "retirementType",
   ACTION = "action",
 }
@@ -293,6 +295,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
           <ProjectDetailsLink
             projectId={item.projectId}
             projectName={item.projectName}
+            projectOwnerId={item.projectOwnerId}
           />
         );
       },
@@ -328,7 +331,7 @@ export const CreditRetirementsTableComponent = (props: any) => {
       title: t(CrediRetirementsColumns.DATE),
       key: "createdDate",
       sorter: true,
-      align: "left" as const,
+      align: "center" as const,
       render: (item: CreditRetirementInterface) => {
         return (
           <span>
@@ -342,13 +345,9 @@ export const CreditRetirementsTableComponent = (props: any) => {
     {
       title: t(CrediRetirementsColumns.CREDITS),
       key: CrediRetirementsColumns.CREDITS,
-      align: "left" as const,
+      align: "right" as const,
       render: (item: CreditRetirementInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(item?.creditAmount))}
-          </span>
-        );
+        return <span>{addCommSep(String(item?.creditAmount))}</span>;
       },
     },
     {
@@ -361,12 +360,24 @@ export const CreditRetirementsTableComponent = (props: any) => {
       },
     },
     {
+      title: t(CrediRetirementsColumns.CREDIT_TYPE),
+      key: CrediRetirementsColumns.CREDIT_TYPE,
+      align: "center" as const,
+      render: (item: CreditRetirementInterface) => (
+        <CreditTypePill
+          isItmo={!!item?.itmoAuthorizationRecord}
+          itmoSerial={item?.itmoSerial}
+          t={t}
+        />
+      ),
+    },
+    {
       title: t(CrediRetirementsColumns.RETIREMENT_TYPE),
-      key: "retirementType",
+      key: "subType",
       sorter: true,
       align: "center" as const,
       render: (item: CreditRetirementInterface) => {
-        return <span>{item?.retirementType}</span>;
+        return <span>{item?.subType}</span>;
       },
     },
     {

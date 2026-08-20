@@ -3,9 +3,12 @@ import { SwapOutlined } from '@ant-design/icons';
 import { Card, Empty, message, PaginationProps, Row, Table, Tag, Tooltip } from 'antd';
 import moment from 'moment';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import '../../../Styles/common.table.scss';
 import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
 import { ProfileIcon } from '../../IconComponents/ProfileIcon/profile.icon';
+import { ProjectDetailsLink } from '../../ProjectDetailsLink/projectDetailsLink';
+import { CreditTypePill } from '../../../Pages/CreditPages/Components/creditTypePill';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
 import { API_PATHS } from '../../../Config/apiConfig';
 import {
@@ -20,11 +23,14 @@ export enum OrganizationTransactionStatus {
   TRANSFERRED = 'Transferred',
   RECEIVED = 'Received',
   RETIRED = 'Retired',
+  ITMO_AUTHORIZED = 'ITMO Authorized',
 }
 
 export interface OrganizationTransactionInterface {
   id: string;
+  projectId: string;
   projectName: string;
+  projectOwnerId: number;
   serialNumber: string;
   currentStatus: OrganizationTransactionStatus;
   senderName?: string | null;
@@ -33,6 +39,12 @@ export interface OrganizationTransactionInterface {
   receiverLogo?: string | null;
   updatedDate: string;
   creditAmount: number;
+  // Non-null ⇒ these units are ITMOs (see credit.block.org.transactions.view.entity.ts).
+  itmoAuthorizationRecord?: string | null;
+  // Derived server-side from this row's own frozen serialNumber — never
+  // from a live join, which would drift as the block keeps getting
+  // re-split by later actions. Null for MO rows.
+  itmoSerial?: string | null;
 }
 
 // Raw row from POST .../orgCreditBlocks (CreditBlockOrgTransactionsViewEntity).
@@ -43,17 +55,22 @@ interface OrgTransactionQueryRow {
   serialNumber: string;
   projectId: string;
   projectName: string;
+  projectOwnerId: number;
   senderName: string | null;
   senderLogo: string | null;
   receiverName: string | null;
   receiverLogo: string | null;
   updatedDate: number | string;
   creditAmount: number;
+  itmoAuthorizationRecord: string | null;
+  itmoSerial: string | null;
 }
 
 const mapRow = (row: OrgTransactionQueryRow): OrganizationTransactionInterface => ({
   id: row.id,
+  projectId: row.projectId,
   projectName: row.projectName,
+  projectOwnerId: row.projectOwnerId,
   serialNumber: row.serialNumber,
   currentStatus: row.currentStatus as OrganizationTransactionStatus,
   senderName: row.senderName,
@@ -62,6 +79,8 @@ const mapRow = (row: OrgTransactionQueryRow): OrganizationTransactionInterface =
   receiverLogo: row.receiverLogo,
   updatedDate: String(row.updatedDate),
   creditAmount: row.creditAmount,
+  itmoAuthorizationRecord: row.itmoAuthorizationRecord,
+  itmoSerial: row.itmoSerial,
 });
 
 const getTransactionStatusTagColor = (status: OrganizationTransactionStatus) => {
@@ -74,6 +93,8 @@ const getTransactionStatusTagColor = (status: OrganizationTransactionStatus) => 
       return 'success';
     case OrganizationTransactionStatus.RETIRED:
       return 'warning';
+    case OrganizationTransactionStatus.ITMO_AUTHORIZED:
+      return 'cyan';
     default:
       return 'default';
   }
@@ -91,6 +112,8 @@ const getTransactionStatusHexColor = (status: OrganizationTransactionStatus) => 
       return '#52c41a';
     case OrganizationTransactionStatus.RETIRED:
       return '#faad14';
+    case OrganizationTransactionStatus.ITMO_AUTHORIZED:
+      return '#13c2c2';
     default:
       return undefined;
   }
@@ -114,6 +137,11 @@ export const OrganizationTransactionsTable = ({
   t,
   companyId,
 }: OrganizationTransactionsTableProps) => {
+  // CreditTypePill's keys ("itmo"/"mo"/"itmoSerial"/...) live in the
+  // creditPages namespace, but this page's own `t` prop is bound to
+  // companyProfile — load creditPages locally rather than repurposing the
+  // shared `t`, so every other column stays on companyProfile unchanged.
+  const { t: tCreditPages } = useTranslation('creditPages');
   const { post } = useConnection();
   const isInitialRender = useRef(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -130,7 +158,7 @@ export const OrganizationTransactionsTable = ({
   // The transactions view's projectId column is the project's refId; only
   // projects with at least one issued credit are worth offering here.
   const projectFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.GET_PROJECT,
+    endpoint: API_PATHS.PROJECT_NAME_IDS,
     id: 'project',
     mode: 'multiple',
     placeholder: t('filterByProject'),
@@ -212,7 +240,13 @@ export const OrganizationTransactionsTable = ({
       key: 'projectName',
       sorter: true,
       align: 'left' as const,
-      render: (record: OrganizationTransactionInterface) => <span>{record.projectName}</span>,
+      render: (record: OrganizationTransactionInterface) => (
+      <ProjectDetailsLink
+        projectId={record.projectId}
+        projectName={record.projectName}
+        projectOwnerId={record.projectOwnerId}
+      />
+    ),
     },
     {
       title: t('companyProfile:serialNo'),
@@ -228,6 +262,18 @@ export const OrganizationTransactionsTable = ({
         <Tag color={getTransactionStatusTagColor(record.currentStatus)}>
           {t(record.currentStatus)}
         </Tag>
+      ),
+    },
+    {
+      title: t('companyProfile:creditType'),
+      key: 'creditType',
+      align: 'center' as const,
+      render: (record: OrganizationTransactionInterface) => (
+        <CreditTypePill
+          isItmo={!!record.itmoAuthorizationRecord}
+          itmoSerial={record.itmoSerial}
+          t={tCreditPages}
+        />
       ),
     },
     {
@@ -353,6 +399,7 @@ export const OrganizationTransactionsTable = ({
         disabled={loading}
         appliedFiltersLabel={t('appliedFilters')}
         clearAllLabel={t('clearAll')}
+        selectAllLabel={t('selectAll')}
       />
       <div className="credit-table-container">
         <Table

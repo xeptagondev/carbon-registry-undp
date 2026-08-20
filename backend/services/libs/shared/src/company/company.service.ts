@@ -16,7 +16,10 @@ import { CompanyRole } from "../enum/company.role.enum";
 import { QueryDto } from "../dto/query.dto";
 import { DataListResponseDto } from "../dto/data.list.response";
 import { BasicResponseDto } from "../dto/basic.response.dto";
-import { CompanyState } from "../enum/company.state.enum";
+import {
+  CompanyState,
+  COMPANY_STATE_ALPHABETICAL_ORDER,
+} from "../enum/company.state.enum";
 import { HelperService } from "../util/helpers.service";
 import { FindOrganisationQueryDto } from "../dto/find.organisation.dto";
 import { ProgrammeLedgerService } from "../programme-ledger/programme-ledger.service";
@@ -63,6 +66,7 @@ import { IDNameResponse } from "../dto/id-name.response.dto";
 import { Role } from "../casl/role.enum";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
 import { CreditBlockOrgAggregationViewEntity } from "../view-entities/credit.block.org.aggregation.view.entity";
+import { CreditBlockOrgBalancesViewEntity } from "../view-entities/credit.block.org.balances.view.entity";
 
 @Injectable()
 export class CompanyService {
@@ -93,7 +97,9 @@ export class CompanyService {
     @InjectRepository(CreditBlocksEntity)
     private creditBlocksEntityRepository: Repository<CreditBlocksEntity>,
     @InjectRepository(CreditBlockOrgAggregationViewEntity)
-    private creditBlockOrgAggregationViewEntityRepository: Repository<CreditBlockOrgAggregationViewEntity>
+    private creditBlockOrgAggregationViewEntityRepository: Repository<CreditBlockOrgAggregationViewEntity>,
+    @InjectRepository(CreditBlockOrgBalancesViewEntity)
+    private creditBlockOrgBalancesViewEntityRepository: Repository<CreditBlockOrgBalancesViewEntity>
   ) {}
 
   async suspend(
@@ -624,7 +630,9 @@ export class CompanyService {
         )
       )
       .orderBy(
-        query?.sort?.key && `"${query?.sort?.key}"`,
+        query?.sort?.key === "state"
+          ? this.stateAlphabeticalExpr()
+          : query?.sort?.key && `"${query?.sort?.key}"`,
         query?.sort?.order,
         query?.sort?.nullFirst !== undefined
           ? query?.sort?.nullFirst === true
@@ -646,30 +654,55 @@ export class CompanyService {
   }
 
   // Attaches the per-org credit totals (issued / received / retired /
-  // transferred / reserved / balance) from CreditBlockOrgAggregationViewEntity
-  // onto each company, so the View Organisations table (creditIssued /
-  // creditRetired) and the profile summary card can read them off the
-  // response. Orgs with no credit activity default to 0.
+  // transferred / reserved / balance, plus the ITMO-only subset of
+  // reserved/balance) onto each company, so the View Organisations table
+  // (creditIssued / creditRetired) and the profile summary card can read
+  // them off the response. Orgs with no credit activity default to 0.
+  //
+  // Two different views back this, on two different grains:
+  //  - CreditBlockOrgAggregationViewEntity is FROM company (LEFT JOINed to
+  //    credit activity), so every org has a row - including ones with zero
+  //    credit history.
+  //  - CreditBlockOrgBalancesViewEntity is FROM credit_blocks_entity
+  //    directly (see ItmoVisibilityViews1787300000000), so an org holding
+  //    no blocks at all has NO row - itmoBalance/itmoReservedCredits must
+  //    default to 0 explicitly rather than assuming a match.
+  // itmoBalance/itmoReservedCredits are the ITMO-only subset of
+  // creditBalance/creditReserved (not additional totals) - MO is derived
+  // client-side as creditBalance - itmoBalance, matching the convention
+  // already used by the Credits -> Balance tables.
   private async attachCreditAggregation(companies: Company[]): Promise<void> {
     if (!companies || companies.length === 0) {
       return;
     }
     const companyIds = companies.map((c) => c.companyId);
-    const aggregations =
-      await this.creditBlockOrgAggregationViewEntityRepository.find({
+    const [aggregations, balances] = await Promise.all([
+      this.creditBlockOrgAggregationViewEntityRepository.find({
         where: { organizationId: In(companyIds) },
-      });
+      }),
+      this.creditBlockOrgBalancesViewEntityRepository.find({
+        where: { organizationId: In(companyIds) },
+      }),
+    ]);
     const byOrgId = new Map<number, CreditBlockOrgAggregationViewEntity>(
       aggregations.map((a) => [Number(a.organizationId), a])
     );
+    const balancesByOrgId = new Map<number, CreditBlockOrgBalancesViewEntity>(
+      balances.map((b) => [Number(b.organizationId), b])
+    );
     for (const company of companies) {
       const agg = byOrgId.get(Number(company.companyId));
+      const bal = balancesByOrgId.get(Number(company.companyId));
       (company as any).creditIssued = Number(agg?.creditIssued ?? 0);
       (company as any).creditReceived = Number(agg?.creditReceived ?? 0);
       (company as any).creditRetired = Number(agg?.creditRetired ?? 0);
       (company as any).creditTransferred = Number(agg?.creditTransferred ?? 0);
       (company as any).creditReserved = Number(agg?.creditReserved ?? 0);
       (company as any).creditBalance = Number(agg?.creditBalance ?? 0);
+      (company as any).itmoBalance = Number(bal?.itmoBalance ?? 0);
+      (company as any).itmoReservedCredits = Number(
+        bal?.itmoReservedCredits ?? 0
+      );
     }
   }
 
@@ -958,6 +991,25 @@ export class CompanyService {
     const resp = await this.companyRepo
       .createQueryBuilder()
       .select(['"companyId"', '"name"', '"state"', '"taxId"'])
+      .where(
+        this.helperService.generateWhereSQL(
+          query,
+          this.helperService.parseMongoQueryToSQL(abilityCondition)
+        )
+      )
+      .orderBy(query?.sort?.key && `"${query?.sort?.key}"`, query?.sort?.order)
+      .offset(query.size * query.page - query.size)
+      .limit(query.size)
+      .getRawMany();
+    return new DataListResponseDto(resp, undefined);
+  }
+
+  async queryNameIds(query: QueryDto, abilityCondition: string): Promise<any> {
+    query.page = query.page || 1;
+    query.size = query.size || 10;
+    const resp = await this.companyRepo
+      .createQueryBuilder()
+      .select(['"companyId"', '"name"'])
       .where(
         this.helperService.generateWhereSQL(
           query,
@@ -1435,5 +1487,21 @@ export class CompanyService {
     });
 
     return companies && companies.length > 0 ? companies[0] : undefined;
+  }
+
+  /**
+   * "state" is a native Postgres enum (company_state_enum), so a plain
+   * ORDER BY sorts by its declared ordinal (0,1,2,3), not by the displayed
+   * label ("Active"/"Deactivated"/"Pending"/"Rejected"). Sort by each
+   * state's position in COMPANY_STATE_ALPHABETICAL_ORDER instead. An
+   * unmapped value (e.g. a new CompanyState added without updating that
+   * list) falls into the ELSE bucket and sorts last, rather than breaking
+   * the query.
+   */
+  private stateAlphabeticalExpr(): string {
+    const whenClauses = COMPANY_STATE_ALPHABETICAL_ORDER.map(
+      (state, idx) => `WHEN '${state}' THEN ${idx}`
+    ).join(" ");
+    return `CASE "state" ${whenClauses} ELSE ${COMPANY_STATE_ALPHABETICAL_ORDER.length} END`;
   }
 }

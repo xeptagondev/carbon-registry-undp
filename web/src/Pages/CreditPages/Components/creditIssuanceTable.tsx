@@ -26,7 +26,7 @@ import { addCommSep } from "../../../Definitions/Definitions/programme.definitio
 import { CreditIssuanceInterface } from "../Interfaces/creditIssuance.interface";
 import { CreditHistoryEntry } from "../../../Components/CreditHistoryGraph/creditHistoryGraph.types";
 import { CreditHistoryGraph } from "../../../Components/CreditHistoryGraph/CreditHistoryGraph";
-import { ProjectDetailsLink } from "./ProjectDetailsLink";
+import { ProjectDetailsLink } from "../../../Components/ProjectDetailsLink/projectDetailsLink";
 import {
   FilterBar,
   FilterValue,
@@ -50,6 +50,7 @@ interface IssuanceQueryRow {
   issuanceDate: number | string;
   projectId: string;
   projectName: string;
+  projectOwnerId: number;
   organizationId: number;
   organizationName: string;
   organizationLogo: string | null;
@@ -69,6 +70,7 @@ const mapIssuanceRow = (row: IssuanceQueryRow): CreditIssuanceInterface => ({
   issuanceDate: String(row.issuanceDate),
   projectId: row.projectId,
   projectName: row.projectName,
+  projectOwnerId: row.projectOwnerId,
   organizationId: row.organizationId,
   organizationName: row.organizationName,
   organizationLogo: row.organizationLogo,
@@ -111,7 +113,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
   // Org & Project dropdowns load lazily, page-by-page, and search server-side
   // (see usePaginatedEntityFilter) rather than preloading the whole list.
   const orgFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.ORGANIZATION_NAMES,
+    endpoint: API_PATHS.ORGANIZATION_NAME_IDS,
     id: "organization",
     mode: "multiple",
     placeholder: t("filterByOrganization"),
@@ -120,7 +122,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
     sortKey: "name",
     extraFilters: [
       { key: "companyRole", operation: "=", value: CompanyRole.PROJECT_DEVELOPER },
-      { key: "state", operation: "=", value: "1" },
+      { key: "state", operation: "in", value: ["0", "1"] },
     ],
     selectedValues: filterValues.organization as FilterValue[],
   });
@@ -128,7 +130,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
   // The issuances view's projectId column is the project's refId; only
   // projects with at least one issued credit are worth offering here.
   const projectFilter = usePaginatedEntityFilter({
-    endpoint: API_PATHS.GET_PROJECT,
+    endpoint: API_PATHS.PROJECT_NAME_IDS,
     id: "project",
     mode: "multiple",
     placeholder: t("filterByProject"),
@@ -241,6 +243,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
           <ProjectDetailsLink
             projectId={record.projectId}
             projectName={record.projectName}
+            projectOwnerId={record.projectOwnerId}
           />
         );
       },
@@ -278,7 +281,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
       title: t(CreditIssuanceColumns.ISSUANCE_DATE),
       key: "issuanceDate",
       sorter: true,
-      align: "left" as const,
+      align: "center" as const,
       render: (record: CreditIssuanceInterface) => {
         return <span>{moment(Number(record?.issuanceDate)).format("YYYY-MM-DD HH:mm:ss")}</span>;
       },
@@ -287,13 +290,9 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
       title: t(CreditIssuanceColumns.CREDITS),
       key: "creditAmount",
       sorter: true,
-      align: "left" as const,
+      align: "right" as const,
       render: (record: CreditIssuanceInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(record?.creditAmount))}
-          </span>
-        );
+        return <span>{addCommSep(String(record?.creditAmount))}</span>;
       },
     },
     {
@@ -383,6 +382,7 @@ export const CreditIssuanceTableComponent = ({ t }: CreditIssuanceTableProps) =>
         disabled={loading}
         appliedFiltersLabel={t("appliedFilters")}
         clearAllLabel={t("clearAll")}
+        selectAllLabel={t("selectAll")}
       />
       <Row>
         <Col span={24}>

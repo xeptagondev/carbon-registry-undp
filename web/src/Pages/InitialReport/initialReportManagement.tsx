@@ -6,6 +6,9 @@ import { Button, Row, Col, Table, Tag, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { CompanyRole } from "../../Definitions/Enums/company.role.enum";
 import "./initialReports.scss";
+import "../../Styles/common.table.scss";
+import { useTranslation } from "react-i18next";
+import { TimedPageInfoTitle } from "../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle";
 
 const statusColors: Record<string, string> = {
   Draft: "default",
@@ -15,6 +18,7 @@ const statusColors: Record<string, string> = {
 
 const InitialReportManagement = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["common","InitialReport"]);
   const { post } = useConnection();
   const { userInfoState } = useUserContext();
   const [loading, setLoading] = useState(false);
@@ -27,14 +31,20 @@ const InitialReportManagement = () => {
     userInfoState?.companyRole === CompanyRole.DESIGNATED_NATIONAL_AUTHORITY;
 
   const columns = [
-    { title: "Report ID", dataIndex: "reportId", key: "reportId" },
+    { title: t("InitialReport:columnReportId"), dataIndex: "reportId", key: "reportId" },
     {
-      title: "Cooperative Approach",
+      title: t("InitialReport:columnCooperativeApproach"),
       dataIndex: "cooperativeApproachId",
       key: "cooperativeApproachId",
     },
     {
-      title: "Status",
+      title: t("InitialReport:columnVersion"),
+      dataIndex: "version",
+      key: "version",
+      render: (version: number) => <span>v{version ?? 1}</span>,
+    },
+    {
+      title: t("InitialReport:columnStatus"),
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
@@ -42,7 +52,7 @@ const InitialReportManagement = () => {
       ),
     },
     {
-      title: "Created",
+      title: t("InitialReport:columnCreated"),
       dataIndex: "createdTime",
       key: "createdTime",
       render: (ts: string) =>
@@ -76,17 +86,19 @@ const InitialReportManagement = () => {
   return (
     <div className="initial-reports-container">
       <div className="title-bar">
-        <div className="body-title">Initial Reports</div>
-        <div className="body-sub-title">
-          Article 6.2 initial reports required per Decision 2/CMA.3 para. 18
-          before first ITMO authorization
-        </div>
+        <TimedPageInfoTitle
+          title={t('InitialReport:initialReports')}
+          description={t('InitialReport:initialReportDescription', {
+            defaultValue:
+              'Article 6.2 initial reports required per Decision 2/CMA.3 para. 18 before first ITMO authorization',
+          })}
+          infoButtonLabel={t('InitialReport:showInitialReportDescription', {
+            defaultValue: 'Show information about Initial Reports',
+          })}
+        />
       </div>
       <div className="content-card">
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-          <Col>
-            <div className="table-title">All Initial Reports</div>
-          </Col>
           <Col>
             {canCreate && (
               <Button
@@ -94,7 +106,7 @@ const InitialReportManagement = () => {
                 icon={<PlusOutlined />}
                 onClick={() => navigate("/initialReports/create")}
               >
-                Generate Report
+              {t('InitialReport:generateReport')}
               </Button>
             )}
           </Col>
@@ -102,6 +114,7 @@ const InitialReportManagement = () => {
         <Table
           dataSource={data}
           columns={columns}
+          className="common-table-class"
           rowKey="reportId"
           loading={loading}
           pagination={{

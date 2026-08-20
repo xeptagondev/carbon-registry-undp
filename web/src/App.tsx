@@ -46,6 +46,7 @@ import ProgrammeManagement from "./Pages/ProgrammeManagement/programmeManagement
 import { CreditBalancePage } from "./Pages/CreditPages/creditBalancePage";
 import { CreditTransfersPage } from "./Pages/CreditPages/creditTransfersPage";
 import { CreditRetirementsPage } from "./Pages/CreditPages/creditRetirementsPage";
+import { ItmoAuthorizationsPage } from "./Pages/CreditPages/itmoAuthorizationsPage";
 import { CreditBlockListPage } from "./Pages/CreditPages/creditBlockListPage";
 import { CreditHistoryViewPage } from "./Pages/CreditPages/creditHistoryViewPage";
 import Reports from "./Pages/Reports/Reports";
@@ -54,6 +55,7 @@ import AddCooperativeApproach from "./Pages/CooperativeApproaches/addCooperative
 import CooperativeApproachDetails from "./Pages/CooperativeApproaches/cooperativeApproachDetails";
 import CaManagement from "./Pages/CorrespondingAdjustment/caManagement";
 import CaCalculation from "./Pages/CorrespondingAdjustment/caCalculation";
+import CaDetails from "./Pages/CorrespondingAdjustment/caDetails";
 import InitialReportManagement from "./Pages/InitialReport/initialReportManagement";
 import CreateInitialReport from "./Pages/InitialReport/createInitialReport";
 import EditInitialReport from "./Pages/InitialReport/editInitialReport";
@@ -169,6 +171,10 @@ const App = () => {
                       element={<CreditRetirementsPage />}
                     />
                     <Route
+                      path="itmoAuthorizations"
+                      element={<ItmoAuthorizationsPage />}
+                    />
+                    <Route
                       element={
                         <RoleRoute
                           allow={[CompanyRole.DESIGNATED_NATIONAL_AUTHORITY]}
@@ -218,6 +224,7 @@ const App = () => {
                   >
                     <Route path="viewAll" element={<CaManagement />} />
                     <Route path="calculate" element={<CaCalculation />} />
+                    <Route path="view/:caId" element={<CaDetails />} />
                   </Route>
                   <Route
                     path="/initialReports"

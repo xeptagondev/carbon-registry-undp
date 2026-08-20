@@ -3,10 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
 import { useUserContext } from "../../Context/UserInformationContext/userInformationContext";
+import { useCountryOptions } from "../../Components/Common/hooks/useCountryOptions";
 import { Button, Row, Col, Table, Tag, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { CompanyRole } from "../../Definitions/Enums/company.role.enum";
 import "./cooperativeApproaches.scss";
+import "../../Styles/common.table.scss";
+import { TimedPageInfoTitle } from "../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle";
 
 const statusColors: Record<string, string> = {
   Draft: "default",
@@ -17,9 +20,10 @@ const statusColors: Record<string, string> = {
 
 const CooperativeApproaches = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation(["common"]);
+  const { t } = useTranslation(["common","coopApproach"]);
   const { post } = useConnection();
   const { userInfoState } = useUserContext();
+  const { byCode: countryNameByCode } = useCountryOptions();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -33,36 +37,44 @@ const CooperativeApproaches = () => {
 
   const columns = [
     {
-      title: "ID",
+      title: t("coopApproach:columnId"),
       dataIndex: "cooperativeApproachId",
       key: "cooperativeApproachId",
       sorter: true,
     },
     {
-      title: "Title",
+      title: t("coopApproach:columnCaReference"),
+      dataIndex: "caReferenceNumber",
+      key: "caReferenceNumber",
+      render: (ref: string) =>
+        ref ? <Tag color="green">{ref}</Tag> : <span>—</span>,
+    },
+    {
+      title: t("coopApproach:columnTitle"),
       dataIndex: "title",
       key: "title",
       sorter: true,
     },
     {
-      title: "Host Party",
+      title: t("coopApproach:columnHostParty"),
       dataIndex: "hostParty",
       key: "hostParty",
+      render: (code: string) => countryNameByCode.get(code) ?? code,
     },
     {
-      title: "Participating Parties",
+      title: t("coopApproach:columnParticipatingParties"),
       dataIndex: "participatingParties",
       key: "participatingParties",
       render: (parties: string[]) => (
         <>
           {parties?.map((p) => (
-            <Tag key={p}>{p}</Tag>
+            <Tag key={p}>{countryNameByCode.get(p) ?? p}</Tag>
           ))}
         </>
       ),
     },
     {
-      title: "Status",
+      title: t("coopApproach:columnStatus"),
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
@@ -102,16 +114,19 @@ const CooperativeApproaches = () => {
   return (
     <div className="cooperative-approaches-container">
       <div className="title-bar">
-        <div className="body-title">Cooperative Approaches</div>
-        <div className="body-sub-title">
-          Article 6.2 bilateral and multilateral cooperative approaches
-        </div>
+        <TimedPageInfoTitle
+          title={t('coopApproach:cooperativeApproaches')}
+          description={t('coopApproach:coopApproachDescription', {
+            defaultValue:
+              'Article 6.2 bilateral and multilateral cooperative approaches',
+          })}
+          infoButtonLabel={t('coopApproach:showCoopApproachDescription', {
+            defaultValue: 'Show information about Cooperative Approaches',
+          })}
+        />
       </div>
       <div className="content-card">
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-          <Col>
-            <div className="table-title">All Cooperative Approaches</div>
-          </Col>
           <Col>
             {canCreate && (
               <Button
@@ -121,7 +136,7 @@ const CooperativeApproaches = () => {
                   navigate("/cooperativeApproaches/add")
                 }
               >
-                Add New
+                {t('coopApproach:addNew')}
               </Button>
             )}
           </Col>
@@ -129,6 +144,7 @@ const CooperativeApproaches = () => {
         <Table
           dataSource={data}
           columns={columns}
+          className="common-table-class"
           rowKey="cooperativeApproachId"
           loading={loading}
           pagination={{

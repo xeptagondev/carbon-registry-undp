@@ -10,6 +10,13 @@ export class InitialReport extends EntitySubject {
   @Column()
   cooperativeApproachId: string;
 
+  // Append-only audit versioning: every edit of a draft report saves a
+  // NEW row with version + 1 instead of mutating the previous one. The
+  // row with MAX(version) per cooperativeApproachId is the live report;
+  // older rows are read-only history.
+  @Column({ type: "int", default: 1 })
+  version: number;
+
   @Column({
     type: "enum",
     enum: InitialReportStatus,

@@ -30,6 +30,22 @@ import { Role } from '../../../Definitions/Enums/role.enum';
 import { API_PATHS } from '../../../Config/apiConfig';
 import { addCommSep } from '../../../Definitions/Definitions/programme.definitions';
 
+// '-' when the figure itself is missing (matches every other field in this card).
+const formatCreditFigure = (value: number | undefined | null): string =>
+  value !== undefined && value !== null ? addCommSep(value) : '-';
+
+// MO is derived client-side as total - ITMO (API returns the grand total plus
+// the ITMO-only subset), same convention as the Credits -> Balance tables
+// (see creditBalanceByOrganizationTable.tsx). '-' if either input is missing,
+// rather than rendering NaN.
+const formatMoCreditFigure = (
+  total: number | undefined | null,
+  itmo: number | undefined | null
+): string =>
+  total !== undefined && total !== null && itmo !== undefined && itmo !== null
+    ? addCommSep(total - itmo)
+    : '-';
+
 export const CompanyProfileComponent = (props: any) => {
   const {
     t,
@@ -532,25 +548,35 @@ export const CompanyProfileComponent = (props: any) => {
                   </Row>
                   <Row className="field">
                     <Col span={12} className="field-key">
-                      {t('companyProfile:creditsReserved')}
+                      {t('companyProfile:moReserved')}
                     </Col>
                     <Col span={12} className="field-value credit-reserved">
-                      {companyDetails.creditReserved !== undefined &&
-                      companyDetails.creditReserved !== null
-                        ? addCommSep(companyDetails.creditReserved)
-                        : '-'}
+                      {formatMoCreditFigure(companyDetails.creditReserved, companyDetails.itmoReservedCredits)}
+                    </Col>
+                  </Row>
+                  <Row className="field">
+                    <Col span={12} className="field-key">
+                      {t('companyProfile:itmoReserved')}
+                    </Col>
+                    <Col span={12} className="field-value credit-reserved">
+                      {formatCreditFigure(companyDetails.itmoReservedCredits)}
                     </Col>
                   </Row>
                   <div className="credit-summary-divider" />
                   <Row className="field">
                     <Col span={12} className="field-key">
-                      {t('companyProfile:creditBalance')}
+                      {t('companyProfile:moBalance')}
                     </Col>
                     <Col span={12} className="field-value credit-balance">
-                      {companyDetails.creditBalance !== undefined &&
-                      companyDetails.creditBalance !== null
-                        ? addCommSep(companyDetails.creditBalance)
-                        : '-'}
+                      {formatMoCreditFigure(companyDetails.creditBalance, companyDetails.itmoBalance)}
+                    </Col>
+                  </Row>
+                  <Row className="field">
+                    <Col span={12} className="field-key">
+                      {t('companyProfile:itmoBalance')}
+                    </Col>
+                    <Col span={12} className="field-value credit-balance">
+                      {formatCreditFigure(companyDetails.itmoBalance)}
                     </Col>
                   </Row>
                 </div>

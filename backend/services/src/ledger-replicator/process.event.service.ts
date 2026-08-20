@@ -366,8 +366,8 @@ export class ProcessEventService {
           await this.creditTransactionsManagementService.handleTransactionRecords(
             creditBlock,
             em,
-            // Pass the pre-update block state so the handler can set
-            // isFirstTransfer correctly (Dec 2/CMA.3 para 1(a)).
+            // Pre-update block state, used to derive fromAccountType on
+            // transfer records.
             previousCreditBlock ?? undefined
           );
         });

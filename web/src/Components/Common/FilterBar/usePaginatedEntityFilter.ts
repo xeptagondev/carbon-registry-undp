@@ -125,7 +125,9 @@ export const usePaginatedEntityFilter = ({
     onDropdownVisibleChange: (open: boolean) => open && select.onDropdownOpen(),
   };
   const control: MultiSelectFilterControl | SingleSelectFilterControl =
-    mode === "multiple" ? { ...base, mode: "multiple" } : { ...base, mode: "single" };
+    mode === "multiple"
+      ? { ...base, mode: "multiple", onSelectAll: select.loadAllOptions }
+      : { ...base, mode: "single" };
 
   return { control, options: select.options, loading: select.loading };
 };

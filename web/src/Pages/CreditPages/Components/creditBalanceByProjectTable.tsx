@@ -10,13 +10,20 @@ import { API_PATHS } from '../../../Config/apiConfig';
 import { useConnection } from '../../../Context/ConnectionContext/connectionContext';
 import { useUserContext } from '../../../Context/UserInformationContext/userInformationContext';
 import { CompanyRole } from '../../../Definitions/Enums/company.role.enum';
+import { Role } from '../../../Definitions/Enums/role.enum';
 import { CreditActionType } from '../Enums/creditActionType.enum';
 import { IssuedOrReceivedOptions } from '../Enums/creditEventEnum';
 import { CreditRetirementProceedAction } from '../Enums/creditRetirementProceedType.enum';
 import { CreditRetirementTypeEmnum } from '../Enums/creditRetirementType.enum';
 import type { CreditBalanceInterface } from '../Interfaces/creditBalance.interface';
 import { CreditActionModal } from './creditActionModal';
-import { ProjectDetailsLink } from './ProjectDetailsLink';
+import { toSortOrder, type SortOrder } from './creditTableHelpers';
+import { CreditTypePill } from './creditTypePill';
+import {
+  ItmoAuthRequestModal,
+  ItmoAuthRequestModalFinishPayload,
+} from './itmoAuthRequestModal';
+import { ProjectDetailsLink } from '../../../Components/ProjectDetailsLink/projectDetailsLink';
 import '../creditPageStyles.scss';
 
 interface CreditSerialBalance {
@@ -29,6 +36,10 @@ interface CreditSerialBalance {
   balance: number;
   reserved: number;
   type: IssuedOrReceivedOptions;
+  itmoAuthorizationRecord?: string | null;
+  itmoCooperativeApproachId?: string | null;
+  itmoAuthorizationPurpose?: string | null;
+  itmoSerial?: string | null;
 }
 
 interface CreditSerialBalancePage {
@@ -36,6 +47,10 @@ interface CreditSerialBalancePage {
   total: number;
   hasMore: boolean;
 }
+
+// Per-block sort keys whose column is nullable in the balances view - only
+// itmoAuthorizationRecord, which is null for every MO block.
+const NULLABLE_SORT_KEYS = new Set(['itmoAuthorizationRecord']);
 
 const SERIAL_PAGE_SIZE = 8;
 const SERIAL_VISIBLE_ROW_COUNT = 5;
@@ -45,16 +60,22 @@ const SERIAL_BODY_HEIGHT = SERIAL_VISIBLE_ROW_COUNT * SERIAL_ROW_HEIGHT;
 interface ProjectBalance {
   id: string;
   name: string;
+  ownerId: string | number;
   owner: string;
   ownerLogo: string;
   ownerColor: string;
-  balance: number;
-  reserved: number;
+  // MO/ITMO are disjoint subsets that sum to the project's total
+  // balance/reserved amount — derived client-side from the API's
+  // grand-total + ITMO-only figures.
+  moBalance: number;
+  moReserved: number;
+  itmoBalance: number;
+  itmoReserved: number;
   updatedAt: string;
 }
 
 export interface CreditBalanceByProjectTableProps {
-  selectedOrganizations: string[];
+  selectedOrganizationIds: string[];
   selectedProjects: string[];
   refreshGeneration: number;
   onBalanceChanged: () => void;
@@ -68,6 +89,8 @@ interface ProjectBalanceApiRow {
   projectOwnerLogo: string | null;
   creditBalance: string | number;
   reservedCredits: string | number;
+  itmoBalance: string | number;
+  itmoReservedCredits: string | number;
   updatedTime: string | number;
 }
 
@@ -80,6 +103,10 @@ interface CreditBalanceApiRow {
   receiverName: string;
   receiverLogo: string | null;
   type: IssuedOrReceivedOptions;
+  itmoAuthorizationRecord?: string | null;
+  itmoCooperativeApproachId?: string | null;
+  itmoAuthorizationPurpose?: string | null;
+  itmoSerial?: string | null;
 }
 
 interface ConnectionResponse<T> {
@@ -100,8 +127,8 @@ interface BalanceQueryRequest {
   filterAnd?: BalanceQueryFilter[];
   sort: {
     key: string;
-    order: 'DESC';
-    nullFirst: false;
+    order: SortOrder;
+    nullFirst: boolean;
   };
 }
 
@@ -131,20 +158,41 @@ const OrganizationCell = ({
   </div>
 );
 
+// Sorting is server-side (sorter: true), and antd reports the clicked
+// column's `key` - so `key` is the queryBalance view's column name here, not
+// the local field name the row is rendered from.
 const getSerialColumns = (
+  t: (key: string) => string,
   openActions?: (row: CreditSerialBalance) => ReactNode,
 ): ColumnsType<CreditSerialBalance> => [
-  { title: 'Serial Number', dataIndex: 'serialNumber', key: 'serialNumber', align: 'left', width: 280, sorter: (a, b) => a.serialNumber.localeCompare(b.serialNumber), render: (value) => <span className="credit-balance-serial-number">{value}</span> },
-  { title: 'Organization', key: 'organization', align: 'left', sorter: (a, b) => a.organization.localeCompare(b.organization), render: (_, row) => <OrganizationCell name={row.organization} color={row.organizationColor} logo={row.organizationLogo} /> },
-  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', width: 180, sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt), render: (value) => <span className="credit-balance-detail-date">{value}</span> },
-  { title: 'Credit Balance', dataIndex: 'balance', key: 'balance', align: 'right', sorter: (a, b) => a.balance - b.balance, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
-  { title: 'Reserved Credits', dataIndex: 'reserved', key: 'reserved', align: 'right', sorter: (a, b) => a.reserved - b.reserved, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  { title: 'Serial Number', dataIndex: 'serialNumber', key: 'serialNumber', align: 'left', width: openActions ? '21%' : '22%', sorter: true, render: (value) => <span className="credit-balance-serial-number">{value}</span> },
+  { title: 'Credit Owner', key: 'receiverName', align: 'left', width: openActions ? '15%' : '16%', sorter: true, render: (_, row) => <OrganizationCell name={row.organization} color={row.organizationColor} logo={row.organizationLogo} /> },
+  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedTime', align: 'center', width: openActions ? '15%' : '16%', sorter: true, render: (value) => <span className="credit-balance-detail-date">{value}</span> },
+  { title: 'Balance', dataIndex: 'balance', key: 'creditAmount', align: 'right', width: openActions ? '10%' : '11%', sorter: true, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  { title: 'Reserved', dataIndex: 'reserved', key: 'reservedCredits', align: 'right', width: openActions ? '10%' : '11%', sorter: true, render: (value) => <span className="credit-balance-detail-number">{formatCredits(value)}</span> },
+  {
+    // Sorted server-side on the authorization record's nullability (null =
+    // MO), which is what the pill actually reflects - see NULLABLE_SORT_KEYS.
+    title: t('creditType'),
+    key: 'itmoAuthorizationRecord',
+    align: 'center',
+    width: openActions ? '10%' : '11%',
+    sorter: true,
+    render: (_, row) => (
+      <CreditTypePill
+        isItmo={!!row.itmoAuthorizationRecord}
+        itmoSerial={row.itmoSerial}
+        t={t}
+      />
+    ),
+  },
   {
     title: 'Issue or Received',
     dataIndex: 'type',
     key: 'type',
     align: 'center',
-    sorter: (a, b) => a.type.localeCompare(b.type),
+    width: openActions ? '15%' : '13%',
+    sorter: true,
     render: (value: IssuedOrReceivedOptions) => (
       <Tag color={value === IssuedOrReceivedOptions.RECEIVED ? 'success' : 'processing'}>
         {value === IssuedOrReceivedOptions.RECEIVED ? 'Received' : 'Issued'}
@@ -155,7 +203,7 @@ const getSerialColumns = (
     title: '',
     key: 'action',
     align: 'center' as const,
-    width: 90,
+    width: '4%',
     render: (_value: unknown, row: CreditSerialBalance) => openActions(row),
   }] : []),
 ];
@@ -171,6 +219,7 @@ const CreditBalanceSerialTable = ({
   openActions,
   refreshGeneration,
 }: CreditBalanceSerialTableProps) => {
+  const { t } = useTranslation(['creditPages']);
   const { post } = useConnection();
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
@@ -181,6 +230,8 @@ const CreditBalanceSerialTable = ({
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
+  const [sortField, setSortField] = useState<string>();
+  const [sortOrder, setSortOrder] = useState<SortOrder>();
 
   const fetchSerialBalances = useCallback(async (
     pageNumber: number,
@@ -193,7 +244,15 @@ const CreditBalanceSerialTable = ({
         operation: '=',
         value: project.id,
       }],
-      sort: { key: 'updatedTime', order: 'DESC', nullFirst: false },
+      sort: sortField && sortOrder
+        ? {
+            key: sortField,
+            order: sortOrder,
+            // Ascending on a nullable key puts the nulls first, matching
+            // "MO before ITMO" on the Credit Type column.
+            nullFirst: NULLABLE_SORT_KEYS.has(sortField) && sortOrder === 'ASC',
+          }
+        : { key: 'updatedTime', order: 'DESC', nullFirst: false },
     };
     const response = await post(
       API_PATHS.CREDIT_BALANCE_QUERY,
@@ -212,11 +271,18 @@ const CreditBalanceSerialTable = ({
         balance: Number(row.creditAmount) || 0,
         reserved: Number(row.reservedCredits) || 0,
         type: row.type,
+        itmoAuthorizationRecord: row.itmoAuthorizationRecord,
+        itmoCooperativeApproachId: row.itmoCooperativeApproachId,
+        itmoAuthorizationPurpose: row.itmoAuthorizationPurpose,
+        itmoSerial: row.itmoSerial,
       })),
       total: responseTotal,
       hasMore: pageNumber * SERIAL_PAGE_SIZE < responseTotal,
     };
-  }, [post, project.id]);
+    // Changing the sort changes this callback's identity, which the reset
+    // effect below already watches - so a sort click clears the
+    // infinite-scroll buffer and refetches page 1 in the new order.
+  }, [post, project.id, sortField, sortOrder]);
 
   useEffect(() => {
     const requestGeneration = requestGenerationRef.current + 1;
@@ -307,13 +373,18 @@ const CreditBalanceSerialTable = ({
         }`}
         rowKey="serialNumber"
         dataSource={rows}
-        columns={getSerialColumns(openActions)}
+        columns={getSerialColumns(t, openActions)}
         pagination={false}
         tableLayout="fixed"
         loading={loading && rows.length === 0}
-        scroll={openActions
-          ? { x: 1050, y: SERIAL_BODY_HEIGHT }
-          : { y: SERIAL_BODY_HEIGHT }}
+        scroll={{ y: SERIAL_BODY_HEIGHT }}
+        onChange={(_pagination, _filters, sorter, extra) => {
+          if (extra.action !== 'sort') return;
+          const sorted = Array.isArray(sorter) ? sorter[0] : sorter;
+          const order = toSortOrder(sorted?.order);
+          setSortOrder(order);
+          setSortField(order ? String(sorted.columnKey) : undefined);
+        }}
       />
       {loading && rows.length > 0 && (
         <div className="credit-balance-serial-loading" aria-label="Loading more credit balances">
@@ -327,25 +398,36 @@ const CreditBalanceSerialTable = ({
   );
 };
 
+// `key` is the API's sort key, not a local field name - sorting is done by
+// the server (sorter: true), so a click has to name a column the
+// queryBalanceByProject view understands. moBalance/moReserved have no
+// column of their own in that view; the service maps them to the same
+// "total minus ITMO" expression the rows are derived with below.
 const columns: ColumnsType<ProjectBalance> = [
   {
     title: 'Project Name',
     dataIndex: 'name',
-    key: 'name',
+    key: 'projectName',
     align: 'left',
-    sorter: (a, b) => a.name.localeCompare(b.name),
+    sorter: true,
     render: (_, row) => (
-      <ProjectDetailsLink projectId={row.id} projectName={row.name} />
+      <ProjectDetailsLink
+        projectId={row.id}
+        projectName={row.name}
+        projectOwnerId={row.ownerId}
+      />
     ),
   },
-  { title: 'Project Owner', key: 'owner', align: 'left', sorter: (a, b) => a.owner.localeCompare(b.owner), render: (_, row) => <OrganizationCell name={row.owner} color={row.ownerColor} logo={row.ownerLogo} /> },
-  { title: 'Total Credit Balance', dataIndex: 'balance', key: 'balance', align: 'left', sorter: (a, b) => a.balance - b.balance, render: formatCredits },
-  { title: 'Total Reserved Credits', dataIndex: 'reserved', key: 'reserved', align: 'left', sorter: (a, b) => a.reserved - b.reserved, render: formatCredits },
-  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedAt', align: 'left', sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt) },
+  { title: 'Project Owner', key: 'projectOwnerName', align: 'left', sorter: true, render: (_, row) => <OrganizationCell name={row.owner} color={row.ownerColor} logo={row.ownerLogo} /> },
+  { title: 'MO Balance', dataIndex: 'moBalance', key: 'moBalance', align: 'right', sorter: true, render: formatCredits },
+  { title: 'MO Reserved', dataIndex: 'moReserved', key: 'moReserved', align: 'right', sorter: true, render: formatCredits },
+  { title: 'ITMO Balance', dataIndex: 'itmoBalance', key: 'itmoBalance', align: 'right', sorter: true, render: formatCredits },
+  { title: 'ITMO Reserved', dataIndex: 'itmoReserved', key: 'itmoReservedCredits', align: 'right', sorter: true, render: formatCredits },
+  { title: 'Updated Date & Time', dataIndex: 'updatedAt', key: 'updatedTime', align: 'center', sorter: true },
 ];
 
 export const CreditBalanceByProjectTable = ({
-  selectedOrganizations,
+  selectedOrganizationIds,
   selectedProjects,
   refreshGeneration,
   onBalanceChanged,
@@ -354,14 +436,17 @@ export const CreditBalanceByProjectTable = ({
   const { post } = useConnection();
   const { userInfoState } = useUserContext();
   const canManageCredits =
-    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER;
+    userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER &&
+    userInfoState?.userRole === Role.Admin;
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<string>();
+  const [sortOrder, setSortOrder] = useState<SortOrder>();
   const [rows, setRows] = useState<ProjectBalance[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const projectRequestGeneration = useRef(0);
-  const selectedOrganizationsKey = selectedOrganizations.join('\u0000');
+  const selectedOrganizationsKey = selectedOrganizationIds.join('\u0000');
   const selectedProjectsKey = selectedProjects.join('\u0000');
   const [expandedProjectId, setExpandedProjectId] = useState<string>();
   const [collapsingProjectId, setCollapsingProjectId] = useState<string>();
@@ -372,6 +457,14 @@ export const CreditBalanceByProjectTable = ({
     icon: ReactNode;
     title: string;
     type: CreditActionType;
+    actionBtnText: string;
+    data: CreditBalanceInterface;
+  }>();
+  const [itmoModalVisible, setItmoModalVisible] = useState(false);
+  const [itmoModalLoading, setItmoModalLoading] = useState(false);
+  const [itmoModalData, setItmoModalData] = useState<{
+    icon: ReactNode;
+    title: string;
     actionBtnText: string;
     data: CreditBalanceInterface;
   }>();
@@ -388,16 +481,18 @@ export const CreditBalanceByProjectTable = ({
 
     if (organizations.length > 0) {
       filterAnd.push({
-        key: 'projectOwnerName',
+        key: 'projectOwnerId',
         operation: 'in',
         value: organizations,
       });
     }
     if (projects.length > 0) {
+      // Each selected value is one name's comma-joined project ids, so a single
+      // selection can expand to several projects.
       filterAnd.push({
-        key: 'projectName',
+        key: 'projectId',
         operation: 'in',
-        value: projects,
+        value: projects.flatMap((value) => value.split(',')),
       });
     }
 
@@ -406,7 +501,9 @@ export const CreditBalanceByProjectTable = ({
       page: currentPage,
       size: pageSize,
       filterAnd: filterAnd.length > 0 ? filterAnd : undefined,
-      sort: { key: 'updatedTime', order: 'DESC', nullFirst: false },
+      sort: sortField && sortOrder
+        ? { key: sortField, order: sortOrder, nullFirst: false }
+        : { key: 'updatedTime', order: 'DESC', nullFirst: false },
     };
     void (post(
       API_PATHS.CREDIT_BALANCE_BY_PROJECT_QUERY,
@@ -415,16 +512,25 @@ export const CreditBalanceByProjectTable = ({
       .then((response) => {
         if (projectRequestGeneration.current !== requestGeneration) return;
         const apiRows = response.data ?? [];
-        const mappedRows = apiRows.map((row): ProjectBalance => ({
-          id: row.projectId,
-          name: row.projectName,
-          owner: row.projectOwnerName,
-          ownerLogo: row.projectOwnerLogo ?? '',
-          ownerColor: avatarColor(row.projectOwnerName),
-          balance: Number(row.creditBalance) || 0,
-          reserved: Number(row.reservedCredits) || 0,
-          updatedAt: formatTimestamp(row.updatedTime),
-        }));
+        const mappedRows = apiRows.map((row): ProjectBalance => {
+          const creditBalance = Number(row.creditBalance) || 0;
+          const reservedCredits = Number(row.reservedCredits) || 0;
+          const itmoBalance = Number(row.itmoBalance) || 0;
+          const itmoReserved = Number(row.itmoReservedCredits) || 0;
+          return {
+            id: row.projectId,
+            name: row.projectName,
+            ownerId: row.projectOwnerId,
+            owner: row.projectOwnerName,
+            ownerLogo: row.projectOwnerLogo ?? '',
+            ownerColor: avatarColor(row.projectOwnerName),
+            moBalance: creditBalance - itmoBalance,
+            moReserved: reservedCredits - itmoReserved,
+            itmoBalance,
+            itmoReserved,
+            updatedAt: formatTimestamp(row.updatedTime),
+          };
+        });
         setRows(mappedRows);
         setTotal(response.response?.data?.total ?? mappedRows.length);
       })
@@ -450,6 +556,8 @@ export const CreditBalanceByProjectTable = ({
     refreshGeneration,
     selectedOrganizationsKey,
     selectedProjectsKey,
+    sortField,
+    sortOrder,
   ]);
 
   useEffect(() => () => {
@@ -493,6 +601,10 @@ export const CreditBalanceByProjectTable = ({
     senderName: serial.organization,
     senderLogo: null,
     type: serial.type,
+    itmoAuthorizationRecord: serial.itmoAuthorizationRecord,
+    itmoCooperativeApproachId: serial.itmoCooperativeApproachId,
+    itmoAuthorizationPurpose: serial.itmoAuthorizationPurpose,
+    itmoSerial: serial.itmoSerial,
   });
 
   const openActionModal = (
@@ -514,16 +626,43 @@ export const CreditBalanceByProjectTable = ({
     setModalActionVisible(true);
   };
 
+  const openItmoAuthModal = (serial: CreditSerialBalance, project: ProjectBalance) => {
+    if (!canManageCredits) return;
+    setItmoModalData({
+      icon: <Icon.GlobeAmericas color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
+      title: t('requestItmoAuthorization'),
+      actionBtnText: t('submit'),
+      data: toCreditBalanceRecord(serial, project),
+    });
+    setItmoModalVisible(true);
+  };
+
   const actionMenu = (serial: CreditSerialBalance, project: ProjectBalance) => (
     <List
       className="action-menu"
       size="small"
       dataSource={[
-        { text: t('transfer'), icon: <Icon.ArrowLeftRight color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />, type: CreditActionType.TRANSFER },
-        { text: t('retire'), icon: <Icon.ClockHistory color="#FF4D4F" />, type: CreditActionType.RETIREMENT },
+        // MO blocks only — ITMO blocks cannot be transferred.
+        ...(!serial.itmoAuthorizationRecord
+          ? [{
+              text: t('transfer'),
+              icon: <Icon.ArrowLeftRight color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
+              click: () => openActionModal(serial, project, CreditActionType.TRANSFER),
+            }]
+          : []),
+        { text: t('retire'), icon: <Icon.ClockHistory color="#FF4D4F" />, click: () => openActionModal(serial, project, CreditActionType.RETIREMENT) },
+        // MO blocks only — an already ITMO-authorized block cannot be
+        // re-authorized.
+        ...(!serial.itmoAuthorizationRecord
+          ? [{
+              text: t('itmoAuthorization'),
+              icon: <Icon.GlobeAmericas color={COLOR_CONFIGS.PRIMARY_THEME_COLOR} />,
+              click: () => openItmoAuthModal(serial, project),
+            }]
+          : []),
       ]}
       renderItem={(item) => (
-        <List.Item onClick={() => openActionModal(serial, project, item.type)}>
+        <List.Item onClick={item.click}>
           <Typography.Text className="action-icon color-primary">{item.icon}</Typography.Text>
           <span>{item.text}</span>
         </List.Item>
@@ -540,7 +679,7 @@ export const CreditBalanceByProjectTable = ({
   );
 
   const onFinishAction = async (
-    receiveParty: string | { country?: string; organization?: string },
+    receiveParty: string | { country?: string; authorizedEntityId?: string },
     blockId: string,
     creditAmount: number,
     remark?: string,
@@ -558,19 +697,15 @@ export const CreditBalanceByProjectTable = ({
           remarks: remark,
         }) as ConnectionResponse<unknown>;
       } else {
-        const crossBorderParty = typeof receiveParty === 'object'
+        const useParty = typeof receiveParty === 'object'
           ? receiveParty
           : undefined;
         response = await post(API_PATHS.CREDIT_RETIREMENT_REQUEST, {
           blockId,
           remarks: remark,
-          retirementType,
-          ...(retirementType === CreditRetirementTypeEmnum.CROSS_BORDER_TRANSACTIONS
-            ? {
-              country: crossBorderParty?.country,
-              organizationName: crossBorderParty?.organization?.trim(),
-            }
-            : {}),
+          subType: retirementType,
+          country: useParty?.country,
+          authorizedEntityId: useParty?.authorizedEntityId,
           amount: Number(creditAmount),
         }) as ConnectionResponse<unknown>;
       }
@@ -597,6 +732,36 @@ export const CreditBalanceByProjectTable = ({
     }
   };
 
+  const onFinishItmoAuthRequest = async (
+    payload: ItmoAuthRequestModalFinishPayload,
+  ) => {
+    if (!canManageCredits) return;
+    setItmoModalLoading(true);
+    try {
+      const response = await (post(API_PATHS.ITMO_AUTH_REQUEST, payload) as Promise<
+        ConnectionResponse<unknown>
+      >);
+
+      if (response.status !== 201) {
+        throw new Error(t('somethingWentWrong'));
+      }
+
+      message.success(t('itmoAuthorizationRequestSubmitted'));
+      setItmoModalVisible(false);
+      onBalanceChanged();
+    } catch (error: unknown) {
+      const errorMessage = typeof error === 'object'
+        && error !== null
+        && 'message' in error
+        && typeof error.message === 'string'
+        ? error.message
+        : t('somethingWentWrong');
+      message.error(errorMessage);
+    } finally {
+      setItmoModalLoading(false);
+    }
+  };
+
   return (
     <div className="credit-table-container credit-balance-project-table">
       <Table<ProjectBalance>
@@ -606,9 +771,20 @@ export const CreditBalanceByProjectTable = ({
         columns={columns}
         loading={loading}
         tableLayout="fixed"
-        scroll={{ x: 1050 }}
-        onChange={(_pagination, _filters, _sorter, extra) => {
-          if (extra.action === 'sort' && expandedProjectId) {
+        onChange={(_pagination, _filters, sorter, extra) => {
+          // Pagination has its own handler below; only sort clicks are ours.
+          if (extra.action !== 'sort') return;
+          const sorted = Array.isArray(sorter) ? sorter[0] : sorter;
+          const order = toSortOrder(sorted?.order);
+          setSortOrder(order);
+          setSortField(order ? String(sorted.columnKey) : undefined);
+          // Both setStates land in the same render as this one, so the fetch
+          // effect re-runs exactly once with page 1 and the new sort.
+          setCurrentPage(1);
+          if (expandedProjectId) {
+            // The expanded row's project may not even be on page 1 of the new
+            // ordering - collapse rather than reattach the panel to a
+            // different row.
             toggleExpandedProject(expandedProjectId, true);
           }
         }}
@@ -639,7 +815,7 @@ export const CreditBalanceByProjectTable = ({
           ),
           columnTitle: 'Action',
           columnWidth: 80,
-          expandIconColumnIndex: 5,
+          expandIconColumnIndex: 7,
           fixed: false,
         }}
         pagination={{
@@ -671,6 +847,19 @@ export const CreditBalanceByProjectTable = ({
           remarkRequired={false}
           proceedAction={CreditRetirementProceedAction.ACCEPT}
           data={modalActionData?.data}
+        />
+      )}
+      {canManageCredits && (
+        <ItmoAuthRequestModal
+          onFinish={onFinishItmoAuthRequest}
+          onCancel={() => setItmoModalVisible(false)}
+          t={t}
+          actionBtnText={itmoModalData?.actionBtnText}
+          openModal={itmoModalVisible}
+          loading={itmoModalLoading}
+          icon={itmoModalData?.icon}
+          title={itmoModalData?.title}
+          data={itmoModalData?.data}
         />
       )}
     </div>

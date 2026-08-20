@@ -20,7 +20,7 @@ import moment from "moment";
 import { addCommSep } from "../../../Definitions/Definitions/programme.definitions";
 import { useUserContext } from "../../../Context/UserInformationContext/userInformationContext";
 import { CompanyRole } from "../../../Definitions/Enums/company.role.enum";
-import { ProjectDetailsLink } from "./ProjectDetailsLink";
+import { ProjectDetailsLink } from "../../../Components/ProjectDetailsLink/projectDetailsLink";
 
 const { Search } = Input;
 
@@ -139,6 +139,7 @@ export const CreditTransfersTableComponent = (props: any) => {
           <ProjectDetailsLink
             projectId={item.projectId}
             projectName={item.projectName}
+            projectOwnerId={item.projectOwnerId}
           />
         );
       },
@@ -147,7 +148,7 @@ export const CreditTransfersTableComponent = (props: any) => {
       title: t(CrediTransferColumns.DATE),
       key: "createdDate",
       sorter: true,
-      align: "left" as const,
+      align: "center" as const,
       render: (item: CreditTransfersInterface) => {
         return (
           <span>
@@ -207,13 +208,9 @@ export const CreditTransfersTableComponent = (props: any) => {
     {
       title: t(CrediTransferColumns.CREDIT_TRANSFERRED),
       key: CrediTransferColumns.CREDIT_TRANSFERRED,
-      align: "left" as const,
+      align: "right" as const,
       render: (item: CreditTransfersInterface) => {
-        return (
-          <span style={{ marginLeft: "20px" }}>
-            {addCommSep(String(item?.creditAmount))}
-          </span>
-        );
+        return <span>{addCommSep(String(item?.creditAmount))}</span>;
       },
     },
     ...(userInfoState?.companyRole === CompanyRole.PROJECT_DEVELOPER

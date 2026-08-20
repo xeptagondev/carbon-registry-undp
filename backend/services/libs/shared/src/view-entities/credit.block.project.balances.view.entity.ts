@@ -20,6 +20,10 @@ import { ViewColumn, ViewEntity } from "typeorm";
       pc."logo" AS "projectOwnerLogo",
       SUM(cb."creditAmount" - cb."reservedCreditAmount") AS "creditBalance",
       SUM(cb."reservedCreditAmount") AS "reservedCredits",
+      COALESCE(SUM(cb."creditAmount" - cb."reservedCreditAmount")
+        FILTER (WHERE cb."itmoAuthorizationRecord" IS NOT NULL), 0) AS "itmoBalance",
+      COALESCE(SUM(cb."reservedCreditAmount")
+        FILTER (WHERE cb."itmoAuthorizationRecord" IS NOT NULL), 0) AS "itmoReservedCredits",
       MAX(cb."txTime") AS "updatedTime"
     FROM credit_blocks_entity cb
     LEFT JOIN project_entity p ON cb."projectRefId" = p."refId"
@@ -48,6 +52,15 @@ export class CreditBlockProjectBalancesViewEntity {
 
   @ViewColumn()
   reservedCredits: number;
+
+  // ITMO-only subset of creditBalance / reservedCredits (blocks with a
+  // non-null itmoAuthorizationRecord). MO figures are derived
+  // client-side as creditBalance - itmoBalance.
+  @ViewColumn()
+  itmoBalance: number;
+
+  @ViewColumn()
+  itmoReservedCredits: number;
 
   @ViewColumn()
   updatedTime: number;

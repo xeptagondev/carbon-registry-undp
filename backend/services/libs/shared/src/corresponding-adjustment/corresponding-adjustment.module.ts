@@ -4,6 +4,7 @@ import { CorrespondingAdjustmentService } from "./corresponding-adjustment.servi
 import { CorrespondingAdjustment } from "../entities/corresponding.adjustment.entity";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
 import { Emission } from "../entities/emission.entity";
+import { NdcTarget } from "../entities/ndc.target.entity";
 import { UtilModule } from "../util/util.module";
 
 @Module({
@@ -12,6 +13,7 @@ import { UtilModule } from "../util/util.module";
       CorrespondingAdjustment,
       CreditTransactionsEntity,
       Emission,
+      NdcTarget,
     ]),
     UtilModule,
   ],

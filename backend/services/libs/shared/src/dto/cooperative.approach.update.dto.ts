@@ -7,6 +7,7 @@ import {
   IsString,
 } from "class-validator";
 import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
+import { IsValidCountry } from "../decorators/validcountry.decorator";
 
 export class CooperativeApproachUpdateDto {
   @ApiProperty()
@@ -19,10 +20,13 @@ export class CooperativeApproachUpdateDto {
   @IsString()
   title?: string;
 
+  // Host party stays in the set (unioned back in server-side) even if
+  // omitted here — see CooperativeApproachService.update().
   @ApiPropertyOptional()
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @IsValidCountry({ each: true })
   participatingParties?: string[];
 
   @ApiPropertyOptional()

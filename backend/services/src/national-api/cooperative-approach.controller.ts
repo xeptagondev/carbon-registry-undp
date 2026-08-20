@@ -15,6 +15,7 @@ import { PoliciesGuardEx } from "@app/shared/casl/policy.guard";
 import { CooperativeApproachService } from "@app/shared/cooperative-approach/cooperative-approach.service";
 import { CooperativeApproachCreateDto } from "@app/shared/dto/cooperative.approach.create.dto";
 import { CooperativeApproachUpdateDto } from "@app/shared/dto/cooperative.approach.update.dto";
+import { CaAuthorizedEntityCreateDto } from "@app/shared/dto/ca.authorized.entity.create.dto";
 import { CooperativeApproach } from "@app/shared/entities/cooperative.approach.entity";
 import { QueryDto } from "@app/shared/dto/query.dto";
 
@@ -59,10 +60,60 @@ export class CooperativeApproachController {
   @ApiBearerAuth()
   @UseGuards(
     JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Read, CooperativeApproach)
+  )
+  @Get("hostParty")
+  getHostParty() {
+    return this.cooperativeApproachService.getHostParty();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
     PoliciesGuardEx(true, Action.Update, CooperativeApproach)
   )
   @Put("update")
   update(@Body() dto: CooperativeApproachUpdateDto, @Request() req) {
     return this.cooperativeApproachService.update(dto, req.user);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Update, CooperativeApproach)
+  )
+  @Post("authorizedEntity/add")
+  addAuthorizedEntity(
+    @Body() dto: CaAuthorizedEntityCreateDto,
+    @Request() req
+  ) {
+    return this.cooperativeApproachService.addAuthorizedEntity(dto, req.user);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Update, CooperativeApproach)
+  )
+  @Put("authorizedEntity/remove")
+  removeAuthorizedEntity(@Query("id") id: string, @Request() req) {
+    return this.cooperativeApproachService.removeAuthorizedEntity(
+      id,
+      req.user
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(
+    JwtAuthGuard,
+    PoliciesGuardEx(true, Action.Read, CooperativeApproach)
+  )
+  @Get("authorizedEntity/query")
+  queryAuthorizedEntities(
+    @Query("cooperativeApproachId") cooperativeApproachId: string
+  ) {
+    return this.cooperativeApproachService.queryAuthorizedEntities(
+      cooperativeApproachId
+    );
   }
 }
