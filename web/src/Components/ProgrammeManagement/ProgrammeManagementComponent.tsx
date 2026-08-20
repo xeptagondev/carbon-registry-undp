@@ -189,6 +189,8 @@ export const ProgrammeManagementComponent = (props: any) => {
       key: ProgrammeManagementSlColumns.title,
       sorter: true,
       align: "left" as const,
+      width: 180,
+      fixed: "left" as const,
       render: (item: any) => {
         return <span className="clickable">{item}</span>;
       },
@@ -205,6 +207,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       dataIndex: "company",
       key: ProgrammeManagementSlColumns.company,
       align: "left" as const,
+      width: 130,
       render: (item: any) => {
         const elements = (
           <Tooltip title={item.name} color={TooltipColor} key={TooltipColor}>
@@ -236,6 +239,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       key: ProgrammeManagementSlColumns.sector,
       sorter: true,
       align: "center" as const,
+      width: 130,
       render: (item: any) => {
         return <>{t(`projectList:${item}`)}</>;
       },
@@ -246,6 +250,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       key: ProgrammeManagementSlColumns.sectoralScope,
       sorter: true,
       align: "center" as const,
+      width: 220,
       render: (item: any) => {
         return <>{t(`projectList:${item}`)}</>;
       },
@@ -256,6 +261,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       key: ProgrammeManagementSlColumns.projectProposalStage,
       sorter: true,
       align: "center" as const,
+      width: 160,
       render: (item: any) => {
         return (
           <Tag color={getProjectProposalStage(item as ProjectProposalStage)}>
@@ -270,6 +276,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       key: ProgrammeManagementSlColumns.creditIssued,
       sorter: true,
       align: "right" as const,
+      width: 125,
       render: (item: any) => {
         return <span>{item}</span>;
       },
@@ -280,6 +287,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       key: ProgrammeManagementSlColumns.creditBalance,
       sorter: true,
       align: "right" as const,
+      width: 130,
       render: (item: any) => {
         return <span>{item}</span>;
       },
@@ -290,6 +298,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       key: ProgrammeManagementSlColumns.creditRetired,
       sorter: true,
       align: "right" as const,
+      width: 124,
       render: (item: any) => {
         return <span>{item}</span>;
       },
@@ -299,6 +308,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       dataIndex: "authorizationId",
       key: ProgrammeManagementSlColumns.authorizationId,
       align: "center" as const,
+      width: 160,
       render: (item: any) => {
         return <span>{item ? item : t("projectList:na")}</span>;
       },
@@ -308,15 +318,16 @@ export const ProgrammeManagementComponent = (props: any) => {
       dataIndex: "createdTime",
       key: ProgrammeManagementSlColumns.projectCreatedDate,
       align: "center" as const,
+      width: 150,
       render: (item: any) => {
-        console.log("-----------item-----------", item);
         return <>{toMoment(Number(item)).format("YYYY/MM/DD HH:mm:ss")}</>;
       },
     },
     {
       title: t(""),
-      width: 6,
-      align: "right" as const,
+      width: 30,
+      fixed: "right" as const,
+      align: "center" as const,
       key: ProgrammeManagementSlColumns.action,
       render: (_: any, record: any) => {
         const menu = actionMenu(record);
@@ -333,6 +344,15 @@ export const ProgrammeManagementComponent = (props: any) => {
       },
     },
   ].filter((column) => visibleColumns.includes(column.key));
+
+  // The column set is wide enough to overflow a laptop viewport, so the table
+  // scrolls horizontally inside its own container instead of pushing the page.
+  // Summing the visible widths keeps that scroll width correct whichever
+  // columns the page passes in via visibleColumns.
+  const tableScrollX = columns.reduce(
+    (total, column) => total + (column.width ?? 0),
+    0
+  );
 
   const getAllProgramme = async () => {
     setLoading(true);
@@ -662,6 +682,7 @@ export const ProgrammeManagementComponent = (props: any) => {
                 columns={columns}
                 className="common-table-class"
                 loading={loading}
+                scroll={{ x: tableScrollX }}
                 pagination={{
                   current: currentPage,
                   pageSize: pageSize,
