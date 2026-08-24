@@ -64,7 +64,7 @@ organizations, no drift.
 | `GET /program?page=&limit=` (list) | ✅ | Live capture spec | 2026-08-21 | Pagination envelope confirmed exactly (`PagedResponse<T>`); node has zero *committed* programs, so `ProgramRecord`'s own field shape is still unconfirmed — a real one is staged, see the row below |
 | `GET /program/{id}` (get) | ⏳ | — | — | Never called — no committed program id exists to call it with |
 | `GET /staging?table=program` | ✅ | Live capture spec | 2026-08-21 | Found a real staged program — `StagingRecord` corrected (see README "Known gaps" §16: `is_transfer` added, `diff.change` is an array of snake_case DB-column-named fields, not a single camelCase object) |
-| `POST /program` (stageCreate) | ✅ | Manual dev testing | 2026-08-21 | Staged via `CadTrustBootstrapHandler` against this real node (`programName: "UNDP Demo Program"`, `programRegistry: "SystemX"`, `programRegistryActivityId: "NG"` — matches configured defaults); confirmed by reading it back via the staging capture. Not yet committed |
+| `POST /program` (stageCreate) | ✅ | Manual dev testing | 2026-08-24 | Staged via `CadTrustBootstrapHandler` against this real node (`programName: "UNDP Demo Program"`, `programRegistry: "SystemX"`, `programRegistryActivityId: "NG"` — matches configured defaults). A full bootstrap run on 2026-08-24 committed it via the inline `CadTrustCommitHandler`: `committed:true` confirmed on the node afterward |
 | `PUT /program/{id}` (stageUpdate) | ⏳ | — | — | Not currently exercised by any handler, but the transport method exists |
 | `DELETE /program/{id}` (stageDelete) | ⏳ | — | — | Blocked with 409 while any project references the program (per the interface's own NOTE) |
 
@@ -77,7 +77,7 @@ organizations, no drift.
 | `GET /methodology?page=&limit=` (list) | ✅ | Live capture spec | 2026-08-21 | 36 real methodologies, 20 returned; every field name matched exactly (no snake_case surprises, unlike organizations) |
 | `GET /methodology/{id}` (get) | ✅ | Live capture spec | 2026-08-21 | Matched the list entry exactly |
 | `GET /staging?table=methodology` | ✅ | Live capture spec | 2026-08-21 | Found a real staged methodology — same `StagingRecord` correction as program (see README "Known gaps" §16) |
-| `POST /methodology` (stageCreate) | ✅ | Manual dev testing | 2026-08-21 | Staged via `CadTrustBootstrapHandler` against this real node (`methodologyCode: "NG-NCC"`, `methodologyName: "National Carbon Crediting"` — matches configured defaults); confirmed by reading it back via the staging capture. Not yet committed |
+| `POST /methodology` (stageCreate) | ✅ | Manual dev testing | 2026-08-24 | Staged via `CadTrustBootstrapHandler` against this real node (`methodologyCode: "NG-NCC"`, `methodologyName: "National Carbon Crediting"` — matches configured defaults). Committed in the same 2026-08-24 bootstrap run as the program row above; `committed:true` confirmed on the node afterward |
 | `PUT /methodology/{id}` (stageUpdate) | ⏳ | — | — | Not currently exercised by any handler, but the transport method exists |
 | `DELETE /methodology/{id}` (stageDelete) | ⏳ | — | — | Blocked with 409 while any project_methodology references it (per the interface's own NOTE) |
 
@@ -116,6 +116,12 @@ already exercises `GET /project?page=&limit=` and asserts the pagination envelop
 (`page`/`data`/length), but has not checked individual record field names, so the row above stays ⏳
 pending a full capture pass.
 
+`Stakeholder`'s and `Project`'s `stageCreate` were both reached live on 2026-08-24 via
+`CadTrustProjectCreateHandler` — the endpoints are up and the request shape was accepted for
+transport — but every attempt returned `504 Gateway time-out` from Cloudflare (origin overloaded,
+`retry_after: 120`) before a response body was observed. Both rows stay ⏳ pending a confirmed
+successful response.
+
 ## AEF resources (Article 6.2 reporting, `resources/entities.ts`)
 
 | Resource | Path | `list`/`get` | `stageCreate`/`stageUpdate`/`stageDelete` |
@@ -134,7 +140,7 @@ pending a full capture pass.
 |---|---|---|---|---|
 | `GET /staging` (list/listAll) | ✅ | Live capture spec | 2026-08-21 | `StagingRecord` corrected via the `table=program`/`table=methodology` captures — see the Program/Methodology sections above and README "Known gaps" §16. `type`-filtered calls (`staged`/`pending`/`failed`) and unfiltered calls remain unexercised |
 | `GET /staging/pending` (hasPendingCommits / hasUncommittedStagedRows) | ✅ | Manual dev testing | 2026-08-21 | `confirmed:false` means "staged rows still need a commit" on v2 — inverted from v1 and from this package's original doc comment. See README "Known gaps" §17. Not safe to gate a commit on the v1 reading (`!confirmed => skip`); the v2 reading (`confirmed => nothing to commit`) is safe and is what `hasUncommittedStagedRows()` / `CadTrustCommitHandler` now use |
-| `POST /staging/commit` (commit) | ✅ | Manual dev testing | 2026-08-21 | Confirmed against a live node: a program staging row moved from `committed:false` to `committed:true` once the bogus v1-reading `hasPendingCommits()` pre-check was removed from `CadTrustCommitHandler`; the handler now re-guards with the v2-reading `hasUncommittedStagedRows()` instead |
+| `POST /staging/commit` (commit) | ✅ | Manual dev testing | 2026-08-24 | First confirmed 2026-08-21: a program staging row moved from `committed:false` to `committed:true` once the bogus v1-reading `hasPendingCommits()` pre-check was removed from `CadTrustCommitHandler` (which now re-guards with the v2-reading `hasUncommittedStagedRows()` instead). Re-confirmed 2026-08-24 with a full `CadTrustBootstrapHandler` run: both the program and methodology rows staged in the same run committed together in one call |
 | `POST /staging/retry` (retry) | ⏳ | — | — | |
 | `POST /staging/reset-committed` (resetCommitted) | ⏳ | — | — | |
 | `PUT /staging` (edit) | ⏳ | — | — | |

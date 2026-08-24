@@ -65,7 +65,13 @@ export interface CadTrustValidationSyncProps {
   /** Which document this validation record is for — drives the sync-record localId and the CAD Trust validationId. */
   documentType: DocumentTypeEnum.PROJECT_DESIGN_DOCUMENT | DocumentTypeEnum.VALIDATION;
   documentVersion: number;
-  /** The validating Independent Certifier's company name. Not a CAD Trust picklist match — see picklist.map.ts. */
+  /**
+   * The validating Independent Certifier's company name. Carried for local context/audit
+   * (visible on the stored `cadtrust_sync_record.payload`) only — `CadTrustValidationMapper` does
+   * NOT send this to CAD Trust's `validationBody` field; that field is always the configured
+   * default instead, since this name is never a match against CAD Trust's closed `validation_body`
+   * picklist. See `CadTrustValidationMapper`'s class doc.
+   */
   validationBodyName: string;
   /** ISO date. From the PDD's/validation report's crediting-period fields, when present. */
   creditPeriodStartDate?: string;
@@ -160,9 +166,12 @@ export class CadTrustSyncEnqueueService {
   }
 
   /**
-   * Asks for a staging commit. Deliberately a separate action rather than
-   * something the sync handlers do inline: commits then batch naturally, and a
-   * slow or failing commit never blocks staging the next record.
+   * Asks for a staging commit via the queue. Currently unused: every business handler in this
+   * module (bootstrap, project-create, project-update, validation-create) calls
+   * `CadTrustCommitHandler.handle()` directly in-process instead, since this registry's sync
+   * volume (roughly one event per day) leaves no real batching benefit to protect by queueing.
+   * Kept — and the dispatcher still routes `CADTV2Commit` to `CadTrustCommitHandler` — as a valid
+   * path for a future caller that does want commits driven off the queue instead.
    */
   async enqueueCommit(): Promise<void> {
     await this.enqueue(AsyncActionType.CADTV2Commit, {});

@@ -6,9 +6,16 @@ import { CadTrustValidationMapper } from "./validation.mapper";
 const CAD_TRUST_PROJECT_ID = "cadt-project-1";
 const VALIDATION_ID = "0042-PDD-v1";
 
-function buildMapper() {
+function buildMapper(overrides: { validationBodyDefault?: string } = {}) {
   const warnOnUnknownValues = jest.fn(async (_key: string, values: string[]) => values);
-  return { warnOnUnknownValues, mapper: new CadTrustValidationMapper({ warnOnUnknownValues } as any) };
+  const profile = {
+    getValidationBodyDefault: () => overrides.validationBodyDefault ?? "DNV",
+  };
+  return {
+    warnOnUnknownValues,
+    profile,
+    mapper: new CadTrustValidationMapper({ warnOnUnknownValues } as any, profile as any),
+  };
 }
 
 function buildProps(overrides: Partial<CadTrustValidationSyncProps> = {}): CadTrustValidationSyncProps {
@@ -34,7 +41,7 @@ describe("CadTrustValidationMapper", () => {
       validationId: VALIDATION_ID,
       cadTrustProjectId: CAD_TRUST_PROJECT_ID,
       validationType: VALIDATION_TYPE_PDD_APPROVAL,
-      validationBody: "Kunene Certifiers",
+      validationBody: "DNV",
       validationDate: "2026-03-15",
       validationCreditPeriodStartDate: "2026-01-01",
       validationCreditPeriodEndDate: "2033-01-01",
@@ -72,6 +79,18 @@ describe("CadTrustValidationMapper", () => {
     await mapper.toCreateInput(buildProps(), VALIDATION_ID, CAD_TRUST_PROJECT_ID);
 
     expect(warnOnUnknownValues).toHaveBeenCalledWith("validation_type", [VALIDATION_TYPE_PDD_APPROVAL]);
-    expect(warnOnUnknownValues).toHaveBeenCalledWith("validation_body", ["Kunene Certifiers"]);
+    expect(warnOnUnknownValues).toHaveBeenCalledWith("validation_body", ["DNV"]);
+  });
+
+  it("always uses the configured default for validationBody, never the real IC name", async () => {
+    const { mapper } = buildMapper({ validationBodyDefault: "SGS (Thailand) Limited" });
+
+    const input = await mapper.toCreateInput(
+      buildProps({ validationBodyName: "Kunene Certifiers" }),
+      VALIDATION_ID,
+      CAD_TRUST_PROJECT_ID
+    );
+
+    expect(input.validationBody).toBe("SGS (Thailand) Limited");
   });
 });

@@ -16,6 +16,7 @@ import { DocumentEntity } from "../../entities/document.entity";
 import { AsyncActionType } from "../../enum/async.action.type.enum";
 import { CadTrustLocalEntityType } from "../../enum/cadtrust.local.entity.type.enum";
 import { CadTrustResourceType } from "../../enum/cadtrust.resource.type.enum";
+import { CadTrustSyncStatus } from "../../enum/cadtrust.sync.status.enum";
 import { DocumentTypeEnum } from "../../enum/document.type.enum";
 import { CadTrustProjectCreateSnapshot } from "../cadtrust-sync.enqueue.service";
 import { CadTrustSyncKey, CadTrustSyncRecordService } from "../cadtrust-sync-record.service";
@@ -112,7 +113,7 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       const stakeholder = await this.ensureStakeholder(props.companyId);
       const project = await this.ensureProject(refId, props, infContent);
 
-      let stagedAnything = (stakeholder?.staged ?? false) || (project?.staged ?? false);
+      let commitOwed = (stakeholder?.commitOwed ?? false) || (project?.commitOwed ?? false);
 
       if (project) {
         const methodologyLinked = await this.ensureProjectMethodology(
@@ -125,10 +126,10 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
           : false;
         const locationStaged = await this.ensureLocation(refId, project.cadTrustId, infContent);
 
-        stagedAnything = stagedAnything || methodologyLinked || stakeholderLinked || locationStaged;
+        commitOwed = commitOwed || methodologyLinked || stakeholderLinked || locationStaged;
       }
 
-      if (stagedAnything) {
+      if (commitOwed) {
         await this.commitHandler.handle();
       }
     } catch (error) {
@@ -140,22 +141,98 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
   }
 
   /**
+   * Bootstrap's status check (see `CadTrustBootstrapHandler.stageProgram`'s doc comment),
+   * reused here across all five `ensureX` methods. Returns whether an existing sync record
+   * means the caller can skip staging — `undefined` means stage now, and callers should check
+   * `failedBefore` first (see `adoptOrphanedStagedRow`) before doing so.
+   *
+   * `isAlreadySynced()` can't be used for this: it collapses STAGED and COMMITTED into one
+   * `true`, which is exactly what let a resource staged-but-never-committed by a prior run
+   * suppress the inline commit forever — the bug that stuck the bootstrap commit, fixed the
+   * same way in `bootstrap.handler.ts`.
+   */
+  private async existingSync(
+    key: CadTrustSyncKey,
+    label: string
+  ): Promise<{ cadTrustId?: string; commitOwed: boolean } | { failedBefore: boolean }> {
+    const existing = await this.syncRecords.find(key);
+    if (existing?.syncStatus === CadTrustSyncStatus.COMMITTED) {
+      return { cadTrustId: existing.cadTrustId, commitOwed: false };
+    }
+    if (existing?.syncStatus === CadTrustSyncStatus.STAGED) {
+      // Staged on a previous run whose commit never went through. Don't re-stage — that would
+      // duplicate the record on the node — just signal that a commit is still owed.
+      this.logger.log(`${label} is already staged but not yet committed; retrying the commit.`);
+      return { cadTrustId: existing.cadTrustId, commitOwed: true };
+    }
+    return { failedBefore: existing?.syncStatus === CadTrustSyncStatus.FAILED };
+  }
+
+  /**
+   * A staging POST that fails with a 504/timeout is ambiguous: the origin may have created the
+   * row before it stopped answering in time (seen live 2026-08-24 on `/stakeholder` and
+   * `/project` — Cloudflare 504s from an overloaded origin). Staging POSTs are single-attempt by
+   * design (see `@app/cadtrust`'s `http/retry.ts` — a blind retry after an ambiguous mutation
+   * failure risks double-staging), so an ambiguous failure surfaces here, on the next delivery,
+   * as a FAILED sync record. Re-staging blindly in that state would duplicate the row on the
+   * node, and a later commit would then publish it twice. Look for the orphan first and adopt
+   * it instead of creating a new one.
+   *
+   * `type: 'staged'` on the list query is deliberately NOT used to narrow this search — that
+   * filter's semantics carry the same v1/v2 ambiguity documented on `StagingV2PendingResponse`
+   * (see `libs/cadtrust/README.md` "Known gaps" §17), confirmed to disagree with itself across
+   * endpoints on this exact node. Filtering on the `StagingRecord` booleans directly is
+   * unambiguous: `committed` and `failed_commit` mean exactly what they say.
+   */
+  private async adoptOrphanedStagedRow(
+    key: CadTrustSyncKey,
+    table: string,
+    primaryKeyColumn: string,
+    matches: (change: Record<string, unknown>) => boolean
+  ): Promise<{ cadTrustId: string; commitOwed: true } | undefined> {
+    try {
+      const client = this.cadTrustV2Service.getClient();
+      for await (const record of client.staging.listAll({ table, limit: 100 })) {
+        if (record.committed || record.failed_commit) {
+          continue;
+        }
+        const change = record.diff?.change?.[0] ?? {};
+        if (!matches(change)) {
+          continue;
+        }
+
+        const cadTrustId = (change[primaryKeyColumn] as string | undefined) ?? record.uuid;
+        await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: record.uuid }, change);
+        this.logger.warn(
+          `Adopted an orphaned CAD Trust staging row on "${table}" (uuid ${record.uuid}) left over ` +
+            `from a prior ambiguous failure, instead of re-staging a duplicate.`
+        );
+        return { cadTrustId, commitOwed: true };
+      }
+      return undefined;
+    } catch (error) {
+      this.logger.error(`Failed to check for an orphaned CAD Trust staging row on "${table}"`, error);
+      return undefined;
+    }
+  }
+
+  /**
    * Stages the owning PD company as a CAD Trust stakeholder, once per company
    * — reused across every project that company creates. See the class doc for
    * why a live `Company` read is safe here.
    */
   private async ensureStakeholder(
     companyId: number
-  ): Promise<{ cadTrustId: string; staged: boolean } | undefined> {
+  ): Promise<{ cadTrustId: string; commitOwed: boolean } | undefined> {
     const key: CadTrustSyncKey = {
       localEntityType: CadTrustLocalEntityType.STAKEHOLDER,
       localId: String(companyId),
       cadTrustEntityType: CadTrustResourceType.STAKEHOLDER,
     };
 
-    if (await this.syncRecords.isAlreadySynced(key)) {
-      const cadTrustId = await this.syncRecords.getCadTrustId(key);
-      return cadTrustId ? { cadTrustId, staged: false } : undefined;
+    const existing = await this.existingSync(key, `CAD Trust stakeholder for company ${companyId}`);
+    if ("commitOwed" in existing) {
+      return existing.cadTrustId ? { cadTrustId: existing.cadTrustId, commitOwed: existing.commitOwed } : undefined;
     }
 
     let input: StakeholderCreateInput | undefined;
@@ -169,6 +246,19 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       }
 
       input = await this.stakeholderMapper.toCreateInput(company);
+
+      if (existing.failedBefore) {
+        const orphan = await this.adoptOrphanedStagedRow(
+          key,
+          "stakeholder",
+          "cad_trust_stakeholder_id",
+          (change) => change.stakeholder_name === input?.stakeholderName
+        );
+        if (orphan) {
+          return orphan;
+        }
+      }
+
       const staged = await this.cadTrustV2Service.getClient().stakeholder.stageCreate(input);
       const cadTrustId = staged.response.cadTrustStakeholderId ?? staged.response.uuid;
 
@@ -178,7 +268,7 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
         input as unknown as Record<string, unknown>
       );
       this.logger.log(`Staged CAD Trust stakeholder for company ${companyId} as ${cadTrustId}`);
-      return { cadTrustId, staged: true };
+      return { cadTrustId, commitOwed: true };
     } catch (error) {
       await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to stage CAD Trust stakeholder for company ${companyId}`, error);
@@ -191,7 +281,7 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
     refId: string,
     props: CadTrustProjectCreateSnapshot,
     infContent: any
-  ): Promise<{ cadTrustId: string; staged: boolean } | undefined> {
+  ): Promise<{ cadTrustId: string; commitOwed: boolean } | undefined> {
     const key: CadTrustSyncKey = {
       localEntityType: CadTrustLocalEntityType.PROJECT,
       localId: refId,
@@ -201,10 +291,10 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
     // The async queue is at-least-once, and the database consumer re-runs the
     // whole action if anything after it in the same pass fails. Re-delivery is
     // routine, so this check is what stops a duplicate project being staged.
-    if (await this.syncRecords.isAlreadySynced(key)) {
+    const existing = await this.existingSync(key, `Project ${refId}`);
+    if ("commitOwed" in existing) {
       this.logger.log(`Project ${refId} is already synced to CAD Trust; skipping`);
-      const cadTrustId = await this.syncRecords.getCadTrustId(key);
-      return cadTrustId ? { cadTrustId, staged: false } : undefined;
+      return existing.cadTrustId ? { cadTrustId: existing.cadTrustId, commitOwed: existing.commitOwed } : undefined;
     }
 
     let input: ProjectCreateInput | undefined;
@@ -219,6 +309,18 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
         input.cadTrustProgramId = programCadTrustId;
       }
 
+      if (existing.failedBefore) {
+        const orphan = await this.adoptOrphanedStagedRow(
+          key,
+          "project",
+          "cad_trust_project_id",
+          (change) => change.project_id === refId
+        );
+        if (orphan) {
+          return orphan;
+        }
+      }
+
       const staged = await this.cadTrustV2Service.getClient().project.stageCreate(input);
       // The guide documents cadTrustProjectId on the create response but does
       // not guarantee it on every resource, so fall back to uuid.
@@ -230,7 +332,7 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
         input as unknown as Record<string, unknown>
       );
       this.logger.log(`Staged project ${refId} to CAD Trust as ${cadTrustId}`);
-      return { cadTrustId, staged: true };
+      return { cadTrustId, commitOwed: true };
     } catch (error) {
       await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to stage project ${refId} to CAD Trust`, error);
@@ -254,8 +356,9 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       cadTrustEntityType: CadTrustResourceType.PROJECT_METHODOLOGY,
     };
 
-    if (await this.syncRecords.isAlreadySynced(key)) {
-      return false;
+    const existing = await this.existingSync(key, `CAD Trust methodology link for project ${refId}`);
+    if ("commitOwed" in existing) {
+      return existing.commitOwed;
     }
 
     let input: ProjectMethodologyCreateInput | undefined;
@@ -278,6 +381,20 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
         cadTrustMethodologyId: methodologyCadTrustId,
         projectMethodologyDate: this.toIsoDate(projectCreateTime),
       };
+
+      if (existing.failedBefore) {
+        const orphan = await this.adoptOrphanedStagedRow(
+          key,
+          "projectMethodology",
+          "cad_trust_project_methodology_id",
+          (change) =>
+            change.cad_trust_project_id === projectCadTrustId &&
+            change.cad_trust_methodology_id === methodologyCadTrustId
+        );
+        if (orphan) {
+          return true;
+        }
+      }
 
       const staged = await this.cadTrustV2Service.getClient().projectMethodology.stageCreate(input);
       const cadTrustId = staged.response.cadTrustProjectMethodologyId ?? staged.response.uuid;
@@ -308,8 +425,9 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       cadTrustEntityType: CadTrustResourceType.STAKEHOLDER_PROJECT,
     };
 
-    if (await this.syncRecords.isAlreadySynced(key)) {
-      return false;
+    const existing = await this.existingSync(key, `CAD Trust stakeholder link for project ${refId}`);
+    if ("commitOwed" in existing) {
+      return existing.commitOwed;
     }
 
     const input: StakeholderProjectCreateInput = {
@@ -318,6 +436,20 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
     };
 
     try {
+      if (existing.failedBefore) {
+        const orphan = await this.adoptOrphanedStagedRow(
+          key,
+          "stakeholderProject",
+          "cad_trust_stakeholder_project_id",
+          (change) =>
+            change.cad_trust_stakeholder_id === stakeholderCadTrustId &&
+            change.cad_trust_project_id === projectCadTrustId
+        );
+        if (orphan) {
+          return true;
+        }
+      }
+
       const staged = await this.cadTrustV2Service.getClient().stakeholderProject.stageCreate(input);
       const cadTrustId = staged.response.cadTrustStakeholderProjectId ?? staged.response.uuid;
 
@@ -350,8 +482,9 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       cadTrustEntityType: CadTrustResourceType.LOCATION,
     };
 
-    if (await this.syncRecords.isAlreadySynced(key)) {
-      return false;
+    const existing = await this.existingSync(key, `CAD Trust location for project ${refId}`);
+    if ("commitOwed" in existing) {
+      return existing.commitOwed;
     }
 
     let input: LocationCreateInput | undefined;
@@ -360,6 +493,18 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       if (!input) {
         this.logger.log(`No location data on the INF for project ${refId}; skipping location sync`);
         return false;
+      }
+
+      if (existing.failedBefore) {
+        const orphan = await this.adoptOrphanedStagedRow(
+          key,
+          "location",
+          "cad_trust_location_id",
+          (change) => change.cad_trust_project_id === projectCadTrustId
+        );
+        if (orphan) {
+          return true;
+        }
       }
 
       const staged = await this.cadTrustV2Service.getClient().location.stageCreate(input);

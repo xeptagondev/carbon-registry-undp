@@ -152,6 +152,12 @@ export default () => ({
       link: process.env.CADT_V2_METHODOLOGY_LINK,
       type: process.env.CADT_V2_METHODOLOGY_TYPE || 'Not Determined',
     },
+    // Picklist "validation_body" — CAD Trust's validation_body list is a closed set of ~90
+    // internationally accredited VVBs; this registry's Independent Certifiers will not be on it by
+    // name (see mappers/validation.mapper.ts). Always used as-is for every validation sync — not a
+    // fallback-if-unmatched scheme. "DNV" is a real live-observed entry (picklistValues.ts); reconfirm
+    // against GET /v2/governance/meta/pickList on the target node before go-live.
+    validationBodyDefault: process.env.CADT_V2_VALIDATION_BODY || "DNV",
   },
   systemType: process.env.SYSTEM_TYPE || "CARBON_UNIFIED_SYSTEM",
   systemName: process.env.SYSTEM_NAME || "SystemX",

@@ -39,16 +39,17 @@ const ORGANIZATION_KEY: CadTrustSyncKey = {
  * ## Program and methodology: staged, then committed inline — not queued
  *
  * Staging still only writes to the node's private staging table, same as
- * everywhere else in this adaptor. But unlike `CadTrustProjectCreateHandler`,
- * which enqueues a separate `CADTV2Commit` action so several projects created
- * back-to-back batch into one on-chain commit, this handler calls
- * `CadTrustCommitHandler.handle()` directly, in the same run. Bootstrap runs
- * once per national-api start — there is nothing else in flight to batch
- * with — so queueing would only add a full extra round trip (another
- * `async_action_entity` row, another pass of the consumer loop) before the
- * program and methodology are actually published. Calling the handler
- * in-process is safe here because it already satisfies the same never-throw
- * contract this class does.
+ * everywhere else in this adaptor. Every business handler in this module —
+ * this one, `CadTrustProjectCreateHandler`, `CadTrustProjectUpdateHandler`,
+ * `CadTrustValidationCreateHandler` — now calls `CadTrustCommitHandler.handle()`
+ * directly, in the same run, rather than enqueuing a separate `CADTV2Commit`
+ * action; nothing enqueues one any more. This registry syncs at roughly one
+ * event per day, so there is essentially never anything else in flight to
+ * batch a commit with — queueing would only add a full extra round trip
+ * (another `async_action_entity` row, another pass of the consumer loop)
+ * before anything is actually published, for no real batching benefit.
+ * Calling the handler in-process is safe here because it already satisfies
+ * the same never-throw contract this class does.
  *
  * ## Idempotent by design, not by trigger suppression
  *

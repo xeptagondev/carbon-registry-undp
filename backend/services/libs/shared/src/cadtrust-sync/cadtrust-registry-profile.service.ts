@@ -41,6 +41,11 @@ export class CadTrustRegistryProfileService {
     );
   }
 
+  /** Always used for CAD Trust's validationBody — see configuration.ts's cadTrustV2.validationBodyDefault. */
+  getValidationBodyDefault(): string {
+    return this.configService.get<string>("cadTrustV2.validationBodyDefault");
+  }
+
   getProgramInput(): ProgramCreateInput {
     const input: ProgramCreateInput = {
       programName: this.configService.get<string>("cadTrustV2.program.name"),

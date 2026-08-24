@@ -2,6 +2,7 @@ import { CadTrustValidationError } from "@app/cadtrust";
 
 import { CadTrustLocalEntityType } from "../../enum/cadtrust.local.entity.type.enum";
 import { CadTrustResourceType } from "../../enum/cadtrust.resource.type.enum";
+import { CadTrustSyncStatus } from "../../enum/cadtrust.sync.status.enum";
 import { ProjectProposalStage } from "../../enum/projectProposalStage.enum";
 import { DocumentTypeEnum } from "../../enum/document.type.enum";
 import { CadTrustProjectCreateHandler } from "./project-create.handler";
@@ -51,12 +52,17 @@ const SNAPSHOT = {
 const COMPANY = { companyId: COMPANY_ID, name: "Kunene Developers", website: "https://kunenedev.example.org" };
 const INF_WITH_LOCATION = { projectDescription: "d", province: "Kunene" };
 
+type EntityKey = "stakeholder" | "project" | "methodology" | "stakeholderProject" | "location";
+
 function buildHandler(
   overrides: {
     enabled?: boolean;
-    alreadySynced?: Partial<
-      Record<"stakeholder" | "project" | "methodology" | "stakeholderProject" | "location", boolean>
-    >;
+    /** Sub-entity already COMMITTED — nothing to do. */
+    alreadySynced?: Partial<Record<EntityKey, boolean>>;
+    /** Sub-entity STAGED by a prior run whose commit never landed — commit owed, no re-stage. */
+    staged?: Partial<Record<EntityKey, boolean>>;
+    /** Sub-entity FAILED by a prior run — triggers the orphan-adopt lookup before re-staging. */
+    failed?: Partial<Record<EntityKey, boolean>>;
     syncedProgramId?: string | undefined;
     syncedMethodologyId?: string | undefined;
     company?: any;
@@ -66,10 +72,14 @@ function buildHandler(
     stageProjectMethodology?: jest.Mock;
     stageStakeholderProject?: jest.Mock;
     stageLocation?: jest.Mock;
+    /** Stub for `client.staging.listAll` — the orphan-adopt lookup. Defaults to yielding nothing. */
+    stagingListAll?: jest.Mock;
     commit?: jest.Mock;
   } = {}
 ) {
   const alreadySynced = overrides.alreadySynced ?? {};
+  const staged = overrides.staged ?? {};
+  const failed = overrides.failed ?? {};
 
   const stageStakeholder =
     overrides.stageStakeholder ??
@@ -117,24 +127,41 @@ function buildHandler(
     LOCATION: "cadt-loc-cached",
   };
 
+  const entityKeyFor = (localEntityType: CadTrustLocalEntityType): EntityKey | undefined => {
+    switch (localEntityType) {
+      case CadTrustLocalEntityType.STAKEHOLDER:
+        return "stakeholder";
+      case CadTrustLocalEntityType.PROJECT:
+        return "project";
+      case CadTrustLocalEntityType.PROJECT_METHODOLOGY:
+        return "methodology";
+      case CadTrustLocalEntityType.STAKEHOLDER_PROJECT:
+        return "stakeholderProject";
+      case CadTrustLocalEntityType.LOCATION:
+        return "location";
+      default:
+        return undefined;
+    }
+  };
+
   const syncRecords = {
-    isAlreadySynced: jest.fn(async (key: any) => {
-      switch (key.localEntityType) {
-        case CadTrustLocalEntityType.STAKEHOLDER:
-          return alreadySynced.stakeholder ?? false;
-        case CadTrustLocalEntityType.PROJECT:
-          return alreadySynced.project ?? false;
-        case CadTrustLocalEntityType.PROJECT_METHODOLOGY:
-          return alreadySynced.methodology ?? false;
-        case CadTrustLocalEntityType.STAKEHOLDER_PROJECT:
-          return alreadySynced.stakeholderProject ?? false;
-        case CadTrustLocalEntityType.LOCATION:
-          return alreadySynced.location ?? false;
-        default:
-          return false;
+    // Backs `existingSync()`. `alreadySynced`/`staged`/`failed` map onto the three statuses the
+    // handler distinguishes — COMMITTED (nothing to do), STAGED (commit owed, don't re-stage),
+    // FAILED (triggers the orphan-adopt lookup before re-staging).
+    find: jest.fn(async (key: any) => {
+      const entityKey = entityKeyFor(key.localEntityType);
+      if (!entityKey) {
+        return null;
       }
+      const syncStatus = alreadySynced[entityKey]
+        ? CadTrustSyncStatus.COMMITTED
+        : staged[entityKey]
+        ? CadTrustSyncStatus.STAGED
+        : failed[entityKey]
+        ? CadTrustSyncStatus.FAILED
+        : undefined;
+      return syncStatus ? { syncStatus, cadTrustId: syncedIds[key.localEntityType] } : null;
     }),
-    getCadTrustId: jest.fn(async (key: any) => syncedIds[key.localEntityType]),
     getSyncedCadTrustId: jest.fn(async (_localEntityType: any, cadTrustEntityType: any) => {
       if (cadTrustEntityType === CadTrustResourceType.PROGRAM) return overrides.syncedProgramId;
       if (cadTrustEntityType === CadTrustResourceType.METHODOLOGY) {
@@ -167,6 +194,9 @@ function buildHandler(
 
   const commitHandler = { handle: overrides.commit ?? jest.fn(async () => undefined) };
 
+  // The orphan-adopt lookup (adoptOrphanedStagedRow) — defaults to "the node has nothing".
+  const stagingListAll = overrides.stagingListAll ?? jest.fn(async function* () {});
+
   const cadTrustV2Service = {
     getClient: () => ({
       stakeholder: { stageCreate: stageStakeholder },
@@ -174,6 +204,7 @@ function buildHandler(
       projectMethodology: { stageCreate: stageProjectMethodology },
       stakeholderProject: { stageCreate: stageStakeholderProject },
       location: { stageCreate: stageLocation },
+      staging: { listAll: stagingListAll },
     }),
   };
   const configService = { get: () => overrides.enabled ?? true };
@@ -206,6 +237,7 @@ function buildHandler(
     stageProjectMethodology,
     stageStakeholderProject,
     stageLocation,
+    stagingListAll,
     logger,
   };
 }
@@ -325,6 +357,133 @@ describe("CadTrustProjectCreateHandler", () => {
       expect(stageStakeholderProject).not.toHaveBeenCalled();
       expect(stageLocation).not.toHaveBeenCalled();
       expect(commitHandler.handle).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("commit-owed status (previously staged, never committed)", () => {
+    // Regression coverage for the bug fixed here: isAlreadySynced() collapsed STAGED and
+    // COMMITTED into one "already synced" true, so a resource staged by a run that died before
+    // committing made every ensureX report no commit owed, and the inline commit never re-fired.
+    it("does not re-stage any sub-entity when everything is STAGED, but still commits once", async () => {
+      const {
+        handler,
+        commitHandler,
+        stageStakeholder,
+        stageProject,
+        stageProjectMethodology,
+        stageStakeholderProject,
+        stageLocation,
+      } = buildHandler({
+        staged: {
+          stakeholder: true,
+          project: true,
+          methodology: true,
+          stakeholderProject: true,
+          location: true,
+        },
+      });
+
+      await handler.handle(SNAPSHOT);
+
+      expect(stageStakeholder).not.toHaveBeenCalled();
+      expect(stageProject).not.toHaveBeenCalled();
+      expect(stageProjectMethodology).not.toHaveBeenCalled();
+      expect(stageStakeholderProject).not.toHaveBeenCalled();
+      expect(stageLocation).not.toHaveBeenCalled();
+      expect(commitHandler.handle).toHaveBeenCalledTimes(1);
+    });
+
+    it("commits once when only one sub-entity is STAGED and the rest are already COMMITTED", async () => {
+      const { handler, commitHandler, stageLocation } = buildHandler({
+        alreadySynced: { stakeholder: true, project: true, methodology: true, stakeholderProject: true },
+        staged: { location: true },
+      });
+
+      await handler.handle(SNAPSHOT);
+
+      expect(stageLocation).not.toHaveBeenCalled();
+      expect(commitHandler.handle).toHaveBeenCalledTimes(1);
+    });
+
+    it("still resolves the project's cadTrustId when only the project is STAGED, so downstream links use it", async () => {
+      const { handler, stageProject, stageProjectMethodology, stageStakeholderProject, stageLocation } =
+        buildHandler({ staged: { project: true } });
+
+      await handler.handle(SNAPSHOT);
+
+      expect(stageProject).not.toHaveBeenCalled();
+      expect(stageProjectMethodology).toHaveBeenCalledWith(
+        expect.objectContaining({ cadTrustProjectId: "cadt-project-cached" })
+      );
+      expect(stageStakeholderProject).toHaveBeenCalledWith(
+        expect.objectContaining({ cadTrustProjectId: "cadt-project-cached" })
+      );
+      expect(stageLocation).toHaveBeenCalledWith(
+        expect.objectContaining({ cadTrustProjectId: "cadt-project-cached" })
+      );
+    });
+  });
+
+  describe("orphaned staging rows after an ambiguous failure (504 recovery)", () => {
+    // Live dev testing (2026-08-24) hit 504 Gateway time-out from Cloudflare on /stakeholder and
+    // /project — an ambiguous failure, since the origin may have created the row before it
+    // stopped answering. A blind re-stage on the next delivery would duplicate it on the node.
+    it("adopts a matching uncommitted row on the node instead of re-staging, when the sync record is FAILED", async () => {
+      const stagingListAll = jest.fn(async function* (query: any) {
+        if (query.table === "stakeholder") {
+          yield {
+            uuid: "staging-orphan-1",
+            committed: false,
+            failed_commit: false,
+            diff: { change: [{ stakeholder_name: "Kunene Developers" }] },
+          };
+        }
+      });
+      const { handler, commitHandler, stageStakeholder, syncRecords } = buildHandler({
+        failed: { stakeholder: true },
+        stagingListAll,
+      });
+
+      await handler.handle(SNAPSHOT);
+
+      expect(stageStakeholder).not.toHaveBeenCalled();
+      expect(syncRecords.markStaged).toHaveBeenCalledWith(
+        STAKEHOLDER_KEY,
+        { cadTrustId: "staging-orphan-1", stagingUuid: "staging-orphan-1" },
+        { stakeholder_name: "Kunene Developers" }
+      );
+      expect(commitHandler.handle).toHaveBeenCalledTimes(1);
+    });
+
+    it("stages normally when FAILED but the node holds no matching uncommitted row", async () => {
+      const { handler, stageStakeholder, syncRecords } = buildHandler({ failed: { stakeholder: true } });
+
+      await handler.handle(SNAPSHOT);
+
+      expect(stageStakeholder).toHaveBeenCalledTimes(1);
+      expect(syncRecords.markStaged).toHaveBeenCalledWith(
+        STAKEHOLDER_KEY,
+        { cadTrustId: "cadt-stakeholder-1", stagingUuid: "staging-stakeholder-1" },
+        expect.any(Object)
+      );
+    });
+
+    it("ignores a node row that is already committed, and stages a fresh one instead", async () => {
+      const stagingListAll = jest.fn(async function* (query: any) {
+        if (query.table === "stakeholder") {
+          yield {
+            uuid: "staging-orphan-1",
+            committed: true,
+            failed_commit: false,
+            diff: { change: [{ stakeholder_name: "Kunene Developers" }] },
+          };
+        }
+      });
+      const { handler, stageStakeholder } = buildHandler({ failed: { stakeholder: true }, stagingListAll });
+
+      await handler.handle(SNAPSHOT);
+
+      expect(stageStakeholder).toHaveBeenCalledTimes(1);
     });
   });
 
