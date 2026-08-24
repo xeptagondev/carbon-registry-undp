@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  Alert,
   Button,
   Col,
   Form,
@@ -9,11 +10,17 @@ import {
   Row,
   Select,
   Skeleton,
-  Switch,
   Tag,
+  Tooltip,
   message,
 } from "antd";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
+import { NdcType, NDC_TYPE_LABELS } from "../../Definitions/Enums/ndcType.enum";
+import {
+  CA_METHOD_LABELS,
+  getCompatibleCaMethods,
+} from "../../Definitions/Enums/caMethod.enum";
+import { Sector } from "../../Definitions/Enums/sector.enum";
 import "./initialReports.scss";
 
 const { TextArea } = Input;
@@ -21,27 +28,36 @@ const { TextArea } = Input;
 const statusColors: Record<string, string> = {
   Draft: "default",
   Submitted: "blue",
-  Published: "green",
 };
 
 type IrShape = {
-  reportId: string;
+  reportNumber: string;
   status: string;
-  cooperativeApproachId: string;
+  versionCount: number;
+  ndcStartYear: number | null;
+  ndcEndYear: number | null;
+  ndcType: string | null;
+  baseYear: number | null;
+  baseYearEmission: number | null;
+  ndcTarget: number | null;
+  caMethod: string | null;
   caMethodDescription: string | null;
+  sectors: string[] | null;
   participationDemonstration: any;
   itmoMetrics: any;
-  ndcQuantification: any;
-  cooperativeApproachDetails: any;
   environmentalIntegrity: any;
 };
 
 const arr = (v: any): string[] =>
   Array.isArray(v) ? v.map((x) => String(x)) : [];
 
+// The report row is mutable in place — this always edits the live
+// working document, never a version. Editing a report that has already
+// been Submitted reopens it as a Draft on the server; any cooperative
+// approaches already attached stay attached.
 const EditInitialReport = () => {
   const navigate = useNavigate();
-  const { reportId = "" } = useParams<{ reportId: string }>();
+  const { reportNumber = "" } = useParams<{ reportNumber: string }>();
   const { get, put } = useConnection();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
@@ -52,130 +68,87 @@ const EditInitialReport = () => {
     setLoading(true);
     try {
       const res = await get(
-        `national/initialReport/get?id=${encodeURIComponent(reportId)}`
+        `national/initialReport/get?reportNumber=${encodeURIComponent(reportNumber)}`
       );
       const row = res?.data;
       if (!row) {
-        message.error(`Initial report ${reportId} not found`);
+        message.error(`Initial report ${reportNumber} not found`);
         navigate("/initialReports/viewAll");
-        return;
-      }
-      if (row.status !== "Draft") {
-        message.warning(
-          "Only the latest Draft version of an initial report can be edited"
-        );
-        navigate(`/initialReports/view/${reportId}`);
         return;
       }
       setIr(row);
       form.setFieldsValue({
+        ndcStartYear: row.ndcStartYear ?? null,
+        ndcEndYear: row.ndcEndYear ?? null,
+        ndcType: row.ndcType ?? NdcType.SINGLE_YEAR,
+        baseYear: row.baseYear ?? null,
+        baseYearEmission: row.baseYearEmission ?? null,
+        ndcTarget: row.ndcTarget ?? null,
+        caMethod: row.caMethod ?? null,
         caMethodDescription: row.caMethodDescription ?? "",
-        participation_isPartyToParisAgreement:
-          row.participationDemonstration?.isPartyToParisAgreement ?? true,
-        participation_hasNDC: row.participationDemonstration?.hasNDC ?? true,
-        participation_hasTrackingArrangements:
-          row.participationDemonstration?.hasTrackingArrangements ?? true,
-        participation_hasAuthorizationArrangements:
-          row.participationDemonstration?.hasAuthorizationArrangements ?? true,
-        participation_countryCode:
-          row.participationDemonstration?.countryCode ?? "",
-        itmo_primaryMetric: row.itmoMetrics?.primaryMetric ?? "tCO2e",
-        itmo_nonGhgMetrics: arr(row.itmoMetrics?.nonGhgMetrics),
-        ndc_target: row.ndcQuantification?.ndcTarget ?? null,
-        ndc_baseYear: row.ndcQuantification?.baseYear ?? null,
-        ndc_targetYear: row.ndcQuantification?.targetYear ?? null,
-        ndc_sectors: arr(row.ndcQuantification?.sectors),
-        ndc_ghgs: arr(row.ndcQuantification?.ghgs),
-        ca_title: row.cooperativeApproachDetails?.title ?? "",
-        ca_participatingParties: arr(
-          row.cooperativeApproachDetails?.participatingParties
-        ),
-        ca_description: row.cooperativeApproachDetails?.description ?? "",
-        ca_expectedMitigation:
-          row.cooperativeApproachDetails?.expectedMitigation ?? "",
-        env_noNetIncrease:
+        sectors: arr(row.sectors),
+        environmentalIntegrityAssessment:
           row.environmentalIntegrity?.noNetIncrease ?? "",
-        env_conservativeBaselines:
-          row.environmentalIntegrity?.conservativeBaselines ?? "",
-        env_nonPermanenceRisk:
-          row.environmentalIntegrity?.nonPermanenceRisk ?? "",
-        env_leakageRisk: row.environmentalIntegrity?.leakageRisk ?? "",
       });
     } catch (e: any) {
-      message.error(
-        e?.response?.data?.message ?? "Failed to load initial report"
-      );
+      message.error(e?.message ?? "Failed to load initial report");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (reportId) fetchIr();
+    if (reportNumber) fetchIr();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reportId]);
+  }, [reportNumber]);
 
   const buildPayload = (values: any) => ({
-    reportId,
+    reportNumber,
+    ndcStartYear:
+      values.ndcStartYear === null || values.ndcStartYear === undefined
+        ? undefined
+        : Number(values.ndcStartYear),
+    ndcEndYear:
+      values.ndcEndYear === null || values.ndcEndYear === undefined
+        ? undefined
+        : Number(values.ndcEndYear),
+    ndcType: values.ndcType,
+    baseYear:
+      values.baseYear === null || values.baseYear === undefined
+        ? undefined
+        : Number(values.baseYear),
+    baseYearEmission:
+      values.baseYearEmission === null || values.baseYearEmission === undefined
+        ? undefined
+        : Number(values.baseYearEmission),
+    ndcTarget:
+      values.ndcTarget === null || values.ndcTarget === undefined
+        ? undefined
+        : Number(values.ndcTarget),
+    caMethod: values.caMethod,
     caMethodDescription: values.caMethodDescription ?? "",
-    participationDemonstration: {
-      isPartyToParisAgreement: !!values.participation_isPartyToParisAgreement,
-      hasNDC: !!values.participation_hasNDC,
-      hasTrackingArrangements: !!values.participation_hasTrackingArrangements,
-      hasAuthorizationArrangements:
-        !!values.participation_hasAuthorizationArrangements,
-      countryCode: values.participation_countryCode || "",
-    },
-    itmoMetrics: {
-      primaryMetric: values.itmo_primaryMetric || "tCO2e",
-      nonGhgMetrics: arr(values.itmo_nonGhgMetrics),
-    },
-    ndcQuantification: {
-      ndcTarget:
-        values.ndc_target === null || values.ndc_target === undefined
-          ? null
-          : Number(values.ndc_target),
-      baseYear:
-        values.ndc_baseYear === null || values.ndc_baseYear === undefined
-          ? null
-          : Number(values.ndc_baseYear),
-      targetYear:
-        values.ndc_targetYear === null || values.ndc_targetYear === undefined
-          ? null
-          : Number(values.ndc_targetYear),
-      sectors: arr(values.ndc_sectors),
-      ghgs: arr(values.ndc_ghgs),
-    },
-    cooperativeApproachDetails: {
-      title: values.ca_title || "",
-      participatingParties: arr(values.ca_participatingParties),
-      description: values.ca_description || "",
-      expectedMitigation: values.ca_expectedMitigation || "",
-    },
+    sectors: arr(values.sectors),
+    // Participation Demonstration and ITMO Metrics aren't collected on
+    // the create form, so editing leaves them untouched (the update DTO
+    // only applies a field when it's present in the payload) rather
+    // than re-sending stale form state for fields this form doesn't
+    // show. Environmental Integrity mirrors the create form's single
+    // "assessment" field, so the other three sub-fields are preserved
+    // from what was already stored rather than being edited here.
     environmentalIntegrity: {
-      noNetIncrease: values.env_noNetIncrease || "",
-      conservativeBaselines: values.env_conservativeBaselines || "",
-      nonPermanenceRisk: values.env_nonPermanenceRisk || "",
-      leakageRisk: values.env_leakageRisk || "",
+      ...(ir?.environmentalIntegrity ?? {}),
+      noNetIncrease: values.environmentalIntegrityAssessment ?? "",
     },
   });
 
   const onFinish = async (values: any) => {
     setSaving(true);
     try {
-      // Edits are append-only: the backend saves the changes as a new
-      // version row and returns it.
-      const res = await put(
-        "national/initialReport/update",
-        buildPayload(values)
-      );
-      const newReportId = res?.data?.reportId ?? reportId;
-      message.success("Initial report saved as a new version");
-      navigate(`/initialReports/view/${newReportId}`);
+      await put("national/initialReport/update", buildPayload(values));
+      message.success("Initial report saved");
+      navigate(`/initialReports/view/${reportNumber}`);
     } catch (e: any) {
-      message.error(
-        e?.response?.data?.message ?? "Failed to update initial report"
-      );
+      message.error(e?.message ?? "Failed to update initial report");
     } finally {
       setSaving(false);
     }
@@ -183,167 +156,198 @@ const EditInitialReport = () => {
 
   if (loading || !ir) return <Skeleton active />;
 
+  // Once v1.0 has been filed, these fields feed the frozen trajectory
+  // and corresponding-adjustment calculations that earlier versions
+  // (and any already-submitted corresponding adjustments) were computed
+  // against — changing them retroactively would invalidate history
+  // rather than amend it. Sectors, the CA method description, and the
+  // environmental-integrity assessment are pure narrative text with no
+  // downstream calculation, so those stay editable indefinitely.
+  const locked = (ir.versionCount ?? 0) > 0;
+  const lockedTooltip =
+    "Locked — this can no longer be changed once the initial report has been submitted";
+
   return (
     <div className="initial-reports-container">
       <div className="title-bar">
         <div className="body-title">
-          Edit Initial Report {ir.reportId}{" "}
+          Edit Initial Report {ir.reportNumber}{" "}
           <Tag color={statusColors[ir.status] || "default"}>{ir.status}</Tag>
         </div>
-        <div className="body-sub-title">
-          Cooperative Approach: {ir.cooperativeApproachId} — Decision 2/CMA.3
-          para. 18
-        </div>
+        <div className="body-sub-title">Decision 2/CMA.3 para. 18</div>
       </div>
       <div className="content-card">
+        {locked && (
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+            message="NDC Period, NDC Type, Base Year, Base Year Emission, NDC Target, and CA Method are locked because this report has already been submitted."
+          />
+        )}
         <Form form={form} layout="vertical" onFinish={onFinish}>
-          <div className="section-title">Cooperative Approach Details</div>
+          <div className="section-title">NDC Information</div>
           <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item name="ca_title" label="Title">
-                <Input />
+            <Col span={8}>
+              <Form.Item
+                name="ndcStartYear"
+                label="NDC Start Year"
+                rules={[{ required: true, message: "NDC start year is required" }]}
+                tooltip={locked ? lockedTooltip : undefined}
+              >
+                <InputNumber
+                  style={{ width: "100%" }}
+                  min={1900}
+                  max={2100}
+                  disabled={locked}
+                />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
-                name="ca_participatingParties"
-                label="Participating Parties (Country Codes)"
+                name="ndcEndYear"
+                label="NDC End Year"
+                rules={[{ required: true, message: "NDC end year is required" }]}
+                tooltip={locked ? lockedTooltip : undefined}
+              >
+                <InputNumber
+                  style={{ width: "100%" }}
+                  min={1900}
+                  max={2100}
+                  disabled={locked}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="ndcType"
+                label="NDC Type"
+                rules={[{ required: true, message: "NDC type is required" }]}
+                tooltip={locked ? lockedTooltip : undefined}
               >
                 <Select
-                  mode="tags"
-                  placeholder="Enter country codes (e.g. NG, CH)"
-                  tokenSeparators={[",", " "]}
+                  disabled={locked}
+                  onChange={() => {
+                    // The CA Method options depend on NDC Type; a method
+                    // valid under the old type may not be valid under
+                    // the new one, so clear it.
+                    form.setFieldValue("caMethod", undefined);
+                  }}
+                >
+                  <Select.Option value={NdcType.SINGLE_YEAR}>
+                    {NDC_TYPE_LABELS[NdcType.SINGLE_YEAR]}
+                  </Select.Option>
+                  <Select.Option value={NdcType.MULTI_YEAR} disabled>
+                    <Tooltip title="Multi-year NDCs are not supported yet">
+                      {NDC_TYPE_LABELS[NdcType.MULTI_YEAR]}
+                    </Tooltip>
+                  </Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col span={8}>
+              <Form.Item
+                name="baseYear"
+                label="Base Year"
+                rules={[{ required: true, message: "Base year is required" }]}
+                tooltip={locked ? lockedTooltip : "The emission trajectory's origin year."}
+              >
+                <InputNumber
+                  style={{ width: "100%" }}
+                  min={1900}
+                  max={2100}
+                  disabled={locked}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="baseYearEmission"
+                label="Base Year Emission (tCO2eq)"
+                rules={[{ required: true, message: "Base year emission is required" }]}
+                tooltip={
+                  locked
+                    ? lockedTooltip
+                    : "The country's emissions in the base year — the trajectory's starting point."
+                }
+              >
+                <InputNumber style={{ width: "100%" }} min={0} disabled={locked} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="ndcTarget"
+                label="NDC Target (tCO2eq)"
+                rules={[{ required: true, message: "NDC target is required" }]}
+                tooltip={
+                  locked
+                    ? lockedTooltip
+                    : "The value at the NDC end year — the trajectory interpolates a straight line to it from the base year's emissions."
+                }
+              >
+                <InputNumber style={{ width: "100%" }} min={0} disabled={locked} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item name="sectors" label="Sectors">
+                <Select
+                  mode="multiple"
+                  options={Object.values(Sector).map((s) => ({
+                    value: s,
+                    label: s,
+                  }))}
                 />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={24}>
             <Col span={24}>
-              <Form.Item name="ca_description" label="Description">
+              <Form.Item
+                name="environmentalIntegrityAssessment"
+                label="Environmental Integrity Assessment"
+              >
                 <TextArea
                   rows={3}
-                  placeholder="Describe the cooperative approach"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={24}>
-            <Col span={24}>
-              <Form.Item
-                name="ca_expectedMitigation"
-                label="Expected Mitigation Outcomes"
-              >
-                <Input placeholder="e.g. 250000" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <div className="section-title">Participation Demonstration</div>
-          <Row gutter={24}>
-            <Col span={6}>
-              <Form.Item
-                name="participation_isPartyToParisAgreement"
-                label="Party to Paris Agreement"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item
-                name="participation_hasNDC"
-                label="Has NDC"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item
-                name="participation_hasTrackingArrangements"
-                label="Tracking Arrangements"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item
-                name="participation_hasAuthorizationArrangements"
-                label="Authorization Arrangements"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item
-                name="participation_countryCode"
-                label="Country Code"
-              >
-                <Input placeholder="e.g. NG" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <div className="section-title">ITMO Metrics</div>
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item name="itmo_primaryMetric" label="Primary Metric">
-                <Input placeholder="tCO2e" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="itmo_nonGhgMetrics"
-                label="Non-GHG Metrics"
-              >
-                <Select
-                  mode="tags"
-                  placeholder="e.g. resilience-units"
-                  tokenSeparators={[",", " "]}
+                  placeholder="Conservative baselines; no double counting; additionality demonstrated."
                 />
               </Form.Item>
             </Col>
           </Row>
 
-          <div className="section-title">NDC Quantification</div>
+          <div className="section-title">Corresponding Adjustment Method</div>
           <Row gutter={24}>
             <Col span={8}>
-              <Form.Item name="ndc_target" label="NDC Target (tCO2eq)">
-                <InputNumber style={{ width: "100%" }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="ndc_baseYear" label="Base Year">
-                <InputNumber style={{ width: "100%" }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="ndc_targetYear" label="Target Year">
-                <InputNumber style={{ width: "100%" }} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item name="ndc_sectors" label="Sectors">
-                <Select
-                  mode="tags"
-                  placeholder="e.g. Energy, Forestry"
-                  tokenSeparators={[",", " "]}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="ndc_ghgs" label="GHGs">
-                <Select
-                  mode="tags"
-                  placeholder="e.g. CO2"
-                  tokenSeparators={[",", " "]}
-                />
+              <Form.Item noStyle shouldUpdate={(prev, curr) => prev.ndcType !== curr.ndcType}>
+                {() => {
+                  const ndcType = form.getFieldValue("ndcType");
+                  const allowedMethods = getCompatibleCaMethods(ndcType);
+                  return (
+                    <Form.Item
+                      name="caMethod"
+                      label="CA Method"
+                      rules={[{ required: true, message: "CA method is required" }]}
+                      tooltip={
+                        locked
+                          ? lockedTooltip
+                          : ndcType === NdcType.MULTI_YEAR
+                          ? "Multi-Year NDCs require the Multi-Year method"
+                          : "Trajectory and Averaging are computed identically for a Single-Year NDC target"
+                      }
+                    >
+                      <Select
+                        disabled={locked}
+                        options={allowedMethods.map((value) => ({
+                          value,
+                          label: CA_METHOD_LABELS[value],
+                        }))}
+                      />
+                    </Form.Item>
+                  );
+                }}
               </Form.Item>
             </Col>
           </Row>
@@ -354,42 +358,9 @@ const EditInitialReport = () => {
                 label="Corresponding Adjustment Method Description"
               >
                 <TextArea
-                  rows={3}
+                  rows={4}
                   placeholder="Describe the chosen CA method (trajectory, averaging, or multi-year) and rationale"
                 />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <div className="section-title">Environmental Integrity</div>
-          <Row gutter={24}>
-            <Col span={24}>
-              <Form.Item
-                name="env_noNetIncrease"
-                label="No Net Increase in Emissions"
-              >
-                <TextArea rows={2} />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                name="env_conservativeBaselines"
-                label="Conservative Baselines"
-              >
-                <TextArea rows={2} />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                name="env_nonPermanenceRisk"
-                label="Non-Permanence Risk"
-              >
-                <TextArea rows={2} />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item name="env_leakageRisk" label="Leakage Risk">
-                <TextArea rows={2} />
               </Form.Item>
             </Col>
           </Row>
@@ -397,7 +368,9 @@ const EditInitialReport = () => {
           <Row justify="end" gutter={16} style={{ marginTop: 16 }}>
             <Col>
               <Button
-                onClick={() => navigate(`/initialReports/view/${reportId}`)}
+                onClick={() =>
+                  navigate(`/initialReports/view/${reportNumber}`)
+                }
               >
                 Cancel
               </Button>

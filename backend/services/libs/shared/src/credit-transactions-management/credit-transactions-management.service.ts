@@ -618,6 +618,13 @@ export class CreditTransactionsManagementService {
           id: dto.authorizedEntityId,
           cooperativeApproachId: ca.cooperativeApproachId,
           status: AuthorizedEntityStatus.ACTIVE,
+          // Any entity under an Active CA is eligible here regardless
+          // of submissionStatus — an entity added as an amendment after
+          // the CA was already filed/activated (see
+          // CooperativeApproachService.addAuthorizedEntity) is still
+          // Draft submissionStatus, with no filing path yet, but that's
+          // a gap in the initial-report versioning flow, not a reason
+          // to block it from backing a real transfer/retirement.
           // Must be incorporated in the resolved acquiring country —
           // an OIMP entity from a different counterparty isn't valid
           // for this particular transfer.

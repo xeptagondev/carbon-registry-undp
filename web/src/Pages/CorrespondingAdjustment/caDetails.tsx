@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useConnection } from "../../Context/ConnectionContext/connectionContext";
 import { useUserContext } from "../../Context/UserInformationContext/userInformationContext";
 import {
+  Alert,
   Button,
   Col,
   Descriptions,
@@ -10,14 +12,18 @@ import {
   Input,
   Modal,
   Row,
-  Select,
   Skeleton,
   Tag,
+  Tooltip,
   message,
 } from "antd";
 import { CheckCircleOutlined, EditOutlined } from "@ant-design/icons";
 import { CompanyRole } from "../../Definitions/Enums/company.role.enum";
 import { Role } from "../../Definitions/Enums/role.enum";
+import { CaMethod } from "../../Definitions/Enums/caMethod.enum";
+import { fmtDecimal, fmtQty } from "./caFormat";
+import CaPeriodTable, { CaPeriodYearRow } from "./caPeriodTable";
+import "./caManagement.scss";
 
 const statusColors: Record<string, string> = {
   Draft: "default",
@@ -25,18 +31,22 @@ const statusColors: Record<string, string> = {
   Approved: "green",
 };
 
-const fmt = (val: number | null | undefined) =>
-  val !== undefined && val !== null ? Number(val).toFixed(2) : "N/A";
-
 const CaDetails = () => {
   const { caId = "" } = useParams<{ caId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation(["correspondingAdjust"]);
   const { get, put } = useConnection();
   const { userInfoState } = useUserContext();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
   const [approving, setApproving] = useState(false);
   const [data, setData] = useState<any>(null);
+  const [periodRows, setPeriodRows] = useState<CaPeriodYearRow[]>([]);
+  const [periodBounds, setPeriodBounds] = useState<{
+    start: number | null;
+    end: number | null;
+  }>({ start: null, end: null });
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
@@ -55,14 +65,26 @@ const CaDetails = () => {
       const response = await get(
         `national/correspondingAdjustment/get?id=${encodeURIComponent(caId)}`
       );
-      if (!response?.data) {
-        message.error(`Corresponding adjustment ${caId} not found`);
+      const row = response?.data;
+      if (!row) {
+        message.error(t("correspondingAdjust:notFound", { caId }));
         navigate("/correspondingAdjustments/viewAll");
         return;
       }
-      setData(response.data);
+      setData(row);
+      const periodResponse = await get(
+        `national/correspondingAdjustment/periodSummary?year=${row.year}`
+      );
+      const period = periodResponse?.data;
+      if (period?.hasNdcTarget) {
+        setPeriodRows(period.years ?? []);
+        setPeriodBounds({
+          start: period.ndcStartYear,
+          end: period.ndcEndYear,
+        });
+      }
     } catch {
-      message.error("Failed to load corresponding adjustment");
+      message.error(t("correspondingAdjust:loadDetailFailed"));
     } finally {
       setLoading(false);
     }
@@ -80,15 +102,32 @@ const CaDetails = () => {
         `national/correspondingAdjustment/submit?id=${encodeURIComponent(caId)}`,
         {}
       );
-      message.success("Corresponding adjustment submitted");
+      message.success(t("correspondingAdjust:submitSuccess"));
       fetchData();
     } catch (error: any) {
       message.error(
-        error?.response?.data?.message ??
-          "Failed to submit corresponding adjustment"
+        error?.response?.data?.message ?? t("correspondingAdjust:submitFailed")
       );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleFinalizePeriod = async () => {
+    setFinalizing(true);
+    try {
+      await put(
+        `national/correspondingAdjustment/finalizePeriod?year=${data.year}`,
+        {}
+      );
+      message.success(t("correspondingAdjust:finalizeSuccess"));
+      fetchData();
+    } catch (error: any) {
+      message.error(
+        error?.response?.data?.message ?? t("correspondingAdjust:finalizeFailed")
+      );
+    } finally {
+      setFinalizing(false);
     }
   };
 
@@ -99,12 +138,11 @@ const CaDetails = () => {
         `national/correspondingAdjustment/approve?id=${encodeURIComponent(caId)}`,
         {}
       );
-      message.success("Corresponding adjustment approved");
+      message.success(t("correspondingAdjust:approveSuccess"));
       fetchData();
     } catch (error: any) {
       message.error(
-        error?.response?.data?.message ??
-          "Failed to approve corresponding adjustment"
+        error?.response?.data?.message ?? t("correspondingAdjust:approveFailed")
       );
     } finally {
       setApproving(false);
@@ -112,10 +150,7 @@ const CaDetails = () => {
   };
 
   const openEdit = () => {
-    form.setFieldsValue({
-      caMethod: data.caMethod,
-      remarks: data.remarks ?? "",
-    });
+    form.setFieldsValue({ remarks: data.remarks ?? "" });
     setEditOpen(true);
   };
 
@@ -124,16 +159,14 @@ const CaDetails = () => {
     try {
       await put("national/correspondingAdjustment/update", {
         caId,
-        caMethod: values.caMethod,
         remarks: values.remarks,
       });
-      message.success("Corresponding adjustment updated");
+      message.success(t("correspondingAdjust:updateSuccess"));
       setEditOpen(false);
       fetchData();
     } catch (error: any) {
       message.error(
-        error?.response?.data?.message ??
-          "Failed to update corresponding adjustment"
+        error?.response?.data?.message ?? t("correspondingAdjust:updateFailed")
       );
     } finally {
       setSaving(false);
@@ -145,24 +178,27 @@ const CaDetails = () => {
 
   const isDraft = data.status === "Draft";
   const isSubmitted = data.status === "Submitted";
-  const isMultiYear = data.ndcType === "MultiYear";
+  const isAveraging = data.caMethod === CaMethod.AVERAGING;
+
+  const gateYear = isAveraging ? periodBounds.end ?? data.year : data.year;
+  const gateOpen = gateYear != null && new Date().getUTCFullYear() > gateYear;
 
   return (
-    <div style={{ padding: "0 24px" }}>
-      <div style={{ marginBottom: 24 }}>
+    <div className="corresponding-adjustment-container">
+      <div className="title-bar">
         <Row justify="space-between" align="middle">
           <Col>
-            <div style={{ fontSize: "1.4rem", fontWeight: 600 }}>
+            <div className="body-title">
               {data.caId}{" "}
               <Tag color={statusColors[data.status] || "default"}>
                 {data.status}
               </Tag>
             </div>
-            <div style={{ fontSize: "0.875rem", color: "rgba(58,53,65,0.6)" }}>
-              Year {data.year}
-              {data.cooperativeApproachId
-                ? ` — Cooperative Approach ${data.cooperativeApproachId}`
-                : " — registry-wide"}
+            <div className="body-sub-title">
+              {t("correspondingAdjust:yearMethodLabel", {
+                year: data.year,
+                method: data.caMethod,
+              })}
             </div>
           </Col>
           <Col>
@@ -172,143 +208,206 @@ const CaDetails = () => {
                 onClick={openEdit}
                 style={{ marginRight: 8 }}
               >
-                Edit
+                {t("correspondingAdjust:edit")}
               </Button>
             )}
-            {canManage && isDraft && (
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={handleSubmit}
-                loading={submitting}
-                style={{ marginRight: 8 }}
+            {canManage && isDraft && !isAveraging && (
+              <Tooltip
+                title={
+                  gateOpen
+                    ? undefined
+                    : t("correspondingAdjust:submitBlockedYear", {
+                        year: data.year,
+                        nextYear: data.year + 1,
+                      })
+                }
               >
-                Submit
-              </Button>
+                <span>
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    onClick={handleSubmit}
+                    loading={submitting}
+                    disabled={!gateOpen}
+                    style={{ marginRight: 8 }}
+                  >
+                    {t("correspondingAdjust:submit")}
+                  </Button>
+                </span>
+              </Tooltip>
             )}
-            {canManage && isSubmitted && (
+            {canManage && isDraft && isAveraging && (
+              <Tooltip
+                title={
+                  gateOpen
+                    ? undefined
+                    : t("correspondingAdjust:submitBlockedPeriod", {
+                        nextYear: Number(periodBounds.end ?? data.year) + 1,
+                      })
+                }
+              >
+                <span>
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    onClick={handleFinalizePeriod}
+                    loading={finalizing}
+                    disabled={!gateOpen}
+                    style={{ marginRight: 8 }}
+                  >
+                    {t("correspondingAdjust:finalizePeriod")}
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
+            {/* TEMPORARY: Approve is hidden for now — restore the
+                canManage && isSubmitted condition to bring it back. */}
+            {false && canManage && isSubmitted && (
               <Button
                 type="primary"
                 icon={<CheckCircleOutlined />}
                 onClick={handleApprove}
                 loading={approving}
               >
-                Approve
+                {t("correspondingAdjust:approve")}
               </Button>
             )}
           </Col>
         </Row>
       </div>
 
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 8,
-          padding: 24,
-          boxShadow:
-            "0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px rgba(0,0,0,0.14), 0px 1px 3px rgba(0,0,0,0.12)",
-        }}
-      >
+      <div className="content-card">
         <Descriptions bordered column={2}>
-          <Descriptions.Item label="NDC Type">{data.ndcType}</Descriptions.Item>
-          <Descriptions.Item label="CA Method">
+          <Descriptions.Item label={t("correspondingAdjust:columnNdcType")}>
+            {data.ndcType}
+          </Descriptions.Item>
+          <Descriptions.Item label={t("correspondingAdjust:columnCaMethod")}>
             {data.caMethod}
           </Descriptions.Item>
-          <Descriptions.Item label="Metric">{data.metric}</Descriptions.Item>
-          <Descriptions.Item label="Cooperative Approach">
-            {data.cooperativeApproachId || "—"}
+          <Descriptions.Item
+            label={t("correspondingAdjust:reportingYearEmission")}
+          >
+            {fmtQty(data.reportingYearEmission)}
           </Descriptions.Item>
-          <Descriptions.Item label="Authorized ITMOs">
-            {fmt(data.authorizedItmos)}
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldAppliedAdjustment")}
+          >
+            {fmtDecimal(data.appliedAdjustment)}
           </Descriptions.Item>
-          <Descriptions.Item label="First Transferred ITMOs">
-            {fmt(data.firstTransferredItmos)}
-          </Descriptions.Item>
-          <Descriptions.Item label="Acquired ITMOs">
-            {fmt(data.acquiredItmos)}
-          </Descriptions.Item>
-          <Descriptions.Item label="Used Towards NDC (domestic + international)">
-            {fmt(data.usedTowardsNdcItmos)}
-          </Descriptions.Item>
-          <Descriptions.Item label="Cancelled ITMOs">
-            {fmt(data.cancelledItmos)}
-          </Descriptions.Item>
-          <Descriptions.Item label="Emissions Balance">
-            {fmt(data.emissionsBalance)}
-          </Descriptions.Item>
-          {isMultiYear && (
+          {isAveraging && (
             <>
-              <Descriptions.Item label="Cumulative First Transferred (period to date)">
-                {fmt(data.cumulativeFirstTransferred)}
+              <Descriptions.Item
+                label={t("correspondingAdjust:fieldCumulativeAdjustment")}
+              >
+                {fmtDecimal(data.cumulativeFirstTransferred)}
               </Descriptions.Item>
-              <Descriptions.Item label="Indicative Annual Adjustment">
-                {fmt(data.indicativeAnnualAdjustment)}
+              <Descriptions.Item
+                label={t("correspondingAdjust:fieldElapsedYears")}
+              >
+                {periodBounds.start != null
+                  ? data.year - periodBounds.start + 1
+                  : "—"}
               </Descriptions.Item>
             </>
           )}
-          <Descriptions.Item label="Adjusted Emissions">
-            {fmt(data.adjustedEmissions)}
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldAuthorizedItmos")}
+          >
+            {fmtDecimal(data.authorizedItmos)}
           </Descriptions.Item>
-          <Descriptions.Item label="NDC Target">
-            {data.ndcTarget ?? "N/A"}
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldFirstTransferredItmos")}
+          >
+            {fmtDecimal(data.firstTransferredItmos)}
           </Descriptions.Item>
-          <Descriptions.Item label="Safeguard" span={2}>
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldAcquiredItmos")}
+          >
+            {fmtDecimal(data.acquiredItmos)}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldUsedTowardsNdc")}
+          >
+            {fmtDecimal(data.usedTowardsNdcItmos)}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldCancelledItmos")}
+          >
+            {fmtDecimal(data.cancelledItmos)}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldEmissionsBalance")}
+          >
+            {fmtDecimal(data.emissionsBalance)}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldAdjustedEmissions")}
+          >
+            {fmtDecimal(data.adjustedEmissions)}
+          </Descriptions.Item>
+          <Descriptions.Item label={t("correspondingAdjust:fieldNdcTarget")}>
+            {fmtDecimal(data.ndcTarget)}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label={t("correspondingAdjust:fieldSafeguard")}
+            span={2}
+          >
             <Tag color={data.safeguardCheckPassed ? "green" : "red"}>
-              {data.safeguardCheckPassed ? "Passed" : "Failed"}
+              {data.safeguardCheckPassed
+                ? t("correspondingAdjust:safeguardPassed")
+                : t("correspondingAdjust:safeguardFailed")}
             </Tag>{" "}
             {data.safeguardNotes}
           </Descriptions.Item>
-          <Descriptions.Item label="Remarks" span={2}>
+          <Descriptions.Item label={t("correspondingAdjust:remarks")} span={2}>
             {data.remarks || "—"}
           </Descriptions.Item>
         </Descriptions>
+
+        {periodRows.length > 0 && (
+          <div style={{ marginTop: 24 }}>
+            <div className="table-title" style={{ marginBottom: 12 }}>
+              {t("correspondingAdjust:ndcPeriodLabel", {
+                start: periodBounds.start,
+                end: periodBounds.end,
+              })}
+            </div>
+            <CaPeriodTable
+              rows={periodRows}
+              reportingYear={data.year}
+              isAveraging={isAveraging}
+            />
+          </div>
+        )}
+
+        {isAveraging && !gateOpen && (
+          <Alert
+            style={{ marginTop: 16 }}
+            type="info"
+            showIcon
+            message={t("correspondingAdjust:averagingBannerTitle")}
+            description={t("correspondingAdjust:averagingBannerDescription")}
+          />
+        )}
       </div>
 
       <Modal
-        title="Edit Corresponding Adjustment"
+        title={t("correspondingAdjust:editCorrespondingAdjustment")}
         open={editOpen}
         onCancel={() => setEditOpen(false)}
         footer={null}
         destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={handleEditSave}>
-          <Form.Item
-            name="caMethod"
-            label="CA Method"
-            rules={[{ required: true, message: "CA method is required" }]}
-            extra={
-              isMultiYear
-                ? "Only the Multi-Year method is compatible with a Multi-Year NDC target."
-                : "Trajectory and Averaging are computed identically for a Single-Year NDC target."
-            }
-          >
-            <Select>
-              {!isMultiYear && (
-                <>
-                  <Select.Option value="Trajectory">
-                    Trajectory (para. 7a(i))
-                  </Select.Option>
-                  <Select.Option value="Averaging">
-                    Averaging (para. 7a(ii))
-                  </Select.Option>
-                </>
-              )}
-              {isMultiYear && (
-                <Select.Option value="MultiYear">
-                  Multi-Year (para. 7b)
-                </Select.Option>
-              )}
-            </Select>
-          </Form.Item>
-          <Form.Item name="remarks" label="Remarks">
+          <Form.Item name="remarks" label={t("correspondingAdjust:remarks")}>
             <Input.TextArea rows={4} />
           </Form.Item>
           <Row justify="end">
             <Button onClick={() => setEditOpen(false)} style={{ marginRight: 8 }}>
-              Cancel
+              {t("correspondingAdjust:cancel")}
             </Button>
             <Button type="primary" htmlType="submit" loading={saving}>
-              Save
+              {t("correspondingAdjust:save")}
             </Button>
           </Row>
         </Form>

@@ -54,8 +54,7 @@ import { AsyncActionType } from "../enum/async.action.type.enum";
 import { ProgrammeAcceptedDto } from "../dto/programme.accepted.dto";
 import { CountryService } from "../util/country.service";
 import { Programme } from "../entities/programme.entity";
-import { InitialReport } from "../entities/initial.report.entity";
-import { InitialReportStatus } from "../enum/initial.report.status.enum";
+import { InitialReportService } from "../initial-report/initial-report.service";
 import { CooperativeApproach } from "../entities/cooperative.approach.entity";
 import { CooperativeApproachStatus } from "../enum/cooperative.approach.status.enum";
 import { ConstantEntity } from "../entities/constants.entity";
@@ -201,8 +200,7 @@ export class ProgrammeService {
     // Dec 2/CMA.3 Annex chapter V para 18 guard: read-side access to
     // InitialReport so we can refuse authorizeProgramme for an Article
     // 6.2 programme whose cooperative approach has no submitted IR.
-    @InjectRepository(InitialReport)
-    private initialReportRepo: Repository<InitialReport>,
+    private readonly initialReportService: InitialReportService,
     // Draft -/CMA.5 paras 20-21 guard: refuse authorizeProgramme when
     // the linked cooperative approach has been revoked.
     @InjectRepository(CooperativeApproach)
@@ -6471,19 +6469,10 @@ export class ProgrammeService {
           HttpStatus.BAD_REQUEST
         );
       }
-      const submittedIr = await this.initialReportRepo.findOne({
-        where: [
-          {
-            cooperativeApproachId: program.cooperativeApproachId,
-            status: InitialReportStatus.SUBMITTED,
-          },
-          {
-            cooperativeApproachId: program.cooperativeApproachId,
-            status: InitialReportStatus.PUBLISHED,
-          },
-        ],
-      });
-      if (!submittedIr) {
+      const hasSubmittedIr = await this.initialReportService.hasSubmittedReport(
+        program.cooperativeApproachId
+      );
+      if (!hasSubmittedIr) {
         throw new HttpException(
           this.helperService.formatReqMessagesString(
             "programme.noSubmittedIrForCaAuth",

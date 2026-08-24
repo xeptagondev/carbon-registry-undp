@@ -2,6 +2,7 @@ import { fixedClock, InMemoryAefStore } from "@app/aef-v2";
 import { EntityManager } from "typeorm";
 
 import { AuthorizedEntityStatus } from "../enum/authorized.entity.status.enum";
+import { AuthorizedEntitySubmissionStatus } from "../enum/authorized.entity.submission.status.enum";
 import { CreditTransactionStatusEnum } from "../enum/credit.transaction.status.enum";
 import { CreditTransactionSubTypesEnum } from "../enum/credit.transaction.sub.types.enum";
 import { TxType } from "../enum/txtype.enum";
@@ -36,6 +37,7 @@ describe("AefV2WriteService — real-time authorized-entity writes", () => {
     createdTime: Date.parse("2024-01-01T00:00:00.000Z"),
     authorizationReference: "REF-1",
     status: AuthorizedEntityStatus.ACTIVE,
+    submissionStatus: AuthorizedEntitySubmissionStatus.SUBMITTED,
   };
 
   // A legacy entity created before authorizationDate became mandatory.
