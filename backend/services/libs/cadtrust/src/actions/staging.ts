@@ -29,7 +29,12 @@ export interface StagingClient {
   list(query: StagingListQueryParams): Promise<PagedResponse<StagingRecord>>;
   /** `GET /staging` — walks every page. */
   listAll(query: Omit<StagingListQueryParams, 'page'>): AsyncGenerator<StagingRecord, void, undefined>;
-  /** `GET /staging/pending` — whether a previous commit is still unconfirmed. */
+  /**
+   * `GET /staging/pending` — on v2, whether there are staged rows still needing a commit, NOT
+   * whether a previous commit is still propagating. `confirmed:false` means a commit is owed,
+   * not that one should be skipped. See `StagingPendingResponse`'s doc comment before using this
+   * to gate anything.
+   */
   hasPendingCommits(): Promise<StagingPendingResponse>;
   /**
    * `POST /staging/commit` — PUBLISHES staged changes to the blockchain.

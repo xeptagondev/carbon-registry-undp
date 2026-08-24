@@ -1,6 +1,9 @@
 import {
   CadTrustV2Service,
+  LocationCreateInput,
+  ProjectCreateInput,
   ProjectMethodologyCreateInput,
+  StakeholderCreateInput,
   StakeholderProjectCreateInput,
 } from "@app/cadtrust";
 import { Injectable, Logger } from "@nestjs/common";
@@ -155,6 +158,7 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       return cadTrustId ? { cadTrustId, staged: false } : undefined;
     }
 
+    let input: StakeholderCreateInput | undefined;
     try {
       const company = await this.companyRepo.findOne({ where: { companyId } });
       if (!company) {
@@ -164,15 +168,19 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
         return undefined;
       }
 
-      const input = await this.stakeholderMapper.toCreateInput(company);
+      input = await this.stakeholderMapper.toCreateInput(company);
       const staged = await this.cadTrustV2Service.getClient().stakeholder.stageCreate(input);
       const cadTrustId = staged.response.cadTrustStakeholderId ?? staged.response.uuid;
 
-      await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: staged.response.uuid });
+      await this.syncRecords.markStaged(
+        key,
+        { cadTrustId, stagingUuid: staged.response.uuid },
+        input as unknown as Record<string, unknown>
+      );
       this.logger.log(`Staged CAD Trust stakeholder for company ${companyId} as ${cadTrustId}`);
       return { cadTrustId, staged: true };
     } catch (error) {
-      await this.syncRecords.markFailed(key, error);
+      await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to stage CAD Trust stakeholder for company ${companyId}`, error);
       return undefined;
     }
@@ -199,8 +207,9 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       return cadTrustId ? { cadTrustId, staged: false } : undefined;
     }
 
+    let input: ProjectCreateInput | undefined;
     try {
-      const input = await this.projectMapper.toCreateInput(props, infContent);
+      input = await this.projectMapper.toCreateInput(props, infContent);
 
       const programCadTrustId = await this.syncRecords.getSyncedCadTrustId(
         CadTrustLocalEntityType.PROGRAM,
@@ -215,11 +224,15 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       // not guarantee it on every resource, so fall back to uuid.
       const cadTrustId = staged.response.cadTrustProjectId ?? staged.response.uuid;
 
-      await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: staged.response.uuid });
+      await this.syncRecords.markStaged(
+        key,
+        { cadTrustId, stagingUuid: staged.response.uuid },
+        input as unknown as Record<string, unknown>
+      );
       this.logger.log(`Staged project ${refId} to CAD Trust as ${cadTrustId}`);
       return { cadTrustId, staged: true };
     } catch (error) {
-      await this.syncRecords.markFailed(key, error);
+      await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to stage project ${refId} to CAD Trust`, error);
       return undefined;
     }
@@ -245,6 +258,7 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       return false;
     }
 
+    let input: ProjectMethodologyCreateInput | undefined;
     try {
       const methodologyCadTrustId = await this.syncRecords.getSyncedCadTrustId(
         CadTrustLocalEntityType.METHODOLOGY,
@@ -259,7 +273,7 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
         return false;
       }
 
-      const input: ProjectMethodologyCreateInput = {
+      input = {
         cadTrustProjectId: projectCadTrustId,
         cadTrustMethodologyId: methodologyCadTrustId,
         projectMethodologyDate: this.toIsoDate(projectCreateTime),
@@ -268,11 +282,15 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       const staged = await this.cadTrustV2Service.getClient().projectMethodology.stageCreate(input);
       const cadTrustId = staged.response.cadTrustProjectMethodologyId ?? staged.response.uuid;
 
-      await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: staged.response.uuid });
+      await this.syncRecords.markStaged(
+        key,
+        { cadTrustId, stagingUuid: staged.response.uuid },
+        input as unknown as Record<string, unknown>
+      );
       this.logger.log(`Linked project ${refId} to CAD Trust methodology as ${cadTrustId}`);
       return true;
     } catch (error) {
-      await this.syncRecords.markFailed(key, error);
+      await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to link project ${refId} to a CAD Trust methodology`, error);
       return false;
     }
@@ -294,20 +312,24 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       return false;
     }
 
-    try {
-      const input: StakeholderProjectCreateInput = {
-        cadTrustStakeholderId: stakeholderCadTrustId,
-        cadTrustProjectId: projectCadTrustId,
-      };
+    const input: StakeholderProjectCreateInput = {
+      cadTrustStakeholderId: stakeholderCadTrustId,
+      cadTrustProjectId: projectCadTrustId,
+    };
 
+    try {
       const staged = await this.cadTrustV2Service.getClient().stakeholderProject.stageCreate(input);
       const cadTrustId = staged.response.cadTrustStakeholderProjectId ?? staged.response.uuid;
 
-      await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: staged.response.uuid });
+      await this.syncRecords.markStaged(
+        key,
+        { cadTrustId, stagingUuid: staged.response.uuid },
+        input as unknown as Record<string, unknown>
+      );
       this.logger.log(`Linked project ${refId} to its CAD Trust stakeholder as ${cadTrustId}`);
       return true;
     } catch (error) {
-      await this.syncRecords.markFailed(key, error);
+      await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to link project ${refId} to its CAD Trust stakeholder`, error);
       return false;
     }
@@ -332,8 +354,9 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       return false;
     }
 
+    let input: LocationCreateInput | undefined;
     try {
-      const input = await this.locationMapper.toCreateInput(projectCadTrustId, infContent);
+      input = await this.locationMapper.toCreateInput(projectCadTrustId, infContent);
       if (!input) {
         this.logger.log(`No location data on the INF for project ${refId}; skipping location sync`);
         return false;
@@ -342,11 +365,15 @@ export class CadTrustProjectCreateHandler extends CadTrustSyncHandler {
       const staged = await this.cadTrustV2Service.getClient().location.stageCreate(input);
       const cadTrustId = staged.response.cadTrustLocationId ?? staged.response.uuid;
 
-      await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: staged.response.uuid });
+      await this.syncRecords.markStaged(
+        key,
+        { cadTrustId, stagingUuid: staged.response.uuid },
+        input as unknown as Record<string, unknown>
+      );
       this.logger.log(`Staged CAD Trust location for project ${refId} as ${cadTrustId}`);
       return true;
     } catch (error) {
-      await this.syncRecords.markFailed(key, error);
+      await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to stage CAD Trust location for project ${refId}`, error);
       return false;
     }

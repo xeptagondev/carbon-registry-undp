@@ -96,10 +96,16 @@ export class CadTrustSyncRecordService {
     );
   }
 
-  /** Records a successful stage: the CAD Trust UUID is now known. */
+  /**
+   * Records a successful stage: the CAD Trust UUID is now known.
+   *
+   * @param payload The exact input built for the CAD Trust request, when the caller has one — see
+   *   `CadTrustSyncRecordEntity.payload`'s doc for why this is worth storing.
+   */
   async markStaged(
     key: CadTrustSyncKey,
-    ids: { cadTrustId?: string; stagingUuid?: string }
+    ids: { cadTrustId?: string; stagingUuid?: string },
+    payload?: Record<string, unknown>
   ): Promise<CadTrustSyncRecordEntity> {
     const record = await this.ensure(key);
     const now = Date.now();
@@ -110,6 +116,7 @@ export class CadTrustSyncRecordService {
     record.lastError = null;
     record.lastAttemptTime = now;
     record.updateTime = now;
+    record.payload = payload !== undefined ? payload : record.payload;
 
     return this.syncRecordRepo.save(record);
   }
@@ -122,7 +129,8 @@ export class CadTrustSyncRecordService {
    */
   async markCommitted(
     key: CadTrustSyncKey,
-    ids: { cadTrustId: string }
+    ids: { cadTrustId: string },
+    payload?: Record<string, unknown>
   ): Promise<CadTrustSyncRecordEntity> {
     const record = await this.ensure(key);
     const now = Date.now();
@@ -132,6 +140,7 @@ export class CadTrustSyncRecordService {
     record.lastError = null;
     record.lastAttemptTime = now;
     record.updateTime = now;
+    record.payload = payload !== undefined ? payload : record.payload;
 
     return this.syncRecordRepo.save(record);
   }
@@ -159,8 +168,15 @@ export class CadTrustSyncRecordService {
   /**
    * Records a failure. Never throws — it is called from a catch block in a
    * handler that must not throw (see the module README for why).
+   *
+   * @param payload The input that was being staged when the failure happened, when the caller has
+   *   one — lets a rejected payload be diagnosed from the row alone.
    */
-  async markFailed(key: CadTrustSyncKey, error: unknown): Promise<void> {
+  async markFailed(
+    key: CadTrustSyncKey,
+    error: unknown,
+    payload?: Record<string, unknown>
+  ): Promise<void> {
     try {
       const record = await this.ensure(key);
       const now = Date.now();
@@ -170,6 +186,7 @@ export class CadTrustSyncRecordService {
       record.lastError = this.describe(error);
       record.lastAttemptTime = now;
       record.updateTime = now;
+      record.payload = payload !== undefined ? payload : record.payload;
 
       await this.syncRecordRepo.save(record);
     } catch (bookkeepingError) {

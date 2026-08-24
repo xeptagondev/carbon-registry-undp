@@ -5,6 +5,7 @@ import { ConfigService } from "@nestjs/config";
 import { AsyncActionType } from "../../enum/async.action.type.enum";
 import { CadTrustLocalEntityType } from "../../enum/cadtrust.local.entity.type.enum";
 import { CadTrustResourceType } from "../../enum/cadtrust.resource.type.enum";
+import { CadTrustSyncStatus } from "../../enum/cadtrust.sync.status.enum";
 import { CadTrustRegistryProfileService } from "../cadtrust-registry-profile.service";
 import { CadTrustSyncKey, CadTrustSyncRecordService } from "../cadtrust-sync-record.service";
 import { CadTrustSyncHandler } from "./cadtrust-sync.handler";
@@ -95,14 +96,14 @@ export class CadTrustBootstrapHandler extends CadTrustSyncHandler {
         return;
       }
 
-      const programStaged = await this.stageProgram();
-      const methodologyStaged = await this.stageMethodology();
-
+      const programNeedsCommit = await this.stageProgram();
+      const methodologyNeedsCommit = await this.stageMethodology();
       // Committed inline rather than via enqueueCommit() — see the class doc.
-      // hasPendingCommits() only reports whether a PREVIOUS commit is still
-      // unconfirmed, not whether anything is currently staged, so this stays
-      // gated on actually having staged something this run.
-      if (programStaged || methodologyStaged) {
+      // Gated on stageProgram()/stageMethodology() reporting a commit is owed —
+      // either because they freshly staged something, or because a prior run's
+      // commit never actually went through (see their doc comments and
+      // CadTrustCommitHandler's).
+      if (programNeedsCommit || methodologyNeedsCommit) {
         await this.commitHandler.handle();
       }
     } catch (error) {
@@ -116,9 +117,10 @@ export class CadTrustBootstrapHandler extends CadTrustSyncHandler {
   /**
    * `organizations.list()` returns every organization this node knows about —
    * its own home organization plus anything imported or subscribed to —
-   * keyed by orgUid. `isHome` is the only field that identifies which one is
+   * keyed by org_uid. `is_home` is the only field that identifies which one is
    * this node's own identity; a non-empty list does not by itself mean
-   * bootstrap is done.
+   * bootstrap is done. Field names on `OrganizationSummary` are snake_case,
+   * unlike the rest of `@app/cadtrust` — see its doc comment for why.
    */
   private async verifyHomeOrganization(): Promise<string | undefined> {
     if (await this.syncRecords.isAlreadySynced(ORGANIZATION_KEY)) {
@@ -127,7 +129,7 @@ export class CadTrustBootstrapHandler extends CadTrustSyncHandler {
 
     try {
       const organizations = await this.cadTrustV2Service.getClient().organizations.list();
-      const home = Object.values(organizations).find((org) => org.isHome);
+      const home = Object.values(organizations).find((org) => org.is_home);
 
       if (!home) {
         const message =
@@ -139,9 +141,13 @@ export class CadTrustBootstrapHandler extends CadTrustSyncHandler {
         return undefined;
       }
 
-      await this.syncRecords.markCommitted(ORGANIZATION_KEY, { cadTrustId: home.orgUid });
-      this.logger.log(`Verified CAD Trust home organization ${home.orgUid} ("${home.name}")`);
-      return home.orgUid;
+      await this.syncRecords.markCommitted(
+        ORGANIZATION_KEY,
+        { cadTrustId: home.org_uid },
+        home as unknown as Record<string, unknown>
+      );
+      this.logger.log(`Verified CAD Trust home organization ${home.org_uid} ("${home.name}")`);
+      return home.org_uid;
     } catch (error) {
       await this.syncRecords.markFailed(ORGANIZATION_KEY, error);
       this.logger.error("Failed to verify the CAD Trust home organization", error);
@@ -149,7 +155,12 @@ export class CadTrustBootstrapHandler extends CadTrustSyncHandler {
     }
   }
 
-  /** Returns whether a create was staged (false when already synced or on failure). */
+  /**
+   * Returns whether a commit is still owed for the program: `false` once it's actually
+   * `COMMITTED`, `true` if it's freshly staged THIS run OR was staged on a previous run whose
+   * commit never went through (see the `STAGED` branch below — this is what used to leave a
+   * program stuck staged-but-never-committed forever after the first bootstrap attempt).
+   */
   private async stageProgram(): Promise<boolean> {
     const input = this.profile.getProgramInput();
     const key: CadTrustSyncKey = {
@@ -158,24 +169,41 @@ export class CadTrustBootstrapHandler extends CadTrustSyncHandler {
       cadTrustEntityType: CadTrustResourceType.PROGRAM,
     };
 
-    if (await this.syncRecords.isAlreadySynced(key)) {
+    const existing = await this.syncRecords.find(key);
+    if (existing?.syncStatus === CadTrustSyncStatus.COMMITTED) {
       return false;
+    }
+    if (existing?.syncStatus === CadTrustSyncStatus.STAGED) {
+      // Staged on a previous run, but the commit that would have published it never actually
+      // went through (see CadTrustCommitHandler for the historical reason why). Don't re-stage
+      // — that would duplicate the record on the node — just signal that a commit is still owed.
+      this.logger.log(
+        `CAD Trust program "${input.programName}" is already staged but not yet committed; retrying the commit.`
+      );
+      return true;
     }
 
     try {
       const staged = await this.cadTrustV2Service.getClient().program.stageCreate(input);
       const cadTrustId = staged.response.cadTrustProgramId ?? staged.response.uuid;
-      await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: staged.response.uuid });
+      await this.syncRecords.markStaged(
+        key,
+        { cadTrustId, stagingUuid: staged.response.uuid },
+        input as unknown as Record<string, unknown>
+      );
       this.logger.log(`Staged CAD Trust program "${input.programName}" as ${cadTrustId}`);
       return true;
     } catch (error) {
-      await this.syncRecords.markFailed(key, error);
+      await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to stage the CAD Trust program "${input.programName}"`, error);
       return false;
     }
   }
 
-  /** Returns whether a create was staged (false when already synced or on failure). */
+  /**
+   * Returns whether a commit is still owed for the methodology — same three-way logic as
+   * `stageProgram()`; see its doc comment.
+   */
   private async stageMethodology(): Promise<boolean> {
     const input = await this.profile.getMethodologyInput();
     const key: CadTrustSyncKey = {
@@ -184,18 +212,29 @@ export class CadTrustBootstrapHandler extends CadTrustSyncHandler {
       cadTrustEntityType: CadTrustResourceType.METHODOLOGY,
     };
 
-    if (await this.syncRecords.isAlreadySynced(key)) {
+    const existing = await this.syncRecords.find(key);
+    if (existing?.syncStatus === CadTrustSyncStatus.COMMITTED) {
       return false;
+    }
+    if (existing?.syncStatus === CadTrustSyncStatus.STAGED) {
+      this.logger.log(
+        `CAD Trust methodology "${input.methodologyCode}" is already staged but not yet committed; retrying the commit.`
+      );
+      return true;
     }
 
     try {
       const staged = await this.cadTrustV2Service.getClient().methodology.stageCreate(input);
       const cadTrustId = staged.response.cadTrustMethodologyId ?? staged.response.uuid;
-      await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: staged.response.uuid });
+      await this.syncRecords.markStaged(
+        key,
+        { cadTrustId, stagingUuid: staged.response.uuid },
+        input as unknown as Record<string, unknown>
+      );
       this.logger.log(`Staged CAD Trust methodology "${input.methodologyCode}" as ${cadTrustId}`);
       return true;
     } catch (error) {
-      await this.syncRecords.markFailed(key, error);
+      await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
       this.logger.error(`Failed to stage the CAD Trust methodology "${input.methodologyCode}"`, error);
       return false;
     }

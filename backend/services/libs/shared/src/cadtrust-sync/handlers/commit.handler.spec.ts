@@ -3,15 +3,15 @@ import { CadTrustCommitHandler } from "./commit.handler";
 function buildHandler(
   overrides: {
     enabled?: boolean;
-    /** CAD Trust's flag is inverted-looking: false means commits ARE pending. */
-    confirmed?: boolean;
     commit?: jest.Mock;
   } = {}
 ) {
   const commit = overrides.commit ?? jest.fn(async () => ({ message: "Committing", success: true }));
+  // Present on the mocked client so a regression that reintroduces a hasPendingCommits() call
+  // is caught by "never calls hasPendingCommits" below, rather than blowing up on undefined.
   const hasPendingCommits = jest.fn(async () => ({
-    confirmed: overrides.confirmed ?? true,
-    message: overrides.confirmed === false ? "There are currently pending commits" : "",
+    confirmed: false,
+    message: "There are currently pending commits",
     success: true,
   }));
 
@@ -60,15 +60,13 @@ describe("CadTrustCommitHandler", () => {
     expect(syncRecords.markAllStagedAsCommitted).toHaveBeenCalledTimes(1);
   });
 
-  it("skips when a previous commit is still unconfirmed", async () => {
-    // confirmed: false means commits ARE pending — committing on top of that is
-    // how records get stuck at committed-but-unconfirmed.
-    const { handler, commit, syncRecords } = buildHandler({ confirmed: false });
+  it("never calls hasPendingCommits — it's a v2 uncommitted-rows count, not a propagation check, and always reads false right after staging", async () => {
+    const { handler, commit, hasPendingCommits } = buildHandler();
 
     await handler.handle();
 
-    expect(commit).not.toHaveBeenCalled();
-    expect(syncRecords.markAllStagedAsCommitted).not.toHaveBeenCalled();
+    expect(hasPendingCommits).not.toHaveBeenCalled();
+    expect(commit).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing when the integration is disabled", async () => {

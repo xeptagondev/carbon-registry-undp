@@ -36,6 +36,9 @@ export type { SystemClient } from './actions/system';
 // Test support: a recording, scriptable transport, so consumers can test their
 // own mapping logic against this client without a live CADT node.
 export * from './testing/fake-transport';
+// Test support: a recording PASSTHROUGH transport, for capturing real request/response
+// shapes from a live node — see live/*.capture.spec.ts.
+export * from './testing/recording-transport';
 
 // Optional NestJS wrapper. Non-Nest consumers can ignore these.
 export * from './nest/cadtrust.module';

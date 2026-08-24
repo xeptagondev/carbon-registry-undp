@@ -98,6 +98,24 @@ describe("CadTrustSyncRecordService", () => {
         expect.objectContaining({ cadTrustId: "cadt-existing" })
       );
     });
+
+    it("stores the payload when one is given", async () => {
+      const { service, repo } = buildService();
+      const payload = { programName: "Test Program" };
+
+      await service.markStaged(KEY, { cadTrustId: "cadt-1" }, payload);
+
+      expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({ payload }));
+    });
+
+    it("leaves a previously-stored payload alone when none is given this call", async () => {
+      const existingPayload = { programName: "Already staged" };
+      const { service, repo } = buildService({ ...KEY, payload: existingPayload });
+
+      await service.markStaged(KEY, { cadTrustId: "cadt-1" });
+
+      expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({ payload: existingPayload }));
+    });
   });
 
   describe("markCommitted", () => {
@@ -124,6 +142,15 @@ describe("CadTrustSyncRecordService", () => {
       await service.markCommitted(KEY, { cadTrustId: "org-uid-1" });
 
       expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it("stores the payload when one is given", async () => {
+      const { service, repo } = buildService();
+      const payload = { org_uid: "org-uid-1", is_home: true };
+
+      await service.markCommitted(KEY, { cadTrustId: "org-uid-1" }, payload);
+
+      expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({ payload }));
     });
   });
 
@@ -152,6 +179,15 @@ describe("CadTrustSyncRecordService", () => {
       await service.markFailed(KEY, error);
 
       expect(repo.save.mock.calls[0][0].lastError).toContain("projectLink must be a valid URI");
+    });
+
+    it("stores the payload that was being staged when the failure happened", async () => {
+      const { service, repo } = buildService();
+      const payload = { projectId: "0042", projectLink: "not-a-uri" };
+
+      await service.markFailed(KEY, new Error("rejected"), payload);
+
+      expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({ payload }));
     });
 
     it("never throws, because it is called from a handler that must not throw", async () => {

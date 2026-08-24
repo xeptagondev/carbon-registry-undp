@@ -55,7 +55,7 @@ const DEFAULT_CREATION_TIMEOUT_MS = 35 * 60 * 1000;
 const DEFAULT_CREATION_POLL_MS = 10_000;
 
 export interface OrganizationsClient {
-  /** `GET /organizations` — NOTE: returns a map keyed by orgUid, not an array. */
+  /** `GET /organizations` — NOTE: returns a map keyed by org_uid, not an array. */
   list(): Promise<OrganizationListResponse>;
   /** `GET /organizations/status?orgUid=` */
   getStatus(orgUid: string): Promise<OrganizationStatusResponse>;

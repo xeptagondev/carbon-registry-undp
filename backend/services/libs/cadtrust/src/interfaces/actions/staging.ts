@@ -25,6 +25,21 @@ export interface StagingListQueryParams {
   limit: number;
 }
 
+/**
+ * CORRECTED against a real node (2026-08-21, live-captured against a staged `program` AND a staged
+ * `methodology` record — same structure on both, not a one-off) — two things the guide got wrong:
+ *
+ *  - `is_transfer` was missing entirely, despite `resetCommitted`'s own doc comment already naming
+ *    it ("Transfer records (is_transfer:true) are excluded server-side").
+ *  - `diff.change` is an ARRAY of one object, not a single object as previously typed. Code trusting
+ *    the old type (`record.diff.change.someField`) needs `record.diff.change[0].someField` instead.
+ *
+ * Also worth knowing, confirmed on both captures: `diff.change`'s keys are the table's own
+ * snake_case DB column names (e.g. `program_name`, `program_registry_activity_id`,
+ * `cad_trust_program_id`), NOT the camelCase used by that resource's `*CreateInput`/`*Record` types
+ * elsewhere in this package (`programName`, `programRegistryActivityId`). Do not assume
+ * `diff.change[0]` matches a resource's `CreateInput` field-for-field.
+ */
 export interface StagingRecord {
   id: number;
   uuid: Guid;
@@ -32,13 +47,15 @@ export interface StagingRecord {
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   committed: boolean;
   failed_commit: boolean;
+  /** Excluded from `resetCommitted`'s server-side sweep when true. Confirmed present on every record. */
+  is_transfer: boolean;
   createdAt: string;
   updatedAt: string;
   diff: {
-    /** The record's prior state (empty object for an INSERT). */
+    /** The record's prior state. Confirmed `{}` for an INSERT; shape for UPDATE/DELETE unconfirmed. */
     original: Record<string, unknown>;
-    /** The staged field changes. */
-    change: Record<string, unknown>;
+    /** The staged field values — an array (see this interface's doc comment), snake_case keys. */
+    change: Record<string, unknown>[];
   };
 }
 
@@ -46,6 +63,27 @@ export interface StagingRecord {
 // Check for pending commits  ·  GET /v2/staging/pending
 // ---------------------------------------------------------------------------
 
+/**
+ * CORRECTED against the CADT v2 source (2026-08-21) — this is NOT the same check as v1. The
+ * name and shape are unchanged from the guide, but the meaning of `confirmed` inverted between
+ * versions:
+ *
+ *  - v1 (`assertNoPendingCommits`): counts records with `commited:true, failedCommit:false` —
+ *    i.e. already-pushed changes still awaiting blockchain confirmation. `confirmed:false`
+ *    means "a previous commit is still propagating, don't commit again yet."
+ *  - v2 (`hasPendingCommits` in `staging-v2.controller.js`, per its own doc comment): counts
+ *    records with `committed:false` — i.e. staged rows that still need to be committed.
+ *    `confirmed:false` means "you have staged rows waiting to be committed" — precisely the
+ *    state in which a commit SHOULD be attempted, not skipped.
+ *
+ * Do not gate a v2 commit on `confirmed`. `POST /staging/commit` enforces the v1-style
+ * precondition (no still-propagating commit) server-side and rejects with an error if it's
+ * violated — that's the reliable signal, surfaced as a thrown/rejected call.
+ *
+ * Also confirmed: `GET /staging?type=pending` uses the v1 meaning
+ * (`committed:true, failed_commit:false`) even on this same v2 node/controller file — the two
+ * "pending" endpoints do not agree with each other.
+ */
 export interface StagingPendingResponse {
   confirmed: boolean;
   message: string;

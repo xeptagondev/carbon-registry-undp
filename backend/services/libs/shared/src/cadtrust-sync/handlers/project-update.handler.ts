@@ -1,4 +1,4 @@
-import { CadTrustV2Service } from "@app/cadtrust";
+import { CadTrustV2Service, ProjectCreateInput } from "@app/cadtrust";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -117,12 +117,13 @@ export class CadTrustProjectUpdateHandler extends CadTrustSyncHandler {
         return;
       }
 
+      let input: ProjectCreateInput | undefined;
       try {
         const infContent = await this.getLatestInfContent(refId);
         // ProjectEntity structurally satisfies CadTrustProjectCreateSnapshot — same reuse trick as
         // CadTrustProjectCreateHandler's snapshot, just sourced from a live ledger read here instead
         // of a pre-write in-memory object.
-        const input = await this.projectMapper.toCreateInput(project, infContent);
+        input = await this.projectMapper.toCreateInput(project, infContent);
 
         const programCadTrustId = await this.syncRecords.getSyncedCadTrustId(
           CadTrustLocalEntityType.PROGRAM,
@@ -134,12 +135,16 @@ export class CadTrustProjectUpdateHandler extends CadTrustSyncHandler {
 
         await this.cadTrustV2Service.getClient().project.stageUpdate(cadTrustProjectId, input);
 
-        await this.syncRecords.markStaged(key, { cadTrustId: cadTrustProjectId });
+        await this.syncRecords.markStaged(
+          key,
+          { cadTrustId: cadTrustProjectId },
+          input as unknown as Record<string, unknown>
+        );
         this.logger.log(
           `Staged CAD Trust project update for ${refId} (${txType}) as ${cadTrustProjectId}`
         );
       } catch (error) {
-        await this.syncRecords.markFailed(key, error);
+        await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
         this.logger.error(`Failed to stage CAD Trust project update for ${refId}`, error);
         return;
       }

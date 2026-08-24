@@ -1,5 +1,6 @@
 import { CadTrustLocalEntityType } from "../../enum/cadtrust.local.entity.type.enum";
 import { CadTrustResourceType } from "../../enum/cadtrust.resource.type.enum";
+import { CadTrustSyncStatus } from "../../enum/cadtrust.sync.status.enum";
 import { CadTrustBootstrapHandler } from "./bootstrap.handler";
 
 const ORGANIZATION_KEY = {
@@ -29,8 +30,15 @@ function buildHandler(
   overrides: {
     enabled?: boolean;
     configProblems?: string[];
+    /** Program/methodology: simulates an existing sync record already COMMITTED — fully done. */
     alreadySynced?: Partial<Record<"organization" | "program" | "methodology", boolean>>;
-    organizations?: Record<string, { orgUid: string; name: string; isHome: boolean }>;
+    /**
+     * Program/methodology: simulates an existing sync record that's STAGED but never got
+     * committed — the exact stuck state this handler used to never retry. Distinct from
+     * `alreadySynced` above, which represents COMMITTED (fully done, no retry needed).
+     */
+    stagedNotCommitted?: Partial<Record<"program" | "methodology", boolean>>;
+    organizations?: Record<string, { org_uid: string; name: string; is_home: boolean }>;
     listOrganizations?: jest.Mock;
     stageProgram?: jest.Mock;
     stageMethodology?: jest.Mock;
@@ -38,9 +46,10 @@ function buildHandler(
   } = {}
 ) {
   const alreadySynced = overrides.alreadySynced ?? {};
+  const stagedNotCommitted = overrides.stagedNotCommitted ?? {};
   const listOrganizations =
     overrides.listOrganizations ??
-    jest.fn(async () => overrides.organizations ?? { "org-uid-1": { orgUid: "org-uid-1", name: "Home Org", isHome: true } });
+    jest.fn(async () => overrides.organizations ?? { "org-uid-1": { org_uid: "org-uid-1", name: "Home Org", is_home: true } });
   const stageProgram =
     overrides.stageProgram ??
     jest.fn(async () => ({
@@ -60,11 +69,22 @@ function buildHandler(
     }));
 
   const syncRecords = {
+    // Only ORGANIZATION goes through isAlreadySynced now — program/methodology use find()
+    // instead, so a STAGED-but-not-committed record can be told apart from a COMMITTED one.
     isAlreadySynced: jest.fn(async (key: any) => {
       if (key.localEntityType === CadTrustLocalEntityType.ORGANIZATION) return alreadySynced.organization ?? false;
-      if (key.localEntityType === CadTrustLocalEntityType.PROGRAM) return alreadySynced.program ?? false;
-      if (key.localEntityType === CadTrustLocalEntityType.METHODOLOGY) return alreadySynced.methodology ?? false;
       return false;
+    }),
+    find: jest.fn(async (key: any) => {
+      if (key.localEntityType === CadTrustLocalEntityType.PROGRAM) {
+        if (alreadySynced.program) return { syncStatus: CadTrustSyncStatus.COMMITTED };
+        if (stagedNotCommitted.program) return { syncStatus: CadTrustSyncStatus.STAGED };
+      }
+      if (key.localEntityType === CadTrustLocalEntityType.METHODOLOGY) {
+        if (alreadySynced.methodology) return { syncStatus: CadTrustSyncStatus.COMMITTED };
+        if (stagedNotCommitted.methodology) return { syncStatus: CadTrustSyncStatus.STAGED };
+      }
+      return null;
     }),
     getCadTrustId: jest.fn(async () => "org-uid-cached"),
     markCommitted: jest.fn(async () => undefined),
@@ -118,29 +138,39 @@ describe("CadTrustBootstrapHandler", () => {
 
     await handler.handle();
 
-    expect(syncRecords.markCommitted).toHaveBeenCalledWith(ORGANIZATION_KEY, { cadTrustId: "org-uid-1" });
-    expect(syncRecords.markStaged).toHaveBeenCalledWith(PROGRAM_KEY, {
-      cadTrustId: "cadt-program-1",
-      stagingUuid: "staging-program-1",
-    });
-    expect(syncRecords.markStaged).toHaveBeenCalledWith(METHODOLOGY_KEY, {
-      cadTrustId: "cadt-methodology-1",
-      stagingUuid: "staging-methodology-1",
-    });
+    expect(syncRecords.markCommitted).toHaveBeenCalledWith(
+      ORGANIZATION_KEY,
+      { cadTrustId: "org-uid-1" },
+      expect.objectContaining({ org_uid: "org-uid-1" })
+    );
+    expect(syncRecords.markStaged).toHaveBeenCalledWith(
+      PROGRAM_KEY,
+      { cadTrustId: "cadt-program-1", stagingUuid: "staging-program-1" },
+      PROGRAM_INPUT
+    );
+    expect(syncRecords.markStaged).toHaveBeenCalledWith(
+      METHODOLOGY_KEY,
+      { cadTrustId: "cadt-methodology-1", stagingUuid: "staging-methodology-1" },
+      METHODOLOGY_INPUT
+    );
     expect(commitHandler.handle).toHaveBeenCalledTimes(1);
   });
 
-  it("identifies the home organization by isHome, ignoring non-home entries in the list", async () => {
+  it("identifies the home organization by is_home, ignoring non-home entries in the list", async () => {
     const { handler, syncRecords } = buildHandler({
       organizations: {
-        "org-uid-mirrored": { orgUid: "org-uid-mirrored", name: "Someone else's org", isHome: false },
-        "org-uid-1": { orgUid: "org-uid-1", name: "Home Org", isHome: true },
+        "org-uid-mirrored": { org_uid: "org-uid-mirrored", name: "Someone else's org", is_home: false },
+        "org-uid-1": { org_uid: "org-uid-1", name: "Home Org", is_home: true },
       },
     });
 
     await handler.handle();
 
-    expect(syncRecords.markCommitted).toHaveBeenCalledWith(ORGANIZATION_KEY, { cadTrustId: "org-uid-1" });
+    expect(syncRecords.markCommitted).toHaveBeenCalledWith(
+      ORGANIZATION_KEY,
+      { cadTrustId: "org-uid-1" },
+      expect.objectContaining({ org_uid: "org-uid-1" })
+    );
   });
 
   it("does nothing when the integration is disabled", async () => {
@@ -170,7 +200,7 @@ describe("CadTrustBootstrapHandler", () => {
   });
 
   describe("idempotency", () => {
-    it("reuses the cached orgUid and skips list() once the organization is verified", async () => {
+    it("reuses the cached org_uid and skips list() once the organization is verified", async () => {
       const { handler, listOrganizations } = buildHandler({ alreadySynced: { organization: true } });
 
       await handler.handle();
@@ -198,6 +228,38 @@ describe("CadTrustBootstrapHandler", () => {
       await handler.handle();
 
       expect(commitHandler.handle).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("retrying a commit that never went through", () => {
+    // The bug this covers: a previous run staged program/methodology successfully, but the
+    // commit itself either failed or was skipped (e.g. CadTrustCommitHandler found a different
+    // commit still unconfirmed on the node) — leaving both sync records stuck at STAGED forever,
+    // because the old isAlreadySynced-based check treated STAGED the same as COMMITTED and never
+    // asked for a retry again.
+    it("retries the commit — without re-staging — when both are STAGED but not committed", async () => {
+      const { handler, stageProgram, stageMethodology, commitHandler } = buildHandler({
+        stagedNotCommitted: { program: true, methodology: true },
+      });
+
+      await handler.handle();
+
+      expect(stageProgram).not.toHaveBeenCalled();
+      expect(stageMethodology).not.toHaveBeenCalled();
+      expect(commitHandler.handle).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries the commit when only the program is stuck STAGED, methodology already committed", async () => {
+      const { handler, stageProgram, stageMethodology, commitHandler } = buildHandler({
+        stagedNotCommitted: { program: true },
+        alreadySynced: { methodology: true },
+      });
+
+      await handler.handle();
+
+      expect(stageProgram).not.toHaveBeenCalled();
+      expect(stageMethodology).not.toHaveBeenCalled();
+      expect(commitHandler.handle).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -233,7 +295,7 @@ describe("CadTrustBootstrapHandler", () => {
       const { handler, syncRecords, stageMethodology, commitHandler } = buildHandler({ stageProgram });
 
       await expect(handler.handle()).resolves.toBeUndefined();
-      expect(syncRecords.markFailed).toHaveBeenCalledWith(PROGRAM_KEY, expect.any(Error));
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(PROGRAM_KEY, expect.any(Error), PROGRAM_INPUT);
       expect(stageMethodology).toHaveBeenCalledTimes(1);
       // The methodology alone still staged, so committing is still worthwhile.
       expect(commitHandler.handle).toHaveBeenCalledTimes(1);
@@ -246,7 +308,11 @@ describe("CadTrustBootstrapHandler", () => {
       const { handler, syncRecords } = buildHandler({ stageMethodology });
 
       await expect(handler.handle()).resolves.toBeUndefined();
-      expect(syncRecords.markFailed).toHaveBeenCalledWith(METHODOLOGY_KEY, expect.any(Error));
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(
+        METHODOLOGY_KEY,
+        expect.any(Error),
+        METHODOLOGY_INPUT
+      );
     });
 
     it("does not rethrow if the (never-throwing-in-practice) commit call somehow throws", async () => {

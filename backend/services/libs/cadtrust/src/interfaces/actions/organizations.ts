@@ -10,39 +10,70 @@
 
 // ---------------------------------------------------------------------------
 // List all organizations  ·  GET /v2/organizations
-// NOTE: The response is a MAP KEYED BY orgUid, not an array. Iterate with
+// NOTE: The response is a MAP KEYED BY org_uid, not an array. Iterate with
 // Object.values() — indexing by position will not work.
 // ---------------------------------------------------------------------------
 
-/** One organization entry in the `GET /v2/organizations` map. */
+/**
+ * One organization entry in the `GET /v2/organizations` map.
+ *
+ * CORRECTED against a real node (2026-08-21, live-captured via
+ * `live/organizations.capture.spec.ts` against a 7-organization node) — the auto-extracted guide's
+ * example used camelCase throughout, but every field except `xchAddress` is snake_case on the wire.
+ * Also adds `data_model_version_store_id`, `data_model_version_store_hash`, `xchAddress`, `balance`,
+ * which the guide's example didn't document at all. See `libs/cadtrust/README.md`'s "Known gaps" §10.
+ */
 export interface OrganizationSummary {
-  orgUid: string;
-  orgHash: string;
+  org_uid: string;
+  org_hash: string;
   name: string;
   /** Icon URL. */
   icon: string;
   /** True for this CADT instance's own organization. */
-  isHome: boolean;
+  is_home: boolean;
   subscribed: boolean;
   synced: boolean;
   /** Documented as a string in the guide's example, e.g. "0". */
-  fileStoreSubscribed: string;
-  registryId: string;
-  registryHash: string;
+  file_store_subscribed: string;
+  registry_id: string;
+  /** Confirmed `null` on a real node for at least one subscribed-but-not-fully-synced entry. */
+  registry_hash: string | null;
   sync_remaining: number;
+  data_model_version_store_id: string;
+  data_model_version_store_hash: string;
+  /**
+   * Chia wallet address for this organization. Camel-cased on the wire, unlike every other field
+   * here. Confirmed present ONLY on the home organization's entry (this node's own wallet) — every
+   * other (imported/subscribed) organization in a real 7-entry list omitted it entirely.
+   */
+  xchAddress?: string;
+  /** Same scope as `xchAddress` — only observed on the home organization's entry. */
+  balance?: number;
 }
 
-/** Response for `GET /v2/organizations` — keyed by orgUid. */
+/** Response for `GET /v2/organizations` — keyed by org_uid. */
 export type OrganizationListResponse = Record<string, OrganizationSummary>;
 
 // ---------------------------------------------------------------------------
 // Get organization sync status  ·  GET /v2/organizations/status?orgUid=<uid>
 // ---------------------------------------------------------------------------
 
+/**
+ * CORRECTED against a real node (2026-08-21) — this bears no resemblance to the guide's documented
+ * shape (`{ orgUid, synced, sync_remaining }`), which does not appear on the wire at all. The
+ * `orgUid` query param is not echoed back anywhere in the response.
+ */
+export interface OrganizationStatusDetails {
+  wallet_synced: boolean;
+  home_org_synced: boolean;
+  pending_commits: number;
+  home_org_profile_synced: boolean;
+}
+
 export interface OrganizationStatusResponse {
-  orgUid: string;
-  synced: boolean;
-  sync_remaining: number;
+  ready: boolean;
+  status: OrganizationStatusDetails;
+  success: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -50,10 +81,15 @@ export interface OrganizationStatusResponse {
 //                        ·  POST /v2/organizations/metadata
 // ---------------------------------------------------------------------------
 
-export interface OrganizationMetadataResponse {
-  orgUid: string;
-  metadata: Record<string, string>;
-}
+/**
+ * CORRECTED against a real node (2026-08-21) — the guide's `{ orgUid, metadata }` wrapper does not
+ * match the wire: a real (empty-metadata) org returned a bare `{}`, not
+ * `{ orgUid: "...", metadata: {} }`. Typed as the flat map directly. UNCONFIRMED for the non-empty
+ * case — no organization on the captured node had any metadata set, so whether a populated response
+ * is still a bare map or reintroduces a wrapper is not yet verified. Re-check with
+ * `addMetadata` + `getMetadata` against the same org_uid before trusting this for a populated case.
+ */
+export type OrganizationMetadataResponse = Record<string, string>;
 
 export interface OrganizationAddMetadataInput {
   orgUid: string;

@@ -1,4 +1,4 @@
-import { CadTrustV2Service } from "@app/cadtrust";
+import { CadTrustV2Service, ValidationCreateInput } from "@app/cadtrust";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
@@ -88,17 +88,22 @@ export class CadTrustValidationCreateHandler extends CadTrustSyncHandler {
         return;
       }
 
+      let input: ValidationCreateInput | undefined;
       try {
-        const input = await this.validationMapper.toCreateInput(props, localId, cadTrustProjectId);
+        input = await this.validationMapper.toCreateInput(props, localId, cadTrustProjectId);
         const staged = await this.cadTrustV2Service.getClient().validation.stageCreate(input);
         // The guide documents cadTrustValidationId on the create response but does not guarantee it
         // on every resource, so fall back to uuid — same convention as every other handler here.
         const cadTrustId = staged.response.cadTrustValidationId ?? staged.response.uuid;
 
-        await this.syncRecords.markStaged(key, { cadTrustId, stagingUuid: staged.response.uuid });
+        await this.syncRecords.markStaged(
+          key,
+          { cadTrustId, stagingUuid: staged.response.uuid },
+          input as unknown as Record<string, unknown>
+        );
         this.logger.log(`Staged CAD Trust validation record ${localId} as ${cadTrustId}`);
       } catch (error) {
-        await this.syncRecords.markFailed(key, error);
+        await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
         this.logger.error(`Failed to stage CAD Trust validation record ${localId}`, error);
         return;
       }

@@ -36,10 +36,32 @@ export interface MethodologyCreateInput {
  */
 export type MethodologyUpdateInput = MethodologyCreateInput;
 
-/** Shape of a Methodology record as returned by `GET /v2/methodology` / `GET /v2/methodology/{id}`. */
-export interface MethodologyRecord extends MethodologyCreateInput {
+/**
+ * Shape of a Methodology record as returned by `GET /v2/methodology` / `GET /v2/methodology/{id}`.
+ *
+ * CORRECTED against a real node (2026-08-21, live-captured via
+ * `live/methodology.capture.spec.ts` against 36 real methodologies) — `methodologyVersion`,
+ * `methodologyDate`, `methodologyLink`, `methodologyType` and `orgUid` are `?: string` on
+ * `MethodologyCreateInput` (meaning "may be absent"), but on a real record every one of these five
+ * keys is ALWAYS present, with `null` when unset rather than the key being omitted. `field?: string`
+ * doesn't type-check `null`, only `undefined` — a real gap between what this said and what the wire
+ * actually sends. `MethodologyCreateInput`'s own optionality is unconfirmed (this capture only
+ * exercised reads), so it isn't touched — only `MethodologyRecord` widens these five to
+ * required-but-nullable. The same optional-vs-nullable question likely applies to every other
+ * `*Record` type in this package with optional fields (e.g. `ProgramRecord.orgUid`,
+ * `ProjectRecord.orgUid`) — not fixed there yet, just flagged so it isn't re-derived from scratch.
+ */
+export interface MethodologyRecord
+  extends Omit<
+    MethodologyCreateInput,
+    'methodologyVersion' | 'methodologyDate' | 'methodologyLink' | 'methodologyType'
+  > {
   cadTrustMethodologyId: string;
-  orgUid?: string;
+  methodologyVersion: string | null;
+  methodologyDate: string | null;
+  methodologyLink: string | null;
+  methodologyType: string | null;
+  orgUid: string | null;
   createdAt: string;
   updatedAt: string;
 }

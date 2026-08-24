@@ -72,6 +72,15 @@ export class CadTrustSyncRecordEntity {
   @Column({ type: "bigint", nullable: true, transformer: NumberTransformer })
   lastAttemptTime?: number;
 
+  /**
+   * The exact payload sent to (or, for a failed attempt, that would have been sent to) CAD Trust for
+   * this sync. Purely for debugging — nothing in this module reads it back. Absent when nothing was
+   * ever built for this record (e.g. ORGANIZATION, which is verified rather than staged, or a
+   * failure that occurred before an input was constructed).
+   */
+  @Column({ type: "jsonb", nullable: true })
+  payload?: Record<string, unknown>;
+
   @Column({ type: "bigint", transformer: NumberTransformer })
   createTime: number;
 

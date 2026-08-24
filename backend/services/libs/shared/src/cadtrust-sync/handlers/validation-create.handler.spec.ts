@@ -96,10 +96,11 @@ describe("CadTrustValidationCreateHandler", () => {
     expect(syncRecords.getCadTrustId).toHaveBeenCalledWith(PROJECT_KEY);
     expect(validationMapper.toCreateInput).toHaveBeenCalledWith(expect.anything(), LOCAL_ID, "cadt-project-1");
     expect(stageCreate).toHaveBeenCalledTimes(1);
-    expect(syncRecords.markStaged).toHaveBeenCalledWith(VALIDATION_KEY, {
-      cadTrustId: "cadt-validation-1",
-      stagingUuid: "staging-validation-1",
-    });
+    expect(syncRecords.markStaged).toHaveBeenCalledWith(
+      VALIDATION_KEY,
+      { cadTrustId: "cadt-validation-1", stagingUuid: "staging-validation-1" },
+      expect.anything()
+    );
     expect(commitHandler.handle).toHaveBeenCalledTimes(1);
   });
 
@@ -110,6 +111,7 @@ describe("CadTrustValidationCreateHandler", () => {
 
     expect(syncRecords.markStaged).toHaveBeenCalledWith(
       expect.objectContaining({ localId: "0042-VALIDATION-v1" }),
+      expect.anything(),
       expect.anything()
     );
   });
@@ -121,6 +123,7 @@ describe("CadTrustValidationCreateHandler", () => {
 
     expect(syncRecords.markStaged).toHaveBeenCalledWith(
       expect.objectContaining({ localId: "0042-PDD-v2" }),
+      expect.anything(),
       expect.anything()
     );
   });
@@ -153,7 +156,11 @@ describe("CadTrustValidationCreateHandler", () => {
       const { handler, syncRecords } = buildHandler({ stageCreate });
 
       await expect(handler.handle(props())).resolves.toBeUndefined();
-      expect(syncRecords.markFailed).toHaveBeenCalledWith(VALIDATION_KEY, expect.any(Error));
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(
+        VALIDATION_KEY,
+        expect.any(Error),
+        expect.anything()
+      );
     });
 
     it("does not rethrow if the inline commit call somehow throws", async () => {

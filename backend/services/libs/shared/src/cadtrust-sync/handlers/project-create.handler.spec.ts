@@ -226,16 +226,18 @@ describe("CadTrustProjectCreateHandler", () => {
     await handler.handle(SNAPSHOT);
 
     expect(stageStakeholder).toHaveBeenCalledTimes(1);
-    expect(syncRecords.markStaged).toHaveBeenCalledWith(STAKEHOLDER_KEY, {
-      cadTrustId: "cadt-stakeholder-1",
-      stagingUuid: "staging-stakeholder-1",
-    });
+    expect(syncRecords.markStaged).toHaveBeenCalledWith(
+      STAKEHOLDER_KEY,
+      { cadTrustId: "cadt-stakeholder-1", stagingUuid: "staging-stakeholder-1" },
+      expect.any(Object)
+    );
 
     expect(stageProject).toHaveBeenCalledWith(expect.objectContaining({ cadTrustProgramId: "cadt-program-1" }));
-    expect(syncRecords.markStaged).toHaveBeenCalledWith(PROJECT_KEY, {
-      cadTrustId: "cadt-project-1",
-      stagingUuid: "staging-project-1",
-    });
+    expect(syncRecords.markStaged).toHaveBeenCalledWith(
+      PROJECT_KEY,
+      { cadTrustId: "cadt-project-1", stagingUuid: "staging-project-1" },
+      expect.objectContaining({ cadTrustProgramId: "cadt-program-1" })
+    );
 
     expect(stageProjectMethodology).toHaveBeenCalledWith({
       cadTrustProjectId: "cadt-project-1",
@@ -354,7 +356,7 @@ describe("CadTrustProjectCreateHandler", () => {
         buildHandler({ stageProject });
 
       await expect(handler.handle(SNAPSHOT)).resolves.toBeUndefined();
-      expect(syncRecords.markFailed).toHaveBeenCalledWith(PROJECT_KEY, error);
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(PROJECT_KEY, error, expect.any(Object));
       expect(stageProjectMethodology).not.toHaveBeenCalled();
       expect(stageStakeholderProject).not.toHaveBeenCalled();
       expect(stageLocation).not.toHaveBeenCalled();
@@ -369,7 +371,11 @@ describe("CadTrustProjectCreateHandler", () => {
       const { handler, syncRecords, stageProject } = buildHandler({ stageStakeholder });
 
       await expect(handler.handle(SNAPSHOT)).resolves.toBeUndefined();
-      expect(syncRecords.markFailed).toHaveBeenCalledWith(STAKEHOLDER_KEY, expect.any(Error));
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(
+        STAKEHOLDER_KEY,
+        expect.any(Error),
+        expect.any(Object)
+      );
       expect(stageProject).toHaveBeenCalledTimes(1);
     });
 
@@ -388,7 +394,11 @@ describe("CadTrustProjectCreateHandler", () => {
       const { handler, syncRecords } = buildHandler({ stageLocation });
 
       await expect(handler.handle(SNAPSHOT)).resolves.toBeUndefined();
-      expect(syncRecords.markFailed).toHaveBeenCalledWith(LOCATION_KEY, expect.any(Error));
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(
+        LOCATION_KEY,
+        expect.any(Error),
+        expect.any(Object)
+      );
     });
 
     it("does not rethrow when staging the stakeholder-project link fails", async () => {
@@ -398,7 +408,11 @@ describe("CadTrustProjectCreateHandler", () => {
       const { handler, syncRecords } = buildHandler({ stageStakeholderProject });
 
       await expect(handler.handle(SNAPSHOT)).resolves.toBeUndefined();
-      expect(syncRecords.markFailed).toHaveBeenCalledWith(STAKEHOLDER_PROJECT_KEY, expect.any(Error));
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(
+        STAKEHOLDER_PROJECT_KEY,
+        expect.any(Error),
+        expect.any(Object)
+      );
     });
 
     it("does not rethrow if the inline commit call somehow throws", async () => {

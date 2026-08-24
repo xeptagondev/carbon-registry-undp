@@ -54,7 +54,7 @@ main.ts                                  (national-api start, after setupHandler
 async-operations-handler                 (consumer, in the replicator container)
   └─ CadTrustBootstrapHandler.handle()
        ├─ CadTrustRegistryProfileService.assertConfigured()  -> sentinel-default guard
-       ├─ client.organizations.list() -> find isHome         -> VERIFY ONLY, never creates
+       ├─ client.organizations.list() -> find is_home        -> VERIFY ONLY, never creates
        │     none found -> markFailed(ORGANIZATION), stop
        ├─ client.program.stageCreate(...)      -> markStaged, if not already synced
        ├─ client.methodology.stageCreate(...)  -> markStaged, if not already synced
@@ -346,7 +346,7 @@ and `.env.national.example` for the full per-key breakdown.
 3. **Before touching any env var**, confirm a home organization already exists
    on the target node — `CADTV2Bootstrap` verifies, it never creates one:
    ```
-   curl -H "x-api-key: $CADT_V2_API_KEY" "$CADT_V2_BASE_URL/organizations" | jq 'to_entries[] | select(.value.isHome)'
+   curl -H "x-api-key: $CADT_V2_API_KEY" "$CADT_V2_BASE_URL/organizations" | jq 'to_entries[] | select(.value.is_home)'
    ```
    If that is empty, provision the organization on the node first (its own
    onboarding flow, ~30 minutes) — enabling bootstrap against a node with no
@@ -374,7 +374,7 @@ restart once step 7 above is done:
 -- bootstrap fired
 SELECT * FROM async_action_entity WHERE "actionType" = '20' ORDER BY "actionId" DESC LIMIT 5;
 
--- all three rows COMMITTED, each with a cadTrustId (the org row's is the orgUid)
+-- all three rows COMMITTED, each with a cadTrustId (the org row's is the org_uid)
 SELECT "localEntityType", "localId", "syncStatus", "cadTrustId", "lastError"
 FROM cadtrust_sync_record
 WHERE "localEntityType" IN ('ORGANIZATION', 'PROGRAM', 'METHODOLOGY');

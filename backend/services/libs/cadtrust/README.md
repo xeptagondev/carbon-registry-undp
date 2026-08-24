@@ -198,7 +198,57 @@ package's suite.
 yarn test -- libs/cadtrust                       # no CADT node required
 CADT_V2_LIVE_URL=http://localhost:31310/v2 \
   yarn test -- libs/cadtrust/src/live            # read-only smoke tests against a real node
+
+# Run every live test/capture in one shot (recommended over the individual
+# commands below once there's more than one or two capture specs):
+../../scripts/run-cadtrust-live-tests.sh http://localhost:31310/v2 [api-key]
+
+# Or run one capture spec at a time:
+CADT_V2_LIVE_URL=http://localhost:31310/v2 \
+  yarn test -- libs/cadtrust/src/live/organizations.capture
+CADT_V2_LIVE_URL=http://localhost:31310/v2 \
+  yarn test -- libs/cadtrust/src/live/program.capture
+CADT_V2_LIVE_URL=http://localhost:31310/v2 \
+  yarn test -- libs/cadtrust/src/live/methodology.capture
 ```
+
+### Live-node capture workflow
+
+Every interface in this package is auto-extracted from the API guide, not validated against a
+running node — `OrganizationSummary` already turned out wrong this way (snake_case fields, several
+undocumented ones). Rather than find the next mismatch as a production bug, reconcile each resource
+group against a real node once, systematically:
+
+1. `createRecordingTransport()` (`testing/recording-transport.ts`) wraps the real `axiosTransport`
+   and records every request/response pair as it happens — the literal wire shapes the typed client
+   (and therefore production code) actually sends and receives, not a hand-copied guess.
+2. A `live/<resource>.capture.spec.ts` file (see `organizations.capture.spec.ts`) builds a client
+   with that transport and writes every captured call to
+   `live/.captures/<resource>-<timestamp>.json` (gitignored). For a **generic CRUD resource**
+   (program, methodology, and everything in `resources/entities.ts`), the SAFE calls to make are
+   `list()`, `get()` (when a real id exists), **and `client.staging.list({ table: '<path>' })`** —
+   all three, not just the first two. `list()`/`get()` only return already-COMMITTED records; a
+   record can be genuinely staged-but-uncommitted on the node and invisible to both (confirmed in
+   practice: `program.capture.spec.ts` found zero committed programs while a real one sat staged,
+   only visible via `GET /staging?table=program`). Every capture spec for a future resource should
+   follow the same three-call shape — see `program.capture.spec.ts` / `methodology.capture.spec.ts`.
+3. Read the capture file, diff it field-by-field against the resource's current interface, fix
+   what's wrong.
+
+Mutating endpoints are deliberately left out of these captures by default — each capture file's doc
+comment explains why for that specific resource group (e.g. organization creation is a ~30-minute,
+effectively irreversible operation; program/methodology writes are instead covered by manual dev
+testing against the real registry adaptor). Add a separate, explicitly-named capture file for
+specific mutating calls only when you've decided it's safe to run them against the target node.
+
+**`scripts/run-cadtrust-live-tests.sh`** (repo root) runs every file under `live/` in one jest
+invocation — takes the base URL and (optional) API key as either positional args or pre-exported
+`CADT_V2_LIVE_URL`/`CADT_V2_LIVE_API_KEY`. Needs no update when a new capture spec is added; it just
+runs the whole directory.
+
+**`LIVE_VALIDATION.md`** (package root) tracks every endpoint in this package, one row each: whether
+it's been confirmed against a real node yet, how (capture spec or manual dev testing), and when —
+check there before trusting an interface you haven't personally verified.
 
 ---
 
@@ -234,6 +284,65 @@ Carried forward from the source documents rather than papered over.
    typed as an open record rather than guessed at.
 9. **`POST /v2/organizations/reclaim-home`** is filed under a "DELETE Examples" heading in the guide
    but its curl example is a POST. Implemented as a POST, following the working example.
+10. **`OrganizationSummary` (`GET /v2/organizations`) is snake_case on the wire**, unlike every
+    other interface in this package — the guide's auto-extracted example used camelCase
+    throughout. Confirmed against a live node (a real 7-organization capture via
+    `live/organizations.capture.spec.ts`): `org_uid`, `org_hash`, `is_home`, `subscribed`,
+    `synced`, `file_store_subscribed`, `registry_id`, `registry_hash`, `sync_remaining`,
+    `data_model_version_store_id`, `data_model_version_store_hash` are all snake_case and present on
+    every entry; `xchAddress` alone stays camelCase. `registry_hash` can be `null` (seen on a
+    subscribed-but-not-fully-synced entry). `xchAddress`/`balance` are present ONLY on the home
+    organization's own entry — every imported/subscribed org omitted both entirely — so both are
+    typed optional, not required.
+11. **`OrganizationStatusResponse` (`GET /v2/organizations/status?orgUid=`) bears no resemblance to
+    the guide's documented shape.** Confirmed against a live node: the real response is
+    `{ ready, status: { wallet_synced, home_org_synced, pending_commits, home_org_profile_synced },
+    success }` — the guide's `{ orgUid, synced, sync_remaining }` does not appear on the wire at all,
+    and the `orgUid` query param is never echoed back.
+12. **`OrganizationMetadataResponse` (`GET /v2/organizations/metadata?orgUid=`) is a bare map, not a
+    `{ orgUid, metadata }` wrapper.** Confirmed against a live node for the empty case (`{}` exactly,
+    for an org with no metadata set) — typed as `Record<string, string>` directly. **Unconfirmed for
+    a populated response** — no organization on the captured node had any metadata set; re-verify with
+    `addMetadata` + `getMetadata` against the same `org_uid` before relying on this for a non-empty
+    case.
+13. **`OrganizationCreationStatusResponse`'s idle case is confirmed correct** (`{ inProgress: false,
+    state: null, message, success: true }`, matched exactly against a live node); the in-progress and
+    upgrade-in-progress variants remain unverified — no creation or upgrade was running at capture
+    time.
+14. **A `?: string` optional field on a `*Record` read type can come back as an explicit `null`
+    rather than an absent key.** Confirmed for `MethodologyRecord` (`methodologyVersion`,
+    `methodologyDate`, `methodologyLink`, `methodologyType`, `orgUid` — all five always present as
+    keys on a real record, `null` when unset). `field?: string` only type-checks `undefined`, not
+    `null`, so this was a real gap. `MethodologyCreateInput`'s own optionality is untouched (unverified
+    for writes — this capture only exercised reads). Worth checking the same way for every other
+    `*Record` type in this package that has optional fields — not yet done for any of them.
+15. **`GET /program`/`GET /methodology` (and, by the same CRUD machinery, every other core resource's
+    `list()`/`get()`) only return already-COMMITTED records — never staged-but-uncommitted ones.**
+    Confirmed the hard way: `program.capture.spec.ts` found zero committed programs on a node that
+    had a real program sitting in the staging table, only visible via
+    `GET /staging?table=program`. Every capture spec for a generic CRUD resource now includes a
+    `client.staging.list({ table })` call for exactly this reason — see the "Live-node capture
+    workflow" section above.
+16. **`StagingRecord` (`GET /staging`) had two real bugs**, both confirmed twice — once on a staged
+    `program` row and once on a staged `methodology` row, same structure both times. `is_transfer`
+    was missing entirely (despite `resetCommitted`'s own doc comment already naming it). `diff.change`
+    is an **array** of one object, not a single object as previously typed — `record.diff.change`
+    needs `[0]` before the field access. Also worth knowing: `diff.change`'s keys are the table's own
+    snake_case DB column names (`program_name`, `cad_trust_program_id`, ...), not the camelCase used
+    by that resource's `CreateInput`/`Record` types elsewhere in this package — don't assume
+    `diff.change[0]` matches a `CreateInput` field-for-field.
+17. **`GET /staging/pending` (`hasPendingCommits()`) means the opposite thing on v2 that it did on
+    v1, and this package's original doc comments were written against the v1 meaning.** v1's version
+    counts already-pushed-but-still-propagating commits (`confirmed:false` = "wait, don't commit
+    again yet"). v2's version (per its own doc comment upstream) counts staged-but-uncommitted rows
+    (`confirmed:false` = "you have staged work that still needs a commit" — the state in which a
+    commit *should* run). A caller that gates a commit attempt on `confirmed` using the v1 reading
+    will skip every commit, permanently, the moment anything is staged — confirmed via live testing
+    (2026-08-21) after exactly this bug stuck a program/methodology bootstrap commit forever. Do not
+    use `hasPendingCommits()` to decide whether to commit; `POST /staging/commit` enforces the real
+    (v1-style) precondition server-side and rejects if violated. Also confirmed: `GET
+    /staging?type=pending` still uses the v1 meaning even on the same v2 node — the two "pending"
+    endpoints disagree with each other. See `StagingPendingResponse`'s doc comment.
 
 ---
 

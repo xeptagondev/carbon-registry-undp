@@ -35,7 +35,14 @@ export interface ProgramCreateInput {
  */
 export type ProgramUpdateInput = ProgramCreateInput;
 
-/** Shape of a Program record as returned by `GET /v2/program` / `GET /v2/program/{id}`. */
+/**
+ * Shape of a Program record as returned by `GET /v2/program` / `GET /v2/program/{id}`.
+ *
+ * Only the pagination envelope has been confirmed against a real node (2026-08-21, via
+ * `live/program.capture.spec.ts`) — the node had zero *committed* programs at capture time, so this
+ * record shape itself remains guide-only/unverified. See `live/program.capture.spec.ts`'s staging
+ * check for a real, uncommitted program's payload instead.
+ */
 export interface ProgramRecord extends ProgramCreateInput {
   cadTrustProgramId: string;
   orgUid?: string;

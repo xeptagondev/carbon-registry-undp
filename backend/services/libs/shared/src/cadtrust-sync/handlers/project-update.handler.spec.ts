@@ -120,7 +120,11 @@ describe("CadTrustProjectUpdateHandler", () => {
       "cadt-project-1",
       expect.objectContaining({ cadTrustProgramId: "cadt-program-1" })
     );
-    expect(syncRecords.markStaged).toHaveBeenCalledWith(PROJECT_KEY, { cadTrustId: "cadt-project-1" });
+    expect(syncRecords.markStaged).toHaveBeenCalledWith(
+      PROJECT_KEY,
+      { cadTrustId: "cadt-project-1" },
+      expect.objectContaining({ cadTrustProgramId: "cadt-program-1" })
+    );
     expect(commitHandler.handle).toHaveBeenCalledTimes(1);
   });
 
@@ -230,7 +234,11 @@ describe("CadTrustProjectUpdateHandler", () => {
       const { handler, syncRecords } = buildHandler({ stageUpdate });
 
       await expect(handler.handle(props(TxType.APPROVE_INF))).resolves.toBeUndefined();
-      expect(syncRecords.markFailed).toHaveBeenCalledWith(PROJECT_KEY, expect.any(Error));
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(
+        PROJECT_KEY,
+        expect.any(Error),
+        expect.any(Object)
+      );
     });
 
     it("does not rethrow if the inline commit call somehow throws", async () => {

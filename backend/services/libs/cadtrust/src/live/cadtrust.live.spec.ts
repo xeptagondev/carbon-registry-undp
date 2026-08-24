@@ -42,12 +42,12 @@ describeLive('CADT v2 live node', () => {
     }
   });
 
-  it('lists organizations as a map keyed by orgUid, not an array', async () => {
+  it('lists organizations as a map keyed by org_uid, not an array', async () => {
     const organizations = await client.organizations.list();
 
     expect(Array.isArray(organizations)).toBe(false);
     for (const [key, org] of Object.entries(organizations)) {
-      expect(org.orgUid).toBe(key);
+      expect(org.org_uid).toBe(key);
     }
   });
 
