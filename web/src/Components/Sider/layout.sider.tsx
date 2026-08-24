@@ -258,7 +258,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
                 alt="country flag"
                 src={
                   import.meta.env.VITE_APP_COUNTRY_FLAG_URL ||
-                  "https://carbon-common-dev.s3.amazonaws.com/flag.png"
+                  "/api/flag.png"
                 }
               />
             </div>
