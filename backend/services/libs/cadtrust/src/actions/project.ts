@@ -49,10 +49,10 @@ export interface ProjectActionsClient {
    * projects and their child records.
    *
    * Prerequisites enforced by the node: a home organization must exist and there
-   * must be no still-propagating commit. Do NOT check this via
-   * `client.staging.hasPendingCommits()` — on v2 that reports whether there are
-   * staged-but-uncommitted rows, not whether a commit is propagating (see
-   * `StagingPendingResponse`'s doc comment); this endpoint enforces the real
+   * must be no still-propagating commit. Do NOT check the latter via
+   * `client.staging.hasPendingCommits()` / `hasUncommittedStagedRows()` — on v2 those report
+   * whether there are staged-but-uncommitted rows, not whether a commit is propagating (see
+   * `StagingV2PendingResponse`'s doc comment); this endpoint enforces the real
    * precondition server-side and rejects if it's violated. Use `NEW-<n>`
    * placeholder ids to create records and to link parent/child rows across
    * sheets. Max 25 MB.

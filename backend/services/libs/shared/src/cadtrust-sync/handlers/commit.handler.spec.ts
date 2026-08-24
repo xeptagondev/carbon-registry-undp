@@ -4,22 +4,21 @@ function buildHandler(
   overrides: {
     enabled?: boolean;
     commit?: jest.Mock;
+    hasUncommittedStagedRows?: jest.Mock;
   } = {}
 ) {
   const commit = overrides.commit ?? jest.fn(async () => ({ message: "Committing", success: true }));
-  // Present on the mocked client so a regression that reintroduces a hasPendingCommits() call
-  // is caught by "never calls hasPendingCommits" below, rather than blowing up on undefined.
-  const hasPendingCommits = jest.fn(async () => ({
-    confirmed: false,
-    message: "There are currently pending commits",
-    success: true,
-  }));
+  // Defaults to "work is owed" so the happy-path tests below don't need to know about this.
+  const hasUncommittedStagedRows =
+    overrides.hasUncommittedStagedRows ?? jest.fn(async () => true);
 
   const syncRecords = {
     markAllStagedAsCommitted: jest.fn(async () => 3),
     markAllStagedAsFailed: jest.fn(async () => 3),
   };
-  const cadTrustV2Service = { getClient: () => ({ staging: { hasPendingCommits, commit } }) };
+  const cadTrustV2Service = {
+    getClient: () => ({ staging: { hasUncommittedStagedRows, commit } }),
+  };
   const configService = {
     get: (key: string) =>
       key === "cadTrustV2.enable"
@@ -37,7 +36,7 @@ function buildHandler(
     logger as any
   );
 
-  return { handler, syncRecords, commit, hasPendingCommits, logger };
+  return { handler, syncRecords, commit, hasUncommittedStagedRows, logger };
 }
 
 describe("CadTrustCommitHandler", () => {
@@ -60,21 +59,31 @@ describe("CadTrustCommitHandler", () => {
     expect(syncRecords.markAllStagedAsCommitted).toHaveBeenCalledTimes(1);
   });
 
-  it("never calls hasPendingCommits — it's a v2 uncommitted-rows count, not a propagation check, and always reads false right after staging", async () => {
-    const { handler, commit, hasPendingCommits } = buildHandler();
+  it("skips the commit and reconciles staged records when nothing is staged on the node", async () => {
+    const hasUncommittedStagedRows = jest.fn(async () => false);
+    const { handler, commit, syncRecords } = buildHandler({ hasUncommittedStagedRows });
 
     await handler.handle();
 
-    expect(hasPendingCommits).not.toHaveBeenCalled();
+    expect(commit).not.toHaveBeenCalled();
+    expect(syncRecords.markAllStagedAsCommitted).toHaveBeenCalledTimes(1);
+  });
+
+  it("commits when there are uncommitted staged rows", async () => {
+    const hasUncommittedStagedRows = jest.fn(async () => true);
+    const { handler, commit } = buildHandler({ hasUncommittedStagedRows });
+
+    await handler.handle();
+
     expect(commit).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing when the integration is disabled", async () => {
-    const { handler, commit, hasPendingCommits } = buildHandler({ enabled: false });
+    const { handler, commit, hasUncommittedStagedRows } = buildHandler({ enabled: false });
 
     await handler.handle();
 
-    expect(hasPendingCommits).not.toHaveBeenCalled();
+    expect(hasUncommittedStagedRows).not.toHaveBeenCalled();
     expect(commit).not.toHaveBeenCalled();
   });
 
@@ -86,6 +95,18 @@ describe("CadTrustCommitHandler", () => {
       const { handler, syncRecords } = buildHandler({ commit });
 
       await expect(handler.handle()).resolves.toBeUndefined();
+      expect(syncRecords.markAllStagedAsFailed).toHaveBeenCalled();
+      expect(syncRecords.markAllStagedAsCommitted).not.toHaveBeenCalled();
+    });
+
+    it("marks staged records failed and does NOT rethrow when hasUncommittedStagedRows fails", async () => {
+      const hasUncommittedStagedRows = jest.fn(async () => {
+        throw new Error("node unreachable");
+      });
+      const { handler, commit, syncRecords } = buildHandler({ hasUncommittedStagedRows });
+
+      await expect(handler.handle()).resolves.toBeUndefined();
+      expect(commit).not.toHaveBeenCalled();
       expect(syncRecords.markAllStagedAsFailed).toHaveBeenCalled();
       expect(syncRecords.markAllStagedAsCommitted).not.toHaveBeenCalled();
     });

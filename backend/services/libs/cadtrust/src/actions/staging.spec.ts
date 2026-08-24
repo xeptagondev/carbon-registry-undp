@@ -56,6 +56,28 @@ describe('staging', () => {
     expect(result.confirmed).toBe(false);
   });
 
+  it('reports uncommitted staged rows by inverting the v2 confirmed reading', async () => {
+    const { fake, client: cadtrust } = client({
+      data: { confirmed: false, message: 'There are currently pending commits', success: true },
+    });
+
+    const result = await cadtrust.staging.hasUncommittedStagedRows();
+
+    expect(fake.lastRequest()).toMatchObject({
+      method: 'GET',
+      url: 'http://localhost:31310/v2/staging/pending',
+    });
+    expect(result).toBe(true);
+  });
+
+  it('reports no uncommitted staged rows when confirmed is true', async () => {
+    const { client: cadtrust } = client({
+      data: { confirmed: true, message: 'There are no pending commits', success: true },
+    });
+
+    await expect(cadtrust.staging.hasUncommittedStagedRows()).resolves.toBe(false);
+  });
+
   it('commits with author, comment and a subset of ids', async () => {
     const { fake, client: cadtrust } = client();
 

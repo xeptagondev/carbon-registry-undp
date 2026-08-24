@@ -18,10 +18,10 @@ import type {
   StagingDeleteInput,
   StagingEditInput,
   StagingListQueryParams,
-  StagingPendingResponse,
   StagingRecord,
   StagingResetCommittedResponse,
   StagingRetryInput,
+  StagingV2PendingResponse,
 } from '../interfaces/actions/staging';
 
 export interface StagingClient {
@@ -32,10 +32,17 @@ export interface StagingClient {
   /**
    * `GET /staging/pending` — on v2, whether there are staged rows still needing a commit, NOT
    * whether a previous commit is still propagating. `confirmed:false` means a commit is owed,
-   * not that one should be skipped. See `StagingPendingResponse`'s doc comment before using this
-   * to gate anything.
+   * not that one should be skipped. See `StagingV2PendingResponse`'s doc comment before using
+   * this to gate anything — or prefer `hasUncommittedStagedRows()` below, which removes the
+   * ambiguity from the call site.
    */
-  hasPendingCommits(): Promise<StagingPendingResponse>;
+  hasPendingCommits(): Promise<StagingV2PendingResponse>;
+  /**
+   * Convenience over `hasPendingCommits()` that removes the v1/v2 `confirmed` ambiguity from
+   * the call site: `true` = the node has staged rows still owed a commit (safe to attempt a
+   * commit); `false` = nothing staged, a commit would be a no-op.
+   */
+  hasUncommittedStagedRows(): Promise<boolean>;
   /**
    * `POST /staging/commit` — PUBLISHES staged changes to the blockchain.
    * Pass `ids` to commit a subset (max 10000), or omit to commit everything staged.
@@ -91,7 +98,15 @@ export function createStagingClient(ctx: CadTrustContext): StagingClient {
     },
 
     hasPendingCommits() {
-      return request<StagingPendingResponse>(ctx, { method: 'GET', path: '/staging/pending' });
+      return request<StagingV2PendingResponse>(ctx, { method: 'GET', path: '/staging/pending' });
+    },
+
+    async hasUncommittedStagedRows() {
+      const pending = await request<StagingV2PendingResponse>(ctx, {
+        method: 'GET',
+        path: '/staging/pending',
+      });
+      return !pending.confirmed;
     },
 
     commit(input = {}) {

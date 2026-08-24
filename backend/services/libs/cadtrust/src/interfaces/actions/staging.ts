@@ -74,21 +74,36 @@ export interface StagingRecord {
  *  - v2 (`hasPendingCommits` in `staging-v2.controller.js`, per its own doc comment): counts
  *    records with `committed:false` — i.e. staged rows that still need to be committed.
  *    `confirmed:false` means "you have staged rows waiting to be committed" — precisely the
- *    state in which a commit SHOULD be attempted, not skipped.
+ *    state in which a commit SHOULD be attempted, not skipped. `confirmed:true` means the
+ *    opposite: nothing is staged, so there is nothing to commit.
  *
- * Do not gate a v2 commit on `confirmed`. `POST /staging/commit` enforces the v1-style
- * precondition (no still-propagating commit) server-side and rejects with an error if it's
- * violated — that's the reliable signal, surfaced as a thrown/rejected call.
+ * Do NOT gate a v2 commit on the v1 reading of `confirmed` (`!confirmed => skip`) — that
+ * deadlocks every commit the moment anything is staged, which is exactly what happened here
+ * before this was corrected. Gating on the v2 reading (`confirmed => nothing to commit => skip`)
+ * is fine — see `StagingClient.hasUncommittedStagedRows()`, which wraps this call so the call
+ * site can't misread `confirmed` again. The propagation precondition v1's check was guarding
+ * (no still-propagating commit) is enforced server-side by `POST /staging/commit` itself, which
+ * rejects with an error if violated — that's the reliable signal for that condition, surfaced as
+ * a thrown/rejected call.
  *
  * Also confirmed: `GET /staging?type=pending` uses the v1 meaning
  * (`committed:true, failed_commit:false`) even on this same v2 node/controller file — the two
  * "pending" endpoints do not agree with each other.
  */
-export interface StagingPendingResponse {
+export interface StagingV2PendingResponse {
+  /**
+   * v2 meaning: `true` = the node has NO rows with `committed:false`, i.e. nothing is waiting
+   * to be committed. `false` = staged rows are owed a commit. NOT v1's meaning ("no
+   * previously-pushed commit still propagating") — see the interface doc comment above.
+   */
   confirmed: boolean;
+  /** e.g. "There are no pending commits" / "There are currently pending commits". */
   message: string;
   success: boolean;
 }
+
+/** @deprecated Ambiguous between v1 and v2 semantics — use {@link StagingV2PendingResponse}. */
+export type StagingPendingResponse = StagingV2PendingResponse;
 
 // ---------------------------------------------------------------------------
 // Commit staged records  ·  POST /v2/staging/commit

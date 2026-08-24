@@ -133,8 +133,8 @@ pending a full capture pass.
 | Endpoint | Status | Validated via | Date | Notes |
 |---|---|---|---|---|
 | `GET /staging` (list/listAll) | ✅ | Live capture spec | 2026-08-21 | `StagingRecord` corrected via the `table=program`/`table=methodology` captures — see the Program/Methodology sections above and README "Known gaps" §16. `type`-filtered calls (`staged`/`pending`/`failed`) and unfiltered calls remain unexercised |
-| `GET /staging/pending` (hasPendingCommits) | ✅ | Manual dev testing | 2026-08-21 | `confirmed:false` means "staged rows still need a commit" on v2 — inverted from v1 and from this package's original doc comment. See README "Known gaps" §17. Not safe to gate a commit on |
-| `POST /staging/commit` (commit) | ✅ | Manual dev testing | 2026-08-21 | Confirmed against a live node: a program staging row moved from `committed:false` to `committed:true` once the bogus `hasPendingCommits()` pre-check was removed from `CadTrustCommitHandler` |
+| `GET /staging/pending` (hasPendingCommits / hasUncommittedStagedRows) | ✅ | Manual dev testing | 2026-08-21 | `confirmed:false` means "staged rows still need a commit" on v2 — inverted from v1 and from this package's original doc comment. See README "Known gaps" §17. Not safe to gate a commit on the v1 reading (`!confirmed => skip`); the v2 reading (`confirmed => nothing to commit`) is safe and is what `hasUncommittedStagedRows()` / `CadTrustCommitHandler` now use |
+| `POST /staging/commit` (commit) | ✅ | Manual dev testing | 2026-08-21 | Confirmed against a live node: a program staging row moved from `committed:false` to `committed:true` once the bogus v1-reading `hasPendingCommits()` pre-check was removed from `CadTrustCommitHandler`; the handler now re-guards with the v2-reading `hasUncommittedStagedRows()` instead |
 | `POST /staging/retry` (retry) | ⏳ | — | — | |
 | `POST /staging/reset-committed` (resetCommitted) | ⏳ | — | — | |
 | `PUT /staging` (edit) | ⏳ | — | — | |

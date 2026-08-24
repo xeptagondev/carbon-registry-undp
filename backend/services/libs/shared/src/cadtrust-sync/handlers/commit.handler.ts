@@ -36,15 +36,23 @@ export class CadTrustCommitHandler extends CadTrustSyncHandler {
 
       const client = this.cadTrustV2Service.getClient();
 
-      const pending = await client.staging.hasPendingCommits();
-      // Read this carefully: `confirmed: false` means a previous commit is still
-      // unconfirmed, i.e. commits ARE pending. Committing on top of that is how
-      // records get stuck at committed-but-unconfirmed (the state
-      // staging.resetCommitted() exists to clear).
-      if (!pending.confirmed) {
+      // v2 semantics — see StagingV2PendingResponse. `hasUncommittedStagedRows()` returning
+      // false means the node has no rows with committed:false, i.e. nothing to commit. This is
+      // the INVERSE of a guard that used to live here: that one read `confirmed` the v1 way
+      // (`!confirmed => skip`), which deadlocked every commit the moment anything was staged
+      // (confirmed via live testing, 2026-08-21). Skipping only when there is genuinely nothing
+      // staged cannot deadlock the same way. The propagation precondition (no previous commit
+      // still propagating on-chain) is still enforced server-side by POST /staging/commit itself
+      // (`assertNoPendingCommitsExcludingTransfers`), which 400s into the catch block below.
+      if (!(await client.staging.hasUncommittedStagedRows())) {
+        // Reconcile before returning: if the node has nothing uncommitted but we still hold
+        // STAGED sync records, those were committed (or cleared off the node) without us
+        // recording it. Leaving them STAGED would make callers like the bootstrap handler's
+        // three-way check re-enqueue a commit every run that this same guard then skips again —
+        // a silent loop.
+        const committed = await this.syncRecords.markAllStagedAsCommitted();
         this.logger.log(
-          `CAD Trust commit skipped — a previous commit is still pending ("${pending.message}"). ` +
-            `The next staged record will enqueue another commit.`
+          `CAD Trust commit skipped — nothing staged on the node; reconciled ${committed} sync record(s) to committed`
         );
         return;
       }

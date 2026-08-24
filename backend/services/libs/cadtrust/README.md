@@ -117,9 +117,12 @@ Deciding when to commit is the adaptor's call. Three workable strategies:
 | **Batch commit at the end of a dependency-ordered sync run** (suggested default) | Ordinary bulk sync — one commit per run, cheapest on-chain, and a failed run leaves nothing half-published |
 | Stage, then commit after human review | Regulated flows where an operator signs off before anything is public |
 
-Whatever you pick, check `staging.hasPendingCommits()` first. A pending commit blocks the XLSX
-imports outright, and stacking commits on top of an unconfirmed one is how records get stuck at
-`committed: true` — which is what `staging.resetCommitted()` exists to unstick.
+Whatever you pick, `staging.hasUncommittedStagedRows()` (née `hasPendingCommits()`) is a valid
+"is there anything to commit at all" short-circuit before calling `commit()` — see "Known gaps"
+§17. It does NOT tell you whether a *previous* commit is still propagating on-chain; that's a
+different precondition, enforced server-side by `POST /staging/commit` and `PUT /project/xlsx`
+alike (both reject if violated). Stacking commits on top of one still propagating is how records
+get stuck at `committed: true` — which is what `staging.resetCommitted()` exists to unstick.
 
 ### 2. `PUT` is a full replace, not a patch
 
@@ -336,13 +339,19 @@ Carried forward from the source documents rather than papered over.
     counts already-pushed-but-still-propagating commits (`confirmed:false` = "wait, don't commit
     again yet"). v2's version (per its own doc comment upstream) counts staged-but-uncommitted rows
     (`confirmed:false` = "you have staged work that still needs a commit" — the state in which a
-    commit *should* run). A caller that gates a commit attempt on `confirmed` using the v1 reading
-    will skip every commit, permanently, the moment anything is staged — confirmed via live testing
-    (2026-08-21) after exactly this bug stuck a program/methodology bootstrap commit forever. Do not
-    use `hasPendingCommits()` to decide whether to commit; `POST /staging/commit` enforces the real
-    (v1-style) precondition server-side and rejects if violated. Also confirmed: `GET
+    commit *should* run). A caller that gates a commit attempt on `confirmed` using the **v1
+    reading** (`!confirmed => skip`) will skip every commit, permanently, the moment anything is
+    staged — confirmed via live testing (2026-08-21) after exactly this bug stuck a
+    program/methodology bootstrap commit forever.
+
+    Gating on the **v2 reading** is fine, and is a legitimate "nothing staged, nothing to commit"
+    short-circuit — that's what `hasUncommittedStagedRows()` is for
+    (`CadTrustCommitHandler` uses it). What `hasPendingCommits()`/`hasUncommittedStagedRows()`
+    still can't tell you, on either reading, is whether a *previous* commit is still propagating
+    on-chain — `POST /staging/commit` enforces that (v1-style) precondition server-side and
+    rejects if violated; that's the reliable signal for it. Also confirmed: `GET
     /staging?type=pending` still uses the v1 meaning even on the same v2 node — the two "pending"
-    endpoints disagree with each other. See `StagingPendingResponse`'s doc comment.
+    endpoints disagree with each other. See `StagingV2PendingResponse`'s doc comment.
 
 ---
 
