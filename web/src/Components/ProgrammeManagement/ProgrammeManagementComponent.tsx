@@ -261,7 +261,7 @@ export const ProgrammeManagementComponent = (props: any) => {
       key: ProgrammeManagementSlColumns.projectProposalStage,
       sorter: true,
       align: "center" as const,
-      width: 160,
+      width: 190,
       render: (item: any) => {
         return (
           <Tag color={getProjectProposalStage(item as ProjectProposalStage)}>

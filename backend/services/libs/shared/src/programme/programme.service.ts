@@ -5185,6 +5185,8 @@ export class ProgrammeService {
             : "NULLS LAST"
           : undefined
       )
+      .addOrderBy('"programme"."createdTime"', "DESC")
+      .addOrderBy('"programme"."programmeId"', "DESC")
       .offset(skip)
       .limit(query.size)
       .getManyAndCount();
