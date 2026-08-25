@@ -62,9 +62,14 @@ const TABLE_DEFAULT_SORT: Partial<Record<AefTableName, SortEntry>> = {
 /** A full ISO 8601 instant — excludes bare dates/years and anything else `Date.parse` would guess at. */
 const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
+/** A string that is entirely digits (optionally signed) — safe to compare numerically. */
+const NUMERIC_STRING = /^-?\d+$/;
+
 // Timestamps compare as epoch, not as text: TypeORM returns `Date` objects
 // whose default stringification collates by weekday name, and ISO strings
 // only compare correctly when every value shares the same fractional precision.
+// Purely-numeric strings (e.g. authorization ids like "10") get the same
+// treatment — compared as text, "10" sorts before "9".
 function comparable(value: unknown): unknown {
   if (value instanceof Date) {
     return value.getTime();
@@ -74,6 +79,9 @@ function comparable(value: unknown): unknown {
     if (!Number.isNaN(epoch)) {
       return epoch;
     }
+  }
+  if (typeof value === "string" && NUMERIC_STRING.test(value)) {
+    return Number(value);
   }
   return value;
 }

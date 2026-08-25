@@ -152,6 +152,37 @@ describe("AefV2ReportService query sorting", () => {
     ]);
   });
 
+  /**
+   * `aefT4HoldingsAuthorizationId` holds the authorization request's own id,
+   * which in practice is a plain sequential id stored as a string ("1", "2",
+   * "10", ...) — not a prefixed code like "AUTH-001". Comparing those as text
+   * sorts "10" before "9", so once a registry has more than nine
+   * authorizations the default appears to stop working past the first page.
+   */
+  it("orders numeric-string authorization ids numerically, not lexicographically", async () => {
+    const service = buildService({
+      holdings: [
+        { aefT4HoldingsAuthorizationId: "2" },
+        { aefT4HoldingsAuthorizationId: "20" },
+        { aefT4HoldingsAuthorizationId: "9" },
+        { aefT4HoldingsAuthorizationId: "11" },
+        { aefT4HoldingsAuthorizationId: "10" },
+        { aefT4HoldingsAuthorizationId: "1" },
+      ],
+    });
+
+    const result = await service.query("t4Holdings", 2026);
+
+    expect(result.data.map((row: any) => row.aefT4HoldingsAuthorizationId)).toEqual([
+      "20",
+      "11",
+      "10",
+      "9",
+      "2",
+      "1",
+    ]);
+  });
+
   it("leaves the other tables on the updatedAt default", async () => {
     const service = buildService({
       actions: [
