@@ -258,7 +258,7 @@ const LayoutSider = (props: LayoutSiderProps) => {
                 alt="country flag"
                 src={
                   import.meta.env.VITE_APP_COUNTRY_FLAG_URL ||
-                  "/api/flag.png"
+                  "https://undpcarbonfiles001.blob.core.windows.net/assets/flag.png"
                 }
               />
             </div>
