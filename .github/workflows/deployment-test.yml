@@ -2,7 +2,7 @@ name: Carbon Registry Test Deployment
 on:
   push:
     branches:
-      - azure-migration
+      - '*'
     paths:
       - web/**
       - backend/**
@@ -39,7 +39,7 @@ jobs:
             echo "all-changes=true" >> $GITHUB_OUTPUT
           else
             echo "No All changes detected."
-            echo "all-changes=true" >> $GITHUB_OUTPUT
+            echo "all-changes=false" >> $GITHUB_OUTPUT
           fi
 
           if echo "$CHANGED_FILES" | grep -q ".github/workflows/"; then
@@ -47,7 +47,7 @@ jobs:
             echo "workflows-changes=true" >> $GITHUB_OUTPUT
           else
             echo "No Workflow changes detected."
-            echo "workflows-changes=true" >> $GITHUB_OUTPUT
+            echo "workflows-changes=false" >> $GITHUB_OUTPUT
           fi
 
           if echo "$CHANGED_FILES" | grep -q "web/"; then
@@ -55,7 +55,7 @@ jobs:
             echo "frontend-changes=true" >> $GITHUB_OUTPUT
           else
             echo "No Frontend changes detected."
-            echo "frontend-changes=true" >> $GITHUB_OUTPUT
+            echo "frontend-changes=false" >> $GITHUB_OUTPUT
           fi
 
           if echo "$CHANGED_FILES" | grep -q "backend/"; then
@@ -63,7 +63,7 @@ jobs:
             echo "backend-changes=true" >> $GITHUB_OUTPUT
           else
             echo "No Backend changes detected."
-            echo "backend-changes=true" >> $GITHUB_OUTPUT
+            echo "backend-changes=false" >> $GITHUB_OUTPUT
           fi
 
   build_frontend:
@@ -104,7 +104,7 @@ jobs:
         env:
           REGISTRY: ${{ env.REGISTRY }}
           REPOSITORY: carbon-web
-          IMAGE_TAG: develop
+          IMAGE_TAG: ${{ github.head_ref || github.ref_name }}
         run: |
           # Build a docker container and push it to ACR 
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -f web/Dockerfile . --build-arg PORT=3030 --build-arg VITE_APP_BACKEND=http://localhost:3000 --build-arg VITE_APP_COUNTRY_NAME="CountryX" --build-arg VITE_APP_REGISTRY_NAME="CountryXRegistry" --build-arg VITE_APP_MAP_TYPE="Mapbox" --build-arg VITE_APP_MAPBOXGL_ACCESS_TOKEN=${{ secrets.MAPBOXGL_ACCESS_TOKEN }} --build-arg VITE_APP_MAXIMUM_FILE_SIZE=5242880 --build-arg VITE_APP_COUNTRY_FLAG_URL="https://test.carbreg.org/api/flag.png" 
@@ -143,7 +143,7 @@ jobs:
         env:
           REGISTRY: ${{ env.REGISTRY }}
           REPOSITORY: carbon-services
-          IMAGE_TAG: develop
+          IMAGE_TAG: ${{ github.head_ref || github.ref_name }}
         run: |
           # Build a docker container and push it to ACR 
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -f backend/services/Dockerfile .
@@ -154,7 +154,7 @@ jobs:
   deploy_frontend:
     name: Carbon Registry Frontend Deploy
     needs: build_frontend
-    if: github.ref == 'refs/heads/azure-migration'
+    if: github.ref == 'refs/heads/develop'
     runs-on: [self-hosted, registry-test]
     concurrency:
       group: registry-test-deploy
@@ -166,7 +166,7 @@ jobs:
   deploy_backend:
     name: Carbon Registry Backend Deploy
     needs: build_backend
-    if: github.ref == 'refs/heads/azure-migration'
+    if: github.ref == 'refs/heads/develop'
     runs-on: [self-hosted, registry-test]
     concurrency:
       group: registry-test-deploy
