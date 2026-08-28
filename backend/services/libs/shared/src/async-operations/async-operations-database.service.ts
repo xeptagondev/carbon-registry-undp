@@ -4,6 +4,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AsyncActionEntity } from "../entities/async.action.entity";
 import { AsyncActionType } from "../enum/async.action.type.enum";
+import { CADTRUST_V2_ACTION_TYPES } from "../enum/cadtrust.async.action.types";
 import { HelperService } from "../util/helpers.service";
 import { AsyncAction, AsyncOperationsInterface } from "./async-operations.interface";
 
@@ -70,14 +71,7 @@ export class AsyncOperationsDatabaseService implements AsyncOperationsInterface 
     // CAD Trust v2 sync is a separate integration from the v1 block above, under
     // its own flag — a node runs v1 and v2 side by side with isolated stores.
     if (
-      [
-        AsyncActionType.CADTV2ProjectCreate,
-        AsyncActionType.CADTV2ProjectUpdate,
-        AsyncActionType.CADTV2Commit,
-        AsyncActionType.CADTV2Bootstrap,
-        AsyncActionType.CADTV2ValidationCreate,
-        AsyncActionType.CADTV2Reconcile,
-      ].includes(action.actionType) &&
+      CADTRUST_V2_ACTION_TYPES.includes(action.actionType) &&
       !this.configService.get("cadTrustV2.enable")
     ) {
       this.logger.log(

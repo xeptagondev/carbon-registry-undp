@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Repository } from "typeorm";
+import { In, MoreThanOrEqual, Repository } from "typeorm";
 
 import { CadTrustSyncRecordEntity } from "../entities/cadtrust.sync.record.entity";
 import { CadTrustLocalEntityType } from "../enum/cadtrust.local.entity.type.enum";
@@ -155,13 +155,29 @@ export class CadTrustSyncRecordService {
     return result.affected ?? 0;
   }
 
-  /** Marks every currently-staged row failed — used when a commit itself fails. */
+  /**
+   * Marks every currently-staged row failed — used when a commit itself fails.
+   *
+   * Unlike `markFailed`, this is a bulk `UPDATE`, so it increments `attemptCount` via a raw SQL
+   * expression (`"attemptCount" + 1`, the same pattern `CounterService.incrementCount` already
+   * uses) rather than reading each row first. That increment is what makes `findStuckFailures`
+   * below meaningful — `CadTrustCommitHandler` calls it after this to decide whether a run of
+   * consecutive commit failures has crossed `cadTrustV2.commitStuckThreshold` (CAD Trust's own
+   * "pending commit" guard is not always self-resolving — see the handler's doc).
+   */
   async markAllStagedAsFailed(error: unknown): Promise<number> {
     const now = Date.now();
-    const result = await this.syncRecordRepo.update(
-      { syncStatus: CadTrustSyncStatus.STAGED },
-      { syncStatus: CadTrustSyncStatus.FAILED, lastError: this.describe(error), updateTime: now }
-    );
+    const result = await this.syncRecordRepo
+      .createQueryBuilder()
+      .update()
+      .where({ syncStatus: CadTrustSyncStatus.STAGED })
+      .set({
+        syncStatus: CadTrustSyncStatus.FAILED,
+        lastError: this.describe(error),
+        updateTime: now,
+        attemptCount: () => '"attemptCount" + 1',
+      })
+      .execute();
     return result.affected ?? 0;
   }
 
@@ -225,6 +241,20 @@ export class CadTrustSyncRecordService {
       })
       .getRawMany<{ localId: string }>();
     return rows.map((row) => row.localId);
+  }
+
+  /**
+   * Every currently-FAILED sync record whose `attemptCount` has reached `threshold` —
+   * `CadTrustCommitHandler` uses this to escalate a run of consecutive commit failures from
+   * "routine, the reconcile timer will retry it" to "an operator should look at this," since CAD
+   * Trust's own "pending commit" guard is not always self-resolving (see the handler's doc).
+   * Relies on `markAllStagedAsFailed`'s `attemptCount` increment — records marked via the
+   * per-record `markFailed` also count, since it increments the same column.
+   */
+  async findStuckFailures(threshold: number): Promise<CadTrustSyncRecordEntity[]> {
+    return this.syncRecordRepo.find({
+      where: { syncStatus: CadTrustSyncStatus.FAILED, attemptCount: MoreThanOrEqual(threshold) },
+    });
   }
 
   /** Flattens an unknown throwable into something worth storing. */

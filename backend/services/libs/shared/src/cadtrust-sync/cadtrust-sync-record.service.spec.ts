@@ -9,15 +9,21 @@ const KEY = {
   cadTrustEntityType: CadTrustResourceType.PROJECT,
 };
 
-function buildService(existing: any = null, rawMany: any[] = []) {
+function buildService(existing: any = null, rawMany: any[] = [], findMany: any[] = []) {
   const queryBuilder = {
     select: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     getRawMany: jest.fn(async () => rawMany),
+    // markAllStagedAsFailed's chain — a separate method set on the same mock object, since both
+    // chains share one createQueryBuilder() call in the real service.
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    execute: jest.fn(async () => ({ affected: 2 })),
   };
   const repo = {
     findOne: jest.fn(async () => existing),
+    find: jest.fn(async () => findMany),
     create: jest.fn((row: any) => row),
     save: jest.fn(async (row: any) => row),
     update: jest.fn(async () => ({ affected: 2 })),
@@ -225,14 +231,39 @@ describe("CadTrustSyncRecordService", () => {
       );
     });
 
-    it("moves every staged row to failed when a commit fails", async () => {
-      const { service, repo } = buildService();
+    it("moves every staged row to failed when a commit fails, incrementing attemptCount", async () => {
+      const { service, queryBuilder } = buildService();
 
       expect(await service.markAllStagedAsFailed(new Error("commit failed"))).toBe(2);
-      expect(repo.update).toHaveBeenCalledWith(
-        { syncStatus: CadTrustSyncStatus.STAGED },
-        expect.objectContaining({ syncStatus: CadTrustSyncStatus.FAILED })
+      expect(queryBuilder.update).toHaveBeenCalled();
+      expect(queryBuilder.where).toHaveBeenCalledWith({ syncStatus: CadTrustSyncStatus.STAGED });
+      expect(queryBuilder.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          syncStatus: CadTrustSyncStatus.FAILED,
+          attemptCount: expect.any(Function),
+        })
       );
+      // The raw SQL expression itself — confirms this is a real increment, not an overwrite.
+      const setCall = queryBuilder.set.mock.calls[0][0];
+      expect(setCall.attemptCount()).toBe('"attemptCount" + 1');
+    });
+  });
+
+  describe("findStuckFailures", () => {
+    it("returns FAILED records whose attemptCount has reached the threshold", async () => {
+      const stuck = [{ localId: "0042" }];
+      const { service, repo } = buildService(null, [], stuck);
+
+      expect(await service.findStuckFailures(6)).toBe(stuck);
+      expect(repo.find).toHaveBeenCalledWith({
+        where: { syncStatus: CadTrustSyncStatus.FAILED, attemptCount: expect.anything() },
+      });
+    });
+
+    it("returns an empty array when nothing is stuck", async () => {
+      const { service } = buildService(null, [], []);
+
+      expect(await service.findStuckFailures(6)).toEqual([]);
     });
   });
 

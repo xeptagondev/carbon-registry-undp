@@ -20,8 +20,8 @@ DocumentManagementService                (producer, in the request path)
        └─ AsyncOperationsInterface.AddAction({ actionType, actionProps })
             └─ async_action_entity row          (or SQS, under ASYNC_OPERATIONS_TYPE=Queue)
 
-async-operations-handler                 (consumer, in the replicator container)
-  └─ AsyncOperationsHandlerService.handler(actionType, props)
+cadtrust-operations-handler              (CAD Trust's own consumer lane, in the replicator container —
+  └─ CadTrustAsyncOperationsHandlerService     see "Two independent async lanes" below)
        └─ CadTrustSyncDispatcherService.handle(...)
             └─ CadTrustProjectCreateHandler.handle(props)     -- thin orchestrator; the ensureX
                  ├─ resources.ensureStakeholder(companyId)       methods below all live on
@@ -60,7 +60,7 @@ main.ts                                  (national-api start, after setupHandler
   └─ CadTrustSyncEnqueueService.enqueueBootstrap()
        └─ AsyncOperationsInterface.AddAction(...)         -> async_action_entity row
 
-async-operations-handler                 (consumer, in the replicator container)
+cadtrust-operations-handler               (consumer, in the replicator container)
   └─ CadTrustBootstrapHandler.handle()
        ├─ CadTrustRegistryProfileService.assertConfigured()  -> sentinel-default guard
        ├─ client.organizations.list() -> find is_home        -> VERIFY ONLY, never creates
@@ -90,7 +90,7 @@ DocumentManagementService.updateProposalStage      (producer, in the request pat
   └─ CadTrustSyncEnqueueService.enqueueProjectUpdate(refId, txType)   transitions unconditionally)
        └─ async_action_entity row
 
-async-operations-handler
+cadtrust-operations-handler
   └─ CadTrustProjectUpdateHandler.handle({ refId, txType })
        ├─ txType ∈ {APPROVE_INF, REJECT_INF, APPROVE_VALIDATION}?
        │     no  -> log "ignored", stop                    (the other 8 transitions end here)
@@ -112,23 +112,20 @@ succeeded) had nothing else revisit it — until now. Two independent paths both
 
 - **`CadTrustProjectUpdateHandler`**, opportunistically, whenever a synced transition fires for that
   project anyway (see the diagram above).
-- **`CadTrustReconcileHandler`**, on a schedule — enqueued once per national-api start, alongside
-  `CADTV2Bootstrap`:
+- **`CadTrustReconcileHandler`**, on a schedule — see "Two independent async lanes" below for how
+  that schedule actually runs.
+
+`CadTrustReconcileHandler.handle()` itself:
 
 ```
-main.ts                                  (national-api start, right after enqueueBootstrap())
-  └─ CadTrustSyncEnqueueService.enqueueReconcile()
-       └─ AsyncOperationsInterface.AddAction(...)         -> async_action_entity row
-
-async-operations-handler
-  └─ CadTrustReconcileHandler.handle()
-       ├─ client.staging.hasUncommittedStagedRows()?      -> retry CadTrustCommitHandler.handle()
-       ├─ syncRecords.findFailedProjectRefIds()            -> distinct refIds with a FAILED
-       │                                                       PROJECT / PROJECT_METHODOLOGY /
-       │                                                       STAKEHOLDER_PROJECT / LOCATION record
-       ├─ for each refId: re-read from the LEDGER, then the same four resources.ensureX calls
-       │       CadTrustProjectUpdateHandler makes above
-       └─ CadTrustCommitHandler.handle()  -- once, if anything across all refIds was staged
+CadTrustReconcileHandler.handle()
+  ├─ client.staging.hasUncommittedStagedRows()?      -> retry CadTrustCommitHandler.handle()
+  ├─ syncRecords.findFailedProjectRefIds()            -> distinct refIds with a FAILED
+  │                                                       PROJECT / PROJECT_METHODOLOGY /
+  │                                                       STAKEHOLDER_PROJECT / LOCATION record
+  ├─ for each refId: re-read from the LEDGER, then the same four resources.ensureX calls
+  │       CadTrustProjectUpdateHandler makes above
+  └─ CadTrustCommitHandler.handle()  -- once, if anything across all refIds was staged
 ```
 
 Before this handler existed, nothing ever revisited a FAILED `cadtrust_sync_record` — recovery
@@ -145,7 +142,7 @@ performValidationReportAction, DNA_APPROVED branch            on APPROVE_PDD_BY_
                                           for why the validating actor's identity can't safely be
                                           re-derived inside the async handler
 
-async-operations-handler
+cadtrust-operations-handler
   └─ CadTrustValidationCreateHandler.handle(props)
        ├─ resources.existingSync(...) for this exact document version:
        │     COMMITTED -> skip entirely
@@ -168,18 +165,55 @@ async actions.
 
 ---
 
-## Two rules that are not negotiable
+## Two independent async lanes
+
+All five CAD Trust `AsyncActionType` members (`CADTV2ProjectCreate`, `CADTV2ProjectUpdate`,
+`CADTV2Commit`, `CADTV2Bootstrap`, `CADTV2ValidationCreate`, `CADTV2Reconcile`) — see
+`CADTRUST_V2_ACTION_TYPES` in `libs/shared/src/enum/cadtrust.async.action.types.ts` — are written to
+the same `async_action_entity` table every other async action is (`Email`, `RegistryCompanyCreate`,
+the legacy v1 CADT actions, …), but they are **consumed by a completely separate process loop**,
+`RUN_MODULE=cadtrust-operations-handler` (`src/async-operations-handler/cadtrust-async-operations-handler.service.ts`),
+not `async-operations-handler`. It runs alongside `replicator,async-operations-handler` in the same
+replicator container (see `docker-compose.yml`), but with its own cursor
+(`CounterType.CADTRUST_ASYNC_OPERATIONS`, not `ASYNC_OPERATIONS`) and its own backoff.
+
+Why: every CAD Trust handler already never throws (rule 1 below), so a CAD Trust failure could never
+permanently stall the shared cursor — but the shared loop still processes one action at a time,
+synchronously, in order. A *slow* (not failing) CAD Trust HTTP call — already observed live: 504s
+from an overloaded node, see `libs/cadtrust/LIVE_VALIDATION.md` — sat inline ahead of whatever email
+or registry-sync action was queued right behind it. `AsyncOperationsDatabaseHandlerService` now
+excludes `CADTRUST_V2_ACTION_TYPES` from its own query, so the two loops partition the table with no
+overlap: neither ever delays the other.
+
+This split is also what makes fast, safe retry possible for CAD Trust specifically.
+`CadTrustAsyncOperationsHandlerService` runs a **second, fully independent timer** alongside its
+cursor loop — a self-rescheduling call straight to `CadTrustReconcileHandler` (via the dispatcher)
+every `cadTrustV2.reconcileIntervalMs` (`CADT_V2_RECONCILE_INTERVAL_MS`, default 5 minutes),
+bypassing the queue entirely. This is what actually retries a staging/commit call that failed
+because a previous commit was still propagating on CAD Trust's side (see
+`CadTrustCommitHandler`'s class doc) — without needing to detect that specific error: reconcile
+already re-drives every `FAILED` project-scoped sync record unconditionally, so running it
+frequently is enough. `main.ts`'s once-per-national-api-start `enqueueReconcile()` call still exists
+too, as a cheap belt-and-braces immediately on national-api restart; the frequent timer is what
+does the real work, in the process that actually executes CAD Trust calls.
+
+---
+
+## Rules that are not negotiable
 
 ### 1. A handler must never throw
 
-`AsyncOperationsDatabaseHandlerService` keeps a **single global cursor** for all async operations, in
-the `counter` table. When a handler throws, that cursor does not advance and the same action retries
-forever on `5000 * 2^retryCount` backoff — which very quickly means never. **Everything behind it in
-the queue stops, including every outgoing email in the system.**
+Both `AsyncOperationsDatabaseHandlerService` (email, registry-sync, legacy CADT v1) and
+`CadTrustAsyncOperationsHandlerService` (CAD Trust v2 — see "Two independent async lanes" above)
+each keep their **own single cursor**, in the `counter` table. When a handler throws, its cursor
+does not advance and the same action retries forever on `5000 * 2^retryCount` backoff — which very
+quickly means never. **Everything behind it in that lane stops** — for the shared lane that includes
+every outgoing email in the system; for the CAD Trust lane it would mean no further CAD Trust action
+(including the reconcile timer's own dispatch calls) ever runs again.
 
-So a CAD Trust node being down must not be able to take email with it. Handlers catch their own
-errors, record them on `cadtrust_sync_record`, and return normally. `CadTrustSyncDispatcherService`
-catches anything that escapes anyway, as a backstop.
+So a CAD Trust node being down must not be able to take either lane down with it. Handlers catch
+their own errors, record them on `cadtrust_sync_record`, and return normally.
+`CadTrustSyncDispatcherService` catches anything that escapes anyway, as a backstop.
 
 Failures are visible in `cadtrust_sync_record.syncStatus` / `lastError`, not by blocking the queue.
 
@@ -193,6 +227,16 @@ see `src/migrations/1785500000000-CadTrustV2Sync.ts` — or the first insert fai
 
 (The enums in this module are string-valued precisely to avoid inheriting that problem.)
 
+### 3. A stuck commit needs a human, not a bot
+
+CAD Trust's `assertNoPendingCommitsExcludingTransfers` guard is *usually* a previous commit still
+propagating on-chain — the reconcile timer's frequent retries handle that on their own. But it can
+also be a row whose confirmation never lands, which does **not** self-resolve (see
+`CadTrustCommitHandler`'s class doc). That state's documented fix, `POST /staging/reset-committed`,
+is node-global and re-publishes every tenant's stuck rows on a shared node — too destructive to call
+automatically. Past `cadTrustV2.commitStuckThreshold` consecutive failures,
+`CadTrustCommitHandler` logs a loud warning naming the fix. It never calls it. An operator decides.
+
 ---
 
 ## Adding a newly synced entity
@@ -203,11 +247,16 @@ see `src/migrations/1785500000000-CadTrustV2Sync.ts` — or the first insert fai
 4. Add a handler under `handlers/` extending `CadTrustSyncHandler`, and list it in `SYNC_HANDLERS`
    in `cadtrust-sync.module.ts`.
 5. Add a typed method to `CadTrustSyncEnqueueService` and call it where the domain event happens.
-6. Add the action type to the CAD Trust v2 gate list in **both** `async-operations-database.service.ts`
-   **and** `async-operations-queue.service.ts`, or it will fire regardless of `CADT_V2_ENABLE`.
+6. **Append** the action type to `CADTRUST_V2_ACTION_TYPES` in
+   `libs/shared/src/enum/cadtrust.async.action.types.ts` — one shared constant used by both
+   producers' `CADT_V2_ENABLE` gate, `CadTrustAsyncOperationsHandlerService`'s consumer filter, and
+   `AsyncOperationsDatabaseHandlerService`'s exclusion filter. (Before this constant existed, the
+   gate list was hard-coded and duplicated in both producers separately, and had already drifted
+   once — don't reintroduce that by hard-coding it anywhere else.)
 
-Nothing outside this module changes — not the dispatcher, and not the switch in
-`async-operations-handler.service.ts`.
+Nothing outside this module changes — not the dispatcher, not the switch in
+`async-operations-handler.service.ts`, and not `CadTrustAsyncOperationsHandlerService` (it dispatches
+generically over whatever `CADTRUST_V2_ACTION_TYPES` contains).
 
 ### Conventions worth keeping
 
@@ -302,9 +351,12 @@ is a full replace — omitting it when a program IS synced would silently unlink
 | `CADT_V2_METHODOLOGY_NAME` | `"National Carbon Crediting"` | Required |
 | `CADT_V2_METHODOLOGY_VERSION` / `_DATE` / `_LINK` | — | Optional |
 | `CADT_V2_METHODOLOGY_TYPE` | — | Optional, picklist `methodology_type` |
+| `CADT_V2_RECONCILE_INTERVAL_MS` | `300000` (5 min) | How often the CAD Trust async lane re-runs the reconcile pass — see "Two independent async lanes" above |
+| `CADT_V2_COMMIT_STUCK_THRESHOLD` | `6` | Consecutive commit failures before `CadTrustCommitHandler` logs a stuck-commit warning — see rule 3 above |
 
-The consumer runs wherever `RUN_MODULE` includes `async-operations-handler` — today that is the
-**replicator** container, not a service of its own.
+The consumer runs wherever `RUN_MODULE` includes `cadtrust-operations-handler` — today that is the
+**replicator** container, not a service of its own. (`async-operations-handler` alongside it in the
+same container handles every non-CAD-Trust async action — see "Two independent async lanes".)
 
 All of the program/methodology values above go through `CadTrustRegistryProfileService` — the
 single place they are read from, so a later move to a DB-backed profile (there isn't one today)
@@ -368,7 +420,7 @@ on both maps in `picklist.map.ts` for the full member-by-member reasoning.
 The config split matters: `national-api` only ever reads `CADT_V2_ENABLE` (the
 enqueue gate); every other key — base URL, API key, registry name, commit
 author — is read inside the **replicator** container, because that's where
-`async-operations-handler` (and therefore this module's dispatcher) runs. See
+`cadtrust-operations-handler` (and therefore this module's dispatcher) runs. See
 the CADT v2 blocks in `backend/services/.env.example`, `.env.replicator.example`
 and `.env.national.example` for the full per-key breakdown.
 

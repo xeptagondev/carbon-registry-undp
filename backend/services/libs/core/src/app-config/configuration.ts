@@ -113,6 +113,18 @@ export default () => ({
     baseUrl: process.env.CADT_V2_BASE_URL || "http://localhost:31310/v2",
     apiKey: process.env.CADT_V2_API_KEY,
     timeoutMs: Number(process.env.CADT_V2_TIMEOUT_MS || 30000),
+    // How often the CAD Trust-only async lane re-runs CadTrustReconcileHandler, independent of
+    // the shared email/registry queue's own polling cadence. See
+    // src/async-operations-handler/cadtrust-async-operations-handler.service.ts and
+    // libs/shared/src/cadtrust-sync/README.md's "Re-driving children on update, and reconciling
+    // on a schedule" section. Only read in the process running RUN_MODULE=cadtrust-operations-handler.
+    reconcileIntervalMs: Number(process.env.CADT_V2_RECONCILE_INTERVAL_MS || 5 * 60 * 1000),
+    // Consecutive commit-failure count (see cadtrust_sync_record.attemptCount) past which
+    // CadTrustCommitHandler logs a loud, one-time-per-crossing "this may need a human" warning
+    // instead of quietly retrying forever. Not every failure this deep is a stuck commit — see
+    // the handler's own doc — but it is the signal an operator should investigate
+    // POST /staging/reset-committed rather than assume it will clear itself.
+    commitStuckThreshold: Number(process.env.CADT_V2_COMMIT_STUCK_THRESHOLD || 6),
     // Sent as CAD Trust's `projectRegistryName` — the name this registry is
     // published under on the network, not the CADT node's own identity.
     registryName: process.env.CADT_V2_REGISTRY_NAME || process.env.SYSTEM_NAME || "SystemX",

@@ -124,6 +124,15 @@ different precondition, enforced server-side by `POST /staging/commit` and `PUT 
 alike (both reject if violated). Stacking commits on top of one still propagating is how records
 get stuck at `committed: true` — which is what `staging.resetCommitted()` exists to unstick.
 
+**`resetCommitted()` is node-global and somewhat destructive: call it deliberately, not on a
+timer.** It resets *every* tenant's stuck rows on a shared node (excluding transfers) and
+re-publishes them on the next commit — it cannot be scoped to your own registry's rows. The
+registry-side adaptor (`libs/shared/src/cadtrust-sync/`) never calls it automatically:
+`CadTrustCommitHandler` only logs a warning once a run of consecutive commit failures crosses
+`cadTrustV2.commitStuckThreshold`, naming this endpoint as the fix — an operator decides whether
+to actually run it. See that module's README, rule 3 ("A stuck commit needs a human, not a bot")
+of "Rules that are not negotiable".
+
 ### 2. `PUT` is a full replace, not a patch
 
 Every update endpoint requires the complete object. That is why every `*UpdateInput` is an alias of

@@ -1,5 +1,6 @@
 import { handler } from "./ledger-replicator/handler";
 import { handler as asyncHandler } from "./async-operations-handler/handler";
+import { handler as cadTrustAsyncHandler } from "./async-operations-handler/cadtrust-handler";
 import { handler as importHandler } from "./data-importer/handler";
 import { handler as aefRolloverHandler } from "./aef-rollover/handler";
 import * as setupHandler from "@app/shared/setup/handler";
@@ -37,6 +38,13 @@ async function bootstrap() {
         continue;
       case "async-operations-handler":
         await asyncHandler();
+        console.log("Module initiated", moduleName);
+        continue;
+      case "cadtrust-operations-handler":
+        // CAD Trust's own async lane — separate cursor, separate loop, plus a recurring
+        // reconcile timer, all independent of async-operations-handler above. See
+        // src/async-operations-handler/cadtrust-async-operations-handler.service.ts.
+        await cadTrustAsyncHandler();
         console.log("Module initiated", moduleName);
         continue;
       case "data-importer":

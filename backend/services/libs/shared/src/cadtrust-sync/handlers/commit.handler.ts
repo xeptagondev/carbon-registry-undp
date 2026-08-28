@@ -14,6 +14,24 @@ import { CadTrustSyncHandler } from "./cadtrust-sync.handler";
  * stops. Keeping commit as its own queued action means several staged records
  * naturally batch into one on-chain commit, and a slow or failing commit never
  * blocks staging the next one.
+ *
+ * ## A commit failure is usually transient, but not always
+ *
+ * CAD Trust's `assertNoPendingCommitsExcludingTransfers` guard rejects a commit while any staging
+ * row sits at `committed:true, failed_commit:false` — normally a previous commit still
+ * propagating on-chain, which clears itself within minutes. But it is also the state a row is
+ * left in when its confirmation never lands, which does **not** self-resolve (observed live
+ * 2026-08-24: a stuck `project` UPDATE row blocked an unrelated validation-report sync — see
+ * `libs/cadtrust/README.md`'s notes on `POST /staging/reset-committed`, CAD Trust's own,
+ * node-global fix for that state).
+ *
+ * This handler does not try to tell the two cases apart — see `cadtrust-sync/README.md`'s
+ * "Re-driving children on update, and reconciling on a schedule" section for why the CAD
+ * Trust-only async lane just retries on a short timer instead. What this handler *does* do is
+ * escalate: once `cadtrust_sync_record.attemptCount` for any FAILED row crosses
+ * `cadTrustV2.commitStuckThreshold`, it logs one loud warning pointing at `resetCommitted()` —
+ * never calls it. That endpoint resets every tenant's stuck rows on a shared node and
+ * re-publishes them; an operator has to make that call, this handler never does.
  */
 @Injectable()
 export class CadTrustCommitHandler extends CadTrustSyncHandler {
@@ -76,7 +94,31 @@ export class CadTrustCommitHandler extends CadTrustSyncHandler {
           `The records are still staged on the node and a later commit will include them.`,
         error
       );
+      await this.warnIfStuck();
     }
+  }
+
+  /**
+   * Fires every time this commit handler runs while at least one FAILED sync record has crossed
+   * `cadTrustV2.commitStuckThreshold` — not just once — so a still-unresolved condition keeps
+   * showing up in the logs rather than being logged once and missed. Logging only; see the class
+   * doc for why `resetCommitted()` is never called from here.
+   */
+  private async warnIfStuck(): Promise<void> {
+    const threshold = this.configService.get<number>("cadTrustV2.commitStuckThreshold");
+    const stuck = await this.syncRecords.findStuckFailures(threshold);
+    if (stuck.length === 0) {
+      return;
+    }
+
+    this.logger.warn(
+      `CAD TRUST COMMIT STUCK — ${stuck.length} staging record(s) have failed ${threshold}+ times ` +
+        `in a row. If this is a commit still propagating on-chain it will resolve on its own; if a ` +
+        `confirmation never landed, an operator must run POST /staging/reset-committed on the node ` +
+        `to clear it — this resets every tenant's stuck rows on a shared node, so read ` +
+        `libs/cadtrust/README.md's notes on it before running it. Affected records: ` +
+        `${stuck.map((record) => `${record.localEntityType}:${record.localId}`).join(", ")}`
+    );
   }
 
   private commitAuthor(): string {
