@@ -38,6 +38,22 @@
  * describe.configure({ mode: "serial" }) block to avoid interleaving
  * with other cross-cutting tests that might create CAs with colliding
  * year windows on shared CounterService state.
+ *
+ * KNOWN GAPS (UNCR-478 NDC-period restructure — flagging, not silently
+ * patching, since there's no live stack in this environment to verify a
+ * rewrite against):
+ *   - Same `/calculate` gap as corresponding-adjustment.spec.ts: this
+ *     file's own `nextFutureYear()` never seeds an `ndc_target` row, so
+ *     its `/calculate` calls are very likely 400ing. Fix is
+ *     `await ensureNdcTargetForYear(apiDna, year)` (support/factories.ts)
+ *     before each call.
+ *   - The "CA-IR pre-population snapshot" invariant referenced above no
+ *     longer holds: initial reports no longer copy any field from a
+ *     cooperative approach at generate time (an IR now covers many
+ *     approaches, filed against an NDC period instead of a single CA).
+ *     Whatever test asserts that snapshot needs re-scoping to the
+ *     initial_report_cooperative_approach link's own
+ *     cooperativeApproachDetails snapshot instead.
  */
 import { request } from "@playwright/test";
 import { test, expect } from "./support/fixtures";
@@ -694,6 +710,11 @@ test.describe("Article 6.2 - Cross-cutting Integration", () => {
         cooperativeApproachId: ca.cooperativeApproachId,
       });
       await submitInitialReport(apiDna, gen.reportId);
+      // Revocation is only reachable from Active, so activate first.
+      await apiDna.put("national/cooperativeApproach/update", {
+        cooperativeApproachId: ca.cooperativeApproachId,
+        status: "Active",
+      });
       // Flip the CA to Revoked via PUT /update (revocation endpoint).
       const revokeRes = await apiDna.put(
         "national/cooperativeApproach/update",
@@ -1217,9 +1238,12 @@ test.describe("Article 6.2 - Cross-cutting Integration", () => {
           cooperativeApproachId: ca.cooperativeApproachId,
         });
 
-        // Flip the CA to Revoked. The service accepts any status on
-        // /update (no state machine today — see audit gap #5), so
-        // this succeeds.
+        // Flip the CA to Revoked. Revocation is only reachable from an
+        // Active approach, so make that move first.
+        await apiDna.put("national/cooperativeApproach/update", {
+          cooperativeApproachId: ca.cooperativeApproachId,
+          status: "Active",
+        });
         const revokeRes = await apiDna.put(
           "national/cooperativeApproach/update",
           {

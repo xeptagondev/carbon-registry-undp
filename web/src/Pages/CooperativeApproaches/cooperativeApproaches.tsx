@@ -7,16 +7,10 @@ import { useCountryOptions } from "../../Components/Common/hooks/useCountryOptio
 import { Button, Row, Col, Table, Tag, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { CompanyRole } from "../../Definitions/Enums/company.role.enum";
+import { CA_STATUS_COLORS } from "../../Definitions/Enums/cooperativeApproachStatus.enum";
 import "./cooperativeApproaches.scss";
 import "../../Styles/common.table.scss";
 import { TimedPageInfoTitle } from "../../Components/Common/TimedPageInfoTitle/TimedPageInfoTitle";
-
-const statusColors: Record<string, string> = {
-  Draft: "default",
-  Active: "green",
-  Suspended: "orange",
-  Completed: "blue",
-};
 
 const CooperativeApproaches = () => {
   const navigate = useNavigate();
@@ -78,7 +72,7 @@ const CooperativeApproaches = () => {
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
-        <Tag color={statusColors[status] || "default"}>{status}</Tag>
+        <Tag color={CA_STATUS_COLORS[status] || "default"}>{status}</Tag>
       ),
     },
   ];
