@@ -1,6 +1,5 @@
 import { CadTrustLocalEntityType } from "../../enum/cadtrust.local.entity.type.enum";
 import { CadTrustResourceType } from "../../enum/cadtrust.resource.type.enum";
-import { DocumentTypeEnum } from "../../enum/document.type.enum";
 import { TxType } from "../../enum/txtype.enum";
 import { CadTrustProjectSyncProps } from "../cadtrust-sync.enqueue.service";
 import { CadTrustProjectUpdateHandler } from "./project-update.handler";
@@ -12,6 +11,8 @@ const PROJECT_KEY = {
   localId: REF_ID,
   cadTrustEntityType: CadTrustResourceType.PROJECT,
 };
+
+const INF_CONTENT = { projectDescription: "d" };
 
 const LEDGER_PROJECT = {
   refId: REF_ID,
@@ -33,6 +34,10 @@ function buildHandler(
     infContent?: any;
     stageUpdate?: jest.Mock;
     commit?: jest.Mock;
+    ensureStakeholder?: jest.Mock;
+    ensureProjectMethodology?: jest.Mock;
+    ensureStakeholderProject?: jest.Mock;
+    ensureLocation?: jest.Mock;
   } = {}
 ) {
   const stageUpdate =
@@ -42,8 +47,13 @@ function buildHandler(
       response: { message: "ok", success: true },
     }));
 
-  const documentRepo = {
-    findOne: jest.fn(async () => ({ content: overrides.infContent ?? { projectDescription: "d" } })),
+  const resources = {
+    getLatestInfContent: jest.fn(async () => overrides.infContent ?? INF_CONTENT),
+    ensureStakeholder:
+      overrides.ensureStakeholder ?? jest.fn(async () => ({ cadTrustId: "cadt-stakeholder-1", commitOwed: false })),
+    ensureProjectMethodology: overrides.ensureProjectMethodology ?? jest.fn(async () => false),
+    ensureStakeholderProject: overrides.ensureStakeholderProject ?? jest.fn(async () => false),
+    ensureLocation: overrides.ensureLocation ?? jest.fn(async () => false),
   };
 
   const syncRecords = {
@@ -81,9 +91,9 @@ function buildHandler(
   const logger = { log: jest.fn(), error: jest.fn(), warn: jest.fn() };
 
   const handler = new CadTrustProjectUpdateHandler(
-    documentRepo as any,
     syncRecords as any,
     projectMapper as any,
+    resources as any,
     programmeLedgerService as any,
     commitHandler as any,
     cadTrustV2Service as any,
@@ -93,7 +103,7 @@ function buildHandler(
 
   return {
     handler,
-    documentRepo,
+    resources,
     syncRecords,
     projectMapper,
     programmeLedgerService,
@@ -197,14 +207,54 @@ describe("CadTrustProjectUpdateHandler", () => {
     expect(syncRecords.markFailed).toHaveBeenCalledWith(PROJECT_KEY, expect.any(Error));
   });
 
-  it("reads the latest INF document via the repository, not DocumentManagementService", async () => {
-    const { handler, documentRepo } = buildHandler();
+  it("reads the latest INF document via CadTrustProjectResourceService, not a repository directly", async () => {
+    const { handler, resources } = buildHandler();
 
     await handler.handle(props(TxType.APPROVE_INF));
 
-    expect(documentRepo.findOne).toHaveBeenCalledWith({
-      where: { programmeId: REF_ID, type: DocumentTypeEnum.INITIAL_NOTIFICATION_FORM },
-      order: { version: "DESC" },
+    expect(resources.getLatestInfContent).toHaveBeenCalledWith(REF_ID);
+  });
+
+  describe("re-driving failed child resources", () => {
+    // The point of this handler now covering more than just the project record: a child that
+    // failed at create time (typically ensureProjectMethodology, when bootstrap hadn't yet
+    // succeeded) had no other path back to CAD Trust before this. See the class doc.
+    it("re-drives the stakeholder, methodology link, stakeholder-project link and location after a successful PUT", async () => {
+      const { handler, resources } = buildHandler();
+
+      await handler.handle(props(TxType.APPROVE_INF));
+
+      expect(resources.ensureStakeholder).toHaveBeenCalledWith(LEDGER_PROJECT.companyId);
+      expect(resources.ensureProjectMethodology).toHaveBeenCalledWith(
+        REF_ID,
+        "cadt-project-1",
+        LEDGER_PROJECT.createTime
+      );
+      expect(resources.ensureStakeholderProject).toHaveBeenCalledWith(REF_ID, "cadt-project-1", "cadt-stakeholder-1");
+      expect(resources.ensureLocation).toHaveBeenCalledWith(REF_ID, "cadt-project-1", INF_CONTENT);
+    });
+
+    it("does not link the stakeholder-project relation when the stakeholder never resolved", async () => {
+      const ensureStakeholder = jest.fn(async () => undefined);
+      const { handler, resources } = buildHandler({ ensureStakeholder });
+
+      await handler.handle(props(TxType.APPROVE_INF));
+
+      expect(resources.ensureStakeholderProject).not.toHaveBeenCalled();
+    });
+
+    it("still commits once even when every child is already COMMITTED (ensureX all report false)", async () => {
+      const { handler, commitHandler } = buildHandler({
+        ensureStakeholder: jest.fn(async () => ({ cadTrustId: "cadt-stakeholder-cached", commitOwed: false })),
+        ensureProjectMethodology: jest.fn(async () => false),
+        ensureStakeholderProject: jest.fn(async () => false),
+        ensureLocation: jest.fn(async () => false),
+      });
+
+      await handler.handle(props(TxType.APPROVE_INF));
+
+      // The project PUT itself always has something to commit — see the class doc.
+      expect(commitHandler.handle).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -241,6 +291,15 @@ describe("CadTrustProjectUpdateHandler", () => {
       );
     });
 
+    it("does not rethrow when a child ensure step throws", async () => {
+      const ensureLocation = jest.fn(async () => {
+        throw new Error("unexpected");
+      });
+      const { handler } = buildHandler({ ensureLocation });
+
+      await expect(handler.handle(props(TxType.APPROVE_INF))).resolves.toBeUndefined();
+    });
+
     it("does not rethrow if the inline commit call somehow throws", async () => {
       const commit = jest.fn(async () => {
         throw new Error("unexpected");
@@ -259,11 +318,11 @@ describe("CadTrustProjectUpdateHandler", () => {
   });
 
   it("skips entirely when the integration is disabled", async () => {
-    const { handler, stageUpdate, syncRecords, documentRepo } = buildHandler({ enabled: false });
+    const { handler, stageUpdate, syncRecords, resources } = buildHandler({ enabled: false });
 
     await handler.handle(props(TxType.APPROVE_INF));
 
-    expect(documentRepo.findOne).not.toHaveBeenCalled();
+    expect(resources.getLatestInfContent).not.toHaveBeenCalled();
     expect(stageUpdate).not.toHaveBeenCalled();
     expect(syncRecords.markFailed).not.toHaveBeenCalled();
   });

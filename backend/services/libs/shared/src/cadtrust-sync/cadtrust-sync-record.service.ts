@@ -197,6 +197,36 @@ export class CadTrustSyncRecordService {
     }
   }
 
+  /**
+   * Distinct `localId`s (project `refId`s) of every currently-FAILED sync record among the
+   * project-scoped, refId-keyed resource types — PROJECT itself and its three child links/records
+   * that share a refId-keyed `localId` (`PROJECT_METHODOLOGY`, `STAKEHOLDER_PROJECT`, `LOCATION`).
+   * Used by `CadTrustReconcileHandler` to find which projects have something worth re-driving.
+   *
+   * Deliberately excludes `STAKEHOLDER` (keyed by companyId, not refId — see
+   * `CadTrustLocalEntityType`'s doc) and `VALIDATION` (needs a fuller snapshot than a sync record
+   * alone safely reconstructs after the fact — see `CadTrustValidationSyncProps`'s doc for why).
+   * A FAILED stakeholder still gets retried as a side effect whenever `ensureStakeholder` runs
+   * again for one of the refIds returned here, since every project of that company shares one
+   * stakeholder record.
+   */
+  async findFailedProjectRefIds(): Promise<string[]> {
+    const rows = await this.syncRecordRepo
+      .createQueryBuilder("record")
+      .select("DISTINCT record.localId", "localId")
+      .where("record.syncStatus = :status", { status: CadTrustSyncStatus.FAILED })
+      .andWhere("record.localEntityType IN (:...types)", {
+        types: [
+          CadTrustLocalEntityType.PROJECT,
+          CadTrustLocalEntityType.PROJECT_METHODOLOGY,
+          CadTrustLocalEntityType.STAKEHOLDER_PROJECT,
+          CadTrustLocalEntityType.LOCATION,
+        ],
+      })
+      .getRawMany<{ localId: string }>();
+    return rows.map((row) => row.localId);
+  }
+
   /** Flattens an unknown throwable into something worth storing. */
   private describe(error: unknown): string {
     if (error instanceof Error) {

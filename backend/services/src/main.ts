@@ -80,7 +80,12 @@ async function bootstrap() {
       // purpose — CadTrustBootstrapHandler is idempotent, dropped entirely when
       // CADT_V2_ENABLE is off, and runs in the replicator's
       // async-operations-handler, not here. See libs/shared/src/cadtrust-sync/README.md.
-      await app.get(CadTrustSyncEnqueueService).enqueueBootstrap();
+      const cadTrustSyncEnqueue = app.get(CadTrustSyncEnqueueService);
+      await cadTrustSyncEnqueue.enqueueBootstrap();
+      // Retries a staged-but-uncommitted batch and re-drives any project left with a FAILED
+      // sync record — otherwise nothing ever revisits one. Same idempotent-on-every-start
+      // reasoning as enqueueBootstrap() above.
+      await cadTrustSyncEnqueue.enqueueReconcile();
     }
     await app.listen(process.env.RUN_PORT || 3000);
     console.log("Module initiated", moduleName);

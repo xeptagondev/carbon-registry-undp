@@ -34,4 +34,8 @@ describe("AsyncActionType ordinals", () => {
   it("pins CADTV2ValidationCreate to 21, matching the label added in 1785800000000-CadTrustV2Validation.ts", () => {
     expect(AsyncActionType.CADTV2ValidationCreate).toBe(21);
   });
+
+  it("pins CADTV2Reconcile to 22, matching the label added in 1786000000000-CadTrustV2Reconcile.ts", () => {
+    expect(AsyncActionType.CADTV2Reconcile).toBe(22);
+  });
 });

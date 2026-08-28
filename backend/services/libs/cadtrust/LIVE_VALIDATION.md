@@ -94,33 +94,40 @@ Every resource below exposes the identical 5-endpoint shape program/methodology 
 (program/methodology) confirms `makeResource()` itself works, but each resource's own field names
 are a separate, unvalidated guess until captured individually.
 
-| Resource | Path | `list`/`get` | `stageCreate`/`stageUpdate`/`stageDelete` |
-|---|---|---|---|
-| Stakeholder | `/stakeholder` | ⏳ | ⏳ |
-| Label | `/label` | ⏳ | ⏳ |
-| Project | `/project` | ⏳ | ⏳ |
-| ProjectMethodology | `/project-methodology` | ⏳ | ⏳ |
-| StakeholderProject | `/stakeholder-projects` | ⏳ | ⏳ |
-| Validation | `/validation` | ⏳ | ⏳ |
-| Verification | `/verification` | ⏳ | ⏳ |
-| Location | `/location` | ⏳ | ⏳ |
-| Estimation | `/estimation` | ⏳ | ⏳ |
-| Rating | `/rating` | ⏳ | ⏳ |
-| CoBenefit | `/co-benefit` | ⏳ | ⏳ |
-| Issuance | `/issuance` | ⏳ | ⏳ |
-| Unit | `/unit` | ⏳ | ⏳ |
-| UnitLabel | `/unit-label` | ⏳ | ⏳ |
+`stageCreate`/`stageUpdate` are split from `stageDelete` below because project-lifecycle dev testing
+(2026-08-24, via the real handlers against a live node — see the paragraph below the table)
+confirmed the former for six of these resources without ever exercising the latter for any of them.
 
-`Project`'s `list` is a partial exception — `cadtrust.live.spec.ts`'s `'paginates projects'` test
-already exercises `GET /project?page=&limit=` and asserts the pagination envelope
-(`page`/`data`/length), but has not checked individual record field names, so the row above stays ⏳
-pending a full capture pass.
+| Resource | Path | `list`/`get` | `stageCreate` | `stageUpdate` | `stageDelete` |
+|---|---|---|---|---|---|
+| Stakeholder | `/stakeholder` | ⏳ | ✅ | ⏳ | ⏳ |
+| Label | `/label` | ⏳ | ⏳ | ⏳ | ⏳ |
+| Project | `/project` | ⏳ | ✅ | ✅ | ⏳ |
+| ProjectMethodology | `/project-methodology` | ⏳ | ✅ | ⏳ | ⏳ |
+| StakeholderProject | `/stakeholder-projects` | ⏳ | ✅ | ⏳ | ⏳ |
+| Validation | `/validation` | ⏳ | ✅ | ⏳ | ⏳ |
+| Verification | `/verification` | ⏳ | ⏳ | ⏳ | ⏳ |
+| Location | `/location` | ⏳ | ✅ | ⏳ | ⏳ |
+| Estimation | `/estimation` | ⏳ | ⏳ | ⏳ | ⏳ |
+| Rating | `/rating` | ⏳ | ⏳ | ⏳ | ⏳ |
+| CoBenefit | `/co-benefit` | ⏳ | ⏳ | ⏳ | ⏳ |
+| Issuance | `/issuance` | ⏳ | ⏳ | ⏳ | ⏳ |
+| Unit | `/unit` | ⏳ | ⏳ | ⏳ | ⏳ |
+| UnitLabel | `/unit-label` | ⏳ | ⏳ | ⏳ | ⏳ |
 
-`Stakeholder`'s and `Project`'s `stageCreate` were both reached live on 2026-08-24 via
-`CadTrustProjectCreateHandler` — the endpoints are up and the request shape was accepted for
-transport — but every attempt returned `504 Gateway time-out` from Cloudflare (origin overloaded,
-`retry_after: 120`) before a response body was observed. Both rows stay ⏳ pending a confirmed
-successful response.
+Validated via: manual dev testing, 2026-08-24 — `Stakeholder.stageCreate` (`CadTrustProjectCreateHandler.ensureStakeholder`),
+`Project.stageCreate` (`ensureProject`), `Project.stageUpdate` (`CadTrustProjectUpdateHandler`),
+`ProjectMethodology.stageCreate` (`ensureProjectMethodology`), `StakeholderProject.stageCreate`
+(`ensureStakeholderProject`), `Location.stageCreate` (`ensureLocation`), and `Validation.stageCreate`
+(`CadTrustValidationCreateHandler`) were each staged, committed, and confirmed on the node through a
+full project-lifecycle pass (INF submit through `APPROVE_VALIDATION`) — superseding the "504 Gateway
+time-out" note that used to sit here for Stakeholder/Project: those were transient origin overload on
+an earlier attempt the same day, not a standing problem.
+
+`Project`'s `list` is a partial exception on the `get`/`list` side — `cadtrust.live.spec.ts`'s
+`'paginates projects'` test already exercises `GET /project?page=&limit=` and asserts the pagination
+envelope (`page`/`data`/length), but has not checked individual record field names, so that cell
+stays ⏳ pending a full capture pass.
 
 ## AEF resources (Article 6.2 reporting, `resources/entities.ts`)
 

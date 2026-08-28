@@ -23,24 +23,33 @@ DocumentManagementService                (producer, in the request path)
 async-operations-handler                 (consumer, in the replicator container)
   └─ AsyncOperationsHandlerService.handler(actionType, props)
        └─ CadTrustSyncDispatcherService.handle(...)
-            └─ CadTrustProjectCreateHandler.handle(props)
-                 ├─ ensureStakeholder(companyId)          -> stage the owning PD company, once per company
-                 ├─ ensureProject(props, infContent)       -> stage the project, link cadTrustProgramId
-                 ├─ ensureProjectMethodology(...)          -> link project <-> the bootstrapped methodology
-                 ├─ ensureStakeholderProject(...)          -> link project <-> its owning stakeholder
-                 ├─ ensureLocation(...)                    -> stage the project's site location, if the
-                 │                                             INF captured one                -> all PRIVATE to this node
+            └─ CadTrustProjectCreateHandler.handle(props)     -- thin orchestrator; the ensureX
+                 ├─ resources.ensureStakeholder(companyId)       methods below all live on
+                 │       -> stage the owning PD company, once per company    CadTrustProjectResourceService
+                 ├─ resources.ensureProject(refId, props, infContent)
+                 │       -> stage the project, link cadTrustProgramId
+                 ├─ resources.ensureProjectMethodology(...)   -> link project <-> the bootstrapped methodology
+                 ├─ resources.ensureStakeholderProject(...)   -> link project <-> its owning stakeholder
+                 ├─ resources.ensureLocation(...)              -> stage the project's site location, if the
+                 │                                                 INF captured one            -> all PRIVATE to this node
                  └─ CadTrustCommitHandler.handle()  -- called directly, in-process, if anything was staged
                       └─ client.staging.commit(...)                                             -> PUBLIC on the network
 ```
 
 Nothing is visible to the CAD Trust network until the commit runs. Five resources can be staged in
 one project-create run (stakeholder, project, project_methodology, stakeholder_project, location) —
-each independently idempotent via `isAlreadySynced`, each self-catching so one failure never blocks
+each independently idempotent via `existingSync()`, each self-catching so one failure never blocks
 the others — followed by a single inline commit, not a queued one. (Earlier versions of this handler
 queued the commit, matching the reasoning bootstrap's commit still documents below; once a single
 project-create run stages up to five resources itself, that in-run batch is already worth committing
 together immediately, and queueing added a round trip without adding any real batching benefit.)
+
+`existingSync()`, `adoptOrphanedStagedRow()` and the five `ensureX` methods all live on
+`CadTrustProjectResourceService`, not on the handler — extracted so `CadTrustProjectUpdateHandler`
+and `CadTrustReconcileHandler` (both below) can re-drive the same child resources instead of each
+reimplementing the staged/committed/orphan bookkeeping. `CadTrustProjectCreateHandler` itself is now
+just the orchestration: which ensures to call, in what order, and whether the result adds up to a
+commit being owed.
 
 `CADTV2ProjectCreate` above is the steady-state flow. Before any project can sync, a one-time
 `CADTV2Bootstrap` action verifies the CAD Trust home organization and stages this registry's one
@@ -86,9 +95,46 @@ async-operations-handler
        ├─ txType ∈ {APPROVE_INF, REJECT_INF, APPROVE_VALIDATION}?
        │     no  -> log "ignored", stop                    (the other 8 transitions end here)
        │     yes -> re-map the project from the LEDGER (not project_entity) + the INF's
-       │            document_entity.content, PUT it, markStaged, commit inline if staged
-       └─ CadTrustCommitHandler.handle()  -- called directly, in-process, if staged
+       │            document_entity.content, PUT it, markStaged
+       ├─ resources.ensureStakeholder / ensureProjectMethodology / ensureStakeholderProject /
+       │       ensureLocation  -- re-drives any of the four child resources that never got
+       │                          staged or committed at create time (see "Re-driving children"
+       │                          below); a no-op for anything already COMMITTED
+       └─ CadTrustCommitHandler.handle()  -- called directly, in-process
 ```
+
+### Re-driving children on update, and reconciling on a schedule
+
+`CadTrustProjectCreateHandler` stages up to five resources in one run, each independently fallible.
+A child that failed there (most commonly `ensureProjectMethodology`, when bootstrap hadn't yet
+succeeded) had nothing else revisit it — until now. Two independent paths both call into
+`CadTrustProjectResourceService`'s same `ensureX` methods to fill in what's missing:
+
+- **`CadTrustProjectUpdateHandler`**, opportunistically, whenever a synced transition fires for that
+  project anyway (see the diagram above).
+- **`CadTrustReconcileHandler`**, on a schedule — enqueued once per national-api start, alongside
+  `CADTV2Bootstrap`:
+
+```
+main.ts                                  (national-api start, right after enqueueBootstrap())
+  └─ CadTrustSyncEnqueueService.enqueueReconcile()
+       └─ AsyncOperationsInterface.AddAction(...)         -> async_action_entity row
+
+async-operations-handler
+  └─ CadTrustReconcileHandler.handle()
+       ├─ client.staging.hasUncommittedStagedRows()?      -> retry CadTrustCommitHandler.handle()
+       ├─ syncRecords.findFailedProjectRefIds()            -> distinct refIds with a FAILED
+       │                                                       PROJECT / PROJECT_METHODOLOGY /
+       │                                                       STAKEHOLDER_PROJECT / LOCATION record
+       ├─ for each refId: re-read from the LEDGER, then the same four resources.ensureX calls
+       │       CadTrustProjectUpdateHandler makes above
+       └─ CadTrustCommitHandler.handle()  -- once, if anything across all refIds was staged
+```
+
+Before this handler existed, nothing ever revisited a FAILED `cadtrust_sync_record` — recovery
+depended on an unrelated later project event happening to touch the exact same sync record. See
+`handlers/reconcile.handler.ts` for why `STAKEHOLDER` and `VALIDATION` sync records are deliberately
+not looked up directly here.
 
 ```
 DocumentManagementService.performPDDAction /                 (producer, in the request path — only
@@ -101,11 +147,20 @@ performValidationReportAction, DNA_APPROVED branch            on APPROVE_PDD_BY_
 
 async-operations-handler
   └─ CadTrustValidationCreateHandler.handle(props)
-       ├─ already synced for this exact document version?  -> skip
+       ├─ resources.existingSync(...) for this exact document version:
+       │     COMMITTED -> skip entirely
+       │     STAGED    -> skip staging, retry the commit only
+       │     FAILED    -> resources.adoptOrphanedStagedRow(...) before falling through to stage
        ├─ project not yet synced to CAD Trust?              -> markFailed, stop
        ├─ client.validation.stageCreate(...)  -> markStaged
        └─ CadTrustCommitHandler.handle()  -- called directly, in-process
 ```
+
+Uses `CadTrustProjectResourceService.existingSync()` / `adoptOrphanedStagedRow()`, not
+`CadTrustSyncRecordService.isAlreadySynced()` — the latter collapses STAGED and COMMITTED into one
+`true`, which used to leave a validation record staged-but-never-committed stuck forever, and would
+re-stage (duplicating) one that had gone STAGED → FAILED after a commit failure. See
+`handlers/validation-create.handler.ts`'s class doc.
 
 `APPROVE_VALIDATION` fires both flows from the same request: the project record moves to
 `"Authorized"` and a validation record is staged for the validation report, as two independent
@@ -210,7 +265,8 @@ Nothing outside this module changes — not the dispatcher, and not the switch i
 | `CADTV2ProjectUpdate` | ✅ Implemented, deliberately narrow scope — of the 11 lifecycle transitions enqueued, only `APPROVE_INF` (→ `"Registered"`), `REJECT_INF` (→ `"Rejected"`), `APPROVE_VALIDATION` (→ `"Authorized"`) re-stage the project record; the other 8 are logged as ignored |
 | `CADTV2ValidationCreate` | ✅ Implemented — stages a CAD Trust `validation` record on `APPROVE_PDD_BY_DNA` and `APPROVE_VALIDATION`, keyed by document + version so a resubmitted-and-reapproved document gets its own record |
 | `CADTV2Commit` | ✅ Implemented — called both from the queue and inline from every other CAD Trust v2 handler |
-| Credits (issuance / unit) | ❌ Not started — needs `verification`, which nothing in this registry produces yet |
+| `CADTV2Reconcile` | ✅ Implemented — retries a staged-but-uncommitted batch and re-drives any project with a FAILED sync record; enqueued once per national-api start alongside `CADTV2Bootstrap` |
+| Credits (issuance / unit) | ❌ Not started — a scope decision, not a data-availability gap. The registry does produce verification reports (`DocumentTypeEnum.VERIFICATION`, `performVerificationAction()`); `TxType.APPROVE_VERIFICATION` is declared but unused because verification approval writes `TxType.ISSUE` via `programmeLedgerService.issueCredits(...)` (`document-management.service.ts`'s `performVerificationAction`), bypassing the `updateProposalStage` funnel this module hooks. Wiring credits in means hooking `issueCredits()` directly, not waiting on data that doesn't exist yet. |
 
 Organization creation itself is **out of scope everywhere** — `CADTV2Bootstrap` verifies a home
 organization exists and fails loudly if it doesn't; provisioning one is an operator action against
@@ -325,17 +381,19 @@ and `.env.national.example` for the full per-key breakdown.
    ```
    Skipping this makes the first enqueued action fail with
    `invalid input value for enum async_action_entity_actiontype_enum: "17"` —
-   the baseline migration only created labels `'0'..'16'`. There are four
+   the baseline migration only created labels `'0'..'16'`. There are six
    CAD Trust migrations to run, in order: `1785500000000-CadTrustV2Sync.ts`
    (labels `17`–`19`, the `cadtrust_sync_record` table),
    `1785600000000-CadTrustV2Bootstrap.ts` (label `20`, plus `ORGANIZATION` /
    `PROGRAM` / `METHODOLOGY`), `1785700000000-CadTrustV2ProjectRelations.ts`
    (no new action-type label — adds `STAKEHOLDER` / `PROJECT_METHODOLOGY` /
-   `STAKEHOLDER_PROJECT` / `LOCATION`), and `1785800000000-CadTrustV2Validation.ts`
-   (label `21`, plus `VALIDATION`).
+   `STAKEHOLDER_PROJECT` / `LOCATION`), `1785800000000-CadTrustV2Validation.ts`
+   (label `21`, plus `VALIDATION`), `1785900000000-CadTrustSyncRecordPayload.ts`
+   (no new label — adds the debugging-only `payload` column), and
+   `1786000000000-CadTrustV2Reconcile.ts` (label `22`, for `CADTV2Reconcile`).
 2. Confirm it landed:
    ```sql
-   SELECT unnest(enum_range(NULL::async_action_entity_actiontype_enum));            -- includes 17..21
+   SELECT unnest(enum_range(NULL::async_action_entity_actiontype_enum));            -- includes 17..22
    SELECT unnest(enum_range(NULL::cadtrust_sync_record_localentitytype_enum));      -- includes ORGANIZATION, PROGRAM,
                                                                                      -- METHODOLOGY, STAKEHOLDER,
                                                                                      -- PROJECT_METHODOLOGY,

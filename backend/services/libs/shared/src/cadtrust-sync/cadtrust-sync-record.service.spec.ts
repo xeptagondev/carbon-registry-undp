@@ -9,16 +9,23 @@ const KEY = {
   cadTrustEntityType: CadTrustResourceType.PROJECT,
 };
 
-function buildService(existing: any = null) {
+function buildService(existing: any = null, rawMany: any[] = []) {
+  const queryBuilder = {
+    select: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    getRawMany: jest.fn(async () => rawMany),
+  };
   const repo = {
     findOne: jest.fn(async () => existing),
     create: jest.fn((row: any) => row),
     save: jest.fn(async (row: any) => row),
     update: jest.fn(async () => ({ affected: 2 })),
+    createQueryBuilder: jest.fn(() => queryBuilder),
   };
   const logger = { log: jest.fn(), error: jest.fn(), warn: jest.fn() };
 
-  return { service: new CadTrustSyncRecordService(repo as any, logger as any), repo, logger };
+  return { service: new CadTrustSyncRecordService(repo as any, logger as any), repo, queryBuilder, logger };
 }
 
 describe("CadTrustSyncRecordService", () => {
@@ -265,6 +272,33 @@ describe("CadTrustSyncRecordService", () => {
       expect(
         await service.getSyncedCadTrustId(CadTrustLocalEntityType.PROGRAM, CadTrustResourceType.PROGRAM)
       ).toBeUndefined();
+    });
+  });
+
+  describe("findFailedProjectRefIds", () => {
+    it("returns the distinct refIds of FAILED project-scoped sync records", async () => {
+      const { service, queryBuilder } = buildService(null, [{ localId: "0042" }, { localId: "0099" }]);
+
+      const refIds = await service.findFailedProjectRefIds();
+
+      expect(refIds).toEqual(["0042", "0099"]);
+      expect(queryBuilder.where).toHaveBeenCalledWith("record.syncStatus = :status", {
+        status: CadTrustSyncStatus.FAILED,
+      });
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith("record.localEntityType IN (:...types)", {
+        types: [
+          CadTrustLocalEntityType.PROJECT,
+          CadTrustLocalEntityType.PROJECT_METHODOLOGY,
+          CadTrustLocalEntityType.STAKEHOLDER_PROJECT,
+          CadTrustLocalEntityType.LOCATION,
+        ],
+      });
+    });
+
+    it("returns an empty array when nothing is FAILED", async () => {
+      const { service } = buildService(null, []);
+
+      expect(await service.findFailedProjectRefIds()).toEqual([]);
     });
   });
 });

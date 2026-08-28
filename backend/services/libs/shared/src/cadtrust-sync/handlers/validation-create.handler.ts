@@ -5,6 +5,7 @@ import { ConfigService } from "@nestjs/config";
 import { AsyncActionType } from "../../enum/async.action.type.enum";
 import { CadTrustLocalEntityType } from "../../enum/cadtrust.local.entity.type.enum";
 import { CadTrustResourceType } from "../../enum/cadtrust.resource.type.enum";
+import { CadTrustProjectResourceService } from "../cadtrust-project-resource.service";
 import { CadTrustValidationSyncProps } from "../cadtrust-sync.enqueue.service";
 import { CadTrustSyncKey, CadTrustSyncRecordService } from "../cadtrust-sync-record.service";
 import { CadTrustValidationMapper } from "../mappers/validation.mapper";
@@ -24,6 +25,16 @@ import { CadTrustCommitHandler } from "./commit.handler";
  * its own record rather than silently skipping (a version-independent key) or needing a
  * `stageUpdate` path. This resource is create-only here as a result.
  *
+ * ## Staged-but-not-committed and orphan handling
+ *
+ * Uses `CadTrustProjectResourceService.existingSync()` — not `CadTrustSyncRecordService.isAlreadySynced()`
+ * — for the same reason `CadTrustProjectCreateHandler` does: `isAlreadySynced()` collapses STAGED
+ * and COMMITTED into one `true`, which would leave a validation record staged-but-never-committed
+ * stuck forever (the commit never gets retried), and — after a failed commit flips the record to
+ * FAILED — would cause the next delivery to re-stage it, duplicating it on the node. `existingSync()`
+ * distinguishes all three states, and `adoptOrphanedStagedRow()` recovers a validation row left
+ * orphaned by an ambiguous staging failure (e.g. a 504) instead of re-staging a duplicate.
+ *
  * Commit is inline, not queued — matches `CadTrustBootstrapHandler` / `CadTrustProjectCreateHandler`:
  * this handler stages at most one resource per run, and there is no cross-run batching upside to
  * deferring through another queue round trip.
@@ -35,6 +46,7 @@ export class CadTrustValidationCreateHandler extends CadTrustSyncHandler {
   constructor(
     private readonly syncRecords: CadTrustSyncRecordService,
     private readonly validationMapper: CadTrustValidationMapper,
+    private readonly resources: CadTrustProjectResourceService,
     private readonly commitHandler: CadTrustCommitHandler,
     private readonly cadTrustV2Service: CadTrustV2Service,
     private readonly configService: ConfigService,
@@ -67,10 +79,19 @@ export class CadTrustValidationCreateHandler extends CadTrustSyncHandler {
         cadTrustEntityType: CadTrustResourceType.VALIDATION,
       };
 
-      // The async queue is at-least-once; this is what stops a duplicate validation record on
-      // re-delivery.
-      if (await this.syncRecords.isAlreadySynced(key)) {
-        this.logger.log(`Validation record ${localId} is already synced to CAD Trust; skipping`);
+      // The async queue is at-least-once, and the database consumer re-runs the whole action if
+      // anything after it in the same pass fails. Re-delivery is routine, so this is what stops a
+      // duplicate validation record — see the class doc for why existingSync() and not
+      // isAlreadySynced().
+      const existing = await this.resources.existingSync(key, `Validation record ${localId}`);
+      if ("commitOwed" in existing) {
+        if (!existing.commitOwed) {
+          this.logger.log(`Validation record ${localId} is already synced to CAD Trust; skipping`);
+          return;
+        }
+        // Staged on a previous run whose commit never went through — nothing to (re-)stage, just
+        // retry the commit below.
+        await this.commitHandler.handle();
         return;
       }
 
@@ -91,6 +112,20 @@ export class CadTrustValidationCreateHandler extends CadTrustSyncHandler {
       let input: ValidationCreateInput | undefined;
       try {
         input = await this.validationMapper.toCreateInput(props, localId, cadTrustProjectId);
+
+        if (existing.failedBefore) {
+          const orphan = await this.resources.adoptOrphanedStagedRow(
+            key,
+            "validation",
+            "cad_trust_validation_id",
+            (change) => change.validation_id === localId
+          );
+          if (orphan) {
+            await this.commitHandler.handle();
+            return;
+          }
+        }
+
         const staged = await this.cadTrustV2Service.getClient().validation.stageCreate(input);
         // The guide documents cadTrustValidationId on the create response but does not guarantee it
         // on every resource, so fall back to uuid — same convention as every other handler here.

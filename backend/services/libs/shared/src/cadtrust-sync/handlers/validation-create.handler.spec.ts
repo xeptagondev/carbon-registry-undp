@@ -34,10 +34,17 @@ function props(overrides: Partial<CadTrustValidationSyncProps> = {}): CadTrustVa
 function buildHandler(
   overrides: {
     enabled?: boolean;
+    /** Sync record already COMMITTED — nothing to do. */
     alreadySynced?: boolean;
+    /** Sync record STAGED by a prior run whose commit never landed — commit owed, no re-stage. */
+    staged?: boolean;
+    /** Sync record FAILED by a prior run — triggers the orphan-adopt lookup before re-staging. */
+    failed?: boolean;
     cadTrustProjectId?: string | undefined;
     stageCreate?: jest.Mock;
     commit?: jest.Mock;
+    /** What adoptOrphanedStagedRow finds, when `failed` is set. Defaults to "nothing". */
+    orphan?: { cadTrustId: string; commitOwed: true } | undefined;
   } = {}
 ) {
   const stageCreate =
@@ -48,12 +55,23 @@ function buildHandler(
     }));
 
   const syncRecords = {
-    isAlreadySynced: jest.fn(async () => overrides.alreadySynced ?? false),
     getCadTrustId: jest.fn(async () =>
       "cadTrustProjectId" in overrides ? overrides.cadTrustProjectId : "cadt-project-1"
     ),
     markStaged: jest.fn(async () => undefined),
     markFailed: jest.fn(async () => undefined),
+  };
+
+  const resources = {
+    // Backs the handler's `existingSync()` call. `alreadySynced`/`staged`/`failed` map onto the
+    // three statuses the handler distinguishes — COMMITTED (nothing to do), STAGED (commit owed,
+    // don't re-stage), FAILED (triggers the orphan-adopt lookup before re-staging).
+    existingSync: jest.fn(async () => {
+      if (overrides.alreadySynced) return { cadTrustId: "cadt-validation-cached", commitOwed: false };
+      if (overrides.staged) return { cadTrustId: "cadt-validation-cached", commitOwed: true };
+      return { failedBefore: overrides.failed ?? false };
+    }),
+    adoptOrphanedStagedRow: jest.fn(async () => overrides.orphan),
   };
 
   const validationMapper = {
@@ -78,13 +96,14 @@ function buildHandler(
   const handler = new CadTrustValidationCreateHandler(
     syncRecords as any,
     validationMapper as any,
+    resources as any,
     commitHandler as any,
     cadTrustV2Service as any,
     configService as any,
     logger as any
   );
 
-  return { handler, syncRecords, validationMapper, commitHandler, stageCreate, logger };
+  return { handler, syncRecords, resources, validationMapper, commitHandler, stageCreate, logger };
 }
 
 describe("CadTrustValidationCreateHandler", () => {
@@ -128,13 +147,57 @@ describe("CadTrustValidationCreateHandler", () => {
     );
   });
 
-  it("skips staging and committing when this exact document version is already synced", async () => {
+  it("skips staging and committing when this exact document version is already COMMITTED", async () => {
     const { handler, stageCreate, commitHandler } = buildHandler({ alreadySynced: true });
 
     await handler.handle(props());
 
     expect(stageCreate).not.toHaveBeenCalled();
     expect(commitHandler.handle).not.toHaveBeenCalled();
+  });
+
+  describe("commit-owed status (previously staged, never committed)", () => {
+    // Regression coverage for the bug fixed here: isAlreadySynced() collapsed STAGED and
+    // COMMITTED into one "already synced" true, so a validation record staged by a run that died
+    // before committing was stuck — the commit never got retried on re-delivery. Then, once a
+    // subsequent commit failure flipped the record to FAILED, the next delivery would re-stage it,
+    // duplicating it on the node (isAlreadySynced() returns false for FAILED).
+    it("does not re-stage when STAGED but never committed, and retries the commit instead", async () => {
+      const { handler, stageCreate, commitHandler } = buildHandler({ staged: true });
+
+      await handler.handle(props());
+
+      expect(stageCreate).not.toHaveBeenCalled();
+      expect(commitHandler.handle).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("orphaned staging rows after an ambiguous failure (504 recovery)", () => {
+    it("adopts a matching uncommitted row on the node instead of re-staging, when the sync record is FAILED", async () => {
+      const { handler, stageCreate, resources, commitHandler } = buildHandler({
+        failed: true,
+        orphan: { cadTrustId: "staging-orphan-1", commitOwed: true },
+      });
+
+      await handler.handle(props());
+
+      expect(resources.adoptOrphanedStagedRow).toHaveBeenCalledWith(
+        VALIDATION_KEY,
+        "validation",
+        "cad_trust_validation_id",
+        expect.any(Function)
+      );
+      expect(stageCreate).not.toHaveBeenCalled();
+      expect(commitHandler.handle).toHaveBeenCalledTimes(1);
+    });
+
+    it("stages normally when FAILED but the node holds no matching uncommitted row", async () => {
+      const { handler, stageCreate } = buildHandler({ failed: true, orphan: undefined });
+
+      await handler.handle(props());
+
+      expect(stageCreate).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("is marked FAILED with a clear message when the project is not yet synced to CAD Trust", async () => {

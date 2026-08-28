@@ -76,6 +76,7 @@ export class AsyncOperationsQueueService implements AsyncOperationsInterface {
         AsyncActionType.CADTV2Commit,
         AsyncActionType.CADTV2Bootstrap,
         AsyncActionType.CADTV2ValidationCreate,
+        AsyncActionType.CADTV2Reconcile,
       ].includes(action.actionType) &&
       !this.configService.get("cadTrustV2.enable")
     ) {

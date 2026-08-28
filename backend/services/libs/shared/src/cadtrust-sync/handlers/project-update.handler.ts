@@ -1,16 +1,13 @@
 import { CadTrustV2Service, ProjectCreateInput } from "@app/cadtrust";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
 
-import { DocumentEntity } from "../../entities/document.entity";
 import { AsyncActionType } from "../../enum/async.action.type.enum";
 import { CadTrustLocalEntityType } from "../../enum/cadtrust.local.entity.type.enum";
 import { CadTrustResourceType } from "../../enum/cadtrust.resource.type.enum";
-import { DocumentTypeEnum } from "../../enum/document.type.enum";
 import { TxType } from "../../enum/txtype.enum";
 import { ProgrammeLedgerService } from "../../programme-ledger/programme-ledger.service";
+import { CadTrustProjectResourceService } from "../cadtrust-project-resource.service";
 import { CadTrustProjectSyncProps } from "../cadtrust-sync.enqueue.service";
 import { CadTrustSyncKey, CadTrustSyncRecordService } from "../cadtrust-sync-record.service";
 import { CadTrustProjectMapper } from "../mappers/project.mapper";
@@ -30,7 +27,9 @@ import { CadTrustCommitHandler } from "./commit.handler";
 const SYNCED_TX_TYPES: TxType[] = [TxType.APPROVE_INF, TxType.REJECT_INF, TxType.APPROVE_VALIDATION];
 
 /**
- * Re-stages the CAD Trust project record on `APPROVE_INF` / `REJECT_INF` / `APPROVE_VALIDATION`.
+ * Re-stages the CAD Trust project record on `APPROVE_INF` / `REJECT_INF` / `APPROVE_VALIDATION`,
+ * and re-drives any child resource (stakeholder, project-methodology link, stakeholder-project
+ * link, location) that never got staged or committed at project-create time.
  *
  * ## Reads live state safely — never `project_entity`
  *
@@ -43,26 +42,39 @@ const SYNCED_TX_TYPES: TxType[] = [TxType.APPROVE_INF, TxType.REJECT_INF, TxType
  *    is immediately consistent, not `project_entity`, which is populated asynchronously by the
  *    ledger replicator and cannot be trusted to already reflect this transition (or even to exist at
  *    all, relative to this handler's own run) by the time this handler executes.
- *  - The INF description: `document_entity`, read via `getLatestInfContent` — written synchronously,
- *    once, when the INF was submitted, and never touched again after that.
+ *  - The INF description: `document_entity`, read via `CadTrustProjectResourceService.getLatestInfContent`
+ *    — written synchronously, once, when the INF was submitted, and never touched again after that.
  *
  * `input.cadTrustProgramId` is re-derived every run for the same full-replace reason: omitting it
  * when a program IS already synced would silently unlink it from the project on this PUT.
  *
+ * ## Re-driving children — why this handler, and why it's safe
+ *
+ * `CadTrustProjectCreateHandler` stages up to five resources in one run, each independently
+ * fallible. A child that failed there (most commonly `ensureProjectMethodology`, when bootstrap
+ * hadn't yet succeeded) had no other path back to CAD Trust — nothing re-visited it. This handler
+ * already reads the project fresh from the ledger for the PUT above, so `project.companyId` and
+ * `project.createTime` are available for free to re-drive `ensureStakeholder` /
+ * `ensureProjectMethodology` / `ensureStakeholderProject` / `ensureLocation` the same way create
+ * did. Each of those checks `existingSync()` first (via `CadTrustProjectResourceService`), so an
+ * already-COMMITTED child is left untouched — this only fills in what's missing or FAILED, it does
+ * not re-`stageUpdate` a child that changed since creation (e.g. a corrected location on a
+ * resubmitted INF); that stays out of scope.
+ *
  * ## Commit is inline, not queued
  *
- * Matches `CadTrustBootstrapHandler` / `CadTrustProjectCreateHandler` — this handler stages at most
- * one resource per run, so there is no cross-run batching upside to a queued commit.
+ * Matches `CadTrustBootstrapHandler` / `CadTrustProjectCreateHandler` — a successful project
+ * `stageUpdate` always has something to commit, and any child re-driven in the same run piggybacks
+ * on that same commit call.
  */
 @Injectable()
 export class CadTrustProjectUpdateHandler extends CadTrustSyncHandler {
   readonly actionType = AsyncActionType.CADTV2ProjectUpdate;
 
   constructor(
-    @InjectRepository(DocumentEntity)
-    private readonly documentRepo: Repository<DocumentEntity>,
     private readonly syncRecords: CadTrustSyncRecordService,
     private readonly projectMapper: CadTrustProjectMapper,
+    private readonly resources: CadTrustProjectResourceService,
     private readonly programmeLedgerService: ProgrammeLedgerService,
     private readonly commitHandler: CadTrustCommitHandler,
     private readonly cadTrustV2Service: CadTrustV2Service,
@@ -117,9 +129,10 @@ export class CadTrustProjectUpdateHandler extends CadTrustSyncHandler {
         return;
       }
 
+      const infContent = await this.resources.getLatestInfContent(refId);
+
       let input: ProjectCreateInput | undefined;
       try {
-        const infContent = await this.getLatestInfContent(refId);
         // ProjectEntity structurally satisfies CadTrustProjectCreateSnapshot — same reuse trick as
         // CadTrustProjectCreateHandler's snapshot, just sourced from a live ledger read here instead
         // of a pre-write in-memory object.
@@ -149,28 +162,21 @@ export class CadTrustProjectUpdateHandler extends CadTrustSyncHandler {
         return;
       }
 
+      // Re-drive any of the five create-time child resources that never got staged or committed.
+      // Each call is independently self-catching (see CadTrustProjectResourceService) and a no-op
+      // when the child is already COMMITTED.
+      const stakeholder = await this.resources.ensureStakeholder(project.companyId);
+      await this.resources.ensureProjectMethodology(refId, cadTrustProjectId, project.createTime);
+      if (stakeholder) {
+        await this.resources.ensureStakeholderProject(refId, cadTrustProjectId, stakeholder.cadTrustId);
+      }
+      await this.resources.ensureLocation(refId, cadTrustProjectId, infContent);
+
       await this.commitHandler.handle();
     } catch (error) {
       // Must not rethrow: a throw here stalls the global async-operations cursor and stops every
       // queued action in the system, email included.
       this.logger.error(`Unexpected error updating CAD Trust project ${refId}`, error);
     }
-  }
-
-  /**
-   * The INF document holds every project field that has no column on `project_entity` —
-   * description, dates, location, contacts. Read via the repository rather than
-   * `DocumentManagementService`, to keep this module free of a dependency cycle with the module that
-   * enqueues these actions. Mirrors `CadTrustProjectCreateHandler`'s identically-named method.
-   */
-  private async getLatestInfContent(refId: string): Promise<any | undefined> {
-    const document = await this.documentRepo.findOne({
-      where: {
-        programmeId: refId,
-        type: DocumentTypeEnum.INITIAL_NOTIFICATION_FORM,
-      },
-      order: { version: "DESC" },
-    });
-    return document?.content;
   }
 }

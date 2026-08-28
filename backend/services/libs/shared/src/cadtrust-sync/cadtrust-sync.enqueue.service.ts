@@ -187,6 +187,16 @@ export class CadTrustSyncEnqueueService {
     await this.enqueue(AsyncActionType.CADTV2Bootstrap, {});
   }
 
+  /**
+   * Retries a staged-but-uncommitted batch and re-drives any project with a FAILED sync record.
+   * Called once per national-api start (see main.ts), alongside `enqueueBootstrap()` — the handler
+   * is idempotent and cheap when there is nothing to reconcile, so a repeat enqueue on every
+   * restart just costs one no-op row on a healthy deployment.
+   */
+  async enqueueReconcile(): Promise<void> {
+    await this.enqueue(AsyncActionType.CADTV2Reconcile, {});
+  }
+
   private async enqueue(actionType: AsyncActionType, actionProps: any): Promise<void> {
     try {
       // AddAction drops the action itself when cadTrustV2.enable is off.

@@ -9,6 +9,7 @@ import { Company } from "../entities/company.entity";
 import { DocumentEntity } from "../entities/document.entity";
 import { ProgrammeLedgerModule } from "../programme-ledger/programme-ledger.module";
 import { CadTrustPicklistService } from "./cadtrust-picklist.service";
+import { CadTrustProjectResourceService } from "./cadtrust-project-resource.service";
 import { CadTrustRegistryProfileService } from "./cadtrust-registry-profile.service";
 import {
   CADTRUST_SYNC_HANDLERS,
@@ -20,6 +21,7 @@ import { CadTrustBootstrapHandler } from "./handlers/bootstrap.handler";
 import { CadTrustCommitHandler } from "./handlers/commit.handler";
 import { CadTrustProjectCreateHandler } from "./handlers/project-create.handler";
 import { CadTrustProjectUpdateHandler } from "./handlers/project-update.handler";
+import { CadTrustReconcileHandler } from "./handlers/reconcile.handler";
 import { CadTrustValidationCreateHandler } from "./handlers/validation-create.handler";
 import { CadTrustLocationMapper } from "./mappers/location.mapper";
 import { CadTrustProjectMapper } from "./mappers/project.mapper";
@@ -51,6 +53,8 @@ import { CadTrustValidationMapper } from "./mappers/validation.mapper";
  *
  * `DocumentManagementService` enqueues these actions, so injecting it here would
  * make `DocumentManagementModule` and this module mutually dependent. Handlers
+ * (mostly via `CadTrustProjectResourceService`, which centralizes the repository
+ * access shared by the project-create, project-update and reconcile handlers)
  * therefore read `DocumentEntity` / `Company` through repositories, and current
  * project state through `ProgrammeLedgerService` (imported via `ProgrammeLedgerModule`,
  * confirmed dependency-cycle-free) — never `ProjectEntity`, which the ledger replicator
@@ -64,6 +68,7 @@ const SYNC_HANDLERS = [
   CadTrustProjectUpdateHandler,
   CadTrustValidationCreateHandler,
   CadTrustCommitHandler,
+  CadTrustReconcileHandler,
 ];
 
 @Module({
@@ -84,6 +89,7 @@ const SYNC_HANDLERS = [
     CadTrustStakeholderMapper,
     CadTrustLocationMapper,
     CadTrustValidationMapper,
+    CadTrustProjectResourceService,
     ...SYNC_HANDLERS,
     {
       provide: CADTRUST_SYNC_HANDLERS,

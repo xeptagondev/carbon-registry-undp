@@ -31,4 +31,8 @@ export enum AsyncActionType {
   // Stages a CAD Trust validation record for a DNA-approved PDD or validation report.
   // See src/migrations/1785800000000-CadTrustV2Validation.ts.
   CADTV2ValidationCreate,
+  // Re-drives any FAILED cadtrust_sync_record and retries a stuck staged-but-uncommitted
+  // batch. Enqueued once per national-api start, alongside CADTV2Bootstrap — see main.ts.
+  // See src/migrations/1786000000000-CadTrustV2Reconcile.ts.
+  CADTV2Reconcile,
 }
