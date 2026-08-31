@@ -22,6 +22,7 @@ import { CompanyRole } from "../enum/company.role.enum";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { CompanyService } from "../company/company.service";
 import { FileHandlerInterface } from "../file-handler/filehandler.interface";
+import { toStorageKey } from "../file-handler/storage-key";
 import { plainToClass, plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { DocType } from "../enum/document.type";
@@ -945,7 +946,10 @@ public async uploadDocument(type: DocType, id: string, data: string) {
             HttpStatus.INTERNAL_SERVER_ERROR
           );
         }
-        return data;
+        // Not an upload - the client echoed back a document it was shown. Store
+        // the key rather than the resolved URL it received, or re-saving a form
+        // would silently replace keys with backend-specific URLs.
+        return toStorageKey(data);
       }
       filetype = this.getFileExtension(data);
       data = data.split(",")[1];
