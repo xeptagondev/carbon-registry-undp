@@ -120,18 +120,59 @@ succeeded) had nothing else revisit it — until now. Two independent paths both
 ```
 CadTrustReconcileHandler.handle()
   ├─ client.staging.hasUncommittedStagedRows()?      -> retry CadTrustCommitHandler.handle()
-  ├─ syncRecords.findFailedProjectRefIds()            -> distinct refIds with a FAILED
+  │
+  ├─ PROJECT sweep — syncRecords.findFailedProjectRefIds()  -> distinct refIds with a FAILED
   │                                                       PROJECT / PROJECT_METHODOLOGY /
   │                                                       STAKEHOLDER_PROJECT / LOCATION record
-  ├─ for each refId: re-read from the LEDGER, then the same four resources.ensureX calls
-  │       CadTrustProjectUpdateHandler makes above
-  └─ CadTrustCommitHandler.handle()  -- once, if anything across all refIds was staged
+  │     for each refId: re-read from the LEDGER, then the same four resources.ensureX calls
+  │       CadTrustProjectUpdateHandler makes above    -> then commit if the sweep owed one
+  │
+  ├─ SNAPSHOT sweep — syncRecords.findFailedSnapshotRecords()  -> full FAILED VALIDATION /
+  │                                                       VERIFICATION / ISSUANCE rows
+  │     grouped & ordered VALIDATION -> VERIFICATION -> ISSUANCE; each record re-driven from its
+  │       `syncProps` snapshot (or, for a pre-`syncProps` row, best-effort from `payload`) via
+  │       resources.ensureValidation / creditResources.ensureVerification / .ensureIssuance
+  │       -> commit after each group that owed one, so the next group sees it published
+  │
+  ├─ CREDIT_BLOCK sweep — syncRecords.findFailedCreditBlockIds()  -> distinct creditBlockIds with
+  │                                                       a FAILED UNIT / UNIT_LABEL record
+  │     for each creditBlockId: creditResources.ensureIssuanceForUncreatedUnit(creditBlockId) +
+  │       ensureUnitUpdate(creditBlockId) + ensureItmoLabelIfAuthorized(creditBlockId)
+  │       -- ensureUnitUpdate/ensureItmoLabelIfAuthorized are the same upsert ensureX the
+  │       steady-state CadTrustUnitUpdateHandler calls; ensureIssuanceForUncreatedUnit is the
+  │       one-off re-drive for the case below     -> then commit if the sweep owed one
 ```
 
+A failed credit issuance never reaches `ensureUnitCreate`, so `CadTrustCreditResourceService`'s
+`ensureCreditIssuance` writes a `FAILED` `UNIT` row (keyed by `creditBlockId`) as a breadcrumb before
+returning — one per vintage block. Without it the `CREDIT_BLOCK` sweep would have nothing to find and
+the units would stay unsynced forever, even once the `ISSUANCE` record itself reconciled via the
+`SNAPSHOT` sweep (the two live in different sweeps, and `ISSUANCE`'s `syncProps` is only `{ refId }`,
+so the snapshot sweep can't know which blocks were waiting on it). `ensureIssuanceForUncreatedUnit`
+covers the narrower case where `ensureIssuance` bailed on its "no synced verification" early return
+and so left *no* `ISSUANCE` row for the `SNAPSHOT` sweep either — the `CREDIT_BLOCK` sweep re-drives
+that missing issuance itself, but only for a block whose unit has genuinely never been staged.
+
+The three sweeps run in dependency order (project -> validation/verification/issuance -> unit), so
+a chain broken at several links can fully heal in a single tick. Which `CadTrustLocalEntityType`
+belongs to which sweep — and why `ORGANIZATION` / `PROGRAM` / `METHODOLOGY` belong to none (they are
+`BOOTSTRAP_ONLY`; a FAILED row there recovers on the next `enqueueBootstrap()`), while `STAKEHOLDER`
+and `LABEL` are re-driven only as a side effect of another sweep's `ensureX` — is defined and
+explained in `reconcile-scope.ts`, with `reconcile-scope.spec.ts` pinning the partition.
+
 Before this handler existed, nothing ever revisited a FAILED `cadtrust_sync_record` — recovery
-depended on an unrelated later project event happening to touch the exact same sync record. See
-`handlers/reconcile.handler.ts` for why `STAKEHOLDER` and `VALIDATION` sync records are deliberately
-not looked up directly here.
+depended on an unrelated later project or credit event happening to touch the exact same sync
+record.
+
+The `SNAPSHOT` sweep re-drives what the project sweep cannot: `VALIDATION` / `VERIFICATION` need the
+request-side snapshot (`CadTrustValidationSyncProps` / `CadTrustVerificationSyncProps`) that
+re-deriving from the operational DB would race the replicator for, and `ISSUANCE`'s `localId` is the
+composite `${refId}-VERIFICATION-v${N}` key, not a bare refId. That snapshot is now persisted on the
+sync record itself (`cadtrust_sync_record.syncProps`, written by
+`CadTrustSyncRecordService.recordSyncProps` before staging — so it survives even the "project not
+yet synced" early return), and reconcile reads it back. A row that failed before that column existed
+falls back to the stored outbound `payload`; if neither is usable the record is logged and left
+FAILED rather than guessed at.
 
 ```
 DocumentManagementService.performPDDAction /                 (producer, in the request path — only
@@ -163,12 +204,84 @@ re-stage (duplicating) one that had gone STAGED → FAILED after a commit failur
 `"Authorized"` and a validation record is staged for the validation report, as two independent
 async actions.
 
+### Credits: issuance, unit create, and every later unit update
+
+Two different producer-side hooks, for the same reason validation's request-path/replicator-side
+split exists — the data each event needs is only safely readable from a different place:
+
+```
+document-management.service.ts        (producer, in the request path — performVerificationAction's
+  performVerificationAction              DNA_APPROVED branch, right before issueCredits())
+  └─ CadTrustSyncEnqueueService.enqueueVerification({ refId, documentVersion,
+       verificationBodyName })
+       └─ async_action_entity row
+
+cadtrust-operations-handler
+  └─ CadTrustVerificationCreateHandler.handle(props)
+       └─ resources.ensureVerification(props)     -- stages a `verification` record keyed
+              -> stage, keyed refId-VERIFICATION-vN    ${refId}-VERIFICATION-v${documentVersion}
+       └─ CadTrustCommitHandler.handle()  -- called directly, in-process
+```
+
+```
+credit-transactions-management.service.ts    (producer, in the replicator — handleTransactionRecords,
+  handleTransactionRecords                      one call per TxType.ISSUE row: issueCredits() writes
+  └─ CadTrustSyncEnqueueService.enqueueCreditIssuance(creditBlockId)   one CreditBlocksEntity per vintage)
+       └─ async_action_entity row     -- payload is just { creditBlockId }, safe to re-read: see
+                                          CadTrustCreditResourceService's class doc
+
+cadtrust-operations-handler
+  └─ CadTrustCreditIssuanceHandler.handle({ creditBlockId })
+       └─ resources.ensureCreditIssuance(creditBlockId)
+              ├─ ensureIssuance(refId)     -- reuses VERIFICATION's own localId (findLatestSynced) —
+              │     -> stage, same localId    safe because monitoring cycles are strictly serial
+              └─ ensureUnitCreate(creditBlockId, cadTrustIssuanceId)   -- always a create: this
+                     -> stage a new `unit`                                vintage's block is new
+       └─ CadTrustCommitHandler.handle()  -- called directly, in-process
+```
+
+Every later change to that same `creditBlockId` — a whole-block transfer, a `COMPLETED` retirement,
+a `COMPLETED` ITMO authorization, or the retained/shrunken side of any partial split
+(`TxType.CREDIT_BLOCK_SPLIT`) — funnels through one upsert action instead of one per event type:
+
+```
+credit-transactions-management.service.ts    (producer, in the replicator — handleTransactionRecords's
+  handleTransactionRecords                      TRANSFER / RETIRE / ITMO_AUTH / CREDIT_BLOCK_SPLIT
+  └─ CadTrustSyncEnqueueService.enqueueUnitUpdate(creditBlockId)   branches; RETIRE/ITMO_AUTH only
+       └─ async_action_entity row                                  when status == COMPLETED)
+
+cadtrust-operations-handler
+  └─ CadTrustUnitUpdateHandler.handle({ creditBlockId })
+       ├─ resources.ensureUnitUpdate(creditBlockId)     -- re-reads current CreditBlocksEntity state
+       │     never synced   -> create (a split-off block's first sync)
+       │     STAGED         -> retry the commit only, don't re-stage
+       │     COMMITTED       -> full-replace PUT, reusing the unit's own original
+       │                        cadTrustIssuanceId (read back from its stored payload)
+       └─ resources.ensureItmoLabelIfAuthorized(creditBlockId)   -- no-op unless
+              itmoAuthorizationRecord is set; bootstraps the singleton "Article 6 -
+              Authorisation" label on first use, then links this unit to it
+       └─ CadTrustCommitHandler.handle()  -- called directly, in-process, if either owed one
+```
+
+**Why `unit` is treated as create-once-then-upsert, not split-aware.** CAD Trust's own `/unit/split`
+call takes one request describing every resulting fragment; the registry instead emits a split's two
+halves as two independent, uncorrelated replicator events (`CREDIT_BLOCK_SPLIT` for the retained
+low-range block, a normal `TRANSFER`/`RETIRE`/`ITMO_AUTH` for the new high-range one). Rather than
+reassembling them, every distinct `creditBlockId` just gets its own `unit`, created once and kept in
+sync via full-replace `stageUpdate` thereafter — see `CadTrustCreditResourceService`'s class doc and
+`CadTrustCreditUnitMapper`'s class doc.
+
+**A rejected or cancelled retirement/ITMO-authorization request never reaches CAD Trust** —
+`handleTransactionRecords`'s own `RETIRE`/`ITMO_AUTH` branches only call `enqueueUnitUpdate` inside
+their existing `status == CreditTransactionStatusEnum.COMPLETED` guard.
+
 ---
 
 ## Two independent async lanes
 
-All five CAD Trust `AsyncActionType` members (`CADTV2ProjectCreate`, `CADTV2ProjectUpdate`,
-`CADTV2Commit`, `CADTV2Bootstrap`, `CADTV2ValidationCreate`, `CADTV2Reconcile`) — see
+All nine CAD Trust `AsyncActionType` members (`CADTV2ProjectCreate`, `CADTV2ProjectUpdate`,
+`CADTV2Commit`, `CADTV2Bootstrap`, `CADTV2ValidationCreate`, `CADTV2Reconcile`,
+`CADTV2VerificationCreate`, `CADTV2CreditIssuance`, `CADTV2UnitUpdate`) — see
 `CADTRUST_V2_ACTION_TYPES` in `libs/shared/src/enum/cadtrust.async.action.types.ts` — are written to
 the same `async_action_entity` table every other async action is (`Email`, `RegistryCompanyCreate`,
 the legacy v1 CADT actions, …), but they are **consumed by a completely separate process loop**,
@@ -314,8 +427,10 @@ generically over whatever `CADTRUST_V2_ACTION_TYPES` contains).
 | `CADTV2ProjectUpdate` | ✅ Implemented, deliberately narrow scope — of the 11 lifecycle transitions enqueued, only `APPROVE_INF` (→ `"Registered"`), `REJECT_INF` (→ `"Rejected"`), `APPROVE_VALIDATION` (→ `"Authorized"`) re-stage the project record; the other 8 are logged as ignored |
 | `CADTV2ValidationCreate` | ✅ Implemented — stages a CAD Trust `validation` record on `APPROVE_PDD_BY_DNA` and `APPROVE_VALIDATION`, keyed by document + version so a resubmitted-and-reapproved document gets its own record |
 | `CADTV2Commit` | ✅ Implemented — called both from the queue and inline from every other CAD Trust v2 handler |
-| `CADTV2Reconcile` | ✅ Implemented — retries a staged-but-uncommitted batch and re-drives any project with a FAILED sync record; enqueued once per national-api start alongside `CADTV2Bootstrap` |
-| Credits (issuance / unit) | ❌ Not started — a scope decision, not a data-availability gap. The registry does produce verification reports (`DocumentTypeEnum.VERIFICATION`, `performVerificationAction()`); `TxType.APPROVE_VERIFICATION` is declared but unused because verification approval writes `TxType.ISSUE` via `programmeLedgerService.issueCredits(...)` (`document-management.service.ts`'s `performVerificationAction`), bypassing the `updateProposalStage` funnel this module hooks. Wiring credits in means hooking `issueCredits()` directly, not waiting on data that doesn't exist yet. |
+| `CADTV2Reconcile` | ✅ Implemented — three sweeps in dependency order: retries a staged-but-uncommitted batch, re-drives any project with a FAILED sync record, re-drives any FAILED `VALIDATION`/`VERIFICATION`/`ISSUANCE` record from its persisted `syncProps` snapshot, and re-drives any credit block with a FAILED `UNIT`/`UNIT_LABEL` sync record; enqueued once per national-api start alongside `CADTV2Bootstrap` and re-run on a short timer. Never touches the `BOOTSTRAP_ONLY` singletons — see `reconcile-scope.ts` |
+| `CADTV2VerificationCreate` | ✅ Implemented — stages a CAD Trust `verification` record on a DNA-approved verification report, keyed `${refId}-VERIFICATION-v${documentVersion}` |
+| `CADTV2CreditIssuance` | ✅ Implemented — ensures the `verification` record above, stages the 1:1 `issuance` record, and creates one `unit` per newly-issued vintage block |
+| `CADTV2UnitUpdate` | ✅ Implemented — full-replace upsert for a `unit`: whole-block transfer, `COMPLETED` retirement, `COMPLETED` ITMO authorization (plus the Article 6 label link), and the retained/shrunken side of any partial split |
 
 Organization creation itself is **out of scope everywhere** — `CADTV2Bootstrap` verifies a home
 organization exists and fails loudly if it doesn't; provisioning one is an operator action against
@@ -353,6 +468,8 @@ is a full replace — omitting it when a program IS synced would silently unlink
 | `CADT_V2_METHODOLOGY_TYPE` | — | Optional, picklist `methodology_type` |
 | `CADT_V2_RECONCILE_INTERVAL_MS` | `300000` (5 min) | How often the CAD Trust async lane re-runs the reconcile pass — see "Two independent async lanes" above |
 | `CADT_V2_COMMIT_STUCK_THRESHOLD` | `6` | Consecutive commit failures before `CadTrustCommitHandler` logs a stuck-commit warning — see rule 3 above |
+| `CADT_V2_VERIFICATION_BODY` | `CADT_V2_VALIDATION_BODY`, then `"DNV"` | Published as `verificationBody` on every `verification` record — never the real verifying body's name |
+| `CADT_V2_UNIT_TYPE` | — (empty string) | Published as `unitType` on every `unit` record. No safe default — left empty until set, deliberately, so the node's own rejection surfaces a missing value rather than a guessed one. **Set this before enabling credit sync.** |
 
 The consumer runs wherever `RUN_MODULE` includes `cadtrust-operations-handler` — today that is the
 **replicator** container, not a service of its own. (`async-operations-handler` alongside it in the
@@ -380,7 +497,18 @@ types the *transport-level* fields as plain `string` rather than a union — onl
 mapping tables are pinned to the snapshot.
 
 `validationBody` is the one picklist deliberately left untyped (plain `string`) even in the
-snapshot file — see `picklistValues.ts`'s doc comment for why.
+snapshot file — see `picklistValues.ts`'s doc comment for why. `verificationBody` gets the identical
+treatment, for the identical reason (a configured default, `CADT_V2_VERIFICATION_BODY` — falling
+back to `CADT_V2_VALIDATION_BODY`, then `"DNV"` — never the real verifying body's name).
+
+`unitStatus` and `unitType` are **not yet captured from a live node** and are left as plain `string`
+too, deliberately: `unitStatus` is derived internally (`"Held"` / `"Retired"` plus a fixed
+reason-string map keyed by `AccountType` — see `UNIT_STATUS_REASON_MAP` in `picklist.map.ts`) so
+there's low risk there, but `unitType` (`CADT_V2_UNIT_TYPE`) has **no safe default at all** — the
+mapper sends an empty string rather than guess, specifically so the node's own rejection surfaces
+the gap instead of silently publishing a wrong value. Capture both from a live node's
+`GET /v2/governance/meta/pickList` before going live with credit sync, and set `CADT_V2_UNIT_TYPE`
+before enabling it.
 
 `CadTrustPicklistService` fetches the live lists (cached ~1h) and **logs a warning** for any mapped
 value that is not in them — this is the runtime authority for drift after the snapshot ages. It
@@ -433,7 +561,7 @@ and `.env.national.example` for the full per-key breakdown.
    ```
    Skipping this makes the first enqueued action fail with
    `invalid input value for enum async_action_entity_actiontype_enum: "17"` —
-   the baseline migration only created labels `'0'..'16'`. There are six
+   the baseline migration only created labels `'0'..'16'`. There are eight
    CAD Trust migrations to run, in order: `1785500000000-CadTrustV2Sync.ts`
    (labels `17`–`19`, the `cadtrust_sync_record` table),
    `1785600000000-CadTrustV2Bootstrap.ts` (label `20`, plus `ORGANIZATION` /
@@ -441,16 +569,21 @@ and `.env.national.example` for the full per-key breakdown.
    (no new action-type label — adds `STAKEHOLDER` / `PROJECT_METHODOLOGY` /
    `STAKEHOLDER_PROJECT` / `LOCATION`), `1785800000000-CadTrustV2Validation.ts`
    (label `21`, plus `VALIDATION`), `1785900000000-CadTrustSyncRecordPayload.ts`
-   (no new label — adds the debugging-only `payload` column), and
-   `1786000000000-CadTrustV2Reconcile.ts` (label `22`, for `CADTV2Reconcile`).
+   (no new label — adds the debugging-only `payload` column),
+   `1786000000000-CadTrustV2Reconcile.ts` (label `22`, for `CADTV2Reconcile`),
+   `1787600000000-CadTrustAsyncOperationsCounter.ts` (no new action-type label —
+   adds the `CADTRUST_ASYNC_OPERATIONS` counter row the second lane's cursor
+   uses), and `1787700000000-CadTrustV2Credits.ts` (labels `23`–`25`, plus
+   `VERIFICATION` / `ISSUANCE` / `UNIT` / `LABEL` / `UNIT_LABEL`).
 2. Confirm it landed:
    ```sql
-   SELECT unnest(enum_range(NULL::async_action_entity_actiontype_enum));            -- includes 17..22
+   SELECT unnest(enum_range(NULL::async_action_entity_actiontype_enum));            -- includes 17..25
    SELECT unnest(enum_range(NULL::cadtrust_sync_record_localentitytype_enum));      -- includes ORGANIZATION, PROGRAM,
                                                                                      -- METHODOLOGY, STAKEHOLDER,
                                                                                      -- PROJECT_METHODOLOGY,
                                                                                      -- STAKEHOLDER_PROJECT, LOCATION,
-                                                                                     -- VALIDATION
+                                                                                     -- VALIDATION, VERIFICATION,
+                                                                                     -- ISSUANCE, UNIT, LABEL, UNIT_LABEL
    SELECT to_regclass('public.cadtrust_sync_record');                               -- non-null
    ```
 3. **Before touching any env var**, confirm a home organization already exists

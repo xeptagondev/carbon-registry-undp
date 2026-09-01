@@ -23,4 +23,7 @@ export const CADTRUST_V2_ACTION_TYPES: readonly AsyncActionType[] = [
   AsyncActionType.CADTV2Bootstrap,
   AsyncActionType.CADTV2ValidationCreate,
   AsyncActionType.CADTV2Reconcile,
+  AsyncActionType.CADTV2VerificationCreate,
+  AsyncActionType.CADTV2CreditIssuance,
+  AsyncActionType.CADTV2UnitUpdate,
 ];

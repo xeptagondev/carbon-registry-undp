@@ -118,7 +118,7 @@ export default () => ({
     // src/async-operations-handler/cadtrust-async-operations-handler.service.ts and
     // libs/shared/src/cadtrust-sync/README.md's "Re-driving children on update, and reconciling
     // on a schedule" section. Only read in the process running RUN_MODULE=cadtrust-operations-handler.
-    reconcileIntervalMs: Number(process.env.CADT_V2_RECONCILE_INTERVAL_MS || 5 * 60 * 1000),
+    reconcileIntervalMs: Number(process.env.CADT_V2_RECONCILE_INTERVAL_MS || 30 * 1000),
     // Consecutive commit-failure count (see cadtrust_sync_record.attemptCount) past which
     // CadTrustCommitHandler logs a loud, one-time-per-crossing "this may need a human" warning
     // instead of quietly retrying forever. Not every failure this deep is a stuck commit — see
@@ -170,6 +170,19 @@ export default () => ({
     // fallback-if-unmatched scheme. "DNV" is a real live-observed entry (picklistValues.ts); reconfirm
     // against GET /v2/governance/meta/pickList on the target node before go-live.
     validationBodyDefault: process.env.CADT_V2_VALIDATION_BODY || "DNV",
+    // Picklist "verification_body" — same closed international VVB list as validation_body, and
+    // the same reasoning: a national verifying body will not be on it by name (see
+    // mappers/verification.mapper.ts). Defaults to the same value as validationBodyDefault, since
+    // both fields are filled by the same category of accredited-VVB placeholder; override
+    // separately if the target node's verification_body and validation_body lists diverge.
+    verificationBodyDefault:
+      process.env.CADT_V2_VERIFICATION_BODY || process.env.CADT_V2_VALIDATION_BODY || "DNV",
+    // Picklist "unit_type", required on every CAD Trust unit. Unlike every other CADT_V2_* value
+    // in this block, there is NO safe hardcoded fallback — no unit_type value has ever been
+    // confirmed against a live node (see mappers/picklist.map.ts). Left unset until an operator
+    // sets it; CadTrustRegistryProfileService.getUnitType() returns undefined rather than a guess,
+    // and the credit-unit mapper's warnOnUnknownValues call will flag that loudly in the logs.
+    unitType: process.env.CADT_V2_UNIT_TYPE || "Not Determined",
   },
   systemType: process.env.SYSTEM_TYPE || "CARBON_UNIFIED_SYSTEM",
   systemName: process.env.SYSTEM_NAME || "SystemX",

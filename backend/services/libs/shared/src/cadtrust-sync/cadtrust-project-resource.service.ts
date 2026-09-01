@@ -5,6 +5,7 @@ import {
   ProjectMethodologyCreateInput,
   StakeholderCreateInput,
   StakeholderProjectCreateInput,
+  ValidationCreateInput,
 } from "@app/cadtrust";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -16,11 +17,16 @@ import { CadTrustLocalEntityType } from "../enum/cadtrust.local.entity.type.enum
 import { CadTrustResourceType } from "../enum/cadtrust.resource.type.enum";
 import { CadTrustSyncStatus } from "../enum/cadtrust.sync.status.enum";
 import { DocumentTypeEnum } from "../enum/document.type.enum";
-import { CadTrustProjectCreateSnapshot } from "./cadtrust-sync.enqueue.service";
+import {
+  CadTrustProjectCreateSnapshot,
+  CadTrustValidationSyncProps,
+} from "./cadtrust-sync.enqueue.service";
+import { toCadTrustIsoDate } from "./iso-date";
 import { CadTrustSyncKey, CadTrustSyncRecordService } from "./cadtrust-sync-record.service";
 import { CadTrustLocationMapper } from "./mappers/location.mapper";
 import { CadTrustProjectMapper } from "./mappers/project.mapper";
 import { CadTrustStakeholderMapper } from "./mappers/stakeholder.mapper";
+import { CadTrustValidationMapper } from "./mappers/validation.mapper";
 
 /** `undefined` means "nothing synced yet, stage now"; otherwise the resolved CAD Trust id. */
 export type EnsureResult = { cadTrustId: string; commitOwed: boolean } | undefined;
@@ -48,6 +54,7 @@ export class CadTrustProjectResourceService {
     private readonly projectMapper: CadTrustProjectMapper,
     private readonly stakeholderMapper: CadTrustStakeholderMapper,
     private readonly locationMapper: CadTrustLocationMapper,
+    private readonly validationMapper: CadTrustValidationMapper,
     private readonly cadTrustV2Service: CadTrustV2Service,
     private readonly logger: Logger
   ) {}
@@ -305,7 +312,8 @@ export class CadTrustProjectResourceService {
       input = {
         cadTrustProjectId: projectCadTrustId,
         cadTrustMethodologyId: methodologyCadTrustId,
-        projectMethodologyDate: this.toIsoDate(projectCreateTime),
+        projectMethodologyDate:
+          toCadTrustIsoDate(projectCreateTime) ?? new Date().toISOString().split("T")[0],
       };
 
       if (existing.failedBefore) {
@@ -447,6 +455,88 @@ export class CadTrustProjectResourceService {
   }
 
   /**
+   * Stages a CAD Trust validation record for a DNA-approved PDD or validation report. `localId` is
+   * `${refId}-${documentType}-v${documentVersion}` — see `CadTrustLocalEntityType.VALIDATION`'s doc
+   * for why the document version is part of the key.
+   *
+   * Lifted out of `CadTrustValidationCreateHandler` (which is now a thin shell, like
+   * `CadTrustVerificationCreateHandler`) so `CadTrustReconcileHandler` can re-drive a FAILED
+   * validation record too. `existingSync()` distinguishes COMMITTED (skip), STAGED (commit owed,
+   * don't re-stage — see its doc for the historical bug) and FAILED (look for an orphaned staged
+   * row via `adoptOrphanedStagedRow` before re-staging, to survive an ambiguous 504).
+   *
+   * Records `props` onto the sync row via `recordSyncProps` *before* the "project not yet synced"
+   * check — that path marks the record FAILED without ever building an outbound payload, and the
+   * snapshot is what lets reconcile rebuild the request later.
+   */
+  async ensureValidation(props: CadTrustValidationSyncProps): Promise<EnsureResult> {
+    const { refId, documentType, documentVersion } = props;
+    const localId = `${refId}-${documentType}-v${documentVersion}`;
+    const key: CadTrustSyncKey = {
+      localEntityType: CadTrustLocalEntityType.VALIDATION,
+      localId,
+      cadTrustEntityType: CadTrustResourceType.VALIDATION,
+    };
+
+    const existing = await this.existingSync(key, `Validation record ${localId}`);
+    if ("commitOwed" in existing) {
+      return existing.cadTrustId
+        ? { cadTrustId: existing.cadTrustId, commitOwed: existing.commitOwed }
+        : undefined;
+    }
+
+    await this.syncRecords.recordSyncProps(key, props as unknown as Record<string, unknown>);
+
+    const cadTrustProjectId = await this.syncRecords.getCadTrustId({
+      localEntityType: CadTrustLocalEntityType.PROJECT,
+      localId: refId,
+      cadTrustEntityType: CadTrustResourceType.PROJECT,
+    });
+    if (!cadTrustProjectId) {
+      const message =
+        `Project ${refId} is not yet synced to CAD Trust; cannot attach a validation ` +
+        `record for ${localId}`;
+      this.logger.error(message);
+      await this.syncRecords.markFailed(key, new Error(message));
+      return undefined;
+    }
+
+    let input: ValidationCreateInput | undefined;
+    try {
+      input = await this.validationMapper.toCreateInput(props, localId, cadTrustProjectId);
+
+      if (existing.failedBefore) {
+        const orphan = await this.adoptOrphanedStagedRow(
+          key,
+          "validation",
+          "cad_trust_validation_id",
+          (change) => change.validation_id === localId
+        );
+        if (orphan) {
+          return orphan;
+        }
+      }
+
+      const staged = await this.cadTrustV2Service.getClient().validation.stageCreate(input);
+      // The guide documents cadTrustValidationId on the create response but does not guarantee it
+      // on every resource, so fall back to uuid — same convention as every other handler here.
+      const cadTrustId = staged.response.cadTrustValidationId ?? staged.response.uuid;
+
+      await this.syncRecords.markStaged(
+        key,
+        { cadTrustId, stagingUuid: staged.response.uuid },
+        input as unknown as Record<string, unknown>
+      );
+      this.logger.log(`Staged CAD Trust validation record ${localId} as ${cadTrustId}`);
+      return { cadTrustId, commitOwed: true };
+    } catch (error) {
+      await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
+      this.logger.error(`Failed to stage CAD Trust validation record ${localId}`, error);
+      return undefined;
+    }
+  }
+
+  /**
    * The INF document holds every project field that has no column on
    * `project_entity` — description, dates, location, contacts. Read via the
    * repository rather than `DocumentManagementService`, to keep this module free of
@@ -463,10 +553,5 @@ export class CadTrustProjectResourceService {
       order: { version: "DESC" },
     });
     return document?.content;
-  }
-
-  /** Internal timestamps are epoch milliseconds; CAD Trust wants YYYY-MM-DD. */
-  private toIsoDate(epochMs: number): string {
-    return new Date(epochMs).toISOString().split("T")[0];
   }
 }

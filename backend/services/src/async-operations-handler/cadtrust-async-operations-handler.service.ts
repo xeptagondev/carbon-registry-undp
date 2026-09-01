@@ -133,9 +133,11 @@ export class CadTrustAsyncOperationsHandlerService
    */
   private startReconcileTimer(): void {
     const intervalMs = this.configService.get<number>("cadTrustV2.reconcileIntervalMs");
+    console.log(`CAD Trust reconcile timer started, interval ${intervalMs}ms`);
 
     const runReconcile = async () => {
       try {
+        console.log("CAD Trust reconcile timer tick");
         await this.cadTrustSyncDispatcher.handle(AsyncActionType.CADTV2Reconcile, {});
       } catch (error) {
         // Backstop only — CadTrustSyncDispatcherService.handle() already never throws.

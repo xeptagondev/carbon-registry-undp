@@ -9,6 +9,8 @@ import {
   ValidationTypeValue,
 } from "@app/cadtrust";
 
+import { AccountType } from "../../enum/account.type.enum";
+import { CreditTransactionSubTypesEnum } from "../../enum/credit.transaction.sub.types.enum";
 import { InfSectorEnum } from "../../enum/inf.sector.enum";
 import { InfSectoralScopeEnum } from "../../enum/inf.sectoral.scope.enum";
 import { ProjectProposalStage } from "../../enum/projectProposalStage.enum";
@@ -50,6 +52,25 @@ export const PICKLIST_KEYS = {
   validationType: "validation_type",
   /** Required on ValidationCreateInput — see validation.ts. Deliberately not a typed union — see picklistValues.ts. */
   validationBody: "validation_body",
+  /**
+   * Required on VerificationCreateInput — see verification.ts. Same closed-VVB-list situation as
+   * `validationBody` (a national body will essentially never be on it by name) — deliberately not
+   * a typed union, and always resolved through `CadTrustRegistryProfileService.getVerificationBodyDefault()`,
+   * never the real verifying body's name. See `verification.mapper.ts`'s class doc.
+   */
+  verificationBody: "verification_body",
+  /**
+   * Required on UnitCreateInput — see unit.ts. **Not authoritatively known**: nothing in this repo
+   * beyond a test fixture (`['Held', 'Retired']`) and unit.ts's own NOTE that v2 renamed "Active" to
+   * "Held". Deliberately not a typed union until captured from a live node — see picklistValues.ts's
+   * header comment for the convention this follows.
+   */
+  unitStatus: "unit_status",
+  /**
+   * Required on UnitCreateInput — see unit.ts. **Not authoritatively known** — nothing in this repo
+   * names a single real value. Deliberately not a typed union until captured from a live node.
+   */
+  unitType: "unit_type",
 } as const;
 
 /**
@@ -182,6 +203,72 @@ export const PROJECT_STATUS_FALLBACK: ProjectStatusValue = "Listed";
  * `unit_metric` is exactly `["gCO2eq/kWh", "kt (Kiloton)", "tCO2e"]` — an exact match.
  */
 export const PROJECT_UNIT_METRIC: UnitMetricValue = "tCO2e";
+
+/**
+ * The latest retirement's `CreditTransactionsEntity.subType` -> CAD Trust `unitStatusReason`.
+ *
+ * Preferred over `UNIT_STATUS_REASON_MAP` below: `accountType` alone cannot tell a domestic MO
+ * `USE_TOWARDS_NDC` retirement from an international ITMO `FIRST_TRANSFER_TOWARDS_NDC` one —
+ * `mapSubTypeToAccountType` (`programme-ledger.service.ts`) collapses both into
+ * `RETIREMENT_NDC`, so keying on `accountType` publishes the identical reason for a domestic use
+ * and an Article 6 first transfer. `credit-unit.mapper.ts` reads this first and only falls back to
+ * the `accountType` map for a retirement row that carries no `subType` (legacy rows). Free-form
+ * text, not picklist-constrained.
+ */
+export const UNIT_STATUS_REASON_BY_SUBTYPE: Partial<Record<CreditTransactionSubTypesEnum, string>> = {
+  [CreditTransactionSubTypesEnum.USE_TOWARDS_NDC]: "Retired for use towards the host Party's NDC",
+  [CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC]:
+    "First transfer - retired towards the acquiring Party's NDC",
+  [CreditTransactionSubTypesEnum.FIRST_TRANSFER_FOR_OIMP]:
+    "First transfer - retired for other international mitigation purposes",
+  [CreditTransactionSubTypesEnum.VOLUNTARY_CANCELLATION]: "Voluntarily cancelled",
+  [CreditTransactionSubTypesEnum.OMGE_CANCELLATION]:
+    "Cancelled for overall mitigation in global emissions (OMGE)",
+};
+
+/**
+ * `credit.blocks.entity.ts`'s `accountType` -> CAD Trust `unitStatusReason`.
+ *
+ * Fallback for retirement rows with no `subType` (legacy) — `UNIT_STATUS_REASON_BY_SUBTYPE` above
+ * is the primary source. Unlike every map above, `unit_status` itself is **not confirmed** against
+ * a live node — see `PICKLIST_KEYS.unitStatus`'s doc — so this only maps the *reason* text, which
+ * is free-form (not picklist-constrained) on `UnitCreateInput`. `HOLDING` never reaches this map:
+ * a held unit's `unitStatusReason` is only ever set at issuance/transfer time, not through this
+ * retirement/ITMO-authorization path — see `credit-unit.mapper.ts`.
+ */
+export const UNIT_STATUS_REASON_MAP: Partial<Record<AccountType, string>> = {
+  [AccountType.RETIREMENT_NDC]: "Retired for use towards NDC",
+  [AccountType.RETIREMENT_OIMP]: "Retired for other international mitigation purposes",
+  [AccountType.CANCELLATION_VOLUNTARY]: "Voluntarily cancelled",
+  [AccountType.CANCELLATION_OMGE]: "Cancelled for overall mitigation in global emissions (OMGE)",
+  // CANCELLATION_SOP is declared in AccountType but never produced by mapSubTypeToAccountType
+  // (credit-transactions-management.service.ts) — no registry flow reaches it today, so it falls
+  // through to UNIT_STATUS_REASON_FALLBACK like any other unmapped member would.
+};
+
+export const UNIT_STATUS_REASON_FALLBACK = "Retired";
+
+/**
+ * CAD Trust's `unit_status` values, required on every `UnitCreateInput`/`UnitUpdateInput`.
+ * **Not confirmed against a live node** — the only evidence in this repo is `unit.ts`'s own NOTE
+ * that v2 renamed "Active" to "Held", and a `@app/cadtrust` test fixture exercising `['Held',
+ * 'Retired']` as a fake transport response, not a captured real one. Deliberately not typed as a
+ * union in `picklistValues.ts` (see its header) — capture `GET /v2/governance/meta/pickList`'s
+ * real `unit_status` list before trusting these further; `CadTrustPicklistService` will warn in
+ * the logs if either has drifted.
+ */
+export const UNIT_STATUS_HELD = "Held";
+export const UNIT_STATUS_RETIRED = "Retired";
+
+/**
+ * CAD Trust requires `unitType` on every unit create/update. **No value has ever been confirmed
+ * against a live node or found documented anywhere in this repo** — unlike every other required
+ * picklist field in this module, there is no safe default to fall back to here. Set
+ * `CADT_V2_UNIT_TYPE` before enabling credit sync; `CadTrustRegistryProfileService.getUnitType()`
+ * reads it with no fallback, and `warnOnUnknownValues` will flag it as unrecognized until the real
+ * `unit_type` list is captured and this file is updated — that is the deliberate warn-only outcome
+ * for an unset or wrong value, not a code error.
+ */
 
 // Re-exported so callers of this file don't need a separate import from @app/cadtrust just to
 // annotate a `systemCountryName` / `CADT_V2_METHODOLOGY_TYPE` config value.

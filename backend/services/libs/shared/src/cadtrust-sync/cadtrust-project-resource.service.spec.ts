@@ -65,11 +65,16 @@ function buildService(
     syncedMethodologyId?: string | undefined;
     company?: any;
     infContent?: any;
+    /** ensureValidation: the synced CAD Trust project id. Omit for "synced"; pass undefined for "not synced". */
+    validationProjectId?: string | undefined;
+    /** ensureValidation: force the VALIDATION sync record's status (COMMITTED / STAGED / FAILED). */
+    validationSyncStatus?: CadTrustSyncStatus;
     stageStakeholder?: jest.Mock;
     stageProject?: jest.Mock;
     stageProjectMethodology?: jest.Mock;
     stageStakeholderProject?: jest.Mock;
     stageLocation?: jest.Mock;
+    stageValidation?: jest.Mock;
     /** Stub for `client.staging.listAll` — the orphan-adopt lookup. Defaults to yielding nothing. */
     stagingListAll?: jest.Mock;
   } = {}
@@ -107,6 +112,12 @@ function buildService(
     jest.fn(async () => ({
       staged: true as const,
       response: { message: "ok", uuid: "staging-loc-1", cadTrustLocationId: "cadt-loc-1", success: true },
+    }));
+  const stageValidation =
+    overrides.stageValidation ??
+    jest.fn(async () => ({
+      staged: true as const,
+      response: { message: "ok", uuid: "staging-validation-1", cadTrustValidationId: "cadt-validation-1", success: true },
     }));
 
   const documentRepo = {
@@ -146,6 +157,11 @@ function buildService(
     // service distinguishes — COMMITTED (nothing to do), STAGED (commit owed, don't re-stage),
     // FAILED (triggers the orphan-adopt lookup before re-staging).
     find: jest.fn(async (key: any) => {
+      if (key.localEntityType === CadTrustLocalEntityType.VALIDATION) {
+        return overrides.validationSyncStatus
+          ? { syncStatus: overrides.validationSyncStatus, cadTrustId: "cadt-validation-cached" }
+          : null;
+      }
       const entityKey = entityKeyFor(key.localEntityType);
       if (!entityKey) {
         return null;
@@ -159,6 +175,12 @@ function buildService(
         : undefined;
       return syncStatus ? { syncStatus, cadTrustId: syncedIds[key.localEntityType] } : null;
     }),
+    // Backs ensureValidation's PROJECT-id lookup. Defaults to "the project is synced"; pass
+    // `validationProjectId: undefined` to exercise the "project not yet synced" branch.
+    getCadTrustId: jest.fn(async () =>
+      "validationProjectId" in overrides ? overrides.validationProjectId : "cadt-project-1"
+    ),
+    recordSyncProps: jest.fn(async () => undefined),
     getSyncedCadTrustId: jest.fn(async (_localEntityType: any, cadTrustEntityType: any) => {
       if (cadTrustEntityType === CadTrustResourceType.PROGRAM) return overrides.syncedProgramId;
       if (cadTrustEntityType === CadTrustResourceType.METHODOLOGY) {
@@ -174,6 +196,14 @@ function buildService(
   };
 
   const projectMapper = { toCreateInput: jest.fn(async () => ({ projectId: REF_ID })) };
+  const validationMapper = {
+    toCreateInput: jest.fn(async (_props: any, validationId: string, cadTrustProjectId: string) => ({
+      validationId,
+      cadTrustProjectId,
+      validationType: "Validation of Project Design Document",
+      validationBody: "Default VVB",
+    })),
+  };
   const stakeholderMapper = {
     toCreateInput: jest.fn(async (company: any) => ({
       stakeholderName: company.name,
@@ -199,6 +229,7 @@ function buildService(
       projectMethodology: { stageCreate: stageProjectMethodology },
       stakeholderProject: { stageCreate: stageStakeholderProject },
       location: { stageCreate: stageLocation },
+      validation: { stageCreate: stageValidation },
       staging: { listAll: stagingListAll },
     }),
   };
@@ -211,6 +242,7 @@ function buildService(
     projectMapper as any,
     stakeholderMapper as any,
     locationMapper as any,
+    validationMapper as any,
     cadTrustV2Service as any,
     logger as any
   );
@@ -228,10 +260,27 @@ function buildService(
     stageProjectMethodology,
     stageStakeholderProject,
     stageLocation,
+    stageValidation,
+    validationMapper,
     stagingListAll,
     logger,
   };
 }
+
+const VALIDATION_PROPS = {
+  refId: REF_ID,
+  documentType: DocumentTypeEnum.PROJECT_DESIGN_DOCUMENT,
+  documentVersion: 1,
+  validationBodyName: "Kunene Certifiers",
+  creditPeriodStartDate: "2026-01-01",
+  creditPeriodEndDate: "2033-01-01",
+  validationDate: "2026-03-15",
+};
+const VALIDATION_KEY = {
+  localEntityType: CadTrustLocalEntityType.VALIDATION,
+  localId: "0042-PDD-v1",
+  cadTrustEntityType: CadTrustResourceType.VALIDATION,
+};
 
 describe("CadTrustProjectResourceService", () => {
   describe("ensureStakeholder", () => {
@@ -520,6 +569,105 @@ describe("CadTrustProjectResourceService", () => {
 
       expect(stageLocation).not.toHaveBeenCalled();
       expect(result).toBe(true);
+    });
+  });
+
+  describe("ensureValidation", () => {
+    it("records the inbound snapshot, then stages a validation record and reports a commit is owed", async () => {
+      const { service, syncRecords, stageValidation, validationMapper } = buildService();
+
+      const result = await service.ensureValidation(VALIDATION_PROPS as any);
+
+      expect(syncRecords.recordSyncProps).toHaveBeenCalledWith(VALIDATION_KEY, expect.objectContaining({ refId: REF_ID }));
+      expect(validationMapper.toCreateInput).toHaveBeenCalledWith(VALIDATION_PROPS, "0042-PDD-v1", "cadt-project-1");
+      expect(stageValidation).toHaveBeenCalledTimes(1);
+      expect(syncRecords.markStaged).toHaveBeenCalledWith(
+        VALIDATION_KEY,
+        { cadTrustId: "cadt-validation-1", stagingUuid: "staging-validation-1" },
+        expect.any(Object)
+      );
+      expect(result).toEqual({ cadTrustId: "cadt-validation-1", commitOwed: true });
+    });
+
+    it("keys a validation-report approval differently from a PDD approval on the same project", async () => {
+      const { service, syncRecords } = buildService();
+
+      await service.ensureValidation({ ...VALIDATION_PROPS, documentType: DocumentTypeEnum.VALIDATION } as any);
+
+      expect(syncRecords.markStaged).toHaveBeenCalledWith(
+        expect.objectContaining({ localId: "0042-VALIDATION-v1" }),
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    it("reuses the cached id and does not re-stage when already COMMITTED", async () => {
+      const { service, stageValidation } = buildService({
+        validationSyncStatus: CadTrustSyncStatus.COMMITTED,
+      });
+
+      const result = await service.ensureValidation(VALIDATION_PROPS as any);
+
+      expect(stageValidation).not.toHaveBeenCalled();
+      expect(result).toEqual({ cadTrustId: "cadt-validation-cached", commitOwed: false });
+    });
+
+    it("reports commit owed without re-staging when STAGED but never committed", async () => {
+      const { service, stageValidation } = buildService({
+        validationSyncStatus: CadTrustSyncStatus.STAGED,
+      });
+
+      const result = await service.ensureValidation(VALIDATION_PROPS as any);
+
+      expect(stageValidation).not.toHaveBeenCalled();
+      expect(result).toEqual({ cadTrustId: "cadt-validation-cached", commitOwed: true });
+    });
+
+    it("marks FAILED (with the snapshot already recorded) and returns undefined when the project is not yet synced", async () => {
+      const { service, syncRecords, stageValidation } = buildService({ validationProjectId: undefined });
+
+      const result = await service.ensureValidation(VALIDATION_PROPS as any);
+
+      expect(syncRecords.recordSyncProps).toHaveBeenCalled();
+      expect(stageValidation).not.toHaveBeenCalled();
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(VALIDATION_KEY, expect.any(Error));
+      const failCall: any[] = syncRecords.markFailed.mock.calls[0];
+      expect(failCall[1].message).toContain("not yet synced");
+      expect(result).toBeUndefined();
+    });
+
+    it("marks FAILED and returns undefined when staging throws", async () => {
+      const stageValidation = jest.fn(async () => {
+        throw new Error("CAD Trust rejected the validation payload");
+      });
+      const { service, syncRecords } = buildService({ stageValidation });
+
+      const result = await service.ensureValidation(VALIDATION_PROPS as any);
+
+      expect(syncRecords.markFailed).toHaveBeenCalledWith(VALIDATION_KEY, expect.any(Error), expect.any(Object));
+      expect(result).toBeUndefined();
+    });
+
+    it("adopts a matching orphaned staging row instead of re-staging, when FAILED before", async () => {
+      const stagingListAll = jest.fn(async function* (query: any) {
+        if (query.table === "validation") {
+          yield {
+            uuid: "staging-orphan-v1",
+            committed: false,
+            failed_commit: false,
+            diff: { change: [{ validation_id: "0042-PDD-v1", cad_trust_validation_id: "cadt-validation-orphan" }] },
+          };
+        }
+      });
+      const { service, stageValidation } = buildService({
+        validationSyncStatus: CadTrustSyncStatus.FAILED,
+        stagingListAll,
+      });
+
+      const result = await service.ensureValidation(VALIDATION_PROPS as any);
+
+      expect(stageValidation).not.toHaveBeenCalled();
+      expect(result).toEqual({ cadTrustId: "cadt-validation-orphan", commitOwed: true });
     });
   });
 

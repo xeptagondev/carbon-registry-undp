@@ -220,6 +220,72 @@ describe("CadTrustSyncRecordService", () => {
     });
   });
 
+  describe("recordSyncProps", () => {
+    it("stores the inbound snapshot on a fresh row without touching status or attemptCount", async () => {
+      const { service, repo } = buildService();
+      const syncProps = { refId: "0042", documentType: "PDD", documentVersion: 1 };
+
+      await service.recordSyncProps(KEY, syncProps);
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ syncProps, syncStatus: CadTrustSyncStatus.PENDING, attemptCount: 0 })
+      );
+    });
+
+    it("leaves an existing row's status, payload and attemptCount alone", async () => {
+      const existingPayload = { validationId: "0042-PDD-v1" };
+      const { service, repo } = buildService({
+        ...KEY,
+        syncStatus: CadTrustSyncStatus.FAILED,
+        attemptCount: 3,
+        payload: existingPayload,
+      });
+
+      await service.recordSyncProps(KEY, { refId: "0042" });
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          syncProps: { refId: "0042" },
+          syncStatus: CadTrustSyncStatus.FAILED,
+          attemptCount: 3,
+          payload: existingPayload,
+        })
+      );
+    });
+
+    it("never throws — it is on the same never-throw path as markFailed", async () => {
+      const { service, repo, logger } = buildService();
+      repo.save.mockRejectedValueOnce(new Error("database is down"));
+
+      await expect(service.recordSyncProps(KEY, { refId: "0042" })).resolves.toBeUndefined();
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe("findFailedSnapshotRecords", () => {
+    it("returns the full FAILED VALIDATION/VERIFICATION/ISSUANCE rows", async () => {
+      const rows = [
+        { localId: "0042-PDD-v1", localEntityType: CadTrustLocalEntityType.VALIDATION },
+        { localId: "0042-VERIFICATION-v1", localEntityType: CadTrustLocalEntityType.ISSUANCE },
+      ];
+      const { service, repo } = buildService(null, [], rows);
+
+      expect(await service.findFailedSnapshotRecords()).toBe(rows);
+      expect(repo.find).toHaveBeenCalledWith({
+        where: {
+          syncStatus: CadTrustSyncStatus.FAILED,
+          localEntityType: expect.anything(), // In([VALIDATION, VERIFICATION, ISSUANCE]) — a FindOperator
+        },
+      });
+    });
+
+    it("returns an empty array when nothing is FAILED", async () => {
+      const { service } = buildService(null, [], []);
+
+      expect(await service.findFailedSnapshotRecords()).toEqual([]);
+    });
+  });
+
   describe("bulk transitions used by the commit handler", () => {
     it("moves every staged row to committed", async () => {
       const { service, repo } = buildService();
@@ -330,6 +396,62 @@ describe("CadTrustSyncRecordService", () => {
       const { service } = buildService(null, []);
 
       expect(await service.findFailedProjectRefIds()).toEqual([]);
+    });
+  });
+
+  describe("findFailedCreditBlockIds", () => {
+    it("returns the distinct creditBlockIds of FAILED UNIT/UNIT_LABEL sync records", async () => {
+      const { service, queryBuilder } = buildService(null, [
+        { localId: "CA0001-XX-XX-1-1-100" },
+        { localId: "CA0001-XX-XX-1-101-200" },
+      ]);
+
+      const creditBlockIds = await service.findFailedCreditBlockIds();
+
+      expect(creditBlockIds).toEqual(["CA0001-XX-XX-1-1-100", "CA0001-XX-XX-1-101-200"]);
+      expect(queryBuilder.where).toHaveBeenCalledWith("record.syncStatus = :status", {
+        status: CadTrustSyncStatus.FAILED,
+      });
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith("record.localEntityType IN (:...types)", {
+        types: [CadTrustLocalEntityType.UNIT, CadTrustLocalEntityType.UNIT_LABEL],
+      });
+    });
+
+    it("returns an empty array when nothing is FAILED", async () => {
+      const { service } = buildService(null, []);
+
+      expect(await service.findFailedCreditBlockIds()).toEqual([]);
+    });
+  });
+
+  describe("findLatestSynced / getLatestSyncedCadTrustId — the refId-prefixed composite-key lookup", () => {
+    it("finds the most recently staged/committed record whose localId is prefixed by refId", async () => {
+      const record = { localId: "0042-VERIFICATION-v2", cadTrustId: "cadt-verification-2" };
+      const { service, repo } = buildService(record);
+
+      const result = await service.findLatestSynced(CadTrustLocalEntityType.VERIFICATION, "0042");
+
+      expect(result).toBe(record);
+      expect(repo.findOne).toHaveBeenCalledWith({
+        where: {
+          localEntityType: CadTrustLocalEntityType.VERIFICATION,
+          localId: expect.anything(), // Like(`0042-%`) — a TypeORM FindOperator
+          syncStatus: expect.anything(), // In([STAGED, COMMITTED])
+        },
+        order: { id: "DESC" },
+      });
+    });
+
+    it("getLatestSyncedCadTrustId returns just the cadTrustId, or undefined when nothing matched", async () => {
+      const { service: withRecord } = buildService({ cadTrustId: "cadt-verification-2" });
+      expect(await withRecord.getLatestSyncedCadTrustId(CadTrustLocalEntityType.VERIFICATION, "0042")).toBe(
+        "cadt-verification-2"
+      );
+
+      const { service: withNothing } = buildService(null);
+      expect(
+        await withNothing.getLatestSyncedCadTrustId(CadTrustLocalEntityType.VERIFICATION, "0042")
+      ).toBeUndefined();
     });
   });
 });

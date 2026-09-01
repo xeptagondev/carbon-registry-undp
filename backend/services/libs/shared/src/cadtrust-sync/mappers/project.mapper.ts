@@ -7,6 +7,7 @@ import { InfSectoralScopeEnum } from "../../enum/inf.sectoral.scope.enum";
 import { ProjectProposalStage } from "../../enum/projectProposalStage.enum";
 import { CadTrustPicklistService } from "../cadtrust-picklist.service";
 import { CadTrustProjectCreateSnapshot } from "../cadtrust-sync.enqueue.service";
+import { toCadTrustIsoDate } from "../iso-date";
 import {
   PICKLIST_KEYS,
   PROJECT_SECTOR_FALLBACK,
@@ -69,7 +70,8 @@ export class CadTrustProjectMapper {
       projectSector: sector,
       projectType: type,
       projectStatus: status,
-      projectStatusDate: this.toIsoDate(project.updateTime ?? project.createTime),
+      projectStatusDate:
+        toCadTrustIsoDate(project.updateTime ?? project.createTime) ?? new Date().toISOString().split("T")[0],
       projectUnitMetric: PROJECT_UNIT_METRIC,
     };
 
@@ -116,11 +118,5 @@ export class CadTrustProjectMapper {
 
   private mapStatus(stage: string): string {
     return PROJECT_STATUS_MAP[stage as ProjectProposalStage] ?? PROJECT_STATUS_FALLBACK;
-  }
-
-  /** Internal timestamps are epoch milliseconds; CAD Trust wants YYYY-MM-DD. */
-  private toIsoDate(epochMs?: number): string {
-    const date = epochMs ? new Date(Number(epochMs)) : new Date();
-    return date.toISOString().split("T")[0];
   }
 }

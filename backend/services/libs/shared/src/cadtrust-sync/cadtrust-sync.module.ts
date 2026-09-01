@@ -4,10 +4,16 @@ import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AsyncOperationsModule } from "../async-operations/async-operations.module";
+import { CaAuthorizedEntity } from "../entities/ca.authorized.entity.entity";
 import { CadTrustSyncRecordEntity } from "../entities/cadtrust.sync.record.entity";
 import { Company } from "../entities/company.entity";
+import { Country } from "../entities/country.entity";
+import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
+import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
 import { DocumentEntity } from "../entities/document.entity";
 import { ProgrammeLedgerModule } from "../programme-ledger/programme-ledger.module";
+import { SerialNumberManagementModule } from "../serial-number-management/serial-number-management.module";
+import { CadTrustCreditResourceService } from "./cadtrust-credit-resource.service";
 import { CadTrustPicklistService } from "./cadtrust-picklist.service";
 import { CadTrustProjectResourceService } from "./cadtrust-project-resource.service";
 import { CadTrustRegistryProfileService } from "./cadtrust-registry-profile.service";
@@ -19,14 +25,20 @@ import { CadTrustSyncEnqueueService } from "./cadtrust-sync.enqueue.service";
 import { CadTrustSyncRecordService } from "./cadtrust-sync-record.service";
 import { CadTrustBootstrapHandler } from "./handlers/bootstrap.handler";
 import { CadTrustCommitHandler } from "./handlers/commit.handler";
+import { CadTrustCreditIssuanceHandler } from "./handlers/credit-issuance.handler";
 import { CadTrustProjectCreateHandler } from "./handlers/project-create.handler";
 import { CadTrustProjectUpdateHandler } from "./handlers/project-update.handler";
 import { CadTrustReconcileHandler } from "./handlers/reconcile.handler";
+import { CadTrustUnitUpdateHandler } from "./handlers/unit-update.handler";
 import { CadTrustValidationCreateHandler } from "./handlers/validation-create.handler";
+import { CadTrustVerificationCreateHandler } from "./handlers/verification-create.handler";
+import { CadTrustCreditUnitMapper } from "./mappers/credit-unit.mapper";
 import { CadTrustLocationMapper } from "./mappers/location.mapper";
 import { CadTrustProjectMapper } from "./mappers/project.mapper";
 import { CadTrustStakeholderMapper } from "./mappers/stakeholder.mapper";
+import { CadTrustUnitLabelMapper } from "./mappers/unit-label.mapper";
 import { CadTrustValidationMapper } from "./mappers/validation.mapper";
+import { CadTrustVerificationMapper } from "./mappers/verification.mapper";
 
 /**
  * CAD Trust v2 sync adaptor.
@@ -69,6 +81,9 @@ const SYNC_HANDLERS = [
   CadTrustValidationCreateHandler,
   CadTrustCommitHandler,
   CadTrustReconcileHandler,
+  CadTrustVerificationCreateHandler,
+  CadTrustCreditIssuanceHandler,
+  CadTrustUnitUpdateHandler,
 ];
 
 @Module({
@@ -77,7 +92,16 @@ const SYNC_HANDLERS = [
     CadTrustModule,
     AsyncOperationsModule,
     ProgrammeLedgerModule,
-    TypeOrmModule.forFeature([CadTrustSyncRecordEntity, DocumentEntity, Company]),
+    SerialNumberManagementModule,
+    TypeOrmModule.forFeature([
+      CadTrustSyncRecordEntity,
+      DocumentEntity,
+      Company,
+      Country,
+      CaAuthorizedEntity,
+      CreditBlocksEntity,
+      CreditTransactionsEntity,
+    ]),
   ],
   providers: [
     Logger,
@@ -89,7 +113,11 @@ const SYNC_HANDLERS = [
     CadTrustStakeholderMapper,
     CadTrustLocationMapper,
     CadTrustValidationMapper,
+    CadTrustVerificationMapper,
+    CadTrustCreditUnitMapper,
+    CadTrustUnitLabelMapper,
     CadTrustProjectResourceService,
+    CadTrustCreditResourceService,
     ...SYNC_HANDLERS,
     {
       provide: CADTRUST_SYNC_HANDLERS,

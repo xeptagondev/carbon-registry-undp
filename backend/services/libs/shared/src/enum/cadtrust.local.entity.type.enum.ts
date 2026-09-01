@@ -49,4 +49,33 @@ export enum CadTrustLocalEntityType {
    * version rather than collapsing every version onto one record.
    */
   VALIDATION = "VALIDATION",
+  /**
+   * A CAD Trust verification record for one monitoring-cycle's verification-report approval.
+   * `localId` is `${refId}-VERIFICATION-v${documentVersion}` — same composite-key shape as
+   * VALIDATION, and for the same reason (a project has many monitoring cycles over its life).
+   */
+  VERIFICATION = "VERIFICATION",
+  /**
+   * A CAD Trust issuance record — one per verification event, 1:1 with its VERIFICATION sync
+   * record and keyed identically (`${refId}-VERIFICATION-v${documentVersion}`), since the two are
+   * always created together in the same handler run.
+   */
+  ISSUANCE = "ISSUANCE",
+  /**
+   * A CAD Trust unit — this registry's credit-block equivalent. `localId` is `creditBlockId`
+   * directly: every distinct block a split ever produces gets exactly one unit, created once and
+   * kept in sync via full-replace update thereafter. See `cadtrust-sync/README.md`'s "Why not
+   * unit.split" for why this registry never uses CAD Trust's `/unit/split` action.
+   */
+  UNIT = "UNIT",
+  /**
+   * This registry's one "Article 6 - Authorisation" label. Not backed by a local table; `localId`
+   * is the constant `"ARTICLE_6_AUTHORISATION"` — bootstrapped once, like PROGRAM/METHODOLOGY.
+   */
+  LABEL = "LABEL",
+  /**
+   * The unit <-> label relationship, staged when a credit block is ITMO-authorized. `localId` is
+   * `creditBlockId` — one authorized unit has exactly one Article 6 label attached.
+   */
+  UNIT_LABEL = "UNIT_LABEL",
 }

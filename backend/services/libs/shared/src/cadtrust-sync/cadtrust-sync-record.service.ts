@@ -1,11 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, MoreThanOrEqual, Repository } from "typeorm";
+import { In, Like, MoreThanOrEqual, Repository } from "typeorm";
 
 import { CadTrustSyncRecordEntity } from "../entities/cadtrust.sync.record.entity";
 import { CadTrustLocalEntityType } from "../enum/cadtrust.local.entity.type.enum";
 import { CadTrustResourceType } from "../enum/cadtrust.resource.type.enum";
 import { CadTrustSyncStatus } from "../enum/cadtrust.sync.status.enum";
+import { CadTrustReconcilePass, entityTypesForPass } from "./reconcile-scope";
 
 /** Identifies one local record's mapping to one CAD Trust resource. */
 export interface CadTrustSyncKey {
@@ -61,6 +62,41 @@ export class CadTrustSyncRecordService {
       },
       order: { id: "ASC" },
     });
+    return record?.cadTrustId;
+  }
+
+  /**
+   * The most recently staged/committed record of a `refId`-prefixed composite-key type —
+   * `VERIFICATION`'s `${refId}-VERIFICATION-v${documentVersion}` keys, most concretely. Used when
+   * a caller knows the `refId` but not the exact `documentVersion` a prior step keyed its record
+   * under (e.g. `CadTrustCreditIssuanceHandler`, triggered per `creditBlockId`, doesn't itself
+   * know which monitoring cycle's verification produced it — but needs that record's own `localId`
+   * to key its 1:1 `ISSUANCE` record identically). "Most recent" is unambiguous here because
+   * monitoring cycles are strictly serial — a new one cannot start until the previous is fully
+   * verified — and causality guarantees the verification action's row always gets a lower
+   * `actionId` (and so processes first, on this single CAD Trust lane) than any credit-block event
+   * it precedes.
+   */
+  async findLatestSynced(
+    localEntityType: CadTrustLocalEntityType,
+    refId: string
+  ): Promise<CadTrustSyncRecordEntity | null> {
+    return this.syncRecordRepo.findOne({
+      where: {
+        localEntityType,
+        localId: Like(`${refId}-%`),
+        syncStatus: In([CadTrustSyncStatus.STAGED, CadTrustSyncStatus.COMMITTED]),
+      },
+      order: { id: "DESC" },
+    });
+  }
+
+  /** Convenience wrapper over `findLatestSynced` for callers that only need the CAD Trust id. */
+  async getLatestSyncedCadTrustId(
+    localEntityType: CadTrustLocalEntityType,
+    refId: string
+  ): Promise<string | undefined> {
+    const record = await this.findLatestSynced(localEntityType, refId);
     return record?.cadTrustId;
   }
 
@@ -214,17 +250,38 @@ export class CadTrustSyncRecordService {
   }
 
   /**
+   * Persists the *inbound* queue snapshot a sync is being driven from onto its sync record — see
+   * the `syncProps` column doc on `CadTrustSyncRecordEntity`. Called before staging by the
+   * `SNAPSHOT`-pass resources (`ensureValidation` / `ensureVerification` / `ensureIssuance`) so
+   * `CadTrustReconcileHandler` can re-drive a FAILED record after the original `async_action_entity`
+   * row is gone. Deliberately separate from `markStaged` / `markFailed` — the snapshot must survive
+   * the "project not yet synced" early return, which marks the record FAILED without ever building
+   * an outbound `payload`. Never throws; it is on the same never-throw path as `markFailed`.
+   */
+  async recordSyncProps(key: CadTrustSyncKey, syncProps: Record<string, unknown>): Promise<void> {
+    try {
+      const record = await this.ensure(key);
+      record.syncProps = syncProps;
+      record.updateTime = Date.now();
+      await this.syncRecordRepo.save(record);
+    } catch (error) {
+      this.logger.error(
+        `Could not record CAD Trust sync props for ${key.localEntityType}:${key.localId}`,
+        error
+      );
+    }
+  }
+
+  /**
    * Distinct `localId`s (project `refId`s) of every currently-FAILED sync record among the
-   * project-scoped, refId-keyed resource types — PROJECT itself and its three child links/records
-   * that share a refId-keyed `localId` (`PROJECT_METHODOLOGY`, `STAKEHOLDER_PROJECT`, `LOCATION`).
-   * Used by `CadTrustReconcileHandler` to find which projects have something worth re-driving.
+   * entity types assigned to `CadTrustReconcilePass.PROJECT` — PROJECT itself and its three child
+   * links/records that share a refId-keyed `localId` (`PROJECT_METHODOLOGY`, `STAKEHOLDER_PROJECT`,
+   * `LOCATION`). Used by `CadTrustReconcileHandler` to find which projects have something worth
+   * re-driving.
    *
-   * Deliberately excludes `STAKEHOLDER` (keyed by companyId, not refId — see
-   * `CadTrustLocalEntityType`'s doc) and `VALIDATION` (needs a fuller snapshot than a sync record
-   * alone safely reconstructs after the fact — see `CadTrustValidationSyncProps`'s doc for why).
-   * A FAILED stakeholder still gets retried as a side effect whenever `ensureStakeholder` runs
-   * again for one of the refIds returned here, since every project of that company shares one
-   * stakeholder record.
+   * Which entity types belong to which reconcile pass — and why `STAKEHOLDER` (companyId-keyed,
+   * re-driven indirectly), the `SNAPSHOT` types, and the bootstrap-owned singletons are not here —
+   * is defined and explained in `reconcile-scope.ts`.
    */
   async findFailedProjectRefIds(): Promise<string[]> {
     const rows = await this.syncRecordRepo
@@ -232,15 +289,45 @@ export class CadTrustSyncRecordService {
       .select("DISTINCT record.localId", "localId")
       .where("record.syncStatus = :status", { status: CadTrustSyncStatus.FAILED })
       .andWhere("record.localEntityType IN (:...types)", {
-        types: [
-          CadTrustLocalEntityType.PROJECT,
-          CadTrustLocalEntityType.PROJECT_METHODOLOGY,
-          CadTrustLocalEntityType.STAKEHOLDER_PROJECT,
-          CadTrustLocalEntityType.LOCATION,
-        ],
+        types: entityTypesForPass(CadTrustReconcilePass.PROJECT),
       })
       .getRawMany<{ localId: string }>();
     return rows.map((row) => row.localId);
+  }
+
+  /**
+   * Distinct `localId`s (`creditBlockId`s) of every currently-FAILED sync record among the entity
+   * types assigned to `CadTrustReconcilePass.CREDIT_BLOCK` — `UNIT` and `UNIT_LABEL`, both keyed
+   * directly by `creditBlockId`. Used by `CadTrustReconcileHandler`'s credit sweep — the parallel
+   * of `findFailedProjectRefIds()` for the credit side. See `reconcile-scope.ts` for the full
+   * pass-by-pass breakdown.
+   */
+  async findFailedCreditBlockIds(): Promise<string[]> {
+    const rows = await this.syncRecordRepo
+      .createQueryBuilder("record")
+      .select("DISTINCT record.localId", "localId")
+      .where("record.syncStatus = :status", { status: CadTrustSyncStatus.FAILED })
+      .andWhere("record.localEntityType IN (:...types)", {
+        types: entityTypesForPass(CadTrustReconcilePass.CREDIT_BLOCK),
+      })
+      .getRawMany<{ localId: string }>();
+    return rows.map((row) => row.localId);
+  }
+
+  /**
+   * Every currently-FAILED sync record of a `CadTrustReconcilePass.SNAPSHOT` entity type
+   * (`VALIDATION` / `VERIFICATION` / `ISSUANCE` — see `reconcile-scope.ts`). Returns full rows,
+   * unlike the two `localId`-only finders above: `CadTrustReconcileHandler.reconcileSnapshots()`
+   * needs `syncProps` (the request-side snapshot to re-drive from), `payload` (the fallback for a
+   * pre-`syncProps` row) and `localEntityType` (to pick which `ensureX` to call).
+   */
+  async findFailedSnapshotRecords(): Promise<CadTrustSyncRecordEntity[]> {
+    return this.syncRecordRepo.find({
+      where: {
+        syncStatus: CadTrustSyncStatus.FAILED,
+        localEntityType: In(entityTypesForPass(CadTrustReconcilePass.SNAPSHOT)),
+      },
+    });
   }
 
   /**

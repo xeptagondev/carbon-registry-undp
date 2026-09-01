@@ -38,4 +38,12 @@ describe("AsyncActionType ordinals", () => {
   it("pins CADTV2Reconcile to 22, matching the label added in 1786000000000-CadTrustV2Reconcile.ts", () => {
     expect(AsyncActionType.CADTV2Reconcile).toBe(22);
   });
+
+  it.each([
+    ["CADTV2VerificationCreate", AsyncActionType.CADTV2VerificationCreate, 23],
+    ["CADTV2CreditIssuance", AsyncActionType.CADTV2CreditIssuance, 24],
+    ["CADTV2UnitUpdate", AsyncActionType.CADTV2UnitUpdate, 25],
+  ])("%s is %i, matching the label added in 1787700000000-CadTrustV2Credits.ts", (_name, actual, expected) => {
+    expect(actual).toBe(expected);
+  });
 });

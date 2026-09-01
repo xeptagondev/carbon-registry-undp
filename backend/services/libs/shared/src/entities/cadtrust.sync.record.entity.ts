@@ -81,6 +81,18 @@ export class CadTrustSyncRecordEntity {
   @Column({ type: "jsonb", nullable: true })
   payload?: Record<string, unknown>;
 
+  /**
+   * The *inbound* queue snapshot this sync was driven from — the opposite direction to `payload`
+   * above, which is the *outbound* CAD Trust request. Set by `CadTrustSyncRecordService.recordSyncProps`
+   * for the `SNAPSHOT`-pass resources (VALIDATION / VERIFICATION / ISSUANCE — see `reconcile-scope.ts`)
+   * so `CadTrustReconcileHandler` can re-drive a FAILED record long after the `async_action_entity`
+   * row that carried the snapshot has been consumed. Recorded before staging, so it survives even the
+   * "project not yet synced" early return, which never builds an outbound `payload` at all. Absent on
+   * every other resource, and on rows that failed before this column existed.
+   */
+  @Column({ type: "jsonb", nullable: true })
+  syncProps?: Record<string, unknown>;
+
   @Column({ type: "bigint", transformer: NumberTransformer })
   createTime: number;
 

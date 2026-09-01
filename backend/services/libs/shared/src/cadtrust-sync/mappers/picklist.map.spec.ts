@@ -8,6 +8,7 @@ import {
   VALIDATION_TYPE_VALUES,
 } from "@app/cadtrust";
 
+import { CreditTransactionSubTypesEnum } from "../../enum/credit.transaction.sub.types.enum";
 import {
   PROJECT_SECTOR_FALLBACK,
   PROJECT_SECTOR_MAP,
@@ -17,6 +18,7 @@ import {
   PROJECT_TYPE_MAP,
   PROJECT_UNIT_METRIC,
   STAKEHOLDER_TYPE_DEVELOPER,
+  UNIT_STATUS_REASON_BY_SUBTYPE,
   VALIDATION_TYPE_PDD_APPROVAL,
 } from "./picklist.map";
 
@@ -66,5 +68,17 @@ describe("picklist.map values are real CAD Trust picklist members", () => {
 
   it("sanity: LOCATION_COUNTRY_VALUES is available for deployment-time checks", () => {
     expect(LOCATION_COUNTRY_VALUES.length).toBeGreaterThan(0);
+  });
+
+  it("UNIT_STATUS_REASON_BY_SUBTYPE covers every retirement subType so no retirement falls back to accountType", () => {
+    Object.values(CreditTransactionSubTypesEnum).forEach((subType) => {
+      expect(UNIT_STATUS_REASON_BY_SUBTYPE[subType]).toBeDefined();
+    });
+  });
+
+  it("UNIT_STATUS_REASON_BY_SUBTYPE keeps MO use and ITMO first transfer distinct", () => {
+    expect(UNIT_STATUS_REASON_BY_SUBTYPE[CreditTransactionSubTypesEnum.USE_TOWARDS_NDC]).not.toBe(
+      UNIT_STATUS_REASON_BY_SUBTYPE[CreditTransactionSubTypesEnum.FIRST_TRANSFER_TOWARDS_NDC]
+    );
   });
 });

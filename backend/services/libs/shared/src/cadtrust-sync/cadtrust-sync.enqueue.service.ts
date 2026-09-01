@@ -81,6 +81,30 @@ export interface CadTrustValidationSyncProps {
 }
 
 /**
+ * Queue payload for `CADTV2VerificationCreate` — a snapshot, not just an id, for the same reason
+ * `CadTrustValidationSyncProps` carries one: the verifying body's identity is resolved via
+ * `document.lastActionByUserId` in-request (correct, current) but would race the ledger
+ * replicator's own asynchronous write to that same column if re-derived later. See
+ * `CadTrustValidationSyncProps`'s doc for the full reasoning — this is the identical pattern,
+ * applied to `performVerificationAction` instead of the PDD/validation-report approval handlers.
+ */
+export interface CadTrustVerificationSyncProps {
+  refId: string;
+  documentVersion: number;
+  /**
+   * The approving DNA's/verifying body's name. Carried for local context/audit (visible on the
+   * stored `cadtrust_sync_record.payload`) only — `CadTrustVerificationMapper` does NOT send this
+   * to CAD Trust's `verificationBody` field; that field is always the configured default instead,
+   * for the same reason `validationBodyName` never reaches `validationBody`. See
+   * `verification.mapper.ts`'s class doc.
+   */
+  verificationBodyName: string;
+  /** ISO dates, when the monitoring/verification report structurally captures a period — both optional on CAD Trust's side. */
+  verificationStartDate?: string;
+  verificationEndDate?: string;
+}
+
+/**
  * Producer-side helper: the only thing domain services call.
  *
  * Two deliberate properties:
@@ -195,6 +219,48 @@ export class CadTrustSyncEnqueueService {
    */
   async enqueueReconcile(): Promise<void> {
     await this.enqueue(AsyncActionType.CADTV2Reconcile, {});
+  }
+
+  /**
+   * Stages a CAD Trust verification record for a DNA-approved verification report — the
+   * request-path half of credit-issuance sync. See `CadTrustVerificationSyncProps` for why this
+   * carries a fuller snapshot, and `cadtrust-sync/README.md`'s "Two different producer-side
+   * hooks" for why verification is enqueued here while issuance/unit are enqueued from the
+   * replicator instead.
+   */
+  async enqueueVerification(props: CadTrustVerificationSyncProps): Promise<void> {
+    const { refId, documentVersion, verificationBodyName, verificationStartDate, verificationEndDate } =
+      props;
+    await this.enqueue(AsyncActionType.CADTV2VerificationCreate, {
+      refId,
+      documentVersion,
+      verificationBodyName,
+      verificationStartDate,
+      verificationEndDate,
+    });
+  }
+
+  /**
+   * Ensures the verification + issuance records for one newly-issued credit block, then creates
+   * its unit. Enqueued from `CreditTransactionsManagementService.handleTransactionRecords`'s
+   * `ISSUE` branch — one call per vintage block (`issueCredits()` writes one `CreditBlocksEntity`
+   * row per vintage, each an independent ledger/replicator event), not one per DNA-approval
+   * event. `creditBlockId` alone is enough: `CreditBlocksEntity` is written synchronously by the
+   * same replicator code that enqueues this, so re-reading it later is safe — see
+   * `cadtrust-credit-resource.service.ts`'s class doc.
+   */
+  async enqueueCreditIssuance(creditBlockId: string): Promise<void> {
+    await this.enqueue(AsyncActionType.CADTV2CreditIssuance, { creditBlockId });
+  }
+
+  /**
+   * Full-replace update to an existing unit's owner/status/amount. Enqueued from
+   * `handleTransactionRecords` for a whole-block transfer, a `COMPLETED` retirement, a
+   * `COMPLETED` ITMO authorization, and the retained/shrunken side of any partial split
+   * (`TxType.CREDIT_BLOCK_SPLIT`) — see `cadtrust-sync/README.md`'s event-by-event design.
+   */
+  async enqueueUnitUpdate(creditBlockId: string): Promise<void> {
+    await this.enqueue(AsyncActionType.CADTV2UnitUpdate, { creditBlockId });
   }
 
   private async enqueue(actionType: AsyncActionType, actionProps: any): Promise<void> {

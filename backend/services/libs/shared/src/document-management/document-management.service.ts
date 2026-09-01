@@ -2100,6 +2100,22 @@ private getFileExtension = (file: string): string => {
             HttpStatus.BAD_REQUEST
           );
         }
+        // Stage a CAD Trust verification record for this verification-report approval — the
+        // request-path half of credit-issuance sync (see cadtrust-sync/README.md's "Two
+        // different producer-side hooks"). Resolved and enqueued before the ledger write below,
+        // both because document.userId (the submitting IC) is only safely readable synchronously
+        // here — same reasoning as CadTrustValidationSyncProps — and so this action's actionId is
+        // guaranteed lower than any later credit-block event the ledger write triggers via the
+        // replicator (CadTrustCreditIssuanceHandler depends on that ordering — see its doc).
+        const verifyingICCompany = await this.userCompanyViewEntityRepository.findOne({
+          where: { id: document.userId },
+        });
+        await this.cadTrustSyncEnqueue.enqueueVerification({
+          refId: project.refId,
+          documentVersion: document.version,
+          verificationBodyName: verifyingICCompany?.companyName,
+        });
+
         await this.programmeLedgerService.issueCredits(
           activity,
           creditVerified,
@@ -2112,17 +2128,14 @@ private getFileExtension = (file: string): string => {
           ),
           user
         );
-        const ICCompany = await this.userCompanyViewEntityRepository.findOne({
-          where: { id: document.userId },
-        });
         await this.emailHelperService.sendEmailToPDAdmins(
           EmailTemplates.VERIFICATION_APPROVED_TO_PD,
-          { icOrganisationName: ICCompany.companyName },
+          { icOrganisationName: verifyingICCompany?.companyName },
           project.refId
         );
         await this.emailHelperService.sendEmailToICAdmins(
           EmailTemplates.VERIFICATION_APPROVED_TO_IC,
-          { icOrganisationName: ICCompany.companyName },
+          { icOrganisationName: verifyingICCompany?.companyName },
           project.refId
         );
         await this.logProjectStage(

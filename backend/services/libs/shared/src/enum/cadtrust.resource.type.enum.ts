@@ -28,4 +28,14 @@ export enum CadTrustResourceType {
   LOCATION = "LOCATION",
   /** /v2/validation, primary key cadTrustValidationId. */
   VALIDATION = "VALIDATION",
+  /** /v2/verification, primary key cadTrustVerificationId. */
+  VERIFICATION = "VERIFICATION",
+  /** /v2/issuance, primary key cadTrustIssuanceId. */
+  ISSUANCE = "ISSUANCE",
+  /** /v2/unit, primary key cadTrustUnitId. */
+  UNIT = "UNIT",
+  /** /v2/label, primary key cadTrustLabelId. */
+  LABEL = "LABEL",
+  /** /v2/unit-label, primary key cadTrustUnitLabelId. */
+  UNIT_LABEL = "UNIT_LABEL",
 }

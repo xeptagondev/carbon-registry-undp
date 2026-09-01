@@ -41,9 +41,39 @@ export class CadTrustRegistryProfileService {
     );
   }
 
+  /**
+   * The host Party — this registry's own country — as an ISO 3166-1 alpha-2 code. Every party
+   * field in this registry (`systemCountry`, `hostParty`, `participatingParties`,
+   * `RetirementUseData.country`) is alpha-2; see `CountryService.getAlpha3()`'s comment.
+   */
+  getHostCountryCode(): string {
+    return this.configService.get<string>("systemCountry");
+  }
+
+  /** The host Party's display name — the same value `location.mapper.ts` uses for `locationCountry`. */
+  getHostCountryName(): string {
+    return this.configService.get<string>("systemCountryName");
+  }
+
   /** Always used for CAD Trust's validationBody — see configuration.ts's cadTrustV2.validationBodyDefault. */
   getValidationBodyDefault(): string {
     return this.configService.get<string>("cadTrustV2.validationBodyDefault");
+  }
+
+  /** Always used for CAD Trust's verificationBody — see configuration.ts's cadTrustV2.verificationBodyDefault. */
+  getVerificationBodyDefault(): string {
+    return this.configService.get<string>("cadTrustV2.verificationBodyDefault");
+  }
+
+  /**
+   * CAD Trust's required `unitType` field. Unlike every other getter here, this can return
+   * `undefined` — no safe placeholder exists (see `mappers/picklist.map.ts`'s doc on
+   * `PICKLIST_KEYS.unitType`). Callers must not invent a fallback string; an unset value should
+   * reach CAD Trust as-is (or be rejected by it) so the gap stays visible rather than silently
+   * papered over.
+   */
+  getUnitType(): string | undefined {
+    return this.configService.get<string>("cadTrustV2.unitType");
   }
 
   getProgramInput(): ProgramCreateInput {
