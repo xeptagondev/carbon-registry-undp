@@ -11,6 +11,7 @@ import { Country } from "../entities/country.entity";
 import { CreditBlocksEntity } from "../entities/credit.blocks.entity";
 import { CreditTransactionsEntity } from "../entities/credit.transactions.entity";
 import { DocumentEntity } from "../entities/document.entity";
+import { ProjectEntity } from "../entities/projects.entity";
 import { ProgrammeLedgerModule } from "../programme-ledger/programme-ledger.module";
 import { SerialNumberManagementModule } from "../serial-number-management/serial-number-management.module";
 import { CadTrustCreditResourceService } from "./cadtrust-credit-resource.service";
@@ -22,6 +23,7 @@ import {
   CadTrustSyncDispatcherService,
 } from "./cadtrust-sync.dispatcher.service";
 import { CadTrustSyncEnqueueService } from "./cadtrust-sync.enqueue.service";
+import { CadTrustSyncQueryService } from "./cadtrust-sync-query.service";
 import { CadTrustSyncRecordService } from "./cadtrust-sync-record.service";
 import { CadTrustBootstrapHandler } from "./handlers/bootstrap.handler";
 import { CadTrustCommitHandler } from "./handlers/commit.handler";
@@ -101,6 +103,7 @@ const SYNC_HANDLERS = [
       CaAuthorizedEntity,
       CreditBlocksEntity,
       CreditTransactionsEntity,
+      ProjectEntity,
     ]),
   ],
   providers: [
@@ -118,6 +121,7 @@ const SYNC_HANDLERS = [
     CadTrustUnitLabelMapper,
     CadTrustProjectResourceService,
     CadTrustCreditResourceService,
+    CadTrustSyncQueryService,
     ...SYNC_HANDLERS,
     {
       provide: CADTRUST_SYNC_HANDLERS,
@@ -132,6 +136,7 @@ const SYNC_HANDLERS = [
     CadTrustSyncEnqueueService,
     CadTrustSyncDispatcherService,
     CadTrustSyncRecordService,
+    CadTrustSyncQueryService,
   ],
 })
 export class CadTrustSyncModule {}
