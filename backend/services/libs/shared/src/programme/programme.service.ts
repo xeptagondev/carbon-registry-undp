@@ -81,6 +81,7 @@ import { InvestmentRequestDto } from "../dto/investment.request.dto";
 import { InvestmentView } from "../view-entities/investment.view.entity";
 import { DocType } from "../enum/document.type";
 import { FileHandlerInterface } from "../file-handler/filehandler.interface";
+import { resolveStoredFile } from "../file-handler/storage-key";
 import { ProgrammeDocument } from "../entities/programme.document";
 import { NDCAction } from "../entities/ndc.action.entity";
 import { NDCActionType } from "../enum/ndc.action.enum";
@@ -5014,7 +5015,7 @@ export class ProgrammeService {
       .getMany();
 
     if (resp.length > 0) {
-      const prepData = this.prepareProgrammeDataForExport(resp);
+      const prepData = await this.prepareProgrammeDataForExport(resp);
 
       let headers: string[] = [];
       const titleKeys = Object.keys(prepData[0]);
@@ -5047,7 +5048,7 @@ export class ProgrammeService {
     );
   }
 
-  private prepareProgrammeDataForExport(programmes: any) {
+  private async prepareProgrammeDataForExport(programmes: any) {
     const exportData: DataExportProgrammeDto[] = [];
 
     for (const programme of programmes) {
@@ -5065,9 +5066,15 @@ export class ProgrammeService {
         .join(", ");
 
       const programmeDocuments: ProgrammeDocument[] = programme.documents;
-      const concatenatedDocumentUrls = programmeDocuments
-        .map((document) => document.url)
-        .join(", ");
+      // Written into a CSV server-side, so it never passes through the response
+      // interceptor that resolves storage keys for HTTP payloads.
+      const concatenatedDocumentUrls = (
+        await Promise.all(
+          programmeDocuments.map((document) =>
+            resolveStoredFile(this.fileHandler, document.url)
+          )
+        )
+      ).join(", ");
 
       const programmeSectoralScopeKey = Object.keys(SectoralScopeDef).find(
         (key) => SectoralScopeDef[key] === programme.sectoralScope
