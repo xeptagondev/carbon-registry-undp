@@ -20,15 +20,15 @@ $mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   cursor: pointer;
   vertical-align: middle;
   position: relative;
-  color: #0a6fa8;
 
   &:hover {
     background: rgba(22, 177, 255, 0.12);
   }
 
-  svg {
+  &__img {
     width: 15px;
     height: 15px;
+    border-radius: 3px;
     display: block;
   }
 
@@ -51,12 +51,16 @@ $mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
 .cadtrust-sync-modal {
   .ant-modal-content {
+    height: min(800px, calc(100vh - 80px));
+    display: flex;
+    flex-direction: column;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 24px 56px -18px rgba(16, 24, 40, 0.3), 0 0 0 1px rgba(16, 24, 40, 0.04);
   }
 
   .ant-modal-header {
+    flex: none;
     padding: 0;
     border-bottom: none;
   }
@@ -72,8 +76,30 @@ $mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
 
   .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     padding: 22px 30px 30px;
     text-align: left;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(58, 53, 65, 0.18) transparent;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(58, 53, 65, 0.18);
+      border-radius: 999px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(58, 53, 65, 0.28);
+    }
   }
 
   &__head {
@@ -88,12 +114,15 @@ $mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     width: 34px;
     height: 34px;
     border-radius: 9px;
-    background: rgba(22, 177, 255, 0.1);
-    color: #0a6fa8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden;
     flex: none;
+
+    img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
   }
 
   &__title {
@@ -123,12 +152,6 @@ $mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     border-radius: 6px;
     padding: 2px 7px;
     word-break: break-all;
-  }
-
-  &__loading {
-    display: flex;
-    justify-content: center;
-    padding: 44px 0;
   }
 
   &__note {
@@ -496,6 +519,16 @@ $mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     color: #2b2733;
     overflow-wrap: anywhere;
   }
+}
+
+// --- Short states (loading / empty) --------------------------------------
+
+.cadtrust-sync-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
 }
 
 // --- Empty state -----------------------------------------------------------

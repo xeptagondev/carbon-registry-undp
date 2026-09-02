@@ -10,6 +10,7 @@ import {
 import moment from 'moment';
 import { useConnection } from '../../Context/ConnectionContext/connectionContext';
 import { API_PATHS } from '../../Config/apiConfig';
+import CadTrustLogo from '../../Assets/Images/cadtrust-logo.png';
 import {
   CADTRUST_TABLE_NAMES,
   CadTrustLocalEntityType,
@@ -474,11 +475,7 @@ export const CadTrustSyncModal = ({
   const head = (
     <div className="cadtrust-sync-modal__head">
       <span className="cadtrust-sync-modal__logo">
-        <svg width="19" height="19" viewBox="0 0 24 24" {...svgProps} strokeWidth={1.6}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M3 12h18" />
-          <path d="M12 3c2.6 2.4 4 5.8 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.8-4-9s1.4-6.6 4-9Z" />
-        </svg>
+        <img src={CadTrustLogo} alt="CAD Trust" />
       </span>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span className="cadtrust-sync-modal__title" style={{ display: 'block' }}>
@@ -504,11 +501,11 @@ export const CadTrustSyncModal = ({
       className="cadtrust-sync-modal"
     >
       {loading ? (
-        <div className="cadtrust-sync-modal__loading">
+        <div className="cadtrust-sync-state">
           <Spin />
         </div>
       ) : !overview || overview.records.length === 0 ? (
-        <div className="cadtrust-sync-empty">
+        <div className="cadtrust-sync-state cadtrust-sync-empty">
           <div className="cadtrust-sync-empty__ico">
             <svg width="20" height="20" viewBox="0 0 24 24" {...svgProps} strokeWidth={1.6}>
               <circle cx="12" cy="12" r="9" />

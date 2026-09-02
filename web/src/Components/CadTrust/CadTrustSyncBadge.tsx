@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from 'react';
 import { Tooltip } from 'antd';
-import CadTrustLogo from '../../Assets/Images/cadtrust-logo.svg';
+import CadTrustLogo from '../../Assets/Images/cadtrust-logo.png';
 import { CadTrustSyncModal } from './CadTrustSyncModal';
 import {
   CadTrustSyncOverallStatus,
@@ -56,7 +56,7 @@ export const CadTrustSyncBadge = ({
           aria-label={TOOLTIP[status]}
           onClick={onClick}
         >
-          <CadTrustLogo />
+          <img className="cadtrust-sync-badge__img" src={CadTrustLogo} alt="" />
           <span className="cadtrust-sync-badge__dot" />
         </button>
       </Tooltip>
