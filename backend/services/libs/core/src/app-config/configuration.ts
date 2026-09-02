@@ -145,7 +145,7 @@ export default () => ({
     program: {
       name:
         process.env.CADT_V2_PROGRAM_NAME ||
-        `${process.env.systemCountryName || "CountryX"} National Carbon Crediting Program`,
+        `${process.env.systemCountryName || "CountryX"} National Carbon Crediting Demo Program`,
       registry:
         process.env.CADT_V2_PROGRAM_REGISTRY ||
         process.env.CADT_V2_REGISTRY_NAME ||
