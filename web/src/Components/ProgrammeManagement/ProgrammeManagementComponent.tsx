@@ -51,6 +51,8 @@ import { ProfileIcon } from "../IconComponents/ProfileIcon/profile.icon";
 import { CreditTypeSl } from "../../Definitions/Enums/creditTypeSl.enum";
 import { Role } from "../../Definitions/Enums/role.enum";
 import { API_PATHS } from "../../Config/apiConfig";
+import { CadTrustSyncBadge } from "../CadTrust/CadTrustSyncBadge";
+import { CadTrustSyncStatusSummary } from "../CadTrust/cadTrustSync.types";
 import { APPLICATION_STAGE } from "../../Definitions/Constants/ApplicationStage";
 import { downloadCSV } from "../../Utils/downloadCSV";
 import { deepCopy } from "../../Utils/deepCopy";
@@ -69,6 +71,9 @@ export const ProgrammeManagementComponent = (props: any) => {
   } = props;
 
   const { get, delete: del, post } = useConnection();
+  const [cadtStatus, setCadtStatus] = useState<
+    Record<string, CadTrustSyncStatusSummary>
+  >({});
   const [totalProgramme, setTotalProgramme] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
   const [tableData, setTableData] = useState<UserTableDataType[]>([]);
@@ -191,8 +196,18 @@ export const ProgrammeManagementComponent = (props: any) => {
       align: "left" as const,
       width: 180,
       fixed: "left" as const,
-      render: (item: any) => {
-        return <span className="clickable">{item}</span>;
+      render: (item: any, record: any) => {
+        return (
+          <span className="clickable">
+            {item}
+            <CadTrustSyncBadge
+              scope="project"
+              refId={record?.refId}
+              title={record?.title}
+              status={cadtStatus[record?.refId]?.overallStatus}
+            />
+          </span>
+        );
       },
       onCell: (record: any, rowIndex: any) => {
         return {
@@ -354,6 +369,25 @@ export const ProgrammeManagementComponent = (props: any) => {
     0
   );
 
+  const fetchCadtStatuses = async (rows: any[]) => {
+    const refIds = Array.from(
+      new Set((rows ?? []).map((row) => row?.refId).filter(Boolean))
+    );
+    if (refIds.length === 0) {
+      setCadtStatus({});
+      return;
+    }
+    try {
+      const response: any = await post(API_PATHS.CADTRUST_SYNC_PROJECT_STATUSES, {
+        refIds,
+      });
+      setCadtStatus(response?.data ?? {});
+    } catch (error) {
+      // A CAD Trust status probe must never break the project list.
+      setCadtStatus({});
+    }
+  };
+
   const getAllProgramme = async () => {
     setLoading(true);
 
@@ -401,11 +435,13 @@ export const ProgrammeManagementComponent = (props: any) => {
         filterOr: filterOr?.length > 0 ? filterOr : undefined,
         sort: sort,
       });
-      setTableData(response?.data ? response.data : []);
+      const rows = response?.data ? response.data : [];
+      setTableData(rows);
       setTotalProgramme(
         response.response?.data?.total ? response.response?.data?.total : 0
       );
       setLoading(false);
+      void fetchCadtStatuses(rows);
       setDataQuery({
         filterAnd: filter,
         filterOr: filterOr?.length > 0 ? filterOr : undefined,

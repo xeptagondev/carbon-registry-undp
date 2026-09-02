@@ -107,7 +107,7 @@ services:
       DB_USER: root
       DB_PASSWORD: "<ANY PASSWORD>"
       # ,data-importer
-      RUN_MODULE: replicator,async-operations-handler
+      RUN_MODULE: replicator,async-operations-handler,cadtrust-operations-handler
       LOCATION_SERVICE: OPENSTREET
       SMTP_ENDPOINT: email-smtp.us-east-1.amazonaws.com
       SMTP_USERNAME: ***REMOVED***

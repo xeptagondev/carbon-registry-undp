@@ -135,6 +135,7 @@
     "moduleNameMapper": {
       "^@app/shared(|/.*)$": "<rootDir>/libs/shared/src/$1",
       "^@app/core(|/.*)$": "<rootDir>/libs/core/src/$1",
+      "^@app/cadtrust(|/.*)$": "<rootDir>/libs/cadtrust/src/$1",
       "^@app/aef-v2(|/.*)$": "<rootDir>/libs/aef-v2/src/$1"
     }
   },
