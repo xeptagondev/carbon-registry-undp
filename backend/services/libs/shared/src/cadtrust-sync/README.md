@@ -561,7 +561,7 @@ and `.env.national.example` for the full per-key breakdown.
    ```
    Skipping this makes the first enqueued action fail with
    `invalid input value for enum async_action_entity_actiontype_enum: "17"` —
-   the baseline migration only created labels `'0'..'16'`. There are eight
+   the baseline migration only created labels `'0'..'16'`. There are nine
    CAD Trust migrations to run, in order: `1785500000000-CadTrustV2Sync.ts`
    (labels `17`–`19`, the `cadtrust_sync_record` table),
    `1785600000000-CadTrustV2Bootstrap.ts` (label `20`, plus `ORGANIZATION` /
@@ -573,8 +573,12 @@ and `.env.national.example` for the full per-key breakdown.
    `1786000000000-CadTrustV2Reconcile.ts` (label `22`, for `CADTV2Reconcile`),
    `1787600000000-CadTrustAsyncOperationsCounter.ts` (no new action-type label —
    adds the `CADTRUST_ASYNC_OPERATIONS` counter row the second lane's cursor
-   uses), and `1787700000000-CadTrustV2Credits.ts` (labels `23`–`25`, plus
-   `VERIFICATION` / `ISSUANCE` / `UNIT` / `LABEL` / `UNIT_LABEL`).
+   uses), `1787700000000-CadTrustV2Credits.ts` (labels `23`–`25`, plus
+   `VERIFICATION` / `ISSUANCE` / `UNIT` / `LABEL` / `UNIT_LABEL`), and
+   `1787900000000-CadTrustV2SyncProps.ts` (no new action-type label — adds the
+   `syncProps` column the reconcile pass reads back to re-drive a FAILED
+   `VALIDATION` / `VERIFICATION` / `ISSUANCE` record from its request-side
+   snapshot).
 2. Confirm it landed:
    ```sql
    SELECT unnest(enum_range(NULL::async_action_entity_actiontype_enum));            -- includes 17..25

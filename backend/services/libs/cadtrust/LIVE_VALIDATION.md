@@ -94,26 +94,27 @@ Every resource below exposes the identical 5-endpoint shape program/methodology 
 (program/methodology) confirms `makeResource()` itself works, but each resource's own field names
 are a separate, unvalidated guess until captured individually.
 
-`stageCreate`/`stageUpdate` are split from `stageDelete` below because project-lifecycle dev testing
-(2026-08-24, via the real handlers against a live node — see the paragraph below the table)
-confirmed the former for six of these resources without ever exercising the latter for any of them.
+`stageCreate`/`stageUpdate` are split from `stageDelete` below because dev testing (2026-08-24
+project lifecycle, then 2026-09-02 credit lifecycle — via the real handlers against a live node, see
+the two paragraphs below the table) confirmed the former for most of these resources without ever
+exercising the latter for any of them.
 
 | Resource | Path | `list`/`get` | `stageCreate` | `stageUpdate` | `stageDelete` |
 |---|---|---|---|---|---|
 | Stakeholder | `/stakeholder` | ⏳ | ✅ | ⏳ | ⏳ |
-| Label | `/label` | ⏳ | ⏳ | ⏳ | ⏳ |
+| Label | `/label` | ⏳ | ✅ | ⏳ | ⏳ |
 | Project | `/project` | ⏳ | ✅ | ✅ | ⏳ |
 | ProjectMethodology | `/project-methodology` | ⏳ | ✅ | ⏳ | ⏳ |
 | StakeholderProject | `/stakeholder-projects` | ⏳ | ✅ | ⏳ | ⏳ |
 | Validation | `/validation` | ⏳ | ✅ | ⏳ | ⏳ |
-| Verification | `/verification` | ⏳ | ⏳ | ⏳ | ⏳ |
+| Verification | `/verification` | ⏳ | ✅ | ⏳ | ⏳ |
 | Location | `/location` | ⏳ | ✅ | ⏳ | ⏳ |
 | Estimation | `/estimation` | ⏳ | ⏳ | ⏳ | ⏳ |
 | Rating | `/rating` | ⏳ | ⏳ | ⏳ | ⏳ |
 | CoBenefit | `/co-benefit` | ⏳ | ⏳ | ⏳ | ⏳ |
-| Issuance | `/issuance` | ⏳ | ⏳ | ⏳ | ⏳ |
-| Unit | `/unit` | ⏳ | ⏳ | ⏳ | ⏳ |
-| UnitLabel | `/unit-label` | ⏳ | ⏳ | ⏳ | ⏳ |
+| Issuance | `/issuance` | ⏳ | ✅ | ⏳ | ⏳ |
+| Unit | `/unit` | ⏳ | ✅ | ✅ | ⏳ |
+| UnitLabel | `/unit-label` | ⏳ | ✅ | ⏳ | ⏳ |
 
 Validated via: manual dev testing, 2026-08-24 — `Stakeholder.stageCreate` (`CadTrustProjectCreateHandler.ensureStakeholder`),
 `Project.stageCreate` (`ensureProject`), `Project.stageUpdate` (`CadTrustProjectUpdateHandler`),
@@ -123,6 +124,16 @@ Validated via: manual dev testing, 2026-08-24 — `Stakeholder.stageCreate` (`Ca
 full project-lifecycle pass (INF submit through `APPROVE_VALIDATION`) — superseding the "504 Gateway
 time-out" note that used to sit here for Stakeholder/Project: those were transient origin overload on
 an earlier attempt the same day, not a standing problem.
+
+Validated via: manual dev testing, 2026-09-02 — the full credit lifecycle
+(verification-report approval → issuance → whole-block domestic transfer → retirement →
+ITMO authorization → partial split) was run through the real handlers against a live node:
+`Verification.stageCreate` (`CadTrustVerificationCreateHandler`), `Issuance.stageCreate` and
+`Unit.stageCreate` (`CadTrustCreditIssuanceHandler`), `Unit.stageUpdate`, `Label.stageCreate` and
+`UnitLabel.stageCreate` (`CadTrustUnitUpdateHandler`, the label bootstrapped on first ITMO
+authorization). Each record staged, committed, and was confirmed present on the node. Individual
+record field names are still an unvalidated guess pending a per-resource capture pass — only the
+staging/commit mechanism is confirmed for these.
 
 `Project`'s `list` is a partial exception on the `get`/`list` side — `cadtrust.live.spec.ts`'s
 `'paginates projects'` test already exercises `GET /project?page=&limit=` and asserts the pagination
