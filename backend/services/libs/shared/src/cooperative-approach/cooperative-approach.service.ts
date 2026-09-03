@@ -23,6 +23,7 @@ import { CounterService } from "../util/counter.service";
 import { CounterType } from "../util/counter.type.enum";
 import { CountryService } from "../util/country.service";
 import { User } from "../entities/user.entity";
+import { AefV2WriteService } from "../aef-v2-registry/aef-v2-write.service";
 
 // Allowed manual status transitions. Draft has none: an approach leaves
 // Draft only when its initial report is submitted, which drives it to
@@ -59,7 +60,8 @@ export class CooperativeApproachService {
     private readonly helperService: HelperService,
     private readonly counterService: CounterService,
     private readonly countryService: CountryService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly aefV2WriteService: AefV2WriteService
   ) {}
 
   // Cooperative approaches are managed by the government (DNA) Admin /
@@ -527,6 +529,10 @@ export class CooperativeApproachService {
     entity.status = AuthorizedEntityStatus.INACTIVE;
     entity.updatedTime = new Date().getTime();
     const saved = await this.authorizedEntityRepo.save(entity);
+    // Keeps any already-filed (unfrozen) AEF V2 Table 5 row for this entity
+    // from drifting — without this, a deactivation only reaches Table 5 the
+    // next time an Action references the entity, or at year-end.
+    await this.aefV2WriteService.syncAuthorizedEntityStatus(saved, approach?.caReferenceNumber);
     return new DataResponseDto(HttpStatus.OK, saved);
   }
 
