@@ -96,11 +96,15 @@ export class CadTrustReconcileHandler extends CadTrustSyncHandler {
         await this.commitHandler.handle();
       }
 
+      // Records that have already failed this many times are left alone — see
+      // cadTrustV2.reconcileMaxAttempts's doc.
+      const maxAttempts = this.configService.get<number>("cadTrustV2.reconcileMaxAttempts");
+
       // Dependency order: project → validation/verification/issuance → unit. Each sweep commits its
       // own staged rows before the next runs, so a chain broken at several links can heal in one tick.
-      await this.reconcileProjects();
-      await this.reconcileSnapshots();
-      await this.reconcileCreditBlocks();
+      await this.reconcileProjects(maxAttempts);
+      await this.reconcileSnapshots(maxAttempts);
+      await this.reconcileCreditBlocks(maxAttempts);
     } catch (error) {
       // Must not rethrow: a throw here stalls the global async-operations cursor and stops every
       // queued action in the system, email included. Every sweep and every ensureX behind it
@@ -109,8 +113,8 @@ export class CadTrustReconcileHandler extends CadTrustSyncHandler {
     }
   }
 
-  private async reconcileProjects(): Promise<void> {
-    const refIds = await this.syncRecords.findFailedProjectRefIds();
+  private async reconcileProjects(maxAttempts: number): Promise<void> {
+    const refIds = await this.syncRecords.findFailedProjectRefIds(maxAttempts);
     if (refIds.length === 0) {
       this.logger.log("CAD Trust reconcile: no FAILED project sync records to re-drive");
       return;
@@ -128,8 +132,8 @@ export class CadTrustReconcileHandler extends CadTrustSyncHandler {
     }
   }
 
-  private async reconcileCreditBlocks(): Promise<void> {
-    const creditBlockIds = await this.syncRecords.findFailedCreditBlockIds();
+  private async reconcileCreditBlocks(maxAttempts: number): Promise<void> {
+    const creditBlockIds = await this.syncRecords.findFailedCreditBlockIds(maxAttempts);
     if (creditBlockIds.length === 0) {
       this.logger.log("CAD Trust reconcile: no FAILED credit sync records to re-drive");
       return;
@@ -203,8 +207,8 @@ export class CadTrustReconcileHandler extends CadTrustSyncHandler {
    * re-staged (and committed) before the next group references it. Each group commits its own
    * staged rows.
    */
-  private async reconcileSnapshots(): Promise<void> {
-    const records = await this.syncRecords.findFailedSnapshotRecords();
+  private async reconcileSnapshots(maxAttempts: number): Promise<void> {
+    const records = await this.syncRecords.findFailedSnapshotRecords(maxAttempts);
     if (records.length === 0) {
       this.logger.log(
         "CAD Trust reconcile: no FAILED validation/verification/issuance sync records to re-drive"
