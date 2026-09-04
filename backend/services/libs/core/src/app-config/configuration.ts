@@ -130,6 +130,13 @@ export default () => ({
     // the handler's own doc — but it is the signal an operator should investigate
     // POST /staging/reset-committed rather than assume it will clear itself.
     commitStuckThreshold: Number(process.env.CADT_V2_COMMIT_STUCK_THRESHOLD || 6),
+    // Per-record cap on `cadtrust_sync_record.attemptCount` past which CadTrustReconcileHandler
+    // stops re-driving a FAILED project/snapshot/credit-block record — otherwise a permanently
+    // broken record (bad data, a resource CAD Trust will never accept) would be retried forever,
+    // every reconcileIntervalMs tick, indefinitely. Once a record crosses this it is left alone;
+    // findStuckFailures/commitStuckThreshold above is the separate signal that surfaces it to an
+    // operator.
+    reconcileMaxAttempts: Number(process.env.CADT_V2_RECONCILE_MAX_ATTEMPTS || 10),
     // Sent as CAD Trust's `projectRegistryName` — the name this registry is
     // published under on the network, not the CADT node's own identity.
     registryName: process.env.CADT_V2_REGISTRY_NAME || process.env.SYSTEM_NAME || "SystemX",

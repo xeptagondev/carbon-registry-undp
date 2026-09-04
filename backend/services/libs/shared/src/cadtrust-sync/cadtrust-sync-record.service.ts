@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Like, MoreThanOrEqual, Repository } from "typeorm";
+import { In, LessThan, Like, MoreThanOrEqual, Repository } from "typeorm";
 
 import { CadTrustSyncRecordEntity } from "../entities/cadtrust.sync.record.entity";
 import { CadTrustLocalEntityType } from "../enum/cadtrust.local.entity.type.enum";
@@ -282,8 +282,12 @@ export class CadTrustSyncRecordService {
    * Which entity types belong to which reconcile pass — and why `STAKEHOLDER` (companyId-keyed,
    * re-driven indirectly), the `SNAPSHOT` types, and the bootstrap-owned singletons are not here —
    * is defined and explained in `reconcile-scope.ts`.
+   *
+   * @param maxAttempts Records whose `attemptCount` has already reached this are excluded — a
+   *   permanently-broken record (bad data, a resource CAD Trust will never accept) would otherwise
+   *   be re-driven forever, every reconcile tick. See `cadTrustV2.reconcileMaxAttempts`.
    */
-  async findFailedProjectRefIds(): Promise<string[]> {
+  async findFailedProjectRefIds(maxAttempts: number): Promise<string[]> {
     const rows = await this.syncRecordRepo
       .createQueryBuilder("record")
       .select("DISTINCT record.localId", "localId")
@@ -291,6 +295,7 @@ export class CadTrustSyncRecordService {
       .andWhere("record.localEntityType IN (:...types)", {
         types: entityTypesForPass(CadTrustReconcilePass.PROJECT),
       })
+      .andWhere("record.attemptCount < :maxAttempts", { maxAttempts })
       .getRawMany<{ localId: string }>();
     return rows.map((row) => row.localId);
   }
@@ -301,8 +306,10 @@ export class CadTrustSyncRecordService {
    * directly by `creditBlockId`. Used by `CadTrustReconcileHandler`'s credit sweep — the parallel
    * of `findFailedProjectRefIds()` for the credit side. See `reconcile-scope.ts` for the full
    * pass-by-pass breakdown.
+   *
+   * @param maxAttempts See `findFailedProjectRefIds`'s doc.
    */
-  async findFailedCreditBlockIds(): Promise<string[]> {
+  async findFailedCreditBlockIds(maxAttempts: number): Promise<string[]> {
     const rows = await this.syncRecordRepo
       .createQueryBuilder("record")
       .select("DISTINCT record.localId", "localId")
@@ -310,6 +317,7 @@ export class CadTrustSyncRecordService {
       .andWhere("record.localEntityType IN (:...types)", {
         types: entityTypesForPass(CadTrustReconcilePass.CREDIT_BLOCK),
       })
+      .andWhere("record.attemptCount < :maxAttempts", { maxAttempts })
       .getRawMany<{ localId: string }>();
     return rows.map((row) => row.localId);
   }
@@ -320,12 +328,15 @@ export class CadTrustSyncRecordService {
    * unlike the two `localId`-only finders above: `CadTrustReconcileHandler.reconcileSnapshots()`
    * needs `syncProps` (the request-side snapshot to re-drive from), `payload` (the fallback for a
    * pre-`syncProps` row) and `localEntityType` (to pick which `ensureX` to call).
+   *
+   * @param maxAttempts See `findFailedProjectRefIds`'s doc.
    */
-  async findFailedSnapshotRecords(): Promise<CadTrustSyncRecordEntity[]> {
+  async findFailedSnapshotRecords(maxAttempts: number): Promise<CadTrustSyncRecordEntity[]> {
     return this.syncRecordRepo.find({
       where: {
         syncStatus: CadTrustSyncStatus.FAILED,
         localEntityType: In(entityTypesForPass(CadTrustReconcilePass.SNAPSHOT)),
+        attemptCount: LessThan(maxAttempts),
       },
     });
   }

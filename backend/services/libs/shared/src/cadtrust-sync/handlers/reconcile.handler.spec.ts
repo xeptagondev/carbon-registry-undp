@@ -33,6 +33,7 @@ const LEDGER_PROJECT = {
 function buildHandler(
   overrides: {
     enabled?: boolean;
+    reconcileMaxAttempts?: number;
     failedRefIds?: string[];
     failedCreditBlockIds?: string[];
     hasUncommittedStagedRows?: boolean;
@@ -100,7 +101,14 @@ function buildHandler(
       staging: { hasUncommittedStagedRows },
     }),
   };
-  const configService = { get: () => overrides.enabled ?? true };
+  const configService = {
+    get: (key: string) =>
+      key === "cadTrustV2.enable"
+        ? overrides.enabled ?? true
+        : key === "cadTrustV2.reconcileMaxAttempts"
+        ? overrides.reconcileMaxAttempts ?? 10
+        : undefined,
+  };
   const logger = { log: jest.fn(), error: jest.fn(), warn: jest.fn() };
 
   const handler = new CadTrustReconcileHandler(
@@ -210,7 +218,7 @@ describe("CadTrustReconcileHandler", () => {
 
       await handler.handle();
 
-      expect(syncRecords.findFailedCreditBlockIds).toHaveBeenCalledTimes(1);
+      expect(syncRecords.findFailedCreditBlockIds).toHaveBeenCalledWith(10);
       expect(creditResources.ensureIssuanceForUncreatedUnit).toHaveBeenCalledWith(CREDIT_BLOCK_ID_1);
       expect(creditResources.ensureUnitUpdate).toHaveBeenCalledWith(CREDIT_BLOCK_ID_1);
       expect(creditResources.ensureItmoLabelIfAuthorized).toHaveBeenCalledWith(CREDIT_BLOCK_ID_1);
@@ -332,7 +340,7 @@ describe("CadTrustReconcileHandler", () => {
 
       await handler.handle();
 
-      expect(syncRecords.findFailedSnapshotRecords).toHaveBeenCalledTimes(1);
+      expect(syncRecords.findFailedSnapshotRecords).toHaveBeenCalledWith(10);
       expect(resources.ensureValidation).toHaveBeenCalledWith(
         expect.objectContaining({ refId: REF_ID_1, documentType: "PDD", documentVersion: 1 })
       );

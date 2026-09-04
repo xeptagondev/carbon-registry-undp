@@ -270,11 +270,12 @@ describe("CadTrustSyncRecordService", () => {
       ];
       const { service, repo } = buildService(null, [], rows);
 
-      expect(await service.findFailedSnapshotRecords()).toBe(rows);
+      expect(await service.findFailedSnapshotRecords(10)).toBe(rows);
       expect(repo.find).toHaveBeenCalledWith({
         where: {
           syncStatus: CadTrustSyncStatus.FAILED,
           localEntityType: expect.anything(), // In([VALIDATION, VERIFICATION, ISSUANCE]) — a FindOperator
+          attemptCount: expect.anything(), // LessThan(10) — a FindOperator
         },
       });
     });
@@ -282,7 +283,7 @@ describe("CadTrustSyncRecordService", () => {
     it("returns an empty array when nothing is FAILED", async () => {
       const { service } = buildService(null, [], []);
 
-      expect(await service.findFailedSnapshotRecords()).toEqual([]);
+      expect(await service.findFailedSnapshotRecords(10)).toEqual([]);
     });
   });
 
@@ -376,7 +377,7 @@ describe("CadTrustSyncRecordService", () => {
     it("returns the distinct refIds of FAILED project-scoped sync records", async () => {
       const { service, queryBuilder } = buildService(null, [{ localId: "0042" }, { localId: "0099" }]);
 
-      const refIds = await service.findFailedProjectRefIds();
+      const refIds = await service.findFailedProjectRefIds(10);
 
       expect(refIds).toEqual(["0042", "0099"]);
       expect(queryBuilder.where).toHaveBeenCalledWith("record.syncStatus = :status", {
@@ -390,12 +391,15 @@ describe("CadTrustSyncRecordService", () => {
           CadTrustLocalEntityType.LOCATION,
         ],
       });
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith("record.attemptCount < :maxAttempts", {
+        maxAttempts: 10,
+      });
     });
 
     it("returns an empty array when nothing is FAILED", async () => {
       const { service } = buildService(null, []);
 
-      expect(await service.findFailedProjectRefIds()).toEqual([]);
+      expect(await service.findFailedProjectRefIds(10)).toEqual([]);
     });
   });
 
@@ -406,7 +410,7 @@ describe("CadTrustSyncRecordService", () => {
         { localId: "CA0001-XX-XX-1-101-200" },
       ]);
 
-      const creditBlockIds = await service.findFailedCreditBlockIds();
+      const creditBlockIds = await service.findFailedCreditBlockIds(10);
 
       expect(creditBlockIds).toEqual(["CA0001-XX-XX-1-1-100", "CA0001-XX-XX-1-101-200"]);
       expect(queryBuilder.where).toHaveBeenCalledWith("record.syncStatus = :status", {
@@ -415,12 +419,15 @@ describe("CadTrustSyncRecordService", () => {
       expect(queryBuilder.andWhere).toHaveBeenCalledWith("record.localEntityType IN (:...types)", {
         types: [CadTrustLocalEntityType.UNIT, CadTrustLocalEntityType.UNIT_LABEL],
       });
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith("record.attemptCount < :maxAttempts", {
+        maxAttempts: 10,
+      });
     });
 
     it("returns an empty array when nothing is FAILED", async () => {
       const { service } = buildService(null, []);
 
-      expect(await service.findFailedCreditBlockIds()).toEqual([]);
+      expect(await service.findFailedCreditBlockIds(10)).toEqual([]);
     });
   });
 
