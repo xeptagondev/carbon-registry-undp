@@ -20,8 +20,11 @@ export const AppDataSource = new DataSource({
   logging: ["error", "schema"],
 
 
-  // tables from the generated baseline. See docs/migrations-plan.md.
-  entities: ["libs/shared/src/entities/*.ts"],
+  // tables and views from the generated baseline. See docs/migrations-plan.md.
+  entities: [
+    "libs/shared/src/entities/*.ts",
+    "libs/shared/src/view-entities/*.ts",
+  ],
   migrations: ["src/migrations/*.ts"],
 
   // Bookkeeping table TypeORM uses to track which migrations have run.
