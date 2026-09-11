@@ -4,6 +4,7 @@ import {
   AefSubmissionDefaults,
   AefTableName,
   AuthorizedEntitiesProvider,
+  Clock,
   exportFileName,
   formatSubmissionDate,
   HoldingsProvider,
@@ -34,6 +35,7 @@ import { CountryService } from "../util/country.service";
 import { AefStoreFactory } from "./aef-v2-store.factory";
 import {
   AEF_AUTHORIZED_ENTITIES_PROVIDER,
+  AEF_CLOCK,
   AEF_HOLDINGS_PROVIDER,
   AEF_SUBMISSION_DEFAULTS,
 } from "./aef-v2.tokens";
@@ -100,6 +102,7 @@ export class AefV2ReportService {
     @Inject(AEF_HOLDINGS_PROVIDER) private readonly holdings: HoldingsProvider,
     @Inject(AEF_AUTHORIZED_ENTITIES_PROVIDER)
     private readonly authorizedEntities: AuthorizedEntitiesProvider,
+    @Inject(AEF_CLOCK) private readonly clock: Clock,
     private readonly fileHandler: FileHandlerInterface,
     private readonly controlledValues: RegistryControlledValueProvider,
     private readonly countryService: CountryService
@@ -114,7 +117,7 @@ export class AefV2ReportService {
   }
 
   async loadBundle(reportedYear: number) {
-    return loadSubmissionBundle(this.deps(), this.defaults, reportedYear);
+    return loadSubmissionBundle(this.deps(), this.defaults, reportedYear, this.clock);
   }
 
   /**
@@ -219,7 +222,7 @@ export class AefV2ReportService {
   }
 
   async submit(reportedYear: number, options: SubmitOptions = {}) {
-    return submitAefReport(this.deps(), this.defaults, reportedYear, options);
+    return submitAefReport(this.deps(), this.defaults, reportedYear, options, this.clock);
   }
 
   /**
@@ -228,7 +231,7 @@ export class AefV2ReportService {
    * serverless one-shot trigger), both of which call this and nothing else.
    */
   async rollover(options: AefRolloverOptions = {}) {
-    return openReportingYear(this.deps(), this.defaults, options);
+    return openReportingYear(this.deps(), this.defaults, options, this.clock);
   }
 
   config(): AefSubmissionDefaults {

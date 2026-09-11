@@ -2,6 +2,8 @@ import { Button, Tag, Tooltip } from "antd";
 import { TFunction } from "i18next";
 import { createElement, type ReactNode } from "react";
 
+import { testAwareNow } from "../../Utils/aefTestClock";
+
 /** The translator shape used throughout this module. */
 export type Translate = TFunction<string[], undefined, string[]>;
 
@@ -159,9 +161,12 @@ const submitActionCol = (t: Translate, onSubmit: (row: Record<string, unknown>) 
         // had its moment, and re-filing is a revision, not a submit. The
         // reported year also has to be over — the current year's AEF cannot
         // be filed until next year, so it stays disabled even while DRAFT.
+        // `testAwareNow()`, not `new Date()` directly, so this agrees with the
+        // backend's TEST-ONLY AEF_TEST_CLOCK_OVERRIDE when that's set — see
+        // docs/testing/aef-v2-rollover-submit-testing.md.
         disabled:
           row.status !== "DRAFT" ||
-          Number(row.aefT1SubmissionReportYear) >= new Date().getFullYear(),
+          Number(row.aefT1SubmissionReportYear) >= testAwareNow().getFullYear(),
         onClick: () => onSubmit(row),
       },
       t("reporting:submitAef")

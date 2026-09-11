@@ -21,6 +21,7 @@ describe("AefV2ReportService query display shaping", () => {
       defaults as any,
       {} as any, // holdings
       {} as any, // authorizedEntities
+      { now: () => new Date("2026-03-01T12:00:00Z") }, // clock
       {} as any, // fileHandler
       {} as any, // controlledValues
       {} as any // countryService
@@ -99,6 +100,7 @@ describe("AefV2ReportService query sorting", () => {
       defaults as any,
       {} as any, // holdings
       {} as any, // authorizedEntities
+      { now: () => new Date("2026-03-01T12:00:00Z") }, // clock
       {} as any, // fileHandler
       {} as any, // controlledValues
       {} as any // countryService

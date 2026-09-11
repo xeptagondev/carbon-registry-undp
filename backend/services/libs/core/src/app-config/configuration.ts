@@ -302,5 +302,18 @@ export default () => ({
     // are read-then-write, so concurrent ticks could double-insert Table 4/5
     // rows.
     rolloverCronEnabled: process.env.AEF_ROLLOVER_CRON_ENABLED !== "false",
+    // ===== TEST-ONLY — DO NOT SET IN PRODUCTION =====
+    // An ISO instant (e.g. "2027-01-01T01:00:00Z"). When set, AEF V2's notion
+    // of "now" — rollover's openYear/closedYear, submitAefReport's
+    // year-is-not-closed guard, everything derived from @app/aef-v2's Clock —
+    // is offset to start there instead of the real system clock, so a local
+    // dev/test flow (including the frontend Submit button, which sends no
+    // `force`) can exercise the real, unmodified guard logic without waiting
+    // for the calendar to actually turn over. Time still ticks forward
+    // normally from that offset; it is not frozen at one instant. Refused
+    // outright when NODE_ENV=production, so this can never take effect
+    // outside local/dev use regardless of what gets set. See AefV2RegistryModule
+    // for where this is read.
+    testClockOverride: process.env.AEF_TEST_CLOCK_OVERRIDE,
   },
 });
