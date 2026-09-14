@@ -66,6 +66,8 @@ async function bootstrap() {
 
     const app = await buildNestApp(module, "/" + httpPath);
     if (moduleName == "national-api") {
+      await setupHandler.handler();
+
       if (fs.existsSync("organisations.csv")) {
         const orgs = await fs.readFileSync("organisations.csv", "utf8");
         console.log("Inserting orgs", orgs);
@@ -77,11 +79,6 @@ async function bootstrap() {
         console.log("Inserting users", users);
         await setupHandler.handler({ type: "IMPORT_USERS", body: users });
       }
-
-      const staticPath = join(__dirname, "..", "public");
-      console.log("Static file path:", staticPath);
-      app.useStaticAssets(staticPath);
-      await setupHandler.handler();
 
       // Verifies the CAD Trust home organization and stages the registry's
       // program + methodology if not already synced. Enqueued on every start on
