@@ -172,7 +172,6 @@ const Homepage = () => {
                 </div>
               </Col>
             </Row>
-
             <Row>
               <div className="text-ctn">
                 <span>
@@ -186,7 +185,6 @@ const Homepage = () => {
                 <div className="subhome">{t("homepage:subHeading")}</div>
               </div>
             </Row>
-
             <Row className="arrow-ctn">
               {Visible && (
                 <nav className={"arrows"}>
