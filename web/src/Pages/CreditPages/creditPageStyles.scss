@@ -462,10 +462,32 @@
     background: rgba(variables.$white, 0.92);
   }
 
-  .credit-balance-serial-number,
   .credit-balance-detail-date {
     display: inline-block;
     white-space: nowrap;
+  }
+
+  // Serial numbers are long, unbroken tokens, so at narrow widths `nowrap`
+  // overflowed the cell and ran under the Credit Owner column. Wrap the text
+  // instead and hold the CAD Trust badge against the cell's right edge.
+  .credit-balance-serial-number {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    white-space: normal;
+    // No spaces or hyphens to break on - the serial has to break mid-token.
+    overflow-wrap: anywhere;
+
+    .cadtrust-sync-badge-wrap {
+      flex: 0 0 auto;
+    }
+
+    // The wrapper already supplies the spacing via `gap`.
+    .cadtrust-sync-badge {
+      margin-left: 0;
+    }
   }
 
   .credit-balance-detail-number {
