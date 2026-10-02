@@ -20,6 +20,7 @@ import { CadTrustProjectResourceService, EnsureResult } from "./cadtrust-project
 import { CadTrustRegistryProfileService } from "./cadtrust-registry-profile.service";
 import { CadTrustVerificationSyncProps } from "./cadtrust-sync.enqueue.service";
 import { CadTrustSyncKey, CadTrustSyncRecordService } from "./cadtrust-sync-record.service";
+import { toCadTrustIsoDate } from "./iso-date";
 import { CadTrustCreditUnitMapper, CadTrustUnitParties } from "./mappers/credit-unit.mapper";
 import { CadTrustUnitLabelMapper } from "./mappers/unit-label.mapper";
 import { CadTrustVerificationMapper } from "./mappers/verification.mapper";
@@ -94,7 +95,7 @@ export class CadTrustCreditResourceService {
       cadTrustEntityType: CadTrustResourceType.VERIFICATION,
     };
 
-    const existing = await this.projectResources.existingSync(key, `Verification record ${localId}`);
+    const existing = await this.projectResources.existingSync(key, `Verification record ${localId}`, "verification");
     if ("commitOwed" in existing) {
       return existing.cadTrustId ? { cadTrustId: existing.cadTrustId, commitOwed: existing.commitOwed } : undefined;
     }
@@ -165,7 +166,7 @@ export class CadTrustCreditResourceService {
    * `findLatestSynced`) rather than trying to reconstruct it, since `CreditBlocksEntity` carries
    * no document/activity reference back to the verification event that produced it.
    */
-  async ensureIssuance(refId: string): Promise<EnsureResult> {
+  async ensureIssuance(refId: string, issuanceDate?: string): Promise<EnsureResult> {
     const verificationRecord = await this.syncRecords.findLatestSynced(
       CadTrustLocalEntityType.VERIFICATION,
       refId
@@ -187,15 +188,27 @@ export class CadTrustCreditResourceService {
       cadTrustEntityType: CadTrustResourceType.ISSUANCE,
     };
 
-    const existing = await this.projectResources.existingSync(key, `Issuance record ${localId}`);
+    const existing = await this.projectResources.existingSync(key, `Issuance record ${localId}`, "issuance");
     if ("commitOwed" in existing) {
       return existing.cadTrustId ? { cadTrustId: existing.cadTrustId, commitOwed: existing.commitOwed } : undefined;
     }
 
+    // `issuanceDate` (the credit issuance date, `YYYY-MM-DD`) is only known to the credit-block
+    // caller. The reconcile sweep re-drives with just `refId`, so recover it from what an earlier
+    // attempt stored rather than dropping it from the re-sent record.
+    const prior = await this.syncRecords.find(key);
+    const resolvedIssuanceDate =
+      issuanceDate ??
+      ((prior?.syncProps as Record<string, unknown> | undefined)?.issuanceDate as string | undefined) ??
+      ((prior?.payload as Record<string, unknown> | undefined)?.issuanceDate as string | undefined);
+
     // `refId` is all ensureIssuance needs to rebuild itself — everything else is re-derived from
     // other sync records. Stored so CadTrustReconcileHandler's snapshot sweep can re-drive a FAILED
     // issuance record without parsing it back out of the composite localId.
-    await this.syncRecords.recordSyncProps(key, { refId });
+    await this.syncRecords.recordSyncProps(key, {
+      refId,
+      ...(resolvedIssuanceDate ? { issuanceDate: resolvedIssuanceDate } : {}),
+    });
 
     const cadTrustProjectMethodologyId = await this.syncRecords.getCadTrustId({
       localEntityType: CadTrustLocalEntityType.PROJECT_METHODOLOGY,
@@ -227,6 +240,9 @@ export class CadTrustCreditResourceService {
       };
       if (cadTrustLocationId) {
         input.cadTrustLocationId = cadTrustLocationId;
+      }
+      if (resolvedIssuanceDate) {
+        input.issuanceDate = resolvedIssuanceDate;
       }
 
       if (existing.failedBefore) {
@@ -273,7 +289,7 @@ export class CadTrustCreditResourceService {
       return false;
     }
 
-    const issuance = await this.ensureIssuance(creditBlock.projectRefId);
+    const issuance = await this.ensureIssuance(creditBlock.projectRefId, this.issuanceDateOf(creditBlock));
     if (!issuance) {
       // ensureIssuance already logged, and — on the paths where it could key a row — marked the
       // ISSUANCE record FAILED. The UNIT record is keyed by `creditBlockId` and lives in a
@@ -330,7 +346,7 @@ export class CadTrustCreditResourceService {
         return false;
       }
 
-      const issuance = await this.ensureIssuance(creditBlock.projectRefId);
+      const issuance = await this.ensureIssuance(creditBlock.projectRefId, this.issuanceDateOf(creditBlock));
       return issuance?.commitOwed ?? false;
     } catch (error) {
       this.logger.error(
@@ -349,7 +365,7 @@ export class CadTrustCreditResourceService {
   async ensureUnitCreate(creditBlockId: string, cadTrustIssuanceId: string): Promise<boolean> {
     const key = this.unitKey(creditBlockId);
 
-    const existing = await this.projectResources.existingSync(key, `CAD Trust unit ${creditBlockId}`);
+    const existing = await this.projectResources.existingSync(key, `CAD Trust unit ${creditBlockId}`, "unit");
     if ("commitOwed" in existing) {
       return existing.commitOwed;
     }
@@ -406,14 +422,36 @@ export class CadTrustCreditResourceService {
       // reliable source for "which issuance did this specific unit's create use," since
       // re-resolving "the project's latest issuance" could silently point an older block's update
       // at the wrong issuance once a project has had more than one monitoring cycle).
-      const cadTrustIssuanceId = existing.payload?.cadTrustIssuanceId as string | undefined;
+      const cadTrustIssuanceId = await this.resolveUnitIssuanceId(existing.payload, creditBlock.projectRefId);
       if (!cadTrustIssuanceId) {
-        const message = `CAD Trust unit ${creditBlockId}'s original payload has no cadTrustIssuanceId to reuse on update`;
+        const message = `CAD Trust unit ${creditBlockId} has no cadTrustIssuanceId to reuse on update`;
         this.logger.error(message);
         await this.syncRecords.markFailed(key, new Error(message));
         return false;
       }
       return this.stageUnit(key, creditBlock, cadTrustIssuanceId, false, existing.cadTrustId);
+    }
+
+    if (existing?.syncStatus === CadTrustSyncStatus.FAILED && existing.cadTrustId) {
+      // FAILED but still carrying the unit's CAD Trust id: either the unit was created and a later
+      // update/commit failed (the usual case for a partial split's retained parent), or a create was
+      // staged and its commit failed. Falling through to the create path below for the first case
+      // would POST a second unit for the shrunken range and leave the original stale on CAD Trust.
+      const exists = await this.projectResources.existsOnCadTrust("unit", existing.cadTrustId);
+      if (exists === undefined) {
+        this.logger.warn(`Could not verify CAD Trust unit ${creditBlockId}; leaving it FAILED for the next pass`);
+        return false;
+      }
+      if (exists) {
+        const cadTrustIssuanceId = await this.resolveUnitIssuanceId(existing.payload, creditBlock.projectRefId);
+        if (!cadTrustIssuanceId) {
+          const message = `CAD Trust unit ${creditBlockId} has no cadTrustIssuanceId to reuse on update`;
+          this.logger.error(message);
+          await this.syncRecords.markFailed(key, new Error(message));
+          return false;
+        }
+        return this.stageUnit(key, creditBlock, cadTrustIssuanceId, false, existing.cadTrustId);
+      }
     }
 
     // Never synced (or FAILED) — this is either a genuinely new split-off block, or a retry of a
@@ -435,6 +473,31 @@ export class CadTrustCreditResourceService {
 
     const failedBefore = existing?.syncStatus === CadTrustSyncStatus.FAILED;
     return this.stageUnit(key, creditBlock, cadTrustIssuanceId, failedBefore, undefined);
+  }
+
+  /**
+   * The credit issuance date for a block's issuance record: the instant the block was issued
+   * (`txTime`), falling back to `createTime`. UTC calendar date, the same convention as the unit's
+   * `unitStatusDate`.
+   */
+  private issuanceDateOf(creditBlock: CreditBlocksEntity): string | undefined {
+    return toCadTrustIsoDate(creditBlock.txTime) ?? toCadTrustIsoDate(creditBlock.createTime);
+  }
+
+  /**
+   * The issuance an existing unit was created under: the id in its stored payload, falling back to
+   * the project's latest synced issuance. The fallback covers a unit adopted from an orphaned
+   * staging row, whose stored payload is CAD Trust's snake_case diff and has no `cadTrustIssuanceId`.
+   */
+  private async resolveUnitIssuanceId(
+    payload: Record<string, unknown> | undefined,
+    projectRefId: string
+  ): Promise<string | undefined> {
+    const stored = (payload?.cadTrustIssuanceId ?? payload?.cad_trust_issuance_id) as string | undefined;
+    return (
+      stored ??
+      (await this.syncRecords.getLatestSyncedCadTrustId(CadTrustLocalEntityType.ISSUANCE, projectRefId))
+    );
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -482,7 +545,7 @@ export class CadTrustCreditResourceService {
       cadTrustEntityType: CadTrustResourceType.LABEL,
     };
 
-    const existing = await this.projectResources.existingSync(key, "CAD Trust Article 6 authorisation label");
+    const existing = await this.projectResources.existingSync(key, "CAD Trust Article 6 authorisation label", "label");
     if ("commitOwed" in existing) {
       return existing.cadTrustId ? { cadTrustId: existing.cadTrustId, commitOwed: existing.commitOwed } : undefined;
     }
@@ -528,7 +591,7 @@ export class CadTrustCreditResourceService {
       cadTrustEntityType: CadTrustResourceType.UNIT_LABEL,
     };
 
-    const existing = await this.projectResources.existingSync(key, `CAD Trust unit-label link for ${creditBlockId}`);
+    const existing = await this.projectResources.existingSync(key, `CAD Trust unit-label link for ${creditBlockId}`, "unitLabel");
     if ("commitOwed" in existing) {
       return existing.commitOwed;
     }

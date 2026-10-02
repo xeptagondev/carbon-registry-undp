@@ -45,6 +45,14 @@ describe("CadTrustStakeholderMapper", () => {
     expect(input).not.toHaveProperty("stakeholderLink");
   });
 
+  it("defaults a scheme-less website to https so it is a valid absolute URI", async () => {
+    const { mapper } = buildMapper();
+
+    const input = await mapper.toCreateInput({ name: "Kunene Developers", website: " www.kunenedev.example.org " });
+
+    expect(input.stakeholderLink).toBe("https://www.kunenedev.example.org");
+  });
+
   it("checks stakeholderType against the live picklist", async () => {
     const { mapper, warnOnUnknownValues } = buildMapper();
 
