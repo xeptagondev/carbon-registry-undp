@@ -1,4 +1,5 @@
 import {
+  CadTrustNotFoundError,
   CadTrustV2Service,
   LocationCreateInput,
   ProjectCreateInput,
@@ -30,6 +31,20 @@ import { CadTrustValidationMapper } from "./mappers/validation.mapper";
 
 /** `undefined` means "nothing synced yet, stage now"; otherwise the resolved CAD Trust id. */
 export type EnsureResult = { cadTrustId: string; commitOwed: boolean } | undefined;
+
+/** The `CadTrustClient` resource clients a sync record's CAD Trust id can be looked up on. */
+export type CadTrustResourceName =
+  | "stakeholder"
+  | "project"
+  | "projectMethodology"
+  | "stakeholderProject"
+  | "location"
+  | "validation"
+  | "verification"
+  | "issuance"
+  | "unit"
+  | "label"
+  | "unitLabel";
 
 /**
  * Shared "ensure this local record exists on CAD Trust" logic for a project and everything
@@ -72,8 +87,9 @@ export class CadTrustProjectResourceService {
    */
   async existingSync(
     key: CadTrustSyncKey,
-    label: string
-  ): Promise<{ cadTrustId?: string; commitOwed: boolean } | { failedBefore: boolean }> {
+    label: string,
+    resource?: CadTrustResourceName
+  ): Promise<{ cadTrustId?: string; commitOwed: boolean } | { failedBefore: boolean; failedCadTrustId?: string }> {
     const existing = await this.syncRecords.find(key);
     if (existing?.syncStatus === CadTrustSyncStatus.COMMITTED) {
       return { cadTrustId: existing.cadTrustId, commitOwed: false };
@@ -84,7 +100,44 @@ export class CadTrustProjectResourceService {
       this.logger.log(`${label} is already staged but not yet committed; retrying the commit.`);
       return { cadTrustId: existing.cadTrustId, commitOwed: true };
     }
-    return { failedBefore: existing?.syncStatus === CadTrustSyncStatus.FAILED };
+
+    const failed = existing?.syncStatus === CadTrustSyncStatus.FAILED;
+    if (failed && existing.cadTrustId && resource) {
+      // A FAILED row that still carries a CAD Trust id is not necessarily "never created": a
+      // COMMITTED record whose later staging/commit failed is flipped to FAILED with its id intact.
+      // Creating again would POST a duplicate and overwrite the stored id, so check the node first.
+      const exists = await this.existsOnCadTrust(resource, existing.cadTrustId);
+      if (exists === true) {
+        await this.syncRecords.markCommitted(key, { cadTrustId: existing.cadTrustId });
+        this.logger.warn(`${label} is FAILED locally but already exists on CAD Trust; marked it committed.`);
+        return { cadTrustId: existing.cadTrustId, commitOwed: false };
+      }
+      if (exists === undefined) {
+        // Couldn't verify (network/5xx). Leave the row FAILED so the next reconcile pass retries,
+        // rather than risk a duplicate create.
+        this.logger.warn(`${label}: could not verify it on CAD Trust; skipping this pass.`);
+        return { cadTrustId: existing.cadTrustId, commitOwed: false };
+      }
+    }
+    return { failedBefore: failed, failedCadTrustId: failed ? existing.cadTrustId : undefined };
+  }
+
+  /**
+   * Whether `cadTrustId` is a published record on the node: `true` found, `false` a definite 404
+   * (never committed, or deleted), `undefined` when it could not be determined — callers must not
+   * create anything in that case.
+   */
+  async existsOnCadTrust(resource: CadTrustResourceName, cadTrustId: string): Promise<boolean | undefined> {
+    try {
+      await this.cadTrustV2Service.getClient()[resource].get(cadTrustId);
+      return true;
+    } catch (error) {
+      if (error instanceof CadTrustNotFoundError) {
+        return false;
+      }
+      this.logger.error(`Failed to look up ${resource} ${cadTrustId} on CAD Trust`, error);
+      return undefined;
+    }
   }
 
   /**
@@ -152,7 +205,7 @@ export class CadTrustProjectResourceService {
       cadTrustEntityType: CadTrustResourceType.STAKEHOLDER,
     };
 
-    const existing = await this.existingSync(key, `CAD Trust stakeholder for company ${companyId}`);
+    const existing = await this.existingSync(key, `CAD Trust stakeholder for company ${companyId}`, "stakeholder");
     if ("commitOwed" in existing) {
       return existing.cadTrustId ? { cadTrustId: existing.cadTrustId, commitOwed: existing.commitOwed } : undefined;
     }
@@ -242,6 +295,27 @@ export class CadTrustProjectResourceService {
         input.cadTrustProgramId = programCadTrustId;
       }
 
+      if (existing.failedBefore && existing.failedCadTrustId) {
+        // A project that already has a CAD Trust id was created once; its FAILED state came from a
+        // later update or commit. Re-creating it would POST a second project (and reset the status
+        // to whatever stage the ledger is at now), so update the existing one in place instead.
+        const exists = await this.existsOnCadTrust("project", existing.failedCadTrustId);
+        if (exists === undefined) {
+          this.logger.warn(`Could not verify project ${refId} on CAD Trust; skipping this pass`);
+          return undefined;
+        }
+        if (exists) {
+          await this.cadTrustV2Service.getClient().project.stageUpdate(existing.failedCadTrustId, input);
+          await this.syncRecords.markStaged(
+            key,
+            { cadTrustId: existing.failedCadTrustId },
+            input as unknown as Record<string, unknown>
+          );
+          this.logger.log(`Re-staged update for existing CAD Trust project ${refId} (${existing.failedCadTrustId})`);
+          return { cadTrustId: existing.failedCadTrustId, commitOwed: true };
+        }
+      }
+
       if (existing.failedBefore) {
         const orphan = await this.adoptOrphanedStagedRow(
           key,
@@ -289,7 +363,7 @@ export class CadTrustProjectResourceService {
       cadTrustEntityType: CadTrustResourceType.PROJECT_METHODOLOGY,
     };
 
-    const existing = await this.existingSync(key, `CAD Trust methodology link for project ${refId}`);
+    const existing = await this.existingSync(key, `CAD Trust methodology link for project ${refId}`, "projectMethodology");
     if ("commitOwed" in existing) {
       return existing.commitOwed;
     }
@@ -359,7 +433,7 @@ export class CadTrustProjectResourceService {
       cadTrustEntityType: CadTrustResourceType.STAKEHOLDER_PROJECT,
     };
 
-    const existing = await this.existingSync(key, `CAD Trust stakeholder link for project ${refId}`);
+    const existing = await this.existingSync(key, `CAD Trust stakeholder link for project ${refId}`, "stakeholderProject");
     if ("commitOwed" in existing) {
       return existing.commitOwed;
     }
@@ -412,7 +486,7 @@ export class CadTrustProjectResourceService {
       cadTrustEntityType: CadTrustResourceType.LOCATION,
     };
 
-    const existing = await this.existingSync(key, `CAD Trust location for project ${refId}`);
+    const existing = await this.existingSync(key, `CAD Trust location for project ${refId}`, "location");
     if ("commitOwed" in existing) {
       return existing.commitOwed;
     }
@@ -478,7 +552,7 @@ export class CadTrustProjectResourceService {
       cadTrustEntityType: CadTrustResourceType.VALIDATION,
     };
 
-    const existing = await this.existingSync(key, `Validation record ${localId}`);
+    const existing = await this.existingSync(key, `Validation record ${localId}`, "validation");
     if ("commitOwed" in existing) {
       return existing.cadTrustId
         ? { cadTrustId: existing.cadTrustId, commitOwed: existing.commitOwed }

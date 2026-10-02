@@ -168,7 +168,14 @@ export const PROJECT_TYPE_FALLBACK: ProjectTypeValue = "Any combination of the a
  *    host-country-authorization concept (`authorizationPurpose`, `corresponding-adjustment` module)
  *    — that caution was wrong; `"Authorized"` is the intended, confirmed mapping for this stage.
  *
- * Every other member below is either a stage this registry does not sync (the remaining 8
+ * The PDD and validation-report stages that follow INF approval (`PDD_SUBMITTED` through
+ * `VALIDATION_REPORT_SUBMITTED`) map to `"Registered"`, NOT `"Listed"`. The project-update handler
+ * builds its payload from the project's CURRENT ledger stage rather than the stage of the
+ * transition that triggered it, so a push that runs after the project has moved past INF approval
+ * must still resolve to `"Registered"` — mapping these to `"Listed"` regressed an already-Registered
+ * project on CAD Trust.
+ *
+ * Every other member below is either a stage this registry does not sync (the remaining
  * transitions in `updateProposalStage`'s funnel are intentionally ignored — see
  * `handlers/project-update.handler.ts`) or the value staged once at project creation
  * (`PENDING -> "Listed"`, `handlers/project-create.handler.ts`). Kept mapped for completeness and
@@ -180,10 +187,10 @@ export const PROJECT_TYPE_FALLBACK: ProjectTypeValue = "Any combination of the a
 export const PROJECT_STATUS_MAP: Partial<Record<ProjectProposalStage, ProjectStatusValue>> = {
   [ProjectProposalStage.PENDING]: "Listed",
   [ProjectProposalStage.APPROVED]: "Registered",
-  [ProjectProposalStage.PDD_SUBMITTED]: "Listed",
-  [ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER]: "Listed",
-  [ProjectProposalStage.PDD_APPROVED_BY_DNA]: "Listed",
-  [ProjectProposalStage.VALIDATION_REPORT_SUBMITTED]: "Listed",
+  [ProjectProposalStage.PDD_SUBMITTED]: "Registered",
+  [ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER]: "Registered",
+  [ProjectProposalStage.PDD_APPROVED_BY_DNA]: "Registered",
+  [ProjectProposalStage.VALIDATION_REPORT_SUBMITTED]: "Registered",
   [ProjectProposalStage.VALIDATION_DNA_APPROVED]: "Validated",
   [ProjectProposalStage.AUTHORISED]: "Authorized",
   [ProjectProposalStage.AUTHORIZED]: "Authorized",

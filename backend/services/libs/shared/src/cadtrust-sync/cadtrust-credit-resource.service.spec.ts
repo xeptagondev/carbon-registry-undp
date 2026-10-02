@@ -68,6 +68,8 @@ function buildService(
   const projectResources = {
     existingSync: jest.fn(async (_key: any, _label: string) => ({ failedBefore: false })),
     adoptOrphanedStagedRow: jest.fn(async () => undefined),
+    // Default: the stored CAD Trust id is not published on the node (a definite 404).
+    existsOnCadTrust: jest.fn(async (): Promise<boolean | undefined> => false),
   };
 
   const verificationMapper = { toCreateInput: jest.fn(async () => ({ verificationId: "x" })) };
@@ -209,6 +211,51 @@ describe("CadTrustCreditResourceService", () => {
         })
       );
       expect(result).toEqual({ cadTrustId: "cadt-issuance-1", commitOwed: true });
+    });
+
+    it("sends the credit issuance date and remembers it for reconcile", async () => {
+      const { service, syncRecords, issuanceStageCreate } = buildService();
+      syncRecords.findLatestSynced.mockResolvedValue({
+        localId: "0042-VERIFICATION-v1",
+        cadTrustId: "cadt-verification-1",
+      });
+      syncRecords.getCadTrustId.mockResolvedValue("cadt-project-methodology-1");
+
+      await service.ensureIssuance(REF_ID, "2026-03-15");
+
+      expect(issuanceStageCreate).toHaveBeenCalledWith(expect.objectContaining({ issuanceDate: "2026-03-15" }));
+      expect(syncRecords.recordSyncProps).toHaveBeenCalledWith(expect.any(Object), {
+        refId: REF_ID,
+        issuanceDate: "2026-03-15",
+      });
+    });
+
+    it("recovers the issuance date from the earlier attempt when reconcile re-drives with only a refId", async () => {
+      const { service, syncRecords, issuanceStageCreate } = buildService();
+      syncRecords.findLatestSynced.mockResolvedValue({
+        localId: "0042-VERIFICATION-v1",
+        cadTrustId: "cadt-verification-1",
+      });
+      syncRecords.getCadTrustId.mockResolvedValue("cadt-project-methodology-1");
+      syncRecords.find.mockResolvedValue({ syncProps: { refId: REF_ID, issuanceDate: "2026-03-15" } });
+
+      await service.ensureIssuance(REF_ID);
+
+      expect(issuanceStageCreate).toHaveBeenCalledWith(expect.objectContaining({ issuanceDate: "2026-03-15" }));
+    });
+
+    it("derives the issuance date from the credit block's issue time", async () => {
+      const { service, syncRecords, issuanceStageCreate } = buildService();
+      syncRecords.findLatestSynced.mockResolvedValue({
+        localId: "0042-VERIFICATION-v1",
+        cadTrustId: "cadt-verification-1",
+      });
+      syncRecords.getCadTrustId.mockResolvedValue("cadt-project-methodology-1");
+
+      await service.ensureCreditIssuance(CREDIT_BLOCK_ID);
+
+      // CREDIT_BLOCK.txTime = 1_700_000_000_000 → 2023-11-14 (UTC).
+      expect(issuanceStageCreate).toHaveBeenCalledWith(expect.objectContaining({ issuanceDate: "2023-11-14" }));
     });
 
     it("is marked FAILED when no synced verification exists for this project", async () => {
@@ -385,7 +432,22 @@ describe("CadTrustCreditResourceService", () => {
       expect(commitOwed).toBe(true);
     });
 
-    it("is marked FAILED when a COMMITTED unit's payload has no cadTrustIssuanceId to reuse", async () => {
+    it("falls back to the project's latest issuance when a COMMITTED unit's payload has no cadTrustIssuanceId", async () => {
+      const { service, syncRecords, unitStageUpdate } = buildService();
+      syncRecords.find.mockResolvedValue({
+        syncStatus: CadTrustSyncStatus.COMMITTED,
+        cadTrustId: "cadt-unit-1",
+        payload: {},
+      });
+      syncRecords.getLatestSyncedCadTrustId.mockResolvedValue("cadt-issuance-latest");
+
+      const commitOwed = await service.ensureUnitUpdate(CREDIT_BLOCK_ID);
+
+      expect(unitStageUpdate).toHaveBeenCalledWith("cadt-unit-1", expect.any(Object));
+      expect(commitOwed).toBe(true);
+    });
+
+    it("is marked FAILED when a COMMITTED unit has no issuance id anywhere to reuse", async () => {
       const { service, syncRecords, unitStageUpdate } = buildService();
       syncRecords.find.mockResolvedValue({
         syncStatus: CadTrustSyncStatus.COMMITTED,
@@ -398,6 +460,52 @@ describe("CadTrustCreditResourceService", () => {
       expect(unitStageUpdate).not.toHaveBeenCalled();
       expect(commitOwed).toBe(false);
       expect(syncRecords.markFailed).toHaveBeenCalled();
+    });
+
+    describe("FAILED record that still carries the unit's CAD Trust id (a retained split parent whose update failed)", () => {
+      const FAILED_WITH_ID = {
+        syncStatus: CadTrustSyncStatus.FAILED,
+        cadTrustId: "cadt-unit-1",
+        payload: { cadTrustIssuanceId: "cadt-issuance-original" },
+      };
+
+      it("updates the existing unit in place rather than creating a second one", async () => {
+        const { service, syncRecords, projectResources, unitStageCreate, unitStageUpdate } = buildService();
+        syncRecords.find.mockResolvedValue(FAILED_WITH_ID);
+        projectResources.existsOnCadTrust.mockResolvedValue(true);
+
+        const commitOwed = await service.ensureUnitUpdate(CREDIT_BLOCK_ID);
+
+        expect(projectResources.existsOnCadTrust).toHaveBeenCalledWith("unit", "cadt-unit-1");
+        expect(unitStageCreate).not.toHaveBeenCalled();
+        expect(unitStageUpdate).toHaveBeenCalledWith("cadt-unit-1", expect.any(Object));
+        expect(commitOwed).toBe(true);
+      });
+
+      it("creates the unit when the stored id was never published (404)", async () => {
+        const { service, syncRecords, projectResources, unitStageCreate, unitStageUpdate } = buildService();
+        syncRecords.find.mockResolvedValue(FAILED_WITH_ID);
+        syncRecords.getLatestSyncedCadTrustId.mockResolvedValue("cadt-issuance-1");
+        projectResources.existsOnCadTrust.mockResolvedValue(false);
+
+        const commitOwed = await service.ensureUnitUpdate(CREDIT_BLOCK_ID);
+
+        expect(unitStageUpdate).not.toHaveBeenCalled();
+        expect(unitStageCreate).toHaveBeenCalledTimes(1);
+        expect(commitOwed).toBe(true);
+      });
+
+      it("neither creates nor updates when the node lookup could not be completed", async () => {
+        const { service, syncRecords, projectResources, unitStageCreate, unitStageUpdate } = buildService();
+        syncRecords.find.mockResolvedValue(FAILED_WITH_ID);
+        projectResources.existsOnCadTrust.mockResolvedValue(undefined);
+
+        const commitOwed = await service.ensureUnitUpdate(CREDIT_BLOCK_ID);
+
+        expect(unitStageCreate).not.toHaveBeenCalled();
+        expect(unitStageUpdate).not.toHaveBeenCalled();
+        expect(commitOwed).toBe(false);
+      });
     });
 
     it("is marked FAILED when the credit block itself is missing", async () => {
