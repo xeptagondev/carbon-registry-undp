@@ -318,7 +318,7 @@ const ProjectDetailsViewComponent = (props: any) => {
         data?.geographicalLocationCoordinates &&
         data.geographicalLocationCoordinates.length > 0
       ) {
-        setProjectLocationMapCenter([29.873888, -1.940278]);
+        setProjectLocationMapCenter([80.7718, 7.8731]);
         const tempMapSource: any = [];
         const tempLocationLayer: any = [];
         const tempOutlineLayer: any = [];

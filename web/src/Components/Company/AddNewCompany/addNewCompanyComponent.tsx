@@ -712,7 +712,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       placeholder={t('addCompany:phoneNo')}
                       international
                       value={formatPhoneNumberIntl(contactNoInput)}
-                      defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
+                      defaultCountry="LK"
                       countryCallingCodeEditable={false}
                       onChange={(v) => {}}
                       countries={countries}
@@ -754,7 +754,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       placeholder={t('addCompany:faxNo')}
                       international
                       value={formatPhoneNumberIntl(faxNumber)}
-                      defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
+                      defaultCountry="LK"
                       countryCallingCodeEditable={false}
                       onChange={(v) => {
                         if (v === undefined) {
@@ -914,7 +914,7 @@ export const AddNewCompanyComponent = (props: any) => {
                       placeholder={t('addCompany:phoneNo')}
                       international
                       value={formatPhoneNumberIntl(contactNoInput)}
-                      defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
+                      defaultCountry="LK"
                       countryCallingCodeEditable={false}
                       onChange={(v) => {}}
                     />

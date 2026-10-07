@@ -11,9 +11,9 @@ import { PICKLIST_KEYS } from "./mappers/picklist.map";
  * materially worse than doing it for a project (see `assertConfigured`) —
  * this is the exact set `configuration.ts` falls back to.
  */
-const SENTINEL_COUNTRY_NAME = "Rwanda";
-const SENTINEL_SYSTEM_NAME = "Rwanda National Carbon Registry";
-const SENTINEL_COUNTRY_CODE = "RW";
+const SENTINEL_COUNTRY_NAME = "CountryX";
+const SENTINEL_SYSTEM_NAME = "SystemX";
+const SENTINEL_COUNTRY_CODE = "NG";
 
 /**
  * Single source for the CAD Trust bootstrap values: the registry's own

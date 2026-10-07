@@ -592,7 +592,7 @@ const Step08 = (props: CustomStepsProps) => {
                             // placeholder={t('PDD:telephone')}
                             international
                             value={formatPhoneNumberIntl(contactNoInput)}
-                            defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
+                            defaultCountry="LK"
                             countryCallingCodeEditable={false}
                             onChange={(v) => {}}
                             countries={countries as Country[]}
@@ -646,7 +646,7 @@ const Step08 = (props: CustomStepsProps) => {
                             // placeholder={t('PDD:telephone')}
                             international
                             value={formatPhoneNumberIntl(contactNoInput)}
-                            defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
+                            defaultCountry="LK"
                             countryCallingCodeEditable={false}
                             onChange={(v) => {}}
                             countries={countries as Country[]}

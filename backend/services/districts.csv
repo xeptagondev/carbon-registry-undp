@@ -1,31 +1,26 @@
 Name,Country,Province,Latitude,Longitude,Language
-Bugesera,RW,Eastern,-2.23456,30.14825,en
-Gatsibo,RW,Eastern,-1.59185,30.45535,en
-Kayonza,RW,Eastern,-1.85101,30.65102,en
-Kirehe,RW,Eastern,-2.25659,30.72617,en
-Ngoma,RW,Eastern,-2.18532,30.46961,en
-Nyagatare,RW,Eastern,-1.31455,30.37242,en
-Rwamagana,RW,Eastern,-1.97281,30.35428,en
-Gasabo,RW,Kigali City,-1.8847,30.13141,en
-Kicukiro,RW,Kigali City,-2.00391,30.14696,en
-Nyarugenge,RW,Kigali City,-1.99095,30.02127,en
-Burera,RW,Northern,-1.47394,29.83468,en
-Gakenke,RW,Northern,-1.6981,29.78543,en
-Gicumbi,RW,Northern,-1.61647,30.12104,en
-Musanze,RW,Northern,-1.50763,29.60662,en
-Rulindo,RW,Northern,-1.73828,29.99794,en
-Gisagara,RW,Southern,-2.61811,29.85022,en
-Huye,RW,Southern,-2.51704,29.69603,en
-Kamonyi,RW,Southern,-2.00521,29.89817,en
-Muhanga,RW,Southern,-1.93912,29.71805,en
-Nyamagabe,RW,Southern,-2.40819,29.46797,en
-Nyanza,RW,Southern,-2.33692,29.79451,en
-Nyaruguru,RW,Southern,-2.69845,29.52369,en
-Ruhango,RW,Southern,-2.19957,29.76989,en
-Karongi,RW,Western,-2.1296,29.36172,en
-Ngororero,RW,Western,-1.87822,29.56904,en
-Nyabihu,RW,Western,-1.65275,29.50684,en
-Nyamasheke,RW,Western,-2.36154,29.14791,en
-Rubavu,RW,Western,-1.68126,29.32932,en
-Rusizi,RW,Western,-2.57016,29.07535,en
-Rutsiro,RW,Western,-1.9145,29.31507,en
+Ampara,LK,Eastern,7.291418,81.636696,en
+Anuradhapura,LK,North Central,8.311351,80.403650,en
+Badulla,LK,Uva,6.9934,81.0550,en
+Batticaloa,LK,Eastern,7.7310,81.6747,en
+Colombo,LK,Western,6.927079,79.861243,en
+Galle,LK,Southern,6.053519,80.220977,en
+Gampaha,LK,Western,7.0873,79.9999,en
+Hambantota,LK,Southern,6.1429,81.1212,en
+Jaffna,LK,Northern,9.6615,80.0255,en
+Kalutara,LK,Western,6.5854,79.9607,en
+Kandy,LK,Central,7.2906,80.6337,en
+Kegalle,LK,Sabaragamuwa,7.2513,80.3464,en
+Kilinochchi,LK,Northern,9.3961,80.3982,en
+Kurunegala,LK,North Western,7.4863,80.3623,en
+Mannar,LK,Northern,8.9779,79.9093,en
+Matale,LK,Central,7.4675,80.6234,en
+Matara,LK,Southern,5.9485,80.5353,en
+Monaragala,LK,Uva,6.8710,81.3487,en
+Mullaitivu,LK,Northern,9.2671,80.8142,en
+Nuwara Eliya,LK,Central,6.9708,80.7829,en
+Polonnaruwa,LK,North Central,7.9403,81.0188,en
+Puttalam,LK,North Western,8.0330,79.8264,en
+Ratnapura,LK,Sabaragamuwa,6.6828,80.3991,en
+Trincomalee,LK,Eastern,8.5874,81.2152,en
+Vavuniya,LK,Northern,8.7542,80.4982,en
