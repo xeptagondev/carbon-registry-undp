@@ -1281,7 +1281,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   <PhoneInput
                                     placeholder={t("addProgramme:phoneNo")}
                                     international
-                                    defaultCountry="LK"
+                                    defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
                                     countryCallingCodeEditable={false}
                                     onChange={(v) => {}}
                                     countries={countries}
@@ -1341,7 +1341,7 @@ export const ProgrammeCreationComponent = (props: any) => {
                                   <PhoneInput
                                     placeholder={t("addProgramme:phoneNo")}
                                     international
-                                    defaultCountry="LK"
+                                    defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
                                     countryCallingCodeEditable={false}
                                     onChange={(v) => {}}
                                     countries={countries}

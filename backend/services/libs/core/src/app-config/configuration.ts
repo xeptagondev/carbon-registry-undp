@@ -10,11 +10,11 @@ function required(name: string): string {
 
 export default () => ({
   stage: process.env.STAGE || "local",
-  systemCountry: process.env.systemCountryCode || "NG",
-  systemCountryName: process.env.systemCountryName || "CountryX",
-  systemContinentName: process.env.systemContinentName || "CountryX",
+  systemCountry: process.env.systemCountryCode || "RW",
+  systemCountryName: process.env.systemCountryName || "Rwanda",
+  systemContinentName: process.env.systemContinentName || "Rwanda",
   countryClimateFundName:
-    process.env.countryClimateFundName || "CountryX Climate Fund (Pvt) Ltd",
+    process.env.countryClimateFundName || "Rwanda Climate Fund (Pvt) Ltd",
   defaultCreditUnit: process.env.defaultCreditUnit || "ITMO",
   year: parseInt(process.env.REPORT_YEAR),
   dateTimeFormat: "DD LLLL yyyy @ HH:mm",
@@ -157,7 +157,7 @@ export default () => ({
     program: {
       name:
         process.env.CADT_V2_PROGRAM_NAME ||
-        `${process.env.systemCountryName || "CountryX"} National Carbon Crediting Demo Program`,
+        `${process.env.systemCountryName || "Rwanda"} National Carbon Crediting Demo Program`,
       registry:
         process.env.CADT_V2_PROGRAM_REGISTRY ||
         process.env.CADT_V2_REGISTRY_NAME ||

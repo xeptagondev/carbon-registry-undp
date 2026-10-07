@@ -1,84 +1,417 @@
 Name,Country,District,Latitude,Longitude,Language
-Colombo 1 (Fort),LK,Colombo,6.9271,79.8612,en
-Colombo 2 (Slave Island),LK,Colombo,6.9271,79.8612,en
-Colombo 3 (Kollupitiya),LK,Colombo,6.9271,79.8612,en
-Colombo 4 (Bambalapitiya),LK,Colombo,6.9271,79.8612,en
-Colombo 5 (Havelock Town),LK,Colombo,6.9271,79.8612,en
-Colombo 6 (Wellawatte),LK,Colombo,6.9271,79.8612,en
-Colombo 7 (Cinnamon Gardens),LK,Colombo,6.9271,79.8612,en
-Colombo 8 (Borella),LK,Colombo,6.9271,79.8612,en
-Colombo 9 (Dematagoda),LK,Colombo,6.9271,79.8612,en
-Colombo 10 (Maradana),LK,Colombo,6.9271,79.8612,en
-Colombo 11 (Pettah),LK,Colombo,6.9271,79.8612,en
-Colombo 12 (Hulftsdorp),LK,Colombo,6.9271,79.8612,en
-Colombo 13 (Kotahena),LK,Colombo,6.9271,79.8612,en
-Colombo 14 (Grandpass),LK,Colombo,6.9271,79.8612,en
-Colombo 15 (Mutwal),LK,Colombo,6.9271,79.8612,en
-Dehiwala,LK,Colombo,6.8444,79.8650,en
-Mount Lavinia,LK,Colombo,6.8283,79.8630,en
-Moratuwa,LK,Colombo,6.7730,79.8815,en
-Ratmalana,LK,Colombo,6.8194,79.8802,en
-Gampaha,LK,Gampaha,7.0902,79.9940,en
-Negombo,LK,Gampaha,7.2083,79.8358,en
-Kalutara,LK,Kalutara,6.5831,79.9607,en
-Horana,LK,Kalutara,6.7167,80.0667,en
-Kandy,LK,Kandy,7.2906,80.6337,en
-Peradeniya,LK,Kandy,7.2627,80.5981,en
-Gampola,LK,Kandy,7.1646,80.5706,en
-Kadugannawa,LK,Kandy,7.2546,80.5239,en
-Digana,LK,Kandy,7.3005,80.7558,en
-Matale,LK,Matale,7.4675,80.6234,en
-Dambulla,LK,Matale,7.8717,80.6520,en
-Galewela,LK,Matale,7.7833,80.5667,en
-Ukuwela,LK,Matale,7.4167,80.6833,en
-Nuwara Eliya,LK,Nuwara Eliya,6.9708,80.7829,en
-Hatton,LK,Nuwara Eliya,6.8994,80.5934,en
-Talawakele,LK,Nuwara Eliya,6.9340,80.6692,en
-Ginigathhena,LK,Nuwara Eliya,6.9633,80.5333,en
-Ampara,LK,Ampara,7.2964,81.6745,en
-Kalmunai,LK,Ampara,7.4167,81.8167,en
-Akkaraipattu,LK,Ampara,7.2167,81.8500,en
-Sammanthurai,LK,Ampara,7.3667,81.8333,en
-Batticaloa,LK,Batticaloa,7.7102,81.6924,en
-Kattankudy,LK,Batticaloa,7.6833,81.7333,en
-Eravur,LK,Batticaloa,7.7667,81.6000,en
-Valachchenai,LK,Batticaloa,7.8994,81.5661,en
-Trincomalee,LK,Trincomalee,8.5760,81.2330,en
-Kinniya,LK,Trincomalee,8.4833,81.1833,en
-Muttur,LK,Trincomalee,8.4500,81.2667,en
-Anuradhapura,LK,Anuradhapura,8.3114,80.4037,en
-Mihintale,LK,Anuradhapura,8.3752,80.5070,en
-Kekirawa,LK,Anuradhapura,8.0356,80.5950,en
-Polonnaruwa,LK,Polonnaruwa,7.9403,81.0188,en
-Hingurakgoda,LK,Polonnaruwa,8.0500,80.9500,en
-Medirigiriya,LK,Polonnaruwa,8.1833,80.9167,en
-Kurunegala,LK,Kurunegala,7.4863,80.3621,en
-Kuliyapitiya,LK,Kurunegala,7.4667,80.0333,en
-Pannala,LK,Kurunegala,7.3833,80.0333,en
-Puttalam,LK,Puttalam,8.0333,79.8333,en
-Chilaw,LK,Puttalam,7.5833,79.8000,en
-Wennappuwa,LK,Puttalam,7.3000,79.8500,en
-Jaffna,LK,Jaffna,9.6685,80.0074,en
-Point Pedro,LK,Jaffna,9.8167,80.2333,en
-Mannar,LK,Mannar,8.9833,79.9000,en
-Pesalai,LK,Mannar,9.0500,79.7333,en
-Mullaitivu,LK,Mullaitivu,9.2674,80.8128,en
-Puthukudiyiruppu,LK,Mullaitivu,9.3833,80.7667,en
-Vavuniya,LK,Vavuniya,8.7500,80.5000,en
-Omanthai,LK,Vavuniya,8.8500,80.4667,en
-Kilinochchi,LK,Kilinochchi,9.4000,80.4000,en
-Paranthan,LK,Kilinochchi,9.4333,80.4167,en
-Kegalle,LK,Kegalle,7.2514,80.3464,en
-Warakapola,LK,Kegalle,7.1500,80.2500,en
-Ratnapura,LK,Ratnapura,6.6828,80.3992,en
-Balangoda,LK,Ratnapura,6.6470,80.7042,en
-Galle,LK,Galle,6.0535,80.2210,en
-Ambalangoda,LK,Galle,6.2394,80.0533,en
-Matara,LK,Matara,5.9485,80.5353,en
-Weligama,LK,Matara,5.9736,80.4292,en
-Hambantota,LK,Hambantota,6.1240,81.1185,en
-Tangalle,LK,Hambantota,6.0228,80.7916,en
-Badulla,LK,Badulla,6.9896,81.0552,en
-Bandarawela,LK,Badulla,6.8316,80.9936,en
-Monaragala,LK,Monaragala,6.8804,81.3509,en
-Wellawaya,LK,Monaragala,6.7351,81.1015,en
+Gashora,RW,Bugesera,-2.24112,30.24894,en
+Juru,RW,Bugesera,-2.10821,30.21835,en
+Kamabuye,RW,Bugesera,-2.38996,30.14008,en
+Mareba,RW,Bugesera,-2.25791,30.06256,en
+Mayange,RW,Bugesera,-2.24256,30.15715,en
+Musenyi,RW,Bugesera,-2.18864,30.0297,en
+Mwogo,RW,Bugesera,-2.07076,30.14728,en
+Ngeruka,RW,Bugesera,-2.32092,30.10225,en
+Ntarama,RW,Bugesera,-2.09456,30.05647,en
+Nyamata,RW,Bugesera,-2.14395,30.09802,en
+Nyarugenge (Bugesera),RW,Bugesera,-2.30703,29.99889,en
+Rilima,RW,Bugesera,-2.17103,30.20012,en
+Ruhuha,RW,Bugesera,-2.3186,30.05838,en
+Rweru,RW,Bugesera,-2.31697,30.27694,en
+Shyara,RW,Bugesera,-2.25581,29.99833,en
+Bungwe,RW,Burera,-1.49195,29.96829,en
+Butaro,RW,Burera,-1.39575,29.85126,en
+Cyanika (Burera),RW,Burera,-1.37512,29.72178,en
+Cyeru,RW,Burera,-1.5135,29.82637,en
+Gahunga,RW,Burera,-1.42396,29.67819,en
+Gatebe,RW,Burera,-1.53536,29.94797,en
+Gitovu,RW,Burera,-1.4914,29.78139,en
+Kagogo,RW,Burera,-1.38036,29.7677,en
+Kinoni,RW,Burera,-1.46114,29.73912,en
+Kinyababa,RW,Burera,-1.37968,29.80808,en
+Kivuye,RW,Burera,-1.46629,29.90216,en
+Nemba (Burera),RW,Burera,-1.57722,29.86912,en
+Rugarama (Burera),RW,Burera,-1.4228,29.73455,en
+Rugengabari,RW,Burera,-1.54461,29.79783,en
+Ruhunde,RW,Burera,-1.56333,29.91871,en
+Rusarabuye,RW,Burera,-1.45552,29.82872,en
+Rwerere,RW,Burera,-1.50886,29.86969,en
+Busengo,RW,Gakenke,-1.63318,29.71618,en
+Coko,RW,Gakenke,-1.78174,29.81041,en
+Cyabingo,RW,Gakenke,-1.58553,29.69453,en
+Gakenke,RW,Gakenke,-1.67035,29.78517,en
+Gashenyi,RW,Gakenke,-1.6459,29.84989,en
+Janja,RW,Gakenke,-1.66898,29.70232,en
+Kamubuga,RW,Gakenke,-1.58047,29.80193,en
+Karambo,RW,Gakenke,-1.62732,29.8246,en
+Kivuruga,RW,Gakenke,-1.59521,29.75355,en
+Mataba,RW,Gakenke,-1.72145,29.75692,en
+Minazi,RW,Gakenke,-1.73941,29.78949,en
+Mugunga,RW,Gakenke,-1.6921,29.65384,en
+Muhondo,RW,Gakenke,-1.81085,29.88645,en
+Muyongwe,RW,Gakenke,-1.74317,29.89077,en
+Muzo,RW,Gakenke,-1.70884,29.7074,en
+Nemba (Gakenke),RW,Gakenke,-1.62056,29.78724,en
+Ruli,RW,Gakenke,-1.82705,29.83929,en
+Rusasa,RW,Gakenke,-1.62519,29.65447,en
+Rushashi,RW,Gakenke,-1.7157,29.85439,en
+Bumbogo,RW,Gasabo,-1.88784,30.15591,en
+Gatsata,RW,Gasabo,-1.92204,30.04228,en
+Gikomero,RW,Gasabo,-1.87485,30.22898,en
+Gisozi,RW,Gasabo,-1.91778,30.06129,en
+Jabana,RW,Gasabo,-1.86433,30.06403,en
+Jali,RW,Gasabo,-1.88247,30.01659,en
+Kacyiru,RW,Gasabo,-1.93761,30.08047,en
+Kimihurura,RW,Gasabo,-1.95429,30.08831,en
+Kimironko,RW,Gasabo,-1.93836,30.12423,en
+Kinyinya,RW,Gasabo,-1.90894,30.09651,en
+Ndera,RW,Gasabo,-1.93358,30.18683,en
+Nduba,RW,Gasabo,-1.85118,30.11273,en
+Remera (Gasabo),RW,Gasabo,-1.94756,30.10608,en
+Rusororo,RW,Gasabo,-1.93654,30.23586,en
+Rutunga,RW,Gasabo,-1.82513,30.17445,en
+Gasange,RW,Gatsibo,-1.80429,30.2927,en
+Gatsibo,RW,Gatsibo,-1.60263,30.24472,en
+Gitoki,RW,Gatsibo,-1.64043,30.33583,en
+Kabarore,RW,Gatsibo,-1.56032,30.39338,en
+Kageyo (Gatsibo),RW,Gatsibo,-1.65948,30.2655,en
+Kiramuruzi,RW,Gatsibo,-1.82293,30.39918,en
+Kiziguro,RW,Gatsibo,-1.7577,30.4127,en
+Muhura,RW,Gatsibo,-1.74657,30.2948,en
+Murambi (Gatsibo),RW,Gatsibo,-1.81016,30.34683,en
+Ngarama,RW,Gatsibo,-1.53095,30.26518,en
+Nyagihanga,RW,Gatsibo,-1.55308,30.20182,en
+Remera (Gatsibo),RW,Gatsibo,-1.70904,30.32772,en
+Rugarama (Gatsibo),RW,Gatsibo,-1.69769,30.40239,en
+Rwimbogo (Gatsibo),RW,Gatsibo,-1.5609,30.60579,en
+Bukure,RW,Gicumbi,-1.81274,30.22228,en
+Bwisige,RW,Gicumbi,-1.55481,30.13745,en
+Byumba,RW,Gicumbi,-1.57132,30.048,en
+Cyumba,RW,Gicumbi,-1.47882,30.01485,en
+Giti,RW,Gicumbi,-1.77707,30.24138,en
+Kageyo (Gicumbi),RW,Gicumbi,-1.63205,30.0868,en
+Kaniga,RW,Gicumbi,-1.4386,30.04813,en
+Manyagiro,RW,Gicumbi,-1.53356,29.99936,en
+Miyove,RW,Gicumbi,-1.61513,29.98014,en
+Mukarange (Gicumbi),RW,Gicumbi,-1.48913,30.0679,en
+Muko (Gicumbi),RW,Gicumbi,-1.71256,30.22314,en
+Mutete,RW,Gicumbi,-1.71611,30.0959,en
+Nyamiyaga (Gicumbi),RW,Gicumbi,-1.68103,30.14248,en
+Nyankenke,RW,Gicumbi,-1.59287,30.00417,en
+Rubaya,RW,Gicumbi,-1.46828,29.99526,en
+Rukomo (Gicumbi),RW,Gicumbi,-1.61568,30.12217,en
+Rushaki,RW,Gicumbi,-1.47518,30.10706,en
+Rutare,RW,Gicumbi,-1.73599,30.15517,en
+Ruvune,RW,Gicumbi,-1.64021,30.18504,en
+Rwamiko,RW,Gicumbi,-1.77027,30.18727,en
+Shangasha,RW,Gicumbi,-1.53369,30.08034,en
+Gikonko,RW,Gisagara,-2.47665,29.86155,en
+Gishubi,RW,Gisagara,-2.58057,29.89982,en
+Kansi,RW,Gisagara,-2.69212,29.79148,en
+Kibirizi (Gisagara),RW,Gisagara,-2.63312,29.79193,en
+Kigembe,RW,Gisagara,-2.73842,29.76016,en
+Mamba,RW,Gisagara,-2.48094,29.92949,en
+Muganza (Gisagara),RW,Gisagara,-2.65765,29.88953,en
+Mugombwa,RW,Gisagara,-2.70107,29.83675,en
+Mukindo,RW,Gisagara,-2.73919,29.86029,en
+Musha (Gisagara),RW,Gisagara,-2.52426,29.84264,en
+Ndora,RW,Gisagara,-2.59706,29.83737,en
+Nyanza,RW,Gisagara,-2.78718,29.73357,en
+Save,RW,Gisagara,-2.55653,29.78885,en
+Gishamvu,RW,Huye,-2.65395,29.69638,en
+Huye,RW,Huye,-2.58206,29.69726,en
+Karama (Huye),RW,Huye,-2.60496,29.64548,en
+Kigoma (Huye),RW,Huye,-2.47455,29.64318,en
+Kinazi (Huye),RW,Huye,-2.41286,29.78603,en
+Maraba,RW,Huye,-2.54229,29.63012,en
+Mbazi (Huye),RW,Huye,-2.54677,29.72879,en
+Mukura (Huye),RW,Huye,-2.66545,29.74148,en
+Ngoma (Huye),RW,Huye,-2.60189,29.73391,en
+Ruhashya,RW,Huye,-2.5201,29.7368,en
+Rusatira,RW,Huye,-2.46754,29.78356,en
+Rwaniro,RW,Huye,-2.43196,29.7077,en
+Simbi,RW,Huye,-2.50239,29.68161,en
+Tumba (Huye),RW,Huye,-2.62825,29.74144,en
+Gacurabwenge,RW,Kamonyi,-1.99947,29.89545,en
+Karama (Kamonyi),RW,Kamonyi,-1.94438,29.8496,en
+Kayenzi,RW,Kamonyi,-1.89012,29.8401,en
+Kayumbu,RW,Kamonyi,-1.95353,29.80709,en
+Mugina,RW,Kamonyi,-2.12886,29.97316,en
+Musambira,RW,Kamonyi,-2.02396,29.8395,en
+Ngamba,RW,Kamonyi,-1.88303,29.90777,en
+Nyamiyaga (Kamonyi),RW,Kamonyi,-2.08372,29.91507,en
+Nyarubaka,RW,Kamonyi,-2.08663,29.83537,en
+Rugarika,RW,Kamonyi,-2.02227,29.96328,en
+Rukoma,RW,Kamonyi,-1.9333,29.91185,en
+Runda,RW,Kamonyi,-1.94831,29.96695,en
+Bwishyura,RW,Karongi,-2.08256,29.36466,en
+Gashari,RW,Karongi,-2.13926,29.51477,en
+Gishyita,RW,Karongi,-2.15474,29.29001,en
+Gitesi,RW,Karongi,-2.13274,29.41994,en
+Mubuga,RW,Karongi,-2.11615,29.31277,en
+Murambi (Karongi),RW,Karongi,-2.16891,29.56929,en
+Murundi (Karongi),RW,Karongi,-2.10509,29.57386,en
+Mutuntu,RW,Karongi,-2.24834,29.41809,en
+Rubengera,RW,Karongi,-2.05706,29.42258,en
+Rugabano,RW,Karongi,-2.09853,29.48942,en
+Ruganda,RW,Karongi,-2.21442,29.48221,en
+Rwankuba,RW,Karongi,-2.17036,29.37014,en
+Twumba,RW,Karongi,-2.2399,29.35064,en
+Gahini,RW,Kayonza,-1.78576,30.58908,en
+Kabare,RW,Kayonza,-2.04954,30.65735,en
+Kabarondo,RW,Kayonza,-2.02482,30.5454,en
+Mukarange (Kayonza),RW,Kayonza,-1.90397,30.50641,en
+Murama (Kayonza),RW,Kayonza,-2.03317,30.60251,en
+Murundi (Kayonza),RW,Kayonza,-1.65664,30.58319,en
+Mwiri,RW,Kayonza,-1.83713,30.71253,en
+Ndego,RW,Kayonza,-1.99022,30.74399,en
+Nyamirama,RW,Kayonza,-1.95002,30.52925,en
+Rukara,RW,Kayonza,-1.8005,30.4725,en
+Ruramira,RW,Kayonza,-1.99878,30.49869,en
+Rwinkwavu,RW,Kayonza,-1.94494,30.62151,en
+Gahanga,RW,Kicukiro,-2.03161,30.10965,en
+Gatenga,RW,Kicukiro,-1.99817,30.08289,en
+Gikondo,RW,Kicukiro,-1.97319,30.07869,en
+Kagarama,RW,Kicukiro,-1.99774,30.1134,en
+Kanombe,RW,Kicukiro,-1.99772,30.14496,en
+Kicukiro,RW,Kicukiro,-1.97182,30.09716,en
+Kigarama (Kicukiro),RW,Kicukiro,-1.98752,30.06459,en
+Masaka,RW,Kicukiro,-2.02226,30.20316,en
+Niboye,RW,Kicukiro,-1.97635,30.11382,en
+Nyarugunga,RW,Kicukiro,-1.97447,30.15799,en
+Gahara,RW,Kirehe,-2.34183,30.51623,en
+Gatore,RW,Kirehe,-2.33211,30.57357,en
+Kigarama (Kirehe),RW,Kirehe,-2.35047,30.69678,en
+Kigina,RW,Kirehe,-2.26023,30.70312,en
+Kirehe,RW,Kirehe,-2.25951,30.63634,en
+Mahama,RW,Kirehe,-2.26213,30.8274,en
+Mpanga,RW,Kirehe,-2.09451,30.82334,en
+Musaza,RW,Kirehe,-2.34265,30.61731,en
+Mushikiri,RW,Kirehe,-2.19322,30.6596,en
+Nasho,RW,Kirehe,-2.11332,30.72318,en
+Nyamugari,RW,Kirehe,-2.31322,30.78567,en
+Nyarubuye,RW,Kirehe,-2.20745,30.75734,en
+Cyeza,RW,Muhanga,-2.01691,29.77989,en
+Kabacuzi,RW,Muhanga,-1.94778,29.74457,en
+Kibangu,RW,Muhanga,-1.85872,29.6911,en
+Kiyumba,RW,Muhanga,-1.87926,29.76258,en
+Muhanga,RW,Muhanga,-2.03891,29.72228,en
+Mushishiro,RW,Muhanga,-2.00988,29.66353,en
+Nyabinoni,RW,Muhanga,-1.77277,29.68672,en
+Nyamabuye,RW,Muhanga,-2.08742,29.74109,en
+Nyarusange,RW,Muhanga,-2.08458,29.66131,en
+Rongi,RW,Muhanga,-1.81075,29.74172,en
+Rugendabari,RW,Muhanga,-1.94128,29.68852,en
+Shyogwe,RW,Muhanga,-2.10911,29.77723,en
+Busogo,RW,Musanze,-1.55958,29.56177,en
+Cyuve,RW,Musanze,-1.47401,29.65572,en
+Gacaca,RW,Musanze,-1.50233,29.69743,en
+Gashaki,RW,Musanze,-1.53334,29.74701,en
+Gataraga,RW,Musanze,-1.53551,29.51466,en
+Kimonyi,RW,Musanze,-1.52381,29.59261,en
+Kinigi,RW,Musanze,-1.43377,29.54957,en
+Muhoza,RW,Musanze,-1.51265,29.64525,en
+Muko (Musanze),RW,Musanze,-1.54498,29.61951,en
+Musanze,RW,Musanze,-1.47795,29.58105,en
+Nkotsi,RW,Musanze,-1.57595,29.61879,en
+Nyange (Musanze),RW,Musanze,-1.42776,29.62558,en
+Remera (Musanze),RW,Musanze,-1.54201,29.71936,en
+Rwaza,RW,Musanze,-1.55886,29.66713,en
+Shingiro,RW,Musanze,-1.49883,29.51759,en
+Gashanda,RW,Ngoma,-2.17567,30.47141,en
+Jarama,RW,Ngoma,-2.27942,30.37677,en
+Karembo,RW,Ngoma,-2.12887,30.44997,en
+Kazo,RW,Ngoma,-2.213,30.49848,en
+Kibungo,RW,Ngoma,-2.13574,30.56865,en
+Mugesera,RW,Ngoma,-2.11845,30.36948,en
+Murama (Ngoma),RW,Ngoma,-2.22425,30.55813,en
+Mutenderi,RW,Ngoma,-2.28374,30.47948,en
+Remera (Ngoma),RW,Ngoma,-2.08288,30.53469,en
+Rukira,RW,Ngoma,-2.16009,30.61355,en
+Rukumberi,RW,Ngoma,-2.17075,30.31372,en
+Rurenge,RW,Ngoma,-2.106,30.49788,en
+Sake,RW,Ngoma,-2.22786,30.40701,en
+Zaza,RW,Ngoma,-2.15947,30.40564,en
+Bwira,RW,Ngororero,-1.94743,29.57169,en
+Gatumba,RW,Ngororero,-1.95048,29.63302,en
+Hindiro,RW,Ngororero,-1.80018,29.59899,en
+Kabaya,RW,Ngororero,-1.77554,29.55232,en
+Kageyo (Ngororero),RW,Ngororero,-1.8702,29.58115,en
+Kavumu,RW,Ngororero,-1.85595,29.52685,en
+Matyazo,RW,Ngororero,-1.75974,29.62991,en
+Muhanda,RW,Ngororero,-1.80678,29.47625,en
+Muhororo,RW,Ngororero,-1.89948,29.63409,en
+Ndaro,RW,Ngororero,-1.99502,29.58111,en
+Ngororero,RW,Ngororero,-1.83472,29.64121,en
+Nyange (Ngororero),RW,Ngororero,-2.04636,29.5958,en
+Sovu,RW,Ngororero,-1.91423,29.52535,en
+Bigogwe,RW,Nyabihu,-1.63288,29.42964,en
+Jenda,RW,Nyabihu,-1.58361,29.46987,en
+Jomba,RW,Nyabihu,-1.72578,29.57796,en
+Kabatwa,RW,Nyabihu,-1.549,29.42099,en
+Karago,RW,Nyabihu,-1.64657,29.49958,en
+Kintobo,RW,Nyabihu,-1.60643,29.55599,en
+Mukamira,RW,Nyabihu,-1.59424,29.51378,en
+Muringa,RW,Nyabihu,-1.73341,29.49467,en
+Rambura,RW,Nyabihu,-1.68757,29.48628,en
+Rugera,RW,Nyabihu,-1.62276,29.61107,en
+Rurembo,RW,Nyabihu,-1.65727,29.57662,en
+Shyira,RW,Nyabihu,-1.69429,29.6103,en
+Gatunda,RW,Nyagatare,-1.40628,30.19898,en
+Karama (Nyagatare),RW,Nyagatare,-1.36212,30.18235,en
+Karangazi,RW,Nyagatare,-1.42233,30.50412,en
+Katabagemu,RW,Nyagatare,-1.46948,30.31378,en
+Kiyombe,RW,Nyagatare,-1.41924,30.12276,en
+Matimba,RW,Nyagatare,-1.1183,30.43902,en
+Mimuri,RW,Nyagatare,-1.46562,30.2313,en
+Mukama,RW,Nyagatare,-1.46761,30.18495,en
+Musheri,RW,Nyagatare,-1.12297,30.378,en
+Nyagatare,RW,Nyagatare,-1.34082,30.34594,en
+Rukomo (Nyagatare),RW,Nyagatare,-1.36564,30.26571,en
+Rwempasha,RW,Nyagatare,-1.21689,30.3261,en
+Rwimiyaga,RW,Nyagatare,-1.26349,30.47041,en
+Tabagwe,RW,Nyagatare,-1.2982,30.2346,en
+Buruhukiro,RW,Nyamagabe,-2.44717,29.36881,en
+Cyanika (Nyamagabe),RW,Nyamagabe,-2.42864,29.61633,en
+Gasaka,RW,Nyamagabe,-2.47384,29.56477,en
+Gatare,RW,Nyamagabe,-2.3776,29.38407,en
+Kaduha,RW,Nyamagabe,-2.3422,29.52083,en
+Kamegeri,RW,Nyamagabe,-2.51905,29.56687,en
+Kibirizi (Nyamagabe),RW,Nyamagabe,-2.44621,29.52792,en
+Kibumbwe,RW,Nyamagabe,-2.39974,29.52947,en
+Kitabi,RW,Nyamagabe,-2.54596,29.42273,en
+Mbazi (Nyamagabe),RW,Nyamagabe,-2.37511,29.58976,en
+Mugano,RW,Nyamagabe,-2.27979,29.51149,en
+Musange,RW,Nyamagabe,-2.26727,29.57261,en
+Musebeya,RW,Nyamagabe,-2.39616,29.46603,en
+Mushubi,RW,Nyamagabe,-2.31046,29.44803,en
+Nkomane,RW,Nyamagabe,-2.31868,29.38148,en
+Tare,RW,Nyamagabe,-2.52179,29.50608,en
+Uwinkingi,RW,Nyamagabe,-2.49478,29.40614,en
+Bushekeri,RW,Nyamasheke,-2.43964,29.10149,en
+Bushenge,RW,Nyamasheke,-2.42577,28.98879,en
+Cyato,RW,Nyamasheke,-2.40337,29.25938,en
+Gihombo,RW,Nyamasheke,-2.1995,29.23562,en
+Kagano,RW,Nyamasheke,-2.35584,29.1122,en
+Kanjongo,RW,Nyamasheke,-2.3421,29.16677,en
+Karambi,RW,Nyamasheke,-2.32373,29.27256,en
+Karengera,RW,Nyamasheke,-2.5131,29.05663,en
+Kirimbi,RW,Nyamasheke,-2.26057,29.22747,en
+Macuba,RW,Nyamasheke,-2.30389,29.1941,en
+Mahembe,RW,Nyamasheke,-2.24047,29.28514,en
+Nyabitekeri,RW,Nyamasheke,-2.33814,29.02696,en
+Rangiro,RW,Nyamasheke,-2.43419,29.17705,en
+Ruharambuga,RW,Nyamasheke,-2.46839,29.02888,en
+Shangi,RW,Nyamasheke,-2.39368,29.02658,en
+Busasamana (Nyanza),RW,Nyanza,-2.35916,29.75455,en
+Busoro,RW,Nyanza,-2.27699,29.93604,en
+Cyabakamyi,RW,Nyanza,-2.29172,29.64949,en
+Kibilizi,RW,Nyanza,-2.37308,29.90919,en
+Kigoma (Nyanza),RW,Nyanza,-2.29888,29.82243,en
+Mukingo,RW,Nyanza,-2.28637,29.72825,en
+Muyira,RW,Nyanza,-2.34517,29.84775,en
+Ntyazo,RW,Nyanza,-2.42446,29.87371,en
+Nyagisozi (Nyanza),RW,Nyanza,-2.35819,29.63561,en
+Rwabicuma,RW,Nyanza,-2.35761,29.70002,en
+Gitega,RW,Nyarugenge,-1.95342,30.05507,en
+Kanyinya,RW,Nyarugenge,-1.91782,30.00253,en
+Kigali,RW,Nyarugenge,-1.97917,30.01896,en
+Kimisagara,RW,Nyarugenge,-1.95294,30.04611,en
+Mageregere,RW,Nyarugenge,-2.04192,30.03604,en
+Muhima,RW,Nyarugenge,-1.94122,30.06093,en
+Nyakabanda,RW,Nyarugenge,-1.96952,30.04505,en
+Nyamirambo,RW,Nyarugenge,-1.99259,30.04327,en
+Nyarugenge,RW,Nyarugenge,-1.95682,30.06428,en
+Rwezamenyo,RW,Nyarugenge,-1.97125,30.05265,en
+Busanze,RW,Nyaruguru,-2.78669,29.526,en
+Cyahinda,RW,Nyaruguru,-2.75428,29.59537,en
+Kibeho,RW,Nyaruguru,-2.65561,29.56579,en
+Kivu,RW,Nyaruguru,-2.60627,29.42195,en
+Mata,RW,Nyaruguru,-2.59444,29.56641,en
+Muganza (Nyaruguru),RW,Nyaruguru,-2.66691,29.43547,en
+Munini,RW,Nyaruguru,-2.72516,29.54566,en
+Ngera,RW,Nyaruguru,-2.70596,29.6943,en
+Ngoma (Nyaruguru),RW,Nyaruguru,-2.76396,29.68254,en
+Nyabimata,RW,Nyaruguru,-2.72431,29.4016,en
+Nyagisozi (Nyaruguru),RW,Nyaruguru,-2.76309,29.63094,en
+Ruheru,RW,Nyaruguru,-2.77464,29.43727,en
+Ruramba,RW,Nyaruguru,-2.57868,29.51942,en
+Rusenge,RW,Nyaruguru,-2.67677,29.62958,en
+Bugeshi,RW,Rubavu,-1.54041,29.37555,en
+Busasamana (Rubavu),RW,Rubavu,-1.58964,29.33775,en
+Cyanzarwe,RW,Rubavu,-1.63488,29.31824,en
+Gisenyi,RW,Rubavu,-1.6867,29.25912,en
+Kanama,RW,Rubavu,-1.70731,29.39391,en
+Kanzenze,RW,Rubavu,-1.64813,29.38656,en
+Mudende,RW,Rubavu,-1.59994,29.38404,en
+Nyakiriba,RW,Rubavu,-1.67404,29.3542,en
+Nyamyumba,RW,Rubavu,-1.73706,29.28876,en
+Nyundo,RW,Rubavu,-1.72448,29.33731,en
+Rubavu,RW,Rubavu,-1.66007,29.28909,en
+Rugerero,RW,Rubavu,-1.68814,29.2984,en
+Bweramana,RW,Ruhango,-2.22707,29.70713,en
+Byimana,RW,Ruhango,-2.15396,29.74724,en
+Kabagali,RW,Ruhango,-2.22491,29.61357,en
+Kinazi (Ruhango),RW,Ruhango,-2.18714,29.91956,en
+Kinihira (Ruhango),RW,Ruhango,-2.17682,29.64165,en
+Mbuye,RW,Ruhango,-2.14575,29.84039,en
+Mwendo,RW,Ruhango,-2.14993,29.67828,en
+Ntongwe,RW,Ruhango,-2.24006,29.87507,en
+Ruhango,RW,Ruhango,-2.22552,29.79213,en
+Base,RW,Rulindo,-1.64095,29.89751,en
+Burega,RW,Rulindo,-1.7312,30.03679,en
+Bushoki,RW,Rulindo,-1.70182,29.90788,en
+Buyoga,RW,Rulindo,-1.6972,30.02432,en
+Cyinzuzi,RW,Rulindo,-1.75956,30.01061,en
+Cyungo,RW,Rulindo,-1.61238,29.91901,en
+Kinihira (Rulindo),RW,Rulindo,-1.66259,29.96512,en
+Kisaro,RW,Rulindo,-1.64327,30.03574,en
+Masoro,RW,Rulindo,-1.80408,30.0641,en
+Mbogo,RW,Rulindo,-1.76712,29.95651,en
+Murambi (Rulindo),RW,Rulindo,-1.81757,30.0308,en
+Ngoma (Rulindo),RW,Rulindo,-1.81503,29.98927,en
+Ntarabana,RW,Rulindo,-1.78323,30.09681,en
+Rukozo,RW,Rulindo,-1.63491,29.95119,en
+Rusiga,RW,Rulindo,-1.81057,29.93678,en
+Shyrongi,RW,Rulindo,-1.86538,29.95321,en
+Tumba (Rulindo),RW,Rulindo,-1.70782,29.95105,en
+Bugarama,RW,Rusizi,-2.7053,29.0285,en
+Butare,RW,Rusizi,-2.53606,29.16395,en
+Bweyeye,RW,Rusizi,-2.58457,29.2778,en
+Gashonga,RW,Rusizi,-2.59486,28.93342,en
+Giheke,RW,Rusizi,-2.45888,28.95502,en
+Gihundwe,RW,Rusizi,-2.45792,28.91925,en
+Gikundamvura,RW,Rusizi,-2.63086,29.04423,en
+Gitambi,RW,Rusizi,-2.59645,28.99039,en
+Kamembe,RW,Rusizi,-2.49228,28.91441,en
+Muganza (Rusizi),RW,Rusizi,-2.64359,29.01974,en
+Mururu,RW,Rusizi,-2.52201,28.90418,en
+Nkanka,RW,Rusizi,-2.41177,28.93677,en
+Nkombo,RW,Rusizi,-2.39608,28.91072,en
+Nkungu,RW,Rusizi,-2.52935,28.98002,en
+Nyakabuye,RW,Rusizi,-2.56315,29.03054,en
+Nyakarenzo,RW,Rusizi,-2.5476,28.9258,en
+Nzahaha,RW,Rusizi,-2.66409,28.95067,en
+Rwimbogo (Rusizi),RW,Rusizi,-2.63573,28.97568,en
+Boneza,RW,Rutsiro,-1.90649,29.29399,en
+Gihango,RW,Rutsiro,-1.95061,29.38524,en
+Kigeyo,RW,Rutsiro,-1.82308,29.32639,en
+Kivumu,RW,Rutsiro,-1.7799,29.30341,en
+Manihira,RW,Rutsiro,-1.94333,29.43522,en
+Mukura (Rutsiro),RW,Rutsiro,-2.02039,29.49024,en
+Murunda,RW,Rutsiro,-1.87894,29.42049,en
+Musasa,RW,Rutsiro,-1.93907,29.34446,en
+Mushonyi,RW,Rutsiro,-1.86406,29.32729,en
+Mushubati,RW,Rutsiro,-1.99859,29.40612,en
+Nyabirasi,RW,Rutsiro,-1.77297,29.38329,en
+Ruhango (Rutsiro),RW,Rutsiro,-1.85334,29.38977,en
+Rusebeya,RW,Rutsiro,-1.93735,29.48252,en
+Fumbwe,RW,Rwamagana,-1.86077,30.28335,en
+Gahengeri,RW,Rwamagana,-1.95016,30.30497,en
+Gishali,RW,Rwamagana,-1.89889,30.41005,en
+Karenge,RW,Rwamagana,-2.08331,30.31315,en
+Kigabiro,RW,Rwamagana,-1.97873,30.44037,en
+Muhazi,RW,Rwamagana,-1.88924,30.45281,en
+Munyaga,RW,Rwamagana,-2.03255,30.45527,en
+Munyiginya,RW,Rwamagana,-1.91595,30.37361,en
+Musha (Rwamagana),RW,Rwamagana,-1.90459,30.33519,en
+Muyumbu,RW,Rwamagana,-1.99425,30.26915,en
+Mwulire,RW,Rwamagana,-1.97865,30.38132,en
+Nyakaliro,RW,Rwamagana,-2.05054,30.25535,en
+Nzige,RW,Rwamagana,-2.02806,30.3294,en
+Rubona,RW,Rwamagana,-2.04455,30.39863,en
