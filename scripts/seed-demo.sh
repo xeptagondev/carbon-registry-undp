@@ -189,7 +189,7 @@ create_programme() {
   "implementinguser":6,
   "environmentalAssessmentRegistrationNo":"EAR-$ext",
   "designDocument":"$PDF",
-  "programmeProperties":{"estimatedProgrammeCostUSD":10000,"geographicalLocation":["Abia"],"greenHouseGasses":["CO2"]}
+  "programmeProperties":{"estimatedProgrammeCostUSD":10000,"geographicalLocation":["Gasabo"],"greenHouseGasses":["CO2"]}
 }
 JSON
 )

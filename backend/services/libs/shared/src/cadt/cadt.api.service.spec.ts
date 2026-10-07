@@ -87,7 +87,7 @@ describe("CadtApiService", () => {
     revokedCertifierId: [],
     creditUnit: "ITMO",
     programmeProperties: {
-      geographicalLocation: ["Abia", "Lagos"],
+      geographicalLocation: ["Gasabo", "Musanze"],
       greenHouseGasses: [GHGs.CO2, GHGs.CH4],
     },
     txTime: 0,

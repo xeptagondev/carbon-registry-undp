@@ -404,7 +404,7 @@ export const AddNewUserComponent = (props: any) => {
                     placeholder={t('addUser:phoneNo')}
                     international
                     // value={contactNoInput}
-                    defaultCountry="LK"
+                    defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
                     countryCallingCodeEditable={false}
                     onChange={(v) => {}}
                     countries={countries}

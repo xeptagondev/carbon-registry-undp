@@ -67,7 +67,7 @@ const GetLocationMapComponent = (props: CMAMapComponentProps) => {
     setProjectLocationMapCenter(
       projectLocation?.length > 0
         ? getCenter(projectLocation)
-        : [80.7718, 7.8731]
+        : [29.873888, -1.940278]
     );
 
     const mapSource: MapSourceData = {
