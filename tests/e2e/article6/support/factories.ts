@@ -112,7 +112,7 @@ export function seedProgrammeDirect(input: {
   // sendRequestForLetterOfAuthorisation calls .length on it
   // (programme.service.ts:1550 + letter.of.authorisation.request.gen.ts:35).
   const programmePropertiesJson = JSON.stringify({
-    geographicalLocation: ["Gasabo"],
+    geographicalLocation: ["Abia"],
     greenHouseGasses: ["CO2"],
   }).replace(/'/g, "''");
   const sql = `
@@ -156,7 +156,7 @@ export function seedProgrammeDirect(input: {
     article6trade: input.article6trade !== false,
     cooperativeApproachId: input.cooperativeApproachId ?? null,
     programmeProperties: {
-      geographicalLocation: ["Gasabo"],
+      geographicalLocation: ["Abia"],
       greenHouseGasses: ["CO2"],
     },
     txTime: Date.now(),
@@ -1131,10 +1131,10 @@ export async function createProgramme(
       estimatedProgrammeCostUSD: 10000,
       // programme.service.ts:1926-1943 validates every location string
       // against region.regionName (lang=en). The seeded region table in
-      // the dev stack holds Rwanda's 30 districts (regions.csv), so
-      // "Gasabo" (Kigali City) is guaranteed to exist. Passing a
-      // country-code like "RW" here fails validation.
-      geographicalLocation: ["Gasabo"],
+      // the dev stack holds Nigerian states; "Abia" is the first
+      // alphabetically and is guaranteed to exist. Passing a
+      // country-code like "NG" here fails validation.
+      geographicalLocation: ["Abia"],
       greenHouseGasses: ["CO2"],
       ...(programmeProperties ?? {}),
     },

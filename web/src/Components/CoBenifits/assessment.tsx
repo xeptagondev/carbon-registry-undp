@@ -541,7 +541,7 @@ const Assessment = (props: any) => {
                           <PhoneInput
                             style={{ width: 303 }}
                             international
-                            defaultCountry={import.meta.env.VITE_APP_COUNTRY_CODE}
+                            defaultCountry="LK"
                             countryCallingCodeEditable={false}
                             onChange={(v) => {}}
                             countries={countries}
