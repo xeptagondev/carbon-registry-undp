@@ -146,16 +146,27 @@ export class CadTrustProjectUpdateHandler extends CadTrustSyncHandler {
           input.cadTrustProgramId = programCadTrustId;
         }
 
-        await this.cadTrustV2Service.getClient().project.stageUpdate(cadTrustProjectId, input);
+        if (await this.resources.isUnchangedOnCadTrust("project", cadTrustProjectId, input)) {
+          // Staging an update that changes nothing would wedge every later commit on the node —
+          // see isUnchangedOnCadTrust.
+          await this.syncRecords.markCommitted(
+            key,
+            { cadTrustId: cadTrustProjectId },
+            input as unknown as Record<string, unknown>
+          );
+          this.logger.log(`CAD Trust project ${refId} is unchanged (${txType}); skipped update`);
+        } else {
+          await this.cadTrustV2Service.getClient().project.stageUpdate(cadTrustProjectId, input);
 
-        await this.syncRecords.markStaged(
-          key,
-          { cadTrustId: cadTrustProjectId },
-          input as unknown as Record<string, unknown>
-        );
-        this.logger.log(
-          `Staged CAD Trust project update for ${refId} (${txType}) as ${cadTrustProjectId}`
-        );
+          await this.syncRecords.markStaged(
+            key,
+            { cadTrustId: cadTrustProjectId },
+            input as unknown as Record<string, unknown>
+          );
+          this.logger.log(
+            `Staged CAD Trust project update for ${refId} (${txType}) as ${cadTrustProjectId}`
+          );
+        }
       } catch (error) {
         await this.syncRecords.markFailed(key, error, input as unknown as Record<string, unknown>);
         this.logger.error(`Failed to stage CAD Trust project update for ${refId}`, error);

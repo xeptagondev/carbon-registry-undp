@@ -138,7 +138,9 @@ Two points worth calling out for a business reader:
   keeps the original owner's shrunken block and creates a new block for the
   counterparty's portion. Each of those blocks is its own CAD Trust unit —
   created once, then kept current by full-replacement updates — rather than one
-  unit being split.
+  unit being split. If an update to the original block fails and is retried, the
+  registry first checks that the CAD Trust record still exists and updates it in
+  place; it never creates a second record for the same block.
 
 - **Only completed outcomes reach CAD Trust.** A retirement or ITMO-authorization
   request that is rejected or cancelled before completion is never published; the

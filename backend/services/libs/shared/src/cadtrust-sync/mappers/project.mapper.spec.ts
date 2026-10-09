@@ -89,6 +89,20 @@ describe("CadTrustProjectMapper", () => {
     expect(input.projectStatus).toBe("Listed");
   });
 
+  it.each([
+    ProjectProposalStage.APPROVED,
+    ProjectProposalStage.PDD_SUBMITTED,
+    ProjectProposalStage.PDD_APPROVED_BY_CERTIFIER,
+    ProjectProposalStage.PDD_APPROVED_BY_DNA,
+    ProjectProposalStage.VALIDATION_REPORT_SUBMITTED,
+  ])("keeps a project at %s as Registered rather than regressing it to Listed", async (stage) => {
+    const { mapper } = buildMapper();
+
+    const input = await mapper.toCreateInput(buildProject({ projectProposalStage: stage }));
+
+    expect(input.projectStatus).toBe("Registered");
+  });
+
   it("maps a real projectType match when sector has one", async () => {
     const { mapper } = buildMapper();
 
