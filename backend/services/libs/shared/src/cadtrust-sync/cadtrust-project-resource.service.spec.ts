@@ -4,7 +4,7 @@ import { CadTrustResourceType } from "../enum/cadtrust.resource.type.enum";
 import { CadTrustSyncStatus } from "../enum/cadtrust.sync.status.enum";
 import { DocumentTypeEnum } from "../enum/document.type.enum";
 import { ProjectProposalStage } from "../enum/projectProposalStage.enum";
-import { CadTrustProjectResourceService } from "./cadtrust-project-resource.service";
+import { CadTrustProjectResourceService, sameCadTrustValue } from "./cadtrust-project-resource.service";
 
 const REF_ID = "0042";
 const COMPANY_ID = 7;
@@ -229,7 +229,7 @@ function buildService(
   // The orphan-adopt lookup (adoptOrphanedStagedRow) — defaults to "the node has nothing".
   const stagingListAll = overrides.stagingListAll ?? jest.fn(async function* () {});
 
-  const getFromNode = jest.fn(async (id: string) => {
+  const getFromNode = jest.fn(async (id: string): Promise<Record<string, unknown>> => {
     if (overrides.existsOnNode === true) {
       return { id };
     }
@@ -320,6 +320,49 @@ describe("CadTrustProjectResourceService", () => {
         expect.any(Object)
       );
       expect(result).toEqual({ cadTrustId: "cadt-project-cached", commitOwed: true });
+    });
+
+    it("adopts the update still staged on the node instead of staging it a second time", async () => {
+      const stagingListAll = jest.fn(async function* (query: any) {
+        if (query.table === "project") {
+          yield {
+            uuid: "staging-update-1",
+            committed: false,
+            failed_commit: false,
+            diff: { change: [{ cad_trust_project_id: "cadt-project-cached" }] },
+          };
+        }
+      });
+      const { service, stageProject, stageProjectUpdate } = buildService({
+        failed: { project: true },
+        existsOnNode: true,
+        stagingListAll,
+      });
+
+      const result = await service.ensureProject(REF_ID, SNAPSHOT as any, {});
+
+      expect(stageProject).not.toHaveBeenCalled();
+      expect(stageProjectUpdate).not.toHaveBeenCalled();
+      expect(result).toEqual({ cadTrustId: "cadt-project-cached", commitOwed: true });
+    });
+
+    it("skips the update and marks it committed when the node already holds the same project", async () => {
+      const { service, stageProject, stageProjectUpdate, syncRecords, getFromNode } = buildService({
+        failed: { project: true },
+        existsOnNode: true,
+      });
+      getFromNode.mockImplementation(async () => ({ projectId: REF_ID, cadTrustProjectId: "cadt-project-cached" }));
+
+      const result = await service.ensureProject(REF_ID, SNAPSHOT as any, {});
+
+      expect(stageProject).not.toHaveBeenCalled();
+      expect(stageProjectUpdate).not.toHaveBeenCalled();
+      expect(syncRecords.markCommitted).toHaveBeenCalledWith(
+        PROJECT_KEY,
+        { cadTrustId: "cadt-project-cached" },
+        expect.any(Object)
+      );
+      expect(result).toEqual({ cadTrustId: "cadt-project-cached", commitOwed: false });
     });
 
     it("creates the project when the stored id was never published (404)", async () => {
@@ -464,6 +507,52 @@ describe("CadTrustProjectResourceService", () => {
 
       expect(result).toBeUndefined();
       expect(syncRecords.markFailed).toHaveBeenCalledWith(STAKEHOLDER_KEY, expect.any(Error), expect.any(Object));
+    });
+  });
+
+  describe("isUnchangedOnCadTrust", () => {
+    it("is true when every sent field matches the committed record", async () => {
+      const { service, getFromNode } = buildService();
+      getFromNode.mockImplementation(async () => ({
+        cadTrustProjectId: "p1",
+        unitStartBlock: "4071",
+        unitCount: 17,
+        unitLink: null,
+        createdAt: "2026-10-08T15:38:58.351Z",
+      }));
+
+      // Number vs string, undefined vs null, and fields the input doesn't send are all ignored.
+      await expect(
+        service.isUnchangedOnCadTrust("project", "p1", { unitStartBlock: 4071, unitCount: 17, unitLink: undefined })
+      ).resolves.toBe(true);
+    });
+
+    it("is false when any sent field differs", async () => {
+      const { service, getFromNode } = buildService();
+      getFromNode.mockImplementation(async () => ({ unitStatus: "Held" }));
+
+      await expect(service.isUnchangedOnCadTrust("project", "p1", { unitStatus: "Retired" })).resolves.toBe(false);
+    });
+
+    it("is false when the record cannot be read", async () => {
+      const { service } = buildService({ existsOnNode: "error" });
+
+      await expect(service.isUnchangedOnCadTrust("project", "p1", { unitStatus: "Retired" })).resolves.toBe(false);
+    });
+  });
+
+  describe("sameCadTrustValue", () => {
+    it.each([
+      [undefined, null, true],
+      [null, undefined, true],
+      ["x", null, false],
+      [undefined, "x", false],
+      [4071, "4071", true],
+      ["a", "b", false],
+      [["a", "b"], ["a", "b"], true],
+      [["a"], ["b"], false],
+    ])("%p vs %p -> %p", (sent, stored, expected) => {
+      expect(sameCadTrustValue(sent, stored)).toBe(expected);
     });
   });
 
