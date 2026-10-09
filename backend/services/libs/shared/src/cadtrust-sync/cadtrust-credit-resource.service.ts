@@ -443,6 +443,17 @@ export class CadTrustCreditResourceService {
         return false;
       }
       if (exists) {
+        // A FAILED commit usually leaves the update still staged on the node — adopt that row
+        // rather than staging the same update twice.
+        const pending = await this.projectResources.adoptOrphanedStagedRow(
+          key,
+          "unit",
+          "cad_trust_unit_id",
+          (change) => change.cad_trust_unit_id === existing.cadTrustId
+        );
+        if (pending) {
+          return true;
+        }
         const cadTrustIssuanceId = await this.resolveUnitIssuanceId(existing.payload, creditBlock.projectRefId);
         if (!cadTrustIssuanceId) {
           const message = `CAD Trust unit ${creditBlockId} has no cadTrustIssuanceId to reuse on update`;
@@ -680,6 +691,15 @@ export class CadTrustCreditResourceService {
 
       const client = this.cadTrustV2Service.getClient();
       if (existingCadTrustId) {
+        if (await this.projectResources.isUnchangedOnCadTrust("unit", existingCadTrustId, input)) {
+          await this.syncRecords.markCommitted(
+            key,
+            { cadTrustId: existingCadTrustId },
+            input as unknown as Record<string, unknown>
+          );
+          this.logger.log(`CAD Trust unit for block ${creditBlock.creditBlockId} is unchanged; skipped update`);
+          return false;
+        }
         await client.unit.stageUpdate(existingCadTrustId, input);
         await this.syncRecords.markStaged(
           key,

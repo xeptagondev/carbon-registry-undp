@@ -47,6 +47,24 @@ export type CadTrustResourceName =
   | "unitLabel";
 
 /**
+ * One field of an update input against the same field of a committed CAD Trust record: absent and
+ * `null` are equal, scalars compare by string form (the node returns block numbers as strings, for
+ * instance), anything else by JSON.
+ */
+export function sameCadTrustValue(sent: unknown, stored: unknown): boolean {
+  if (sent === undefined || sent === null) {
+    return stored === undefined || stored === null;
+  }
+  if (stored === undefined || stored === null) {
+    return false;
+  }
+  if (typeof sent === "object" || typeof stored === "object") {
+    return JSON.stringify(sent) === JSON.stringify(stored);
+  }
+  return String(sent) === String(stored);
+}
+
+/**
  * Shared "ensure this local record exists on CAD Trust" logic for a project and everything
  * that hangs off it (stakeholder, project-methodology link, stakeholder-project link,
  * location), plus the generic staged/committed/orphan bookkeeping those five all share.
@@ -137,6 +155,33 @@ export class CadTrustProjectResourceService {
       }
       this.logger.error(`Failed to look up ${resource} ${cadTrustId} on CAD Trust`, error);
       return undefined;
+    }
+  }
+
+  /**
+   * Whether the committed record already carries every field of an update `input`, i.e. staging
+   * it would change nothing. Such an update must not be staged: a commit that changes nothing
+   * never gets an on-chain confirmation, so its row stays at `committed:true, failed_commit:false`
+   * and CAD Trust's pending-commit guard then rejects every later commit on the node (seen live
+   * 2026-10-08 with a re-staged unit UPDATE). `false` whenever it can't tell, so callers stage as
+   * before.
+   */
+  async isUnchangedOnCadTrust(
+    resource: CadTrustResourceName,
+    cadTrustId: string,
+    input: object
+  ): Promise<boolean> {
+    try {
+      const record = (await this.cadTrustV2Service.getClient()[resource].get(cadTrustId)) as unknown as Record<
+        string,
+        unknown
+      >;
+      return !!record && Object.entries(input).every(([field, value]) => sameCadTrustValue(value, record[field]));
+    } catch (error) {
+      if (!(error instanceof CadTrustNotFoundError)) {
+        this.logger.warn(`Could not compare ${resource} ${cadTrustId} against CAD Trust; staging the update anyway`);
+      }
+      return false;
     }
   }
 
@@ -305,6 +350,26 @@ export class CadTrustProjectResourceService {
           return undefined;
         }
         if (exists) {
+          // The update may still be staged on the node from the attempt whose commit failed —
+          // adopt that row rather than staging the same update twice.
+          const pending = await this.adoptOrphanedStagedRow(
+            key,
+            "project",
+            "cad_trust_project_id",
+            (change) => change.cad_trust_project_id === existing.failedCadTrustId
+          );
+          if (pending) {
+            return pending;
+          }
+          if (await this.isUnchangedOnCadTrust("project", existing.failedCadTrustId, input)) {
+            await this.syncRecords.markCommitted(
+              key,
+              { cadTrustId: existing.failedCadTrustId },
+              input as unknown as Record<string, unknown>
+            );
+            this.logger.log(`Project ${refId} is unchanged on CAD Trust; skipped update`);
+            return { cadTrustId: existing.failedCadTrustId, commitOwed: false };
+          }
           await this.cadTrustV2Service.getClient().project.stageUpdate(existing.failedCadTrustId, input);
           await this.syncRecords.markStaged(
             key,

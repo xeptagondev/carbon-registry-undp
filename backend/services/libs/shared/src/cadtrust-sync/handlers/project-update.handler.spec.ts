@@ -38,6 +38,7 @@ function buildHandler(
     ensureProjectMethodology?: jest.Mock;
     ensureStakeholderProject?: jest.Mock;
     ensureLocation?: jest.Mock;
+    unchangedOnCadTrust?: boolean;
   } = {}
 ) {
   const stageUpdate =
@@ -54,6 +55,7 @@ function buildHandler(
     ensureProjectMethodology: overrides.ensureProjectMethodology ?? jest.fn(async () => false),
     ensureStakeholderProject: overrides.ensureStakeholderProject ?? jest.fn(async () => false),
     ensureLocation: overrides.ensureLocation ?? jest.fn(async () => false),
+    isUnchangedOnCadTrust: jest.fn(async () => overrides.unchangedOnCadTrust ?? false),
   };
 
   const syncRecords = {
@@ -64,6 +66,7 @@ function buildHandler(
       cadTrustEntityType === CadTrustResourceType.PROGRAM ? overrides.syncedProgramId : undefined
     ),
     markStaged: jest.fn(async () => undefined),
+    markCommitted: jest.fn(async () => undefined),
     markFailed: jest.fn(async () => undefined),
   };
 
@@ -157,6 +160,24 @@ describe("CadTrustProjectUpdateHandler", () => {
       expect(stageUpdate).toHaveBeenCalledTimes(1);
     }
   );
+
+  it("does not stage a PUT that would change nothing on CAD Trust, and marks the record committed", async () => {
+    // A commit with no changes never confirms on-chain and blocks every later commit on the node.
+    const { handler, stageUpdate, syncRecords, resources } = buildHandler({ unchangedOnCadTrust: true });
+
+    await handler.handle(props(TxType.APPROVE_INF));
+
+    expect(resources.isUnchangedOnCadTrust).toHaveBeenCalledWith("project", "cadt-project-1", expect.any(Object));
+    expect(stageUpdate).not.toHaveBeenCalled();
+    expect(syncRecords.markStaged).not.toHaveBeenCalled();
+    expect(syncRecords.markCommitted).toHaveBeenCalledWith(
+      PROJECT_KEY,
+      { cadTrustId: "cadt-project-1" },
+      expect.any(Object)
+    );
+    // Children are still re-driven.
+    expect(resources.ensureLocation).toHaveBeenCalled();
+  });
 
   describe("ignored transitions", () => {
     it.each([

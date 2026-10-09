@@ -61,6 +61,7 @@ function buildService(
     getSyncedCadTrustId: jest.fn(async () => undefined),
     getLatestSyncedCadTrustId: jest.fn(async () => undefined),
     markStaged: jest.fn(async () => undefined),
+    markCommitted: jest.fn(async () => undefined),
     markFailed: jest.fn(async () => undefined),
     recordSyncProps: jest.fn(async () => undefined),
   };
@@ -70,6 +71,8 @@ function buildService(
     adoptOrphanedStagedRow: jest.fn(async () => undefined),
     // Default: the stored CAD Trust id is not published on the node (a definite 404).
     existsOnCadTrust: jest.fn(async (): Promise<boolean | undefined> => false),
+    // Default: the update would change something, so it is staged.
+    isUnchangedOnCadTrust: jest.fn(async () => false),
   };
 
   const verificationMapper = { toCreateInput: jest.fn(async () => ({ verificationId: "x" })) };
@@ -480,6 +483,47 @@ describe("CadTrustCreditResourceService", () => {
         expect(unitStageCreate).not.toHaveBeenCalled();
         expect(unitStageUpdate).toHaveBeenCalledWith("cadt-unit-1", expect.any(Object));
         expect(commitOwed).toBe(true);
+      });
+
+      it("adopts the update still staged on the node instead of staging it a second time", async () => {
+        const { service, syncRecords, projectResources, unitStageCreate, unitStageUpdate } = buildService();
+        syncRecords.find.mockResolvedValue(FAILED_WITH_ID);
+        projectResources.existsOnCadTrust.mockResolvedValue(true);
+        projectResources.adoptOrphanedStagedRow.mockResolvedValue({ cadTrustId: "cadt-unit-1", commitOwed: true } as any);
+
+        const commitOwed = await service.ensureUnitUpdate(CREDIT_BLOCK_ID);
+
+        expect(projectResources.adoptOrphanedStagedRow).toHaveBeenCalledWith(
+          expect.objectContaining({ localId: CREDIT_BLOCK_ID }),
+          "unit",
+          "cad_trust_unit_id",
+          expect.any(Function)
+        );
+        const matches = (projectResources.adoptOrphanedStagedRow.mock.calls[0] as any[])[3];
+        expect(matches({ cad_trust_unit_id: "cadt-unit-1" })).toBe(true);
+        expect(matches({ cad_trust_unit_id: "cadt-unit-other" })).toBe(false);
+        expect(unitStageUpdate).not.toHaveBeenCalled();
+        expect(unitStageCreate).not.toHaveBeenCalled();
+        expect(commitOwed).toBe(true);
+      });
+
+      it("skips the update and marks it committed when the node already holds the same unit", async () => {
+        const { service, syncRecords, projectResources, unitStageCreate, unitStageUpdate } = buildService();
+        syncRecords.find.mockResolvedValue(FAILED_WITH_ID);
+        projectResources.existsOnCadTrust.mockResolvedValue(true);
+        projectResources.isUnchangedOnCadTrust.mockResolvedValue(true);
+
+        const commitOwed = await service.ensureUnitUpdate(CREDIT_BLOCK_ID);
+
+        expect(projectResources.isUnchangedOnCadTrust).toHaveBeenCalledWith("unit", "cadt-unit-1", expect.any(Object));
+        expect(unitStageUpdate).not.toHaveBeenCalled();
+        expect(unitStageCreate).not.toHaveBeenCalled();
+        expect(syncRecords.markCommitted).toHaveBeenCalledWith(
+          expect.objectContaining({ localId: CREDIT_BLOCK_ID }),
+          { cadTrustId: "cadt-unit-1" },
+          expect.any(Object)
+        );
+        expect(commitOwed).toBe(false);
       });
 
       it("creates the unit when the stored id was never published (404)", async () => {
