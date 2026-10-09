@@ -47,6 +47,11 @@ const CaManagement = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  // Sorting is server-side (the columns declare `sorter: true`), so the
+  // chosen column/direction has to be fed back into the query — the table
+  // can't reorder a page it only holds one slice of.
+  const [sortField, setSortField] = useState("createdTime");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
   const [reconciliation, setReconciliation] =
     useState<ReconciliationSummary | null>(null);
   const [reconciliationLoading, setReconciliationLoading] = useState(false);
@@ -66,13 +71,18 @@ const CaManagement = () => {
     }
   };
 
-  const fetchData = async (page: number, size: number) => {
+  const fetchData = async (
+    page: number,
+    size: number,
+    field: string,
+    order: "ASC" | "DESC"
+  ) => {
     setLoading(true);
     try {
       const response = await post("national/correspondingAdjustment/query", {
         page,
         size,
-        sort: { key: "createdTime", order: "DESC" },
+        sort: { key: field, order },
       });
       if (response?.data) {
         setData(response.data);
@@ -86,17 +96,37 @@ const CaManagement = () => {
   };
 
   useEffect(() => {
-    fetchData(currentPage, pageSize);
+    fetchData(currentPage, pageSize, sortField, sortOrder);
     fetchReconciliation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, sortField, sortOrder]);
+
+  // Clearing the sort (antd's third click) drops back to the default
+  // newest-first ordering rather than leaving the list unordered.
+  const handleTableChange = (sorter: any) => {
+    const nextField =
+      sorter?.order === "ascend" || sorter?.order === "descend"
+        ? sorter.field ?? sorter.columnKey
+        : "createdTime";
+    const nextOrder: "ASC" | "DESC" =
+      sorter?.order === "ascend" ? "ASC" : "DESC";
+
+    // antd fires onChange for pagination too, so only jump back to the
+    // first page when the ordering itself actually changed — otherwise
+    // paging forward would bounce straight back to page 1.
+    if (nextField !== sortField || nextOrder !== sortOrder) {
+      setSortField(nextField);
+      setSortOrder(nextOrder);
+      setCurrentPage(1);
+    }
+  };
 
   const handleApprove = async (caId: string) => {
     setApprovingId(caId);
     try {
       await put(`national/correspondingAdjustment/approve?id=${caId}`, {});
       message.success(t("correspondingAdjust:approveSuccess"));
-      fetchData(currentPage, pageSize);
+      fetchData(currentPage, pageSize, sortField, sortOrder);
       fetchReconciliation();
     } catch (error) {
       const serverMsg = (error as any)?.message;
@@ -310,6 +340,9 @@ const CaManagement = () => {
               setPageSize(size || 10);
             },
           }}
+          onChange={(_pagination, _filters, sorter) =>
+            handleTableChange(sorter)
+          }
           onRow={(record) => ({
             onClick: () =>
               navigate(
