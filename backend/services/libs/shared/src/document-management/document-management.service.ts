@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { BaseDocumentDto } from "../dto/base.document.dto";
 import { User } from "../entities/user.entity";
 import { DocumentEntity } from "../entities/document.entity";
@@ -51,6 +51,8 @@ import { CadTrustSyncEnqueueService } from "../cadtrust-sync/cadtrust-sync.enque
 
 @Injectable()
 export class DocumentManagementService {
+  private readonly logger = new Logger(DocumentManagementService.name);
+
   constructor(
     @InjectRepository(DocumentEntity)
     private readonly documentRepository: Repository<DocumentEntity>,
@@ -2114,10 +2116,15 @@ private getFileExtension = (file: string): string => {
         const verifyingICCompany = await this.userCompanyViewEntityRepository.findOne({
           where: { id: document.userId },
         });
+        const monitoringPeriod = await this.getCadTrustMonitoringPeriod(
+          project.refId,
+          document.activityId
+        );
         await this.cadTrustSyncEnqueue.enqueueVerification({
           refId: project.refId,
           documentVersion: document.version,
           verificationBodyName: verifyingICCompany?.companyName,
+          ...monitoringPeriod,
         });
 
         await this.programmeLedgerService.issueCredits(
@@ -2184,9 +2191,51 @@ private getFileExtension = (file: string): string => {
   }
 
   /**
+   * The monitoring period for a verification's CAD Trust `verificationStartDate`/`EndDate`. A
+   * verification report records only a free-text duration, so the dates come from the monitoring
+   * report the verification was raised against (same `activityId`): its "Crediting period duration"
+   * date pickers, `projectActivityDetails.pa_projectCreditingPeriod` (start) and
+   * `...EndDate`. Prefers the IC-approved monitoring report, else the latest version. Returns an
+   * empty object — never throws — when no dates are available, since both fields are optional.
+   */
+  private async getCadTrustMonitoringPeriod(
+    refId: string,
+    activityId?: number
+  ): Promise<{ verificationStartDate?: string; verificationEndDate?: string }> {
+    try {
+      const monitoringDocs = await this.documentRepository.find({
+        where: {
+          programmeId: refId,
+          type: DocumentTypeEnum.MONITORING,
+          ...(activityId ? { activityId } : {}),
+        },
+        order: { version: "DESC" },
+      });
+      const monitoringDoc =
+        monitoringDocs.find((d) => d.status === DocumentStatus.IC_APPROVED) ?? monitoringDocs[0];
+      const details = monitoringDoc?.content?.projectActivityDetails;
+
+      const verificationStartDate = this.cadTrustEpochSecondsToIsoDate(details?.pa_projectCreditingPeriod);
+      const verificationEndDate = this.cadTrustEpochSecondsToIsoDate(details?.pa_projectCreditingPeriodEndDate);
+      return {
+        ...(verificationStartDate ? { verificationStartDate } : {}),
+        ...(verificationEndDate ? { verificationEndDate } : {}),
+      };
+    } catch (error) {
+      this.logger.error(`Could not resolve the monitoring period for CAD Trust verification of ${refId}`, error);
+      return {};
+    }
+  }
+
+  /**
    * PDD/validation-report crediting-period dates are stored as unix seconds (frontend forms use
    * `moment(...).unix()`), but CAD Trust's `validationCreditPeriodStartDate`/`EndDate` want ISO
    * 8601 dates. Guards undefined/null/NaN — the field is optional on both sides.
+   *
+   * The frontend stores the picked date as the browser's start of day (`moment(...).startOf("day")`),
+   * and this sends that instant's UTC calendar date. That is deliberate: the registry can't convey a
+   * timezone to CAD Trust, so UTC is the one consistent reading. Be aware that for a browser east of
+   * UTC the CAD Trust date can therefore be one day earlier than the date the user picked.
    */
   private cadTrustEpochSecondsToIsoDate(epochSeconds?: number): string | undefined {
     if (!epochSeconds || Number.isNaN(Number(epochSeconds))) {

@@ -31,8 +31,11 @@ export class CadTrustStakeholderMapper {
     // an empty string (company.service.ts forces it to "" when an update omits
     // it), which is not a valid URI, so an empty value must be omitted rather
     // than sent.
-    if (company.website && company.website.trim().length > 0) {
-      input.stakeholderLink = company.website.trim();
+    // The DTO's @IsUrl() also accepts scheme-less values such as "www.example.org", which are not
+    // absolute URIs, so a missing scheme is defaulted to https.
+    const website = company.website?.trim();
+    if (website) {
+      input.stakeholderLink = /^[a-z][a-z0-9+.-]*:\/\//i.test(website) ? website : `https://${website}`;
     }
 
     return input;

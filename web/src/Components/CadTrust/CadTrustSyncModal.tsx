@@ -335,7 +335,7 @@ const EntityCard = ({
 
             <div className="cadtrust-sync-section__meta">
               <span>
-                {record.attemptCount} attempt{record.attemptCount === 1 ? '' : 's'}
+                {record.attemptCount} {record.attemptCount === 1 ? 'retry' : 'retries'}
               </span>
               <span>Updated {formatDateTime(record.updateTime)}</span>
             </div>

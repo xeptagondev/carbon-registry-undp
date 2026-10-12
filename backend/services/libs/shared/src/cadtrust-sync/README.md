@@ -271,6 +271,16 @@ reassembling them, every distinct `creditBlockId` just gets its own `unit`, crea
 sync via full-replace `stageUpdate` thereafter — see `CadTrustCreditResourceService`'s class doc and
 `CadTrustCreditUnitMapper`'s class doc.
 
+**A FAILED record that still has a CAD Trust id is never re-created.** A COMMITTED record whose later
+update or commit fails is flipped to FAILED with its `cadTrustId` intact (`markFailed`,
+`markAllStagedAsFailed`). Treating that as "never created" made the retry `POST` a second record and
+overwrite the stored id, leaving the original stale — e.g. a partial split's retained parent unit kept
+its full range while a duplicate appeared for the shrunken one, and a re-created project reset to an
+earlier status. Before any create, `CadTrustProjectResourceService.existsOnCadTrust` looks the stored id
+up on the node: found → update in place (`ensureProject`, `ensureUnitUpdate`) or mark committed
+(`existingSync`'s create-once resources); 404 → the normal orphan-adopt/create path; any other error →
+do nothing this pass and leave the row FAILED for the next reconcile.
+
 **A rejected or cancelled retirement/ITMO-authorization request never reaches CAD Trust** —
 `handleTransactionRecords`'s own `RETIRE`/`ITMO_AUTH` branches only call `enqueueUnitUpdate` inside
 their existing `status == CreditTransactionStatusEnum.COMPLETED` guard.

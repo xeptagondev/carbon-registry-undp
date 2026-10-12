@@ -1268,7 +1268,8 @@ export class CreditTransactionsManagementService {
       // The retained/shrunken side of any partial transfer, retirement or ITMO authorization.
       // Deliberately writes no CreditTransactionsEntity row — that has always been true (this
       // txType previously fell through this whole if/else chain doing nothing at all) and stays
-      // true; this branch exists purely to add the CAD Trust hook for the child block. See
+      // true; this branch exists purely to add the CAD Trust hook for the retained parent block
+      // (the child goes through its own TRANSFER/RETIRE/ITMO_AUTH event above). See
       // CadTrustUnitUpdateHandler's class doc and cadtrust-sync/README.md's "Why not unit.split".
       await this.cadTrustSyncEnqueue.enqueueUnitUpdate(creditBlock.creditBlockId);
     }
