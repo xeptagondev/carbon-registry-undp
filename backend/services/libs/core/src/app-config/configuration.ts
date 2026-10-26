@@ -8,6 +8,12 @@ function required(name: string): string {
   return value;
 }
 
+// EMAIL_SERVICE decides which email backend is built, and therefore which
+// credentials are mandatory. The SMTP pair below is only required when SMTP is
+// the active backend - a GRAPH deployment has no SMTP values to give.
+const emailService = process.env.EMAIL_SERVICE || "SMTP";
+const isSmtp = emailService === "SMTP";
+
 export default () => ({
   stage: process.env.STAGE || "local",
   systemCountry: process.env.systemCountryCode || "NG",
@@ -53,9 +59,10 @@ export default () => ({
     creditBlocksTable: "credit_blocks",
   },
   email: {
+    service: emailService,
     source: process.env.SOURCE_EMAIL || "noreply@example.com",
-    endpoint: required("SMTP_ENDPOINT"),
-    username: required("SMTP_USERNAME"),
+    endpoint: isSmtp ? required("SMTP_ENDPOINT") : process.env.SMTP_ENDPOINT,
+    username: isSmtp ? required("SMTP_USERNAME") : process.env.SMTP_USERNAME,
     password: process.env.SMTP_PASSWORD,
     disabled: process.env.IS_EMAIL_DISABLED === "true" ? true : false,
     disableLowPriorityEmails:
@@ -63,6 +70,25 @@ export default () => ({
     getemailprefix: process.env.EMAILPREFIX || "🏬📐 🇦🇶",
     adresss: process.env.HOST_ADDRESS || "Address <br>Region, Country Zipcode",
     configSet: process.env.EMAIL_CONFIG_SET || "",
+    // Microsoft Graph backend (EMAIL_SERVICE=GRAPH). Deliberately not wrapped in
+    // required(): GraphEmailService validates these in its constructor so the
+    // error names the backend that needs them, the way AzureFileHandlerService
+    // does for its own settings.
+    graph: {
+      appName: process.env.GRAPH_APP_NAME || "",
+      tenantId: process.env.GRAPH_TENANT_ID,
+      clientId: process.env.GRAPH_CLIENT_ID,
+      clientSecret: process.env.GRAPH_CLIENT_SECRET,
+      loginHost:
+        process.env.GRAPH_LOGIN_HOST || "https://login.microsoftonline.com",
+      apiHost: process.env.GRAPH_API_HOST || "https://graph.microsoft.com",
+      saveToSentItems: process.env.GRAPH_SAVE_TO_SENT_ITEMS === "true",
+      maxAttachmentBytes:
+        parseInt(process.env.GRAPH_MAX_ATTACHMENT_BYTES) || 2500000,
+      attachmentFailureMode:
+        process.env.GRAPH_ATTACHMENT_FAILURE_MODE || "skip",
+      requestTimeoutMs: parseInt(process.env.GRAPH_REQUEST_TIMEOUT_MS) || 20000,
+    },
   },
   s3CommonBucket: {
     name: process.env.S3_COMMON_BUCKET || "carbon-common-dev",

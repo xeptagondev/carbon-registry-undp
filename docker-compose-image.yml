@@ -50,6 +50,14 @@ services:
       Department: ""
       DISABLE_LOW_PRIORITY_EMAIL: "true"
       EMAILPREFIX: ""
+      EMAIL_SERVICE: SMTP
+      # Set EMAIL_SERVICE: GRAPH and fill these to send through Microsoft Graph.
+      # The app registration needs the APPLICATION permission Mail.Send, admin
+      # consented, and SOURCE_EMAIL must be a real licensed or shared mailbox.
+      # GRAPH_APP_NAME: ""
+      # GRAPH_TENANT_ID: ""
+      # GRAPH_CLIENT_ID: ""
+      # GRAPH_CLIENT_SECRET: ""
       LOCATION_SERVICE: FILE
       ASYNC_OPERATIONS_TYPE: Database
       HOST: "http://localhost:3030"
@@ -115,6 +123,14 @@ services:
       IS_EMAIL_DISABLED: "true"
       DISABLE_LOW_PRIORITY_EMAIL: "true"
       EMAILPREFIX: ""
+      EMAIL_SERVICE: SMTP
+      # Set EMAIL_SERVICE: GRAPH and fill these to send through Microsoft Graph.
+      # The app registration needs the APPLICATION permission Mail.Send, admin
+      # consented, and SOURCE_EMAIL must be a real licensed or shared mailbox.
+      # GRAPH_APP_NAME: ""
+      # GRAPH_TENANT_ID: ""
+      # GRAPH_CLIENT_ID: ""
+      # GRAPH_CLIENT_SECRET: ""
       ASYNC_OPERATIONS_TYPE: Database
       ITMO_API_KEY: ""
       ITMO_EMAIL: ""
