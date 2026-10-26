@@ -8,6 +8,27 @@ function required(name: string): string {
   return value;
 }
 
+/**
+ * Reads the EMAIL_SERVICE_*-namespaced name, falling back to the legacy
+ * unprefixed one. SMTP_ENDPOINT/USERNAME/PASSWORD predate the namespacing and
+ * are set in every existing deployment, so renaming them outright would break
+ * each one on upgrade. Both spellings work; the prefixed one wins.
+ */
+function emailVar(name: string, legacy: string): string {
+  return process.env[name] || process.env[legacy];
+}
+
+function requiredEmailVar(name: string, legacy: string): string {
+  const value = emailVar(name, legacy);
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name} (legacy ${legacy} is also unset). ` +
+        `Set it in your .env file (see .env.example).`
+    );
+  }
+  return value;
+}
+
 // EMAIL_SERVICE decides which email backend is built, and therefore which
 // credentials are mandatory. The SMTP pair below is only required when SMTP is
 // the active backend - a GRAPH deployment has no SMTP values to give.
@@ -61,9 +82,13 @@ export default () => ({
   email: {
     service: emailService,
     source: process.env.SOURCE_EMAIL || "noreply@example.com",
-    endpoint: isSmtp ? required("SMTP_ENDPOINT") : process.env.SMTP_ENDPOINT,
-    username: isSmtp ? required("SMTP_USERNAME") : process.env.SMTP_USERNAME,
-    password: process.env.SMTP_PASSWORD,
+    endpoint: isSmtp
+      ? requiredEmailVar("EMAIL_SERVICE_SMTP_ENDPOINT", "SMTP_ENDPOINT")
+      : emailVar("EMAIL_SERVICE_SMTP_ENDPOINT", "SMTP_ENDPOINT"),
+    username: isSmtp
+      ? requiredEmailVar("EMAIL_SERVICE_SMTP_USERNAME", "SMTP_USERNAME")
+      : emailVar("EMAIL_SERVICE_SMTP_USERNAME", "SMTP_USERNAME"),
+    password: emailVar("EMAIL_SERVICE_SMTP_PASSWORD", "SMTP_PASSWORD"),
     disabled: process.env.IS_EMAIL_DISABLED === "true" ? true : false,
     disableLowPriorityEmails:
       process.env.DISABLE_LOW_PRIORITY_EMAIL === "true" ? true : false,

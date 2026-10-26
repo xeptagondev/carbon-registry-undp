@@ -235,9 +235,15 @@ Can add more options by implementing [email interface](./backend/services/libs/s
 Change by environment variable `EMAIL_SERVICE`. Supported types `GRAPH`, `SMTP(Default)`.
 An unrecognised value stops the service at boot rather than falling back.
 
-`SMTP` requires `SMTP_ENDPOINT`, `SMTP_USERNAME` and `SMTP_PASSWORD`. These are only
+`SMTP` requires `EMAIL_SERVICE_SMTP_ENDPOINT`, `EMAIL_SERVICE_SMTP_USERNAME` and `EMAIL_SERVICE_SMTP_PASSWORD`. These are only
 mandatory while `EMAIL_SERVICE=SMTP`, so a Graph deployment does not have to invent values
 for them.
+
+**Upgrading:** these three were previously named `SMTP_ENDPOINT`, `SMTP_USERNAME` and
+`SMTP_PASSWORD`. The old names are still read as a fallback, so an existing deployment keeps
+working untouched; the prefixed name wins where both are set. The unprefixed spellings are
+deprecated and worth migrating, but nothing breaks if you don't. When neither is set the
+startup error names both spellings.
 
 `GRAPH` sends app-only (client credentials) through `/v1.0/users/{SOURCE_EMAIL}/sendMail`
 and requires:
@@ -281,7 +287,7 @@ Two behaviours worth knowing:
 
 `EMAIL_SERVICE` must be set the same in **every** service's env file. `configuration.ts` is
 evaluated in each container, so leaving the national API on `SMTP` keeps it demanding
-`SMTP_ENDPOINT` and `SMTP_USERNAME` even once mail is going out over Graph. Note also that
+`EMAIL_SERVICE_SMTP_ENDPOINT` and `EMAIL_SERVICE_SMTP_USERNAME` even once mail is going out over Graph. Note also that
 email is sent by the container running `async-operations-handler`, which in
 `docker-compose.yml` is the `replicator` service, not `national`.
 
@@ -432,9 +438,9 @@ For contribution and licensing terms, see [Standards and License](#standards) an
   - Add / update following environment variables to enable email functionality.
     - `IS_EMAIL_DISABLED`=false
     - `SOURCE_EMAIL` (Sender email address)
-    - `SMTP_ENDPOINT`
-    - `SMTP_USERNAME`
-    - `SMTP_PASSWORD`
+    - `EMAIL_SERVICE_SMTP_ENDPOINT`
+    - `EMAIL_SERVICE_SMTP_USERNAME`
+    - `EMAIL_SERVICE_SMTP_PASSWORD`
   - To send through Microsoft Graph instead of SMTP, set `EMAIL_SERVICE`=GRAPH and supply
     `EMAIL_SERVICE_GRAPH_TENANT_ID`, `EMAIL_SERVICE_GRAPH_CLIENT_ID`, `EMAIL_SERVICE_GRAPH_CLIENT_SECRET` and a real `SOURCE_EMAIL`
     mailbox. See the **Email Service** section above for the tenant-side setup.

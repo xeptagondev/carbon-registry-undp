@@ -26,10 +26,14 @@ import { SmtpEmailService } from "./providers/smtp/smtp.email.service";
           case EmailServiceType.GRAPH:
             return new GraphEmailService(logger, configService, fileHandler);
           default:
-            // An unrecognised value must not fall through to SMTP. A typo in a
-            // deployment env would otherwise either send over credentials the
-            // operator believed they had replaced, or fail at boot with a
-            // missing SMTP_ENDPOINT that reads as an unrelated problem.
+            // Email off: nothing is sent whatever this says, and a throw here
+            // aborts bootstrap for every RUN_MODULE, since EmailModule arrives
+            // via SharedModule. SmtpEmailService no-ops on the same flag.
+            if (configService.get<boolean>("email.disabled")) {
+              return new SmtpEmailService(logger, configService, fileHandler);
+            }
+            // Email on: never fall through to SMTP, or a typo sends over
+            // credentials the operator believed they had replaced.
             throw new Error(
               `Unsupported EMAIL_SERVICE "${emailService}". Expected one of: ${Object.values(
                 EmailServiceType

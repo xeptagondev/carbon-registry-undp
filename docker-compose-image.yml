@@ -117,9 +117,9 @@ services:
       # ,data-importer
       RUN_MODULE: replicator,async-operations-handler,cadtrust-operations-handler
       LOCATION_SERVICE: OPENSTREET
-      SMTP_ENDPOINT: email-smtp.us-east-1.amazonaws.com
-      SMTP_USERNAME: ***REMOVED***
-      SMTP_PASSWORD: ""
+      EMAIL_SERVICE_SMTP_ENDPOINT: email-smtp.us-east-1.amazonaws.com
+      EMAIL_SERVICE_SMTP_USERNAME: ***REMOVED***
+      EMAIL_SERVICE_SMTP_PASSWORD: ""
       IS_EMAIL_DISABLED: "true"
       DISABLE_LOW_PRIORITY_EMAIL: "true"
       EMAILPREFIX: ""
