@@ -75,19 +75,19 @@ export default () => ({
     // error names the backend that needs them, the way AzureFileHandlerService
     // does for its own settings.
     graph: {
-      appName: process.env.GRAPH_APP_NAME || "",
-      tenantId: process.env.GRAPH_TENANT_ID,
-      clientId: process.env.GRAPH_CLIENT_ID,
-      clientSecret: process.env.GRAPH_CLIENT_SECRET,
+      appName: process.env.EMAIL_SERVICE_GRAPH_APP_NAME || "",
+      tenantId: process.env.EMAIL_SERVICE_GRAPH_TENANT_ID,
+      clientId: process.env.EMAIL_SERVICE_GRAPH_CLIENT_ID,
+      clientSecret: process.env.EMAIL_SERVICE_GRAPH_CLIENT_SECRET,
       loginHost:
-        process.env.GRAPH_LOGIN_HOST || "https://login.microsoftonline.com",
-      apiHost: process.env.GRAPH_API_HOST || "https://graph.microsoft.com",
-      saveToSentItems: process.env.GRAPH_SAVE_TO_SENT_ITEMS === "true",
+        process.env.EMAIL_SERVICE_GRAPH_LOGIN_HOST || "https://login.microsoftonline.com",
+      apiHost: process.env.EMAIL_SERVICE_GRAPH_API_HOST || "https://graph.microsoft.com",
+      saveToSentItems: process.env.EMAIL_SERVICE_GRAPH_SAVE_TO_SENT_ITEMS === "true",
       maxAttachmentBytes:
-        parseInt(process.env.GRAPH_MAX_ATTACHMENT_BYTES) || 2500000,
+        parseInt(process.env.EMAIL_SERVICE_GRAPH_MAX_ATTACHMENT_BYTES) || 2500000,
       attachmentFailureMode:
-        process.env.GRAPH_ATTACHMENT_FAILURE_MODE || "skip",
-      requestTimeoutMs: parseInt(process.env.GRAPH_REQUEST_TIMEOUT_MS) || 20000,
+        process.env.EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE || "skip",
+      requestTimeoutMs: parseInt(process.env.EMAIL_SERVICE_GRAPH_REQUEST_TIMEOUT_MS) || 20000,
     },
   },
   s3CommonBucket: {

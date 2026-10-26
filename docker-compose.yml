@@ -87,8 +87,8 @@ services:
   #     SMTP_ENDPOINT: email-smtp.us-east-1.amazonaws.com
   #     SMTP_PASSWORD: "<ANY PASSOWORD>"
   #     EMAIL_SERVICE: SMTP
-  #     # For Microsoft Graph instead: EMAIL_SERVICE: GRAPH plus GRAPH_TENANT_ID,
-  #     # GRAPH_CLIENT_ID, GRAPH_CLIENT_SECRET and a real SOURCE_EMAIL mailbox.
+  #     # For Microsoft Graph instead: EMAIL_SERVICE: GRAPH plus EMAIL_SERVICE_GRAPH_TENANT_ID,
+  #     # EMAIL_SERVICE_GRAPH_CLIENT_ID, EMAIL_SERVICE_GRAPH_CLIENT_SECRET and a real SOURCE_EMAIL mailbox.
   #     ASYNC_OPERATIONS_TYPE: Database
   web:
     build:

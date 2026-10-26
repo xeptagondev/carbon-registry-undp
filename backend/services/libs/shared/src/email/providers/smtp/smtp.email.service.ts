@@ -1,8 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { FileHandlerInterface } from "../file-handler/filehandler.interface";
-import { BaseEmailService } from "./base.email.service";
-import { NormalisedEmail } from "./email.interface";
+import { FileHandlerInterface } from "../../../file-handler/filehandler.interface";
+import { BaseEmailService } from "../../base.email.service";
+import { NormalisedEmail } from "../../email.interface";
 import nodemailer = require("nodemailer");
 
 @Injectable()

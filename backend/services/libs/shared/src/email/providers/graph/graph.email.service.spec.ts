@@ -101,7 +101,7 @@ describe("GraphEmailService", () => {
       "refuses to start without %s",
       (key) => {
         expect(() => build({ graph: { [key]: undefined } })).toThrow(
-          /EMAIL_SERVICE=GRAPH requires GRAPH_/
+          /EMAIL_SERVICE=GRAPH requires EMAIL_SERVICE_GRAPH_/
         );
       }
     );
@@ -112,14 +112,14 @@ describe("GraphEmailService", () => {
 
     it("refuses a tenant id that could reshape the authority URL", () => {
       expect(() => build({ graph: { tenantId: "tenant/../other" } })).toThrow(
-        /GRAPH_TENANT_ID/
+        /EMAIL_SERVICE_GRAPH_TENANT_ID/
       );
     });
 
     it("refuses an unknown attachment failure mode", () => {
       expect(() =>
         build({ graph: { attachmentFailureMode: "explode" } })
-      ).toThrow(/GRAPH_ATTACHMENT_FAILURE_MODE/);
+      ).toThrow(/EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE/);
     });
 
     it("builds the MSAL client against the tenant and logs the app name", () => {

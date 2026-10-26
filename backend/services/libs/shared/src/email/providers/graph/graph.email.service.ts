@@ -2,12 +2,12 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios from "axios";
 import * as path from "path";
-import { contentTypeForPath } from "../file-handler/content-types";
-import { FileHandlerInterface } from "../file-handler/filehandler.interface";
-import { isStorageKey } from "../file-handler/storage-key";
-import { StorageType } from "../enum/storage.type";
-import { BaseEmailService } from "./base.email.service";
-import { NormalisedEmail, ResolvedAttachment } from "./email.interface";
+import { contentTypeForPath } from "../../../file-handler/content-types";
+import { FileHandlerInterface } from "../../../file-handler/filehandler.interface";
+import { isStorageKey } from "../../../file-handler/storage-key";
+import { StorageType } from "../../../enum/storage.type";
+import { BaseEmailService } from "../../base.email.service";
+import { NormalisedEmail, ResolvedAttachment } from "../../email.interface";
 import { GraphTokenProvider } from "./graph.token";
 const fs = require("fs").promises;
 
@@ -48,9 +48,9 @@ export class GraphEmailService extends BaseEmailService {
     // EMAIL_SERVICE should stop the container starting, not surface hours later
     // as a stalled async cursor with every notification stuck behind it.
     const requiredSettings: Array<[string, any]> = [
-      ["GRAPH_TENANT_ID", graph.tenantId],
-      ["GRAPH_CLIENT_ID", graph.clientId],
-      ["GRAPH_CLIENT_SECRET", graph.clientSecret],
+      ["EMAIL_SERVICE_GRAPH_TENANT_ID", graph.tenantId],
+      ["EMAIL_SERVICE_GRAPH_CLIENT_ID", graph.clientId],
+      ["EMAIL_SERVICE_GRAPH_CLIENT_SECRET", graph.clientSecret],
     ];
     for (const [name, value] of requiredSettings) {
       if (!value) {
@@ -73,14 +73,14 @@ export class GraphEmailService extends BaseEmailService {
     // reshape it before MSAL's own validation sees it.
     if (/[\s/\\]/.test(graph.tenantId)) {
       throw new Error(
-        "GRAPH_TENANT_ID must be a tenant GUID or verified domain, with no " +
+        "EMAIL_SERVICE_GRAPH_TENANT_ID must be a tenant GUID or verified domain, with no " +
           "slashes or whitespace."
       );
     }
 
     if (!["skip", "fail"].includes(this.attachmentFailureMode)) {
       throw new Error(
-        `Unsupported GRAPH_ATTACHMENT_FAILURE_MODE "${this.attachmentFailureMode}". ` +
+        `Unsupported EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE "${this.attachmentFailureMode}". ` +
           "Expected one of: skip, fail."
       );
     }

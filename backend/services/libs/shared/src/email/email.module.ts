@@ -4,8 +4,8 @@ import { EmailServiceType } from "../enum/email.service.type";
 import { FileHandlerModule } from "../file-handler/filehandler.module";
 import { FileHandlerInterface } from "../file-handler/filehandler.interface";
 import { EmailHandlerInterface } from "./email.interface";
-import { GraphEmailService } from "./graph.email.service";
-import { SmtpEmailService } from "./smtp.email.service";
+import { GraphEmailService } from "./providers/graph/graph.email.service";
+import { SmtpEmailService } from "./providers/smtp/smtp.email.service";
 
 @Module({
   imports: [FileHandlerModule],

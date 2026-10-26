@@ -244,11 +244,11 @@ and requires:
 
 | Variable | Notes |
 |---|---|
-| `GRAPH_TENANT_ID` | Directory (tenant) ID of the Microsoft 365 tenant |
-| `GRAPH_CLIENT_ID` | Application (client) ID of the app registration |
-| `GRAPH_CLIENT_SECRET` | Client secret; supplied from SSM on Lambda deployments |
+| `EMAIL_SERVICE_GRAPH_TENANT_ID` | Directory (tenant) ID of the Microsoft 365 tenant |
+| `EMAIL_SERVICE_GRAPH_CLIENT_ID` | Application (client) ID of the app registration |
+| `EMAIL_SERVICE_GRAPH_CLIENT_SECRET` | Client secret; supplied from SSM on Lambda deployments |
 | `SOURCE_EMAIL` | The sending mailbox — see below |
-| `GRAPH_APP_NAME` | Optional. Sender display name and a label on Graph log lines |
+| `EMAIL_SERVICE_GRAPH_APP_NAME` | Optional. Sender display name and a label on Graph log lines |
 
 Tenant-side setup, all of which an administrator has to do once:
 
@@ -263,9 +263,9 @@ Tenant-side setup, all of which an administrator has to do once:
    restricting it to that one mailbox. Without one, `Mail.Send` lets the app send as **any**
    mailbox in the tenant.
 
-Optional settings, shown with their defaults: `GRAPH_SAVE_TO_SENT_ITEMS=false`,
-`GRAPH_MAX_ATTACHMENT_BYTES=2500000`, `GRAPH_ATTACHMENT_FAILURE_MODE=skip` (`skip` | `fail`),
-`GRAPH_REQUEST_TIMEOUT_MS=20000`, and `GRAPH_LOGIN_HOST` / `GRAPH_API_HOST` for sovereign
+Optional settings, shown with their defaults: `EMAIL_SERVICE_GRAPH_SAVE_TO_SENT_ITEMS=false`,
+`EMAIL_SERVICE_GRAPH_MAX_ATTACHMENT_BYTES=2500000`, `EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE=skip` (`skip` | `fail`),
+`EMAIL_SERVICE_GRAPH_REQUEST_TIMEOUT_MS=20000`, and `EMAIL_SERVICE_GRAPH_LOGIN_HOST` / `EMAIL_SERVICE_GRAPH_API_HOST` for sovereign
 clouds.
 
 Two behaviours worth knowing:
@@ -274,7 +274,7 @@ Two behaviours worth knowing:
   `sendMail` caps near 4MB. An attachment that is too large, or that cannot be read, is
   dropped and the email is sent without it, with a note in the body and an error in the log.
   That is deliberate: a throw would stop the async operations handler advancing its cursor and
-  hold up every email queued behind it. Set `GRAPH_ATTACHMENT_FAILURE_MODE=fail` to make such
+  hold up every email queued behind it. Set `EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE=fail` to make such
   a case an error instead.
 - **`202 Accepted` is not proof of delivery.** It means Microsoft accepted the message; a bad
   recipient comes back later as a bounce to the sending mailbox, not as an error in the log.
@@ -436,7 +436,7 @@ For contribution and licensing terms, see [Standards and License](#standards) an
     - `SMTP_USERNAME`
     - `SMTP_PASSWORD`
   - To send through Microsoft Graph instead of SMTP, set `EMAIL_SERVICE`=GRAPH and supply
-    `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET` and a real `SOURCE_EMAIL`
+    `EMAIL_SERVICE_GRAPH_TENANT_ID`, `EMAIL_SERVICE_GRAPH_CLIENT_ID`, `EMAIL_SERVICE_GRAPH_CLIENT_SECRET` and a real `SOURCE_EMAIL`
     mailbox. See the **Email Service** section above for the tenant-side setup.
     Set `EMAIL_SERVICE` in both `.env.national` and `.env.replicator`.
   - Use `DB_PASSWORD` env variable to change PostgresSQL database password
