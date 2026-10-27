@@ -1,12 +1,32 @@
-function required(name: string): string {
-  const value = process.env[name];
+/**
+ * `legacy` names a superseded spelling to accept as a fallback: the prefixed
+ * name wins, and an unset or empty value falls through to the old one. The
+ * SMTP_* variables predate the EMAIL_SERVICE_* namespacing and are set in every
+ * existing deployment, so renaming them outright would break each one on
+ * upgrade. The error names both spellings, or someone with a working legacy
+ * value would be told to set a variable they have never heard of.
+ */
+function required(name: string, legacy?: string): string {
+  const value = process.env[name] || (legacy ? process.env[legacy] : undefined);
   if (!value) {
     throw new Error(
-      `Missing required environment variable: ${name}. Set it in your .env file (see .env.example).`
+      `Missing required environment variable: ${name}` +
+        (legacy ? ` (legacy ${legacy} is also unset)` : "") +
+        `. Set it in your .env file (see .env.example).`
     );
   }
   return value;
 }
+
+// EMAIL_SERVICE decides which email backend is built, and therefore which
+// credentials are mandatory: a GRAPH deployment has no SMTP values to give, and
+// vice versa. Both are gated on email being enabled too - with IS_EMAIL_DISABLED
+// nothing is sent, so demanding credentials would stop every service starting
+// over values that cannot be used.
+const emailService = process.env.EMAIL_SERVICE || "SMTP";
+const emailEnabled = process.env.IS_EMAIL_DISABLED !== "true";
+const isSmtp = emailEnabled && emailService === "SMTP";
+const isGraph = emailEnabled && emailService === "GRAPH";
 
 export default () => ({
   stage: process.env.STAGE || "local",
@@ -53,16 +73,48 @@ export default () => ({
     creditBlocksTable: "credit_blocks",
   },
   email: {
+    service: emailService,
     source: process.env.SOURCE_EMAIL || "noreply@example.com",
-    endpoint: required("SMTP_ENDPOINT"),
-    username: required("SMTP_USERNAME"),
-    password: process.env.SMTP_PASSWORD,
+    endpoint: isSmtp
+      ? required("EMAIL_SERVICE_SMTP_ENDPOINT", "SMTP_ENDPOINT")
+      : process.env.EMAIL_SERVICE_SMTP_ENDPOINT || process.env.SMTP_ENDPOINT,
+    username: isSmtp
+      ? required("EMAIL_SERVICE_SMTP_USERNAME", "SMTP_USERNAME")
+      : process.env.EMAIL_SERVICE_SMTP_USERNAME || process.env.SMTP_USERNAME,
+    password:
+      process.env.EMAIL_SERVICE_SMTP_PASSWORD || process.env.SMTP_PASSWORD,
     disabled: process.env.IS_EMAIL_DISABLED === "true" ? true : false,
     disableLowPriorityEmails:
       process.env.DISABLE_LOW_PRIORITY_EMAIL === "true" ? true : false,
     getemailprefix: process.env.EMAILPREFIX || "🏬📐 🇦🇶",
     adresss: process.env.HOST_ADDRESS || "Address <br>Region, Country Zipcode",
     configSet: process.env.EMAIL_CONFIG_SET || "",
+    // Microsoft Graph backend (EMAIL_SERVICE=GRAPH). The three credentials are
+    // mandatory while Graph is the active backend, mirroring the SMTP pair
+    // above. GraphEmailService still checks the shape of what arrives - a
+    // SOURCE_EMAIL that is a real address, a tenant id that cannot reshape the
+    // authority URL - which presence alone does not cover.
+    graph: {
+      appName: process.env.EMAIL_SERVICE_GRAPH_APP_NAME || "",
+      tenantId: isGraph
+        ? required("EMAIL_SERVICE_GRAPH_TENANT_ID", "GRAPH_TENANT_ID")
+        : process.env.EMAIL_SERVICE_GRAPH_TENANT_ID,
+      clientId: isGraph
+        ? required("EMAIL_SERVICE_GRAPH_CLIENT_ID", "GRAPH_CLIENT_ID")
+        : process.env.EMAIL_SERVICE_GRAPH_CLIENT_ID,
+      clientSecret: isGraph
+        ? required("EMAIL_SERVICE_GRAPH_CLIENT_SECRET", "GRAPH_CLIENT_SECRET")
+        : process.env.EMAIL_SERVICE_GRAPH_CLIENT_SECRET,
+      loginHost:
+        process.env.EMAIL_SERVICE_GRAPH_LOGIN_HOST || "https://login.microsoftonline.com",
+      apiHost: process.env.EMAIL_SERVICE_GRAPH_API_HOST || "https://graph.microsoft.com",
+      saveToSentItems: process.env.EMAIL_SERVICE_GRAPH_SAVE_TO_SENT_ITEMS === "true",
+      maxAttachmentBytes:
+        parseInt(process.env.EMAIL_SERVICE_GRAPH_MAX_ATTACHMENT_BYTES) || 2500000,
+      attachmentFailureMode:
+        process.env.EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE || "skip",
+      requestTimeoutMs: parseInt(process.env.EMAIL_SERVICE_GRAPH_REQUEST_TIMEOUT_MS) || 20000,
+    },
   },
   s3CommonBucket: {
     name: process.env.S3_COMMON_BUCKET || "carbon-common-dev",

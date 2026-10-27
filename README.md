@@ -223,6 +223,74 @@ allowing `GET,HEAD,OPTIONS` from the frontend origin. The web app downloads docu
 fetching the file and re-serving it as a blob URL, which a cross-origin request without CORS
 will block — and `HEAD` matters as much as `GET`, because `file-saver` probes with it first.
 
+**Email Service**
+
+Implemented 2 options for sending email.
+
+1. SMTP, via nodemailer — aimed at AWS SES, and the default.
+2. Microsoft Graph, for tenants where SMTP AUTH is disabled.
+
+Can add more options by implementing [email interface](./backend/services/libs/shared/src/email/email.interface.ts)
+
+Change by environment variable `EMAIL_SERVICE`. Supported types `GRAPH`, `SMTP(Default)`.
+An unrecognised value stops the service at boot rather than falling back.
+
+`SMTP` requires `EMAIL_SERVICE_SMTP_ENDPOINT`, `EMAIL_SERVICE_SMTP_USERNAME` and `EMAIL_SERVICE_SMTP_PASSWORD`. These are only
+mandatory while `EMAIL_SERVICE=SMTP`, so a Graph deployment does not have to invent values
+for them.
+
+**Upgrading:** these three were previously named `SMTP_ENDPOINT`, `SMTP_USERNAME` and
+`SMTP_PASSWORD`. The old names are still read as a fallback, so an existing deployment keeps
+working untouched; the prefixed name wins where both are set. The unprefixed spellings are
+deprecated and worth migrating, but nothing breaks if you don't. When neither is set the
+startup error names both spellings.
+
+`GRAPH` sends app-only (client credentials) through `/v1.0/users/{SOURCE_EMAIL}/sendMail`
+and requires:
+
+| Variable | Notes |
+|---|---|
+| `EMAIL_SERVICE_GRAPH_TENANT_ID` | Directory (tenant) ID of the Microsoft 365 tenant |
+| `EMAIL_SERVICE_GRAPH_CLIENT_ID` | Application (client) ID of the app registration |
+| `EMAIL_SERVICE_GRAPH_CLIENT_SECRET` | Client secret; supplied from SSM on Lambda deployments |
+| `SOURCE_EMAIL` | The sending mailbox — see below |
+| `EMAIL_SERVICE_GRAPH_APP_NAME` | Optional. Sender display name and a label on Graph log lines |
+
+Tenant-side setup, all of which an administrator has to do once:
+
+1. Register an application in Entra ID (Azure AD) and create a client secret.
+2. Grant it the **application** permission `Mail.Send` — not the delegated one — and click
+   **Grant admin consent**. Without consent a token is still issued and every send returns 403.
+3. Make sure `SOURCE_EMAIL` is a real licensed or shared mailbox in that tenant. Under SMTP
+   this value is only a `From` header, but Graph uses it as the mailbox in the request path,
+   so a placeholder returns an opaque `ResourceNotFound`.
+4. Recommended: scope the credential with an
+   [ApplicationAccessPolicy](https://learn.microsoft.com/en-us/graph/auth-limit-mailbox-access)
+   restricting it to that one mailbox. Without one, `Mail.Send` lets the app send as **any**
+   mailbox in the tenant.
+
+Optional settings, shown with their defaults: `EMAIL_SERVICE_GRAPH_SAVE_TO_SENT_ITEMS=false`,
+`EMAIL_SERVICE_GRAPH_MAX_ATTACHMENT_BYTES=2500000`, `EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE=skip` (`skip` | `fail`),
+`EMAIL_SERVICE_GRAPH_REQUEST_TIMEOUT_MS=20000`, and `EMAIL_SERVICE_GRAPH_LOGIN_HOST` / `EMAIL_SERVICE_GRAPH_API_HOST` for sovereign
+clouds.
+
+Two behaviours worth knowing:
+
+- **Attachments are inlined.** Graph carries attachment bytes inside the request, which simple
+  `sendMail` caps near 4MB. An attachment that is too large, or that cannot be read, is
+  dropped and the email is sent without it, with a note in the body and an error in the log.
+  That is deliberate: a throw would stop the async operations handler advancing its cursor and
+  hold up every email queued behind it. Set `EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE=fail` to make such
+  a case an error instead.
+- **`202 Accepted` is not proof of delivery.** It means Microsoft accepted the message; a bad
+  recipient comes back later as a bounce to the sending mailbox, not as an error in the log.
+
+`EMAIL_SERVICE` must be set the same in **every** service's env file. `configuration.ts` is
+evaluated in each container, so leaving the national API on `SMTP` keeps it demanding
+`EMAIL_SERVICE_SMTP_ENDPOINT` and `EMAIL_SERVICE_SMTP_USERNAME` even once mail is going out over Graph. Note also that
+email is sent by the container running `async-operations-handler`, which in
+`docker-compose.yml` is the `replicator` service, not `national`.
+
 ### **Database Architecture**
 
 Primary/secondary database architecture used to store carbon project and account balances.
@@ -345,7 +413,7 @@ The main customization touchpoints in the repository are organized as follows:
 | **Backend enumerations and constants** | `backend/services/libs/shared/src/enum/`, `backend/services/libs/shared/src/constants/` — server-side vocabularies and constants. |
 | **DTOs and validation** | `backend/services/libs/shared/src/dto/` — request/response shapes and validation rules that affect API contracts and form behaviour. |
 | **Reference data** | `backend/services/countries.json`, `backend/services/regions.csv` (or equivalent path) — countries and geographic regions used by setup and location services. |
-| **Service selection** | Environment variables (e.g. `RUN_MODULE`, `LEDGER_TYPE`, `LOCATION_SERVICE`, `FILE_SERVICE`) — which modules and implementations are active. |
+| **Service selection** | Environment variables (e.g. `RUN_MODULE`, `LEDGER_TYPE`, `LOCATION_SERVICE`, `FILE_SERVICE`, `EMAIL_SERVICE`) — which modules and implementations are active. |
 | **Deployment and infrastructure** | `docker-compose.yml`, `deployment/`, `backend/services/serverless.yml` — service composition and cloud/deployment configuration. |
 | **Localization** | `web/public/locales/` — translation files per language and namespace. |
 
@@ -356,7 +424,7 @@ Schema definitions, entity and view definitions, and ledger interfaces live unde
 Developers customizing or extending the registry can use the following approach:
 
 - **Creating a configuration package for a country or deployment:** Gather all deployment-specific settings in one place: copy or extend the relevant config files (e.g. from `web/src/Config/`), enumerations (frontend and backend), reference data (countries, regions), and environment variables. Optionally use a dedicated folder or branch for “country X config” that overrides only these files, leaving the rest of the codebase unchanged. Document the chosen country code, default language, and any feature flags or disabled modules.
-- **Registering new modules or overriding defaults:** To add a new optional module (e.g. a new data importer or analytics provider), implement the appropriate interface (e.g. importer, replicator, location, file-handler) in the backend, register it in the relevant module (e.g. replicator or data-importer), and enable it via `RUN_MODULE` or equivalent environment configuration. To override default behaviour, provide a new implementation of the same interface and select it via the corresponding environment variable (e.g. `LOCATION_SERVICE`, `FILE_SERVICE`).
+- **Registering new modules or overriding defaults:** To add a new optional module (e.g. a new data importer or analytics provider), implement the appropriate interface (e.g. importer, replicator, location, file-handler, email) in the backend, register it in the relevant module (e.g. replicator or data-importer), and enable it via `RUN_MODULE` or equivalent environment configuration. To override default behaviour, provide a new implementation of the same interface and select it via the corresponding environment variable (e.g. `LOCATION_SERVICE`, `FILE_SERVICE`, `EMAIL_SERVICE`).
 - **Contributing new customization capabilities:** When adding a new customization point (e.g. a new config file, enum set, or feature flag), keep it in the locations indicated above (Config, Enums, constants, reference data, or deployment config). Prefer configuration and interfaces over hard-coded branches; document the new option in the README or in a dedicated docs file, and update this section if it introduces a new category of customization.
 
 For contribution and licensing terms, see [Standards and License](#standards) and [Governance and Support](#support).
@@ -370,9 +438,13 @@ For contribution and licensing terms, see [Standards and License](#standards) an
   - Add / update following environment variables to enable email functionality.
     - `IS_EMAIL_DISABLED`=false
     - `SOURCE_EMAIL` (Sender email address)
-    - `SMTP_ENDPOINT`
-    - `SMTP_USERNAME`
-    - `SMTP_PASSWORD`
+    - `EMAIL_SERVICE_SMTP_ENDPOINT`
+    - `EMAIL_SERVICE_SMTP_USERNAME`
+    - `EMAIL_SERVICE_SMTP_PASSWORD`
+  - To send through Microsoft Graph instead of SMTP, set `EMAIL_SERVICE`=GRAPH and supply
+    `EMAIL_SERVICE_GRAPH_TENANT_ID`, `EMAIL_SERVICE_GRAPH_CLIENT_ID`, `EMAIL_SERVICE_GRAPH_CLIENT_SECRET` and a real `SOURCE_EMAIL`
+    mailbox. See the **Email Service** section above for the tenant-side setup.
+    Set `EMAIL_SERVICE` in both `.env.national` and `.env.replicator`.
   - Use `DB_PASSWORD` env variable to change PostgresSQL database password
   - Configure system root account email by updating environment variable `ROOT EMAIL`. If the email service is enabled, on the first docker start, this email address will receive a new email with the root user password.
   - By default frontend does not show map images on dashboard and project view. To enable them please update `REACT_APP_MAP_TYPE` env variable to `Mapbox` and add new env variable `REACT_APP_MAPBOXGL_ACCESS_TOKEN` with [MapBox public access token](https://docs.mapbox.com/help/tutorials/get-started-tokens-api/) in web container.

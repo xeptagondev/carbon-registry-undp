@@ -52,7 +52,8 @@ functions:
       - DB_PASSWORD
       - USER_JWT_SECRET
       - ADMIN_JWT_SECRET
-      - SMTP_PASSWORD
+      - EMAIL_SERVICE_SMTP_PASSWORD
+      - EMAIL_SERVICE_GRAPH_CLIENT_SECRET
     environment:
       NODE_PATH: "./:/opt/node_modules"
     layers:
@@ -73,7 +74,8 @@ functions:
       - DB_PASSWORD
       - USER_JWT_SECRET
       - ADMIN_JWT_SECRET
-      - SMTP_PASSWORD
+      - EMAIL_SERVICE_SMTP_PASSWORD
+      - EMAIL_SERVICE_GRAPH_CLIENT_SECRET
     environment:
       NODE_PATH: "./:/opt/node_modules"
     layers:
@@ -142,7 +144,8 @@ functions:
           arn: arn:aws:sqs:us-east-1:302213478610:AsyncQueue${self:provider.stage}.fifo
           batchSize: 10
     ssmToEnvironment:
-      - SMTP_PASSWORD
+      - EMAIL_SERVICE_SMTP_PASSWORD
+      - EMAIL_SERVICE_GRAPH_CLIENT_SECRET
       - DB_PASSWORD
       - MRV_API_TOKEN
     environment:
@@ -156,7 +159,8 @@ functions:
     handler: src/setup/handler.handler
     ssmToEnvironment:
       - DB_PASSWORD
-      - SMTP_PASSWORD
+      - EMAIL_SERVICE_SMTP_PASSWORD
+      - EMAIL_SERVICE_GRAPH_CLIENT_SECRET
     environment:
       NODE_PATH: "./:/opt/node_modules"
     layers:
@@ -181,7 +185,8 @@ custom:
     DB_PASSWORD: /${self:provider.stage}/DB_PASSWORD~true
     USER_JWT_SECRET: /${self:provider.stage}/USER_JWT_SECRET~true
     ADMIN_JWT_SECRET: /${self:provider.stage}/ADMIN_JWT_SECRET~true
-    SMTP_PASSWORD: /${self:provider.stage}/SES_PASSWORD~true
+    EMAIL_SERVICE_SMTP_PASSWORD: /${self:provider.stage}/SES_PASSWORD~true
+    EMAIL_SERVICE_GRAPH_CLIENT_SECRET: /${self:provider.stage}/EMAIL_SERVICE_GRAPH_CLIENT_SECRET~true
     MAPBOX_PK: /${self:provider.stage}/MAPBOX_PK~true
     ITMO_API_KEY: /${self:provider.stage}/ITMO_API_KEY~true
     ITMO_EMAIL: /${self:provider.stage}/ITMO_EMAIL~true
