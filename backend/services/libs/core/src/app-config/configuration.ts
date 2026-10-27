@@ -1,39 +1,32 @@
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(
-      `Missing required environment variable: ${name}. Set it in your .env file (see .env.example).`
-    );
-  }
-  return value;
-}
-
 /**
- * Reads the EMAIL_SERVICE_*-namespaced name, falling back to the legacy
- * unprefixed one. SMTP_ENDPOINT/USERNAME/PASSWORD predate the namespacing and
- * are set in every existing deployment, so renaming them outright would break
- * each one on upgrade. Both spellings work; the prefixed one wins.
+ * `legacy` names a superseded spelling to accept as a fallback: the prefixed
+ * name wins, and an unset or empty value falls through to the old one. The
+ * SMTP_* variables predate the EMAIL_SERVICE_* namespacing and are set in every
+ * existing deployment, so renaming them outright would break each one on
+ * upgrade. The error names both spellings, or someone with a working legacy
+ * value would be told to set a variable they have never heard of.
  */
-function emailVar(name: string, legacy: string): string {
-  return process.env[name] || process.env[legacy];
-}
-
-function requiredEmailVar(name: string, legacy: string): string {
-  const value = emailVar(name, legacy);
+function required(name: string, legacy?: string): string {
+  const value = process.env[name] || (legacy ? process.env[legacy] : undefined);
   if (!value) {
     throw new Error(
-      `Missing required environment variable: ${name} (legacy ${legacy} is also unset). ` +
-        `Set it in your .env file (see .env.example).`
+      `Missing required environment variable: ${name}` +
+        (legacy ? ` (legacy ${legacy} is also unset)` : "") +
+        `. Set it in your .env file (see .env.example).`
     );
   }
   return value;
 }
 
 // EMAIL_SERVICE decides which email backend is built, and therefore which
-// credentials are mandatory. The SMTP pair below is only required when SMTP is
-// the active backend - a GRAPH deployment has no SMTP values to give.
+// credentials are mandatory: a GRAPH deployment has no SMTP values to give, and
+// vice versa. Both are gated on email being enabled too - with IS_EMAIL_DISABLED
+// nothing is sent, so demanding credentials would stop every service starting
+// over values that cannot be used.
 const emailService = process.env.EMAIL_SERVICE || "SMTP";
-const isSmtp = emailService === "SMTP";
+const emailEnabled = process.env.IS_EMAIL_DISABLED !== "true";
+const isSmtp = emailEnabled && emailService === "SMTP";
+const isGraph = emailEnabled && emailService === "GRAPH";
 
 export default () => ({
   stage: process.env.STAGE || "local",
@@ -83,27 +76,35 @@ export default () => ({
     service: emailService,
     source: process.env.SOURCE_EMAIL || "noreply@example.com",
     endpoint: isSmtp
-      ? requiredEmailVar("EMAIL_SERVICE_SMTP_ENDPOINT", "SMTP_ENDPOINT")
-      : emailVar("EMAIL_SERVICE_SMTP_ENDPOINT", "SMTP_ENDPOINT"),
+      ? required("EMAIL_SERVICE_SMTP_ENDPOINT", "SMTP_ENDPOINT")
+      : process.env.EMAIL_SERVICE_SMTP_ENDPOINT || process.env.SMTP_ENDPOINT,
     username: isSmtp
-      ? requiredEmailVar("EMAIL_SERVICE_SMTP_USERNAME", "SMTP_USERNAME")
-      : emailVar("EMAIL_SERVICE_SMTP_USERNAME", "SMTP_USERNAME"),
-    password: emailVar("EMAIL_SERVICE_SMTP_PASSWORD", "SMTP_PASSWORD"),
+      ? required("EMAIL_SERVICE_SMTP_USERNAME", "SMTP_USERNAME")
+      : process.env.EMAIL_SERVICE_SMTP_USERNAME || process.env.SMTP_USERNAME,
+    password:
+      process.env.EMAIL_SERVICE_SMTP_PASSWORD || process.env.SMTP_PASSWORD,
     disabled: process.env.IS_EMAIL_DISABLED === "true" ? true : false,
     disableLowPriorityEmails:
       process.env.DISABLE_LOW_PRIORITY_EMAIL === "true" ? true : false,
     getemailprefix: process.env.EMAILPREFIX || "🏬📐 🇦🇶",
     adresss: process.env.HOST_ADDRESS || "Address <br>Region, Country Zipcode",
     configSet: process.env.EMAIL_CONFIG_SET || "",
-    // Microsoft Graph backend (EMAIL_SERVICE=GRAPH). Deliberately not wrapped in
-    // required(): GraphEmailService validates these in its constructor so the
-    // error names the backend that needs them, the way AzureFileHandlerService
-    // does for its own settings.
+    // Microsoft Graph backend (EMAIL_SERVICE=GRAPH). The three credentials are
+    // mandatory while Graph is the active backend, mirroring the SMTP pair
+    // above. GraphEmailService still checks the shape of what arrives - a
+    // SOURCE_EMAIL that is a real address, a tenant id that cannot reshape the
+    // authority URL - which presence alone does not cover.
     graph: {
       appName: process.env.EMAIL_SERVICE_GRAPH_APP_NAME || "",
-      tenantId: process.env.EMAIL_SERVICE_GRAPH_TENANT_ID,
-      clientId: process.env.EMAIL_SERVICE_GRAPH_CLIENT_ID,
-      clientSecret: process.env.EMAIL_SERVICE_GRAPH_CLIENT_SECRET,
+      tenantId: isGraph
+        ? required("EMAIL_SERVICE_GRAPH_TENANT_ID", "GRAPH_TENANT_ID")
+        : process.env.EMAIL_SERVICE_GRAPH_TENANT_ID,
+      clientId: isGraph
+        ? required("EMAIL_SERVICE_GRAPH_CLIENT_ID", "GRAPH_CLIENT_ID")
+        : process.env.EMAIL_SERVICE_GRAPH_CLIENT_ID,
+      clientSecret: isGraph
+        ? required("EMAIL_SERVICE_GRAPH_CLIENT_SECRET", "GRAPH_CLIENT_SECRET")
+        : process.env.EMAIL_SERVICE_GRAPH_CLIENT_SECRET,
       loginHost:
         process.env.EMAIL_SERVICE_GRAPH_LOGIN_HOST || "https://login.microsoftonline.com",
       apiHost: process.env.EMAIL_SERVICE_GRAPH_API_HOST || "https://graph.microsoft.com",
