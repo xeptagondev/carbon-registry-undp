@@ -38,6 +38,7 @@ export class EmailHelperService {
     this.isEmailDisabled = this.configService.get<boolean>(
       "email.disableLowPriorityEmails"
     );
+
   }
 
   public async sendEmailToProgrammeOwnerAdmins(

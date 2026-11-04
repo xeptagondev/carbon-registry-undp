@@ -83,6 +83,7 @@ export default () => ({
       : process.env.EMAIL_SERVICE_SMTP_USERNAME || process.env.SMTP_USERNAME,
     password:
       process.env.EMAIL_SERVICE_SMTP_PASSWORD || process.env.SMTP_PASSWORD,
+
     disabled: process.env.IS_EMAIL_DISABLED === "true" ? true : false,
     disableLowPriorityEmails:
       process.env.DISABLE_LOW_PRIORITY_EMAIL === "true" ? true : false,
@@ -133,7 +134,7 @@ export default () => ({
   openstreet: {
     retrieve: process.env.OPENSTREET_QUERY === "true" || false,
   },
-  asyncQueueName: required("ASYNC_QUEUE_NAME"),
+  asyncQueueName: process.env.ASYNC_QUEUE_NAME,
   ITMOSystem: {
     endpoint: process.env.ITMO_ENDPOINT,
     apiKey: process.env.ITMO_API_KEY,
