@@ -11,7 +11,6 @@ import configuration from "@app/core/app-config/configuration";
 import { AsyncOperationType } from "@app/shared/enum/async.operation.type.enum";
 import { TypeOrmConfigService } from "@app/core/app-config/typeorm.config.service";
 import { RegistryClientModule } from "@app/shared/registry-client/registry-client.module";
-import { EmailModule } from "@app/shared/email/email.module";
 import { CadtModule } from "@app/shared/cadt/cadt.module";
 import { SharedModule } from "@app/shared";
 import { CoreModule } from "@app/core";

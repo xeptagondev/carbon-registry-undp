@@ -3,17 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { BlobServiceClient, ContainerClient } from "@azure/storage-blob";
 import { FileHandlerInterface } from "./filehandler.interface";
 import { encodeStorageKey } from "./storage-key";
-
-const CONTENT_TYPES = {
-  csv: "text/csv",
-  jpeg: "image/jpeg",
-  jpg: "image/jpeg",
-  json: "application/json",
-  pdf: "application/pdf",
-  png: "image/png",
-  txt: "text/plain",
-  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-};
+import { contentTypeForPath } from "./content-types";
 
 @Injectable()
 export class AzureFileHandlerService implements FileHandlerInterface {
@@ -68,7 +58,7 @@ export class AzureFileHandlerService implements FileHandlerInterface {
     const blob = this.container.getBlockBlobClient(path);
 
     await blob.uploadData(buffer, {
-      blobHTTPHeaders: { blobContentType: this.contentType(path) },
+      blobHTTPHeaders: { blobContentType: contentTypeForPath(path) },
     });
 
     return path;
@@ -76,10 +66,5 @@ export class AzureFileHandlerService implements FileHandlerInterface {
 
   public async getUrl(path: string): Promise<string> {
     return `${this.container.url}/${encodeStorageKey(path)}`;
-  }
-
-  private contentType(path: string): string {
-    const extension = path.split(".").pop()?.toLowerCase();
-    return CONTENT_TYPES[extension] || "application/octet-stream";
   }
 }
