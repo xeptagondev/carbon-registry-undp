@@ -88,6 +88,20 @@ export class CooperativeApproachService {
     return this.configService.get("systemCountry");
   }
 
+  // A cooperative approach is by definition between parties, so the host
+  // party on its own is not a valid set of participating parties.
+  private assertHasNonHostParty(parties: string[]): void {
+    if (!parties.some((party) => party !== this.hostParty)) {
+      throw new HttpException(
+        this.helperService.formatReqMessagesString(
+          "cooperativeApproach.requiresNonHostParty",
+          [this.hostParty]
+        ),
+        HttpStatus.BAD_REQUEST
+      );
+    }
+  }
+
   async getHostParty(): Promise<DataResponseDto> {
     return new DataResponseDto(HttpStatus.OK, {
       alpha2: this.hostParty,
@@ -124,6 +138,7 @@ export class CooperativeApproachService {
     approach.participatingParties = Array.from(
       new Set([this.hostParty, ...dto.participatingParties])
     );
+    this.assertHasNonHostParty(approach.participatingParties);
     approach.description = dto.description;
     approach.startDate = dto.startDate;
     approach.endDate = dto.endDate;
@@ -240,6 +255,7 @@ export class CooperativeApproachService {
       const nextParties = Array.from(
         new Set([this.hostParty, ...dto.participatingParties])
       );
+      this.assertHasNonHostParty(nextParties);
       const removed = approach.participatingParties.filter(
         (p) => !nextParties.includes(p)
       );
