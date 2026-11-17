@@ -77,6 +77,10 @@ const AddCooperativeApproach = () => {
         ? [...values, hostParty.alpha2]
         : values;
     form.setFieldValue("participatingParties", next);
+    // setFieldValue doesn't re-validate, and the host party we just added
+    // back changes the outcome — otherwise clearing the field leaves the
+    // "required" error showing instead of the host-party one.
+    form.validateFields(["participatingParties"]).catch(() => {});
   };
 
   const partiesTagRender = (props: {
@@ -228,6 +232,23 @@ const AddCooperativeApproach = () => {
                   {
                     required: true,
                     message: "At least one participating party is required",
+                  },
+                  {
+                    // The host party is pre-selected and locked, so a
+                    // cooperative approach needs at least one other party
+                    // to actually be cooperative.
+                    validator: (_, value: string[] | undefined) =>
+                      // An empty selection is the `required` rule's job.
+                      (value ?? []).length === 0 ||
+                      (value ?? []).some(
+                        (party) => party !== hostParty?.alpha2
+                      )
+                        ? Promise.resolve()
+                        : Promise.reject(
+                            new Error(
+                              "At least one participating party other than the host party is required"
+                            )
+                          ),
                   },
                 ]}
               >

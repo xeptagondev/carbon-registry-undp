@@ -8,5 +8,6 @@
   "authorizedEntityNotFound": "Authorized entity {} not found.",
   "countryOfIncorporationNotParticipating": "Country of incorporation {} is not a participating party of cooperative approach {}.",
   "authorizationDateInFuture": "The authorization date cannot be in the future.",
-  "participatingPartyInUse": "Participating party {} cannot be removed from cooperative approach {} — an active authorized entity is incorporated there."
+  "participatingPartyInUse": "Participating party {} cannot be removed from cooperative approach {} — an active authorized entity is incorporated there.",
+  "requiresNonHostParty": "A cooperative approach must have at least one participating party other than the host party ({})."
 }
