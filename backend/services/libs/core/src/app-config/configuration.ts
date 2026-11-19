@@ -27,6 +27,7 @@ const emailService = process.env.EMAIL_SERVICE || "SMTP";
 const emailEnabled = process.env.IS_EMAIL_DISABLED !== "true";
 const isSmtp = emailEnabled && emailService === "SMTP";
 const isGraph = emailEnabled && emailService === "GRAPH";
+const isSmtpOauth = emailEnabled && emailService === "SMTP_OAUTH";
 
 export default () => ({
   stage: process.env.STAGE || "local",
@@ -115,6 +116,37 @@ export default () => ({
       attachmentFailureMode:
         process.env.EMAIL_SERVICE_GRAPH_ATTACHMENT_FAILURE_MODE || "skip",
       requestTimeoutMs: parseInt(process.env.EMAIL_SERVICE_GRAPH_REQUEST_TIMEOUT_MS) || 20000,
+    },
+    smtpOauth: {
+      tenantId: isSmtpOauth
+        ? required(
+            "EMAIL_SERVICE_SMTP_OAUTH_TENANT_ID",
+            "EMAIL_SERVICE_GRAPH_TENANT_ID"
+          )
+        : process.env.EMAIL_SERVICE_SMTP_OAUTH_TENANT_ID ||
+          process.env.EMAIL_SERVICE_GRAPH_TENANT_ID,
+      clientId: isSmtpOauth
+        ? required(
+            "EMAIL_SERVICE_SMTP_OAUTH_CLIENT_ID",
+            "EMAIL_SERVICE_GRAPH_CLIENT_ID"
+          )
+        : process.env.EMAIL_SERVICE_SMTP_OAUTH_CLIENT_ID ||
+          process.env.EMAIL_SERVICE_GRAPH_CLIENT_ID,
+      clientSecret: isSmtpOauth
+        ? required(
+            "EMAIL_SERVICE_SMTP_OAUTH_CLIENT_SECRET",
+            "EMAIL_SERVICE_GRAPH_CLIENT_SECRET"
+          )
+        : process.env.EMAIL_SERVICE_SMTP_OAUTH_CLIENT_SECRET ||
+          process.env.EMAIL_SERVICE_GRAPH_CLIENT_SECRET,
+      loginHost:
+        process.env.EMAIL_SERVICE_SMTP_OAUTH_LOGIN_HOST ||
+        process.env.EMAIL_SERVICE_GRAPH_LOGIN_HOST ||
+        "https://login.microsoftonline.com",
+      host: process.env.EMAIL_SERVICE_SMTP_OAUTH_HOST || "smtp.office365.com",
+      port: parseInt(process.env.EMAIL_SERVICE_SMTP_OAUTH_PORT) || 587,
+      requestTimeoutMs:
+        parseInt(process.env.EMAIL_SERVICE_SMTP_OAUTH_REQUEST_TIMEOUT_MS) || 20000,
     },
   },
   s3CommonBucket: {

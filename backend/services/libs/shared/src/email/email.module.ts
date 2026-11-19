@@ -6,6 +6,7 @@ import { FileHandlerInterface } from "../file-handler/filehandler.interface";
 import { EmailHandlerInterface } from "./email.interface";
 import { GraphEmailService } from "./providers/graph/graph.email.service";
 import { SmtpEmailService } from "./providers/smtp/smtp.email.service";
+import { SmtpOauthEmailService } from "./providers/smtp-oauth/smtp-oauth.email.service";
 
 @Module({
   imports: [FileHandlerModule],
@@ -25,6 +26,8 @@ import { SmtpEmailService } from "./providers/smtp/smtp.email.service";
             return new SmtpEmailService(logger, configService, fileHandler);
           case EmailServiceType.GRAPH:
             return new GraphEmailService(logger, configService, fileHandler);
+          case EmailServiceType.SMTP_OAUTH:
+            return new SmtpOauthEmailService(logger, configService, fileHandler);
           default:
             // Email off: nothing is sent whatever this says, and a throw here
             // aborts bootstrap for every RUN_MODULE, since EmailModule arrives
